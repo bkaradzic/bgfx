@@ -609,6 +609,7 @@ namespace bgfx { namespace gl
 			ARB_texture_stencil8,
 			ARB_texture_storage,
 			ARB_texture_swizzle,
+			ARB_texture_view,
 			ARB_timer_query,
 			ARB_uniform_buffer_object,
 			ARB_vertex_array_object,
@@ -666,6 +667,7 @@ namespace bgfx { namespace gl
 			EXT_texture_sRGB,
 			EXT_texture_storage,
 			EXT_texture_swizzle,
+			EXT_texture_view,
 			EXT_texture_type_2_10_10_10_REV,
 			EXT_timer_query,
 			EXT_unpack_subimage,
@@ -720,6 +722,7 @@ namespace bgfx { namespace gl
 			OES_texture_half_float_linear,
 			OES_texture_stencil8,
 			OES_texture_storage_multisample_2d_array,
+			OES_texture_view,
 			OES_vertex_array_object,
 			OES_vertex_half_float,
 			OES_vertex_type_10_10_10_2,
@@ -827,6 +830,7 @@ namespace bgfx { namespace gl
 		{ "ARB_texture_stencil8",                     false,                             true  },
 		{ "ARB_texture_storage",                      BGFX_CONFIG_RENDERER_OPENGL >= 42, true  },
 		{ "ARB_texture_swizzle",                      BGFX_CONFIG_RENDERER_OPENGL >= 33, true  },
+		{ "ARB_texture_view",                         BGFX_CONFIG_RENDERER_OPENGL >= 43, true  },
 		{ "ARB_timer_query",                          BGFX_CONFIG_RENDERER_OPENGL >= 33, true  },
 		{ "ARB_uniform_buffer_object",                BGFX_CONFIG_RENDERER_OPENGL >= 31, true  },
 		{ "ARB_vertex_array_object",                  BGFX_CONFIG_RENDERER_OPENGL >= 30, true  },
@@ -884,6 +888,7 @@ namespace bgfx { namespace gl
 		{ "EXT_texture_sRGB",                         false,                             true  },
 		{ "EXT_texture_storage",                      false,                             true  },
 		{ "EXT_texture_swizzle",                      false,                             true  },
+		{ "EXT_texture_view",                         false,                             true  },
 		{ "EXT_texture_type_2_10_10_10_REV",          false,                             true  },
 		{ "EXT_timer_query",                          BGFX_CONFIG_RENDERER_OPENGL >= 33, true  },
 		{ "EXT_unpack_subimage",                      false,                             true  },
@@ -938,6 +943,7 @@ namespace bgfx { namespace gl
 		{ "OES_texture_half_float_linear",            false,                             true  },
 		{ "OES_texture_stencil8",                     false,                             true  },
 		{ "OES_texture_storage_multisample_2d_array", false,                             true  },
+		{ "OES_texture_view",                         false,                             true  },
 		{ "OES_vertex_array_object",                  false,                             true  },
 		{ "OES_vertex_half_float",                    false,                             true  },
 		{ "OES_vertex_type_10_10_10_2",               false,                             true  },
@@ -2249,6 +2255,7 @@ namespace bgfx { namespace gl
 			, m_maxMsaa(0)
 			, m_vao(0)
 			, m_blitSupported(false)
+			, m_textureViewSupported(false)
 			, m_readBackSupported(BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) )
 			, m_vaoSupport(false)
 			, m_samplerObjectSupport(false)
@@ -2904,6 +2911,13 @@ namespace bgfx { namespace gl
 				||  s_extension[Extension::OES_copy_image].m_supported)
 				{
 					m_blitSupported = NULL != glCopyImageSubData;
+				}
+
+				if (s_extension[Extension::ARB_texture_view].m_supported
+				||  s_extension[Extension::EXT_texture_view].m_supported
+				||  s_extension[Extension::OES_texture_view].m_supported)
+				{
+					m_textureViewSupported = NULL != glTextureView;
 				}
 
 				g_caps.supported |= m_blitSupported || BX_ENABLED(BGFX_GL_CONFIG_BLIT_EMULATION)
@@ -4220,6 +4234,8 @@ namespace bgfx { namespace gl
 			{
 				m_samplerStateCache.invalidate();
 			}
+
+			m_textureViewStateCache.invalidate();
 		}
 
 		void setSamplerState(uint32_t _stage, uint32_t _numMips, uint32_t _flags, const float _rgba[4])
@@ -4810,6 +4826,7 @@ namespace bgfx { namespace gl
 		OcclusionQueryGL m_occlusionQuery;
 
 		SamplerStateCache m_samplerStateCache;
+		TextureViewStateCache m_textureViewStateCache;
 		UniformStateCache m_uniformStateCache;
 
 		TextVideoMem m_textVideoMem;
@@ -4827,6 +4844,7 @@ namespace bgfx { namespace gl
 		GLuint m_vao;
 		uint16_t m_maxLabelLen;
 		bool m_blitSupported;
+		bool m_textureViewSupported;
 		bool m_readBackSupported;
 		bool m_vaoSupport;
 		bool m_samplerObjectSupport;
@@ -5628,6 +5646,9 @@ namespace bgfx { namespace gl
 				: s_textureFormat[m_textureFormat].m_internalFmt
 				;
 
+			m_internalFmt = internalFmt;
+			m_numLayers   = textureArray ? _depth : 1;
+
 			if (textureArray)
 			{
 				GL_CHECK(glTexStorage3D(_target
@@ -5637,6 +5658,7 @@ namespace bgfx { namespace gl
 					, m_height
 					, _depth
 					) );
+				m_immutableStorage = true;
 			}
 			else if (computeWrite)
 			{
@@ -5659,6 +5681,7 @@ namespace bgfx { namespace gl
 						, m_height
 						) );
 				}
+				m_immutableStorage = true;
 			}
 
 			setSamplerState(uint32_t(_flags), NULL);
@@ -5979,6 +6002,8 @@ namespace bgfx { namespace gl
 
 	void TextureGL::destroy()
 	{
+		s_renderGL->m_textureViewStateCache.invalidateWithParent(uint16_t(this - s_renderGL->m_textures) );
+
 		if (0 == (m_flags & BGFX_SAMPLER_INTERNAL_SHARED)
 		&&  0 != m_id)
 		{
@@ -6233,7 +6258,60 @@ namespace bgfx { namespace gl
 		}
 	}
 
-	void TextureGL::commit(uint32_t _stage, uint32_t _flags, const float _palette[][4])
+	GLuint TextureGL::getViewId(uint8_t _firstMip, uint8_t _numMips, uint16_t _firstLayer, uint16_t _numLayers)
+	{
+		const uint8_t  firstMip   = bx::min<uint8_t>(_firstMip, uint8_t(m_numMips - 1) );
+		const uint8_t  numMips    = bx::min<uint8_t>(_numMips, uint8_t(m_numMips - firstMip) );
+		const uint16_t numLayers0 = uint16_t(bx::max<uint32_t>(m_numLayers, 1) );
+		const uint16_t firstLayer = bx::min<uint16_t>(_firstLayer, uint16_t(numLayers0 - 1) );
+		const uint16_t numLayers  = bx::min<uint16_t>(_numLayers, uint16_t(numLayers0 - firstLayer) );
+
+		const bool fullRange = 0 == firstMip
+			&& numMips   >= m_numMips
+			&& 0 == firstLayer
+			&& numLayers >= numLayers0
+			;
+
+		if (fullRange
+		|| !s_renderGL->m_textureViewSupported
+		|| !m_immutableStorage
+		||  GL_ZERO == m_internalFmt
+		||  NULL == glTextureView)
+		{
+			return m_id;
+		}
+
+		const uint16_t parent = uint16_t(this - s_renderGL->m_textures);
+
+		const uint64_t key = 0
+			| (uint64_t(parent)     << 48)
+			| (uint64_t(firstMip)   << 40)
+			| (uint64_t(numMips)    << 32)
+			| (uint64_t(firstLayer) << 16)
+			| (uint64_t(numLayers)  <<  0)
+			;
+
+		GLuint viewId = s_renderGL->m_textureViewStateCache.find(key);
+		if (UINT32_MAX != viewId)
+		{
+			return viewId;
+		}
+
+		viewId = s_renderGL->m_textureViewStateCache.add(key, parent);
+		GL_CHECK(glTextureView(viewId
+			, m_target
+			, m_id
+			, m_internalFmt
+			, firstMip
+			, numMips
+			, firstLayer
+			, numLayers
+			) );
+
+		return viewId;
+	}
+
+	void TextureGL::commit(uint32_t _stage, uint32_t _flags, const float _palette[][4], uint8_t _firstMip, uint8_t _numMips, uint16_t _firstLayer, uint16_t _numLayers)
 	{
 		const uint32_t flags = 0 == (BGFX_SAMPLER_INTERNAL_DEFAULT & _flags)
 			? _flags
@@ -6241,8 +6319,10 @@ namespace bgfx { namespace gl
 			;
 		const uint32_t index = (flags & BGFX_SAMPLER_BORDER_COLOR_MASK) >> BGFX_SAMPLER_BORDER_COLOR_SHIFT;
 
+		const GLuint id = getViewId(_firstMip, _numMips, _firstLayer, _numLayers);
+
 		GL_CHECK(glActiveTexture(GL_TEXTURE0+_stage) );
-		GL_CHECK(glBindTexture(m_target, m_id) );
+		GL_CHECK(glBindTexture(m_target, id) );
 
 		if (s_renderGL->m_samplerObjectSupport)
 		{
@@ -7747,7 +7827,7 @@ namespace bgfx { namespace gl
 								case Binding::Texture:
 									{
 										TextureGL& texture = m_textures[bind.m_idx];
-										texture.commit(ii, bind.m_samplerFlags, _render->m_colorPalette);
+										texture.commit(ii, bind.m_samplerFlags, _render->m_colorPalette, bind.m_firstMip, bind.m_numMips, bind.m_firstLayer, bind.m_numLayers);
 									}
 									break;
 
@@ -7756,7 +7836,7 @@ namespace bgfx { namespace gl
 										const TextureGL& texture = m_textures[bind.m_idx];
 										GL_CHECK(glBindImageTexture(ii
 											, texture.m_id
-											, bind.m_mip
+											, bind.m_firstMip
 											, texture.isCubeMap() || texture.m_target == GL_TEXTURE_2D_ARRAY ? GL_TRUE : GL_FALSE
 											, 0
 											, s_access[bind.m_access]
@@ -8270,13 +8350,13 @@ namespace bgfx { namespace gl
 										{
 											const TextureGL& texture = m_textures[bind.m_idx];
 											GL_CHECK(glBindImageTexture(stage
-																		, texture.m_id
-																		, bind.m_mip
-																		, texture.isCubeMap() || texture.m_target == GL_TEXTURE_2D_ARRAY ? GL_TRUE : GL_FALSE
-																		, 0
-																		, s_access[bind.m_access]
-																		, s_imageFormat[bind.m_format])
-													);
+												, texture.m_id
+												, bind.m_firstMip
+												, texture.isCubeMap() || texture.m_target == GL_TEXTURE_2D_ARRAY ? GL_TRUE : GL_FALSE
+												, 0
+												, s_access[bind.m_access]
+												, s_imageFormat[bind.m_format])
+												);
 											barrier |= GL_SHADER_IMAGE_ACCESS_BARRIER_BIT;
 										}
 										break;
@@ -8284,7 +8364,7 @@ namespace bgfx { namespace gl
 									case Binding::Texture:
 										{
 											TextureGL& texture = m_textures[bind.m_idx];
-											texture.commit(stage, bind.m_samplerFlags, _render->m_colorPalette);
+											texture.commit(stage, bind.m_samplerFlags, _render->m_colorPalette, bind.m_firstMip, bind.m_numMips, bind.m_firstLayer, bind.m_numLayers);
 										}
 										break;
 

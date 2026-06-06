@@ -500,14 +500,20 @@ namespace bgfx { namespace mtl
 			, bool _fragment
 			, uint32_t _flags = BGFX_SAMPLER_INTERNAL_DEFAULT
 			, uint8_t _mip = UINT8_MAX
+			, uint16_t _firstLayer = 0
+			, uint16_t _numLayers = UINT16_MAX
+			, uint8_t _firstMip = 0
+			, uint8_t _numMips = UINT8_MAX
 			);
 
 		MTL::Texture* getTextureMipLevel(uint8_t _mip);
+		MTL::Texture* getTextureView(uint16_t _firstLayer, uint16_t _numLayers, uint8_t _firstMip, uint8_t _numMips);
 
 		MTL::Texture* m_ptr;
 		MTL::Texture* m_ptrMsaa;
 		MTL::Texture* m_ptrStencil; // for emulating packed depth/stencil formats - only for iOS8...
 		MTL::Texture* m_ptrMips[14];
+		stl::unordered_map<uint64_t, MTL::Texture*> m_ptrViews;
 		MTL::SamplerState* m_sampler;
 		uint64_t m_flags;
 		uint32_t m_width;

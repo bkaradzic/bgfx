@@ -205,6 +205,7 @@ typedef void           (GL_APIENTRYP PFNGLTEXSTORAGE2DPROC) (GLenum target, GLsi
 typedef void           (GL_APIENTRYP PFNGLTEXSTORAGE3DPROC) (GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth);
 typedef void           (GL_APIENTRYP PFNGLTEXSUBIMAGE2DPROC) (GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const void *pixels);
 typedef void           (GL_APIENTRYP PFNGLTEXSUBIMAGE3DPROC) (GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const void *pixels);
+typedef void           (GL_APIENTRYP PFNGLTEXTUREVIEWPROC) (GLuint texture, GLenum target, GLuint origtexture, GLenum internalformat, GLuint minlevel, GLuint numlevels, GLuint minlayer, GLuint numlayers);
 typedef void           (GL_APIENTRYP PFNGLUNIFORM1FPROC) (GLint location, GLfloat v0);
 typedef void           (GL_APIENTRYP PFNGLUNIFORM1FVPROC) (GLint location, GLsizei count, const GLfloat *value);
 typedef void           (GL_APIENTRYP PFNGLUNIFORM1IPROC) (GLint location, GLint v0);
@@ -407,6 +408,7 @@ GL_IMPORT______(true,  PFNGLTEXSTORAGE2DPROC,                      glTexStorage2
 GL_IMPORT______(true,  PFNGLTEXSTORAGE3DPROC,                      glTexStorage3D);
 GL_IMPORT______(false, PFNGLTEXSUBIMAGE2DPROC,                     glTexSubImage2D);
 GL_IMPORT______(true,  PFNGLTEXSUBIMAGE3DPROC,                     glTexSubImage3D);
+GL_IMPORT______(true,  PFNGLTEXTUREVIEWPROC,                       glTextureView);
 GL_IMPORT______(false, PFNGLUNIFORM1IPROC,                         glUniform1i);
 GL_IMPORT______(false, PFNGLUNIFORM1IVPROC,                        glUniform1iv);
 GL_IMPORT______(false, PFNGLUNIFORM1FPROC,                         glUniform1f);
@@ -534,8 +536,8 @@ GL_IMPORT_OES__(true,  PFNGLCOMPRESSEDTEXSUBIMAGE3DPROC,           glCompressedT
 
 GL_IMPORT_EXT__(true,  PFNGLTEXSTORAGE2DPROC,                      glTexStorage2D);
 GL_IMPORT_EXT__(true,  PFNGLTEXSTORAGE3DPROC,                      glTexStorage3D);
+GL_IMPORT_EXT__(true,  PFNGLTEXTUREVIEWPROC,                       glTextureView);
 GL_IMPORT______(true,  PFNGLTEXIMAGE2DMULTISAMPLEPROC,             glTexImage2DMultisample);
-GL_IMPORT______(true,  PFNGLTEXIMAGE3DMULTISAMPLEPROC,             glTexImage3DMultisample);
 
 GL_IMPORT_EXT__(true,  PFNGLFRAMEBUFFERTEXTUREPROC,                glFramebufferTexture);
 GL_IMPORT_EXT__(true,  PFNGLFRAMEBUFFERTEXTURELAYERPROC,           glFramebufferTextureLayer);
@@ -630,6 +632,7 @@ GL_IMPORT______(true,  PFNGLCOMPRESSEDTEXSUBIMAGE3DPROC,           glCompressedT
 
 GL_IMPORT______(true,  PFNGLTEXSTORAGE2DPROC,                      glTexStorage2D);
 GL_IMPORT______(true,  PFNGLTEXSTORAGE3DPROC,                      glTexStorage3D);
+GL_IMPORT______(true,  PFNGLTEXTUREVIEWPROC,                       glTextureView);
 GL_IMPORT______(true,  PFNGLTEXIMAGE2DMULTISAMPLEPROC,             glTexImage2DMultisample);
 GL_IMPORT______(true,  PFNGLTEXIMAGE3DMULTISAMPLEPROC,             glTexImage3DMultisample);
 

@@ -3750,19 +3750,26 @@ VK_IMPORT_DEVICE
 			return sampler;
 		}
 
-		VkImageView getCachedImageView(TextureHandle _handle, uint32_t _mip, uint32_t _numMips, VkImageViewType _type, bool _stencil = false)
+		VkImageView getCachedImageView(TextureHandle _handle, uint32_t _mip, uint32_t _numMips, VkImageViewType _type, bool _stencil = false, uint32_t _firstLayer = 0, uint32_t _numLayers = UINT32_MAX)
 		{
 			const TextureVK& texture = m_textures[_handle.idx];
 
 			_stencil = _stencil && !!(texture.m_aspectFlags & VK_IMAGE_ASPECT_STENCIL_BIT);
 
+			const uint32_t firstLayer = bx::min<uint32_t>(_firstLayer, texture.m_numSides);
+			const uint32_t numLayers  = bx::min<uint32_t>(_numLayers,  texture.m_numSides - firstLayer);
+			const uint32_t firstMip   = bx::min<uint32_t>(_mip,        texture.m_numMips);
+			const uint32_t numMips    = bx::min<uint32_t>(_numMips,    texture.m_numMips - firstMip);
+
 			bx::HashMurmur2A hash;
 			hash.begin();
 			hash.add(_handle.idx);
-			hash.add(_mip);
-			hash.add(_numMips);
+			hash.add(firstMip);
+			hash.add(numMips);
 			hash.add(_type);
 			hash.add(_stencil);
+			hash.add(firstLayer);
+			hash.add(numLayers);
 			uint32_t hashKey = hash.end();
 
 			VkImageView* viewCached = m_imageViewCache.find(hashKey);
@@ -3778,7 +3785,7 @@ VK_IMPORT_DEVICE
 				;
 
 			VkImageView view;
-			VK_CHECK(texture.createView(0, texture.m_numSides, _mip, _numMips, _type, aspectMask, false, &view) );
+			VK_CHECK(texture.createView(firstLayer, numLayers, firstMip, numMips, _type, aspectMask, false, &view) );
 			m_imageViewCache.add(hashKey, view, _handle.idx);
 
 			return view;
@@ -4149,8 +4156,8 @@ VK_IMPORT_DEVICE
 							imageInfo[imageCount].sampler     = VK_NULL_HANDLE;
 							imageInfo[imageCount].imageView   = getCachedImageView(
 								  { bind.m_idx }
-								, bind.m_mip
-								, 1
+								, bind.m_firstMip
+								, bind.m_numMips
 								, type
 								);
 							wds[wdsCount].pImageInfo = &imageInfo[imageCount];
@@ -4210,10 +4217,12 @@ VK_IMPORT_DEVICE
 							imageInfo[imageCount].sampler     = sampler;
 							imageInfo[imageCount].imageView   = getCachedImageView(
 								  { bind.m_idx }
-								, 0
-								, texture.m_numMips
+								, bind.m_firstMip
+								, bind.m_numMips
 								, type
 								, sampleStencil
+								, bind.m_firstLayer
+								, bind.m_numLayers
 								);
 
 							wds[wdsCount].sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;

@@ -3645,6 +3645,13 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 		{
 			MTL_RELEASE_W(m_ptrMips[ii], 0);
 		}
+
+		for (stl::unordered_map<uint64_t, MTL::Texture*>::iterator it = m_ptrViews.begin(), itEnd = m_ptrViews.end(); it != itEnd; ++it)
+		{
+			MTL::Texture* view = it->second;
+			MTL_RELEASE_W(view, 0);
+		}
+		m_ptrViews.clear();
 	}
 
 	void TextureMtl::overrideInternal(uintptr_t _ptr)
@@ -3760,11 +3767,11 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 		}
 	}
 
-	void TextureMtl::commit(uint8_t _stage, bool _vertex, bool _fragment, uint32_t _flags, uint8_t _mip)
+	void TextureMtl::commit(uint8_t _stage, bool _vertex, bool _fragment, uint32_t _flags, uint8_t _mip, uint16_t _firstLayer, uint16_t _numLayers, uint8_t _firstMip, uint8_t _numMips)
 	{
 		if (_vertex)
 		{
-			MTL::Texture* p = _mip != UINT8_MAX ? getTextureMipLevel(_mip) : m_ptr;
+			MTL::Texture* p = _mip != UINT8_MAX ? getTextureMipLevel(_mip) : getTextureView(_firstLayer, _numLayers, _firstMip, _numMips);
 			s_renderMtl->m_renderCommandEncoder->setVertexTexture(p, _stage);
 			s_renderMtl->m_renderCommandEncoder->setVertexSamplerState(
 				  0 == (BGFX_SAMPLER_INTERNAL_DEFAULT & _flags)
@@ -3776,7 +3783,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 		if (_fragment)
 		{
-			MTL::Texture* p = _mip != UINT8_MAX ? getTextureMipLevel(_mip) : m_ptr;
+			MTL::Texture* p = _mip != UINT8_MAX ? getTextureMipLevel(_mip) : getTextureView(_firstLayer, _numLayers, _firstMip, _numMips);
 			s_renderMtl->m_renderCommandEncoder->setFragmentTexture(p, _stage);
 			s_renderMtl->m_renderCommandEncoder->setFragmentSamplerState(
 				  0 == (BGFX_SAMPLER_INTERNAL_DEFAULT & _flags)
@@ -3785,6 +3792,55 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 				, _stage
 				);
 		}
+	}
+
+	MTL::Texture* TextureMtl::getTextureView(uint16_t _firstLayer, uint16_t _numLayers, uint8_t _firstMip, uint8_t _numMips)
+	{
+		if (NULL == m_ptr)
+		{
+			return NULL;
+		}
+
+		const uint32_t totalLayers = uint32_t(m_ptr->arrayLength() * (TextureCube == m_type ? 6 : 1) );
+
+		const uint8_t  firstMip   = bx::min<uint8_t>(_firstMip, uint8_t(m_numMips - 1) );
+		const uint8_t  numMips    = bx::min<uint8_t>(_numMips,  uint8_t(m_numMips - firstMip) );
+		const uint32_t firstLayer = bx::min<uint32_t>(_firstLayer, totalLayers - 1);
+		const uint32_t numLayers  = bx::min<uint32_t>(_numLayers,  totalLayers - firstLayer);
+
+		const bool fullRange = 0 == firstMip
+			&& 0 == firstLayer
+			&& numMips   >= m_numMips
+			&& numLayers >= totalLayers
+			;
+
+		if (fullRange)
+		{
+			return m_ptr;
+		}
+
+		const uint64_t key = 0
+			| uint64_t(firstMip)
+			| (uint64_t(numMips)    <<  8)
+			| (uint64_t(firstLayer) << 16)
+			| (uint64_t(numLayers)  << 32)
+			;
+
+		stl::unordered_map<uint64_t, MTL::Texture*>::iterator it = m_ptrViews.find(key);
+		if (it != m_ptrViews.end() )
+		{
+			return it->second;
+		}
+
+		MTL::Texture* view = m_ptr->newTextureView(
+			  m_ptr->pixelFormat()
+			, TextureCube == m_type ? (MTL::TextureType)MTL::TextureType2DArray : m_ptr->textureType()
+			, NS::Range::Make(firstMip, numMips)
+			, NS::Range::Make(firstLayer, numLayers)
+			);
+		m_ptrViews[key] = view;
+
+		return view;
 	}
 
 	MTL::Texture* TextureMtl::getTextureMipLevel(uint8_t _mip)
@@ -5090,7 +5146,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 								case Binding::Image:
 								{
 									TextureMtl& texture = m_textures[bind.m_idx];
-									m_computeCommandEncoder->setTexture(texture.getTextureMipLevel(bind.m_mip), stage);
+									m_computeCommandEncoder->setTexture(texture.getTextureMipLevel(bind.m_firstMip), stage);
 								}
 								break;
 
@@ -5509,7 +5565,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 											, 0 != (bindingTypes[stage] & PipelineStateMtl::BindToVertexShader)
 											, 0 != (bindingTypes[stage] & PipelineStateMtl::BindToFragmentShader)
 											, bind.m_samplerFlags
-											, bind.m_mip
+											, bind.m_firstMip
 											);
 									}
 									break;
@@ -5522,6 +5578,11 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 											, 0 != (bindingTypes[stage] & PipelineStateMtl::BindToVertexShader)
 											, 0 != (bindingTypes[stage] & PipelineStateMtl::BindToFragmentShader)
 											, bind.m_samplerFlags
+											, UINT8_MAX
+											, bind.m_firstLayer
+											, bind.m_numLayers
+											, bind.m_firstMip
+											, bind.m_numMips
 											);
 									}
 									break;

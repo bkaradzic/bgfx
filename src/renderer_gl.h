@@ -1343,6 +1343,85 @@ namespace bgfx { namespace gl
 		HashMap m_hashMap;
 	};
 
+	class TextureViewStateCache
+	{
+	public:
+		GLuint add(uint64_t _key, uint16_t _parent)
+		{
+			invalidate(_key);
+
+			GLuint viewId;
+			GL_CHECK(glGenTextures(1, &viewId) );
+
+			m_hashMap.insert(stl::make_pair(_key, Data{viewId, _parent}) );
+
+			return viewId;
+		}
+
+		GLuint find(uint64_t _key)
+		{
+			HashMap::iterator it = m_hashMap.find(_key);
+			if (it != m_hashMap.end() )
+			{
+				return it->second.m_textureViewId;
+			}
+
+			return UINT32_MAX;
+		}
+
+		void invalidate(uint64_t _key)
+		{
+			HashMap::iterator it = m_hashMap.find(_key);
+			if (it != m_hashMap.end() )
+			{
+				GL_CHECK(glDeleteTextures(1, &it->second.m_textureViewId) );
+				m_hashMap.erase(it);
+			}
+		}
+
+		void invalidateWithParent(uint16_t _parent)
+		{
+			for (HashMap::iterator it = m_hashMap.begin(), itEnd = m_hashMap.end(); it != itEnd;)
+			{
+				if (it->second.m_parent == _parent)
+				{
+					GL_CHECK(glDeleteTextures(1, &it->second.m_textureViewId) );
+					HashMap::iterator itErase = it;
+					++it;
+					m_hashMap.erase(itErase);
+				}
+				else
+				{
+					++it;
+				}
+			}
+		}
+
+		void invalidate()
+		{
+			for (HashMap::iterator it = m_hashMap.begin(), itEnd = m_hashMap.end(); it != itEnd; ++it)
+			{
+				GL_CHECK(glDeleteTextures(1, &it->second.m_textureViewId) );
+			}
+			m_hashMap.clear();
+		}
+
+		uint32_t getCount() const
+		{
+			return uint32_t(m_hashMap.size() );
+		}
+
+	private:
+		struct Data
+		{
+			GLuint   m_textureViewId;
+			uint16_t m_parent;
+		};
+
+		typedef stl::unordered_map<uint64_t, Data> HashMap;
+		HashMap m_hashMap;
+	};
+
 	struct IndexBufferGL
 	{
 		void create(uint32_t _size, void* _data, uint16_t _flags)
@@ -1445,9 +1524,11 @@ namespace bgfx { namespace gl
 			, m_target(GL_TEXTURE_2D)
 			, m_fmt(GL_ZERO)
 			, m_type(GL_ZERO)
+			, m_internalFmt(GL_ZERO)
 			, m_flags(0)
 			, m_currentSamplerHash(UINT32_MAX)
 			, m_numMips(0)
+			, m_immutableStorage(false)
 		{
 		}
 
@@ -1457,7 +1538,8 @@ namespace bgfx { namespace gl
 		void overrideInternal(uintptr_t _ptr);
 		void update(uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem);
 		void setSamplerState(uint32_t _flags, const float _rgba[4]);
-		void commit(uint32_t _stage, uint32_t _flags, const float _palette[][4]);
+		void commit(uint32_t _stage, uint32_t _flags, const float _palette[][4], uint8_t _firstMip, uint8_t _numMips, uint16_t _firstLayer, uint16_t _numLayers);
+		GLuint getViewId(uint8_t _firstMip, uint8_t _numMips, uint16_t _firstLayer, uint16_t _numLayers);
 		void resolve(uint8_t _resolve) const;
 
 		bool isCubeMap() const
@@ -1473,6 +1555,7 @@ namespace bgfx { namespace gl
 		GLenum m_target;
 		GLenum m_fmt;
 		GLenum m_type;
+		GLenum m_internalFmt;
 		uint64_t m_flags;
 		uint32_t m_currentSamplerHash;
 		uint32_t m_width;
@@ -1482,6 +1565,7 @@ namespace bgfx { namespace gl
 		uint8_t m_numMips;
 		uint8_t m_requestedFormat;
 		uint8_t m_textureFormat;
+		bool m_immutableStorage;
 	};
 
 	struct ShaderGL

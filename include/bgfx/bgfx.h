@@ -1401,6 +1401,36 @@ namespace bgfx
 			, uint32_t _flags = UINT32_MAX
 			);
 
+		/// Set texture stage for draw primitive, selecting a sub-range of the
+		/// texture's array layers and mip levels.
+		///
+		/// @param[in] _stage Texture unit.
+		/// @param[in] _sampler Program sampler.
+		/// @param[in] _handle Texture handle.
+		/// @param[in] _firstLayer First array layer.
+		/// @param[in] _numLayers Number of array layers.
+		/// @param[in] _firstMip First (most detailed) mip level.
+		/// @param[in] _numMips Number of mip levels.
+		/// @param[in] _flags Texture sampling mode. Default value UINT32_MAX uses
+		///   texture sampling settings from the texture.
+		///   - `BGFX_SAMPLER_[U/V/W]_[MIRROR/CLAMP]` - Mirror or clamp to edge wrap
+		///   mode.
+		///   - `BGFX_SAMPLER_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]` - Point or anisotropic
+		///   sampling.
+		///
+		/// @attention C99's equivalent binding is `bgfx_encoder_set_texture_view`.
+		///
+		void setTexture(
+			  uint8_t _stage
+			, UniformHandle _sampler
+			, TextureHandle _handle
+			, uint16_t _firstLayer
+			, uint16_t _numLayers
+			, uint8_t _firstMip
+			, uint8_t _numMips
+			, uint32_t _flags = UINT32_MAX
+			);
+
 		/// Submit an empty primitive for rendering. Uniforms and draw state
 		/// will be applied but no geometry will be submitted. Useful in cases
 		/// when no other draw/compute primitive is submitted to view, but it's
@@ -4355,6 +4385,36 @@ namespace bgfx
 		  uint8_t _stage
 		, UniformHandle _sampler
 		, TextureHandle _handle
+		, uint32_t _flags = UINT32_MAX
+		);
+
+	/// Set texture stage for draw primitive, selecting a sub-range of the
+	/// texture's array layers and mip levels.
+	///
+	/// @param[in] _stage Texture unit.
+	/// @param[in] _sampler Program sampler.
+	/// @param[in] _handle Texture handle.
+	/// @param[in] _firstLayer First array layer.
+	/// @param[in] _numLayers Number of array layers.
+	/// @param[in] _firstMip First (most detailed) mip level.
+	/// @param[in] _numMips Number of mip levels.
+	/// @param[in] _flags Texture sampling mode. Default value UINT32_MAX uses
+	///   texture sampling settings from the texture.
+	///   - `BGFX_SAMPLER_[U/V/W]_[MIRROR/CLAMP]` - Mirror or clamp to edge wrap
+	///   mode.
+	///   - `BGFX_SAMPLER_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]` - Point or anisotropic
+	///   sampling.
+	///
+	/// @attention C99's equivalent binding is `bgfx_set_texture_view`.
+	///
+	void setTexture(
+		  uint8_t _stage
+		, UniformHandle _sampler
+		, TextureHandle _handle
+		, uint16_t _firstLayer
+		, uint16_t _numLayers
+		, uint8_t _firstMip
+		, uint8_t _numMips
 		, uint32_t _flags = UINT32_MAX
 		);
 

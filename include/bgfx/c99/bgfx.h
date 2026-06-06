@@ -2920,6 +2920,27 @@ BGFX_C_API void bgfx_encoder_set_instance_count(bgfx_encoder_t* _this, uint32_t 
 BGFX_C_API void bgfx_encoder_set_texture(bgfx_encoder_t* _this, uint8_t _stage, bgfx_uniform_handle_t _sampler, bgfx_texture_handle_t _handle, uint32_t _flags);
 
 /**
+ * Set texture stage for draw primitive, selecting a sub-range of the
+ * texture's array layers and mip levels.
+ *
+ * @param[in] _stage Texture unit.
+ * @param[in] _sampler Program sampler.
+ * @param[in] _handle Texture handle.
+ * @param[in] _firstLayer First array layer.
+ * @param[in] _numLayers Number of array layers.
+ * @param[in] _firstMip First (most detailed) mip level.
+ * @param[in] _numMips Number of mip levels.
+ * @param[in] _flags Texture sampling mode. Default value UINT32_MAX uses
+ *    texture sampling settings from the texture.
+ *    - `BGFX_SAMPLER_[U/V/W]_[MIRROR/CLAMP]` - Mirror or clamp to edge wrap
+ *      mode.
+ *    - `BGFX_SAMPLER_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]` - Point or anisotropic
+ *      sampling.
+ *
+ */
+BGFX_C_API void bgfx_encoder_set_texture_view(bgfx_encoder_t* _this, uint8_t _stage, bgfx_uniform_handle_t _sampler, bgfx_texture_handle_t _handle, uint16_t _firstLayer, uint16_t _numLayers, uint8_t _firstMip, uint8_t _numMips, uint32_t _flags);
+
+/**
  * Submit an empty primitive for rendering. Uniforms and draw state
  * will be applied but no geometry will be submitted. Useful in cases
  * when no other draw/compute primitive is submitted to view, but it's
@@ -3554,6 +3575,27 @@ BGFX_C_API void bgfx_set_instance_count(uint32_t _numInstances);
 BGFX_C_API void bgfx_set_texture(uint8_t _stage, bgfx_uniform_handle_t _sampler, bgfx_texture_handle_t _handle, uint32_t _flags);
 
 /**
+ * Set texture stage for draw primitive, selecting a sub-range of the
+ * texture's array layers and mip levels.
+ *
+ * @param[in] _stage Texture unit.
+ * @param[in] _sampler Program sampler.
+ * @param[in] _handle Texture handle.
+ * @param[in] _firstLayer First array layer.
+ * @param[in] _numLayers Number of array layers.
+ * @param[in] _firstMip First (most detailed) mip level.
+ * @param[in] _numMips Number of mip levels.
+ * @param[in] _flags Texture sampling mode. Default value UINT32_MAX uses
+ *    texture sampling settings from the texture.
+ *    - `BGFX_SAMPLER_[U/V/W]_[MIRROR/CLAMP]` - Mirror or clamp to edge wrap
+ *      mode.
+ *    - `BGFX_SAMPLER_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]` - Point or anisotropic
+ *      sampling.
+ *
+ */
+BGFX_C_API void bgfx_set_texture_view(uint8_t _stage, bgfx_uniform_handle_t _sampler, bgfx_texture_handle_t _handle, uint16_t _firstLayer, uint16_t _numLayers, uint8_t _firstMip, uint8_t _numMips, uint32_t _flags);
+
+/**
  * Submit an empty primitive for rendering. Uniforms and draw state
  * will be applied but no geometry will be submitted.
  *
@@ -3893,6 +3935,7 @@ typedef enum bgfx_function_id
     BGFX_FUNCTION_ID_ENCODER_SET_INSTANCE_DATA_FROM_DYNAMIC_VERTEX_BUFFER,
     BGFX_FUNCTION_ID_ENCODER_SET_INSTANCE_COUNT,
     BGFX_FUNCTION_ID_ENCODER_SET_TEXTURE,
+    BGFX_FUNCTION_ID_ENCODER_SET_TEXTURE_VIEW,
     BGFX_FUNCTION_ID_ENCODER_TOUCH,
     BGFX_FUNCTION_ID_ENCODER_SUBMIT,
     BGFX_FUNCTION_ID_ENCODER_SUBMIT_OCCLUSION_QUERY,
@@ -3939,6 +3982,7 @@ typedef enum bgfx_function_id
     BGFX_FUNCTION_ID_SET_INSTANCE_DATA_FROM_DYNAMIC_VERTEX_BUFFER,
     BGFX_FUNCTION_ID_SET_INSTANCE_COUNT,
     BGFX_FUNCTION_ID_SET_TEXTURE,
+    BGFX_FUNCTION_ID_SET_TEXTURE_VIEW,
     BGFX_FUNCTION_ID_TOUCH,
     BGFX_FUNCTION_ID_SUBMIT,
     BGFX_FUNCTION_ID_SUBMIT_OCCLUSION_QUERY,
@@ -4102,6 +4146,7 @@ struct bgfx_interface_vtbl
     void (*encoder_set_instance_data_from_dynamic_vertex_buffer)(bgfx_encoder_t* _this, bgfx_dynamic_vertex_buffer_handle_t _handle, uint32_t _startVertex, uint32_t _num);
     void (*encoder_set_instance_count)(bgfx_encoder_t* _this, uint32_t _numInstances);
     void (*encoder_set_texture)(bgfx_encoder_t* _this, uint8_t _stage, bgfx_uniform_handle_t _sampler, bgfx_texture_handle_t _handle, uint32_t _flags);
+    void (*encoder_set_texture_view)(bgfx_encoder_t* _this, uint8_t _stage, bgfx_uniform_handle_t _sampler, bgfx_texture_handle_t _handle, uint16_t _firstLayer, uint16_t _numLayers, uint8_t _firstMip, uint8_t _numMips, uint32_t _flags);
     void (*encoder_touch)(bgfx_encoder_t* _this, bgfx_view_id_t _id);
     void (*encoder_submit)(bgfx_encoder_t* _this, bgfx_view_id_t _id, bgfx_program_handle_t _program, uint32_t _depth, uint8_t _flags);
     void (*encoder_submit_occlusion_query)(bgfx_encoder_t* _this, bgfx_view_id_t _id, bgfx_program_handle_t _program, bgfx_occlusion_query_handle_t _occlusionQuery, uint32_t _depth, uint8_t _flags);
@@ -4148,6 +4193,7 @@ struct bgfx_interface_vtbl
     void (*set_instance_data_from_dynamic_vertex_buffer)(bgfx_dynamic_vertex_buffer_handle_t _handle, uint32_t _startVertex, uint32_t _num);
     void (*set_instance_count)(uint32_t _numInstances);
     void (*set_texture)(uint8_t _stage, bgfx_uniform_handle_t _sampler, bgfx_texture_handle_t _handle, uint32_t _flags);
+    void (*set_texture_view)(uint8_t _stage, bgfx_uniform_handle_t _sampler, bgfx_texture_handle_t _handle, uint16_t _firstLayer, uint16_t _numLayers, uint8_t _firstMip, uint8_t _numMips, uint32_t _flags);
     void (*touch)(bgfx_view_id_t _id);
     void (*submit)(bgfx_view_id_t _id, bgfx_program_handle_t _program, uint32_t _depth, uint8_t _flags);
     void (*submit_occlusion_query)(bgfx_view_id_t _id, bgfx_program_handle_t _program, bgfx_occlusion_query_handle_t _occlusionQuery, uint32_t _depth, uint8_t _flags);

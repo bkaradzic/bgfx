@@ -1976,12 +1976,7 @@ WGPU_IMPORT
 			RenderBind renderBind;
 			renderBind.clear();
 			Binding& bind = renderBind.m_bind[0];
-			bind.m_idx    = _blitter.m_texture.idx;
-			bind.m_type   = uint8_t(Binding::Texture);
-			bind.m_samplerFlags = uint32_t(texture.m_flags & BGFX_SAMPLER_BITS_MASK);
-			bind.m_format = 0;
-			bind.m_access = 0;
-			bind.m_mip    = 0;
+			bind.setTexture(_blitter.m_texture, uint32_t(texture.m_flags & BGFX_SAMPLER_BITS_MASK) );
 
 			const Stream stream =
 			{
@@ -3055,8 +3050,8 @@ WGPU_IMPORT
 								.size        = 0,
 								.sampler     = NULL,
 								.textureView = _isCompute
-									? texture.getTextureView(bind.m_mip, 1, Binding::Image == bind.m_type)
-									: texture.getTextureView(0, UINT8_MAX, false)
+									? texture.getTextureView(bind.m_firstMip, bind.m_numMips, Binding::Image == bind.m_type)
+									: texture.getTextureView(bind.m_firstMip, bind.m_numMips, false, bind.m_firstLayer, bind.m_numLayers)
 									,
 							};
 
@@ -4243,6 +4238,8 @@ retry:
 
 	void TextureWGPU::destroy()
 	{
+		s_renderWGPU->m_textureViewStateCache.invalidateWithParent(uint16_t(this - s_renderWGPU->m_textures) );
+
 		wgpuDestroy(m_texture);
 		wgpuDestroy(m_textureResolve);
 	}
@@ -4357,7 +4354,7 @@ retry:
 		return sampler;
 	}
 
-	WGPUTextureView TextureWGPU::getTextureView(uint8_t _baseMipLevel, uint8_t _mipLevelCount, bool _storage, bool _array) const
+	WGPUTextureView TextureWGPU::getTextureView(uint8_t _baseMipLevel, uint8_t _mipLevelCount, bool _storage, uint16_t _baseArrayLayer, uint16_t _arrayLayerCount) const
 	{
 		bx::HashMurmur3 murmur;
 		murmur.begin();
@@ -4365,7 +4362,8 @@ retry:
 		murmur.add(_baseMipLevel);
 		murmur.add(_mipLevelCount);
 		murmur.add(_storage);
-		murmur.add(_array);
+		murmur.add(_baseArrayLayer);
+		murmur.add(_arrayLayerCount);
 		const uint32_t hash = murmur.end();
 
 		WGPUTextureView textureView = s_renderWGPU->m_textureViewStateCache.find(hash);
@@ -4373,13 +4371,12 @@ retry:
 		if (NULL == textureView)
 		{
 			WGPUTextureViewDimension tvd = m_viewDimension;
-			uint32_t arrayLayerCount = WGPU_ARRAY_LAYER_COUNT_UNDEFINED;
+			const uint32_t arrayLayerCount = UINT16_MAX == _arrayLayerCount
+				? WGPU_ARRAY_LAYER_COUNT_UNDEFINED
+				: _arrayLayerCount
+				;
 
-			if (_array)
-			{
-				tvd = WGPUTextureViewDimension_2DArray;
-			}
-			else if (_storage)
+			if (_storage)
 			{
 				if (WGPUTextureViewDimension_Cube == tvd)
 				{
@@ -4395,16 +4392,17 @@ retry:
 				.dimension       = tvd,
 				.baseMipLevel    = _baseMipLevel,
 				.mipLevelCount   = UINT8_MAX == _mipLevelCount ? WGPU_MIP_LEVEL_COUNT_UNDEFINED : _mipLevelCount,
-				.baseArrayLayer  = 0,
+				.baseArrayLayer  = _baseArrayLayer,
 				.arrayLayerCount = arrayLayerCount,
 				.aspect          = WGPUTextureAspect_All,
-				.usage           = WGPUTextureUsage_TextureBinding
+				.usage           = 0
+					| WGPUTextureUsage_TextureBinding
 					| (_storage ? WGPUTextureUsage_StorageBinding : 0)
 					,
 			};
 
 			textureView = WGPU_CHECK(wgpuTextureCreateView(m_texture, &textureViewDesc) );
-			s_renderWGPU->m_textureViewStateCache.add(hash, textureView);
+			s_renderWGPU->m_textureViewStateCache.add(hash, textureView, uint16_t(this - s_renderWGPU->m_textures) );
 		}
 
 		return textureView;
@@ -5475,22 +5473,19 @@ m_resolution.formatColor = TextureFormat::BGRA8;
 			for (uint32_t ii = 0; ii < 4; ++ii)
 			{
 				Binding& bind = renderBind.m_bind[ii];
-				bind.m_type   = Binding::Image;
-				bind.m_access = Access::Write;
-				bind.m_idx    = _textureHandle.idx;
-				bind.m_mip    = uint8_t(bx::min(topMip + 1 + ii, uint32_t(_texture.m_numMips - 1) ) );
+				bind.setImage(_textureHandle, uint8_t(bx::min(topMip + 1 + ii, uint32_t(_texture.m_numMips - 1) ) ), Access::Write, TextureFormat::Enum(0) );
 			}
 
 			{
-				Binding& bind    = renderBind.m_bind[4];
-				bind.m_type         = Binding::Texture;
-				bind.m_idx          = _textureHandle.idx;
-				bind.m_mip          = uint8_t(topMip);
-				bind.m_samplerFlags = 0
+				Binding& bind = renderBind.m_bind[4];
+				bind.setTexture(
+					  _textureHandle
+					, 0
 					| BGFX_SAMPLER_U_CLAMP
 					| BGFX_SAMPLER_V_CLAMP
 					| BGFX_SAMPLER_W_CLAMP
-					;
+					, uint8_t(topMip)
+					);
 			}
 
 			ComputePipeline* computePipeline = getPipeline(prog, renderBind);

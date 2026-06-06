@@ -3305,12 +3305,20 @@ namespace bgfx { namespace d3d11
 			return uav;
 		}
 
-		ID3D11ShaderResourceView* getCachedSrv(TextureHandle _handle, uint8_t _mip, bool _compute = false, bool _stencil = false)
+		ID3D11ShaderResourceView* getCachedSrv(TextureHandle _handle, uint8_t _firstMip, uint8_t _numMips = 1, uint16_t _firstLayer = 0, uint16_t _numLayers = UINT16_MAX, bool _compute = false, bool _stencil = false)
 		{
+			const TextureD3D11& texture = m_textures[_handle.idx];
+
+			const uint8_t  numMips   = bx::min<uint8_t>(_numMips,   uint8_t(texture.m_numMips - _firstMip) );
+			const uint16_t numLayers = bx::min<uint16_t>(_numLayers, uint16_t(texture.m_numLayers - _firstLayer) );
+
 			bx::HashMurmur2A murmur;
 			murmur.begin();
 			murmur.add(_handle);
-			murmur.add(_mip);
+			murmur.add(_firstMip);
+			murmur.add(numMips);
+			murmur.add(_firstLayer);
+			murmur.add(numLayers);
 			murmur.add(0);
 			murmur.add(_compute);
 			murmur.add(_stencil);
@@ -3320,13 +3328,16 @@ namespace bgfx { namespace d3d11
 			ID3D11ShaderResourceView* srv;
 			if (NULL == ptr)
 			{
-				const TextureD3D11& texture = m_textures[_handle.idx];
 				const uint32_t msaaQuality = bx::satSub<uint32_t>(uint32_t( (texture.m_flags&BGFX_TEXTURE_RT_MSAA_MASK) >> BGFX_TEXTURE_RT_MSAA_SHIFT ), 1u);
 				const DXGI_SAMPLE_DESC& msaa = s_msaa[msaaQuality];
 				const bool msaaSample = 1 < msaa.Count && 0 != (texture.m_flags&BGFX_TEXTURE_MSAA_SAMPLE);
 
 				D3D11_SHADER_RESOURCE_VIEW_DESC desc;
-				desc.Format = _stencil ? DXGI_FORMAT_X24_TYPELESS_G8_UINT : texture.getSrvFormat();
+				desc.Format = _stencil
+					? DXGI_FORMAT_X24_TYPELESS_G8_UINT
+					: texture.getSrvFormat()
+					;
+
 				switch (texture.m_type)
 				{
 				case TextureD3D11::Texture2D:
@@ -3336,10 +3347,10 @@ namespace bgfx { namespace d3d11
 							? D3D11_SRV_DIMENSION_TEXTURE2DMSARRAY
 							: D3D11_SRV_DIMENSION_TEXTURE2DARRAY
 							;
-						desc.Texture2DArray.MostDetailedMip = _mip;
-						desc.Texture2DArray.MipLevels       = 1;
-						desc.Texture2DArray.FirstArraySlice = 0;
-						desc.Texture2DArray.ArraySize       = texture.m_numLayers;
+						desc.Texture2DArray.MostDetailedMip = _firstMip;
+						desc.Texture2DArray.MipLevels       = numMips;
+						desc.Texture2DArray.FirstArraySlice = _firstLayer;
+						desc.Texture2DArray.ArraySize       = numLayers;
 					}
 					else
 					{
@@ -3347,20 +3358,21 @@ namespace bgfx { namespace d3d11
 							? D3D11_SRV_DIMENSION_TEXTURE2DMS
 							: D3D11_SRV_DIMENSION_TEXTURE2D
 							;
-						desc.Texture2D.MostDetailedMip = _mip;
-						desc.Texture2D.MipLevels       = 1;
+						desc.Texture2D.MostDetailedMip = _firstMip;
+						desc.Texture2D.MipLevels       = numMips;
 					}
 					break;
 
 				case TextureD3D11::TextureCube:
 					desc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURECUBE;
-					desc.TextureCube.MostDetailedMip = _mip;
-					desc.TextureCube.MipLevels       = 1;
+					desc.TextureCube.MostDetailedMip = _firstMip;
+					desc.TextureCube.MipLevels       = numMips;
 					break;
+
 				case TextureD3D11::Texture3D:
 					desc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE3D;
-					desc.Texture3D.MostDetailedMip = _mip;
-					desc.Texture3D.MipLevels       = 1;
+					desc.Texture3D.MostDetailedMip = _firstMip;
+					desc.Texture3D.MipLevels       = numMips;
 					break;
 				}
 
@@ -4833,17 +4845,39 @@ namespace bgfx { namespace d3d11
 		}
 	}
 
-	void TextureD3D11::commit(uint8_t _stage, uint32_t _flags, const float _palette[][4])
+	void TextureD3D11::commit(uint8_t _stage, uint32_t _flags, const float _palette[][4], uint16_t _firstLayer, uint16_t _numLayers, uint8_t _firstMip, uint8_t _numMips)
 	{
 		TextureStage& ts = s_renderD3D11->m_textureStage;
+
+		const uint8_t  numMips   = bx::min<uint8_t>(_numMips,   uint8_t(m_numMips   - _firstMip) );
+		const uint16_t numLayers = bx::min<uint16_t>(_numLayers, uint16_t(m_numLayers - _firstLayer) );
+
+		const bool fullRange = 0 == _firstMip
+			&& 0 == _firstLayer
+			&& numMips   == m_numMips
+			&& numLayers == m_numLayers
+			;
 
 		if (0 != (_flags & BGFX_SAMPLER_SAMPLE_STENCIL) )
 		{
 			ts.m_srv[_stage] = s_renderD3D11->getCachedSrv(
 				  TextureHandle{ uint16_t(this - s_renderD3D11->m_textures) }
 				, 0
+				, 1
+				, 0
+				, UINT16_MAX
 				, false
 				, true
+				);
+		}
+		else if (!fullRange)
+		{
+			ts.m_srv[_stage] = s_renderD3D11->getCachedSrv(
+				  TextureHandle{ uint16_t(this - s_renderD3D11->m_textures) }
+				, _firstMip
+				, numMips
+				, _firstLayer
+				, numLayers
 				);
 		}
 		else
@@ -5840,14 +5874,14 @@ namespace bgfx { namespace d3d11
 									TextureD3D11& texture = m_textures[bind.m_idx];
 									if (Access::Read != bind.m_access)
 									{
-										uav[stage] = 0 == bind.m_mip
+										uav[stage] = 0 == bind.m_firstMip
 											? texture.m_uav
-											: s_renderD3D11->getCachedUav(texture.getHandle(), bind.m_mip)
+											: s_renderD3D11->getCachedUav(texture.getHandle(), bind.m_firstMip)
 											;
 									}
 									else
 									{
-										m_textureStage.m_srv[stage]     = s_renderD3D11->getCachedSrv(texture.getHandle(), bind.m_mip, true);
+										m_textureStage.m_srv[stage]     = s_renderD3D11->getCachedSrv(texture.getHandle(), bind.m_firstMip, 1, 0, UINT16_MAX, true);
 										m_textureStage.m_sampler[stage] = s_renderD3D11->getSamplerState(uint32_t(texture.m_flags), NULL);
 									}
 								}
@@ -5856,7 +5890,7 @@ namespace bgfx { namespace d3d11
 							case Binding::Texture:
 								{
 									TextureD3D11& texture = m_textures[bind.m_idx];
-									texture.commit(stage, bind.m_samplerFlags, _render->m_colorPalette);
+									texture.commit(stage, bind.m_samplerFlags, _render->m_colorPalette, bind.m_firstLayer, bind.m_numLayers, bind.m_firstMip, bind.m_numMips);
 								}
 								break;
 
@@ -6160,6 +6194,10 @@ namespace bgfx { namespace d3d11
 						if (current.m_idx          != bind.m_idx
 						||  current.m_type         != bind.m_type
 						||  current.m_samplerFlags != bind.m_samplerFlags
+						||  current.m_firstLayer   != bind.m_firstLayer
+						||  current.m_numLayers    != bind.m_numLayers
+						||  current.m_firstMip     != bind.m_firstMip
+						||  current.m_numMips      != bind.m_numMips
 						||  programChanged)
 						{
 							if (kInvalidHandle != bind.m_idx)
@@ -6171,14 +6209,14 @@ namespace bgfx { namespace d3d11
 										TextureD3D11& texture = m_textures[bind.m_idx];
 										if (Access::Read != bind.m_access)
 										{
-											m_textureStage.m_uav[stage] = 0 == bind.m_mip
+											m_textureStage.m_uav[stage] = 0 == bind.m_firstMip
 												? texture.m_uav
-												: s_renderD3D11->getCachedUav(texture.getHandle(), bind.m_mip)
+												: s_renderD3D11->getCachedUav(texture.getHandle(), bind.m_firstMip)
 												;
 										}
 										else
 										{
-											m_textureStage.m_srv[stage]     = s_renderD3D11->getCachedSrv(texture.getHandle(), bind.m_mip, true);
+											m_textureStage.m_srv[stage]     = s_renderD3D11->getCachedSrv(texture.getHandle(), bind.m_firstMip, 1, 0, UINT16_MAX, true);
 											m_textureStage.m_sampler[stage] = s_renderD3D11->getSamplerState(uint32_t(texture.m_flags), NULL);
 										}
 									}
@@ -6187,7 +6225,7 @@ namespace bgfx { namespace d3d11
 								case Binding::Texture:
 									{
 										TextureD3D11& texture = m_textures[bind.m_idx];
-										texture.commit(stage, bind.m_samplerFlags, _render->m_colorPalette);
+										texture.commit(stage, bind.m_samplerFlags, _render->m_colorPalette, bind.m_firstLayer, bind.m_numLayers, bind.m_firstMip, bind.m_numMips);
 									}
 									break;
 

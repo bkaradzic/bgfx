@@ -4015,13 +4015,22 @@ namespace bgfx { namespace d3d12
 		return data;
 	}
 
-	void ScratchBufferD3D12::allocSrv(D3D12_GPU_DESCRIPTOR_HANDLE& _gpuHandle, TextureD3D12& _texture, uint8_t _mip)
+	void ScratchBufferD3D12::allocSrv(D3D12_GPU_DESCRIPTOR_HANDLE& _gpuHandle, TextureD3D12& _texture, uint16_t _firstLayer, uint16_t _numLayers, uint8_t _firstMip, uint8_t _numMips)
 	{
 		ID3D12Device* device = s_renderD3D12->m_device;
 
+		const uint8_t  numMips   = bx::min<uint8_t>(_numMips,   uint8_t(_texture.m_numMips   - _firstMip) );
+		const uint16_t numLayers = bx::min<uint16_t>(_numLayers, uint16_t(_texture.m_numLayers - _firstLayer) );
+
+		const bool fullRange = 0 == _firstMip
+			&& 0 == _firstLayer
+			&& numMips   >= _texture.m_numMips
+			&& numLayers >= _texture.m_numLayers
+			;
+
 		D3D12_SHADER_RESOURCE_VIEW_DESC tmpSrvd;
 		D3D12_SHADER_RESOURCE_VIEW_DESC* srvd = &_texture.m_srvd;
-		if (0 != _mip)
+		if (!fullRange)
 		{
 			bx::memCopy(&tmpSrvd, srvd, sizeof(tmpSrvd) );
 			srvd = &tmpSrvd;
@@ -4030,21 +4039,43 @@ namespace bgfx { namespace d3d12
 			{
 			default:
 			case D3D12_SRV_DIMENSION_TEXTURE2D:
-				srvd->Texture2D.MostDetailedMip = _mip;
-				srvd->Texture2D.MipLevels       = 1;
-				srvd->Texture2D.PlaneSlice      = 0;
+				srvd->Texture2D.MostDetailedMip     = _firstMip;
+				srvd->Texture2D.MipLevels           = numMips;
+				srvd->Texture2D.PlaneSlice          = 0;
 				srvd->Texture2D.ResourceMinLODClamp = 0;
 				break;
 
+			case D3D12_SRV_DIMENSION_TEXTURE2DARRAY:
+				srvd->Texture2DArray.MostDetailedMip     = _firstMip;
+				srvd->Texture2DArray.MipLevels           = numMips;
+				srvd->Texture2DArray.FirstArraySlice     = _firstLayer;
+				srvd->Texture2DArray.ArraySize           = numLayers;
+				srvd->Texture2DArray.PlaneSlice          = 0;
+				srvd->Texture2DArray.ResourceMinLODClamp = 0;
+				break;
+
+			case D3D12_SRV_DIMENSION_TEXTURE2DMSARRAY:
+				srvd->Texture2DMSArray.FirstArraySlice = _firstLayer;
+				srvd->Texture2DMSArray.ArraySize       = numLayers;
+				break;
+
 			case D3D12_SRV_DIMENSION_TEXTURECUBE:
-				srvd->TextureCube.MostDetailedMip = _mip;
-				srvd->TextureCube.MipLevels       = 1;
+				srvd->TextureCube.MostDetailedMip     = _firstMip;
+				srvd->TextureCube.MipLevels           = numMips;
 				srvd->TextureCube.ResourceMinLODClamp = 0;
 				break;
 
+			case D3D12_SRV_DIMENSION_TEXTURECUBEARRAY:
+				srvd->TextureCubeArray.MostDetailedMip     = _firstMip;
+				srvd->TextureCubeArray.MipLevels           = numMips;
+				srvd->TextureCubeArray.First2DArrayFace    = _firstLayer;
+				srvd->TextureCubeArray.NumCubes            = numLayers;
+				srvd->TextureCubeArray.ResourceMinLODClamp = 0;
+				break;
+
 			case D3D12_SRV_DIMENSION_TEXTURE3D:
-				srvd->Texture3D.MostDetailedMip = _mip;
-				srvd->Texture3D.MipLevels       = 1;
+				srvd->Texture3D.MostDetailedMip     = _firstMip;
+				srvd->Texture3D.MipLevels           = numMips;
 				srvd->Texture3D.ResourceMinLODClamp = 0;
 				break;
 			}
@@ -5804,7 +5835,7 @@ namespace bgfx { namespace d3d12
 			}
 			else
 			{
-				const uint32_t savedMipLevels = resourceDesc.MipLevels;
+				const uint16_t savedMipLevels = resourceDesc.MipLevels;
 				const D3D12_RESOURCE_FLAGS savedFlags = resourceDesc.Flags;
 
 				if (needResolve)
@@ -7293,12 +7324,12 @@ namespace bgfx { namespace d3d12
 												if (Access::Read != bind.m_access)
 												{
 													texture.setState(m_commandList, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
-													scratchBuffer.allocUav(srvHandle[stage], texture, bind.m_mip);
+													scratchBuffer.allocUav(srvHandle[stage], texture, bind.m_firstMip);
 												}
 												else
 												{
 													texture.setState(m_commandList, D3D12_RESOURCE_STATE_GENERIC_READ);
-													scratchBuffer.allocSrv(srvHandle[stage], texture, bind.m_mip);
+													scratchBuffer.allocSrv(srvHandle[stage], texture, bind.m_firstLayer, bind.m_numLayers, bind.m_firstMip, bind.m_numMips);
 													samplerFlags[stage] = uint32_t(texture.m_flags);
 												}
 
@@ -7310,7 +7341,7 @@ namespace bgfx { namespace d3d12
 											{
 												TextureD3D12& texture = m_textures[bind.m_idx];
 												texture.setState(m_commandList, D3D12_RESOURCE_STATE_GENERIC_READ);
-												scratchBuffer.allocSrv(srvHandle[stage], texture);
+												scratchBuffer.allocSrv(srvHandle[stage], texture, bind.m_firstLayer, bind.m_numLayers, bind.m_firstMip, bind.m_numMips);
 												samplerFlags[stage] = (0 == (BGFX_SAMPLER_INTERNAL_DEFAULT & bind.m_samplerFlags)
 													? bind.m_samplerFlags
 													: texture.m_flags
@@ -7603,12 +7634,12 @@ namespace bgfx { namespace d3d12
 												if (Access::Read != bind.m_access)
 												{
 													texture.setState(m_commandList, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
-													scratchBuffer.allocUav(srvHandle[stage], texture, bind.m_mip);
+													scratchBuffer.allocUav(srvHandle[stage], texture, bind.m_firstMip);
 												}
 												else
 												{
 													texture.setState(m_commandList, D3D12_RESOURCE_STATE_GENERIC_READ);
-													scratchBuffer.allocSrv(srvHandle[stage], texture, bind.m_mip);
+													scratchBuffer.allocSrv(srvHandle[stage], texture, bind.m_firstLayer, bind.m_numLayers, bind.m_firstMip, bind.m_numMips);
 													samplerFlags[stage] = uint32_t(texture.m_flags);
 												}
 
@@ -7620,7 +7651,7 @@ namespace bgfx { namespace d3d12
 											{
 												TextureD3D12& texture = m_textures[bind.m_idx];
 												texture.setState(m_commandList, D3D12_RESOURCE_STATE_GENERIC_READ);
-												scratchBuffer.allocSrv(srvHandle[stage], texture);
+												scratchBuffer.allocSrv(srvHandle[stage], texture, bind.m_firstLayer, bind.m_numLayers, bind.m_firstMip, bind.m_numMips);
 												samplerFlags[stage] = (0 == (BGFX_SAMPLER_INTERNAL_DEFAULT & bind.m_samplerFlags)
 													? bind.m_samplerFlags
 													: texture.m_flags
