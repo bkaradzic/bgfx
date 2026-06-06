@@ -1510,13 +1510,38 @@ namespace bgfx
 		while (!parse.isEmpty() )
 		{
 			parse = bx::strLTrimSpace(parse);
-			bx::StringView eol = bx::strFind(parse, ';');
-			if (eol.isEmpty() )
+			if (parse.isEmpty() )
 			{
-				eol = bx::strFindEol(parse);
+				break;
 			}
 
-			if (!eol.isEmpty() )
+			bx::StringView nl = bx::strFindNl(parse);
+			bx::StringView line(parse.getPtr(), nl.getPtr() );
+
+			const bx::StringView comment = bx::strFind(line, "//");
+			const bx::StringView code = comment.isEmpty()
+				? line
+				: bx::StringView(line.getPtr(), comment.getPtr() )
+				;
+
+			const bx::StringView trimmed = bx::strTrimSpace(code);
+
+			if (trimmed.isEmpty() )
+			{
+				parse = bx::StringView(nl.getPtr(), term.getTerm() );
+				continue;
+			}
+
+			bx::StringView eol = bx::strFind(code, ';');
+			if (eol.isEmpty() )
+			{
+				bx::write(_messageWriter, &messageErr
+					, "Error: Varying definition '%S' is missing a terminating ';'.\n"
+					, &trimmed
+					);
+				return false;
+			}
+
 			{
 				eol.set(eol.getPtr() + 1, parse.getTerm() );
 
@@ -1587,7 +1612,7 @@ namespace bgfx
 					varyingMap.insert(std::make_pair(var.m_name, var) );
 				}
 
-				parse = bx::strLTrimSpace(bx::strFindNl(bx::StringView(eol.getPtr(), term.getTerm() ) ) );
+				parse = bx::StringView(nl.getPtr(), term.getTerm() );
 			}
 		}
 
