@@ -897,6 +897,14 @@ BGFX_C_API void bgfx_encoder_set_texture(bgfx_encoder_t* _this, uint8_t _stage, 
 	This->setTexture(_stage, sampler.cpp, handle.cpp, _flags);
 }
 
+BGFX_C_API void bgfx_encoder_set_texture_view(bgfx_encoder_t* _this, uint8_t _stage, bgfx_uniform_handle_t _sampler, bgfx_texture_handle_t _handle, uint16_t _firstLayer, uint16_t _numLayers, uint8_t _firstMip, uint8_t _numMips, uint32_t _flags)
+{
+	bgfx::Encoder* This = (bgfx::Encoder*)_this;
+	union { bgfx_uniform_handle_t c; bgfx::UniformHandle cpp; } sampler = { _sampler };
+	union { bgfx_texture_handle_t c; bgfx::TextureHandle cpp; } handle = { _handle };
+	This->setTexture(_stage, sampler.cpp, handle.cpp, _firstLayer, _numLayers, _firstMip, _numMips, _flags);
+}
+
 BGFX_C_API void bgfx_encoder_touch(bgfx_encoder_t* _this, bgfx_view_id_t _id)
 {
 	bgfx::Encoder* This = (bgfx::Encoder*)_this;
@@ -1180,6 +1188,13 @@ BGFX_C_API void bgfx_set_texture(uint8_t _stage, bgfx_uniform_handle_t _sampler,
 	bgfx::setTexture(_stage, sampler.cpp, handle.cpp, _flags);
 }
 
+BGFX_C_API void bgfx_set_texture_view(uint8_t _stage, bgfx_uniform_handle_t _sampler, bgfx_texture_handle_t _handle, uint16_t _firstLayer, uint16_t _numLayers, uint8_t _firstMip, uint8_t _numMips, uint32_t _flags)
+{
+	union { bgfx_uniform_handle_t c; bgfx::UniformHandle cpp; } sampler = { _sampler };
+	union { bgfx_texture_handle_t c; bgfx::TextureHandle cpp; } handle = { _handle };
+	bgfx::setTexture(_stage, sampler.cpp, handle.cpp, _firstLayer, _numLayers, _firstMip, _numMips, _flags);
+}
+
 BGFX_C_API void bgfx_touch(bgfx_view_id_t _id)
 {
 	bgfx::touch((bgfx::ViewId)_id);
@@ -1454,6 +1469,7 @@ BGFX_C_API bgfx_interface_vtbl_t* bgfx_get_interface(uint32_t _version)
 			bgfx_encoder_set_instance_data_from_dynamic_vertex_buffer,
 			bgfx_encoder_set_instance_count,
 			bgfx_encoder_set_texture,
+			bgfx_encoder_set_texture_view,
 			bgfx_encoder_touch,
 			bgfx_encoder_submit,
 			bgfx_encoder_submit_occlusion_query,
@@ -1500,6 +1516,7 @@ BGFX_C_API bgfx_interface_vtbl_t* bgfx_get_interface(uint32_t _version)
 			bgfx_set_instance_data_from_dynamic_vertex_buffer,
 			bgfx_set_instance_count,
 			bgfx_set_texture,
+			bgfx_set_texture_view,
 			bgfx_touch,
 			bgfx_submit,
 			bgfx_submit_occlusion_query,

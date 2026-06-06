@@ -4528,6 +4528,23 @@ public static class bgfx
 	public static extern void encoder_set_texture(Encoder* _this, uint8 _stage, UniformHandle _sampler, TextureHandle _handle, uint32 _flags);
 	
 	/// <summary>
+	/// Set texture stage for draw primitive, selecting a sub-range of the
+	/// texture's array layers and mip levels.
+	/// </summary>
+	///
+	/// <param name="_stage">Texture unit.</param>
+	/// <param name="_sampler">Program sampler.</param>
+	/// <param name="_handle">Texture handle.</param>
+	/// <param name="_firstLayer">First array layer.</param>
+	/// <param name="_numLayers">Number of array layers.</param>
+	/// <param name="_firstMip">First (most detailed) mip level.</param>
+	/// <param name="_numMips">Number of mip levels.</param>
+	/// <param name="_flags">Texture sampling mode. Default value UINT32_MAX uses   texture sampling settings from the texture.   - `BGFX_SAMPLER_[U/V/W]_[MIRROR/CLAMP]` - Mirror or clamp to edge wrap     mode.   - `BGFX_SAMPLER_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]` - Point or anisotropic     sampling.</param>
+	///
+	[LinkName("bgfx_encoder_set_texture_view")]
+	public static extern void encoder_set_texture_view(Encoder* _this, uint8 _stage, UniformHandle _sampler, TextureHandle _handle, uint16 _firstLayer, uint16 _numLayers, uint8 _firstMip, uint8 _numMips, uint32 _flags);
+	
+	/// <summary>
 	/// Submit an empty primitive for rendering. Uniforms and draw state
 	/// will be applied but no geometry will be submitted. Useful in cases
 	/// when no other draw/compute primitive is submitted to view, but it's
@@ -5172,6 +5189,23 @@ public static class bgfx
 	///
 	[LinkName("bgfx_set_texture")]
 	public static extern void set_texture(uint8 _stage, UniformHandle _sampler, TextureHandle _handle, uint32 _flags);
+	
+	/// <summary>
+	/// Set texture stage for draw primitive, selecting a sub-range of the
+	/// texture's array layers and mip levels.
+	/// </summary>
+	///
+	/// <param name="_stage">Texture unit.</param>
+	/// <param name="_sampler">Program sampler.</param>
+	/// <param name="_handle">Texture handle.</param>
+	/// <param name="_firstLayer">First array layer.</param>
+	/// <param name="_numLayers">Number of array layers.</param>
+	/// <param name="_firstMip">First (most detailed) mip level.</param>
+	/// <param name="_numMips">Number of mip levels.</param>
+	/// <param name="_flags">Texture sampling mode. Default value UINT32_MAX uses   texture sampling settings from the texture.   - `BGFX_SAMPLER_[U/V/W]_[MIRROR/CLAMP]` - Mirror or clamp to edge wrap     mode.   - `BGFX_SAMPLER_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]` - Point or anisotropic     sampling.</param>
+	///
+	[LinkName("bgfx_set_texture_view")]
+	public static extern void set_texture_view(uint8 _stage, UniformHandle _sampler, TextureHandle _handle, uint16 _firstLayer, uint16 _numLayers, uint8 _firstMip, uint8 _numMips, uint32 _flags);
 	
 	/// <summary>
 	/// Submit an empty primitive for rendering. Uniforms and draw state

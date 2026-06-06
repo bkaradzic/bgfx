@@ -9,7 +9,7 @@ import bindbc.common.types: c_int64, c_uint64, va_list;
 import bindbc.bgfx.config;
 static import bgfx.impl;
 
-enum uint apiVersion = 143;
+enum uint apiVersion = 144;
 
 alias ViewID = ushort;
 
@@ -1771,6 +1771,26 @@ extern(C++, "bgfx") struct Encoder{
 			    sampling.
 			*/
 			{q{void}, q{setTexture}, q{ubyte stage, UniformHandle sampler, TextureHandle handle, uint flags=uint.max}, ext: `C++`},
+			
+			/**
+			Set texture stage for draw primitive, selecting a sub-range of the
+			texture's array layers and mip levels.
+			Params:
+				stage = Texture unit.
+				sampler = Program sampler.
+				handle = Texture handle.
+				firstLayer = First array layer.
+				numLayers = Number of array layers.
+				firstMIP = First (most detailed) mip level.
+				numMIPs = Number of mip levels.
+				flags = Texture sampling mode. Default value UINT32_MAX uses
+			  texture sampling settings from the texture.
+			  - `BGFX_SAMPLER_[U/V/W]_[MIRROR/CLAMP]` - Mirror or clamp to edge wrap
+			    mode.
+			  - `BGFX_SAMPLER_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]` - Point or anisotropic
+			    sampling.
+			*/
+			{q{void}, q{setTexture}, q{ubyte stage, UniformHandle sampler, TextureHandle handle, ushort firstLayer, ushort numLayers, ubyte firstMIP, ubyte numMIPs, uint flags=uint.max}, ext: `C++`},
 			
 			/**
 			Submit an empty primitive for rendering. Uniforms and draw state
@@ -3725,6 +3745,26 @@ mixin(joinFnBinds((){
 		    sampling.
 		*/
 		{q{void}, q{setTexture}, q{ubyte stage, UniformHandle sampler, TextureHandle handle, uint flags=uint.max}, ext: `C++, "bgfx"`},
+		
+		/**
+		* Set texture stage for draw primitive, selecting a sub-range of the
+		* texture's array layers and mip levels.
+		Params:
+			stage = Texture unit.
+			sampler = Program sampler.
+			handle = Texture handle.
+			firstLayer = First array layer.
+			numLayers = Number of array layers.
+			firstMIP = First (most detailed) mip level.
+			numMIPs = Number of mip levels.
+			flags = Texture sampling mode. Default value UINT32_MAX uses
+		  texture sampling settings from the texture.
+		  - `BGFX_SAMPLER_[U/V/W]_[MIRROR/CLAMP]` - Mirror or clamp to edge wrap
+		    mode.
+		  - `BGFX_SAMPLER_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]` - Point or anisotropic
+		    sampling.
+		*/
+		{q{void}, q{setTexture}, q{ubyte stage, UniformHandle sampler, TextureHandle handle, ushort firstLayer, ushort numLayers, ubyte firstMIP, ubyte numMIPs, uint flags=uint.max}, ext: `C++, "bgfx"`},
 		
 		/**
 		* Submit an empty primitive for rendering. Uniforms and draw state

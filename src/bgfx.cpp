@@ -4183,6 +4183,24 @@ namespace bgfx
 		BGFX_ENCODER(setTexture(_stage, _sampler, _handle, _flags) );
 	}
 
+	void Encoder::setTexture(uint8_t _stage, UniformHandle _sampler, TextureHandle _handle, uint16_t _firstLayer, uint16_t _numLayers, uint8_t _firstMip, uint8_t _numMips, uint32_t _flags)
+	{
+		BGFX_CHECK_HANDLE("setTexture/UniformHandle", s_ctx->m_uniformHandle, _sampler);
+		BGFX_CHECK_HANDLE_INVALID_OK("setTexture/TextureHandle", s_ctx->m_textureHandle, _handle);
+		BX_ASSERT(_stage < g_caps.limits.maxTextureSamplers, "Invalid stage %d (max %d).", _stage, g_caps.limits.maxTextureSamplers);
+
+		if (isValid(_handle) )
+		{
+			const TextureRef& ref = s_ctx->m_textureRef[_handle.idx];
+			BX_ASSERT(!ref.isReadBack()
+				, "Can't sample from texture which was created with BGFX_TEXTURE_READ_BACK. This is CPU only texture."
+				);
+			BX_UNUSED(ref);
+		}
+
+		BGFX_ENCODER(setTexture(_stage, _sampler, _handle, _firstLayer, _numLayers, _firstMip, _numMips, _flags) );
+	}
+
 	void Encoder::touch(ViewId _id)
 	{
 		discard();
@@ -5882,6 +5900,12 @@ namespace bgfx
 	{
 		BGFX_CHECK_ENCODER0();
 		s_ctx->m_encoder0->setTexture(_stage, _sampler, _handle, _flags);
+	}
+
+	void setTexture(uint8_t _stage, UniformHandle _sampler, TextureHandle _handle, uint16_t _firstLayer, uint16_t _numLayers, uint8_t _firstMip, uint8_t _numMips, uint32_t _flags)
+	{
+		BGFX_CHECK_ENCODER0();
+		s_ctx->m_encoder0->setTexture(_stage, _sampler, _handle, _firstLayer, _numLayers, _firstMip, _numMips, _flags);
 	}
 
 	void touch(ViewId _id)

@@ -285,7 +285,7 @@ namespace bgfx { namespace d3d11
 		void destroy();
 		void overrideInternal(uintptr_t _ptr, uint16_t _layerIndex);
 		void update(uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem);
-		void commit(uint8_t _stage, uint32_t _flags, const float _palette[][4]);
+		void commit(uint8_t _stage, uint32_t _flags, const float _palette[][4], uint16_t _firstLayer = 0, uint16_t _numLayers = UINT16_MAX, uint8_t _firstMip = 0, uint8_t _numMips = UINT8_MAX);
 		void resolve(uint8_t _resolve, uint32_t _layer, uint32_t _numLayers, uint32_t _mip) const;
 		TextureHandle getHandle() const;
 		DXGI_FORMAT getSrvFormat() const;

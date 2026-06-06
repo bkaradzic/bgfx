@@ -391,10 +391,10 @@ namespace bgfx { namespace wgpu
 	class StateCacheT
 	{
 	public:
-		void add(uint64_t _key, Ty _value)
+		void add(uint64_t _key, Ty _value, uint16_t _parent = UINT16_MAX)
 		{
 			invalidate(_key);
-			m_hashMap.insert(stl::make_pair(_key, _value) );
+			m_hashMap.insert(stl::make_pair(_key, Data{_value, _parent}) );
 		}
 
 		Ty find(uint64_t _key)
@@ -402,7 +402,7 @@ namespace bgfx { namespace wgpu
 			typename HashMap::iterator it = m_hashMap.find(_key);
 			if (it != m_hashMap.end() )
 			{
-				return it->second;
+				return it->second.m_value;
 			}
 
 			return 0;
@@ -413,8 +413,26 @@ namespace bgfx { namespace wgpu
 			typename HashMap::iterator it = m_hashMap.find(_key);
 			if (it != m_hashMap.end() )
 			{
-				wgpuRelease(it->second);
+				wgpuRelease(it->second.m_value);
 				m_hashMap.erase(it);
+			}
+		}
+
+		void invalidateWithParent(uint16_t _parent)
+		{
+			for (typename HashMap::iterator it = m_hashMap.begin(), itEnd = m_hashMap.end(); it != itEnd;)
+			{
+				if (it->second.m_parent == _parent)
+				{
+					wgpuRelease(it->second.m_value);
+					typename HashMap::iterator itErase = it;
+					++it;
+					m_hashMap.erase(itErase);
+				}
+				else
+				{
+					++it;
+				}
 			}
 		}
 
@@ -422,7 +440,7 @@ namespace bgfx { namespace wgpu
 		{
 			for (typename HashMap::iterator it = m_hashMap.begin(), itEnd = m_hashMap.end(); it != itEnd; ++it)
 			{
-				wgpuRelease(it->second);
+				wgpuRelease(it->second.m_value);
 			}
 
 			m_hashMap.clear();
@@ -434,7 +452,13 @@ namespace bgfx { namespace wgpu
 		}
 
 	private:
-		typedef stl::unordered_map<uint64_t, Ty> HashMap;
+		struct Data
+		{
+			Ty       m_value;
+			uint16_t m_parent;
+		};
+
+		typedef stl::unordered_map<uint64_t, Data> HashMap;
 		HashMap m_hashMap;
 	};
 
@@ -687,7 +711,7 @@ namespace bgfx { namespace wgpu
 		void update(uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem);
 
 		WGPUSampler getSamplerState(uint32_t _samplerFlags) const;
-		WGPUTextureView getTextureView(uint8_t _baseMipLevel, uint8_t _mipLevelCount, bool _storage, bool _array = false) const;
+		WGPUTextureView getTextureView(uint8_t _baseMipLevel, uint8_t _mipLevelCount, bool _storage, uint16_t _baseArrayLayer = 0, uint16_t _arrayLayerCount = UINT16_MAX) const;
 
 		WGPUTexture m_texture;
 		WGPUTexture m_textureResolve;
