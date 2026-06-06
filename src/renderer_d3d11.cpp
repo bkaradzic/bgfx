@@ -3721,11 +3721,11 @@ namespace bgfx { namespace d3d11
 		Matrix4 m_predefinedUniforms[PredefinedUniform::Count];
 		UniformRegistry m_uniformReg;
 
-		StateCacheT<ID3D11BlendState> m_blendStateCache;
-		StateCacheT<ID3D11DepthStencilState> m_depthStencilStateCache;
-		StateCacheT<ID3D11InputLayout> m_inputLayoutCache;
-		StateCacheT<ID3D11RasterizerState> m_rasterizerStateCache;
-		StateCacheT<ID3D11SamplerState> m_samplerStateCache;
+		StateCacheT<ID3D11BlendState*> m_blendStateCache;
+		StateCacheT<ID3D11DepthStencilState*> m_depthStencilStateCache;
+		StateCacheT<ID3D11InputLayout*> m_inputLayoutCache;
+		StateCacheT<ID3D11RasterizerState*> m_rasterizerStateCache;
+		StateCacheT<ID3D11SamplerState*> m_samplerStateCache;
 		StateCacheLru<IUnknown*, 1024> m_srvUavLru;
 
 		TextVideoMem m_textVideoMem;

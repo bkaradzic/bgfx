@@ -3906,7 +3906,7 @@ namespace bgfx { namespace d3d12
 		Matrix4 m_predefinedUniforms[PredefinedUniform::Count];
 		UniformRegistry m_uniformReg;
 
-		StateCacheT<ID3D12PipelineState> m_pipelineStateCache;
+		StateCacheT<ID3D12PipelineState*> m_pipelineStateCache;
 		StateCache m_samplerStateCache;
 
 		TextVideoMem m_textVideoMem;
