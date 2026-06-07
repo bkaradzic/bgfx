@@ -1355,7 +1355,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 #endif  // BX_PLATFORM_OSX
 
 			m_cmd.kick(false, true);
-			m_commandBuffer = m_cmd.alloc();
+			m_commandBuffer = NULL;
 
 			BX_ASSERT(_mip<texture.m_numMips,"Invalid mip: %d num mips:",_mip,texture.m_numMips);
 
@@ -1519,8 +1519,6 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 				);
 
 			bx::free(g_allocator, data);
-
-			m_commandBuffer = m_cmd.alloc();
 		}
 
 		void updateViewName(ViewId _id, const char* _name) override
