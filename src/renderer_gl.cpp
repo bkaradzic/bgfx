@@ -6117,7 +6117,7 @@ namespace bgfx { namespace gl
 			;
 		const bool unpackRowLength = !!BGFX_CONFIG_RENDERER_OPENGL || s_extension[Extension::EXT_unpack_subimage].m_supported;
 		const bool convert         = false
-			|| (compressed && m_textureFormat != m_requestedFormat)
+			|| m_textureFormat != m_requestedFormat
 			|| swizzle
 			;
 
