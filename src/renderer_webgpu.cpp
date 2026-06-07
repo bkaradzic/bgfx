@@ -3235,6 +3235,11 @@ WGPU_IMPORT
 
 		void setDepthStencilState(WGPUDepthStencilState& _outDepthStencilState, TextureFormat::Enum _format, uint64_t _state, uint64_t _stencil)
 		{
+			if (!hasStencil(_format) )
+			{
+				_stencil = 0;
+			}
+
 			_stencil = 0 == _stencil ? kStencilDisabled : _stencil;
 
 			const uint32_t fstencil = unpackStencil(0, _stencil);
