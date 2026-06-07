@@ -2830,6 +2830,7 @@ VK_IMPORT_DEVICE
 
 			const VertexLayout* layout = &m_vertexLayouts[_blitter.m_vb->layoutHandle.idx];
 			VkPipeline pso = getPipeline(state
+				, 0
 				, packStencil(BGFX_STENCIL_DEFAULT, BGFX_STENCIL_DEFAULT)
 				, 1
 				, &layout
@@ -3831,7 +3832,7 @@ VK_IMPORT_DEVICE
 			return pipeline;
 		}
 
-		VkPipeline getPipeline(uint64_t _state, uint64_t _stencil, uint8_t _numStreams, const VertexLayout** _layouts, ProgramHandle _program, uint8_t _numInstanceData)
+		VkPipeline getPipeline(uint64_t _state, uint32_t _rgba, uint64_t _stencil, uint8_t _numStreams, const VertexLayout** _layouts, ProgramHandle _program, uint8_t _numInstanceData)
 		{
 			ProgramVK& program = m_program[_program.idx];
 
@@ -3874,6 +3875,7 @@ VK_IMPORT_DEVICE
 			bx::HashMurmur2A murmur;
 			murmur.begin();
 			murmur.add(_state);
+			murmur.add(!!(BGFX_STATE_BLEND_INDEPENDENT & _state) ? _rgba : 0);
 			murmur.add(_stencil);
 			murmur.add(program.m_vsh->m_hash);
 			murmur.add(program.m_vsh->m_attrMask, sizeof(program.m_vsh->m_attrMask) );
@@ -3903,7 +3905,7 @@ VK_IMPORT_DEVICE
 			VkPipelineColorBlendAttachmentState blendAttachmentState[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
 			VkPipelineColorBlendStateCreateInfo colorBlendState;
 			colorBlendState.pAttachments = blendAttachmentState;
-			setBlendState(colorBlendState, _state);
+			setBlendState(colorBlendState, _state, _rgba);
 
 			VkPipelineInputAssemblyStateCreateInfo inputAssemblyState;
 			inputAssemblyState.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
@@ -9646,6 +9648,7 @@ VK_DESTROY
 
 					const VkPipeline pipeline =
 						getPipeline(draw.m_stateFlags
+							, draw.m_rgba
 							, draw.m_stencil
 							, numStreams
 							, layouts

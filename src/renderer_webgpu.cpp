@@ -1990,6 +1990,7 @@ WGPU_IMPORT
 				, BGFX_INVALID_HANDLE
 				, 1
 				, state
+				, 0
 				, packStencil(BGFX_STENCIL_DEFAULT, BGFX_STENCIL_DEFAULT)
 				, 1
 				, &stream
@@ -2114,6 +2115,7 @@ WGPU_IMPORT
 				, _fbh
 				, _msaaCount
 				, state
+				, 0
 				, stencil
 				, 1
 				, &stream
@@ -2674,6 +2676,7 @@ WGPU_IMPORT
 			, FrameBufferHandle _fbh
 			, uint32_t _msaaCount
 			, uint64_t _state
+			, uint32_t _rgba
 			, uint64_t _stencil
 			, uint32_t _streamMask
 			, const Stream* _stream
@@ -2728,6 +2731,7 @@ WGPU_IMPORT
 			bx::HashMurmur2A murmur;
 			murmur.begin();
 			murmur.add(_state);
+			murmur.add(!!(BGFX_STATE_BLEND_INDEPENDENT & _state) ? _rgba : 0);
 			murmur.add(_stencil);
 			murmur.add(&_renderBind.m_bind, sizeof(_renderBind.m_bind) );
 			murmur.add(program.m_vsh->m_hash);
@@ -2910,7 +2914,7 @@ WGPU_IMPORT
 
 			const bool hasFragmentShader = NULL != program.m_fsh;
 
-			const uint32_t targetCount = hasFragmentShader ? setColorTargetState(blendState, colorTragetState, fb, _state) : 0;
+			const uint32_t targetCount = hasFragmentShader ? setColorTargetState(blendState, colorTragetState, fb, _state, _rgba) : 0;
 
 			if (NULL != depthStencilTextureView)
 			{
@@ -5981,6 +5985,7 @@ m_resolution.formatColor = TextureFormat::BGRA8;
 					, fbh
 					, msaaCount
 					, draw.m_stateFlags
+					, draw.m_rgba
 					, draw.m_stencil
 					, draw.m_streamMask
 					, draw.m_stream
