@@ -493,6 +493,196 @@ namespace bgfx
 		HashMap m_hashMap;
 	};
 
+	template<typename Derived, typename BufferTy, typename ChunkTy>
+	struct ChunkedScratchBufferT
+	{
+		struct Alloc
+		{
+			uint32_t offset;
+			uint32_t chunkIdx;
+		};
+
+		ChunkedScratchBufferT()
+			: m_chunkControl(0)
+		{
+		}
+
+		void create(uint32_t _chunkSize, uint32_t _numChunks, uint32_t _align)
+		{
+			const uint32_t chunkSize = bx::alignUp(_chunkSize, 1<<20);
+
+			m_chunkPos  = 0;
+			m_chunkSize = chunkSize;
+			m_align     = _align;
+
+			m_chunkControl.m_size = 0;
+			m_chunkControl.reset();
+
+			bx::memSet(m_consume, 0, sizeof(m_consume) );
+			m_totalUsed = 0;
+
+			for (uint32_t ii = 0; ii < _numChunks; ++ii)
+			{
+				addChunk();
+			}
+		}
+
+		void destroy()
+		{
+			for (ChunkTy& sbc : m_chunks)
+			{
+				static_cast<Derived*>(this)->destroyChunk(sbc);
+			}
+		}
+
+		void addChunk(uint32_t _at = UINT32_MAX)
+		{
+			ChunkTy sbc;
+			static_cast<Derived*>(this)->createChunk(sbc);
+
+			const uint32_t lastChunk = bx::max(uint32_t(m_chunks.size()-1), 1);
+			const uint32_t at = UINT32_MAX == _at ? lastChunk : _at;
+			const uint32_t chunkIndex = at % bx::max(m_chunks.size(), 1);
+
+			m_chunkControl.resize(m_chunkSize);
+
+			m_chunks.insert(m_chunks.begin() + chunkIndex, sbc);
+		}
+
+		Alloc alloc(uint32_t _size)
+		{
+			BX_ASSERT(_size < m_chunkSize, "Size can't be larger than chunk size (size: %d, chunk size: %d)!", _size, m_chunkSize);
+
+			uint32_t offset     = m_chunkPos;
+			uint32_t nextOffset = offset + _size;
+			uint32_t chunkIdx   = m_chunkControl.m_write/m_chunkSize;
+
+			if (nextOffset >= m_chunkSize)
+			{
+				const uint32_t total = m_chunkSize - m_chunkPos + _size;
+				uint32_t reserved    = m_chunkControl.reserve(total, true);
+
+				if (total != reserved)
+				{
+					addChunk(chunkIdx + 1);
+					reserved = m_chunkControl.reserve(total, true);
+					BX_ASSERT(total == reserved, "Failed to reserve chunk memory after adding chunk.");
+				}
+
+				m_chunkPos = 0;
+				offset     = 0;
+				nextOffset = _size;
+				chunkIdx   = m_chunkControl.m_write/m_chunkSize;
+			}
+			else
+			{
+				const uint32_t size = m_chunkControl.reserve(_size, true);
+				BX_ASSERT(size == _size, "Failed to reserve chunk memory.");
+				BX_UNUSED(size);
+			}
+
+			m_chunkPos = nextOffset;
+
+			return { .offset = offset, .chunkIdx = chunkIdx };
+		}
+
+		template<typename OffsetTy>
+		void write(OffsetTy& _outSbo, const void* _vsData, uint32_t _vsSize, const void* _fsData = NULL, uint32_t _fsSize = 0)
+		{
+			const uint32_t vsSize = bx::strideAlign(_vsSize, m_align);
+			const uint32_t fsSize = bx::strideAlign(_fsSize, m_align);
+			const uint32_t size   = vsSize + fsSize;
+
+			const Alloc sba = alloc(size);
+
+			const uint32_t offset0 = sba.offset;
+			const uint32_t offset1 = offset0 + vsSize;
+
+			const ChunkTy& sbc = m_chunks[sba.chunkIdx];
+
+			_outSbo.buffer = sbc.buffer;
+			_outSbo.offsets[0] = offset0;
+			_outSbo.offsets[1] = offset1;
+
+			if (NULL != _vsData)
+			{
+				bx::memCopy(&sbc.data[offset0], _vsData, _vsSize);
+			}
+
+			if (NULL != _fsData)
+			{
+				bx::memCopy(&sbc.data[offset1], _fsData, _fsSize);
+			}
+		}
+
+		void begin()
+		{
+			BX_ASSERT(0 == m_chunkPos, "");
+			const uint32_t numConsumed = m_consume[static_cast<Derived*>(this)->currentFrameInFlight()];
+			m_chunkControl.consume(numConsumed);
+		}
+
+		void end()
+		{
+			uint32_t numFlush = m_chunkControl.getNumReserved();
+
+			if (0 != m_chunkPos)
+			{
+				for (;;)
+				{
+					const uint32_t remainder = m_chunkSize - m_chunkPos;
+					const uint32_t rem = m_chunkControl.reserve(remainder, true);
+
+					if (rem != remainder)
+					{
+						const uint32_t chunkIdx = m_chunkControl.m_write/m_chunkSize;
+						addChunk(chunkIdx + 1);
+						continue;
+					}
+
+					break;
+				}
+
+				m_chunkPos = 0;
+			}
+
+			const uint32_t numReserved = m_chunkControl.getNumReserved();
+			BX_ASSERT(0 == numReserved % m_chunkSize, "Number of reserved must always be aligned to chunk size!");
+
+			const uint32_t first = m_chunkControl.m_current / m_chunkSize;
+
+			for (uint32_t ii = first, num = numReserved / m_chunkSize + first; ii < num; ++ii)
+			{
+				ChunkTy& chunk = m_chunks[ii % m_chunks.size()];
+
+				static_cast<Derived*>(this)->flushChunk(chunk, bx::min(numFlush, m_chunkSize) );
+
+				m_chunkControl.commit(m_chunkSize);
+				numFlush = bx::satSub<uint32_t>(numFlush, m_chunkSize);
+			}
+
+			m_consume[static_cast<Derived*>(this)->currentFrameInFlight()] = numReserved;
+
+			m_totalUsed = m_chunkControl.getNumUsed();
+		}
+
+		void flush()
+		{
+			end();
+			begin();
+		}
+
+		stl::vector<ChunkTy> m_chunks;
+		bx::RingBufferControl m_chunkControl;
+
+		uint32_t m_chunkPos;
+		uint32_t m_chunkSize;
+		uint32_t m_align;
+
+		uint32_t m_consume[BGFX_CONFIG_MAX_FRAME_LATENCY < BGFX_CONFIG_MAX_BACK_BUFFERS ? BGFX_CONFIG_MAX_BACK_BUFFERS : BGFX_CONFIG_MAX_FRAME_LATENCY];
+		uint32_t m_totalUsed;
+	};
+
 	inline bool hasVertexStreamChanged(const RenderDraw& _current, const RenderDraw& _new)
 	{
 		if (_current.m_streamMask             != _new.m_streamMask
