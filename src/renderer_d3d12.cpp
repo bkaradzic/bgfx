@@ -2183,9 +2183,11 @@ namespace bgfx { namespace d3d12
 			m_textures[_handle.idx].update(m_commandList, _side, _mip, _rect, _z, _depth, _pitch, _mem);
 		}
 
-		void readTexture(TextureHandle _handle, void* _data, uint8_t _mip) override
+		void readTexture(TextureHandle _handle, void* _data, uint16_t _layer, uint8_t _mip) override
 		{
 			const TextureD3D12& texture = m_textures[_handle.idx];
+
+			const uint32_t subresource = _mip + _layer*texture.m_numMips;
 
 			D3D12_RESOURCE_DESC desc = getResourceDesc(texture.m_ptr);
 
@@ -2193,7 +2195,7 @@ namespace bgfx { namespace d3d12
 			uint32_t numRows;
 			uint64_t total;
 			m_device->GetCopyableFootprints(&desc
-				, _mip
+				, subresource
 				, 1
 				, 0
 				, &layout
@@ -2219,7 +2221,7 @@ namespace bgfx { namespace d3d12
 
 			D3D12_TEXTURE_COPY_LOCATION dstLocation = { readback,      D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT,  { layout } };
 			D3D12_TEXTURE_COPY_LOCATION srcLocation = { texture.m_ptr, D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX, { }        };
-			srcLocation.SubresourceIndex = _mip;
+			srcLocation.SubresourceIndex = subresource;
 			m_commandList->CopyTextureRegion(&dstLocation, 0, 0, 0, &srcLocation, &box);
 
 			finish();

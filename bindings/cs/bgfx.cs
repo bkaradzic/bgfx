@@ -3634,10 +3634,11 @@ public static partial class bgfx
 	///
 	/// <param name="_handle">Texture handle.</param>
 	/// <param name="_data">Destination buffer.</param>
+	/// <param name="_layer">Texture layer.</param>
 	/// <param name="_mip">Mip level.</param>
 	///
 	[DllImport(DllName, EntryPoint="bgfx_read_texture", CallingConvention = CallingConvention.Cdecl)]
-	public static extern unsafe uint read_texture(TextureHandle _handle, void* _data, byte _mip);
+	public static extern unsafe uint read_texture(TextureHandle _handle, void* _data, ushort _layer, byte _mip);
 	
 	/// <summary>
 	/// Set texture debug name.

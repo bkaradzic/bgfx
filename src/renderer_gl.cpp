@@ -3439,33 +3439,85 @@ namespace bgfx { namespace gl
 			m_textures[_handle.idx].update(_side, _mip, _rect, _z, _depth, _pitch, _mem);
 		}
 
-		void readTexture(TextureHandle _handle, void* _data, uint8_t _mip) override
+		void readTexture(TextureHandle _handle, void* _data, uint16_t _layer, uint8_t _mip) override
 		{
 			if (m_readBackSupported)
 			{
 				const TextureGL& texture = m_textures[_handle.idx];
 				const bool compressed    = bimg::isCompressed(bimg::TextureFormat::Enum(texture.m_textureFormat) );
 
-				GL_CHECK(glBindTexture(texture.m_target, texture.m_id) );
-
-				if (compressed)
+				if (texture.m_numLayers > 1
+				&&  NULL != glGetTextureSubImage)
 				{
-					GL_CHECK(glGetCompressedTexImage(texture.m_target
-						, _mip
-						, _data
-						) );
+					const uint32_t mipWidth  = bx::max<uint32_t>(1, texture.m_width  >> _mip);
+					const uint32_t mipHeight = bx::max<uint32_t>(1, texture.m_height >> _mip);
+
+					bimg::TextureInfo ti;
+					bimg::imageGetSize(
+						  &ti
+						, uint16_t(mipWidth)
+						, uint16_t(mipHeight)
+						, 1
+						, false
+						, false
+						, 1
+						, bimg::TextureFormat::Enum(texture.m_textureFormat)
+						);
+
+					if (compressed)
+					{
+						GL_CHECK(glGetCompressedTextureSubImage(texture.m_id
+							, _mip
+							, 0
+							, 0
+							, _layer
+							, mipWidth
+							, mipHeight
+							, 1
+							, ti.storageSize
+							, _data
+							) );
+					}
+					else
+					{
+						GL_CHECK(glGetTextureSubImage(texture.m_id
+							, _mip
+							, 0
+							, 0
+							, _layer
+							, mipWidth
+							, mipHeight
+							, 1
+							, texture.m_fmt
+							, texture.m_type
+							, ti.storageSize
+							, _data
+							) );
+					}
 				}
 				else
 				{
-					GL_CHECK(glGetTexImage(texture.m_target
-						, _mip
-						, texture.m_fmt
-						, texture.m_type
-						, _data
-						) );
-				}
+					GL_CHECK(glBindTexture(texture.m_target, texture.m_id) );
 
-				GL_CHECK(glBindTexture(texture.m_target, 0) );
+					if (compressed)
+					{
+						GL_CHECK(glGetCompressedTexImage(texture.m_target
+							, _mip
+							, _data
+							) );
+					}
+					else
+					{
+						GL_CHECK(glGetTexImage(texture.m_target
+							, _mip
+							, texture.m_fmt
+							, texture.m_type
+							, _data
+							) );
+					}
+
+					GL_CHECK(glBindTexture(texture.m_target, 0) );
+				}
 			}
 			else if (BX_ENABLED(BGFX_GL_CONFIG_TEXTURE_READ_BACK_EMULATION) )
 			{
@@ -3475,18 +3527,31 @@ namespace bgfx { namespace gl
 				if (!compressed)
 				{
 					Attachment at[1];
-					at[0].init(_handle);
+					at[0].init(_handle, Access::Read, _layer, 1, _mip);
 
 					FrameBufferGL frameBuffer;
 					frameBuffer.create(BX_COUNTOF(at), at);
 					GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, frameBuffer.m_fbo[0]) );
-					GL_CHECK(glFramebufferTexture2D(
-						  GL_FRAMEBUFFER
-						, GL_COLOR_ATTACHMENT0
-						, GL_TEXTURE_2D
-						, texture.m_id
-						, at[0].mip
-						) );
+					if (texture.m_numLayers > 1)
+					{
+						GL_CHECK(glFramebufferTextureLayer(
+							  GL_FRAMEBUFFER
+							, GL_COLOR_ATTACHMENT0
+							, texture.m_id
+							, at[0].mip
+							, _layer
+							) );
+					}
+					else
+					{
+						GL_CHECK(glFramebufferTexture2D(
+							  GL_FRAMEBUFFER
+							, GL_COLOR_ATTACHMENT0
+							, GL_TEXTURE_2D
+							, texture.m_id
+							, at[0].mip
+							) );
+					}
 
 					if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) || m_gles3)
 					{

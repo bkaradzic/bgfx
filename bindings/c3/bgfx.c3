@@ -2601,8 +2601,9 @@ extern fn void update_texture_cube(TextureHandle _handle, ushort _layer, char _s
 // 
 // _handle : `Texture handle.`
 // _data : `Destination buffer.`
+// _layer : `Texture layer.`
 // _mip : `Mip level.`
-extern fn uint read_texture(TextureHandle _handle, void* _data, char _mip) @cname("bgfx_read_texture");
+extern fn uint read_texture(TextureHandle _handle, void* _data, ushort _layer, char _mip) @cname("bgfx_read_texture");
 
 // Set texture debug name.
 // _handle : `Texture handle.`
@@ -3146,7 +3147,7 @@ extern fn void encoder_set_texture(Encoder* _this, char _stage, UniformHandle _s
 // _firstMip : `First (most detailed) mip level.`
 // _numMips : `Number of mip levels.`
 // _flags : `Texture sampling mode. Default value UINT32_MAX uses   texture sampling settings from the texture.   - `BGFX_SAMPLER_[U/V/W]_[MIRROR/CLAMP]` - Mirror or clamp to edge wrap     mode.   - `BGFX_SAMPLER_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]` - Point or anisotropic     sampling.`
-extern fn void encoder_set_texture_view(Encoder* _this, char _stage, UniformHandle _sampler, TextureHandle _handle, ushort _firstLayer, ushort _numLayers, char _firstMip, char _numMips, uint _flags) @extern("bgfx_encoder_set_texture_view");
+extern fn void encoder_set_texture_view(Encoder* _this, char _stage, UniformHandle _sampler, TextureHandle _handle, ushort _firstLayer, ushort _numLayers, char _firstMip, char _numMips, uint _flags) @cname("bgfx_encoder_set_texture_view");
 
 // Submit an empty primitive for rendering. Uniforms and draw state
 // will be applied but no geometry will be submitted. Useful in cases
@@ -3575,7 +3576,7 @@ extern fn void set_texture(char _stage, UniformHandle _sampler, TextureHandle _h
 // _firstMip : `First (most detailed) mip level.`
 // _numMips : `Number of mip levels.`
 // _flags : `Texture sampling mode. Default value UINT32_MAX uses   texture sampling settings from the texture.   - `BGFX_SAMPLER_[U/V/W]_[MIRROR/CLAMP]` - Mirror or clamp to edge wrap     mode.   - `BGFX_SAMPLER_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]` - Point or anisotropic     sampling.`
-extern fn void set_texture_view(char _stage, UniformHandle _sampler, TextureHandle _handle, ushort _firstLayer, ushort _numLayers, char _firstMip, char _numMips, uint _flags) @extern("bgfx_set_texture_view");
+extern fn void set_texture_view(char _stage, UniformHandle _sampler, TextureHandle _handle, ushort _firstLayer, ushort _numLayers, char _firstMip, char _numMips, uint _flags) @cname("bgfx_set_texture_view");
 
 // Submit an empty primitive for rendering. Uniforms and draw state
 // will be applied but no geometry will be submitted.

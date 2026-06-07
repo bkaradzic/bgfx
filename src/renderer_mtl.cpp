@@ -1344,13 +1344,13 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 				;
 		}
 
-		void readTexture(TextureHandle _handle, void* _data, uint8_t _mip) override
+		void readTexture(TextureHandle _handle, void* _data, uint16_t _layer, uint8_t _mip) override
 		{
 			const TextureMtl& texture = m_textures[_handle.idx];
 
 #if BX_PLATFORM_OSX
 			MTL::BlitCommandEncoder* bce = s_renderMtl->getBlitCommandEncoder();
-			bce->synchronizeTexture(texture.m_ptr, 0, _mip);
+			bce->synchronizeTexture(texture.m_ptr, _layer, _mip);
 			endEncoding();
 #endif  // BX_PLATFORM_OSX
 
@@ -1365,7 +1365,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 			MTL::Region region(0, 0, 0, srcWidth, srcHeight, 1);
 
-			texture.m_ptr->getBytes(_data, srcWidth*bpp/8, 0, region, _mip, 0);
+			texture.m_ptr->getBytes(_data, srcWidth*bpp/8, 0, region, _mip, _layer);
 		}
 
 		void resizeTexture(TextureHandle _handle, uint16_t _width, uint16_t _height, uint8_t _numMips, uint16_t _numLayers) override

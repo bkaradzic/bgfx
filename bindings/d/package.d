@@ -9,7 +9,7 @@ import bindbc.common.types: c_int64, c_uint64, va_list;
 import bindbc.bgfx.config;
 static import bgfx.impl;
 
-enum uint apiVersion = 144;
+enum uint apiVersion = 145;
 
 alias ViewID = ushort;
 
@@ -2832,9 +2832,10 @@ mixin(joinFnBinds((){
 		Params:
 			handle = Texture handle.
 			data = Destination buffer.
+			layer = Texture layer.
 			mip = Mip level.
 		*/
-		{q{uint}, q{readTexture}, q{TextureHandle handle, void* data, ubyte mip=0}, ext: `C++, "bgfx"`},
+		{q{uint}, q{readTexture}, q{TextureHandle handle, void* data, ushort layer=0, ubyte mip=0}, ext: `C++, "bgfx"`},
 		
 		/**
 		* Set texture debug name.

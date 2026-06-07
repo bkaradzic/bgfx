@@ -2901,11 +2901,12 @@ extern fn bgfx_update_texture_cube(_handle: TextureHandle, _layer: u16, _side: u
 /// 
 /// <param name="_handle">Texture handle.</param>
 /// <param name="_data">Destination buffer.</param>
+/// <param name="_layer">Texture layer.</param>
 /// <param name="_mip">Mip level.</param>
-pub inline fn readTexture(_handle: TextureHandle, _data: ?*anyopaque, _mip: u8) u32 {
-    return bgfx_read_texture(_handle, _data, _mip);
+pub inline fn readTexture(_handle: TextureHandle, _data: ?*anyopaque, _layer: u16, _mip: u8) u32 {
+    return bgfx_read_texture(_handle, _data, _layer, _mip);
 }
-extern fn bgfx_read_texture(_handle: TextureHandle, _data: ?*anyopaque, _mip: u8) u32;
+extern fn bgfx_read_texture(_handle: TextureHandle, _data: ?*anyopaque, _layer: u16, _mip: u8) u32;
 
 /// Set texture debug name.
 /// <param name="_handle">Texture handle.</param>

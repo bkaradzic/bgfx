@@ -3838,7 +3838,7 @@ namespace bgfx
 		virtual void destroyProgram(ProgramHandle _handle) = 0;
 		virtual void* createTexture(TextureHandle _handle, const Memory* _mem, uint64_t _flags, uint8_t _skip, uint64_t _external) = 0;
 		virtual void updateTexture(TextureHandle _handle, uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem) = 0;
-		virtual void readTexture(TextureHandle _handle, void* _data, uint8_t _mip) = 0;
+		virtual void readTexture(TextureHandle _handle, void* _data, uint16_t _layer, uint8_t _mip) = 0;
 		virtual void resizeTexture(TextureHandle _handle, uint16_t _width, uint16_t _height, uint8_t _numMips, uint16_t _numLayers) = 0;
 		virtual void overrideInternal(TextureHandle _handle, uintptr_t _ptr, uint16_t _layerIndex) = 0;
 		virtual uintptr_t getInternal(TextureHandle _handle) = 0;
@@ -5379,7 +5379,7 @@ namespace bgfx
 			textureDecRef(_handle);
 		}
 
-		BGFX_API_FUNC(uint32_t readTexture(TextureHandle _handle, void* _data, uint8_t _mip) )
+		BGFX_API_FUNC(uint32_t readTexture(TextureHandle _handle, void* _data, uint16_t _layer, uint8_t _mip) )
 		{
 			BGFX_MUTEX_SCOPE(m_resourceApiLock);
 
@@ -5388,11 +5388,14 @@ namespace bgfx
 			const TextureRef& ref = m_textureRef[_handle.idx];
 			BX_ASSERT(ref.isReadBack(), "Can't read from texture which was not created with BGFX_TEXTURE_READ_BACK.");
 			BX_ASSERT(_mip < ref.m_numMips, "Invalid mip: %d num mips:", _mip, ref.m_numMips);
-			BX_UNUSED(ref);
+			const uint16_t numLayers = uint16_t(ref.m_numLayers * (ref.m_cubeMap ? 6 : 1) );
+			BX_ASSERT(_layer < numLayers, "Invalid layer: %d num layers: %d", _layer, numLayers);
+			BX_UNUSED(ref, numLayers);
 
 			CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::ReadTexture);
 			cmdbuf.write(_handle);
 			cmdbuf.write(_data);
+			cmdbuf.write(_layer);
 			cmdbuf.write(_mip);
 			return m_submit->m_frameNum + 2;
 		}

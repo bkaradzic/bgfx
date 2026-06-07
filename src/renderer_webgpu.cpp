@@ -1690,7 +1690,7 @@ WGPU_IMPORT
 			*(bool*)(_userdata2) = true;
 		}
 
-		void readTexture(TextureHandle _handle, void* _data, uint8_t _mip) override
+		void readTexture(TextureHandle _handle, void* _data, uint16_t _layer, uint8_t _mip) override
 		{
 			const TextureWGPU& texture = m_textures[_handle.idx];
 
@@ -1727,7 +1727,7 @@ WGPU_IMPORT
 					{
 						.x = 0,
 						.y = 0,
-						.z = 0,
+						.z = _layer,
 					},
 					.aspect = WGPUTextureAspect_All,
 				},

@@ -2529,7 +2529,7 @@ VK_IMPORT_DEVICE
 			m_textures[_handle.idx].update(m_commandBuffer, _side, _mip, _rect, _z, _depth, _pitch, _mem);
 		}
 
-		void readTexture(TextureHandle _handle, void* _data, uint8_t _mip) override
+		void readTexture(TextureHandle _handle, void* _data, uint16_t _layer, uint8_t _mip) override
 		{
 			TextureVK& texture = m_textures[_handle.idx];
 
@@ -2546,6 +2546,7 @@ VK_IMPORT_DEVICE
 				, stagingBuffer
 				, texture.m_currentImageLayout
 				, texture.m_aspectFlags
+				, _layer
 				, _mip
 				);
 
@@ -6203,7 +6204,7 @@ VK_DESTROY
 		return mipWidth * bpp / 8;
 	}
 
-	void ReadbackVK::copyImageToBuffer(VkCommandBuffer _commandBuffer, VkBuffer _buffer, VkImageLayout _layout, VkImageAspectFlags _aspect, uint8_t _mip) const
+	void ReadbackVK::copyImageToBuffer(VkCommandBuffer _commandBuffer, VkBuffer _buffer, VkImageLayout _layout, VkImageAspectFlags _aspect, uint16_t _layer, uint8_t _mip) const
 	{
 		BGFX_PROFILER_SCOPE("ReadbackVK::copyImageToBuffer", kColorFrame);
 
@@ -6218,7 +6219,7 @@ VK_DESTROY
 			, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL
 			, _mip
 			, 1
-			, 0
+			, _layer
 			, 1
 			);
 
@@ -6228,7 +6229,7 @@ VK_DESTROY
 		bic.bufferImageHeight = mipHeight;
 		bic.imageSubresource.aspectMask     = _aspect;
 		bic.imageSubresource.mipLevel       = _mip;
-		bic.imageSubresource.baseArrayLayer = 0;
+		bic.imageSubresource.baseArrayLayer = _layer;
 		bic.imageSubresource.layerCount     = 1;
 		bic.imageOffset = { 0, 0, 0 };
 		bic.imageExtent = { mipWidth, mipHeight, 1 };
@@ -6257,7 +6258,7 @@ VK_DESTROY
 			, _layout
 			, _mip
 			, 1
-			, 0
+			, _layer
 			, 1
 			);
 	}
