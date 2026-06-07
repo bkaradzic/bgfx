@@ -1,7 +1,7 @@
 -- vim: syntax=lua
 -- bgfx interface
 
-version(144)
+version(145)
 
 typedef "bool"
 typedef "char"
@@ -1888,6 +1888,8 @@ func.readTexture { section = "Textures" }
 	"uint32_t"              --- Frame number when the result will be available. See: `bgfx::frame`.
 	.handle "TextureHandle" --- Texture handle.
 	.data   "void*"         --- Destination buffer.
+	.layer  "uint16_t"      --- Texture layer.
+	 { default = 0 }
 	.mip    "uint8_t"       --- Mip level.
 	 { default = 0 }
 

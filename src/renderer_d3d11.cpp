@@ -1900,11 +1900,12 @@ namespace bgfx { namespace d3d11
 			m_textures[_handle.idx].update(_side, _mip, _rect, _z, _depth, _pitch, _mem);
 		}
 
-		void readTexture(TextureHandle _handle, void* _data, uint8_t _mip) override
+		void readTexture(TextureHandle _handle, void* _data, uint16_t _layer, uint8_t _mip) override
 		{
 			const TextureD3D11& texture = m_textures[_handle.idx];
+			const uint32_t subresource = _mip + _layer*texture.m_numMips;
 			D3D11_MAPPED_SUBRESOURCE mapped;
-			DX_CHECK(m_deviceCtx->Map(texture.m_ptr, _mip, D3D11_MAP_READ, 0, &mapped) );
+			DX_CHECK(m_deviceCtx->Map(texture.m_ptr, subresource, D3D11_MAP_READ, 0, &mapped) );
 
 			uint32_t srcWidth  = bx::max(1, texture.m_width >>_mip);
 			uint32_t srcHeight = bx::max(1, texture.m_height>>_mip);
@@ -1919,7 +1920,7 @@ namespace bgfx { namespace d3d11
 
 			bx::memCopy(dst, dstPitch, src, srcPitch, pitch, srcHeight);
 
-			m_deviceCtx->Unmap(texture.m_ptr, _mip);
+			m_deviceCtx->Unmap(texture.m_ptr, subresource);
 		}
 
 		void resizeTexture(TextureHandle _handle, uint16_t _width, uint16_t _height, uint8_t _numMips, uint16_t _numLayers) override

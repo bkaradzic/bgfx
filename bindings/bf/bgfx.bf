@@ -3681,10 +3681,11 @@ public static class bgfx
 	///
 	/// <param name="_handle">Texture handle.</param>
 	/// <param name="_data">Destination buffer.</param>
+	/// <param name="_layer">Texture layer.</param>
 	/// <param name="_mip">Mip level.</param>
 	///
 	[LinkName("bgfx_read_texture")]
-	public static extern uint32 read_texture(TextureHandle _handle, void* _data, uint8 _mip);
+	public static extern uint32 read_texture(TextureHandle _handle, void* _data, uint16 _layer, uint8 _mip);
 	
 	/// <summary>
 	/// Set texture debug name.

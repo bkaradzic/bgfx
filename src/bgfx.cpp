@@ -3519,10 +3519,13 @@ namespace bgfx
 					void* data;
 					_cmdbuf.read(data);
 
+					uint16_t layer;
+					_cmdbuf.read(layer);
+
 					uint8_t mip;
 					_cmdbuf.read(mip);
 
-					m_renderCtx->readTexture(handle, data, mip);
+					m_renderCtx->readTexture(handle, data, layer, mip);
 				}
 				break;
 
@@ -5445,11 +5448,11 @@ namespace bgfx
 		}
 	}
 
-	uint32_t readTexture(TextureHandle _handle, void* _data, uint8_t _mip)
+	uint32_t readTexture(TextureHandle _handle, void* _data, uint16_t _layer, uint8_t _mip)
 	{
 		BX_ASSERT(NULL != _data, "_data can't be NULL");
 		BGFX_CHECK_CAPS(BGFX_CAPS_TEXTURE_READ_BACK, "Texture read-back is not supported!");
-		return s_ctx->readTexture(_handle, _data, _mip);
+		return s_ctx->readTexture(_handle, _data, _layer, _mip);
 	}
 
 	FrameBufferHandle createFrameBuffer(uint16_t _width, uint16_t _height, TextureFormat::Enum _format, uint64_t _textureFlags)

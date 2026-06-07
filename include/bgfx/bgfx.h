@@ -3155,6 +3155,7 @@ namespace bgfx
 	///
 	/// @param[in] _handle Texture handle.
 	/// @param[in] _data Destination buffer.
+	/// @param[in] _layer Texture layer.
 	/// @param[in] _mip Mip level.
 	///
 	/// @returns Frame number when the result will be available. See: `bgfx::frame`.
@@ -3170,6 +3171,7 @@ namespace bgfx
 	uint32_t readTexture(
 		  TextureHandle _handle
 		, void* _data
+		, uint16_t _layer = 0
 		, uint8_t _mip = 0
 		);
 
