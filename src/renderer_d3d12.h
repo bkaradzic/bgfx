@@ -114,13 +114,11 @@ namespace bgfx { namespace d3d12
 		{
 		}
 
-		void create(uint32_t _size, uint32_t _maxDescriptors);
+		void create(uint32_t _maxDescriptors);
 		void destroy();
 		void reset(D3D12_GPU_DESCRIPTOR_HANDLE& _gpuHandle);
 
 		void  allocEmpty(D3D12_GPU_DESCRIPTOR_HANDLE& _gpuHandle);
-
-		void* allocCbv(D3D12_GPU_VIRTUAL_ADDRESS& _gpuAddress, uint32_t _size);
 
 		void  allocSrv(D3D12_GPU_DESCRIPTOR_HANDLE& _gpuHandle, struct TextureD3D12& _texture, uint16_t _firstLayer = 0, uint16_t _numLayers = UINT16_MAX, uint8_t _firstMip = 0, uint8_t _numMips = UINT8_MAX);
 		void  allocSrv(D3D12_GPU_DESCRIPTOR_HANDLE& _gpuHandle, struct BufferD3D12& _buffer);
@@ -138,14 +136,32 @@ namespace bgfx { namespace d3d12
 
 	private:
 		ID3D12DescriptorHeap* m_heap;
-		ID3D12Resource* m_upload;
-		D3D12_GPU_VIRTUAL_ADDRESS m_gpuVA;
 		D3D12_CPU_DESCRIPTOR_HANDLE m_cpuHandle;
 		D3D12_GPU_DESCRIPTOR_HANDLE m_gpuHandle;
 		uint32_t m_incrementSize;
-		uint8_t* m_data;
-		uint32_t m_size;
-		uint32_t m_pos;
+	};
+
+	struct ChunkedScratchBufferOffset
+	{
+		D3D12_GPU_VIRTUAL_ADDRESS buffer;
+		uint32_t offsets[2];
+	};
+
+	struct ChunkD3D12
+	{
+		D3D12_GPU_VIRTUAL_ADDRESS buffer;
+		ID3D12Resource* upload;
+		uint8_t* data;
+	};
+
+	struct ChunkedScratchBufferD3D12 : ChunkedScratchBufferT<ChunkedScratchBufferD3D12, D3D12_GPU_VIRTUAL_ADDRESS, ChunkD3D12>
+	{
+		void createUniform(uint32_t _chunkSize, uint32_t _numChunks);
+
+		void createChunk(ChunkD3D12& _chunk);
+		void destroyChunk(ChunkD3D12& _chunk);
+		void flushChunk(ChunkD3D12& _chunk, uint32_t _size);
+		uint32_t currentFrameInFlight() const;
 	};
 
 	class DescriptorAllocatorD3D12

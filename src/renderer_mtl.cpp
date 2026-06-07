@@ -20,8 +20,6 @@
 #	include <IOKit/IOKitLib.h>
 #endif // BX_PLATFORM_OSX
 
-#define UNIFORM_BUFFER_SIZE (8*1024*1024)
-
 namespace bgfx { namespace mtl
 {
 	static char s_viewName[BGFX_CONFIG_MAX_VIEWS][BGFX_CONFIG_MAX_VIEW_NAME];
@@ -772,11 +770,32 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 	struct RendererContextMtl;
 	static RendererContextMtl* s_renderMtl;
 
+	struct ChunkedScratchBufferOffset
+	{
+		MTL::Buffer* buffer;
+		uint32_t offsets[2];
+	};
+
+	struct ChunkMtl
+	{
+		MTL::Buffer* buffer;
+		uint8_t* data;
+	};
+
+	struct ChunkedScratchBufferMtl : ChunkedScratchBufferT<ChunkedScratchBufferMtl, MTL::Buffer*, ChunkMtl>
+	{
+		void createUniform(uint32_t _chunkSize, uint32_t _numChunks);
+
+		void createChunk(ChunkMtl& _chunk);
+		void destroyChunk(ChunkMtl& _chunk);
+		void flushChunk(ChunkMtl& _chunk, uint32_t _size);
+		uint32_t currentFrameInFlight() const;
+	};
+
 	struct RendererContextMtl : public RendererContextI
 	{
 		RendererContextMtl()
 			: m_device(NULL)
-			, m_uniformBuffer(NULL)
 			, m_bufferIndex(0)
 			, m_numWindows(0)
 			, m_rtMsaa(false)
@@ -793,7 +812,6 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			, m_computeCommandEncoder(NULL)
 		{
 			bx::memSet(&m_windows, 0xff, sizeof(m_windows) );
-			bx::memSet(m_uniformBuffers, 0, sizeof(m_uniformBuffers) );
 		}
 
 		~RendererContextMtl()
@@ -1090,13 +1108,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			m_cmd.init(m_device, _init.resolution.maxFrameLatency);
 			BGFX_FATAL(NULL != m_cmd.m_commandQueue, Fatal::UnableToInitialize, "Unable to create Metal device.");
 
-			for (uint8_t ii = 0; ii < BGFX_CONFIG_MAX_FRAME_LATENCY; ++ii)
-			{
-				m_uniformBuffers[ii] = m_device->newBuffer(UNIFORM_BUFFER_SIZE, MTL::ResourceCPUCacheModeDefaultCache);
-			}
-
-			m_uniformBufferVertexOffset   = 0;
-			m_uniformBufferFragmentOffset = 0;
+			m_uniformScratchBuffer.createUniform(2<<20, BGFX_CONFIG_MAX_FRAME_LATENCY);
 
 			const char* vshSource =
 				"using namespace metal;\n"
@@ -1200,10 +1212,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 				m_cmd.shutdown();
 
-				for (uint8_t ii = 0; ii < BGFX_CONFIG_MAX_FRAME_LATENCY; ++ii)
-				{
-					MTL_RELEASE_W(m_uniformBuffers[ii], 0);
-				}
+				m_uniformScratchBuffer.destroy();
 
 				MTL_RELEASE_W(m_device, 0);
 
@@ -1658,32 +1667,25 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 				const uint32_t vertexUniformBufferSize   = pso->m_vshConstantBufferSize;
 				const uint32_t fragmentUniformBufferSize = pso->m_fshConstantBufferSize;
 
-				if (vertexUniformBufferSize)
-				{
-					m_uniformBufferVertexOffset = bx::alignUp(
-						  m_uniformBufferVertexOffset
-						, pso->m_vshConstantBufferAlignment
-						);
-					rce->setVertexBuffer(m_uniformBuffer, m_uniformBufferVertexOffset, 0);
-				}
-
-				m_uniformBufferFragmentOffset = m_uniformBufferVertexOffset + vertexUniformBufferSize;
-
-				if (0 != fragmentUniformBufferSize)
-				{
-					m_uniformBufferFragmentOffset = bx::alignUp(
-						  m_uniformBufferFragmentOffset
-						, pso->m_fshConstantBufferAlignment
-						);
-					rce->setFragmentBuffer(m_uniformBuffer, m_uniformBufferFragmentOffset, 0);
-				}
-
 				float proj[16];
 				bx::mtxOrtho(proj, 0.0f, (float)width, (float)height, 0.0f, 0.0f, 1000.0f, 0.0f, false);
 
 				PredefinedUniform& predefined = pso->m_predefined[0];
 				uint8_t flags = predefined.m_type;
 				setShaderUniform(flags, predefined.m_loc, proj, 4);
+
+				ChunkedScratchBufferOffset sbo;
+				m_uniformScratchBuffer.write(sbo, m_vsScratch, vertexUniformBufferSize, m_fsScratch, fragmentUniformBufferSize);
+
+				if (vertexUniformBufferSize)
+				{
+					rce->setVertexBuffer(sbo.buffer, sbo.offsets[0], 0);
+				}
+
+				if (0 != fragmentUniformBufferSize)
+				{
+					rce->setFragmentBuffer(sbo.buffer, sbo.offsets[1], 0);
+				}
 
 				m_textures[_blitter.m_texture.idx].commit(0, false, true);
 
@@ -1960,12 +1962,11 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 		void setShaderUniform(uint8_t _flags, uint32_t _loc, const void* _val, uint32_t _numRegs)
 		{
-			const uint32_t offset = 0 != (_flags&kUniformFragmentBit)
-				? m_uniformBufferFragmentOffset
-				: m_uniformBufferVertexOffset
+			uint8_t* dst = 0 != (_flags&kUniformFragmentBit)
+				? m_fsScratch
+				: m_vsScratch
 				;
-			uint8_t* dst = (uint8_t*)m_uniformBuffer->contents();
-			bx::memCopy(&dst[offset + _loc], _val, _numRegs*16);
+			bx::memCopy(&dst[_loc], _val, _numRegs*16);
 		}
 
 		void setShaderUniform4f(uint8_t _flags, uint32_t _loc, const void* _val, uint32_t _numRegs)
@@ -2099,25 +2100,6 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			const uint32_t vertexUniformBufferSize   = pso->m_vshConstantBufferSize;
 			const uint32_t fragmentUniformBufferSize = pso->m_fshConstantBufferSize;
 
-			if (0 != vertexUniformBufferSize)
-			{
-				m_uniformBufferVertexOffset = bx::alignUp(
-					  m_uniformBufferVertexOffset
-					, pso->m_vshConstantBufferAlignment
-					);
-				m_renderCommandEncoder->setVertexBuffer(m_uniformBuffer, m_uniformBufferVertexOffset, 0);
-			}
-
-			m_uniformBufferFragmentOffset = m_uniformBufferVertexOffset + vertexUniformBufferSize;
-			if (fragmentUniformBufferSize)
-			{
-				m_uniformBufferFragmentOffset = bx::alignUp(
-					  m_uniformBufferFragmentOffset
-					, pso->m_fshConstantBufferAlignment
-					);
-				m_renderCommandEncoder->setFragmentBuffer(m_uniformBuffer, m_uniformBufferFragmentOffset, 0);
-			}
-
 			const float mrtClearDepth[4] = { _clear.m_depth };
 			float mrtClearColor[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS][4];
 
@@ -2146,19 +2128,29 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			}
 
 			bx::memCopy(
-				  (uint8_t*)m_uniformBuffer->contents() + m_uniformBufferVertexOffset
+				  m_vsScratch
 				, mrtClearDepth
-				, bx::min(vertexUniformBufferSize, sizeof(mrtClearDepth) )
+				, bx::min<uint32_t>(vertexUniformBufferSize, sizeof(mrtClearDepth) )
 				);
 
 			bx::memCopy(
-				  (uint8_t*)m_uniformBuffer->contents() + m_uniformBufferFragmentOffset
+				  m_fsScratch
 				, mrtClearColor
-				, bx::min(fragmentUniformBufferSize, sizeof(mrtClearColor) )
+				, bx::min<uint32_t>(fragmentUniformBufferSize, sizeof(mrtClearColor) )
 				);
 
-			m_uniformBufferFragmentOffset += fragmentUniformBufferSize;
-			m_uniformBufferVertexOffset    = m_uniformBufferFragmentOffset;
+			ChunkedScratchBufferOffset sbo;
+			m_uniformScratchBuffer.write(sbo, m_vsScratch, vertexUniformBufferSize, m_fsScratch, fragmentUniformBufferSize);
+
+			if (0 != vertexUniformBufferSize)
+			{
+				m_renderCommandEncoder->setVertexBuffer(sbo.buffer, sbo.offsets[0], 0);
+			}
+
+			if (fragmentUniformBufferSize)
+			{
+				m_renderCommandEncoder->setFragmentBuffer(sbo.buffer, sbo.offsets[1], 0);
+			}
 
 			const VertexBufferMtl& vb = m_vertexBuffers[_clearQuad.m_vb.idx];
 
@@ -3052,10 +3044,10 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 		bool m_hasVSync;
 		bool m_hasMaximumDrawableCount;
 
-		MTL::Buffer* m_uniformBuffer;
-		MTL::Buffer* m_uniformBuffers[BGFX_CONFIG_MAX_FRAME_LATENCY];
-		uint32_t m_uniformBufferVertexOffset;
-		uint32_t m_uniformBufferFragmentOffset;
+		ChunkedScratchBufferMtl m_uniformScratchBuffer;
+
+		uint8_t  m_vsScratch[64<<10];
+		uint8_t  m_fsScratch[64<<10];
 
 		uint8_t  m_bufferIndex;
 
@@ -3119,6 +3111,33 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 		MTL::ComputeCommandEncoder* m_computeCommandEncoder;
 		FrameBufferHandle           m_renderCommandEncoderFrameBufferHandle;
 	};
+
+	void ChunkedScratchBufferMtl::createUniform(uint32_t _chunkSize, uint32_t _numChunks)
+	{
+		create(_chunkSize, _numChunks, 256);
+	}
+
+	void ChunkedScratchBufferMtl::createChunk(ChunkMtl& _chunk)
+	{
+		_chunk.buffer = s_renderMtl->m_device->newBuffer(m_chunkSize, MTL::ResourceCPUCacheModeDefaultCache);
+		_chunk.data   = (uint8_t*)_chunk.buffer->contents();
+	}
+
+	void ChunkedScratchBufferMtl::destroyChunk(ChunkMtl& _chunk)
+	{
+		MTL_RELEASE_W(_chunk.buffer, 0);
+	}
+
+	void ChunkedScratchBufferMtl::flushChunk(ChunkMtl& _chunk, uint32_t _size)
+	{
+		// Buffers use shared/managed storage and are persistently mapped; nothing to flush.
+		BX_UNUSED(_chunk, _size);
+	}
+
+	uint32_t ChunkedScratchBufferMtl::currentFrameInFlight() const
+	{
+		return s_renderMtl->m_bufferIndex;
+	}
 
 	RendererContextI* rendererCreate(const Init& _init)
 	{
@@ -4740,10 +4759,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			MTL_RELEASE(m_screenshotTarget, 0);
 		}
 
-		m_uniformBuffer = m_uniformBuffers[m_bufferIndex];
-		m_bufferIndex = (m_bufferIndex + 1) % BGFX_CONFIG_MAX_FRAME_LATENCY;
-		m_uniformBufferVertexOffset = 0;
-		m_uniformBufferFragmentOffset = 0;
+		m_uniformScratchBuffer.begin();
 
 		if (0 < _render->m_iboffset)
 		{
@@ -5116,15 +5132,6 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 					{
 						uint32_t vertexUniformBufferSize = currentPso->m_vshConstantBufferSize;
 
-						if (0 != vertexUniformBufferSize)
-						{
-							m_uniformBufferVertexOffset = bx::alignUp(
-								  m_uniformBufferVertexOffset
-								, currentPso->m_vshConstantBufferAlignment
-								);
-							m_computeCommandEncoder->setBuffer(m_uniformBuffer, m_uniformBufferVertexOffset, 0);
-						}
-
 						UniformBuffer* vcb = currentPso->m_vshConstantBuffer;
 						if (NULL != vcb)
 						{
@@ -5133,7 +5140,12 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 						viewState.setPredefined<4>(this, view, *currentPso, _render, compute);
 
-						m_uniformBufferVertexOffset += vertexUniformBufferSize;
+						if (0 != vertexUniformBufferSize)
+						{
+							ChunkedScratchBufferOffset sbo;
+							m_uniformScratchBuffer.write(sbo, m_vsScratch, vertexUniformBufferSize);
+							m_computeCommandEncoder->setBuffer(sbo.buffer, sbo.offsets[0], 0);
+						}
 					}
 
 					for (uint8_t stage = 0; stage < maxComputeBindings; ++stage)
@@ -5481,25 +5493,6 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 					const uint32_t vertexUniformBufferSize   = currentPso->m_vshConstantBufferSize;
 					const uint32_t fragmentUniformBufferSize = currentPso->m_fshConstantBufferSize;
 
-					if (0 != vertexUniformBufferSize)
-					{
-						m_uniformBufferVertexOffset = bx::alignUp(
-							  m_uniformBufferVertexOffset
-							, currentPso->m_vshConstantBufferAlignment
-							);
-						rce->setVertexBuffer(m_uniformBuffer, m_uniformBufferVertexOffset, 0);
-					}
-
-					m_uniformBufferFragmentOffset = m_uniformBufferVertexOffset + vertexUniformBufferSize;
-					if (0 != fragmentUniformBufferSize)
-					{
-						m_uniformBufferFragmentOffset = bx::alignUp(
-							  m_uniformBufferFragmentOffset
-							, currentPso->m_fshConstantBufferAlignment
-							);
-						rce->setFragmentBuffer(m_uniformBuffer, m_uniformBufferFragmentOffset, 0);
-					}
-
 					UniformBuffer* vcb = currentPso->m_vshConstantBuffer;
 					if (NULL != vcb)
 					{
@@ -5514,8 +5507,22 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 					viewState.setPredefined<4>(this, view, *currentPso, _render, draw);
 
-					m_uniformBufferFragmentOffset += fragmentUniformBufferSize;
-					m_uniformBufferVertexOffset    = m_uniformBufferFragmentOffset;
+					if (0 != vertexUniformBufferSize
+					||  0 != fragmentUniformBufferSize)
+					{
+						ChunkedScratchBufferOffset sbo;
+						m_uniformScratchBuffer.write(sbo, m_vsScratch, vertexUniformBufferSize, m_fsScratch, fragmentUniformBufferSize);
+
+						if (0 != vertexUniformBufferSize)
+						{
+							rce->setVertexBuffer(sbo.buffer, sbo.offsets[0], 0);
+						}
+
+						if (0 != fragmentUniformBufferSize)
+						{
+							rce->setFragmentBuffer(sbo.buffer, sbo.offsets[1], 0);
+						}
+					}
 				}
 
 				if (isValid(currentProgram) )
@@ -5943,6 +5950,9 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 			rce->endEncoding();
 		}
+
+		m_uniformScratchBuffer.end();
+		m_bufferIndex = (m_bufferIndex + 1) % BGFX_CONFIG_MAX_FRAME_LATENCY;
 
 		if (NULL != m_commandBuffer)
 		{
