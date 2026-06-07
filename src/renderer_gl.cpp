@@ -8500,7 +8500,7 @@ namespace bgfx { namespace gl
 								const uint8_t idx = it.idx;
 
 								const VertexBufferGL& vb = m_vertexBuffers[draw.m_stream[idx].m_handle.idx];
-								uint16_t decl = !isValid(vb.m_layoutHandle) ? draw.m_stream[idx].m_layoutHandle.idx : vb.m_layoutHandle.idx;
+								uint16_t decl = isValid(draw.m_stream[idx].m_layoutHandle) ? draw.m_stream[idx].m_layoutHandle.idx : vb.m_layoutHandle.idx;
 								const VertexLayout& layout = m_vertexLayouts[decl];
 
 								numVertices = bx::min(numVertices, vb.m_size/layout.m_stride);
