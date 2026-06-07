@@ -449,6 +449,95 @@ namespace bgfx
 		Data m_data[MaxHandleT];
 	};
 
+	template<typename Ty>
+	struct StateCacheFuncT
+	{
+		static void evict(Ty _value)
+		{
+			release(_value);
+		}
+
+		static void validate(Ty /*_value*/, uint64_t /*_key*/)
+		{
+		}
+	};
+
+	template<typename Ty>
+	class StateCacheT
+	{
+	public:
+		void add(uint64_t _key, Ty _value, uint16_t _parent = UINT16_MAX)
+		{
+			invalidate(_key);
+			StateCacheFuncT<Ty>::validate(_value, _key);
+			m_hashMap.insert(stl::make_pair(_key, Data{_value, _parent}) );
+		}
+
+		Ty find(uint64_t _key)
+		{
+			typename HashMap::iterator it = m_hashMap.find(_key);
+			if (it != m_hashMap.end() )
+			{
+				return it->second.m_value;
+			}
+
+			return Ty(0);
+		}
+
+		void invalidate(uint64_t _key)
+		{
+			typename HashMap::iterator it = m_hashMap.find(_key);
+			if (it != m_hashMap.end() )
+			{
+				StateCacheFuncT<Ty>::evict(it->second.m_value);
+				m_hashMap.erase(it);
+			}
+		}
+
+		void invalidateWithParent(uint16_t _parent)
+		{
+			for (typename HashMap::iterator it = m_hashMap.begin(), itEnd = m_hashMap.end(); it != itEnd;)
+			{
+				if (it->second.m_parent == _parent)
+				{
+					StateCacheFuncT<Ty>::evict(it->second.m_value);
+					typename HashMap::iterator itErase = it;
+					++it;
+					m_hashMap.erase(itErase);
+				}
+				else
+				{
+					++it;
+				}
+			}
+		}
+
+		void invalidate()
+		{
+			for (typename HashMap::iterator it = m_hashMap.begin(), itEnd = m_hashMap.end(); it != itEnd; ++it)
+			{
+				StateCacheFuncT<Ty>::evict(it->second.m_value);
+			}
+
+			m_hashMap.clear();
+		}
+
+		uint32_t getCount() const
+		{
+			return uint32_t(m_hashMap.size() );
+		}
+
+	private:
+		struct Data
+		{
+			Ty       m_value;
+			uint16_t m_parent;
+		};
+
+		typedef stl::unordered_map<uint64_t, Data> HashMap;
+		HashMap m_hashMap;
+	};
+
 	class StateCache
 	{
 	public:

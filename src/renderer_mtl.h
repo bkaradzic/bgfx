@@ -13,6 +13,8 @@
 #include <metal-cpp/metal.hpp>
 #include <CoreFoundation/CoreFoundation.h>
 
+#include "renderer.h"
+
 #define BGFX_MTL_PROFILER_BEGIN(_view, _abgr)         \
 	BX_MACRO_BLOCK_BEGIN                              \
 		BGFX_PROFILER_BEGIN(s_viewName[view], _abgr); \
@@ -244,57 +246,6 @@ namespace bgfx { namespace mtl
 	}
 
 	// end of c++ wrapper
-
-	template <typename Ty>
-	class StateCacheT
-	{
-	public:
-		void add(uint64_t _id, Ty _item)
-		{
-			invalidate(_id);
-			m_hashMap.insert(stl::make_pair(_id, _item) );
-		}
-
-		Ty find(uint64_t _id)
-		{
-			typename HashMap::iterator it = m_hashMap.find(_id);
-			if (it != m_hashMap.end() )
-			{
-				return it->second;
-			}
-
-			return NULL;
-		}
-
-		void invalidate(uint64_t _id)
-		{
-			typename HashMap::iterator it = m_hashMap.find(_id);
-			if (it != m_hashMap.end() )
-			{
-				release(it->second);
-				m_hashMap.erase(it);
-			}
-		}
-
-		void invalidate()
-		{
-			for (typename HashMap::iterator it = m_hashMap.begin(), itEnd = m_hashMap.end(); it != itEnd; ++it)
-			{
-				release(it->second);
-			}
-
-			m_hashMap.clear();
-		}
-
-		uint32_t getCount() const
-		{
-			return uint32_t(m_hashMap.size() );
-		}
-
-	private:
-		typedef stl::unordered_map<uint64_t, Ty> HashMap;
-		HashMap m_hashMap;
-	};
 
 	struct BufferMtl
 	{
@@ -709,6 +660,23 @@ namespace bgfx { namespace mtl
 	};
 
 } /* namespace metal */ } // namespace bgfx
+
+namespace bgfx
+{
+	template<typename Ty>
+	struct StateCacheFuncT<Ty*>
+	{
+		static void evict(Ty* _ptr)
+		{
+			mtl::release(_ptr);
+		}
+
+		static void validate(Ty* /*_ptr*/, uint64_t /*_key*/)
+		{
+		}
+	};
+
+} // namespace bgfx
 
 #endif // BGFX_CONFIG_RENDERER_METAL
 

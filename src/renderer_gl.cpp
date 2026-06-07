@@ -4263,7 +4263,7 @@ namespace bgfx { namespace gl
 					murmur.add(-1);
 					hash = murmur.end();
 
-					sampler = m_samplerStateCache.find(hash);
+					sampler = m_samplerStateCache.find(hash).idx;
 				}
 				else
 				{
@@ -4273,17 +4273,17 @@ namespace bgfx { namespace gl
 					if (NULL != _rgba)
 					{
 						hasBorderColor = true;
-						sampler = UINT32_MAX;
+						sampler = 0;
 					}
 					else
 					{
-						sampler = m_samplerStateCache.find(hash);
+						sampler = m_samplerStateCache.find(hash).idx;
 					}
 				}
 
-				if (UINT32_MAX == sampler)
+				if (0 == sampler)
 				{
-					sampler = m_samplerStateCache.add(hash);
+					GL_CHECK(glGenSamplers(1, &sampler) );
 
 					GL_CHECK(glSamplerParameteri(sampler
 						, GL_TEXTURE_WRAP_S
@@ -4335,6 +4335,8 @@ namespace bgfx { namespace gl
 							GL_CHECK(glSamplerParameteri(sampler, GL_TEXTURE_COMPARE_FUNC, s_cmpFunc[cmpFunc]) );
 						}
 					}
+
+					m_samplerStateCache.add(hash, SamplerGL{sampler});
 				}
 
 				GL_CHECK(glBindSampler(_stage, sampler) );
@@ -4825,8 +4827,8 @@ namespace bgfx { namespace gl
 		TimerQueryGL m_gpuTimer;
 		OcclusionQueryGL m_occlusionQuery;
 
-		SamplerStateCache m_samplerStateCache;
-		TextureViewStateCache m_textureViewStateCache;
+		StateCacheT<SamplerGL> m_samplerStateCache;
+		StateCacheT<TextureViewGL> m_textureViewStateCache;
 		UniformStateCache m_uniformStateCache;
 
 		TextVideoMem m_textVideoMem;
@@ -6291,13 +6293,14 @@ namespace bgfx { namespace gl
 			| (uint64_t(numLayers)  <<  0)
 			;
 
-		GLuint viewId = s_renderGL->m_textureViewStateCache.find(key);
-		if (UINT32_MAX != viewId)
+		GLuint viewId = s_renderGL->m_textureViewStateCache.find(key).idx;
+		if (0 != viewId)
 		{
 			return viewId;
 		}
 
-		viewId = s_renderGL->m_textureViewStateCache.add(key, parent);
+		GL_CHECK(glGenTextures(1, &viewId) );
+		s_renderGL->m_textureViewStateCache.add(key, TextureViewGL{viewId}, parent);
 		GL_CHECK(glTextureView(viewId
 			, m_target
 			, m_id

@@ -1288,139 +1288,35 @@ namespace bgfx { namespace gl
 	template<>
 	inline UniformStateCache::F4x4Map& UniformStateCache::getUniformCache() { return m_uniformf4x4CacheMap; }
 
-	class SamplerStateCache
+	struct SamplerGL
 	{
-	public:
-		GLuint add(uint32_t _hash)
+		SamplerGL(GLuint _idx = 0)
+			: idx(_idx)
 		{
-			invalidate(_hash);
-
-			GLuint samplerId;
-			GL_CHECK(glGenSamplers(1, &samplerId) );
-
-			m_hashMap.insert(stl::make_pair(_hash, samplerId) );
-
-			return samplerId;
 		}
 
-		GLuint find(uint32_t _hash)
-		{
-			HashMap::iterator it = m_hashMap.find(_hash);
-			if (it != m_hashMap.end() )
-			{
-				return it->second;
-			}
-
-			return UINT32_MAX;
-		}
-
-		void invalidate(uint32_t _hash)
-		{
-			HashMap::iterator it = m_hashMap.find(_hash);
-			if (it != m_hashMap.end() )
-			{
-				GL_CHECK(glDeleteSamplers(1, &it->second) );
-				m_hashMap.erase(it);
-			}
-		}
-
-		void invalidate()
-		{
-			for (HashMap::iterator it = m_hashMap.begin(), itEnd = m_hashMap.end(); it != itEnd; ++it)
-			{
-				GL_CHECK(glDeleteSamplers(1, &it->second) );
-			}
-			m_hashMap.clear();
-		}
-
-		uint32_t getCount() const
-		{
-			return uint32_t(m_hashMap.size() );
-		}
-
-	private:
-		typedef stl::unordered_map<uint32_t, GLuint> HashMap;
-		HashMap m_hashMap;
+		GLuint idx;
 	};
 
-	class TextureViewStateCache
+	inline void release(SamplerGL& _sampler)
 	{
-	public:
-		GLuint add(uint64_t _key, uint16_t _parent)
+		GL_CHECK(glDeleteSamplers(1, &_sampler.idx) );
+	}
+
+	struct TextureViewGL
+	{
+		TextureViewGL(GLuint _idx = 0)
+			: idx(_idx)
 		{
-			invalidate(_key);
-
-			GLuint viewId;
-			GL_CHECK(glGenTextures(1, &viewId) );
-
-			m_hashMap.insert(stl::make_pair(_key, Data{viewId, _parent}) );
-
-			return viewId;
 		}
 
-		GLuint find(uint64_t _key)
-		{
-			HashMap::iterator it = m_hashMap.find(_key);
-			if (it != m_hashMap.end() )
-			{
-				return it->second.m_textureViewId;
-			}
-
-			return UINT32_MAX;
-		}
-
-		void invalidate(uint64_t _key)
-		{
-			HashMap::iterator it = m_hashMap.find(_key);
-			if (it != m_hashMap.end() )
-			{
-				GL_CHECK(glDeleteTextures(1, &it->second.m_textureViewId) );
-				m_hashMap.erase(it);
-			}
-		}
-
-		void invalidateWithParent(uint16_t _parent)
-		{
-			for (HashMap::iterator it = m_hashMap.begin(), itEnd = m_hashMap.end(); it != itEnd;)
-			{
-				if (it->second.m_parent == _parent)
-				{
-					GL_CHECK(glDeleteTextures(1, &it->second.m_textureViewId) );
-					HashMap::iterator itErase = it;
-					++it;
-					m_hashMap.erase(itErase);
-				}
-				else
-				{
-					++it;
-				}
-			}
-		}
-
-		void invalidate()
-		{
-			for (HashMap::iterator it = m_hashMap.begin(), itEnd = m_hashMap.end(); it != itEnd; ++it)
-			{
-				GL_CHECK(glDeleteTextures(1, &it->second.m_textureViewId) );
-			}
-			m_hashMap.clear();
-		}
-
-		uint32_t getCount() const
-		{
-			return uint32_t(m_hashMap.size() );
-		}
-
-	private:
-		struct Data
-		{
-			GLuint   m_textureViewId;
-			uint16_t m_parent;
-		};
-
-		typedef stl::unordered_map<uint64_t, Data> HashMap;
-		HashMap m_hashMap;
+		GLuint idx;
 	};
+
+	inline void release(TextureViewGL& _view)
+	{
+		GL_CHECK(glDeleteTextures(1, &_view.idx) );
+	}
 
 	struct IndexBufferGL
 	{
