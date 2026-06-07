@@ -3906,6 +3906,43 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 		releaseBackBuffer();
 	}
 
+	static bool isWindowOccluded(void* _nwh)
+	{
+#if BX_PLATFORM_OSX
+		if (NULL == _nwh)
+		{
+			return false;
+		}
+
+		Class nsWindowClass = objc_lookUpClass("NSWindow");
+		Class nsViewClass   = objc_lookUpClass("NSView");
+
+		void* nsWindow = NULL;
+
+		if (NULL != nsWindowClass
+		&&  MtlObjAccess::send<bool>(_nwh, sel_registerName("isKindOfClass:"), nsWindowClass) )
+		{
+			nsWindow = _nwh;
+		}
+		else if (NULL != nsViewClass
+		     &&  MtlObjAccess::send<bool>(_nwh, sel_registerName("isKindOfClass:"), nsViewClass) )
+		{
+			nsWindow = MtlObjAccess::send<void*>(_nwh, sel_registerName("window") );
+		}
+
+		if (NULL == nsWindow)
+		{
+			return false;
+		}
+
+		const uintptr_t occlusionState = MtlObjAccess::send<uintptr_t>(nsWindow, sel_registerName("occlusionState") );
+
+		return 0 == (occlusionState & (uintptr_t(1) << 1) );
+#else
+		return false;
+#endif // BX_PLATFORM_OSX
+	}
+
 	void SwapChainMtl::init(void* _nwh)
 	{
 		{
@@ -4171,7 +4208,9 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 	{
 		if (NULL == m_drawableTexture)
 		{
-			m_drawable = m_metalLayer->nextDrawable();
+			const bool occluded = isWindowOccluded(m_nwh);
+
+			m_drawable = occluded ? NULL : m_metalLayer->nextDrawable();
 
 			if (m_drawable != NULL)
 			{
