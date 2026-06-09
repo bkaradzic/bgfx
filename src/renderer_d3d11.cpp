@@ -5879,6 +5879,8 @@ namespace bgfx { namespace d3d11
 											? texture.m_uav
 											: s_renderD3D11->getCachedUav(texture.getHandle(), bind.m_firstMip)
 											;
+										m_textureStage.m_srv[stage]     = NULL;
+										m_textureStage.m_sampler[stage] = NULL;
 									}
 									else
 									{
@@ -5905,6 +5907,8 @@ namespace bgfx { namespace d3d11
 									if (Access::Read != bind.m_access)
 									{
 										uav[stage] = buffer.m_uav;
+										m_textureStage.m_srv[stage]     = NULL;
+										m_textureStage.m_sampler[stage] = NULL;
 									}
 									else
 									{
