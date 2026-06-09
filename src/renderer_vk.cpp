@@ -6811,23 +6811,23 @@ VK_DESTROY
 		const bool compressed = bimg::isCompressed(bimg::TextureFormat::Enum(m_textureFormat) );
 		const bool convert    = m_textureFormat != m_requestedFormat;
 
-		uint32_t rectpitch  = _rect.m_width * bpp / 8;
-		uint32_t slicepitch = rectpitch * _rect.m_height;
+		uint32_t rectPitch  = _rect.m_width * bpp / 8;
+		uint32_t slicePitch = rectPitch * _rect.m_height;
 		uint32_t numRows    = _rect.m_height;
 		uint32_t align      = blockInfo.blockSize;
 		if (compressed)
 		{
 			const uint32_t numBlocksX = (_rect.m_width  + blockInfo.blockWidth  - 1) / blockInfo.blockWidth;
 			const uint32_t numBlocksY = (_rect.m_height + blockInfo.blockHeight - 1) / blockInfo.blockHeight;
-			rectpitch  = numBlocksX * blockInfo.blockSize;
-			slicepitch = numBlocksY * rectpitch;
+			rectPitch  = numBlocksX * blockInfo.blockSize;
+			slicePitch = numBlocksY * rectPitch;
 			numRows    = numBlocksY;
 		}
 
-		const uint32_t srcpitch = UINT16_MAX == _pitch ? rectpitch : _pitch;
+		const uint32_t srcPitch = UINT16_MAX == _pitch ? rectPitch : _pitch;
 		const uint32_t size = convert || UINT16_MAX == _pitch
-			? slicepitch * _depth
-			: numRows * srcpitch * _depth
+			? slicePitch * _depth
+			: numRows * srcPitch * _depth
 			;
 
 		// bufferRowLength is expressed in texels and, for block-compressed
@@ -6837,8 +6837,8 @@ VK_DESTROY
 		&&  UINT16_MAX != _pitch)
 		{
 			bufferRowLength = compressed
-				? (srcpitch / blockInfo.blockSize) * blockInfo.blockWidth
-				: srcpitch * 8 / bpp
+				? (srcPitch / blockInfo.blockSize) * blockInfo.blockWidth
+				: srcPitch * 8 / bpp
 				;
 		}
 
@@ -6858,8 +6858,8 @@ VK_DESTROY
 
 		if (convert)
 		{
-			temp = (uint8_t*)bx::alloc(g_allocator, slicepitch);
-			bimg::imageDecodeToBgra8(g_allocator, temp, data, _rect.m_width, _rect.m_height, srcpitch, bimg::TextureFormat::Enum(m_requestedFormat) );
+			temp = (uint8_t*)bx::alloc(g_allocator, slicePitch);
+			bimg::imageDecodeToBgra8(g_allocator, temp, data, _rect.m_width, _rect.m_height, rectPitch, bimg::TextureFormat::Enum(m_requestedFormat) );
 			data = temp;
 
 			region.imageExtent.width  = bx::clamp<uint32_t>(region.imageExtent.width,  0u, bx::max(1u, m_width  >> _mip) - _rect.m_x);

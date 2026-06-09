@@ -6099,8 +6099,8 @@ namespace bgfx { namespace gl
 		const bool compressed = bimg::isCompressed(bimg::TextureFormat::Enum(m_requestedFormat) );
 		const uint32_t bpp = bimg::getBitsPerPixel(bimg::TextureFormat::Enum(m_textureFormat) );
 
-		uint32_t rectpitch = _rect.m_width*bpp/8;
-		uint32_t srcpitch  = UINT16_MAX == _pitch ? rectpitch : _pitch;
+		uint32_t rectPitch = _rect.m_width*bpp/8;
+		uint32_t srcPitch  = UINT16_MAX == _pitch ? rectPitch : _pitch;
 
 		GL_CHECK(glBindTexture(m_target, m_id) );
 		GL_CHECK(glPixelStorei(GL_UNPACK_ALIGNMENT, 1) );
@@ -6136,21 +6136,21 @@ namespace bgfx { namespace gl
 		&& !convert)
 		{
 			const uint32_t numBlocksX = (width + blockInfo.blockWidth - 1) / blockInfo.blockWidth;
-			rectpitch = numBlocksX * blockInfo.blockSize;
-			srcpitch  = UINT16_MAX == _pitch ? rectpitch : _pitch;
+			rectPitch = numBlocksX * blockInfo.blockSize;
+			srcPitch  = UINT16_MAX == _pitch ? rectPitch : _pitch;
 		}
 
 		uint8_t* temp = NULL;
 		if (convert
 		||  !unpackRowLength
-		||  (compressed && UINT16_MAX != _pitch && srcpitch != rectpitch) )
+		||  (compressed && UINT16_MAX != _pitch && srcPitch != rectPitch) )
 		{
-			temp = (uint8_t*)bx::alloc(g_allocator, rectpitch*height);
+			temp = (uint8_t*)bx::alloc(g_allocator, rectPitch*height);
 		}
 		else if (unpackRowLength
 		     &&  !compressed)
 		{
-			GL_CHECK(glPixelStorei(GL_UNPACK_ROW_LENGTH, srcpitch*8/bpp) );
+			GL_CHECK(glPixelStorei(GL_UNPACK_ROW_LENGTH, srcPitch*8/bpp) );
 		}
 
 		if (compressed
@@ -6162,7 +6162,7 @@ namespace bgfx { namespace gl
 
 			if (NULL != temp)
 			{
-				bimg::imageCopy(temp, numBlocksY, srcpitch, 1, data, rectpitch);
+				bimg::imageCopy(temp, numBlocksY, srcPitch, 1, data, rectPitch);
 				data = temp;
 			}
 			const GLenum internalFmt = (0 != (m_flags & BGFX_TEXTURE_SRGB) )
@@ -6178,7 +6178,7 @@ namespace bgfx { namespace gl
 				, rect.m_height
 				, _depth
 				, internalFmt
-				, rectpitch*numBlocksY
+				, rectPitch*numBlocksY
 				, data
 				) );
 		}
@@ -6188,16 +6188,16 @@ namespace bgfx { namespace gl
 
 			if (convert)
 			{
-				bimg::imageDecodeToRgba8(g_allocator, temp, data, width, height, srcpitch, bimg::TextureFormat::Enum(m_requestedFormat) );
+				bimg::imageDecodeToRgba8(g_allocator, temp, data, width, height, rectPitch, bimg::TextureFormat::Enum(m_requestedFormat) );
 				data = temp;
-				srcpitch = rectpitch;
+				srcPitch = rectPitch;
 			}
 
 			if (BX_IGNORE_C4127(true
 			&&  !unpackRowLength
 			&&  !convert) )
 			{
-				bimg::imageCopy(temp, width, height, 1, bpp, srcpitch, data);
+				bimg::imageCopy(temp, width, height, 1, bpp, srcPitch, data);
 				data = temp;
 			}
 
