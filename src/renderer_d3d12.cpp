@@ -6004,15 +6004,15 @@ namespace bgfx { namespace d3d12
 		D3D12_RESOURCE_STATES state = setState(_commandList, D3D12_RESOURCE_STATE_COPY_DEST);
 
 		const uint32_t bpp    = bimg::getBitsPerPixel(bimg::TextureFormat::Enum(m_textureFormat) );
-		uint32_t rectpitch    = _rect.m_width*bpp/8;
+		uint32_t rectPitch    = _rect.m_width*bpp/8;
 		if (bimg::isCompressed(bimg::TextureFormat::Enum(m_textureFormat) ) )
 		{
 			const bimg::ImageBlockInfo& blockInfo = bimg::getBlockInfo(bimg::TextureFormat::Enum(m_textureFormat) );
-			rectpitch = (_rect.m_width / blockInfo.blockWidth) * blockInfo.blockSize;
+			rectPitch = (_rect.m_width / blockInfo.blockWidth) * blockInfo.blockSize;
 		}
 
-		const uint32_t srcpitch   = UINT16_MAX == _pitch ? rectpitch : _pitch;
-		const uint32_t slicepitch = rectpitch*_rect.m_height;
+		const uint32_t srcPitch   = UINT16_MAX == _pitch ? rectPitch : _pitch;
+		const uint32_t slicePitch = rectPitch*_rect.m_height;
 
 		const bool convert = m_textureFormat != m_requestedFormat;
 
@@ -6038,13 +6038,16 @@ namespace bgfx { namespace d3d12
 
 		const uint32_t subres = _mip + ((layer + _side) * m_numMips);
 
+		uint32_t copyPitch = srcPitch;
+
 		uint8_t* srcData = _mem->data;
 		uint8_t* temp = NULL;
 
 		if (convert)
 		{
-			temp = (uint8_t*)bx::alloc(g_allocator, slicepitch);
-			bimg::imageDecodeToBgra8(g_allocator, temp, srcData, _rect.m_width, _rect.m_height, srcpitch, bimg::TextureFormat::Enum(m_requestedFormat) );
+			copyPitch = rectPitch;
+			temp = (uint8_t*)bx::alloc(g_allocator, slicePitch);
+			bimg::imageDecodeToBgra8(g_allocator, temp, srcData, _rect.m_width, _rect.m_height, copyPitch, bimg::TextureFormat::Enum(m_requestedFormat) );
 			srcData = temp;
 
 			box.right  = bx::clamp<uint32_t>(box.right,  box.left, bx::max(1u, m_width  >> _mip) - _rect.m_x);
@@ -6077,7 +6080,7 @@ namespace bgfx { namespace d3d12
 		D3D12_RANGE readRange = { 0, 0 };
 		DX_CHECK(staging->Map(0, &readRange, (void**)&dstData) );
 
-		bx::memCopy(dstData, rowPitch, srcData, srcpitch, rectpitch, numRows);
+		bx::memCopy(dstData, rowPitch, srcData, copyPitch, rectPitch, numRows);
 
 		if (NULL != temp)
 		{
