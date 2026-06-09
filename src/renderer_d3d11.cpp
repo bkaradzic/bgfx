@@ -4830,6 +4830,32 @@ namespace bgfx { namespace d3d11
 			box.right  = bx::max(1u, m_width  >> _mip);
 			box.bottom = bx::max(1u, m_height >> _mip);
 		}
+		else
+		{
+			switch (m_textureFormat)
+			{
+			case TextureFormat::R5G6B5:
+				temp = (uint8_t*)bx::alloc(g_allocator, slicepitch);
+				bimg::imageConvert(temp, 16, bx::packB5G6R5, data, bx::unpackR5G6B5, slicepitch);
+				data = temp;
+				break;
+
+			case TextureFormat::RGBA4:
+				temp = (uint8_t*)bx::alloc(g_allocator, slicepitch);
+				bimg::imageConvert(temp, 16, bx::packBgra4, data, bx::unpackRgba4, slicepitch);
+				data = temp;
+				break;
+
+			case TextureFormat::RGB5A1:
+				temp = (uint8_t*)bx::alloc(g_allocator, slicepitch);
+				bimg::imageConvert(temp, 16, bx::packBgr5a1, data, bx::unpackRgb5a1, slicepitch);
+				data = temp;
+				break;
+
+			default:
+				break;
+			}
+		}
 
 		deviceCtx->UpdateSubresource(
 			  m_ptr
