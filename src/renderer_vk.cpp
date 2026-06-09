@@ -6862,12 +6862,8 @@ VK_DESTROY
 			bimg::imageDecodeToBgra8(g_allocator, temp, data, _rect.m_width, _rect.m_height, srcpitch, bimg::TextureFormat::Enum(m_requestedFormat) );
 			data = temp;
 
-			region.imageExtent =
-			{
-				bx::max(1u, m_width  >> _mip),
-				bx::max(1u, m_height >> _mip),
-				_depth,
-			};
+			region.imageExtent.width  = bx::clamp<uint32_t>(region.imageExtent.width,  0u, bx::max(1u, m_width  >> _mip) - _rect.m_x);
+			region.imageExtent.height = bx::clamp<uint32_t>(region.imageExtent.height, 0u, bx::max(1u, m_height >> _mip) - _rect.m_y);
 		}
 
 		StagingBufferVK stagingBuffer = s_renderVK->allocFromScratchStagingBuffer(size, align, data);
