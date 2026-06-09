@@ -2757,7 +2757,6 @@ namespace bgfx { namespace d3d12
 		{
 			m_pipelineStateCache.invalidate();
 
-			m_samplerStateCache.invalidate();
 			m_samplerAllocator.reset();
 		}
 
@@ -3620,14 +3619,7 @@ namespace bgfx { namespace d3d12
 			murmur.add(_flags, _num * sizeof(uint32_t) );
 			uint32_t hash = murmur.end();
 
-			uint16_t sampler = m_samplerStateCache.find(hash);
-			if (UINT16_MAX == sampler)
-			{
-				sampler = m_samplerAllocator.alloc(_flags, _num, _palette);
-				m_samplerStateCache.add(hash, sampler);
-			}
-
-			return sampler;
+			return m_samplerAllocator.alloc(hash, _flags, _num, _palette);
 		}
 
 		bool isVisible(Frame* _render, OcclusionQueryHandle _handle, bool _visible)
@@ -3904,7 +3896,6 @@ namespace bgfx { namespace d3d12
 		UniformRegistry m_uniformReg;
 
 		StateCacheT<ID3D12PipelineState*> m_pipelineStateCache;
-		StateCache m_samplerStateCache;
 
 		TextVideoMem m_textVideoMem;
 
@@ -4208,8 +4199,12 @@ namespace bgfx { namespace d3d12
 
 	void DescriptorAllocatorD3D12::create(D3D12_DESCRIPTOR_HEAP_TYPE _type, uint16_t _maxDescriptors, uint16_t _numDescriptorsPerBlock)
 	{
-		m_handleAlloc = bx::createHandleAlloc(g_allocator, _maxDescriptors/_numDescriptorsPerBlock);
 		m_numDescriptorsPerBlock = _numDescriptorsPerBlock;
+		m_numBlocks = _maxDescriptors/_numDescriptorsPerBlock;
+		BX_ASSERT(m_numBlocks <= kMaxBlocks, "Too many descriptor blocks (%d > %d).", m_numBlocks, kMaxBlocks);
+
+		m_handleAlloc.reset();
+		m_stateCache.invalidate();
 
 		ID3D12Device* device = s_renderD3D12->m_device;
 
@@ -4231,14 +4226,12 @@ namespace bgfx { namespace d3d12
 
 	void DescriptorAllocatorD3D12::destroy()
 	{
-		bx::destroyHandleAlloc(g_allocator, m_handleAlloc);
-
 		DX_RELEASE(m_heap, 0);
 	}
 
 	uint16_t DescriptorAllocatorD3D12::alloc(ID3D12Resource* _ptr, const D3D12_SHADER_RESOURCE_VIEW_DESC* _desc)
 	{
-		uint16_t idx = m_handleAlloc->alloc();
+		uint16_t idx = m_handleAlloc.alloc();
 		BX_ASSERT(bx::kInvalidHandle != idx, "DescriptorAllocatorD3D12 is out of memory.");
 
 		D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle = { m_cpuHandle.ptr + idx * m_incrementSize };
@@ -4252,9 +4245,23 @@ namespace bgfx { namespace d3d12
 		return idx;
 	}
 
-	uint16_t DescriptorAllocatorD3D12::alloc(const uint32_t* _flags, uint32_t _num, const float _palette[][4])
+	uint16_t DescriptorAllocatorD3D12::alloc(uint32_t _hash, const uint32_t* _flags, uint32_t _num, const float _palette[][4])
 	{
-		uint16_t idx = m_handleAlloc->alloc();
+		uint16_t idx = m_stateCache.find(_hash);
+		if (UINT16_MAX != idx)
+		{
+			m_handleAlloc.touch(idx);
+			return idx;
+		}
+
+		if (m_handleAlloc.getNumHandles() >= m_numBlocks)
+		{
+			const uint16_t lru = m_handleAlloc.getBack();
+			m_handleAlloc.free(lru);
+			m_stateCache.invalidate(m_blockHash[lru]);
+		}
+
+		idx = m_handleAlloc.alloc();
 		BX_ASSERT(bx::kInvalidHandle != idx, "DescriptorAllocatorD3D12 is out of memory.");
 
 		ID3D12Device* device   = s_renderD3D12->m_device;
@@ -4308,19 +4315,21 @@ namespace bgfx { namespace d3d12
 			device->CreateSampler(&sd, cpuHandle);
 		}
 
+		m_blockHash[idx] = _hash;
+		m_stateCache.add(_hash, idx);
+
 		return idx;
 	}
 
 	void DescriptorAllocatorD3D12::free(uint16_t _idx)
 	{
-		m_handleAlloc->free(_idx);
+		m_handleAlloc.free(_idx);
 	}
 
 	void DescriptorAllocatorD3D12::reset()
 	{
-		uint16_t max = m_handleAlloc->getMaxHandles();
-		bx::destroyHandleAlloc(g_allocator, m_handleAlloc);
-		m_handleAlloc = bx::createHandleAlloc(g_allocator, max);
+		m_handleAlloc.reset();
+		m_stateCache.invalidate();
 	}
 
 	D3D12_GPU_DESCRIPTOR_HANDLE DescriptorAllocatorD3D12::get(uint16_t _idx)
@@ -8093,7 +8102,7 @@ namespace bgfx { namespace d3d12
 				tvm.printf(10, pos++, 0x8b, " PSO    | Sampler | Bind   | Queued  ");
 				tvm.printf(10, pos++, 0x8b, " %6d |  %6d | %6d | %6d  "
 					, m_pipelineStateCache.getCount()
-					, m_samplerStateCache.getCount()
+					, m_samplerAllocator.getCount()
 					, bindLru.getCount()
 					, m_cmd.m_control.getNumUsed()
 					);

@@ -180,9 +180,14 @@ namespace bgfx { namespace d3d12
 		void destroy();
 
 		uint16_t alloc(ID3D12Resource* _ptr, const D3D12_SHADER_RESOURCE_VIEW_DESC* _desc);
-		uint16_t alloc(const uint32_t* _flags, uint32_t _num, const float _palette[][4]);
+		uint16_t alloc(uint32_t _hash, const uint32_t* _flags, uint32_t _num, const float _palette[][4]);
 		void free(uint16_t _handle);
 		void reset();
+
+		uint32_t getCount() const
+		{
+			return m_stateCache.getCount();
+		}
 
 		D3D12_GPU_DESCRIPTOR_HANDLE get(uint16_t _handle);
 
@@ -192,12 +197,17 @@ namespace bgfx { namespace d3d12
 		}
 
 	private:
+		static constexpr uint16_t kMaxBlocks = 2048;
+
+		StateCache m_stateCache;
 		ID3D12DescriptorHeap* m_heap;
-		bx::HandleAlloc* m_handleAlloc;
+		bx::HandleAllocLruT<kMaxBlocks> m_handleAlloc;
+		uint32_t m_blockHash[kMaxBlocks];
 		D3D12_CPU_DESCRIPTOR_HANDLE m_cpuHandle;
 		D3D12_GPU_DESCRIPTOR_HANDLE m_gpuHandle;
 		uint32_t m_incrementSize;
 		uint16_t m_numDescriptorsPerBlock;
+		uint16_t m_numBlocks;
 	};
 
 	struct BufferD3D12
