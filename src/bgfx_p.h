@@ -5402,11 +5402,16 @@ namespace bgfx
 
 		void resizeTexture(TextureHandle _handle, uint16_t _width, uint16_t _height, uint8_t _numMips, uint16_t _numLayers)
 		{
-			const TextureRef& ref = m_textureRef[_handle.idx];
+			TextureRef& ref = m_textureRef[_handle.idx];
 			BX_ASSERT(BackbufferRatio::Count != ref.m_bbRatio, "");
 
 			getTextureSizeFromRatio(BackbufferRatio::Enum(ref.m_bbRatio), _width, _height);
 			_numMips = calcNumMips(1 < _numMips, _width, _height);
+
+			ref.m_width     = _width;
+			ref.m_height    = _height;
+			ref.m_numMips   = _numMips;
+			ref.m_numLayers = _numLayers;
 
 			BX_TRACE("Resize %3d: %4dx%d %s"
 				, _handle.idx
