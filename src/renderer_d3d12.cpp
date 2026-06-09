@@ -6047,8 +6047,8 @@ namespace bgfx { namespace d3d12
 			bimg::imageDecodeToBgra8(g_allocator, temp, srcData, _rect.m_width, _rect.m_height, srcpitch, bimg::TextureFormat::Enum(m_requestedFormat) );
 			srcData = temp;
 
-			box.right  = bx::max(1u, m_width  >> _mip);
-			box.bottom = bx::max(1u, m_height >> _mip);
+			box.right  = bx::clamp<uint32_t>(box.right,  box.left, bx::max(1u, m_width  >> _mip) - _rect.m_x);
+			box.bottom = bx::clamp<uint32_t>(box.bottom, box.top,  bx::max(1u, m_height >> _mip) - _rect.m_y);
 		}
 
 		D3D12_RESOURCE_DESC desc = getResourceDesc(m_ptr);
