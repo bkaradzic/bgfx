@@ -4100,6 +4100,12 @@ namespace bgfx
 		BGFX_CHECK_HANDLE("setVertexBuffer", s_ctx->m_dynamicVertexBufferHandle, _handle);
 		BGFX_CHECK_HANDLE_INVALID_OK("setVertexBuffer", s_ctx->m_layoutHandle, _layoutHandle);
 		const DynamicVertexBuffer& dvb = s_ctx->m_dynamicVertexBuffers[_handle.idx];
+		BX_ASSERT(!isValid(_layoutHandle)
+			|| s_ctx->m_vertexLayoutRef.m_stride[_layoutHandle.idx] == dvb.m_stride
+			, "Vertex layout override stride (%d) must match dynamic vertex buffer layout stride (%d)."
+			, s_ctx->m_vertexLayoutRef.m_stride[_layoutHandle.idx]
+			, dvb.m_stride
+			);
 		BGFX_ENCODER(setVertexBuffer(_stream, dvb, _startVertex, _numVertices, _layoutHandle) );
 	}
 
@@ -4119,6 +4125,12 @@ namespace bgfx
 		BX_ASSERT(NULL != _tvb, "_tvb can't be NULL");
 		BGFX_CHECK_HANDLE("setVertexBuffer", s_ctx->m_vertexBufferHandle, _tvb->handle);
 		BGFX_CHECK_HANDLE_INVALID_OK("setVertexBuffer", s_ctx->m_layoutHandle, _layoutHandle);
+		BX_ASSERT(!isValid(_layoutHandle)
+			|| s_ctx->m_vertexLayoutRef.m_stride[_layoutHandle.idx] == _tvb->stride
+			, "Vertex layout override stride (%d) must match transient vertex buffer stride (%d)."
+			, s_ctx->m_vertexLayoutRef.m_stride[_layoutHandle.idx]
+			, _tvb->stride
+			);
 		BGFX_ENCODER(setVertexBuffer(_stream, _tvb, _startVertex, _numVertices, _layoutHandle) );
 	}
 
