@@ -885,6 +885,9 @@ public:
 
 			imguiEndFrame();
 
+			// Just flush work, but do not present.
+			bgfx::frame(BGFX_FRAME_FLUSH);
+
 			// Advance to next frame. Rendering thread will be kicked to
 			// process submitted rendering primitives.
 			bgfx::frame();
