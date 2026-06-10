@@ -810,6 +810,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			, m_blitCommandEncoder(NULL)
 			, m_renderCommandEncoder(NULL)
 			, m_computeCommandEncoder(NULL)
+			, m_renderCommandEncoderFbh(BGFX_INVALID_HANDLE)
 		{
 			bx::memSet(&m_windows, 0xff, sizeof(m_windows) );
 		}
@@ -1626,7 +1627,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 				MTL::RenderCommandEncoder* rce = m_commandBuffer->renderCommandEncoder(renderPassDescriptor);
 				m_renderCommandEncoder = rce;
-				m_renderCommandEncoderFrameBufferHandle = fbh;
+				m_renderCommandEncoderFbh = fbh;
 				MTL_RELEASE(renderPassDescriptor, 0);
 
 				if (m_depthClamp)
@@ -1898,7 +1899,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 				g_callback->captureFrame(m_capture, m_captureSize);
 
 				MTL::RenderPassDescriptor* renderPassDescriptor = newRenderPassDescriptor();
-				setFrameBuffer(renderPassDescriptor, m_renderCommandEncoderFrameBufferHandle);
+				setFrameBuffer(renderPassDescriptor, m_renderCommandEncoderFbh);
 
 				for (uint32_t ii = 0; ii < g_caps.limits.maxFBAttachments; ++ii)
 				{
@@ -3016,7 +3017,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			{
 				MTL::RenderPassDescriptor* renderPassDescriptor = newRenderPassDescriptor();
 
-				setFrameBuffer(renderPassDescriptor, m_renderCommandEncoderFrameBufferHandle);
+				setFrameBuffer(renderPassDescriptor, m_renderCommandEncoderFbh);
 
 				renderPassDescriptor->colorAttachments()->object(0)->setLoadAction(MTL::LoadActionLoad);
 				renderPassDescriptor->colorAttachments()->object(0)->setStoreAction(
@@ -3136,7 +3137,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 		MTL::BlitCommandEncoder*    m_blitCommandEncoder;
 		MTL::RenderCommandEncoder*  m_renderCommandEncoder;
 		MTL::ComputeCommandEncoder* m_computeCommandEncoder;
-		FrameBufferHandle           m_renderCommandEncoderFrameBufferHandle;
+		FrameBufferHandle           m_renderCommandEncoderFbh;
 	};
 
 	void ChunkedScratchBufferMtl::createUniform(uint32_t _chunkSize, uint32_t _numChunks)
@@ -5098,7 +5099,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 							rce = m_commandBuffer->renderCommandEncoder(renderPassDescriptor);
 							m_renderCommandEncoder = rce;
-							m_renderCommandEncoderFrameBufferHandle = fbh;
+							m_renderCommandEncoderFbh = fbh;
 
 							MTL_RELEASE(renderPassDescriptor, 0);
 
@@ -5866,10 +5867,19 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 		perfStats.gpuMemoryMax  = -INT64_MAX;
 		perfStats.gpuMemoryUsed = -INT64_MAX;
 
-		rce = getRenderCommandEncoder();
-		rce->setTriangleFillMode(MTL::TriangleFillModeFill);
+		const bool backbufferInUse = false
+			||  NULL != m_renderCommandEncoder
+			|| (NULL != m_mainFrameBuffer.m_swapChain && NULL != m_mainFrameBuffer.m_swapChain->m_drawableTexture)
+			;
 
-		if (_render->m_debug & (BGFX_DEBUG_IFH|BGFX_DEBUG_STATS) )
+		if (backbufferInUse)
+		{
+			rce = getRenderCommandEncoder();
+			rce->setTriangleFillMode(MTL::TriangleFillModeFill);
+		}
+
+		if (backbufferInUse
+		&&  0 != (_render->m_debug & (BGFX_DEBUG_IFH|BGFX_DEBUG_STATS) ) )
 		{
 			rce->pushDebugGroup(nsstr("debugstats") );
 
@@ -5959,7 +5969,8 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 			rce->popDebugGroup();
 		}
-		else if (_render->m_debug & BGFX_DEBUG_TEXT)
+		else if (backbufferInUse
+		     &&  0 != (_render->m_debug & BGFX_DEBUG_TEXT) )
 		{
 			rce->pushDebugGroup(nsstr("debugtext") );
 
@@ -5971,7 +5982,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 		endEncoding();
 
-		m_renderCommandEncoderFrameBufferHandle = BGFX_INVALID_HANDLE;
+		m_renderCommandEncoderFbh = BGFX_INVALID_HANDLE;
 
 		if (_render->m_capture)
 		{
