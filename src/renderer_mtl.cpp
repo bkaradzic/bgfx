@@ -5897,7 +5897,12 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 				tvm.clear();
 				uint16_t pos = 0;
 				tvm.printf(0, pos++, BGFX_CONFIG_DEBUG ? 0x8c : 0x8f
-					, " %s / " BX_COMPILER_NAME
+					, " %s ("
+					  BX_STRINGIZE(METALCPP_VERSION_MAJOR) "."
+					  BX_STRINGIZE(METALCPP_VERSION_MINOR) "."
+					  BX_STRINGIZE(METALCPP_VERSION_PATCH)
+					  ")"
+					  " / " BX_COMPILER_NAME
 					  " / " BX_CPU_NAME
 					  " / " BX_ARCH_NAME
 					  " / " BX_PLATFORM_NAME
