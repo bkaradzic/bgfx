@@ -3224,7 +3224,10 @@ VK_IMPORT_DEVICE
 			else
 			{
 				int64_t start = bx::getHPCounter();
-				newFrameBuffer.acquire(m_commandBuffer);
+				// Only block acquiring the main back buffer: window swap chains may not be
+				// served anymore (e.g. fully occluded window on Wayland compositors without
+				// fifo-v1) and must not stall the whole frame.
+				newFrameBuffer.acquire(m_commandBuffer, &newFrameBuffer == &m_backBuffer);
 				m_presentElapsed += bx::getHPCounter() - start;
 			}
 
@@ -8297,7 +8300,7 @@ VK_DESTROY
 		return idx;
 	}
 
-	bool SwapChainVK::acquire(VkCommandBuffer _commandBuffer)
+	bool SwapChainVK::acquire(VkCommandBuffer _commandBuffer, bool _block)
 	{
 		BGFX_PROFILER_SCOPE("SwapChainVK::acquire", kColorFrame);
 
@@ -8321,13 +8324,22 @@ VK_DESTROY
 				result = vkAcquireNextImageKHR(
 					  device
 					, m_swapChain
-					, UINT64_MAX
+					, _block ? UINT64_MAX : 0
 					, m_lastImageAcquiredSemaphore
 					, VK_NULL_HANDLE
 					, &m_backBufferColorIdx
 					);
 			}
 
+			if (!_block
+			&& (VK_NOT_READY == result || VK_TIMEOUT == result) )
+			{
+				// No image available without blocking, e.g. a fully occluded window the
+				// compositor stopped serving; skip this swap chain for this frame instead
+				// of stalling all swap chains. The semaphore was not used, undo the rotation.
+				m_currentSemaphore = (m_currentSemaphore + kMaxBackBuffers - 1) % kMaxBackBuffers;
+				return false;
+			}
 
 			if (result != VK_SUCCESS)
 			{
@@ -8686,7 +8698,7 @@ VK_DESTROY
 		return denseIdx;
 	}
 
-	bool FrameBufferVK::acquire(VkCommandBuffer _commandBuffer)
+	bool FrameBufferVK::acquire(VkCommandBuffer _commandBuffer, bool _block)
 	{
 		BX_ASSERT(NULL != m_nwh, "FrameBufferVK::acquire is only valid for swap-chain framebuffers.");
 		BGFX_PROFILER_SCOPE("FrameBufferVK::acquire", kColorFrame);
@@ -8704,7 +8716,7 @@ VK_DESTROY
 			_commandBuffer = s_renderVK->m_commandBuffer;
 		}
 
-		const bool acquired = m_swapChain.acquire(_commandBuffer);
+		const bool acquired = m_swapChain.acquire(_commandBuffer, _block);
 		m_needPresent = m_swapChain.m_needPresent;
 		m_currentFramebuffer = m_swapChain.m_backBufferFrameBuffer[m_swapChain.m_backBufferColorIdx];
 
