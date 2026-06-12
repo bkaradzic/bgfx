@@ -8538,6 +8538,19 @@ VK_DESTROY
 		BX_ASSERT(NULL != m_nwh, "FrameBufferVK::acquire is only valid for swap-chain framebuffers.");
 		BGFX_PROFILER_SCOPE("FrameBufferVK::acquire", kColorFrame);
 
+		// Window frame buffers are not recreated by updateResolution like the main back
+		// buffer is, so recreate here when the swap chain was flagged, e.g. with
+		// VK_SUBOPTIMAL_KHR after the window moved to another display.
+		if (this != &s_renderVK->m_backBuffer
+		&&  VK_NULL_HANDLE != m_swapChain.m_swapChain
+		&& (m_swapChain.m_needToRecreateSwapchain || m_swapChain.m_needToRecreateSurface) )
+		{
+			update(_commandBuffer, m_swapChain.m_resolution);
+
+			// update may kick the queue and rotate the command buffer, refresh the local handle
+			_commandBuffer = s_renderVK->m_commandBuffer;
+		}
+
 		const bool acquired = m_swapChain.acquire(_commandBuffer);
 		m_needPresent = m_swapChain.m_needPresent;
 		m_currentFramebuffer = m_swapChain.m_backBufferFrameBuffer[m_swapChain.m_backBufferColorIdx];
