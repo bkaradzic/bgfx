@@ -420,10 +420,14 @@ namespace entry
 			glfwSetScrollCallback(m_window[0], scrollCb);
 			glfwSetCursorPosCallback(m_window[0], cursorPosCb);
 			glfwSetMouseButtonCallback(m_window[0], mouseButtonCb);
-			glfwSetWindowSizeCallback(m_window[0], windowSizeCb);
+			glfwSetFramebufferSizeCallback(m_window[0], framebufferSizeCb);
 			glfwSetDropCallback(m_window[0], dropFileCb);
 
-			m_eventQueue.postSizeEvent(handle, ENTRY_DEFAULT_WIDTH, ENTRY_DEFAULT_HEIGHT);
+			// Drive bgfx with the framebuffer (pixel) size, not the logical window size,
+			// so rendering stays crisp on fractional/HiDPI scaling (e.g. Wayland).
+			int32_t fbWidth, fbHeight;
+			glfwGetFramebufferSize(m_window[0], &fbWidth, &fbHeight);
+			m_eventQueue.postSizeEvent(handle, fbWidth, fbHeight);
 
 			for (uint32_t ii = 0; ii < ENTRY_CONFIG_MAX_GAMEPADS; ++ii)
 			{
@@ -479,11 +483,14 @@ namespace entry
 							glfwSetScrollCallback(window, scrollCb);
 							glfwSetCursorPosCallback(window, cursorPosCb);
 							glfwSetMouseButtonCallback(window, mouseButtonCb);
-							glfwSetWindowSizeCallback(window, windowSizeCb);
+							glfwSetFramebufferSizeCallback(window, framebufferSizeCb);
 							glfwSetDropCallback(window, dropFileCb);
 
 							m_window[msg->m_handle.idx] = window;
-							m_eventQueue.postSizeEvent(msg->m_handle, msg->m_width, msg->m_height);
+
+							int32_t fbWidth, fbHeight;
+							glfwGetFramebufferSize(window, &fbWidth, &fbHeight);
+							m_eventQueue.postSizeEvent(msg->m_handle, fbWidth, fbHeight);
 							m_eventQueue.postWindowEvent(msg->m_handle, glfwNativeWindowHandle(window));
 						}
 						break;
@@ -614,7 +621,7 @@ namespace entry
 		static void scrollCb(GLFWwindow* _window, double _dx, double _dy);
 		static void cursorPosCb(GLFWwindow* _window, double _mx, double _my);
 		static void mouseButtonCb(GLFWwindow* _window, int32_t _button, int32_t _action, int32_t _mods);
-		static void windowSizeCb(GLFWwindow* _window, int32_t _width, int32_t _height);
+		static void framebufferSizeCb(GLFWwindow* _window, int32_t _width, int32_t _height);
 		static void dropFileCb(GLFWwindow* _window, int32_t _count, const char** _filePaths);
 
 		MainThreadEntry m_mte;
@@ -684,9 +691,18 @@ namespace entry
 	void Context::cursorPosCb(GLFWwindow* _window, double _mx, double _my)
 	{
 		WindowHandle handle = s_ctx.findHandle(_window);
+
+		// Cursor position is reported in logical screen coordinates; scale it to
+		// framebuffer pixels so it matches the render resolution under HiDPI scaling.
+		int32_t winWidth, winHeight, fbWidth, fbHeight;
+		glfwGetWindowSize(_window, &winWidth, &winHeight);
+		glfwGetFramebufferSize(_window, &fbWidth, &fbHeight);
+		const double scaleX = winWidth  > 0 ? double(fbWidth)  / double(winWidth)  : 1.0;
+		const double scaleY = winHeight > 0 ? double(fbHeight) / double(winHeight) : 1.0;
+
 		s_ctx.m_eventQueue.postMouseEvent(handle
-			, (int32_t) _mx
-			, (int32_t) _my
+			, (int32_t) (_mx * scaleX)
+			, (int32_t) (_my * scaleY)
 			, (int32_t) s_ctx.m_scrollPos
 			);
 	}
@@ -707,7 +723,7 @@ namespace entry
 			);
 	}
 
-	void Context::windowSizeCb(GLFWwindow* _window, int32_t _width, int32_t _height)
+	void Context::framebufferSizeCb(GLFWwindow* _window, int32_t _width, int32_t _height)
 	{
 		WindowHandle handle = s_ctx.findHandle(_window);
 		s_ctx.m_eventQueue.postSizeEvent(handle, _width, _height);
