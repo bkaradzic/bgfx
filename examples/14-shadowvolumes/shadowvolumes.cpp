@@ -1111,10 +1111,10 @@ struct ShadowVolumeAlgorithm
 
 struct ShadowVolume
 {
-	bgfx::VertexBufferHandle m_vbSides;
-	bgfx::IndexBufferHandle m_ibSides;
-	bgfx::IndexBufferHandle m_ibFrontCap;
-	bgfx::IndexBufferHandle m_ibBackCap;
+	bgfx::TransientVertexBuffer m_vbSides;
+	bgfx::TransientIndexBuffer m_ibSides;
+	bgfx::TransientIndexBuffer m_ibFrontCap;
+	bgfx::TransientIndexBuffer m_ibBackCap;
 
 	uint32_t m_numVertices;
 	uint32_t m_numIndices;
@@ -1123,6 +1123,7 @@ struct ShadowVolume
 	const float* m_lightPos;
 
 	bool m_cap;
+	bool m_valid;
 };
 
 void shadowVolumeLightTransform(
@@ -1494,40 +1495,38 @@ void shadowVolumeCreate(
 	_outShadowVolume.m_lightPos    = _light;
 	_outShadowVolume.m_cap         = cap;
 
-	const bgfx::Memory* mem;
-
 	//sides
 	uint32_t vsize = vsideI * 5*sizeof(float);
 	uint32_t isize = sideI * sizeof(uint16_t);
 
-	mem = bgfx::makeRef(verticesSide, vsize);
-	_outShadowVolume.m_vbSides = bgfx::createVertexBuffer(mem, layout);
+	const uint32_t numIndices = sideI + (cap ? frontCapI + backCapI : 0);
+	_outShadowVolume.m_valid = true
+		&& vsideI     == bgfx::getAvailTransientVertexBuffer(vsideI, layout)
+		&& numIndices == bgfx::getAvailTransientIndexBuffer(numIndices)
+		;
 
-	mem = bgfx::makeRef(indicesSide, isize);
-	_outShadowVolume.m_ibSides = bgfx::createIndexBuffer(mem);
+	if (!_outShadowVolume.m_valid)
+	{
+		return;
+	}
 
-	// bgfx::destroy*Buffer doesn't actually destroy buffers now.
-	// Instead, these bgfx::destroy*Buffer commands get queued to be executed after the end of the next frame.
-	bgfx::destroy(_outShadowVolume.m_vbSides);
-	bgfx::destroy(_outShadowVolume.m_ibSides);
+	bgfx::allocTransientVertexBuffer(&_outShadowVolume.m_vbSides, vsideI, layout);
+	bx::memCopy(_outShadowVolume.m_vbSides.data, verticesSide, vsize);
+
+	bgfx::allocTransientIndexBuffer(&_outShadowVolume.m_ibSides, sideI);
+	bx::memCopy(_outShadowVolume.m_ibSides.data, indicesSide, isize);
 
 	if (cap)
 	{
 		//front cap
 		isize = frontCapI * sizeof(uint16_t);
-		mem = bgfx::makeRef(indicesFrontCap, isize);
-		_outShadowVolume.m_ibFrontCap = bgfx::createIndexBuffer(mem);
-
-		//gets destroyed after the end of the next frame
-		bgfx::destroy(_outShadowVolume.m_ibFrontCap);
+		bgfx::allocTransientIndexBuffer(&_outShadowVolume.m_ibFrontCap, frontCapI);
+		bx::memCopy(_outShadowVolume.m_ibFrontCap.data, indicesFrontCap, isize);
 
 		//back cap
 		isize = backCapI * sizeof(uint16_t);
-		mem = bgfx::makeRef(indicesBackCap, isize);
-		_outShadowVolume.m_ibBackCap = bgfx::createIndexBuffer(mem);
-
-		//gets destroyed after the end of the next frame
-		bgfx::destroy(_outShadowVolume.m_ibBackCap);
+		bgfx::allocTransientIndexBuffer(&_outShadowVolume.m_ibBackCap, backCapI);
+		bx::memCopy(_outShadowVolume.m_ibBackCap.data, indicesBackCap, isize);
 	}
 }
 
@@ -2554,6 +2553,12 @@ public:
 						m_numShadowVolumeVertices += shadowVolume.m_numVertices;
 						m_numShadowVolumeIndices += shadowVolume.m_numIndices;
 
+						if (!shadowVolume.m_valid)
+						{
+							// Geometry didn't fit the per-frame transient budget; skip it.
+							continue;
+						}
+
 						ShadowVolumeProgramType::Enum programIndex = ShadowVolumeProgramType::Blank;
 						RenderState::Enum renderStateIndex;
 						if (m_useStencilTexture)
@@ -2579,8 +2584,8 @@ public:
 
 						s_uniforms.submitPerDrawUniforms();
 						bgfx::setTransform(shadowVolumeMtx);
-						bgfx::setVertexBuffer(0, shadowVolume.m_vbSides);
-						bgfx::setIndexBuffer(shadowVolume.m_ibSides);
+						bgfx::setVertexBuffer(0, &shadowVolume.m_vbSides);
+						bgfx::setIndexBuffer(&shadowVolume.m_ibSides);
 						setRenderState(renderStateCraftStencil);
 						::submit(viewId, m_svProgs[programIndex][ShadowVolumePart::Side]);
 
@@ -2589,14 +2594,14 @@ public:
 							s_uniforms.submitPerDrawUniforms();
 							bgfx::setTransform(shadowVolumeMtx);
 							bgfx::setVertexBuffer(0, group.m_vbh);
-							bgfx::setIndexBuffer(shadowVolume.m_ibFrontCap);
+							bgfx::setIndexBuffer(&shadowVolume.m_ibFrontCap);
 							setRenderState(renderStateCraftStencil);
 							::submit(viewId, m_svProgs[programIndex][ShadowVolumePart::Front]);
 
 							s_uniforms.submitPerDrawUniforms();
 							bgfx::setTransform(shadowVolumeMtx);
 							bgfx::setVertexBuffer(0, group.m_vbh);
-							bgfx::setIndexBuffer(shadowVolume.m_ibBackCap);
+							bgfx::setIndexBuffer(&shadowVolume.m_ibBackCap);
 							::setRenderState(renderStateCraftStencil);
 							::submit(viewId, m_svProgs[programIndex][ShadowVolumePart::Back]);
 						}
@@ -2607,8 +2612,8 @@ public:
 
 							s_uniforms.submitPerDrawUniforms();
 							bgfx::setTransform(shadowVolumeMtx);
-							bgfx::setVertexBuffer(0, shadowVolume.m_vbSides);
-							bgfx::setIndexBuffer(shadowVolume.m_ibSides);
+							bgfx::setVertexBuffer(0, &shadowVolume.m_vbSides);
+							bgfx::setIndexBuffer(&shadowVolume.m_ibSides);
 							::setRenderState(renderState);
 							::submit(kRange1Pass3, m_svProgs[ShadowVolumeProgramType::Color][ShadowVolumePart::Side]);
 
@@ -2617,14 +2622,14 @@ public:
 								s_uniforms.submitPerDrawUniforms();
 								bgfx::setTransform(shadowVolumeMtx);
 								bgfx::setVertexBuffer(0, group.m_vbh);
-								bgfx::setIndexBuffer(shadowVolume.m_ibFrontCap);
+								bgfx::setIndexBuffer(&shadowVolume.m_ibFrontCap);
 								::setRenderState(renderState);
 								::submit(kRange1Pass3, m_svProgs[ShadowVolumeProgramType::Color][ShadowVolumePart::Front]);
 
 								s_uniforms.submitPerDrawUniforms();
 								bgfx::setTransform(shadowVolumeMtx);
 								bgfx::setVertexBuffer(0, group.m_vbh);
-								bgfx::setIndexBuffer(shadowVolume.m_ibBackCap);
+								bgfx::setIndexBuffer(&shadowVolume.m_ibBackCap);
 								::setRenderState(renderState);
 								::submit(kRange1Pass3, m_svProgs[ShadowVolumeProgramType::Color][ShadowVolumePart::Back]);
 							}
