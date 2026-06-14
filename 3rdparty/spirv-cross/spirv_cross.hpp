@@ -91,6 +91,28 @@ struct BuiltInResource
 	Resource resource;
 };
 
+// Needs to stay in sync 1:1 with C API.
+enum ResourceType
+{
+	ResourceTypeUnknown = 0,
+	ResourceTypeUniformBuffer = 1,
+	ResourceTypeStorageBuffer = 2,
+	ResourceTypeStageInput = 3,
+	ResourceTypeStageOutput = 4,
+	ResourceTypeSubpassInput = 5,
+	ResourceTypeStorageImage = 6,
+	ResourceTypeSampledImage = 7,
+	ResourceTypeAtomicCounter = 8,
+	ResourceTypePushConstant = 9,
+	ResourceTypeSeparateImage = 10,
+	ResourceTypeSeparateSamplers = 11,
+	ResourceTypeAccelerationStructure = 12,
+	ResourceTypeRayQuery = 13,
+	ResourceTypeShaderRecordBuffer = 14,
+	ResourceTypeGLPlainUniform = 15,
+	ResourceTypeTensor = 16
+};
+
 struct ShaderResources
 {
 	SmallVector<Resource> uniform_buffers;
@@ -585,6 +607,7 @@ protected:
 	// (SSBO, image load store, etc)
 	SmallVector<uint32_t> global_variables;
 	SmallVector<uint32_t> aliased_variables;
+	SmallVector<uint32_t> buffer_pointer_variables;
 
 	SPIRFunction *current_function = nullptr;
 	SPIRBlock *current_block = nullptr;
@@ -705,6 +728,7 @@ protected:
 	bool expression_is_lvalue(uint32_t id) const;
 	bool variable_storage_is_aliased(const SPIRVariable &var);
 	SPIRVariable *maybe_get_backing_variable(uint32_t chain);
+	SPIRExpression *maybe_get_backing_buffer_pointer(uint32_t chain);
 
 	void register_read(uint32_t expr, uint32_t chain, bool forwarded);
 	void register_write(uint32_t chain);
@@ -739,6 +763,7 @@ protected:
 
 	// Dependency tracking for temporaries read from variables.
 	void flush_dependees(SPIRVariable &var);
+	void flush_dependees(SPIRExpression &expr);
 	void flush_all_active_variables();
 	void flush_control_dependent_expressions(uint32_t block);
 	void flush_all_atomic_capable_variables();
@@ -1089,6 +1114,23 @@ protected:
 	void analyze_non_block_pointer_types();
 	SmallVector<uint32_t> physical_storage_non_block_pointer_types;
 	std::unordered_map<uint32_t, PhysicalBlockMeta> physical_storage_type_to_alignment;
+
+	struct DescriptorHeapMeta
+	{
+		TypeID type;
+		bool hlsl_style_stride;
+
+		// For buffers
+		ID buffer_pointer_id;
+		StorageClass storage;
+		bool nonwritable;
+		bool nonreadable;
+		bool coherent;
+		bool is_volatile;
+		bool is_restrict;
+	};
+	std::vector<DescriptorHeapMeta> descriptor_heap_types;
+	void analyze_descriptor_heap_types();
 
 	void analyze_variable_scope(SPIRFunction &function, AnalyzeVariableScopeAccessHandler &handler);
 	void find_function_local_luts(SPIRFunction &function, const AnalyzeVariableScopeAccessHandler &handler,
