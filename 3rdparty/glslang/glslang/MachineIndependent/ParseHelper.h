@@ -358,6 +358,7 @@ public:
     TIntermTyped* addOutputArgumentConversions(const TFunction&, TIntermAggregate&) const;
     TIntermTyped* addAssign(const TSourceLoc&, TOperator op, TIntermTyped* left, TIntermTyped* right);
     void builtInOpCheck(const TSourceLoc&, const TFunction&, TIntermOperator&);
+    void requireDerivativeLayout(const TSourceLoc&, const char* featureDesc);
     void nonOpBuiltInCheck(const TSourceLoc&, const TFunction&, TIntermAggregate&);
     void userFunctionCallCheck(const TSourceLoc&, TIntermAggregate&);
     void samplerConstructorLocationCheck(const TSourceLoc&, const char* token, TIntermNode*);
@@ -584,6 +585,7 @@ protected:
     TString currentCaller;        // name of last function body entered (not valid when at global scope)
     int* atomicUintOffsets;       // to become an array of the right size to hold an offset per binding point
     bool anyIndexLimits;
+    bool khrDerivativeLayoutQualifierSpecified;
     TIdSetType inductiveLoopIds;
     TVector<TIntermTyped*> needsIndexLimitationChecking;
     TStructRecord matrixFixRecord;

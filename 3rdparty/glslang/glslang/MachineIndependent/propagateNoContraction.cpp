@@ -689,6 +689,10 @@ protected:
             }
             return false;
         }
+        // If this is an arithmetic operation, marks this node as 'noContraction'.
+        if (isArithmeticOperation(node->getOp())) {
+            node->getWritableType().getQualifier().noContraction = true;
+        }
         return true;
     }
 

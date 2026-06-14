@@ -1342,6 +1342,12 @@ public:
     }
 };
 
+enum TDerivativeGroupExtension {
+    EdgNone,
+    EdgNV,
+    EdgKHR,
+};
+
 // Qualifiers that don't need to be kept per object.  They have shader scope, not object scope.
 // So, they will not be part of TType, TQualifier, etc.
 struct TShaderQualifiers {
@@ -1368,8 +1374,9 @@ struct TShaderQualifiers {
     int numViews;             // multiview extenstions
     TInterlockOrdering interlockOrdering;
     bool layoutOverrideCoverage;        // true if layout override_coverage set
-    bool layoutDerivativeGroupQuads;    // true if layout derivative_group_quadsNV set
-    bool layoutDerivativeGroupLinear;   // true if layout derivative_group_linearNV set
+    bool layoutDerivativeGroupQuads;    // true if a derivative_group_quads* layout is set
+    bool layoutDerivativeGroupLinear;   // true if a derivative_group_linear* layout is set
+    TDerivativeGroupExtension derivativeGroupExtension;
     int primitives;                     // mesh shader "max_primitives"DerivativeGroupLinear;   // true if layout derivative_group_linearNV set
     bool layoutPrimitiveCulling;        // true if layout primitive_culling set
     bool layoutNonCoherentTileAttachmentReadQCOM; // fragment shaders -- per object
@@ -1410,6 +1417,7 @@ struct TShaderQualifiers {
         layoutOverrideCoverage      = false;
         layoutDerivativeGroupQuads  = false;
         layoutDerivativeGroupLinear = false;
+        derivativeGroupExtension    = EdgNone;
         layoutPrimitiveCulling      = false;
         layoutNonCoherentTileAttachmentReadQCOM = false;
         layoutTileShadingRateQCOM[0] = 0;
@@ -1481,6 +1489,8 @@ struct TShaderQualifiers {
             layoutDerivativeGroupQuads = src.layoutDerivativeGroupQuads;
         if (src.layoutDerivativeGroupLinear)
             layoutDerivativeGroupLinear = src.layoutDerivativeGroupLinear;
+        if (src.derivativeGroupExtension != EdgNone)
+            derivativeGroupExtension = src.derivativeGroupExtension;
         if (src.primitives != TQualifier::layoutNotSet)
             primitives = src.primitives;
         if (src.interlockOrdering != EioNone)

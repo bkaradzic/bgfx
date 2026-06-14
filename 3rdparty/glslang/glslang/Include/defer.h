@@ -54,6 +54,10 @@ class Defer {
   F f_;
 };
 
+// Template argument deduction guide for Defer.
+template <typename T>
+Defer(T) -> Defer<T>;
+
 } // namespace glslang
 
 #endif
