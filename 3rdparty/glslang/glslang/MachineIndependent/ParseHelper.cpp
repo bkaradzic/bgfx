@@ -61,7 +61,8 @@ TParseContext::TParseContext(TSymbolTable& symbolTable, TIntermediate& interm, b
             inMain(false),
             blockName(nullptr),
             limits(resources.limits),
-            atomicUintOffsets(nullptr), anyIndexLimits(false)
+            atomicUintOffsets(nullptr), anyIndexLimits(false),
+            khrDerivativeLayoutQualifierSpecified(false)
 {
     // decide whether precision qualifiers should be ignored or respected
     if (isEsProfile() || spvVersion.vulkan > 0) {
@@ -1649,24 +1650,6 @@ void TParseContext::handleCoopMat2FunctionCall(const TSourceLoc& loc, const TFun
                     }
                 }
 
-                // error checking decodeFunc parameters are (reference, uint32_t[], uint32_t[])
-                if (fnCandidate->getBuiltInOp() == EOpCooperativeMatrixLoadTensorNV) {
-                    const TFunction* decodeFunc = symbolTable.find(param->getAsSymbolNode()->getMangledName())->getAsFunction();
-
-                    if (decodeFunc->getParamCount() != 3) {
-                        error(loc, "must have three parameters", param->getAsSymbolNode()->getMangledName().c_str(), "");
-                    }
-
-                    if ((*decodeFunc)[0].type->getBasicType() != EbtReference) {
-                        error(loc, "first parameter must be buffer reference type", param->getAsSymbolNode()->getMangledName().c_str(), "");
-                    }
-                    if ((*decodeFunc)[1].type->getBasicType() != EbtUint || (*decodeFunc)[2].type->getBasicType() != EbtUint) {
-                        error(loc, "coordinate parameters must be uint32_t", param->getAsSymbolNode()->getMangledName().c_str(), "");
-                    }
-                    if (!(*decodeFunc)[1].type->isArray() || !(*decodeFunc)[2].type->isArray()) {
-                        error(loc, "coordinate parameters must be uint32_t", param->getAsSymbolNode()->getMangledName().c_str(), "");
-                    }
-                }
 
                 // error checking reduce function has matching parameters
                 if (fnCandidate->getBuiltInOp() == EOpCooperativeMatrixReduceNV) {
@@ -1717,6 +1700,91 @@ void TParseContext::handleCoopMat2FunctionCall(const TSourceLoc& loc, const TFun
                         }
                         if (sequence[1]->getAsTyped()->getType().getBasicType() != elemOp->getType().getBasicType()) {
                             error(loc, "return type must match cooperative matrix component type", param->getAsSymbolNode()->getMangledName().c_str(), "");
+                        }
+                    }
+                }
+            }
+        }
+
+        // Validate the decode function(s) for coopMatLoadTensorNV.
+        //
+        //   coopMatLoadTensorNV(mat, buf, off, t [, view] [, decodeFunc [, decodeVectorFunc]])
+        //
+        // The decode function rules are:
+        //   * decodeFunc:        scalar return matching the matrix component type.
+        //   * decodeVectorFunc:  optional, requires GL_NV_cooperative_matrix_decode_vector.
+        //                        Vector return of the matrix component type with V in {2,4,8}.
+        // Each function is validated independently; their parameter lists do
+        // not need to match (the buffer_reference type may differ between the
+        // two so the shader can type-view the same byte address differently).
+        // The non-decode load form (no function args) is allowed and skipped here.
+        if (fnCandidate->getBuiltInOp() == EOpCooperativeMatrixLoadTensorNV) {
+            std::vector<TIntermNode*> funcArgs;
+            for (uint32_t i = 0; i < sequence.size(); ++i) {
+                if (sequence[i]->getAsTyped()->getBasicType() == EbtFunction) {
+                    funcArgs.push_back(sequence[i]);
+                }
+            }
+            assert(funcArgs.size() <= 2);
+
+            auto checkBaseShape = [&](const TFunction* fn, const char* name) {
+                if (fn->getParamCount() != 3) {
+                    error(loc, "must have three parameters", name, "");
+                    return;
+                }
+                if ((*fn)[0].type->getBasicType() != EbtReference) {
+                    error(loc, "first parameter must be buffer reference type", name, "");
+                }
+                if ((*fn)[1].type->getBasicType() != EbtUint || (*fn)[2].type->getBasicType() != EbtUint) {
+                    error(loc, "coordinate parameters must be uint32_t", name, "");
+                }
+                if (!(*fn)[1].type->isArray() || !(*fn)[2].type->isArray()) {
+                    error(loc, "coordinate parameters must be uint32_t", name, "");
+                }
+            };
+
+            const TType& matType = sequence[0]->getAsTyped()->getType();
+
+            if (funcArgs.size() >= 1) {
+                const char* scalarName = funcArgs[0]->getAsSymbolNode()->getMangledName().c_str();
+                const TFunction* scalarFn =
+                    symbolTable.find(funcArgs[0]->getAsSymbolNode()->getMangledName())->getAsFunction();
+                checkBaseShape(scalarFn, scalarName);
+                const TType& retType = scalarFn->getType();
+                if (retType.getBasicType() != matType.getBasicType() ||
+                    retType.isVector() || retType.isLongVector() ||
+                    retType.isArray() || retType.isStruct() || retType.isMatrix()) {
+                    error(loc, "decodeFunc return type must be the cooperative matrix component type (scalar)",
+                          scalarName, "");
+                }
+            }
+
+            if (funcArgs.size() == 2) {
+                requireExtensions(loc, 1, &E_GL_NV_cooperative_matrix_decode_vector,
+                                  "coopMatLoadTensorNV decodeVectorFunc argument");
+
+                const char* vectorName = funcArgs[1]->getAsSymbolNode()->getMangledName().c_str();
+                const TFunction* vectorFn =
+                    symbolTable.find(funcArgs[1]->getAsSymbolNode()->getMangledName())->getAsFunction();
+                checkBaseShape(vectorFn, vectorName);
+
+                const TType& retType = vectorFn->getType();
+                const bool retIsVector = retType.isVector() || retType.isLongVector();
+                if (!retIsVector) {
+                    error(loc, "decodeVectorFunc return type must be a vector of the matrix component type",
+                          vectorName, "");
+                } else {
+                    if (retType.getBasicType() != matType.getBasicType()) {
+                        error(loc, "decodeVectorFunc return type component must match cooperative matrix component type",
+                              vectorName, "");
+                    }
+                    if (!retType.hasSpecConstantVectorComponents()) {
+                        const uint32_t V = retType.isLongVector()
+                            ? static_cast<uint32_t>(retType.getTypeParameters()->arraySizes->getDimSize(0))
+                            : static_cast<uint32_t>(retType.getVectorSize());
+                        if (V != 2 && V != 4 && V != 8) {
+                            error(loc, "decodeVectorFunc return vector length must be 2, 4, or 8",
+                                  vectorName, "");
                         }
                     }
                 }
@@ -2349,6 +2417,7 @@ void TParseContext::computeBuiltinPrecisions(TIntermTyped& node, const TFunction
             numArgs = 1;
             break;
         case EOpDebugPrintf:
+        case EOpAbortEXT:
         case EOpCooperativeMatrixPerElementOpNV:
         case EOpCooperativeMatrixReduceNV:
         case EOpConstructSaturated:
@@ -2877,6 +2946,23 @@ void TParseContext::memorySemanticsCheck(const TSourceLoc& loc, const TFunction&
 //
 // Assumes there has been a semantically correct match to a built-in function prototype.
 //
+void TParseContext::requireDerivativeLayout(const TSourceLoc& loc, const char* featureDesc)
+{
+    if (language != EShLangCompute && language != EShLangTask && language != EShLangMesh)
+        return;
+
+    if (language == EShLangCompute) {
+        const char* const derivativeExts[] = { E_GL_NV_compute_shader_derivatives, E_GL_KHR_compute_shader_derivatives };
+        requireExtensions(loc, 2, derivativeExts, featureDesc);
+    } else {
+        requireExtensions(loc, 1, &E_GL_KHR_compute_shader_derivatives, featureDesc);
+    }
+
+    if (extensionTurnedOn(E_GL_KHR_compute_shader_derivatives) &&
+        !intermediate.hasLayoutDerivativeModeNone())
+        error(loc, "requires a derivative_group_quads* or derivative_group_linear* layout qualifier", featureDesc, "");
+}
+
 void TParseContext::builtInOpCheck(const TSourceLoc& loc, const TFunction& fnCandidate, TIntermOperator& callNode)
 {
     // Set up convenience accessors to the argument(s).  There is almost always
@@ -2911,6 +2997,18 @@ void TParseContext::builtInOpCheck(const TSourceLoc& loc, const TFunction& fnCan
     };
 
     switch (callNode.getOp()) {
+    case EOpDPdx:
+    case EOpDPdxFine:
+    case EOpDPdxCoarse:
+    case EOpDPdy:
+    case EOpDPdyFine:
+    case EOpDPdyCoarse:
+    case EOpFwidth:
+    case EOpFwidthFine:
+    case EOpFwidthCoarse:
+        requireDerivativeLayout(loc, fnCandidate.getName().c_str());
+        break;
+
     case EOpTextureGather:
     case EOpTextureGatherOffset:
     case EOpTextureGatherOffsets:
@@ -2993,6 +3091,9 @@ void TParseContext::builtInOpCheck(const TSourceLoc& loc, const TFunction& fnCan
     case EOpTexture:
     case EOpTextureLod:
     {
+        if (callNode.getOp() == EOpTexture && fnCandidate.getParamCount() > 2)
+            requireDerivativeLayout(loc, (fnCandidate.getName() + " with bias argument").c_str());
+
         if ((fnCandidate.getParamCount() > 2) && ((*argp)[1]->getAsTyped()->getType().getBasicType() == EbtFloat) &&
             ((*argp)[1]->getAsTyped()->getType().getVectorSize() == 4) && fnCandidate[0].type->getSampler().shadow) {
             featureString = fnCandidate.getName();
@@ -3019,6 +3120,12 @@ void TParseContext::builtInOpCheck(const TSourceLoc& loc, const TFunction& fnCan
         }
         break;
     }
+
+    case EOpTextureProj:
+    case EOpSparseTexture:
+    case EOpTextureQueryLod:
+        requireDerivativeLayout(loc, fnCandidate.getName().c_str());
+        break;
 
     case EOpSparseTextureGather:
     case EOpSparseTextureGatherOffset:
@@ -3101,6 +3208,10 @@ void TParseContext::builtInOpCheck(const TSourceLoc& loc, const TFunction& fnCan
     case EOpSparseTextureLodOffset:
     case EOpSparseTextureGradOffset:
     {
+        if (callNode.getOp() == EOpTextureOffset || callNode.getOp() == EOpTextureProjOffset ||
+            callNode.getOp() == EOpSparseTextureOffset)
+            requireDerivativeLayout(loc, fnCandidate.getName().c_str());
+
         // Handle texture-offset limits checking
         // Pick which argument has to hold constant offsets
         int arg = -1;
@@ -6639,6 +6750,26 @@ void TParseContext::finish()
         break;
     }
 
+    if (intermediate.IsRequestedExtension(E_GL_KHR_compute_shader_derivatives) &&
+        !khrDerivativeLayoutQualifierSpecified) {
+        error(getCurrentLoc(), "requires one of derivative_group_quadsKHR or derivative_group_linearKHR layout qualifiers",
+              E_GL_KHR_compute_shader_derivatives, "");
+    }
+
+    if (intermediate.getLayoutDerivativeModeNone() == LayoutDerivativeGroupQuads) {
+        if ((intermediate.getLocalSizeSpecId(0) == TQualifier::layoutNotSet && (intermediate.getLocalSize(0) & 1)) ||
+            (intermediate.getLocalSizeSpecId(1) == TQualifier::layoutNotSet && (intermediate.getLocalSize(1) & 1)))
+            error(getCurrentLoc(), "requires local_size_x and local_size_y to be multiple of two", "derivative_group_quads", "");
+    } else if (intermediate.getLayoutDerivativeModeNone() == LayoutDerivativeGroupLinear) {
+        if (intermediate.getLocalSizeSpecId(0) == TQualifier::layoutNotSet &&
+            intermediate.getLocalSizeSpecId(1) == TQualifier::layoutNotSet &&
+            intermediate.getLocalSizeSpecId(2) == TQualifier::layoutNotSet &&
+            (intermediate.getLocalSize(0) *
+             intermediate.getLocalSize(1) *
+             intermediate.getLocalSize(2)) % 4 != 0)
+            error(getCurrentLoc(), "requires total group size to be multiple of four", "derivative_group_linear", "");
+    }
+
     // Set default outputs for GL_NV_geometry_shader_passthrough
     if (language == EShLangGeometry && extensionTurnedOn(E_SPV_NV_geometry_shader_passthrough)) {
         if (intermediate.getOutputPrimitive() == ElgNone) {
@@ -7012,17 +7143,32 @@ void TParseContext::setLayoutQualifier(const TSourceLoc& loc, TPublicType& publi
 
         }
     }
-    if (language == EShLangCompute) {
+    if (language == EShLangCompute || language == EShLangTask || language == EShLangMesh) {
         if (id.compare(0, 17, "derivative_group_") == 0) {
-            requireExtensions(loc, 1, &E_GL_NV_compute_shader_derivatives, "compute shader derivatives");
-            if (id == "derivative_group_quadsnv") {
+            if (id == "derivative_group_quadsnv" || id == "derivative_group_linearnv") {
+                requireExtensions(loc, 1, &E_GL_NV_compute_shader_derivatives, "compute shader derivatives");
+                if (language != EShLangCompute) {
+                    error(loc, "can only apply to compute shaders", id.c_str(), "");
+                    return;
+                }
+            } else if (id == "derivative_group_quadskhr" || id == "derivative_group_linearkhr") {
+                requireExtensions(loc, 1, &E_GL_KHR_compute_shader_derivatives, "compute shader derivatives");
+                khrDerivativeLayoutQualifierSpecified = true;
+            }
+            if (id == "derivative_group_quadsnv" || id == "derivative_group_quadskhr") {
                 publicType.shaderQualifiers.layoutDerivativeGroupQuads = true;
+                publicType.shaderQualifiers.derivativeGroupExtension =
+                    id == "derivative_group_quadsnv" ? EdgNV : EdgKHR;
                 return;
-            } else if (id == "derivative_group_linearnv") {
+            } else if (id == "derivative_group_linearnv" || id == "derivative_group_linearkhr") {
                 publicType.shaderQualifiers.layoutDerivativeGroupLinear = true;
+                publicType.shaderQualifiers.derivativeGroupExtension =
+                    id == "derivative_group_linearnv" ? EdgNV : EdgKHR;
                 return;
             }
         }
+    }
+    if (language == EShLangCompute) {
         if (id == "tile_attachmentqcom") {
             requireExtensions(loc, 1, &E_GL_QCOM_tile_shading, "tile shading QCOM");
             publicType.qualifier.layoutTileAttachmentQCOM = true;
@@ -8233,6 +8379,12 @@ const TFunction* TParseContext::findFunction(const TSourceLoc& loc, const TFunct
         if (symbol)
             return symbol->getAsFunction();
     }
+    // abortEXT has usage (var args) as similar as debugPrintfEXT.
+    if (call.getName() == "abortEXT") {
+        TSymbol* symbol = symbolTable.find("abortEXT(", &builtIn);
+        if (symbol)
+            return symbol->getAsFunction();
+    }
 
     // coopMatPerElementNV is variadic. There is some function signature error
     // checking in handleCoopMat2FunctionCall.
@@ -9262,10 +9414,24 @@ TIntermNode* TParseContext::declareVariable(const TSourceLoc& loc, TString& iden
                 publicType.typeParameters->basicType != EbtUint64 &&
                 publicType.typeParameters->basicType != EbtFloat16 &&
                 publicType.typeParameters->basicType != EbtFloat &&
-                publicType.typeParameters->basicType != EbtDouble) {
+                publicType.typeParameters->basicType != EbtDouble &&
+                publicType.typeParameters->basicType != EbtBFloat16 &&
+                publicType.typeParameters->basicType != EbtFloatE5M2 &&
+                publicType.typeParameters->basicType != EbtFloatE4M3) {
                 error(loc, "expected bool, integer or floating point type parameter", identifier.c_str(), "");
             }
 
+            if (publicType.typeParameters->basicType == EbtBFloat16) {
+                requireExtensions(loc, 1, &E_GL_ARM_tensors_bfloat16, "tensor with bfloat16_t type");
+            }
+
+            if (publicType.typeParameters->basicType == EbtFloatE5M2) {
+                requireExtensions(loc, 1, &E_GL_ARM_tensors_float_e5m2, "tensor with floate5m2_t type");
+            }
+
+            if (publicType.typeParameters->basicType == EbtFloatE4M3) {
+                requireExtensions(loc, 1, &E_GL_ARM_tensors_float_e4m3, "tensor with floate4m3_t type");
+            }
         }
     } else {
         if (publicType.typeParameters && publicType.typeParameters->arraySizes->getNumDims() != 0) {
@@ -11420,34 +11586,26 @@ void TParseContext::updateStandaloneQualifierDefaults(const TSourceLoc& loc, con
 
     if (publicType.shaderQualifiers.layoutDerivativeGroupQuads &&
         publicType.shaderQualifiers.layoutDerivativeGroupLinear) {
-        error(loc, "cannot be both specified", "derivative_group_quadsNV and derivative_group_linearNV", "");
-    }
+        error(loc, "cannot be both specified", "derivative_group_quads* and derivative_group_linear*", "");
+    } else if (publicType.shaderQualifiers.layoutDerivativeGroupQuads ||
+               publicType.shaderQualifiers.layoutDerivativeGroupLinear) {
+        const auto derivativeMode = publicType.shaderQualifiers.layoutDerivativeGroupQuads ?
+            LayoutDerivativeGroupQuads :
+            LayoutDerivativeGroupLinear;
+        const char* derivativeModeName = publicType.shaderQualifiers.layoutDerivativeGroupQuads ?
+            "derivative_group_quads" :
+            "derivative_group_linear";
 
-    if (publicType.shaderQualifiers.layoutDerivativeGroupQuads) {
         if (publicType.qualifier.storage == EvqVaryingIn) {
-            if ((intermediate.getLocalSizeSpecId(0) == TQualifier::layoutNotSet && (intermediate.getLocalSize(0) & 1)) ||
-                (intermediate.getLocalSizeSpecId(1) == TQualifier::layoutNotSet && (intermediate.getLocalSize(1) & 1)))
-                error(loc, "requires local_size_x and local_size_y to be multiple of two", "derivative_group_quadsNV", "");
+            if (intermediate.hasLayoutDerivativeModeNone() &&
+                intermediate.getLayoutDerivativeModeNone() != derivativeMode)
+                error(loc, "cannot be both specified", "derivative_group_quads* and derivative_group_linear*", "");
             else
-                intermediate.setLayoutDerivativeMode(LayoutDerivativeGroupQuads);
+                intermediate.setLayoutDerivativeMode(derivativeMode,
+                                                     publicType.shaderQualifiers.derivativeGroupExtension);
+        } else {
+            error(loc, "can only apply to 'in'", derivativeModeName, "");
         }
-        else
-            error(loc, "can only apply to 'in'", "derivative_group_quadsNV", "");
-    }
-    if (publicType.shaderQualifiers.layoutDerivativeGroupLinear) {
-        if (publicType.qualifier.storage == EvqVaryingIn) {
-            if (intermediate.getLocalSizeSpecId(0) == TQualifier::layoutNotSet &&
-                intermediate.getLocalSizeSpecId(1) == TQualifier::layoutNotSet &&
-                intermediate.getLocalSizeSpecId(2) == TQualifier::layoutNotSet &&
-                (intermediate.getLocalSize(0) *
-                intermediate.getLocalSize(1) *
-                intermediate.getLocalSize(2)) % 4 != 0)
-                error(loc, "requires total group size to be multiple of four", "derivative_group_linearNV", "");
-            else
-                intermediate.setLayoutDerivativeMode(LayoutDerivativeGroupLinear);
-        }
-        else
-            error(loc, "can only apply to 'in'", "derivative_group_linearNV", "");
     }
     // Check mesh out array sizes, once all the necessary out qualifiers are defined.
     if ((language == EShLangMesh) &&

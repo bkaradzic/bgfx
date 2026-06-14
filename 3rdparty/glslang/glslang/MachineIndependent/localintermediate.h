@@ -228,9 +228,9 @@ class TVariable;
 // Texture and Sampler transformation mode.
 //
 enum ComputeDerivativeMode {
-    LayoutDerivativeNone,         // default layout as SPV_NV_compute_shader_derivatives not enabled
-    LayoutDerivativeGroupQuads,   // derivative_group_quadsNV
-    LayoutDerivativeGroupLinear,  // derivative_group_linearNV
+    LayoutDerivativeNone,
+    LayoutDerivativeGroupQuads,
+    LayoutDerivativeGroupLinear,
 };
 
 //
@@ -340,6 +340,7 @@ public:
         geoPassthroughEXT(false),
         numShaderRecordBlocks(0),
         computeDerivativeMode(LayoutDerivativeNone),
+        computeDerivativeExtension(EdgNone),
         primitives(TQualifier::layoutNotSet),
         numTaskNVBlocks(0),
         layoutPrimitiveCulling(false),
@@ -502,6 +503,7 @@ public:
             processes.addProcess("invert-y");
     }
     bool getInvertY() const { return invertY; }
+    void invertPositions(TIntermNode* root);
 
     void setDxPositionW(bool dxPosW)
     {
@@ -984,9 +986,14 @@ public:
     bool getLayoutOverrideCoverage() const { return layoutOverrideCoverage; }
     void setGeoPassthroughEXT() { geoPassthroughEXT = true; }
     bool getGeoPassthroughEXT() const { return geoPassthroughEXT; }
-    void setLayoutDerivativeMode(ComputeDerivativeMode mode) { computeDerivativeMode = mode; }
+    void setLayoutDerivativeMode(ComputeDerivativeMode mode, TDerivativeGroupExtension extension)
+    {
+        computeDerivativeMode = mode;
+        computeDerivativeExtension = extension;
+    }
     bool hasLayoutDerivativeModeNone() const { return computeDerivativeMode != LayoutDerivativeNone; }
     ComputeDerivativeMode getLayoutDerivativeModeNone() const { return computeDerivativeMode; }
+    TDerivativeGroupExtension getLayoutDerivativeExtension() const { return computeDerivativeExtension; }
     void setLayoutPrimitiveCulling() { layoutPrimitiveCulling = true; }
     bool getLayoutPrimitiveCulling() const { return layoutPrimitiveCulling; }
     bool setPrimitives(int m)
@@ -1287,6 +1294,7 @@ protected:
     bool geoPassthroughEXT;
     int numShaderRecordBlocks;
     ComputeDerivativeMode computeDerivativeMode;
+    TDerivativeGroupExtension computeDerivativeExtension;
     int primitives;
     int numTaskNVBlocks;
     bool layoutPrimitiveCulling;

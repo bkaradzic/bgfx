@@ -995,6 +995,7 @@ bool TOutputTraverser::visitAggregate(TVisit /* visit */, TIntermAggregate* node
 
     case EOpIsHelperInvocation: out.debug << "IsHelperInvocation"; break;
     case EOpDebugPrintf:  out.debug << "Debug printf";  break;
+    case EOpAbortEXT:  out.debug << "Abort";  break;
 
     case EOpHitObjectTraceRayNV: out.debug << "HitObjectTraceRayNV"; break;
     case EOpHitObjectTraceRayMotionNV: out.debug << "HitObjectTraceRayMotionNV"; break;

@@ -56,7 +56,7 @@
 namespace spv {
     #include "GLSL.ext.KHR.h"
     #include "GLSL.ext.EXT.h"
-    #include "NonSemanticShaderDebugInfo100.h"
+    #include "NonSemanticShaderDebugInfo.h"
 }
 
 #include <algorithm>
@@ -260,15 +260,17 @@ public:
     Id makeDebugInfoNone();
     Id makeBoolDebugType(int const size);
     Id makeIntegerDebugType(int const width, bool const hasSign);
-    Id makeFloatDebugType(int const width);
-    Id makeSequentialDebugType(Id const baseType, Id const componentCount, NonSemanticShaderDebugInfo100Instructions const sequenceType);
+    Id makeFloatDebugType(int const width, Id const fpEncoding = NoType);
+    Id makeSequentialDebugType(Id const baseType, Id const componentCount, NonSemanticShaderDebugInfoInstructions const sequenceType);
     Id makeArrayDebugType(Id const baseType, Id const componentCount);
     Id makeVectorDebugType(Id const baseType, int const componentCount);
     Id makeMatrixDebugType(Id const vectorType, int const vectorCount, bool columnMajor = true);
     Id makeMemberDebugType(Id const memberType, StructMemberDebugInfo const& debugTypeLoc);
     Id makeCompositeDebugType(std::vector<Id> const& memberTypes, std::vector<StructMemberDebugInfo> const& memberDebugInfo,
-                              char const* const name, NonSemanticShaderDebugInfo100DebugCompositeType const tag);
+                              char const* const name, NonSemanticShaderDebugInfoDebugCompositeType const tag);
     Id makeOpaqueDebugType(char const* const name);
+    Id makeVectorIdDebugType(Id componentType, Id componentCount);
+    Id makeCooperativeMatrixDebugTypeKHR(Id componentType, Id scope, Id rows, Id cols, Id use);
     Id makePointerDebugType(StorageClass storageClass, Id const baseType);
     Id makeForwardPointerDebugType(StorageClass storageClass);
     Id makeDebugSource(const Id fileName);
@@ -457,6 +459,11 @@ public:
     Id makeFpConstant(Id type, double d, bool specConstant = false);
 
     Id importNonSemanticShaderDebugInfoInstructions();
+    // Ensure the NonSemantic.Shader.DebugInfo import string names at least `version`.
+    // If the import instruction already exists, its name is patched in place.
+    // If it has not been created yet, importNonSemanticShaderDebugInfoInstructions()
+    // will use the updated version when it runs.
+    void requireNonSemanticShaderDebugInfoVersion(unsigned version);
 
     // Turn the array of constants into a proper spv constant of the requested type.
     Id makeCompositeConstant(Id type, const std::vector<Id>& comps, bool specConst = false);
@@ -592,6 +599,7 @@ public:
     Id createTriOp(Op, Id typeId, Id operand1, Id operand2, Id operand3);
     Id createOp(Op, Id typeId, const std::vector<Id>& operands);
     Id createOp(Op, Id typeId, const std::vector<IdImmediate>& operands);
+    Id createConstData(Op opCode, Id typeId, const std::vector<const char*> operands);
     Id createFunctionCall(spv::Function*, const std::vector<spv::Id>&);
     Id createSpecConstantOp(Op, Id typeId, const std::vector<spv::Id>& operands, const std::vector<unsigned>& literals);
 
@@ -1036,6 +1044,12 @@ protected:
     int sourceVersion;
     spv::Id nonSemanticShaderCompilationUnitId {0};
     spv::Id nonSemanticShaderDebugInfo {0};
+    // Pointer to the OpExtInstImport instruction for NonSemantic.Shader.DebugInfo.
+    // Kept so requireNonSemanticShaderDebugInfoVersion() can patch the name in place.
+    Instruction* nonSemanticShaderDebugInfoImportInst {nullptr};
+    // Spec version encoded in the NonSemantic.Shader.DebugInfo import name.
+    // Defaults to 100. Promoted to N the first time a version-N opcode is emitted.
+    unsigned int nonSemanticShaderDebugInfoVersion{100};
     spv::Id debugInfoNone {0};
     spv::Id debugExpression {0}; // Debug expression with zero operations.
     std::string sourceText;

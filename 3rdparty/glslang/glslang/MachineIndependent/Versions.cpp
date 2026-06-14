@@ -166,7 +166,8 @@ void TParseVersions::initializeExtensionBehavior()
     const extensionData exts[] = { {E_GL_EXT_ray_tracing, EShTargetSpv_1_4},
                                    {E_GL_NV_ray_tracing_motion_blur, EShTargetSpv_1_4},
                                    {E_GL_EXT_mesh_shader, EShTargetSpv_1_4},
-                                   {E_GL_NV_cooperative_matrix2, EShTargetSpv_1_6}
+                                   {E_GL_NV_cooperative_matrix2, EShTargetSpv_1_6},
+                                   {E_GL_NV_cooperative_matrix_decode_vector, EShTargetSpv_1_6}
                                  };
 
     for (size_t ii = 0; ii < sizeof(exts) / sizeof(exts[0]); ii++) {
@@ -269,6 +270,7 @@ void TParseVersions::initializeExtensionBehavior()
 
     extensionBehavior[E_GL_EXT_control_flow_attributes2]                = EBhDisable;
     extensionBehavior[E_GL_EXT_spec_constant_composites]                = EBhDisable;
+    extensionBehavior[E_GL_EXT_abort]                                   = EBhDisable;
 
     extensionBehavior[E_GL_KHR_cooperative_matrix]                      = EBhDisable;
     extensionBehavior[E_GL_NV_cooperative_vector]                       = EBhDisable;
@@ -305,6 +307,7 @@ void TParseVersions::initializeExtensionBehavior()
     extensionBehavior[E_GL_NV_ray_tracing]                           = EBhDisable;
     extensionBehavior[E_GL_NV_ray_tracing_motion_blur]               = EBhDisable;
     extensionBehavior[E_GL_NV_fragment_shader_barycentric]           = EBhDisable;
+    extensionBehavior[E_GL_KHR_compute_shader_derivatives]           = EBhDisable;
     extensionBehavior[E_GL_NV_compute_shader_derivatives]            = EBhDisable;
     extensionBehavior[E_GL_NV_shader_texture_footprint]              = EBhDisable;
     extensionBehavior[E_GL_NV_mesh_shader]                           = EBhDisable;
@@ -315,14 +318,19 @@ void TParseVersions::initializeExtensionBehavior()
     extensionBehavior[E_GL_NV_displacement_micromap]                 = EBhDisable;
     extensionBehavior[E_GL_NV_shader_atomic_fp16_vector]             = EBhDisable;
     extensionBehavior[E_GL_NV_cooperative_matrix2]                   = EBhDisable;
+    extensionBehavior[E_GL_NV_cooperative_matrix_decode_vector]      = EBhDisable;
     extensionBehavior[E_GL_NV_cluster_acceleration_structure]        = EBhDisable;
     extensionBehavior[E_GL_NV_linear_swept_spheres]                  = EBhDisable;
+    extensionBehavior[E_GL_NV_desktop_lowp_mediump]                  = EBhDisable;
     extensionBehavior[E_GL_NV_push_constant_bank]                    = EBhDisable;
     extensionBehavior[E_GL_NV_explicit_typecast]                     = EBhDisable;
 
     // ARM
     extensionBehavior[E_GL_ARM_shader_core_builtins]                 = EBhDisable;
     extensionBehavior[E_GL_ARM_tensors]                              = EBhDisable;
+    extensionBehavior[E_GL_ARM_tensors_bfloat16]                     = EBhDisable;
+    extensionBehavior[E_GL_ARM_tensors_float_e5m2]                   = EBhDisable;
+    extensionBehavior[E_GL_ARM_tensors_float_e4m3]                   = EBhDisable;
 
     // QCOM
     extensionBehavior[E_GL_QCOM_image_processing]                    = EBhDisable;
@@ -553,6 +561,7 @@ void TParseVersions::getPreamble(std::string& preamble)
             "#define GL_EXT_shared_memory_block 1\n"
             "#define GL_EXT_shader_integer_mix 1\n"
             "#define GL_EXT_spec_constant_composites 1\n"
+            "#define GL_EXT_abort 1\n"
 
             // GL_KHR_shader_subgroup
             "#define GL_KHR_shader_subgroup_basic 1\n"
@@ -600,6 +609,7 @@ void TParseVersions::getPreamble(std::string& preamble)
             "#define GL_NV_ray_tracing 1\n"
             "#define GL_NV_ray_tracing_motion_blur 1\n"
             "#define GL_NV_fragment_shader_barycentric 1\n"
+            "#define GL_KHR_compute_shader_derivatives 1\n"
             "#define GL_NV_compute_shader_derivatives 1\n"
             "#define GL_NV_shader_texture_footprint 1\n"
             "#define GL_NV_mesh_shader 1\n"
@@ -607,6 +617,8 @@ void TParseVersions::getPreamble(std::string& preamble)
             "#define GL_NV_integer_cooperative_matrix 1\n"
             "#define GL_NV_shader_invocation_reorder 1\n"
             "#define GL_NV_cooperative_matrix2 1\n"
+            "#define GL_NV_cooperative_matrix_decode_vector 1\n"
+            "#define GL_NV_desktop_lowp_mediump 1\n"
             "#define GL_NV_explicit_typecast 1\n"
 
             "#define GL_QCOM_image_processing 1\n"
@@ -666,6 +678,15 @@ void TParseVersions::getPreamble(std::string& preamble)
         }
         if (version >= 130) {
             preamble +="#define GL_FRAGMENT_PRECISION_HIGH 1\n";
+        }
+
+        if (version >= 460) {
+            preamble +=
+                "#define GL_ARM_tensors 1\n"
+                "#define GL_ARM_tensors_bfloat16 1\n"
+                "#define GL_ARM_tensors_float_e5m2 1\n"
+                "#define GL_ARM_tensors_float_e4m3 1\n"
+                ;
         }
     }
 

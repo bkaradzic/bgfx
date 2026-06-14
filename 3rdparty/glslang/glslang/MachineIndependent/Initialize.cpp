@@ -605,6 +605,23 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
     //
     // Derivatives Functions.
     //
+    TString derivatives (
+        "float dFdx(float p);"
+        "vec2  dFdx(vec2  p);"
+        "vec3  dFdx(vec3  p);"
+        "vec4  dFdx(vec4  p);"
+
+        "float dFdy(float p);"
+        "vec2  dFdy(vec2  p);"
+        "vec3  dFdy(vec3  p);"
+        "vec4  dFdy(vec4  p);"
+
+        "float fwidth(float p);"
+        "vec2  fwidth(vec2  p);"
+        "vec3  fwidth(vec3  p);"
+        "vec4  fwidth(vec4  p);"
+    );
+
     TString derivativeControls (
         "float dFdxFine(float p);"
         "vec2  dFdxFine(vec2  p);"
@@ -4832,6 +4849,8 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
 
     commonBuiltins.append("void debugPrintfEXT();\n");
 
+    commonBuiltins.append("void abortEXT();\n");
+
     if (profile != EEsProfile && version >= 450) {
         // coopMatStoreNV perhaps ought to have "out" on the buf parameter, but
         // adding it introduces undesirable tempArgs on the stack. What we want
@@ -4943,6 +4962,8 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
                 cooperativeMatrixFuncs << "void coopMatLoadTensorNV(inout coopmat m, volatile coherent nontemporal uint8_t[] buf, " << elemTy << " element, tensorLayoutNV t, tensorViewNV v);\n";
                 cooperativeMatrixFuncs << "void coopMatLoadTensorNV(inout coopmat m, volatile coherent nontemporal uint8_t[] buf, " << elemTy << " element, tensorLayoutNV t, __function f);\n";
                 cooperativeMatrixFuncs << "void coopMatLoadTensorNV(inout coopmat m, volatile coherent nontemporal uint8_t[] buf, " << elemTy << " element, tensorLayoutNV t, tensorViewNV v, __function f);\n";
+                cooperativeMatrixFuncs << "void coopMatLoadTensorNV(inout coopmat m, volatile coherent nontemporal uint8_t[] buf, " << elemTy << " element, tensorLayoutNV t, __function f, __function g);\n";
+                cooperativeMatrixFuncs << "void coopMatLoadTensorNV(inout coopmat m, volatile coherent nontemporal uint8_t[] buf, " << elemTy << " element, tensorLayoutNV t, tensorViewNV v, __function f, __function g);\n";
                 cooperativeMatrixFuncs << "void coopMatStoreTensorNV(coopmat m, volatile coherent nontemporal uint8_t[] buf, " << elemTy << " element, tensorLayoutNV t);\n";
                 cooperativeMatrixFuncs << "void coopMatStoreTensorNV(coopmat m, volatile coherent nontemporal uint8_t[] buf, " << elemTy << " element, tensorLayoutNV t, tensorViewNV v);\n";
             }
@@ -5074,6 +5095,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "int8_t", "int16_t", "int32_t", "int64_t",
             "uint8_t", "uint16_t", "uint32_t", "uint64_t",
             "float16_t", "float32_t", "float64_t",
+            "bfloat16_t", "floate5m2_t", "floate4m3_t",
         };
         std::ostringstream ostream;
         for (auto t : tensorDataTypesARM) {
@@ -5657,6 +5679,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "void hitObjectTraceMotionReorderExecuteEXT(hitObjectEXT,accelerationStructureEXT,uint,uint,uint,uint,uint,vec3,float,vec3,float,float,int);"
             "void hitObjectTraceMotionReorderExecuteEXT(hitObjectEXT,accelerationStructureEXT,uint,uint,uint,uint,uint,vec3,float,vec3,float,float,uint,uint,int);"
             "void hitObjectRecordFromQueryEXT(hitObjectEXT, rayQueryEXT, uint, int);"
+            "void hitObjectRecordFromQueryEXT(hitObjectEXT, rayQueryEXT, uint, int, uint);"
             "void hitObjectGetIntersectionTriangleVertexPositionsEXT(hitObjectEXT, out vec3[3]);"
             "void reorderThreadEXT(uint, uint);"
             "void reorderThreadEXT(hitObjectEXT);"
@@ -5742,6 +5765,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "uvec2 hitObjectGetShaderRecordBufferHandleEXT(hitObjectEXT);"
             "void hitObjectSetShaderBindingTableRecordIndexEXT(hitObjectEXT, uint);"
             "void hitObjectRecordFromQueryEXT(hitObjectEXT, rayQueryEXT,uint, int);"
+            "void hitObjectRecordFromQueryEXT(hitObjectEXT, rayQueryEXT,uint, int, uint);"
             "void hitObjectGetIntersectionTriangleVertexPositionsEXT(hitObjectEXT, out vec3[3]);"
             "\n");
         stageBuiltins[EShLangMiss].append(
@@ -5816,6 +5840,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "uvec2 hitObjectGetShaderRecordBufferHandleEXT(hitObjectEXT);"
             "void hitObjectSetShaderBindingTableRecordIndexEXT(hitObjectEXT, uint);"
             "void hitObjectRecordFromQueryEXT(hitObjectEXT, rayQueryEXT, uint, int);"
+            "void hitObjectRecordFromQueryEXT(hitObjectEXT, rayQueryEXT, uint, int, uint);"
             "void hitObjectGetIntersectionTriangleVertexPositionsEXT(hitObjectEXT, out vec3[3]);"
             "\n");
         stageBuiltins[EShLangCallable].append(
@@ -5824,15 +5849,34 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "\n");
     }
 
-    //E_SPV_NV_compute_shader_derivatives
+    // GL_KHR_compute_shader_derivatives / SPV_NV_compute_shader_derivatives
     if ((profile == EEsProfile && version >= 320) || (profile != EEsProfile && version >= 450)) {
+        if (profile != EEsProfile) {
+            stageBuiltins[EShLangCompute].append(derivatives);
+            stageBuiltins[EShLangTask].append(derivatives);
+            stageBuiltins[EShLangMesh].append(derivatives);
+        }
+
         stageBuiltins[EShLangCompute].append(derivativeControls);
         stageBuiltins[EShLangCompute].append("\n");
+
+        if (profile != EEsProfile) {
+            stageBuiltins[EShLangTask].append(derivativeControls);
+            stageBuiltins[EShLangTask].append("\n");
+            stageBuiltins[EShLangMesh].append(derivativeControls);
+            stageBuiltins[EShLangMesh].append("\n");
+        }
     }
     if (profile != EEsProfile && version >= 450) {
         stageBuiltins[EShLangCompute].append(derivativesAndControl16bits);
         stageBuiltins[EShLangCompute].append(derivativesAndControl64bits);
         stageBuiltins[EShLangCompute].append("\n");
+        stageBuiltins[EShLangTask].append(derivativesAndControl16bits);
+        stageBuiltins[EShLangTask].append(derivativesAndControl64bits);
+        stageBuiltins[EShLangTask].append("\n");
+        stageBuiltins[EShLangMesh].append(derivativesAndControl16bits);
+        stageBuiltins[EShLangMesh].append(derivativesAndControl64bits);
+        stageBuiltins[EShLangMesh].append("\n");
     }
 
     // Builtins for GL_NV_mesh_shader
@@ -7488,7 +7532,7 @@ void TBuiltIns::addQueryFunctions(TSampler sampler, const TString& typeName, int
     }
 
     //
-    // textureQueryLod(), fragment stage only
+    // textureQueryLod()
     // Also enabled with extension GL_ARB_texture_query_lod
     // Extension GL_ARB_texture_query_lod says that textureQueryLOD() also exist at extension.
 
@@ -7527,6 +7571,26 @@ void TBuiltIns::addQueryFunctions(TSampler sampler, const TString& typeName, int
                 stageBuiltins[EShLangCompute].append(postfixes[dimMap[sampler.dim]]);
             }
             stageBuiltins[EShLangCompute].append(");\n");
+
+            stageBuiltins[EShLangTask].append(funcName[i]);
+            stageBuiltins[EShLangTask].append(typeName);
+            if (dimMap[sampler.dim] == 1)
+                stageBuiltins[EShLangTask].append(", float");
+            else {
+                stageBuiltins[EShLangTask].append(", vec");
+                stageBuiltins[EShLangTask].append(postfixes[dimMap[sampler.dim]]);
+            }
+            stageBuiltins[EShLangTask].append(");\n");
+
+            stageBuiltins[EShLangMesh].append(funcName[i]);
+            stageBuiltins[EShLangMesh].append(typeName);
+            if (dimMap[sampler.dim] == 1)
+                stageBuiltins[EShLangMesh].append(", float");
+            else {
+                stageBuiltins[EShLangMesh].append(", vec");
+                stageBuiltins[EShLangMesh].append(postfixes[dimMap[sampler.dim]]);
+            }
+            stageBuiltins[EShLangMesh].append(");\n");
         }
     }
 
@@ -8282,9 +8346,12 @@ void TBuiltIns::addGatherFunctions(TSampler sampler, const TString& typeName, in
                             }
 
                             s.append(");\n");
-                            if (bias)
+                            if (bias) {
                                 stageBuiltins[EShLangFragment].append(s);
-                            else
+                                stageBuiltins[EShLangCompute].append(s);
+                                stageBuiltins[EShLangTask].append(s);
+                                stageBuiltins[EShLangMesh].append(s);
+                            } else
                                 commonBuiltins.append(s);
                         }
                     }
@@ -10015,6 +10082,7 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
 
         symbolTable.setFunctionExtensions("controlBarrier",                 1, &E_GL_KHR_memory_scope_semantics);
         symbolTable.setFunctionExtensions("debugPrintfEXT",                 1, &E_GL_EXT_debug_printf);
+        symbolTable.setFunctionExtensions("abortEXT",                       1, &E_GL_EXT_abort);
 
         // GL_ARB_shader_ballot
         if (profile != EEsProfile) {
@@ -10181,15 +10249,28 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
         }
 
         if ((profile != EEsProfile && version >= 450) || (profile == EEsProfile && version >= 320)) {
-            symbolTable.setFunctionExtensions("dFdx",                   1, &E_GL_NV_compute_shader_derivatives);
-            symbolTable.setFunctionExtensions("dFdy",                   1, &E_GL_NV_compute_shader_derivatives);
-            symbolTable.setFunctionExtensions("fwidth",                 1, &E_GL_NV_compute_shader_derivatives);
-            symbolTable.setFunctionExtensions("dFdxFine",               1, &E_GL_NV_compute_shader_derivatives);
-            symbolTable.setFunctionExtensions("dFdyFine",               1, &E_GL_NV_compute_shader_derivatives);
-            symbolTable.setFunctionExtensions("fwidthFine",             1, &E_GL_NV_compute_shader_derivatives);
-            symbolTable.setFunctionExtensions("dFdxCoarse",             1, &E_GL_NV_compute_shader_derivatives);
-            symbolTable.setFunctionExtensions("dFdyCoarse",             1, &E_GL_NV_compute_shader_derivatives);
-            symbolTable.setFunctionExtensions("fwidthCoarse",           1, &E_GL_NV_compute_shader_derivatives);
+            const char* const derivativeExts[] = { E_GL_NV_compute_shader_derivatives, E_GL_KHR_compute_shader_derivatives };
+            if (language == EShLangCompute) {
+                symbolTable.setFunctionExtensions("dFdx",                   2, derivativeExts);
+                symbolTable.setFunctionExtensions("dFdy",                   2, derivativeExts);
+                symbolTable.setFunctionExtensions("fwidth",                 2, derivativeExts);
+                symbolTable.setFunctionExtensions("dFdxFine",               2, derivativeExts);
+                symbolTable.setFunctionExtensions("dFdyFine",               2, derivativeExts);
+                symbolTable.setFunctionExtensions("fwidthFine",             2, derivativeExts);
+                symbolTable.setFunctionExtensions("dFdxCoarse",             2, derivativeExts);
+                symbolTable.setFunctionExtensions("dFdyCoarse",             2, derivativeExts);
+                symbolTable.setFunctionExtensions("fwidthCoarse",           2, derivativeExts);
+            } else if (language == EShLangTask || language == EShLangMesh) {
+                symbolTable.setFunctionExtensions("dFdx",                   1, &E_GL_KHR_compute_shader_derivatives);
+                symbolTable.setFunctionExtensions("dFdy",                   1, &E_GL_KHR_compute_shader_derivatives);
+                symbolTable.setFunctionExtensions("fwidth",                 1, &E_GL_KHR_compute_shader_derivatives);
+                symbolTable.setFunctionExtensions("dFdxFine",               1, &E_GL_KHR_compute_shader_derivatives);
+                symbolTable.setFunctionExtensions("dFdyFine",               1, &E_GL_KHR_compute_shader_derivatives);
+                symbolTable.setFunctionExtensions("fwidthFine",             1, &E_GL_KHR_compute_shader_derivatives);
+                symbolTable.setFunctionExtensions("dFdxCoarse",             1, &E_GL_KHR_compute_shader_derivatives);
+                symbolTable.setFunctionExtensions("dFdyCoarse",             1, &E_GL_KHR_compute_shader_derivatives);
+                symbolTable.setFunctionExtensions("fwidthCoarse",           1, &E_GL_KHR_compute_shader_derivatives);
+            }
         }
 
         if ((profile == EEsProfile && version >= 310) ||
@@ -11060,6 +11141,7 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
     symbolTable.relateToOperator("debugPrintfEXT",     EOpDebugPrintf);
     symbolTable.relateToOperator("assumeEXT",          EOpAssumeEXT);
     symbolTable.relateToOperator("expectEXT",          EOpExpectEXT);
+    symbolTable.relateToOperator("abortEXT",           EOpAbortEXT);
 
 
     if (PureOperatorBuiltins) {

@@ -175,6 +175,15 @@ void Builder::postProcessType(const Instruction& inst, Id typeId)
         default:
             break;
         }
+        if (basicTypeOp == Op::OpTypeInt) {
+            if (width == 16)
+                addCapability(Capability::Int16);
+            else if (width == 8)
+                addCapability(Capability::Int8);
+        } else if (basicTypeOp == Op::OpTypeFloat) {
+            if (width == 16)
+                addCapability(Capability::Float16);
+        }
         break;
     case Op::OpAccessChain:
     case Op::OpPtrAccessChain:
@@ -356,16 +365,26 @@ void Builder::postProcess(Instruction& inst)
                 // Merge new and old (mis)alignment
                 alignment |= inst.getImmediateOperand(alignmentIdx);
 
-                if (!is_store) {
-                    Instruction* inst_type = module.getInstruction(inst.getTypeId());
+                Instruction* inst_type = nullptr;
+                if (is_store) {
+                    // For a store, we are storing through a pointer, so what this ends up looking like when storing a BDA pointer is we have a "OpTypePointer PhysicalStorageBuffer" pointing at the actual "OpTypePointer PhysicalStorageBuffer" value storing
+                    // https://godbolt.org/z/58ff4P3sG
+                    inst_type = module.getInstruction(accessChain->getTypeId());
                     if (inst_type->getOpCode() == Op::OpTypePointer &&
                         inst_type->getImmediateOperand(0) == StorageClass::PhysicalStorageBuffer) {
-                        // This means we are loading a pointer which means need to ensure it is at least 8-byte aligned
-                        // See https://github.com/KhronosGroup/glslang/issues/4084
-                        // In case the alignment is currently 4, need to ensure it is 8 before grabbing the LSB
-                        alignment |= 8;
-                        alignment &= 8;
+                        inst_type = module.getInstruction(inst_type->getIdOperand(1));
                     }
+                } else {
+                    inst_type = module.getInstruction(inst.getTypeId());
+                }
+
+                if (inst_type->getOpCode() == Op::OpTypePointer &&
+                    inst_type->getImmediateOperand(0) == StorageClass::PhysicalStorageBuffer) {
+                    // This means we are loading a pointer which means need to ensure it is at least 8-byte aligned
+                    // See https://github.com/KhronosGroup/glslang/issues/4084
+                    // In case the alignment is currently 4, need to ensure it is 8 before grabbing the LSB
+                    alignment |= 8;
+                    alignment &= 8;
                 }
 
                 // Pick the LSB

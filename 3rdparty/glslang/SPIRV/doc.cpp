@@ -209,8 +209,11 @@ const char* ExecutionModeString(int mode)
     case (int)ExecutionMode::OutputLinesNV:                 return "OutputLinesNV";
     case (int)ExecutionMode::OutputPrimitivesNV:            return "OutputPrimitivesNV";
     case (int)ExecutionMode::OutputTrianglesNV:             return "OutputTrianglesNV";
-    case (int)ExecutionMode::DerivativeGroupQuadsNV:        return "DerivativeGroupQuadsNV";
-    case (int)ExecutionMode::DerivativeGroupLinearNV:       return "DerivativeGroupLinearNV";
+
+    // DerivativeGroupQuadsKHR is an alias of DerivativeGroupQuadsNV
+    case (int)ExecutionMode::DerivativeGroupQuadsKHR:       return "DerivativeGroupQuadsKHR";
+    // DerivativeGroupLinearKHR is an alias of DerivativeGroupLinearNV
+    case (int)ExecutionMode::DerivativeGroupLinearKHR:      return "DerivativeGroupLinearKHR";
 
     case (int)ExecutionMode::PixelInterlockOrderedEXT:         return "PixelInterlockOrderedEXT";
     case (int)ExecutionMode::PixelInterlockUnorderedEXT:       return "PixelInterlockUnorderedEXT";
@@ -356,6 +359,7 @@ const char* DecorationString(int decoration)
 
     case (int)Decoration::ArrayStrideIdEXT:        return "DecorationArrayStrideIdEXT";
     case (int)Decoration::OffsetIdEXT:             return "DecorationOffsetIdEXT";
+    case (int)Decoration::UTFEncodedKHR:           return "UTFEncodedKHR";
     }
 }
 
@@ -851,13 +855,14 @@ const char* CooperativeMatrixOperandsString(int op)
     }
 }
 
-const int TensorAddressingOperandsCeiling = 3;
+const int TensorAddressingOperandsCeiling = 4;
 
 const char* TensorAddressingOperandsString(int op)
 {
     switch (op) {
-    case (int)TensorAddressingOperandsShift::TensorView:  return "TensorView";
-    case (int)TensorAddressingOperandsShift::DecodeFunc:  return "DecodeFunc";
+    case (int)TensorAddressingOperandsShift::TensorView:        return "TensorView";
+    case (int)TensorAddressingOperandsShift::DecodeFunc:        return "DecodeFunc";
+    case (int)TensorAddressingOperandsShift::DecodeVectorFunc:  return "DecodeVectorFunc";
 
     default: return "Bad";
     }
@@ -1037,8 +1042,10 @@ const char* CapabilityString(int info)
     case (int)Capability::RayTracingOpacityMicromapEXT:    return "RayTracingOpacityMicromapEXT";
     case (int)Capability::RayTracingDisplacementMicromapNV: return "RayTracingDisplacementMicromapNV";
     case (int)Capability::RayQueryPositionFetchKHR:        return "RayQueryPositionFetchKHR";
-    case (int)Capability::ComputeDerivativeGroupQuadsNV:   return "ComputeDerivativeGroupQuadsNV";
-    case (int)Capability::ComputeDerivativeGroupLinearNV:  return "ComputeDerivativeGroupLinearNV";
+    // ComputeDerivativeGroupQuadsKHR is an alias of ComputeDerivativeGroupQuadsNV
+    case (int)Capability::ComputeDerivativeGroupQuadsKHR:   return "ComputeDerivativeGroupQuadsKHR";
+   // ComputeDerivativeGroupLinearKHR is an alias of ComputeDerivativeGroupLinearNV
+    case (int)Capability::ComputeDerivativeGroupLinearKHR:  return "ComputeDerivativeGroupLinearKHR";
     case (int)Capability::FragmentBarycentricKHR:          return "FragmentBarycentricKHR";
     case (int)Capability::MeshShadingNV:                   return "MeshShadingNV";
     case (int)Capability::ImageFootprintNV:                return "ImageFootprintNV";
@@ -1076,6 +1083,7 @@ const char* CapabilityString(int info)
     case (int)Capability::CooperativeMatrixPerElementOperationsNV: return "CooperativeMatrixPerElementOperationsNV";
     case (int)Capability::CooperativeMatrixTensorAddressingNV:     return "CooperativeMatrixTensorAddressingNV";
     case (int)Capability::CooperativeMatrixBlockLoadsNV:           return "CooperativeMatrixBlockLoadsNV";
+    case (int)Capability::CooperativeMatrixDecodeVectorNV:         return "CooperativeMatrixDecodeVectorNV";
     case (int)Capability::TensorAddressingNV:                      return "TensorAddressingNV";
 
     case (int)Capability::ShaderSMBuiltinsNV:      return "ShaderSMBuiltinsNV";
@@ -1107,6 +1115,8 @@ const char* CapabilityString(int info)
     case (int)Capability::IntegerFunctions2INTEL:              return "IntegerFunctions2INTEL";
 
     case (int)Capability::ExpectAssumeKHR:                         return "ExpectAssumeKHR";
+    case (int)Capability::AbortKHR:                                return "AbortKHR";
+    case (int)Capability::ConstantDataKHR:                         return "ConstantDataKHR";
 
     case (int)Capability::AtomicFloat16AddEXT:                     return "AtomicFloat16AddEXT";
     case (int)Capability::AtomicFloat32AddEXT:                     return "AtomicFloat32AddEXT";
@@ -1544,6 +1554,10 @@ const char* OpcodeString(int op)
     case (int)Op::OpTypeUntypedPointerKHR:     return "OpTypeUntypedPointerKHR";
     case (int)Op::OpMemberDecorateIdEXT:       return "OpMemberDecorateIdEXT";
     case (int)Op::OpUntypedImageTexelPointerEXT:     return "OpUntypedImageTexelPointerEXT";
+
+    case (int)Op::OpAbortKHR:            return "OpAbortKHR";
+    case (int)Op::OpConstantDataKHR:     return "OpConstantDataKHR";
+    case (int)Op::OpSpecConstantDataKHR: return "OpSpecConstantDataKHR";
 
     case (int)Op::OpAtomicFAddEXT: return "OpAtomicFAddEXT";
     case (int)Op::OpAtomicFMinEXT: return "OpAtomicFMinEXT";
@@ -3214,6 +3228,12 @@ void Parameterize()
         InstructionDesc[enumCast(Op::OpGroupNonUniformQuadAnyKHR)].operands.push(OperandId, "'Predicate'");
         InstructionDesc[enumCast(Op::OpTypeAccelerationStructureKHR)].setResultAndType(true, false);
 
+        InstructionDesc[enumCast(Op::OpConstantDataKHR)].operands.push(OperandLiteralString, "'Data'");
+        InstructionDesc[enumCast(Op::OpSpecConstantDataKHR)].operands.push(OperandLiteralString, "'Data'");
+        InstructionDesc[enumCast(Op::OpAbortKHR)].operands.push(OperandId, "'Message Type'");
+        InstructionDesc[enumCast(Op::OpAbortKHR)].operands.push(OperandId, "'Message'");
+        InstructionDesc[enumCast(Op::OpAbortKHR)].setResultAndType(false, false);
+
         InstructionDesc[enumCast(Op::OpTraceNV)].operands.push(OperandId, "'Acceleration Structure'");
         InstructionDesc[enumCast(Op::OpTraceNV)].operands.push(OperandId, "'Ray Flags'");
         InstructionDesc[enumCast(Op::OpTraceNV)].operands.push(OperandId, "'Cull Mask'");
@@ -4125,6 +4145,7 @@ void Parameterize()
         InstructionDesc[enumCast(Op::OpHitObjectRecordFromQueryEXT)].operands.push(OperandId, "'RayQuery'");
         InstructionDesc[enumCast(Op::OpHitObjectRecordFromQueryEXT)].operands.push(OperandId, "'SBT Record Index'");
         InstructionDesc[enumCast(Op::OpHitObjectRecordFromQueryEXT)].operands.push(OperandId, "'HitObjectAttribute'");
+        InstructionDesc[enumCast(Op::OpHitObjectRecordFromQueryEXT)].operands.push(OperandId, "'Hit Kind'");
         InstructionDesc[enumCast(Op::OpHitObjectRecordFromQueryEXT)].setResultAndType(false, false);
 
         InstructionDesc[enumCast(Op::OpHitObjectGetIntersectionTriangleVertexPositionsEXT)].operands.push(OperandId, "'HitObject'");

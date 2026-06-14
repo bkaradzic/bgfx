@@ -2725,11 +2725,92 @@ void TIntermBranch::updatePrecision(TPrecisionQualifier parentPrecision)
     }
 }
 
+struct TInvertYTraverser : public TIntermTraverser {
+    TInvertYTraverser(TIntermediate& inter)
+        : TIntermTraverser(true, false, false),
+          intermediate(inter) {}
+
+    bool visitAggregate(TVisit visit, TIntermAggregate* node) override
+    {
+        if (visit != EvPreVisit || node->getOp() != EOpSequence)
+            return true;
+
+        TIntermSequence& seq = node->getSequence();
+        for (size_t i = 0; i < seq.size(); ++i) {
+            TIntermBinary* assign = seq[i]->getAsBinaryNode();
+
+            if (!assign || assign->getOp() != EOpAssign)
+                continue;
+
+            const bool isPositionBuiltIn =
+                (assign->getLeft()->getType().getQualifier().builtIn == EbvPosition);
+            if (!isPositionBuiltIn)
+                continue;
+
+            // Skip step 3 of a prior transformation: rhs is our
+            // anonymous temp (id==0, EvqTemporary)
+            TIntermSymbol* rhsSym = assign->getRight()->getAsSymbolNode();
+            if (rhsSym && rhsSym->getId() == 0 && rhsSym->getName().empty())
+                continue;
+
+            const TSourceLoc& loc = assign->getLoc();
+            TIntermTyped* lhs = assign->getLeft();
+            TIntermTyped* rhs = assign->getRight();
+
+            TType tempType(EbtVoid);
+            tempType.shallowCopy(rhs->getType());
+            tempType.getQualifier().storage = EvqTemporary;
+            tempType.getQualifier().builtIn  = EbvNone;
+
+            TIntermAggregate* replacement = nullptr;
+
+            TIntermTyped* tempSym = intermediate.addSymbol(tempType, loc);
+            TIntermTyped* tmpRHS =
+                intermediate.addAssign(EOpAssign, tempSym, rhs, loc);
+            replacement =
+                intermediate.growAggregate(replacement, tmpRHS, loc);
+
+            TIntermTyped* tempSymL = intermediate.addSymbol(tempType, loc);
+            TIntermTyped* tempSymR = intermediate.addSymbol(tempType, loc);
+            TIntermTyped* index    = intermediate.addConstantUnion(1, loc);
+            TIntermTyped* lhsY     =
+                intermediate.addIndex(EOpIndexDirect, tempSymL, index, loc);
+            TIntermTyped* rhsY     =
+                intermediate.addIndex(EOpIndexDirect, tempSymR, index, loc);
+            const TType compType(rhs->getType(), 0);
+            lhsY->setType(compType);
+            rhsY->setType(compType);
+            TIntermTyped* yNeg =
+                intermediate.addUnaryMath(EOpNegative, rhsY, loc);
+            TIntermTyped* tmpYNeg =
+                intermediate.addAssign(EOpAssign, lhsY, yNeg, loc);
+            replacement =
+                intermediate.growAggregate(replacement, tmpYNeg);
+
+            TIntermTyped* tempSymFinal = intermediate.addSymbol(tempType, loc);
+            TIntermTyped* tmpLHS = intermediate.addAssign(EOpAssign, lhs, tempSymFinal, loc);
+            replacement = intermediate.growAggregate(replacement, tmpLHS);
+
+            replacement->setOperator(EOpSequence);
+            seq[i] = replacement;
+        }
+        return true;
+    }
+
+    TIntermediate& intermediate;
+};
+
+void TIntermediate::invertPositions(TIntermNode* root)
+{
+    TInvertYTraverser traverser(*this);
+    root->traverse(&traverser);
+}
+
 //
 // This is to be executed after the final root is put on top by the parsing
 // process.
 //
-bool TIntermediate::postProcess(TIntermNode* root, EShLanguage /*language*/)
+bool TIntermediate::postProcess(TIntermNode* root, EShLanguage language)
 {
     if (root == nullptr)
         return true;
@@ -2741,6 +2822,13 @@ bool TIntermediate::postProcess(TIntermNode* root, EShLanguage /*language*/)
 
     // Propagate 'noContraction' label in backward from 'precise' variables.
     glslang::PropagateNoContraction(*this);
+
+    if (invertY && getSource() == EShSourceGlsl &&
+        (language == EShLangVertex ||
+         language == EShLangGeometry ||
+         language == EShLangTessEvaluation)) {
+        invertPositions(root);
+    }
 
     switch (textureSamplerTransformMode) {
     case EShTexSampTransKeep:
@@ -3247,6 +3335,16 @@ bool TIntermediate::promoteBinary(TIntermBinary& node)
         }
     }
 
+    const bool hasCoopMat = left->getType().isCoopMat() || right->getType().isCoopMat();
+    const bool hasLimitedFloatCoopMat =
+        (left->getType().isCoopMat() &&
+         (left->getType().containsBFloat16() || left->getType().contains8BitFloat())) ||
+        (right->getType().isCoopMat() &&
+         (right->getType().containsBFloat16() || right->getType().contains8BitFloat()));
+
+    if (hasLimitedFloatCoopMat && op != EOpAssign)
+        return false;
+
     // Do general type checks against individual operands (comparing left and right is coming up, checking mixed shapes after that)
     switch (op) {
     case EOpLessThan:
@@ -3387,7 +3485,7 @@ bool TIntermediate::promoteBinary(TIntermBinary& node)
         break;
     }
 
-    if (left->getType().isCoopMat() || right->getType().isCoopMat()) {
+    if (hasCoopMat) {
         // Operations on two cooperative matrices must have identical types
         if (left->getType().isCoopMat() && right->getType().isCoopMat() &&
             left->getType() != right->getType()) {

@@ -133,7 +133,7 @@ class TType;
 typedef enum {
     EShSourceNone,
     EShSourceGlsl,               // GLSL, includes ESSL (OpenGL ES GLSL)
-    EShSourceHlsl,               // HLSL
+    EShSourceHlsl,               // HLSL (deprecated, see issue #4210)
     LAST_ELEMENT_MARKER(EShSourceCount),
 } EShSource;                     // if EShLanguage were EShStage, this could be EShLanguage instead
 
@@ -260,14 +260,14 @@ enum EShMessages : unsigned {
     EShMsgSpvRules             = (1 << 3),  // issue messages for SPIR-V generation
     EShMsgVulkanRules          = (1 << 4),  // issue messages for Vulkan-requirements of GLSL for SPIR-V
     EShMsgOnlyPreprocessor     = (1 << 5),  // only print out errors produced by the preprocessor
-    EShMsgReadHlsl             = (1 << 6),  // use HLSL parsing rules and semantics
+    EShMsgReadHlsl             = (1 << 6),  // use HLSL parsing rules and semantics (deprecated, see issue #4210)
     EShMsgCascadingErrors      = (1 << 7),  // get cascading errors; risks error-recovery issues, instead of an early exit
     EShMsgKeepUncalled         = (1 << 8),  // for testing, don't eliminate uncalled functions
-    EShMsgHlslOffsets          = (1 << 9),  // allow block offsets to follow HLSL rules instead of GLSL rules
+    EShMsgHlslOffsets          = (1 << 9),  // allow block offsets to follow HLSL rules instead of GLSL rules (deprecated, see issue #4210)
     EShMsgDebugInfo            = (1 << 10), // save debug information
-    EShMsgHlslEnable16BitTypes = (1 << 11), // enable use of 16-bit types in SPIR-V for HLSL
-    EShMsgHlslLegalization     = (1 << 12), // enable HLSL Legalization messages
-    EShMsgHlslDX9Compatible    = (1 << 13), // enable HLSL DX9 compatible mode (for samplers and semantics)
+    EShMsgHlslEnable16BitTypes = (1 << 11), // enable use of 16-bit types in SPIR-V for HLSL (deprecated, see issue #4210)
+    EShMsgHlslLegalization     = (1 << 12), // enable HLSL Legalization messages (deprecated, see issue #4210)
+    EShMsgHlslDX9Compatible    = (1 << 13), // enable HLSL DX9 compatible mode (for samplers and semantics) (deprecated, see issue #4210)
     EShMsgBuiltinSymbolTable   = (1 << 14), // print the builtin symbol table
     EShMsgEnhanced             = (1 << 15), // enhanced message readability
     EShMsgAbsolutePath         = (1 << 16), // Output Absolute path for messages
@@ -503,8 +503,8 @@ public:
     void setDxPositionW(bool dxPosW);
     void setEnhancedMsgs();
 #ifdef ENABLE_HLSL
-    void setHlslIoMapping(bool hlslIoMap);
-    void setFlattenUniformArrays(bool flatten);
+    void setHlslIoMapping(bool hlslIoMap);      // deprecated, see issue #4210
+    void setFlattenUniformArrays(bool flatten); // deprecated, see issue #4210
 #endif
     void setNoStorageFormat(bool useUnknownFormat);
     void setNanMinMaxClamp(bool nanMinMaxClamp);
@@ -573,8 +573,8 @@ public:
     void getStrings(const char* const* &s, int& n) { s = strings; n = numStrings; }
 
 #ifdef ENABLE_HLSL
-    void setEnvTargetHlslFunctionality1() { environment.target.hlslFunctionality1 = true; }
-    bool getEnvTargetHlslFunctionality1() const { return environment.target.hlslFunctionality1; }
+    void setEnvTargetHlslFunctionality1() { environment.target.hlslFunctionality1 = true; }  // deprecated, see issue #4210
+    bool getEnvTargetHlslFunctionality1() const { return environment.target.hlslFunctionality1; }  // deprecated, see issue #4210
 #else
     bool getEnvTargetHlslFunctionality1() const { return false; }
 #endif

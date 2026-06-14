@@ -1286,10 +1286,11 @@ int TPpContext::tokenize(TPpToken& ppToken)
         if (needStringSupport && parseContext.intermediate.getSource() != EShSourceHlsl) {
             // HLSL allows string literals.
             // GLSL allows string literals with GL_EXT_debug_printf.
-            const char* const string_literal_EXTs[] = { E_GL_EXT_debug_printf, E_GL_EXT_spirv_intrinsics };
-            parseContext.requireExtensions(ppToken.loc, 2, string_literal_EXTs, "string literal");
+            const char* const string_literal_EXTs[] = { E_GL_EXT_debug_printf, E_GL_EXT_spirv_intrinsics, E_GL_EXT_abort };
+            parseContext.requireExtensions(ppToken.loc, 3, string_literal_EXTs, "string literal");
             if (!parseContext.extensionTurnedOn(E_GL_EXT_debug_printf) &&
-                !parseContext.extensionTurnedOn(E_GL_EXT_spirv_intrinsics)) {
+                !parseContext.extensionTurnedOn(E_GL_EXT_spirv_intrinsics)&&
+                !parseContext.extensionTurnedOn(E_GL_EXT_abort)) {
                 continue;
             }
         }
