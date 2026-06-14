@@ -5568,35 +5568,38 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 					uint32_t numVertices = draw.m_numVertices;
 					uint8_t  numStreams  = 0;
 
-					for (BitMaskToIndexIteratorT it(draw.m_streamMask)
-						; !it.isDone()
-						; it.next(), numStreams++
-						)
+					if (UINT32_MAX != draw.m_streamMask)
 					{
-						const uint8_t idx = it.idx;
+						for (BitMaskToIndexIteratorT it(draw.m_streamMask)
+							; !it.isDone()
+							; it.next(), numStreams++
+							)
+						{
+							const uint8_t idx = it.idx;
 
-						currentState.m_stream[idx].m_layoutHandle   = draw.m_stream[idx].m_layoutHandle;
-						currentState.m_stream[idx].m_handle         = draw.m_stream[idx].m_handle;
-						currentState.m_stream[idx].m_startVertex    = draw.m_stream[idx].m_startVertex;
+							currentState.m_stream[idx].m_layoutHandle   = draw.m_stream[idx].m_layoutHandle;
+							currentState.m_stream[idx].m_handle         = draw.m_stream[idx].m_handle;
+							currentState.m_stream[idx].m_startVertex    = draw.m_stream[idx].m_startVertex;
 
-						const uint16_t handle = draw.m_stream[idx].m_handle.idx;
-						const VertexBufferMtl& vb = m_vertexBuffers[handle];
-						const uint16_t decl = isValid(draw.m_stream[idx].m_layoutHandle)
-							? draw.m_stream[idx].m_layoutHandle.idx
-							: vb.m_layoutHandle.idx;
-						const VertexLayout& layout = m_vertexLayouts[decl];
-						const uint32_t stride = layout.m_stride;
+							const uint16_t handle = draw.m_stream[idx].m_handle.idx;
+							const VertexBufferMtl& vb = m_vertexBuffers[handle];
+							const uint16_t decl = isValid(draw.m_stream[idx].m_layoutHandle)
+								? draw.m_stream[idx].m_layoutHandle.idx
+								: vb.m_layoutHandle.idx;
+							const VertexLayout& layout = m_vertexLayouts[decl];
+							const uint32_t stride = layout.m_stride;
 
-						layouts[numStreams] = &layout;
+							layouts[numStreams] = &layout;
 
-						numVertices = bx::min(UINT32_MAX == draw.m_numVertices
-							? vb.m_size/stride
-							: draw.m_numVertices
-							, numVertices
-							);
-						const uint32_t offset = draw.m_stream[idx].m_startVertex * stride;
+							numVertices = bx::min(UINT32_MAX == draw.m_numVertices
+								? vb.m_size/stride
+								: draw.m_numVertices
+								, numVertices
+								);
+							const uint32_t offset = draw.m_stream[idx].m_startVertex * stride;
 
-						rce->setVertexBuffer(vb.m_ptr, offset, idx+1);
+							rce->setVertexBuffer(vb.m_ptr, offset, idx+1);
+						}
 					}
 
 					if (!isValid(currentProgram) )
@@ -5606,7 +5609,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 					currentPso = NULL;
 
-					if (0 < numStreams)
+					if (0 != draw.m_streamMask)
 					{
 						currentPso = getPipelineState(
 								newFlags
