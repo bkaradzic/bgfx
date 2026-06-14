@@ -195,7 +195,7 @@ void Module::ToBinary(std::vector<uint32_t>* binary, bool skip_nop) const {
           binary->push_back(context()->get_type_mgr()->GetVoidTypeId());
           binary->push_back(context()->TakeNextId());
           binary->push_back(shader_set_id);
-          binary->push_back(NonSemanticShaderDebugInfo100DebugNoLine);
+          binary->push_back(NonSemanticShaderDebugInfoDebugNoLine);
         } else {
           binary->push_back((1 << 16) |
                             static_cast<uint16_t>(spv::Op::OpNoLine));

@@ -1,6 +1,7 @@
 // Copyright (c) 2018 Google LLC.
 // Modifications Copyright (C) 2020 Advanced Micro Devices, Inc. All rights
 // reserved.
+// Copyright (C) 2026 Qualcomm Technologies, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -123,7 +124,7 @@ typedef enum VUIDError_ {
   VUIDErrorMax,
 } VUIDError;
 
-const static uint32_t NumVUIDBuiltins = 42;
+const static uint32_t NumVUIDBuiltins = 45;
 
 typedef struct {
   spv::BuiltIn builtIn;
@@ -176,7 +177,9 @@ std::array<BuiltinVUIDMapping, NumVUIDBuiltins> builtinVUIDInfo = {{
     {spv::BuiltIn::PrimitiveTriangleIndicesEXT, {7053, 7055, 7056}},
     {spv::BuiltIn::CullPrimitiveEXT,          {7034, 7035, 7036}},
     {spv::BuiltIn::HitTriangleVertexPositionsKHR, {8747, 8748, 8749}},
-
+    {spv::BuiltIn::TileOffsetQCOM,    {10626, 10627, 10628}},
+    {spv::BuiltIn::TileDimensionQCOM, {10629, 10630, 10631}},
+    {spv::BuiltIn::TileApronSizeQCOM, {10632, 10633, 10634}},
     // clang-format on
 }};
 
@@ -379,6 +382,9 @@ class BuiltInsValidator {
 
   spv_result_t ValidateMeshShadingEXTBuiltinsAtDefinition(
       const Decoration& decoration, const Instruction& inst);
+
+  spv_result_t ValidateTileQCOMBuiltinAtDefinition(const Decoration& decoration,
+                                                   const Instruction& inst);
 
   // Used as a common method for validating MeshEXT builtins
   spv_result_t ValidateMeshBuiltinInterfaceRules(
@@ -587,6 +593,11 @@ class BuiltInsValidator {
       const Instruction& referenced_inst,
       const Instruction& referenced_from_inst);
 
+  spv_result_t ValidateTileQCOMBuiltinAtReference(
+      const Decoration& decoration, const Instruction& built_in_inst,
+      const Instruction& referenced_inst,
+      const Instruction& referenced_from_inst);
+
   // Validates that |built_in_inst| is not (even indirectly) referenced from
   // within a function which can be called with |execution_model|.
   //
@@ -620,6 +631,10 @@ class BuiltInsValidator {
       const Decoration& decoration, const Instruction& inst,
       const std::function<spv_result_t(const std::string& message)>& diag);
   spv_result_t ValidateI32Vec(
+      const Decoration& decoration, const Instruction& inst,
+      uint32_t num_components,
+      const std::function<spv_result_t(const std::string& message)>& diag);
+  spv_result_t ValidateU32Vec(
       const Decoration& decoration, const Instruction& inst,
       uint32_t num_components,
       const std::function<spv_result_t(const std::string& message)>& diag);
@@ -789,6 +804,9 @@ class BuiltInsValidator {
   // Execution models with which the current function can be called.
   std::set<spv::ExecutionModel> execution_models_;
 
+  // Execution modes with which the current function can be called.
+  std::set<spv::ExecutionMode> execution_modes_;
+
   // For Builtin that can only be declared once in an entry point, keep track if
   // the entry point has it already
   std::set<uint32_t> cull_primitive_entry_points_;
@@ -801,12 +819,16 @@ void BuiltInsValidator::Update(const Instruction& inst) {
     assert(function_id_ == 0);
     function_id_ = inst.id();
     execution_models_.clear();
+    execution_modes_.clear();
     entry_points_ = &_.FunctionEntryPoints(function_id_);
     // Collect execution models from all entry points from which the current
     // function can be called.
     for (const uint32_t entry_point : *entry_points_) {
       if (const auto* models = _.GetExecutionModels(entry_point)) {
         execution_models_.insert(models->begin(), models->end());
+      }
+      if (const auto* modes = _.GetExecutionModes(entry_point)) {
+        execution_modes_.insert(modes->begin(), modes->end());
       }
     }
   }
@@ -817,6 +839,7 @@ void BuiltInsValidator::Update(const Instruction& inst) {
     function_id_ = 0;
     entry_points_ = &no_entry_points;
     execution_models_.clear();
+    execution_modes_.clear();
   }
 }
 
@@ -1089,6 +1112,40 @@ spv_result_t BuiltInsValidator::ValidateI32Vec(
     std::ostringstream ss;
     ss << GetDefinitionDesc(decoration, inst) << " has "
        << actual_num_components << " components.";
+    return diag(ss.str());
+  }
+
+  const uint32_t bit_width = _.GetBitWidth(underlying_type);
+  if (bit_width != 32) {
+    std::ostringstream ss;
+    ss << GetDefinitionDesc(decoration, inst)
+       << " has components with bit width " << bit_width << ".";
+    return diag(ss.str());
+  }
+
+  return SPV_SUCCESS;
+}
+
+spv_result_t BuiltInsValidator::ValidateU32Vec(
+    const Decoration& decoration, const Instruction& inst,
+    uint32_t num_components,
+    const std::function<spv_result_t(const std::string& message)>& diag) {
+  uint32_t underlying_type = 0;
+  if (spv_result_t error =
+          GetUnderlyingType(_, decoration, inst, &underlying_type)) {
+    return error;
+  }
+
+  if (!_.IsUnsignedIntVectorType(underlying_type)) {
+    return diag(GetDefinitionDesc(decoration, inst) +
+                " is not an unsigned int vector.");
+  }
+
+  const uint32_t actual = _.GetDimension(underlying_type);
+  if (actual != num_components) {
+    std::ostringstream ss;
+    ss << GetDefinitionDesc(decoration, inst) << " has " << actual
+       << " components.";
     return diag(ss.str());
   }
 
@@ -3792,6 +3849,8 @@ spv_result_t BuiltInsValidator::ValidateWorkgroupSizeAtReference(
     const Instruction& referenced_inst,
     const Instruction& referenced_from_inst) {
   if (spvIsVulkanEnv(_.context()->target_env)) {
+    const spv::StorageClass storage_class =
+        GetStorageClass(referenced_from_inst);
     for (const spv::ExecutionModel execution_model : execution_models_) {
       if (execution_model != spv::ExecutionModel::GLCompute &&
           execution_model != spv::ExecutionModel::TaskNV &&
@@ -3809,6 +3868,19 @@ spv_result_t BuiltInsValidator::ValidateWorkgroupSizeAtReference(
                << GetReferenceDesc(decoration, built_in_inst, referenced_inst,
                                    referenced_from_inst, execution_model);
       }
+    }
+    if (execution_modes_.count(spv::ExecutionMode::TileShadingRateQCOM) &&
+        storage_class != spv::StorageClass::Max &&
+        storage_class != spv::StorageClass::Input) {
+      return _.diag(SPV_ERROR_INVALID_DATA, &referenced_from_inst)
+             << _.VkErrorID(10635)
+             << spvLogStringForEnv(_.context()->target_env)
+             << " spec allows BuiltIn WorkgroupSize to be only used for "
+                "variables with Input storage class when "
+                "TileShadingRateQCOM Execution Mode is used. "
+             << GetReferenceDesc(decoration, built_in_inst, referenced_inst,
+                                 referenced_from_inst)
+             << " " << GetStorageClassDesc(referenced_from_inst);
     }
   }
 
@@ -4905,6 +4977,76 @@ spv_result_t BuiltInsValidator::ValidateMeshShadingEXTBuiltinsAtReference(
   return SPV_SUCCESS;
 }
 
+spv_result_t BuiltInsValidator::ValidateTileQCOMBuiltinAtDefinition(
+    const Decoration& decoration, const Instruction& inst) {
+  const spv::BuiltIn builtin = decoration.builtin();
+  const uint32_t num_components =
+      (builtin == spv::BuiltIn::TileDimensionQCOM) ? 3 : 2;
+  if (spv_result_t error = ValidateU32Vec(
+          decoration, inst, num_components,
+          [this, &inst, builtin,
+           num_components](const std::string& msg) -> spv_result_t {
+            uint32_t vuid = GetVUIDForBuiltin(builtin, VUIDErrorType);
+            return _.diag(SPV_ERROR_INVALID_DATA, &inst)
+                   << _.VkErrorID(vuid)
+                   << "According to the Vulkan spec BuiltIn "
+                   << _.grammar().lookupOperandName(
+                          SPV_OPERAND_TYPE_BUILT_IN,
+                          static_cast<uint32_t>(builtin))
+                   << " variable must be a " << num_components
+                   << "-component 32-bit unsigned int vector. " << msg;
+          })) {
+    return error;
+  }
+
+  return ValidateTileQCOMBuiltinAtReference(decoration, inst, inst, inst);
+}
+
+spv_result_t BuiltInsValidator::ValidateTileQCOMBuiltinAtReference(
+    const Decoration& decoration, const Instruction& built_in_inst,
+    const Instruction& referenced_inst,
+    const Instruction& referenced_from_inst) {
+  if (spvIsVulkanEnv(_.context()->target_env)) {
+    const spv::BuiltIn builtin = decoration.builtin();
+    const spv::StorageClass sc = GetStorageClass(referenced_from_inst);
+    if (sc != spv::StorageClass::Max && sc != spv::StorageClass::Input) {
+      uint32_t vuid = GetVUIDForBuiltin(builtin, VUIDErrorStorageClass);
+      return _.diag(SPV_ERROR_INVALID_DATA, &referenced_from_inst)
+             << _.VkErrorID(vuid) << "Vulkan spec allows BuiltIn "
+             << _.grammar().lookupOperandName(SPV_OPERAND_TYPE_BUILT_IN,
+                                              static_cast<uint32_t>(builtin))
+             << " to be only used for variables with Input storage class. "
+             << GetReferenceDesc(decoration, built_in_inst, referenced_inst,
+                                 referenced_from_inst)
+             << " " << GetStorageClassDesc(referenced_from_inst);
+    }
+
+    for (const spv::ExecutionModel model : execution_models_) {
+      if (model != spv::ExecutionModel::Fragment &&
+          model != spv::ExecutionModel::GLCompute) {
+        uint32_t vuid = GetVUIDForBuiltin(builtin, VUIDErrorExecutionModel);
+        return _.diag(SPV_ERROR_INVALID_DATA, &referenced_from_inst)
+               << _.VkErrorID(vuid) << "Vulkan spec allows BuiltIn "
+               << _.grammar().lookupOperandName(SPV_OPERAND_TYPE_BUILT_IN,
+                                                static_cast<uint32_t>(builtin))
+               << " to be used only with Fragment or GLCompute execution "
+                  "model. "
+               << GetReferenceDesc(decoration, built_in_inst, referenced_inst,
+                                   referenced_from_inst, model);
+      }
+    }
+  }
+
+  if (function_id_ == 0) {
+    id_to_at_reference_checks_[referenced_from_inst.id()].push_back(
+        std::bind(&BuiltInsValidator::ValidateTileQCOMBuiltinAtReference, this,
+                  decoration, built_in_inst, referenced_from_inst,
+                  std::placeholders::_1));
+  }
+
+  return SPV_SUCCESS;
+}
+
 spv_result_t BuiltInsValidator::ValidateSingleBuiltInAtDefinition(
     const Decoration& decoration, const Instruction& inst) {
   const spv::BuiltIn label = decoration.builtin();
@@ -5094,6 +5236,11 @@ spv_result_t BuiltInsValidator::ValidateSingleBuiltInAtDefinitionVulkan(
     case spv::BuiltIn::SamplerHeapEXT:
     case spv::BuiltIn::ResourceHeapEXT: {
       return ValidateDescriptorHeapAtDefinition(decoration, inst);
+    }
+    case spv::BuiltIn::TileOffsetQCOM:
+    case spv::BuiltIn::TileDimensionQCOM:
+    case spv::BuiltIn::TileApronSizeQCOM: {
+      return ValidateTileQCOMBuiltinAtDefinition(decoration, inst);
     }
     default:
       // No validation rules (for the moment).

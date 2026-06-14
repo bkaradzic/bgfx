@@ -2180,17 +2180,189 @@ uint32_t GetElementType(uint32_t type_id, Instruction::iterator start,
     const Instruction* type_inst = def_use_manager->GetDef(type_id);
     assert(index.type == SPV_OPERAND_TYPE_LITERAL_INTEGER &&
            index.words.size() == 1);
-    if (type_inst->opcode() == spv::Op::OpTypeArray) {
-      type_id = type_inst->GetSingleWordInOperand(0);
-    } else if (type_inst->opcode() == spv::Op::OpTypeMatrix) {
-      type_id = type_inst->GetSingleWordInOperand(0);
-    } else if (type_inst->opcode() == spv::Op::OpTypeStruct) {
-      type_id = type_inst->GetSingleWordInOperand(index.words[0]);
-    } else {
-      return 0;
+    switch (type_inst->opcode()) {
+      case spv::Op::OpTypeArray:
+      case spv::Op::OpTypeMatrix:
+      case spv::Op::OpTypeVector:
+      case spv::Op::OpTypeVectorIdEXT:
+        type_id = type_inst->GetSingleWordInOperand(0);
+        break;
+      case spv::Op::OpTypeStruct:
+        type_id = type_inst->GetSingleWordInOperand(index.words[0]);
+        break;
+      default:
+        return 0;
     }
   }
   return type_id;
+}
+
+// If the input to an OpCompositeExtract is an OpCopyLogical, then we can
+// hoist the extraction before the copy.
+bool CopyLogicalFeedingExtract(IRContext* context, Instruction* inst,
+                               const std::vector<const analysis::Constant*>&) {
+  assert(inst->opcode() == spv::Op::OpCompositeExtract &&
+         "Wrong opcode.  Should be OpCompositeExtract.");
+
+  analysis::DefUseManager* def_use_mgr = context->get_def_use_mgr();
+  uint32_t cid = inst->GetSingleWordInOperand(kExtractCompositeIdInIdx);
+  Instruction* cinst = def_use_mgr->GetDef(cid);
+
+  if (cinst->opcode() != spv::Op::OpCopyLogical) {
+    return false;
+  }
+
+  uint32_t original_composite_id = cinst->GetSingleWordInOperand(0);
+  Instruction* original_composite_inst =
+      def_use_mgr->GetDef(original_composite_id);
+
+  std::vector<uint32_t> indices;
+  for (uint32_t i = 1; i < inst->NumInOperands(); ++i) {
+    indices.push_back(inst->GetSingleWordInOperand(i));
+  }
+
+  uint32_t original_element_type_id =
+      GetElementType(original_composite_inst->type_id(), inst->begin() + 3,
+                     inst->end(), def_use_mgr);
+  assert(original_element_type_id != 0 &&
+         "Could not find the element type.  Invalid SPIR-V.");
+
+  InstructionBuilder ir_builder(
+      context, inst,
+      IRContext::kAnalysisDefUse | IRContext::kAnalysisInstrToBlockMapping);
+
+  Instruction* new_extract = ir_builder.AddCompositeExtract(
+      original_element_type_id, original_composite_id, indices);
+
+  if (original_element_type_id == inst->type_id())
+    inst->SetOpcode(spv::Op::OpCopyObject);
+  else
+    inst->SetOpcode(spv::Op::OpCopyLogical);
+  inst->SetInOperands({{SPV_OPERAND_TYPE_ID, {new_extract->result_id()}}});
+  return true;
+}
+
+// If the input to an OpCompositeExtract is an OpLoad, we can change the
+// load into a load of an OpAccessChain.
+bool LoadFeedingExtract(IRContext* context, Instruction* inst,
+                        const std::vector<const analysis::Constant*>&) {
+  assert(inst->opcode() == spv::Op::OpCompositeExtract &&
+         "Wrong opcode.  Should be OpCompositeExtract.");
+
+  analysis::DefUseManager* def_use_mgr = context->get_def_use_mgr();
+  uint32_t cid = inst->GetSingleWordInOperand(kExtractCompositeIdInIdx);
+  Instruction* cinst = def_use_mgr->GetDef(cid);
+
+  if (cinst->opcode() != spv::Op::OpLoad) {
+    return false;
+  }
+
+  Instruction* composite_type_inst = def_use_mgr->GetDef(cinst->type_id());
+  if (composite_type_inst->opcode() != spv::Op::OpTypeStruct &&
+      composite_type_inst->opcode() != spv::Op::OpTypeArray) {
+    return false;
+  }
+
+  // Check the memory operands.
+  if (cinst->NumInOperands() > 1) {
+    uint32_t memory_access_mask = cinst->GetSingleWordInOperand(1);
+    if (memory_access_mask & uint32_t(spv::MemoryAccessMask::Volatile)) {
+      return false;
+    }
+  }
+
+  uint32_t ptr_id = cinst->GetSingleWordInOperand(0);
+  Instruction* ptr_inst = def_use_mgr->GetDef(ptr_id);
+  Instruction* ptr_type_inst = def_use_mgr->GetDef(ptr_inst->type_id());
+  assert(ptr_type_inst->opcode() == spv::Op::OpTypePointer);
+  spv::StorageClass storage_class =
+      static_cast<spv::StorageClass>(ptr_type_inst->GetSingleWordInOperand(0));
+
+  // If the storage class is Function or Private, we do not want to fold.
+  // These are the storage classes that the local-access-chain-convert pass
+  // works on.
+  if (storage_class == spv::StorageClass::Function ||
+      storage_class == spv::StorageClass::Private) {
+    return false;
+  }
+
+  analysis::ConstantManager* const_mgr = context->get_constant_mgr();
+  analysis::TypeManager* type_mgr = context->get_type_mgr();
+  std::vector<uint32_t> index_ids;
+  for (uint32_t i = 1; i < inst->NumInOperands(); ++i) {
+    uint32_t index = inst->GetSingleWordInOperand(i);
+    const analysis::Constant* index_const =
+        const_mgr->GetConstant(type_mgr->GetUIntType(), {index});
+    index_ids.push_back(
+        const_mgr->GetDefiningInstruction(index_const)->result_id());
+  }
+
+  InstructionBuilder ir_builder(
+      context, cinst,
+      IRContext::kAnalysisDefUse | IRContext::kAnalysisInstrToBlockMapping);
+
+  uint32_t element_ptr_type_id =
+      type_mgr->FindPointerToType(inst->type_id(), storage_class);
+  if (element_ptr_type_id == 0) {
+    return false;
+  }
+
+  Instruction* access_chain =
+      ir_builder.AddAccessChain(element_ptr_type_id, ptr_id, index_ids);
+  std::vector<Operand> load_operands;
+  load_operands.push_back({SPV_OPERAND_TYPE_ID, {access_chain->result_id()}});
+
+  if (cinst->NumInOperands() > 1) {
+    uint32_t memory_access_mask = cinst->GetSingleWordInOperand(1);
+    load_operands.push_back(
+        {SPV_OPERAND_TYPE_MEMORY_ACCESS, {memory_access_mask}});
+
+    uint32_t current_operand_index = 2;
+    if (memory_access_mask & uint32_t(spv::MemoryAccessMask::Aligned)) {
+      uint32_t original_alignment =
+          cinst->GetSingleWordInOperand(current_operand_index);
+
+      std::vector<uint32_t> extract_indices;
+      for (uint32_t i = 1; i < inst->NumInOperands(); ++i) {
+        extract_indices.push_back(inst->GetSingleWordInOperand(i));
+      }
+
+      std::optional<uint32_t> offset =
+          type_mgr->GetType(cinst->type_id())->GetByteOffset(extract_indices);
+      if (!offset) {
+        return false;
+      }
+
+      uint32_t new_alignment = original_alignment;
+      if (*offset != 0) {
+        uint32_t offset_alignment = *offset & ~(*offset - 1);
+        new_alignment = std::min(original_alignment, offset_alignment);
+      }
+
+      load_operands.push_back(
+          {SPV_OPERAND_TYPE_TYPED_LITERAL_NUMBER, {new_alignment}});
+      current_operand_index++;
+    }
+
+    // Copy the remaining operands
+    for (; current_operand_index < cinst->NumInOperands();
+         ++current_operand_index) {
+      load_operands.push_back(cinst->GetInOperand(current_operand_index));
+    }
+  }
+
+  uint32_t load_result_id = context->TakeNextId();
+  if (load_result_id == 0) return false;
+
+  std::unique_ptr<Instruction> new_load_inst(
+      new Instruction(context, spv::Op::OpLoad, inst->type_id(), load_result_id,
+                      load_operands));
+  Instruction* new_load = ir_builder.AddInstruction(std::move(new_load_inst));
+
+  inst->SetOpcode(spv::Op::OpCopyObject);
+  inst->SetInOperands({{SPV_OPERAND_TYPE_ID, {new_load->result_id()}}});
+
+  return true;
 }
 
 // Returns true of |inst_1| and |inst_2| have the same indexes that will be used
@@ -4309,6 +4481,8 @@ void FoldingRules::AddFoldingRules() {
       CompositeConstructFeedingExtract);
   rules_[spv::Op::OpCompositeExtract].push_back(VectorShuffleFeedingExtract());
   rules_[spv::Op::OpCompositeExtract].push_back(FMixFeedingExtract());
+  rules_[spv::Op::OpCompositeExtract].push_back(CopyLogicalFeedingExtract);
+  rules_[spv::Op::OpCompositeExtract].push_back(LoadFeedingExtract);
 
   rules_[spv::Op::OpCompositeInsert].push_back(
       CompositeInsertToCompositeConstruct);

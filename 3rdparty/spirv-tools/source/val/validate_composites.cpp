@@ -621,11 +621,11 @@ spv_result_t ValidateVectorShuffle(ValidationState_t& _,
   // Type as Result Type.
   auto vec1_type = _.FindDef(_.GetOperandTypeId(inst, operand_index));
   auto vec2_type = _.FindDef(_.GetOperandTypeId(inst, operand_index + 1));
-  if (!_.IsVectorType(vec1_type->id())) {
+  if (!vec1_type || !_.IsVectorType(vec1_type->id())) {
     return _.diag(SPV_ERROR_INVALID_ID, inst)
            << "The type of Vector 1 must be a vector type.";
   }
-  if (!_.IsVectorType(vec2_type->id())) {
+  if (!vec2_type || !_.IsVectorType(vec2_type->id())) {
     return _.diag(SPV_ERROR_INVALID_ID, inst)
            << "The type of Vector 2 must be a vector type.";
   }

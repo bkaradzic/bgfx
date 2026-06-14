@@ -951,7 +951,7 @@ bool MergeReturnPass::CreateSingleCaseSwitch(BasicBlock* merge_target) {
   // after OpVariable inst, we have to traverse the whole block to find it.
   for (auto pos = old_block->begin(); pos != old_block->end(); ++pos) {
     if (pos->GetShaderDebugOpcode() ==
-        NonSemanticShaderDebugInfo100DebugFunctionDefinition) {
+        NonSemanticShaderDebugInfoDebugFunctionDefinition) {
       start_block->AddInstruction(MakeUnique<Instruction>(*pos));
       pos.Erase();
       break;

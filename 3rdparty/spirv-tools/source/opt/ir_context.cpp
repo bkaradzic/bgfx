@@ -996,6 +996,11 @@ void IRContext::AddCalls(const Function* func, std::queue<uint32_t>* todo) {
 
         if (mask & uint32_t(spv::TensorAddressingOperandsMask::DecodeFunc)) {
           todo->push(ii->GetSingleWordInOperand(tensor_operands_index + count));
+          ++count;
+        }
+        if (mask &
+            uint32_t(spv::TensorAddressingOperandsMask::DecodeVectorFunc)) {
+          todo->push(ii->GetSingleWordInOperand(tensor_operands_index + count));
         }
       }
     }

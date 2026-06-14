@@ -305,6 +305,9 @@ spv_result_t ValidateLogicalPointerOperands(ValidationState_t& _,
     case spv::Op::OpNodePayloadArrayLengthAMDX:
     case spv::Op::OpIsNodePayloadValidAMDX:
     case spv::Op::OpFinishWritingNodePayloadAMDX:
+    // SPV_INTEL_predicated_io
+    case spv::Op::OpPredicatedLoadINTEL:
+    case spv::Op::OpPredicatedStoreINTEL:
     // SPV_ARM_graph
     case spv::Op::OpGraphEntryPointARM:
       return SPV_SUCCESS;

@@ -58,6 +58,13 @@ spv_result_t ValidateTraceRay(ValidationState_t& _, const Instruction* inst) {
            << "Cull Mask must be a 32-bit int scalar";
   }
 
+  if (!_.CheckForceOpacityMicromap2StateKHRCapabilityRequirement(inst, 1)) {
+    return _.diag(SPV_ERROR_INVALID_CAPABILITY, inst)
+           << "The ForceOpacityMicromap2StateKHR flag requires the "
+              "RayTracingOpacityMicromapKHR and RayQueryKHR or "
+              "RayTracingKHR capabilities";
+  }
+
   const uint32_t sbt_offset = _.GetOperandTypeId(inst, 3);
   if (!_.IsIntScalarType(sbt_offset, 32)) {
     return _.diag(SPV_ERROR_INVALID_DATA, inst)

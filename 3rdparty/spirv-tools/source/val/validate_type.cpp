@@ -60,7 +60,15 @@ spv_result_t ValidateTypeInt(ValidationState_t& _, const Instruction* inst) {
   // integers, respectively.
   auto num_bits = inst->GetOperandAs<const uint32_t>(1);
   if (num_bits != 32) {
-    if (num_bits == 8) {
+    if (num_bits == 4) {
+      if (_.HasCapability(spv::Capability::Int4TypeINTEL) ||
+          _.HasCapability(spv::Capability::ArbitraryPrecisionIntegersINTEL)) {
+        return SPV_SUCCESS;
+      }
+      return _.diag(SPV_ERROR_INVALID_DATA, inst)
+             << "Using a 4-bit integer type requires the Int4TypeINTEL "
+                "or ArbitraryPrecisionIntegersINTEL capability.";
+    } else if (num_bits == 8) {
       if (_.features().declare_int8_type) {
         return SPV_SUCCESS;
       }

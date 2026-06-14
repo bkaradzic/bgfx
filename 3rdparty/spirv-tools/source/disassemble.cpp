@@ -204,7 +204,9 @@ spv_result_t Disassembler::HandleInstruction(
       }
       case spv::Op::OpFunctionEnd:
         // Process the CFG and output the instructions
-        EmitCFG();
+        if (!current_function_cfg_.blocks.empty()) {
+          EmitCFG();
+        }
         // Output OpFunctionEnd itself too
         [[fallthrough]];
       default:
