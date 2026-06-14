@@ -15,6 +15,7 @@
 #include <bx/os.h>
 #include <bx/process.h>
 #include <bx/settings.h>
+#include <bx/sort.h>
 
 #include <entry/entry.h>
 #include <entry/input.h>
@@ -68,27 +69,37 @@ static const bgfx::EmbeddedShader s_embeddedShaders[] =
 	BGFX_EMBEDDED_SHADER_END()
 };
 
-static const char* s_supportedExt[] =
+static bx::StringView s_supportedExt[32];
+static uint32_t       s_numSupportedExt = 0;
+
+static int32_t compareExt(const void* _lhs, const void* _rhs)
 {
-	"bmp",
-	"dds",
-	"exr",
-	"gif",
-	"gnf",
-	"hdr",
-	"heic",
-	"jpeg",
-	"jpg",
-	"ktx",
-	"ktx2",
-	"pgm",
-	"png",
-	"ppm",
-	"psd",
-	"pvr",
-	"tga",
-	"webp",
-};
+	const bx::StringView& lhs = *(const bx::StringView*)_lhs;
+	const bx::StringView& rhs = *(const bx::StringView*)_rhs;
+	return bx::strCmpI(lhs, rhs);
+}
+
+static void initSupportedExt()
+{
+	const char* const* supportedExt = bimg::getSupportedExt();
+
+	for (s_numSupportedExt = 0
+		; s_numSupportedExt < BX_COUNTOF(s_supportedExt) && NULL != supportedExt[s_numSupportedExt]
+		; ++s_numSupportedExt)
+	{
+		s_supportedExt[s_numSupportedExt] = supportedExt[s_numSupportedExt];
+	}
+
+	BX_ASSERT(NULL == supportedExt[s_numSupportedExt], "s_supportedExt array is too small.");
+	BX_ASSERT(bx::isSorted(s_supportedExt, s_numSupportedExt, sizeof(s_supportedExt[0]), compareExt)
+		, "s_supportedExt must be sorted!"
+		);
+}
+
+static bool isExtSupported(const bx::StringView& _ext)
+{
+	return 0 <= bx::binarySearch(_ext, s_supportedExt, s_numSupportedExt, sizeof(s_supportedExt[0]), compareExt);
+}
 
 struct Binding
 {
@@ -309,6 +320,7 @@ struct View
 	~View()
 	{
 	}
+
 	int32_t cmd(int32_t _argc, char const* const* _argv)
 	{
 		if (_argc >= 2)
@@ -751,19 +763,7 @@ struct View
 				{
 					ext.set(ext.getPtr()+1, ext.getTerm() );
 
-					bool supported = false;
-					for (uint32_t ii = 0; ii < BX_COUNTOF(s_supportedExt); ++ii)
-					{
-						const bx::StringView supportedExt(s_supportedExt[ii]);
-
-						if (0 == bx::strCmpI(bx::max(ext.getPtr(), ext.getTerm() - supportedExt.getLength() ), supportedExt) )
-						{
-							supported = true;
-							break;
-						}
-					}
-
-					if (supported)
+					if (isExtSupported(ext) )
 					{
 						const bx::StringView fileName = fi.filePath.getFileName();
 						m_fileList.push_back(std::string(fileName.getPtr(), fileName.getTerm() ) );
@@ -1196,15 +1196,15 @@ void associate()
 	str += "[HKEY_CLASSES_ROOT\\Applications\\texturev.exe\\shell\\open\\command]\r\n";
 	str += value;
 
-	for (uint32_t ii = 0; ii < BX_COUNTOF(s_supportedExt); ++ii)
+	for (uint32_t ii = 0; ii < s_numSupportedExt; ++ii)
 	{
-		const char* ext = s_supportedExt[ii];
+		const bx::StringView& ext = s_supportedExt[ii];
 
-		bx::stringPrintf(str, "[-HKEY_CLASSES_ROOT\\.%s]\r\n\r\n", ext);
-		bx::stringPrintf(str, "[-HKEY_CURRENT_USER\\Software\\Classes\\.%s]\r\n\r\n", ext);
+		bx::stringPrintf(str, "[-HKEY_CLASSES_ROOT\\.%S]\r\n\r\n", &ext);
+		bx::stringPrintf(str, "[-HKEY_CURRENT_USER\\Software\\Classes\\.%S]\r\n\r\n", &ext);
 
-		bx::stringPrintf(str, "[HKEY_CLASSES_ROOT\\.%s]\r\n@=\"texturev\"\r\n\r\n", ext);
-		bx::stringPrintf(str, "[HKEY_CURRENT_USER\\Software\\Classes\\.%s]\r\n@=\"texturev\"\r\n\r\n", ext);
+		bx::stringPrintf(str, "[HKEY_CLASSES_ROOT\\.%S]\r\n@=\"texturev\"\r\n\r\n", &ext);
+		bx::stringPrintf(str, "[HKEY_CURRENT_USER\\Software\\Classes\\.%S]\r\n@=\"texturev\"\r\n\r\n", &ext);
 	}
 
 	bx::FilePath filePath(bx::Dir::Temp);
@@ -1233,10 +1233,10 @@ void associate()
 
 	std::string mimeType;
 
-	auto associate = [&mimeType](const char* _ext)
+	auto associate = [&mimeType](const bx::StringView _ext)
 	{
 		std::string tmp;
-		bx::stringPrintf(tmp, "default texturev.desktop image/%s", _ext);
+		bx::stringPrintf(tmp, "default texturev.desktop image/%S", &_ext);
 
 		bx::ProcessReader reader;
 		bx::Error err;
@@ -1246,13 +1246,13 @@ void associate()
 		}
 		else
 		{
-			bx::printf("Failed to associate MIME type image/%s (error: \"%S\")!\n", _ext, &err.getMessage() );
+			bx::printf("Failed to associate MIME type image/%S (error: \"%S\")!\n", &_ext, &err.getMessage() );
 		}
 
-		bx::stringPrintf(mimeType, "image/%s;", _ext);
+		bx::stringPrintf(mimeType, "image/%S;", &_ext);
 	};
 
-	for (uint32_t ii = 0; ii < BX_COUNTOF(s_supportedExt); ++ii)
+	for (uint32_t ii = 0; ii < s_numSupportedExt; ++ii)
 	{
 		associate(s_supportedExt[ii]);
 	}
@@ -1310,9 +1310,9 @@ void help(const char* _error = NULL)
 		  "Supported input file types:\n"
 		  );
 
-	for (uint32_t ii = 0; ii < BX_COUNTOF(s_supportedExt); ++ii)
+	for (uint32_t ii = 0; ii < s_numSupportedExt; ++ii)
 	{
-		bx::printf("    *.%s\n", s_supportedExt[ii]);
+		bx::printf("    *.%S\n", &s_supportedExt[ii]);
 	}
 
 	bx::printf(
@@ -1328,6 +1328,8 @@ void help(const char* _error = NULL)
 
 int _main_(int _argc, char** _argv)
 {
+	initSupportedExt();
+
 	bx::CommandLine cmdLine(_argc, _argv);
 
 	if (cmdLine.hasArg('v', "version") )
