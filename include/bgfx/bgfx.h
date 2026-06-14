@@ -787,7 +787,7 @@ namespace bgfx
 	///
 	struct VideoDecoderInit
 	{
-		uint32_t magic;               //!< Structure magic. Must be `BX_MAKEFOURCC('V', 'D', 'I', '0')`.
+		uint32_t magic;               //!< Structure magic. Must be `BX_MAKEFOURCC('V', 'D', 'I', 0x0)`.
 		VideoCodec::Enum codec;       //!< Video codec. See: `VideoCodec::Enum`.
 		const uint8_t* parameterSets; //!< Codec parameter sets (Annex B for H.264/H.265, OBUs for AV1).
 		uint32_t parameterSetsSize;   //!< Parameter sets size in bytes.
@@ -830,7 +830,7 @@ namespace bgfx
 	///
 	struct VideoDecoderFrame
 	{
-		uint32_t magic;             //!< Structure magic. Must be `BX_MAKEFOURCC('V', 'D', 'F', '0')`.
+		uint32_t magic;             //!< Structure magic. Must be `BX_MAKEFOURCC('V', 'D', 'F', 0x0)`.
 		const uint8_t* bitstream;   //!< Concatenated access-unit bitstream (decode order). NULL for presentation-only ticks.
 		const VideoDecoderAu* aus;  //!< Per-AU size and PTS array. NULL when `numAus == 0`.
 		uint32_t numAus;            //!< Number of access units in this batch. 0 for presentation-only ticks.

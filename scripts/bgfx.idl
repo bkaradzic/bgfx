@@ -1001,7 +1001,7 @@ struct.TextureInfo { section = "Textures" }
 --- layout, color metadata) is parsed out of the codec parameter sets at
 --- create time.
 struct.VideoDecoderInit { section = "Textures" }
-	.magic             "uint32_t"         --- Structure magic. Must be `BX_MAKEFOURCC('V', 'D', 'I', '0')`.
+	.magic             "uint32_t"         --- Structure magic. Must be `BX_MAKEFOURCC('V', 'D', 'I', 0x0)`.
 	.codec             "VideoCodec::Enum" --- Video codec. See: `VideoCodec::Enum`.
 	.parameterSets     "const uint8_t*"   --- Codec parameter sets (Annex B for H.264/H.265, OBUs for AV1).
 	.parameterSetsSize "uint32_t"         --- Parameter sets size in bytes.
@@ -1034,7 +1034,7 @@ struct.VideoDecoderAu { section = "Textures" }
 --- consumed the submission (`bgfx::copy` only deep-copies the
 --- `VideoDecoderFrame` struct itself, not the buffers it references).
 struct.VideoDecoderFrame { section = "Textures" }
-	.magic              "uint32_t"                     --- Structure magic. Must be `BX_MAKEFOURCC('V', 'D', 'F', '0')`.
+	.magic              "uint32_t"                     --- Structure magic. Must be `BX_MAKEFOURCC('V', 'D', 'F', 0x0)`.
 	.bitstream          "const uint8_t*"               --- Concatenated access-unit bitstream (decode order). NULL for presentation-only ticks.
 	.aus                "const VideoDecoderAu*" --- Per-AU size and PTS array. NULL when `numAus == 0`.
 	.numAus             "uint32_t"                     --- Number of access units in this batch. 0 for presentation-only ticks.

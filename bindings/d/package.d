@@ -1394,7 +1394,7 @@ layout, color metadata) is parsed out of the codec parameter sets at
 create time.
 */
 extern(C++, "bgfx") struct VideoDecoderInit{
-	uint magic; ///Structure magic. Must be `BX_MAKEFOURCC('V', 'D', 'I', '0')`.
+	uint magic; ///Structure magic. Must be `BX_MAKEFOURCC('V', 'D', 'I', 0x0)`.
 	VideoCodec codec; ///Video codec. See: `VideoCodec::Enum`.
 	const(ubyte)* parameterSets; ///Codec parameter sets (Annex B for H.264/H.265, OBUs for AV1).
 	uint parameterSetsSize; ///Parameter sets size in bytes.
@@ -1437,7 +1437,7 @@ consumed the submission (`bgfx::copy` only deep-copies the
 `VideoDecoderFrame` struct itself, not the buffers it references).
 */
 extern(C++, "bgfx") struct VideoDecoderFrame{
-	uint magic; ///Structure magic. Must be `BX_MAKEFOURCC('V', 'D', 'F', '0')`.
+	uint magic; ///Structure magic. Must be `BX_MAKEFOURCC('V', 'D', 'F', 0x0)`.
 	const(ubyte)* bitstream; ///Concatenated access-unit bitstream (decode order). NULL for presentation-only ticks.
 	const(VideoDecoderAu)* aus; ///Per-AU size and PTS array. NULL when `numAus == 0`.
 	uint numAus; ///Number of access units in this batch. 0 for presentation-only ticks.

@@ -888,7 +888,7 @@ typedef struct bgfx_texture_info_s
  */
 typedef struct bgfx_video_decoder_init_s
 {
-    uint32_t             magic;              /** Structure magic. Must be `BX_MAKEFOURCC('V', 'D', 'I', '0')`. */
+    uint32_t             magic;              /** Structure magic. Must be `BX_MAKEFOURCC('V', 'D', 'I', 0x0)`. */
     bgfx_video_codec_t   codec;              /** Video codec. See: `VideoCodec::Enum`.    */
     const uint8_t*       parameterSets;      /** Codec parameter sets (Annex B for H.264/H.265, OBUs for AV1). */
     uint32_t             parameterSetsSize;  /** Parameter sets size in bytes.            */
@@ -937,7 +937,7 @@ typedef struct bgfx_video_decoder_au_s
  */
 typedef struct bgfx_video_decoder_frame_s
 {
-    uint32_t             magic;              /** Structure magic. Must be `BX_MAKEFOURCC('V', 'D', 'F', '0')`. */
+    uint32_t             magic;              /** Structure magic. Must be `BX_MAKEFOURCC('V', 'D', 'F', 0x0)`. */
     const uint8_t*       bitstream;          /** Concatenated access-unit bitstream (decode order). NULL for presentation-only ticks. */
     const bgfx_video_decoder_au_t* aus;      /** Per-AU size and PTS array. NULL when `numAus == 0`. */
     uint32_t             numAus;             /** Number of access units in this batch. 0 for presentation-only ticks. */

@@ -682,7 +682,7 @@ bool VideoPlayer::open(const char* _filePath)
 	const bgfx::Memory* mem = bgfx::alloc(totalSize);
 
 	bgfx::VideoDecoderInit* decInit = (bgfx::VideoDecoderInit*)mem->data;
-	decInit->magic             = BX_MAKEFOURCC('V', 'D', 'I', '0');
+	decInit->magic             = BX_MAKEFOURCC('V', 'D', 'I', 0x0);
 	decInit->codec             = m_impl->codec;
 	decInit->parameterSets     = mem->data + sizeof(bgfx::VideoDecoderInit);
 	decInit->parameterSetsSize = psSize;
@@ -874,7 +874,7 @@ void VideoPlayer::submitDecodeFrame(uint32_t _index, bool _setPosition)
 
 	dstPayload->au.size                  = bitstreamSize;
 	dstPayload->au.ptsUs                 = int64_t(f.ptsUs);
-	dstPayload->frame.magic              = BX_MAKEFOURCC('V', 'D', 'F', '0');
+	dstPayload->frame.magic              = BX_MAKEFOURCC('V', 'D', 'F', 0x0);
 	dstPayload->frame.bitstream          = dstBitstream;
 	dstPayload->frame.aus                = &dstPayload->au;
 	dstPayload->frame.numAus             = 1;
@@ -920,7 +920,7 @@ void VideoPlayer::submitAccessUnitsUpTo(int64_t _untilPtsUs)
 void VideoPlayer::submitPresentationTick(int64_t _presentationTimeUs)
 {
 	bgfx::VideoDecoderFrame desc = {};
-	desc.magic              = BX_MAKEFOURCC('V', 'D', 'F', '0');
+	desc.magic              = BX_MAKEFOURCC('V', 'D', 'F', 0x0);
 	desc.bitstream          = NULL;
 	desc.aus                = NULL;
 	desc.numAus             = 0;
