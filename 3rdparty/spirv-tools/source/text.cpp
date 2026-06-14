@@ -794,6 +794,18 @@ spv_result_t spvTextEncodeOpcode(const spvtools::AssemblyGrammar& grammar,
         if (spvOperandIsOptional(type)) {
           break;
         } else {
+          if (opcodeName == "OpSpecConstantOp" &&
+              type == SPV_OPERAND_TYPE_SPEC_CONSTANT_OP_NUMBER) {
+            std::string operandValue;
+            error = context->getWord(&operandValue, &nextPosition);
+            spv::Op opcode;
+            if (!grammar.lookupSpecConstantOpcode(operandValue.c_str() + 2,
+                                                  &opcode)) {
+              return context->diagnostic()
+                     << "Invalid " << opcodeName << " opcode '" << operandValue
+                     << "'. Did you mean '" << operandValue.substr(2) << "'?";
+            }
+          }
           return context->diagnostic()
                  << "Expected operand for " << opcodeName
                  << " instruction, but found the next instruction instead.";

@@ -22,7 +22,6 @@
 #include <utility>
 #include <vector>
 
-#include "NonSemanticShaderDebugInfo100.h"
 #include "OpenCLDebugInfo100.h"
 #include "source/binary.h"
 #include "source/common_debug_info.h"
@@ -35,6 +34,7 @@
 #include "source/util/small_vector.h"
 #include "source/util/string_utils.h"
 #include "spirv-tools/libspirv.h"
+#include "spirv/unified1/NonSemanticShaderDebugInfo.h"
 
 constexpr uint32_t kNoDebugScope = 0;
 constexpr uint32_t kNoInlinedAt = 0;
@@ -583,8 +583,8 @@ class Instruction : public utils::IntrusiveNodeBase<Instruction> {
 
   // Returns debug opcode of a NonSemantic.Shader.DebugInfo instruction. If
   // it is not a NonSemantic.Shader.DebugInfo instruction, just return
-  // NonSemanticShaderDebugInfo100InstructionsMax.
-  NonSemanticShaderDebugInfo100Instructions GetShaderDebugOpcode() const;
+  // NonSemanticShaderDebugInfoInstructionsMax.
+  NonSemanticShaderDebugInfoInstructions GetShaderDebugOpcode() const;
 
   // Returns debug opcode of an OpenCL.100.DebugInfo or
   // NonSemantic.Shader.DebugInfo instruction. Since these overlap, we
@@ -598,8 +598,7 @@ class Instruction : public utils::IntrusiveNodeBase<Instruction> {
 
   // Returns true if it is a NonSemantic.Shader.DebugInfo instruction.
   bool IsShaderDebugInstr() const {
-    return GetShaderDebugOpcode() !=
-           NonSemanticShaderDebugInfo100InstructionsMax;
+    return GetShaderDebugOpcode() != NonSemanticShaderDebugInfoInstructionsMax;
   }
   bool IsCommonDebugInstr() const {
     return GetCommonDebugOpcode() != CommonDebugInfoInstructionsMax;

@@ -205,6 +205,13 @@ bool Instruction::HasBranchWeights() const {
 void Instruction::ToBinaryWithoutAttachedDebugInsts(
     std::vector<uint32_t>* binary) const {
   const uint32_t num_words = 1 + NumOperandWords();
+  assert(num_words <= 65535 && "too many words in instruction");
+  if (num_words > 65535) {
+    // Generate an invalid instruction encoding, indicating 0 words in the,
+    // which is always invalid.
+    binary->push_back(static_cast<uint16_t>(opcode_));
+    return;
+  }
   binary->push_back((num_words << 16) | static_cast<uint16_t>(opcode_));
   for (const auto& operand : operands_) {
     binary->insert(binary->end(), operand.words.begin(), operand.words.end());
@@ -587,23 +594,23 @@ bool Instruction::AddDebugLine(const Instruction* inst) {
 }
 
 bool Instruction::IsDebugLineInst() const {
-  NonSemanticShaderDebugInfo100Instructions ext_opt = GetShaderDebugOpcode();
-  return ((ext_opt == NonSemanticShaderDebugInfo100DebugLine) ||
-          (ext_opt == NonSemanticShaderDebugInfo100DebugNoLine));
+  NonSemanticShaderDebugInfoInstructions ext_opt = GetShaderDebugOpcode();
+  return ((ext_opt == NonSemanticShaderDebugInfoDebugLine) ||
+          (ext_opt == NonSemanticShaderDebugInfoDebugNoLine));
 }
 
 bool Instruction::IsLineInst() const { return IsLine() || IsNoLine(); }
 
 bool Instruction::IsLine() const {
   if (opcode() == spv::Op::OpLine) return true;
-  NonSemanticShaderDebugInfo100Instructions ext_opt = GetShaderDebugOpcode();
-  return ext_opt == NonSemanticShaderDebugInfo100DebugLine;
+  NonSemanticShaderDebugInfoInstructions ext_opt = GetShaderDebugOpcode();
+  return ext_opt == NonSemanticShaderDebugInfoDebugLine;
 }
 
 bool Instruction::IsNoLine() const {
   if (opcode() == spv::Op::OpNoLine) return true;
-  NonSemanticShaderDebugInfo100Instructions ext_opt = GetShaderDebugOpcode();
-  return ext_opt == NonSemanticShaderDebugInfo100DebugNoLine;
+  NonSemanticShaderDebugInfoInstructions ext_opt = GetShaderDebugOpcode();
+  return ext_opt == NonSemanticShaderDebugInfoDebugNoLine;
 }
 
 Instruction* Instruction::InsertBefore(std::unique_ptr<Instruction>&& inst) {
@@ -674,7 +681,8 @@ bool Instruction::IsValidBasePointer() const {
 }
 
 OpenCLDebugInfo100Instructions Instruction::GetOpenCL100DebugOpcode() const {
-  if (opcode() != spv::Op::OpExtInst) {
+  if (opcode() != spv::Op::OpExtInst &&
+      opcode() != spv::Op::OpExtInstWithForwardRefsKHR) {
     return OpenCLDebugInfo100InstructionsMax;
   }
 
@@ -691,31 +699,33 @@ OpenCLDebugInfo100Instructions Instruction::GetOpenCL100DebugOpcode() const {
       GetSingleWordInOperand(kExtInstInstructionInIdx));
 }
 
-NonSemanticShaderDebugInfo100Instructions Instruction::GetShaderDebugOpcode()
+NonSemanticShaderDebugInfoInstructions Instruction::GetShaderDebugOpcode()
     const {
-  if (opcode() != spv::Op::OpExtInst) {
-    return NonSemanticShaderDebugInfo100InstructionsMax;
+  if (opcode() != spv::Op::OpExtInst &&
+      opcode() != spv::Op::OpExtInstWithForwardRefsKHR) {
+    return NonSemanticShaderDebugInfoInstructionsMax;
   }
 
   if (!context()->get_feature_mgr()->GetExtInstImportId_ShaderDebugInfo()) {
-    return NonSemanticShaderDebugInfo100InstructionsMax;
+    return NonSemanticShaderDebugInfoInstructionsMax;
   }
 
   if (GetSingleWordInOperand(kExtInstSetIdInIdx) !=
       context()->get_feature_mgr()->GetExtInstImportId_ShaderDebugInfo()) {
-    return NonSemanticShaderDebugInfo100InstructionsMax;
+    return NonSemanticShaderDebugInfoInstructionsMax;
   }
 
   uint32_t opcode = GetSingleWordInOperand(kExtInstInstructionInIdx);
-  if (opcode >= NonSemanticShaderDebugInfo100InstructionsMax) {
-    return NonSemanticShaderDebugInfo100InstructionsMax;
+  if (opcode >= NonSemanticShaderDebugInfoInstructionsMax) {
+    return NonSemanticShaderDebugInfoInstructionsMax;
   }
 
-  return NonSemanticShaderDebugInfo100Instructions(opcode);
+  return NonSemanticShaderDebugInfoInstructions(opcode);
 }
 
 CommonDebugInfoInstructions Instruction::GetCommonDebugOpcode() const {
-  if (opcode() != spv::Op::OpExtInst) {
+  if (opcode() != spv::Op::OpExtInst &&
+      opcode() != spv::Op::OpExtInstWithForwardRefsKHR) {
     return CommonDebugInfoInstructionsMax;
   }
 
@@ -1053,8 +1063,8 @@ bool Instruction::IsOpcodeSafeToDelete() const {
   }
 
   if (IsNonSemanticInstruction() &&
-      (GetShaderDebugOpcode() == NonSemanticShaderDebugInfo100DebugDeclare ||
-       GetShaderDebugOpcode() == NonSemanticShaderDebugInfo100DebugValue)) {
+      (GetShaderDebugOpcode() == NonSemanticShaderDebugInfoDebugDeclare ||
+       GetShaderDebugOpcode() == NonSemanticShaderDebugInfoDebugValue)) {
     return true;
   }
 

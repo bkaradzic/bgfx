@@ -16,8 +16,9 @@
 
 #include <algorithm>
 #include <cctype>
+#include <cstdint>
 #include <cstring>
-#include <tuple>
+#include <initializer_list>
 #include <vector>
 
 #include "source/opt/def_use_manager.h"
@@ -127,6 +128,11 @@ std::vector<uint32_t> ParseDefaultValueBitPattern(
       }
       return result;
     }
+  } else if (type->AsArray()) {
+    // This is only for OpSpecConstantDataKHR
+    // Since the length can be a spec constant as well,
+    // we just pass through the bit pattern
+    return std::vector<uint32_t>(input_bit_pattern);
   }
   result.clear();
   return result;
@@ -139,6 +145,7 @@ bool CanHaveSpecIdDecoration(const Instruction& inst) {
     case spv::Op::OpSpecConstant:
     case spv::Op::OpSpecConstantFalse:
     case spv::Op::OpSpecConstantTrue:
+    case spv::Op::OpSpecConstantDataKHR:
       return true;
     default:
       return false;
@@ -224,6 +231,9 @@ Pass::Status SetSpecConstantDefaultValuePass::Process() {
   constexpr uint32_t kOpDecorateSpecIdNumOperands = 3;
   // The in-operand index of the default value in a OpSpecConstant instruction.
   constexpr uint32_t kOpSpecConstantLiteralInOperandIndex = 0;
+  // The in-operand index of the default value in a OpSpecConstantData
+  // instruction.
+  constexpr uint32_t kOpSpecConstantDataLiteralInOperandIndex = 0;
 
   bool modified = false;
   // Scan through all the annotation instructions to find 'OpDecorate SpecId'
@@ -324,6 +334,23 @@ Pass::Status SetSpecConstantDefaultValuePass::Process() {
           modified = true;
         }
         break;
+      case spv::Op::OpSpecConstantDataKHR: {
+        if (spec_inst->GetInOperand(kOpSpecConstantDataLiteralInOperandIndex)
+                .words != bit_pattern) {
+          std::vector<Operand> operands;
+          // keep the result/type
+          operands.push_back(spec_inst->GetOperand(0u));
+          operands.push_back(spec_inst->GetOperand(1u));
+          // the validator is in charge of making sure the length matches
+          for (uint32_t word : bit_pattern) {
+            operands.emplace_back(SPV_OPERAND_TYPE_LITERAL_INTEGER,
+                                  std::initializer_list<uint32_t>{word});
+          }
+          spec_inst->ReplaceOperands(operands);
+          modified = true;
+        }
+        break;
+      }
       default:
         break;
     }

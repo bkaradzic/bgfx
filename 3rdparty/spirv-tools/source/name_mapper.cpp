@@ -164,6 +164,8 @@ void FriendlyNameMapper::SaveBuiltInName(uint32_t target_id,
 spv_result_t FriendlyNameMapper::ParseInstruction(
     const spv_parsed_instruction_t& inst) {
   const auto result_id = inst.result_id;
+  if (inst.num_operands == 0) return SPV_SUCCESS;
+
   switch (spv::Op(inst.opcode)) {
     case spv::Op::OpName:
       SaveName(inst.words[1], spvDecodeLiteralStringOperand(inst, 1));
