@@ -1948,7 +1948,7 @@ struct TextureInfo
 // create time.
 struct VideoDecoderInit
 {
-	// Structure magic. Must be `BX_MAKEFOURCC('V', 'D', 'I', '0')`.
+	// Structure magic. Must be `BX_MAKEFOURCC('V', 'D', 'I', 0x0)`.
 	uint magic;
 	// Video codec. See: `VideoCodec::Enum`.
 	VideoCodec codec;
@@ -1993,7 +1993,7 @@ struct VideoDecoderAu
 // `VideoDecoderFrame` struct itself, not the buffers it references).
 struct VideoDecoderFrame
 {
-	// Structure magic. Must be `BX_MAKEFOURCC('V', 'D', 'F', '0')`.
+	// Structure magic. Must be `BX_MAKEFOURCC('V', 'D', 'F', 0x0)`.
 	uint magic;
 	// Concatenated access-unit bitstream (decode order). NULL for presentation-only ticks.
 	uint8_t* bitstream;
