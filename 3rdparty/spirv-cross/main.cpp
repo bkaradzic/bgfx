@@ -694,6 +694,8 @@ struct CLIArguments
 	uint32_t glsl_ovr_multiview_view_count = 0;
 	SmallVector<pair<uint32_t, uint32_t>> glsl_ext_framebuffer_fetch;
 	bool glsl_ext_framebuffer_fetch_noncoherent = false;
+	uint32_t glsl_descriptor_heap_set = UINT32_MAX;
+	uint32_t glsl_descriptor_heap_binding = UINT32_MAX;
 	bool vulkan_glsl_disable_ext_samplerless_texture_functions = false;
 	bool emit_line_directives = false;
 	bool enable_storage_image_qualifier_deduction = true;
@@ -821,6 +823,7 @@ static void print_help_glsl()
 	                "\t\tPrimary use case is supporting external samplers in ESSL for video rendering on Android where you could remap a texture to a YUV one.\n"
 	                "\t[--glsl-force-flattened-io-blocks]:\n\t\tAlways flatten I/O blocks and structs.\n"
 	                "\t[--glsl-ovr-multiview-view-count count]:\n\t\tIn GL_OVR_multiview2, specify layout(num_views).\n"
+	                "\t[--glsl-descriptor-heap-set-binding desc_set binding]:\n\t\tInstead of layout(descriptor_heap), emit layout(set = desc_set, binding = binding) instead for compatibility with mapping API.\n"
 	);
 	// clang-format on
 }
@@ -1458,6 +1461,10 @@ static string compile_iteration(const CLIArguments &args, std::vector<uint32_t> 
 	opts.force_recompile_max_debug_iterations = args.force_recompile_max_debug_iterations;
 	compiler->set_common_options(opts);
 
+	// This is enough for Vulkan mapping API.
+	if (args.glsl_descriptor_heap_set != UINT32_MAX)
+		compiler->remap_descriptor_heap(ResourceTypeUnknown, args.glsl_descriptor_heap_set, args.glsl_descriptor_heap_binding);
+
 	for (auto &fetch : args.glsl_ext_framebuffer_fetch)
 		compiler->remap_ext_framebuffer_fetch(fetch.first, fetch.second, !args.glsl_ext_framebuffer_fetch_noncoherent);
 
@@ -1703,6 +1710,11 @@ static int main_inner(int argc, char *argv[])
 	});
 	cbs.add("--glsl-ext-framebuffer-fetch-noncoherent", [&args](CLIParser &) {
 		args.glsl_ext_framebuffer_fetch_noncoherent = true;
+	});
+	cbs.add("--glsl-descriptor-heap-set-binding", [&args](CLIParser &parser)
+	{
+		args.glsl_descriptor_heap_set = parser.next_uint();
+		args.glsl_descriptor_heap_binding = parser.next_uint();
 	});
 	cbs.add("--vulkan-glsl-disable-ext-samplerless-texture-functions",
 	        [&args](CLIParser &) { args.vulkan_glsl_disable_ext_samplerless_texture_functions = true; });
