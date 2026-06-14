@@ -164,6 +164,7 @@ Individual capability flags.
 .. doxygendefine:: BGFX_CAPS_VERTEX_ATTRIB_HALF
 .. doxygendefine:: BGFX_CAPS_VERTEX_ATTRIB_UINT10
 .. doxygendefine:: BGFX_CAPS_VERTEX_ID
+.. doxygendefine:: BGFX_CAPS_VIDEO_DECODE
 .. doxygendefine:: BGFX_CAPS_VIEWPORT_LAYER_ARRAY
 .. doxygendefine:: BGFX_CAPS_TEXTURE_COMPARE_ALL
 
@@ -609,7 +610,17 @@ Textures
 .. doxygenstruct:: bgfx::TextureInfo
     :members:
 
+.. doxygenstruct:: bgfx::VideoDecoderInit
+    :members:
+
+.. doxygenstruct:: bgfx::VideoDecoderAu
+    :members:
+
+.. doxygenstruct:: bgfx::VideoDecoderFrame
+    :members:
+
 .. doxygenfunction:: bgfx::isTextureValid
+.. doxygenfunction:: bgfx::isVideoCodecValid
 .. doxygenfunction:: bgfx::calcTextureSize
 .. doxygenfunction:: bgfx::createTexture
 .. doxygenfunction:: bgfx::createTexture2D(uint16_t _width, uint16_t _height, bool _hasMips, uint16_t _numLayers, TextureFormat::Enum _format, uint64_t _flags = BGFX_TEXTURE_NONE|BGFX_SAMPLER_NONE, const Memory* _mem = NULL, uint64_t _external = 0)

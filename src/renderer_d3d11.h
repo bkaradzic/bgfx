@@ -263,6 +263,8 @@ namespace bgfx { namespace d3d11
 		IntelDirectAccessResourceDescriptor* m_descriptor;
 	};
 
+	struct VideoDecoderD3D11;
+
 	struct TextureD3D11
 	{
 		enum Enum
@@ -277,6 +279,7 @@ namespace bgfx { namespace d3d11
 			, m_rt(NULL)
 			, m_srv(NULL)
 			, m_uav(NULL)
+			, m_videoDecoder(NULL)
 			, m_numMips(0)
 		{
 		}
@@ -307,6 +310,7 @@ namespace bgfx { namespace d3d11
 
 		ID3D11ShaderResourceView*  m_srv;
 		ID3D11UnorderedAccessView* m_uav;
+		VideoDecoderD3D11*         m_videoDecoder;
 		uint64_t m_flags;
 		uint32_t m_width;
 		uint32_t m_height;

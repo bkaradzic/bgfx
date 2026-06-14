@@ -7,6 +7,7 @@
 
 #if BGFX_CONFIG_RENDERER_DIRECT3D11
 #	include "renderer_d3d11.h"
+#	include "video_d3d11.h"
 #	include <bx/pixelformat.h>
 
 namespace bgfx { namespace d3d11
@@ -1618,6 +1619,15 @@ namespace bgfx { namespace d3d11
 					g_caps.formats[ii] = support;
 				}
 
+				if (_init.videoDecode)
+				{
+					initVideoDecoder(
+						{
+							.device    = m_device,
+							.deviceCtx = m_deviceCtx,
+						});
+				}
+
 				// Init reserved part of view name.
 				for (uint32_t ii = 0; ii < BGFX_CONFIG_MAX_VIEWS; ++ii)
 				{
@@ -1727,6 +1737,7 @@ namespace bgfx { namespace d3d11
 
 			return false;
 		}
+
 
 		void shutdown()
 		{
@@ -3748,6 +3759,16 @@ namespace bgfx { namespace d3d11
 
 	static RendererContextD3D11* s_renderD3D11;
 
+	const ProgramD3D11& videoGetProgram(RendererContextD3D11* _renderer, ProgramHandle _handle)
+	{
+		return _renderer->m_program[_handle.idx];
+	}
+
+	ID3D11SamplerState* videoGetSamplerState(RendererContextD3D11* _renderer, uint32_t _flags)
+	{
+		return _renderer->getSamplerState(_flags, NULL);
+	}
+
 	RendererContextI* rendererCreate(const Init& _init)
 	{
 		s_renderD3D11 = BX_NEW(g_allocator, RendererContextD3D11);
@@ -4388,7 +4409,10 @@ namespace bgfx { namespace d3d11
 			uint32_t kk = 0;
 
 			const bool compressed = bimg::isCompressed(bimg::TextureFormat::Enum(m_textureFormat) );
-			const bool swizzle    = TextureFormat::BGRA8 == m_textureFormat && 0 != (m_flags&BGFX_TEXTURE_COMPUTE_WRITE);
+			const bool isVideoDecodeDst = 0 != (m_flags & BGFX_TEXTURE_INTERNAL_VIDEO_DECODE_DST);
+			const bool swizzle    = TextureFormat::BGRA8 == m_textureFormat
+				&& (0 != (m_flags&BGFX_TEXTURE_COMPUTE_WRITE) || isVideoDecodeDst)
+				;
 
 			BX_TRACE("Texture %3d: %s (requested: %s), layers %d, %dx%d%s%s%s."
 				, getHandle()
@@ -4403,7 +4427,7 @@ namespace bgfx { namespace d3d11
 				);
 
 			uint8_t* temp = NULL;
-			for (uint16_t side = 0; side < numSides; ++side)
+			for (uint16_t side = 0; !isVideoDecodeDst && side < numSides; ++side)
 			{
 				for (uint8_t lod = 0, num = ti.numMips; lod < num; ++lod)
 				{
@@ -4457,7 +4481,9 @@ namespace bgfx { namespace d3d11
 			}
 
 			const bool writeOnly      = 0 != (m_flags & (BGFX_TEXTURE_RT_WRITE_ONLY|BGFX_TEXTURE_READ_BACK) );
-			const bool computeWrite   = 0 != (m_flags & BGFX_TEXTURE_COMPUTE_WRITE);
+			const bool computeWrite   = 0 != (m_flags & BGFX_TEXTURE_COMPUTE_WRITE)
+				|| isVideoDecodeDst
+				;
 			const bool renderTarget   = 0 != (m_flags & BGFX_TEXTURE_RT_MASK);
 			const bool srgb           = 0 != (m_flags & BGFX_TEXTURE_SRGB);
 			const bool blit           = 0 != (m_flags & BGFX_TEXTURE_BLIT_DST);
@@ -4709,6 +4735,26 @@ namespace bgfx { namespace d3d11
 				DX_CHECK(s_renderD3D11->m_device->CreateUnorderedAccessView(m_ptr, NULL, &m_uav) );
 			}
 
+			if (isVideoDecodeDst)
+			{
+				BX_ASSERT(imageContainer.m_size >= sizeof(VideoDecoderInit)
+					, "VIDEO_DECODE_DST texture: Memory too small for VideoDecoderInit (got %d, want %zu)."
+					, imageContainer.m_size
+					, sizeof(VideoDecoderInit)
+					);
+				const VideoDecoderInit* init = (const VideoDecoderInit*)imageContainer.m_data;
+				BX_ASSERT(kVideoDecoderInitMagic == init->magic
+					, "VIDEO_DECODE_DST texture: bad VideoDecoderInit magic (0x%08x)."
+					, init->magic
+					);
+
+				m_videoDecoder = videoDecoderCreate(*init, s_renderD3D11, uint16_t(ti.width), uint16_t(ti.height) );
+				if (NULL == m_videoDecoder)
+				{
+					BX_TRACE("Failed to initialize hardware video decoder for texture.");
+				}
+			}
+
 			if (temp != NULL)
 			{
 				kk = 0;
@@ -4728,6 +4774,9 @@ namespace bgfx { namespace d3d11
 
 	void TextureD3D11::destroy()
 	{
+		videoDecoderDestroy(m_videoDecoder);
+		m_videoDecoder = NULL;
+
 		m_dar.destroy();
 
 		s_renderD3D11->m_srvUavLru.invalidateWithParent(getHandle().idx);
@@ -4781,6 +4830,28 @@ namespace bgfx { namespace d3d11
 
 	void TextureD3D11::update(uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem)
 	{
+		if (0 != (m_flags & BGFX_TEXTURE_INTERNAL_VIDEO_DECODE_DST) )
+		{
+			BX_ASSERT(_mem->size >= sizeof(VideoDecoderFrame)
+				, "VIDEO_DECODE_DST update: Memory too small for VideoDecoderFrame (got %d, want %zu)."
+				, _mem->size
+				, sizeof(VideoDecoderFrame)
+				);
+
+			const VideoDecoderFrame* frame = (const VideoDecoderFrame*)_mem->data;
+			BX_ASSERT(kVideoDecoderFrameMagic == frame->magic
+				, "VIDEO_DECODE_DST update: bad VideoDecoderFrame magic (0x%08x)."
+				, frame->magic
+				);
+			if (NULL != m_videoDecoder)
+			{
+				videoDecoderDecode(m_videoDecoder, *frame, *this);
+			}
+
+			BX_UNUSED(_side, _mip, _rect, _z, _depth, _pitch);
+			return;
+		}
+
 		ID3D11DeviceContext* deviceCtx = s_renderD3D11->m_deviceCtx;
 
 		D3D11_BOX box;

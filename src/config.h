@@ -175,6 +175,33 @@
 #	error "Can't define both BGFX_CONFIG_RENDERER_OPENGL and BGFX_CONFIG_RENDERER_OPENGLES"
 #endif // BGFX_CONFIG_RENDERER_OPENGL && BGFX_CONFIG_RENDERER_OPENGLES
 
+// Enable hardware video decoder.
+#ifndef BGFX_CONFIG_VIDEO
+#	define BGFX_CONFIG_VIDEO 1
+#endif // BGFX_CONFIG_VIDEO
+
+#define BGFX_CONFIG_VIDEO_DIRECT3D11 (true \
+	&& BGFX_CONFIG_VIDEO                   \
+	&& BGFX_CONFIG_RENDERER_DIRECT3D11     \
+	&& !BX_PLATFORM_LINUX                  \
+	)
+
+#define BGFX_CONFIG_VIDEO_DIRECT3D12 (true \
+	&& BGFX_CONFIG_VIDEO                   \
+	&& BGFX_CONFIG_RENDERER_DIRECT3D12     \
+	&& !BX_PLATFORM_LINUX                  \
+	)
+
+#define BGFX_CONFIG_VIDEO_METAL (true \
+	&& BGFX_CONFIG_VIDEO              \
+	&& BGFX_CONFIG_RENDERER_METAL     \
+	)
+
+#define BGFX_CONFIG_VIDEO_VULKAN (true \
+	&& BGFX_CONFIG_VIDEO               \
+	&& BGFX_CONFIG_RENDERER_VULKAN     \
+	)
+
 /// Enable use of renderer-specific API extensions (e.g. OpenGL extensions,
 /// Vulkan extensions). Default is 1 (enabled).
 #ifndef BGFX_CONFIG_RENDERER_USE_EXTENSIONS

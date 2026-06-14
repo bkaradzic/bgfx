@@ -27,6 +27,7 @@
 BX_ERROR_RESULT(BGFX_ERROR_TEXTURE_VALIDATION,      BX_MAKEFOURCC('b', 'g', 0, 1) );
 BX_ERROR_RESULT(BGFX_ERROR_FRAME_BUFFER_VALIDATION, BX_MAKEFOURCC('b', 'g', 0, 2) );
 BX_ERROR_RESULT(BGFX_ERROR_IDENTIFIER_VALIDATION,   BX_MAKEFOURCC('b', 'g', 0, 3) );
+BX_ERROR_RESULT(BGFX_ERROR_VIDEO_CODEC_VALIDATION,  BX_MAKEFOURCC('b', 'g', 0, 4) );
 
 namespace bgfx
 {
@@ -583,6 +584,7 @@ namespace bgfx
 #include "cs_mipgen_oddx.bin.h"
 #include "cs_mipgen_oddy.bin.h"
 #include "cs_mipgen_oddxy.bin.h"
+#include "cs_yuv_to_rgb.bin.h"
 
 	static const EmbeddedShader s_embeddedShaders[] =
 	{
@@ -601,6 +603,7 @@ namespace bgfx
 		BGFX_EMBEDDED_SHADER(cs_mipgen_oddx),
 		BGFX_EMBEDDED_SHADER(cs_mipgen_oddy),
 		BGFX_EMBEDDED_SHADER(cs_mipgen_oddxy),
+		BGFX_EMBEDDED_SHADER(cs_yuv_to_rgb),
 
 		BGFX_EMBEDDED_SHADER_END()
 	};
@@ -1116,6 +1119,64 @@ namespace bgfx
 		{
 			destroy(s_texMipSrc);
 			s_texMipSrc = BGFX_INVALID_HANDLE;
+		}
+	}
+
+	VideoDecode* g_videoDecode = NULL;
+
+	void VideoDecode::init()
+	{
+		BGFX_CHECK_API_THREAD();
+
+		switch (g_caps.rendererType)
+		{
+		case RendererType::Metal:
+		case RendererType::Direct3D11:
+		case RendererType::Direct3D12:
+		case RendererType::Vulkan:
+			break;
+
+		default:
+			return;
+		}
+
+		ShaderHandle csh = createEmbeddedShader(s_embeddedShaders, g_caps.rendererType, "cs_yuv_to_rgb");
+		BX_ASSERT(isValid(csh), "Failed to create video decode embedded compute shader.");
+
+		if (isValid(csh) )
+		{
+			m_program = createProgram(csh, true);
+			BX_ASSERT(isValid(m_program), "Failed to create video decode program.");
+		}
+
+		s_texY      = createUniform("bgfx_texY",      bgfx::UniformType::Sampler);
+		s_texCbCr   = createUniform("bgfx_texCbCr",   bgfx::UniformType::Sampler);
+
+		g_videoDecode = this;
+	}
+
+	void VideoDecode::shutdown()
+	{
+		BGFX_CHECK_API_THREAD();
+
+		g_videoDecode = NULL;
+
+		if (isValid(m_program) )
+		{
+			destroy(m_program);
+			m_program = BGFX_INVALID_HANDLE;
+		}
+
+		if (isValid(s_texY) )
+		{
+			destroy(s_texY);
+			s_texY = BGFX_INVALID_HANDLE;
+		}
+
+		if (isValid(s_texCbCr) )
+		{
+			destroy(s_texCbCr);
+			s_texCbCr = BGFX_INVALID_HANDLE;
 		}
 	}
 
@@ -1758,6 +1819,7 @@ namespace bgfx
 		CAPS_FLAGS(BGFX_CAPS_VERTEX_ATTRIB_HALF),
 		CAPS_FLAGS(BGFX_CAPS_VERTEX_ATTRIB_UINT10),
 		CAPS_FLAGS(BGFX_CAPS_VERTEX_ID),
+		CAPS_FLAGS(BGFX_CAPS_VIDEO_DECODE),
 		CAPS_FLAGS(BGFX_CAPS_VIEWPORT_LAYER_ARRAY),
 #undef CAPS_FLAGS
 	};
@@ -1929,6 +1991,37 @@ namespace bgfx
 					);
 				BX_UNUSED(flags);
 			}
+		}
+
+		BX_TRACE("");
+		BX_TRACE("Supported video decode codecs:");
+		BX_TRACE("\t +----- 8-bit sample depth");
+		BX_TRACE("\t |+---- 10-bit sample depth");
+		BX_TRACE("\t ||+--- 12-bit sample depth");
+		BX_TRACE("\t |||+-- 4:2:0 chroma subsampling");
+		BX_TRACE("\t ||||+- 4:2:2 chroma subsampling");
+		BX_TRACE("\t |||||+ 4:4:4 chroma subsampling");
+		BX_TRACE("\t ||||||  +-- name");
+		static const char* s_videoCodecName[] =
+		{
+			"H264",
+			"H265",
+			"AV1",
+		};
+		static_assert(BX_COUNTOF(s_videoCodecName) == VideoCodec::Count);
+		for (uint32_t ii = 0; ii < VideoCodec::Count; ++ii)
+		{
+			uint32_t flags = g_caps.codecs[ii];
+			BX_TRACE("\t[%c%c%c%c%c%c] %s"
+				, flags & BGFX_CAPS_VIDEO_CODEC_BIT_8      ? '8' : ' '
+				, flags & BGFX_CAPS_VIDEO_CODEC_BIT_10     ? 'a' : ' '
+				, flags & BGFX_CAPS_VIDEO_CODEC_BIT_12     ? 'c' : ' '
+				, flags & BGFX_CAPS_VIDEO_CODEC_CHROMA_420 ? '0' : ' '
+				, flags & BGFX_CAPS_VIDEO_CODEC_CHROMA_422 ? '2' : ' '
+				, flags & BGFX_CAPS_VIDEO_CODEC_CHROMA_444 ? '4' : ' '
+				, s_videoCodecName[ii]
+				);
+			BX_UNUSED(flags);
 		}
 
 		BX_TRACE("");
@@ -2258,6 +2351,7 @@ namespace bgfx
 		m_textVideoMemBlitter.init(m_init.resolution.debugTextScale);
 		m_clearQuad.init();
 		m_mipGen.init();
+		m_videoDecode.init();
 
 		m_submit->m_transientVb = createTransientVertexBuffer(_init.limits.maxTransientVbSize);
 		m_submit->m_transientIb = createTransientIndexBuffer(_init.limits.maxTransientIbSize);
@@ -2285,6 +2379,7 @@ namespace bgfx
 		m_textVideoMemBlitter.shutdown();
 		m_clearQuad.shutdown();
 		m_mipGen.shutdown();
+		m_videoDecode.shutdown();
 		frame();
 
 		if (BX_ENABLED(BGFX_CONFIG_MULTITHREADED) )
@@ -3787,6 +3882,7 @@ namespace bgfx
 		, debug(BX_ENABLED(BGFX_CONFIG_DEBUG) )
 		, profile(BX_ENABLED(BGFX_CONFIG_DEBUG_ANNOTATION) )
 		, fallback(true)
+		, videoDecode(false)
 		, callback(NULL)
 		, allocator(NULL)
 	{
@@ -5138,6 +5234,121 @@ namespace bgfx
 		return err.isOk();
 	}
 
+	static void isVideoCodecValid(VideoCodec::Enum _codec, uint8_t _chroma, uint8_t _bitDepth, uint16_t _codedWidth, uint16_t _codedHeight, uint8_t _maxDpbSlots, uint8_t _maxActiveReferences, bx::Error* _err)
+	{
+		BX_ERROR_SCOPE(_err, "Video codec validation");
+
+		BGFX_ERROR_CHECK(false
+			|| 0 != (g_caps.supported & BGFX_CAPS_VIDEO_DECODE)
+			, _err
+			, BGFX_ERROR_VIDEO_CODEC_VALIDATION
+			, "Hardware video decode is not supported! "
+			  "Use bgfx::getCaps to check `BGFX_CAPS_VIDEO_DECODE` backend renderer capabilities. "
+			  "Init::videoDecode must be enabled at bgfx::init()."
+			, ""
+			);
+
+		BGFX_ERROR_CHECK(false
+			|| _codec < VideoCodec::Count
+			, _err
+			, BGFX_ERROR_VIDEO_CODEC_VALIDATION
+			, "Invalid video codec."
+			, "Video codec: %d (Max: %d)."
+			, _codec
+			, VideoCodec::Count - 1
+			);
+
+		const uint32_t codecCaps = g_caps.codecs[_codec];
+
+		uint32_t depthBit = 0;
+		switch (_bitDepth)
+		{
+			case  8: depthBit = BGFX_CAPS_VIDEO_CODEC_BIT_8;  break;
+			case 10: depthBit = BGFX_CAPS_VIDEO_CODEC_BIT_10; break;
+			case 12: depthBit = BGFX_CAPS_VIDEO_CODEC_BIT_12; break;
+			default: break;
+		}
+
+		BGFX_ERROR_CHECK(false
+			|| 0 != depthBit
+			, _err
+			, BGFX_ERROR_VIDEO_CODEC_VALIDATION
+			, "Unsupported video bit depth (must be 8, 10 or 12)."
+			, "Bit depth: %d."
+			, _bitDepth
+			);
+
+		BGFX_ERROR_CHECK(false
+			|| 0 != (codecCaps & depthBit)
+			, _err
+			, BGFX_ERROR_VIDEO_CODEC_VALIDATION
+			, "Video codec does not support requested bit depth on this device."
+			, "Codec: %d, bit depth: %d."
+			, _codec
+			, _bitDepth
+			);
+
+		uint32_t chromaBit = 0;
+		switch (_chroma)
+		{
+			case 0: chromaBit = BGFX_CAPS_VIDEO_CODEC_CHROMA_420; break;
+			case 2: chromaBit = BGFX_CAPS_VIDEO_CODEC_CHROMA_422; break;
+			case 4: chromaBit = BGFX_CAPS_VIDEO_CODEC_CHROMA_444; break;
+			default: break;
+		}
+
+		BGFX_ERROR_CHECK(false
+			|| 0 != chromaBit
+			, _err
+			, BGFX_ERROR_VIDEO_CODEC_VALIDATION
+			, "Invalid chroma subsampling value (must be 0 = 4:2:0, 2 = 4:2:2, 4 = 4:4:4)."
+			, "Chroma: %d."
+			, _chroma
+			);
+
+		BGFX_ERROR_CHECK(false
+			|| 0 != (codecCaps & chromaBit)
+			, _err
+			, BGFX_ERROR_VIDEO_CODEC_VALIDATION
+			, "Video codec does not support requested chroma subsampling on this device."
+			, "Codec: %d, chroma: %d."
+			, _codec
+			, _chroma
+			);
+
+		BGFX_ERROR_CHECK(false
+			|| (0 != _codedWidth
+			&&  0 != _codedHeight
+			&&  _codedWidth  <= g_caps.limits.maxTextureSize
+			&&  _codedHeight <= g_caps.limits.maxTextureSize)
+			, _err
+			, BGFX_ERROR_VIDEO_CODEC_VALIDATION
+			, "Coded picture dimensions are invalid or above the `maxTextureSize` limit."
+			, "Coded width x height requested %d x %d (Max: %d)."
+			, _codedWidth
+			, _codedHeight
+			, g_caps.limits.maxTextureSize
+			);
+
+		BGFX_ERROR_CHECK(false
+			|| (0 != _maxDpbSlots
+			&&  _maxActiveReferences <= _maxDpbSlots)
+			, _err
+			, BGFX_ERROR_VIDEO_CODEC_VALIDATION
+			, "Invalid DPB layout: maxDpbSlots must be > 0 and maxActiveReferences must be <= maxDpbSlots."
+			, "maxDpbSlots: %d, maxActiveReferences: %d."
+			, _maxDpbSlots
+			, _maxActiveReferences
+			);
+	}
+
+	bool isVideoCodecValid(VideoCodec::Enum _codec, uint8_t _chroma, uint8_t _bitDepth, uint16_t _codedWidth, uint16_t _codedHeight, uint8_t _maxDpbSlots, uint8_t _maxActiveReferences)
+	{
+		bx::Error err;
+		isVideoCodecValid(_codec, _chroma, _bitDepth, _codedWidth, _codedHeight, _maxDpbSlots, _maxActiveReferences, &err);
+		return err.isOk();
+	}
+
 	void isIdentifierValid(const bx::StringView& _name, bx::Error* _err)
 	{
 		BX_ERROR_SCOPE(_err, "Uniform identifier validation");
@@ -5236,7 +5447,22 @@ namespace bgfx
 		}
 
 		bx::ErrorAssert err;
-		isTextureValid(_width, _height, 0, false, _numLayers, _format, _flags, &err);
+
+		uint64_t flags = _flags;
+		if (NULL != _mem
+		&&  _mem->size >= sizeof(VideoDecoderInit) )
+		{
+			VideoDecoderInit init;
+			bx::memCopy(&init, _mem->data, sizeof(init) );
+
+			if (kVideoDecoderInitMagic == init.magic
+			&&  init.codec < VideoCodec::Count)
+			{
+				flags |= BGFX_TEXTURE_INTERNAL_VIDEO_DECODE_DST;
+			}
+		}
+
+		isTextureValid(_width, _height, 0, false, _numLayers, _format, flags, &err);
 
 		if (!err.isOk() )
 		{
@@ -5247,7 +5473,8 @@ namespace bgfx
 		_numLayers = bx::max<uint16_t>(_numLayers, 1);
 
 		if (BX_ENABLED(BGFX_CONFIG_DEBUG)
-		&&  NULL != _mem)
+		&&  NULL != _mem
+		&&  0 == (flags & BGFX_TEXTURE_INTERNAL_VIDEO_DECODE_DST) )
 		{
 			TextureInfo ti;
 			calcTextureSize(ti, _width, _height, 1, false, _hasMips, _numLayers, _format);
@@ -5275,7 +5502,11 @@ namespace bgfx
 		tc.m_mem       = _mem;
 		bx::write(&writer, tc, bx::ErrorAssert{});
 
-		return s_ctx->createTexture(mem, _flags, 0, NULL, _ratio, NULL != _mem, _external);
+		const bool immutable = true
+			&& NULL != _mem
+			&& 0 == (flags & BGFX_TEXTURE_INTERNAL_VIDEO_DECODE_DST)
+			;
+		return s_ctx->createTexture(mem, flags, 0, NULL, _ratio, immutable, _external);
 	}
 
 	TextureHandle createTexture2D(uint16_t _width, uint16_t _height, bool _hasMips, uint16_t _numLayers, TextureFormat::Enum _format, uint64_t _flags, const Memory* _mem, uint64_t _external)

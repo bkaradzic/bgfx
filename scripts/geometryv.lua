@@ -140,6 +140,9 @@ project ("geometryv")
 			"-framework Metal",
 			"-framework OpenGL",
 			"-framework QuartzCore",
+			"-weak_framework VideoToolbox",
+			"-weak_framework CoreMedia",
+			"-weak_framework CoreVideo",
 		}
 
 	configuration { "ios*" }

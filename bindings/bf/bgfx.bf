@@ -743,6 +743,8 @@ public static class bgfx
 		/// Texture is shared with other device or other process.
 		/// </summary>
 		ExternalShared         = 0x0001000000000000,
+		ReservedShift          = 60,
+		ReservedMask           = 0xf000000000000000,
 	
 		/// <summary>
 		/// Render target MSAAx2 mode.
@@ -1178,9 +1180,14 @@ public static class bgfx
 		VertexId               = 0x0000000100000000,
 	
 		/// <summary>
+		/// Hardware video decode is supported.
+		/// </summary>
+		VideoDecode            = 0x0000000200000000,
+	
+		/// <summary>
 		/// Viewport layer is available in vertex shader.
 		/// </summary>
-		ViewportLayerArray     = 0x0000000200000000,
+		ViewportLayerArray     = 0x0000000400000000,
 	
 		/// <summary>
 		/// All texture compare modes are supported.
@@ -1280,6 +1287,104 @@ public static class bgfx
 		/// Texture format can be used as back buffer format.
 		/// </summary>
 		TextureBackbuffer      = 0x00010000,
+	
+		/// <summary>
+		/// Texture format can be used as video decode destination.
+		/// </summary>
+		TextureVideoDecodeDst  = 0x00020000,
+	}
+	
+	[AllowDuplicates]
+	public enum CapsVideoCodecFlags : uint32
+	{
+		/// <summary>
+		/// Video codec is not supported.
+		/// </summary>
+		None                   = 0x00000000,
+	
+		/// <summary>
+		/// 8-bit sample depth is supported.
+		/// </summary>
+		Bit8                   = 0x00000001,
+	
+		/// <summary>
+		/// 10-bit sample depth is supported.
+		/// </summary>
+		Bit10                  = 0x00000002,
+	
+		/// <summary>
+		/// 12-bit sample depth is supported.
+		/// </summary>
+		Bit12                  = 0x00000004,
+	
+		/// <summary>
+		/// 4:2:0 chroma subsampling is supported.
+		/// </summary>
+		Chroma420              = 0x00000008,
+	
+		/// <summary>
+		/// 4:2:2 chroma subsampling is supported.
+		/// </summary>
+		Chroma422              = 0x00000010,
+	
+		/// <summary>
+		/// 4:4:4 chroma subsampling is supported.
+		/// </summary>
+		Chroma444              = 0x00000020,
+	}
+	
+	[AllowDuplicates]
+	public enum VideoDecoderInitFlags : uint32
+	{
+		/// <summary>
+		/// No flags.
+		/// </summary>
+		None                   = 0x00000000,
+	
+		/// <summary>
+		/// Cache submitted access units in driver-managed memory keyed by `ptsUs` so the
+		/// presentation clock can revisit / loop without re-streaming. The cache is
+		/// unbounded: the app picks the total cache size implicitly by choosing how
+		/// many access units to submit. Without this flag access units are decoded once
+		/// and dropped (streaming default).
+		/// </summary>
+		Retain                 = 0x00000001,
+	}
+	
+	[AllowDuplicates]
+	public enum VideoDecodeFrameFlags : uint32
+	{
+		/// <summary>
+		/// No flags.
+		/// </summary>
+		None                   = 0x00000000,
+	
+		/// <summary>
+		/// First batch after a position change. The first access unit must be a clean IDR.
+		/// Driver flushes its DPB, queued access units, and reorder pool before decoding;
+		/// subsequent `presentationTimeUs` values may land anywhere (monotonicity is only
+		/// required between non-`Set` ticks).
+		/// </summary>
+		Set                    = 0x00000001,
+	
+		/// <summary>
+		/// Skip the picker dispatch for this call. Useful while bulk-loading access units
+		/// so the displayed picture isn't churned mid-load.
+		/// </summary>
+		NoBlit                 = 0x00000002,
+	
+		/// <summary>
+		/// Marks the last access unit of the clip; permits eager pre-decode in idle time
+		/// and lets the picker emit the final frame without lookahead stalling.
+		/// </summary>
+		Final                  = 0x00000004,
+	
+		/// <summary>
+		/// When `presentationTimeUs` runs past the highest cached `ptsUs`, the picker
+		/// wraps modulo the cached pts range. Without this flag the picker freezes on
+		/// the last displayable picture.
+		/// </summary>
+		Loop                   = 0x00000008,
 	}
 	
 	[AllowDuplicates]
@@ -2245,6 +2350,27 @@ public static class bgfx
 	}
 	
 	[AllowDuplicates]
+	public enum VideoCodec : uint32
+	{
+		/// <summary>
+		/// H.264 / AVC.
+		/// </summary>
+		H264,
+	
+		/// <summary>
+		/// H.265 / HEVC.
+		/// </summary>
+		H265,
+	
+		/// <summary>
+		/// AV1.
+		/// </summary>
+		AV1,
+	
+		Count
+	}
+	
+	[AllowDuplicates]
 	public enum Topology : uint32
 	{
 		/// <summary>
@@ -2484,6 +2610,7 @@ public static class bgfx
 		public GPU[4] gpu;
 		public Limits limits;
 		public uint32[100] formats;
+		public uint32[3] codecs;
 	}
 	
 	[CRepr]
@@ -2538,6 +2665,7 @@ public static class bgfx
 		public uint8 debug;
 		public uint8 profile;
 		public uint8 fallback;
+		public uint8 videoDecode;
 		public PlatformData platformData;
 		public Resolution resolution;
 		public Limits limits;
@@ -2596,6 +2724,35 @@ public static class bgfx
 		public uint8 numMips;
 		public uint8 bitsPerPixel;
 		public uint8 cubeMap;
+	}
+	
+	[CRepr]
+	public struct VideoDecoderInit
+	{
+		public uint32 magic;
+		public VideoCodec codec;
+		public uint8_t* parameterSets;
+		public uint32 parameterSetsSize;
+		public uint32 cachedAuBytes;
+		public uint8 flags;
+	}
+	
+	[CRepr]
+	public struct VideoDecoderAu
+	{
+		public uint32 size;
+		public int64 ptsUs;
+	}
+	
+	[CRepr]
+	public struct VideoDecoderFrame
+	{
+		public uint32 magic;
+		public uint8_t* bitstream;
+		public VideoDecoderAu* aus;
+		public uint32 numAus;
+		public int64 presentationTimeUs;
+		public uint8 flags;
 	}
 	
 	[CRepr]
@@ -3508,6 +3665,24 @@ public static class bgfx
 	///
 	[LinkName("bgfx_is_texture_valid")]
 	public static extern bool is_texture_valid(uint16 _depth, bool _cubeMap, uint16 _numLayers, TextureFormat _format, uint64 _flags);
+	
+	/// <summary>
+	/// Validate video codec parameters. Use to check whether the requested
+	/// combination of codec / bit depth / chroma / dimensions / DPB layout can
+	/// be hardware decoded on the current device. Coarse capability discovery
+	/// is `Caps::supported & BGFX_CAPS_VIDEO_DECODE` and `Caps::codecs[]`.
+	/// </summary>
+	///
+	/// <param name="_codec">Video codec. See: `VideoCodec::Enum`.</param>
+	/// <param name="_chroma">Chroma subsampling. 0 = 4:2:0, 2 = 4:2:2, 4 = 4:4:4.</param>
+	/// <param name="_bitDepth">Bit depth per component. 8, 10 or 12.</param>
+	/// <param name="_codedWidth">Coded picture width (macroblock / CTU / superblock aligned).</param>
+	/// <param name="_codedHeight">Coded picture height.</param>
+	/// <param name="_maxDpbSlots">Maximum decoded picture buffer slot count.</param>
+	/// <param name="_maxActiveReferences">Maximum number of reference frames active at once.</param>
+	///
+	[LinkName("bgfx_is_video_codec_valid")]
+	public static extern bool is_video_codec_valid(VideoCodec _codec, uint8 _chroma, uint8 _bitDepth, uint16 _codedWidth, uint16 _codedHeight, uint8 _maxDpbSlots, uint8 _maxActiveReferences);
 	
 	/// <summary>
 	/// Validate frame buffer parameters.

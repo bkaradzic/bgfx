@@ -23,6 +23,7 @@ BIN = vs_debugfont.bin.h \
 	  cs_mipgen_oddx.bin.h \
 	  cs_mipgen_oddy.bin.h \
 	  cs_mipgen_oddxy.bin.h \
+	  cs_yuv_to_rgb.bin.h \
 
 .PHONY: all
 all: $(BIN)
@@ -110,6 +111,9 @@ cs_mipgen_oddy.bin.h : cs_mipgen_oddy.sc cs_mipgen.sh
 	$(call shader-embedded-compute)
 
 cs_mipgen_oddxy.bin.h : cs_mipgen_oddxy.sc cs_mipgen.sh
+	$(call shader-embedded-compute)
+
+cs_yuv_to_rgb.bin.h : cs_yuv_to_rgb.sc
 	$(call shader-embedded-compute)
 
 .PHONY: clean

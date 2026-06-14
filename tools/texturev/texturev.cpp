@@ -5,6 +5,8 @@
 
 #include "common.h"
 
+#include "video_player.h"
+
 #include <bgfx/bgfx.h>
 
 #include <bx/commandline.h>
@@ -109,6 +111,7 @@ struct Binding
 		View,
 		Help,
 		About,
+		Video,
 
 		Count
 	};
@@ -138,15 +141,7 @@ struct Output
 	};
 };
 
-static const InputBinding s_bindingApp[] =
-{
-	{ entry::Key::KeyQ, entry::Modifier::None,  1, NULL, "exit"                },
-	{ entry::Key::KeyF, entry::Modifier::None,  1, NULL, "graphics fullscreen" },
-
-	INPUT_BINDING_END
-};
-
-const char* s_resetCmd =
+static const char* s_resetCmd =
 	"view zoom 1.0\n"
 	"view rotate x 0\n"
 	"view rotate y 0\n"
@@ -156,57 +151,68 @@ const char* s_resetCmd =
 	"view ev\n"
 	;
 
-static const InputBinding s_bindingView[] =
+static const InputBinding s_bindingApp[] =
 {
-	{ entry::Key::Esc,       entry::Modifier::None,       1, NULL, "exit"                    },
-
-	{ entry::Key::Comma,     entry::Modifier::None,       1, NULL, "view mip prev"           },
-	{ entry::Key::Period,    entry::Modifier::None,       1, NULL, "view mip next"           },
-	{ entry::Key::Comma,     entry::Modifier::LeftShift,  1, NULL, "view mip"                },
-	{ entry::Key::Comma,     entry::Modifier::RightShift, 1, NULL, "view mip"                },
-
-	{ entry::Key::Slash,     entry::Modifier::None,       1, NULL, "view filter"             },
-
-	{ entry::Key::Key1,      entry::Modifier::None,       1, NULL, "view zoom 1.0\n"
-	                                                               "view fit\n"              },
-
-	{ entry::Key::Key0,      entry::Modifier::None,       1, NULL, s_resetCmd                },
-	{ entry::Key::Plus,      entry::Modifier::None,       1, NULL, "view zoom +0.1"          },
-	{ entry::Key::Minus,     entry::Modifier::None,       1, NULL, "view zoom -0.1"          },
-
-	{ entry::Key::KeyZ,      entry::Modifier::None,       1, NULL, "view rotate z -90"       },
-	{ entry::Key::KeyZ,      entry::Modifier::LeftShift,  1, NULL, "view rotate z +90"       },
-
-	{ entry::Key::KeyX,      entry::Modifier::None,       1, NULL, "view rotate x +180"      },
-	{ entry::Key::KeyY,      entry::Modifier::None,       1, NULL, "view rotate y +180"      },
+	{ entry::Key::KeyQ,      entry::Modifier::None,       1, NULL, "exit"                },
+	{ entry::Key::KeyF,      entry::Modifier::None,       1, NULL, "graphics fullscreen" },
 
 	{ entry::Key::Up,        entry::Modifier::None,       1, NULL, "view pan\n"
-	                                                               "view file-up"            },
+	                                                               "view file-up"        },
 	{ entry::Key::Down,      entry::Modifier::None,       1, NULL, "view pan\n"
-	                                                               "view file-down"          },
+	                                                               "view file-down"      },
 	{ entry::Key::PageUp,    entry::Modifier::None,       1, NULL, "view pan\n"
-	                                                               "view file-pgup"          },
+	                                                               "view file-pgup"      },
 	{ entry::Key::PageDown,  entry::Modifier::None,       1, NULL, "view pan\n"
-	                                                               "view file-pgdown"        },
+	                                                               "view file-pgdown"    },
 
-	{ entry::Key::Left,      entry::Modifier::None,       1, NULL, "view layer prev"         },
-	{ entry::Key::Right,     entry::Modifier::None,       1, NULL, "view layer next"         },
+	{ entry::Key::Return,    entry::Modifier::None,       1, NULL, "view files"          },
+	{ entry::Key::KeyH,      entry::Modifier::None,       1, NULL, "view help"           },
+	{ entry::Key::KeyI,      entry::Modifier::None,       1, NULL, "view info"           },
 
-	{ entry::Key::KeyR,      entry::Modifier::None,       1, NULL, "view rgb r"              },
-	{ entry::Key::KeyG,      entry::Modifier::None,       1, NULL, "view rgb g"              },
-	{ entry::Key::KeyB,      entry::Modifier::None,       1, NULL, "view rgb b"              },
-	{ entry::Key::KeyA,      entry::Modifier::None,       1, NULL, "view rgb a"              },
+	{ entry::Key::Key1,      entry::Modifier::None,       1, NULL, "view zoom 1.0\n"
+	                                                               "view fit\n"          },
+	{ entry::Key::Key0,      entry::Modifier::None,       1, NULL, s_resetCmd            },
+	{ entry::Key::Plus,      entry::Modifier::None,       1, NULL, "view zoom +0.1"      },
+	{ entry::Key::Minus,     entry::Modifier::None,       1, NULL, "view zoom -0.1"      },
 
-	{ entry::Key::KeyI,      entry::Modifier::None,       1, NULL, "view info"               },
+	{ entry::Key::KeyZ,      entry::Modifier::None,       1, NULL, "view rotate z -90"   },
+	{ entry::Key::KeyZ,      entry::Modifier::LeftShift,  1, NULL, "view rotate z +90"   },
 
-	{ entry::Key::KeyH,      entry::Modifier::None,       1, NULL, "view help"               },
+	{ entry::Key::KeyX,      entry::Modifier::None,       1, NULL, "view rotate x +180"  },
+	{ entry::Key::KeyY,      entry::Modifier::None,       1, NULL, "view rotate y +180"  },
 
-	{ entry::Key::Return,    entry::Modifier::None,       1, NULL, "view files"              },
+	{ entry::Key::KeyR,      entry::Modifier::None,       1, NULL, "view rgb r"          },
+	{ entry::Key::KeyG,      entry::Modifier::None,       1, NULL, "view rgb g"          },
+	{ entry::Key::KeyB,      entry::Modifier::None,       1, NULL, "view rgb b"          },
+	{ entry::Key::KeyA,      entry::Modifier::None,       1, NULL, "view rgb a"          },
 
-	{ entry::Key::KeyS,      entry::Modifier::None,       1, NULL, "view sdf"                },
+	{ entry::Key::KeyI,      entry::Modifier::None,       1, NULL, "view info"           },
+
+	{ entry::Key::KeyH,      entry::Modifier::None,       1, NULL, "view help"           },
+
+	{ entry::Key::Return,    entry::Modifier::None,       1, NULL, "view files"          },
+
+	INPUT_BINDING_END
+};
+
+static const InputBinding s_bindingView[] =
+{
+	{ entry::Key::Esc,       entry::Modifier::None,       1, NULL, "exit"                },
+
+	{ entry::Key::Comma,     entry::Modifier::None,       1, NULL, "view mip prev"       },
+	{ entry::Key::Period,    entry::Modifier::None,       1, NULL, "view mip next"       },
+	{ entry::Key::Comma,     entry::Modifier::LeftShift,  1, NULL, "view mip"            },
+	{ entry::Key::Comma,     entry::Modifier::RightShift, 1, NULL, "view mip"            },
+
+	{ entry::Key::Slash,     entry::Modifier::None,       1, NULL, "view filter"         },
+
+	{ entry::Key::Left,      entry::Modifier::None,       1, NULL, "view layer prev"     },
+	{ entry::Key::Right,     entry::Modifier::None,       1, NULL, "view layer next"     },
+
+	{ entry::Key::KeyS,      entry::Modifier::None,       1, NULL, "view sdf"            },
 
 	{ entry::Key::Space,     entry::Modifier::None,       1, NULL, "view geo\n"
-	                                                               "view pan\n"              },
+	                                                               "view pan\n"          },
 
 	INPUT_BINDING_END
 };
@@ -224,12 +230,31 @@ static const InputBinding s_bindingAbout[] =
 	INPUT_BINDING_END
 };
 
+// Bindings active while a video clip is loaded. Replaces the standard View
+// bindings on file change so per-image keys (rgb channel toggle, geometry,
+// layer / mip navigation) don't accidentally fire on the video texture.
+// Per-file navigation, exit, zoom and help are kept.
+static const InputBinding s_bindingVideo[] =
+{
+	{ entry::Key::Esc,          entry::Modifier::None,       1, NULL, "exit"                    },
+
+	{ entry::Key::Left,         entry::Modifier::None,       1, NULL, "video skip -8"           },
+	{ entry::Key::Right,        entry::Modifier::None,       1, NULL, "video skip +8"           },
+	{ entry::Key::Space,        entry::Modifier::None,       1, NULL, "video pause"             },
+	{ entry::Key::LeftBracket,  entry::Modifier::None,       1, NULL, "video rate down"         },
+	{ entry::Key::RightBracket, entry::Modifier::None,       1, NULL, "video rate up"           },
+	{ entry::Key::KeyL,         entry::Modifier::None,       1, NULL, "video marker"            },
+
+	INPUT_BINDING_END
+};
+
 static const char* s_bindingName[] =
 {
 	"App",
 	"View",
 	"Help",
 	"About",
+	"Video",
 };
 static_assert(Binding::Count == BX_COUNTOF(s_bindingName) );
 
@@ -239,6 +264,7 @@ static const InputBinding* s_binding[] =
 	s_bindingView,
 	s_bindingHelp,
 	s_bindingAbout,
+	s_bindingVideo,
 };
 static_assert(Binding::Count == BX_COUNTOF(s_binding) );
 
@@ -909,6 +935,52 @@ int cmdView(CmdContext* /*_context*/, void* _userData, int _argc, char const* co
 	return view->cmd(_argc, _argv);
 }
 
+int cmdVideo(CmdContext* /*_context*/, void* _userData, int _argc, char const* const* _argv)
+{
+	VideoPlayer* player = static_cast<VideoPlayer*>(_userData);
+	if (NULL == player || !player->isOpen() || _argc < 2)
+	{
+		return 0;
+	}
+
+	const bx::StringView verb(_argv[1]);
+
+	if (0 == bx::strCmp(verb, "skip", 4) )
+	{
+		float seconds = 0.0f;
+		if (_argc >= 3)
+		{
+			bx::fromString(&seconds, _argv[2]);
+		}
+		player->seekRelative(int64_t(seconds * 1.0e6f) );
+	}
+	else if (0 == bx::strCmp(verb, "pause", 5) )
+	{
+		player->togglePause();
+	}
+	else if (0 == bx::strCmp(verb, "rate", 4) )
+	{
+		if (_argc >= 3 && 0 == bx::strCmp(_argv[2], "up", 2) )
+		{
+			player->rateUp();
+		}
+		else if (_argc >= 3 && 0 == bx::strCmp(_argv[2], "down", 4) )
+		{
+			player->rateDown();
+		}
+	}
+	else if (0 == bx::strCmp(verb, "marker", 6) )
+	{
+		player->cycleAbMarker();
+	}
+	else if (0 == bx::strCmp(verb, "restart", 7) )
+	{
+		player->restart();
+	}
+
+	return 0;
+}
+
 struct PosUvwColorVertex
 {
 	float m_x;
@@ -1322,6 +1394,21 @@ void help(const char* _error = NULL)
 		  "  -v, --version            Version information only.\n"
 		  "      --associate          Associate file extensions with texturev.\n"
 		  "\n"
+		  "      --gl                 Force OpenGL renderer.\n"
+		  "      --vk                 Force Vulkan renderer.\n"
+		  "      --noop               Force no-op renderer.\n"
+		  "      --d3d11              Force Direct3D 11 renderer.\n"
+		  "      --d3d12              Force Direct3D 12 renderer.\n"
+		  "      --mtl                Force Metal renderer (macOS only).\n"
+		  "\n"
+		  "      --amd                Prefer AMD GPU.\n"
+		  "      --apple              Prefer Apple GPU.\n"
+		  "      --arm                Prefer ARM GPU.\n"
+		  "      --intel              Prefer Intel GPU.\n"
+		  "      --nvidia             Prefer NVIDIA GPU.\n"
+		  "      --microsoft          Prefer Microsoft GPU.\n"
+		  "      --sw                 Prefer software rasterizer.\n"
+		  "\n"
 		  "For additional information, see https://github.com/bkaradzic/bgfx\n"
 		);
 }
@@ -1356,22 +1443,32 @@ int _main_(int _argc, char** _argv)
 
 	uint32_t debug = BGFX_DEBUG_TEXT;
 
+	Args args(_argc, _argv);
+
 	inputAddBindings(s_bindingName[Binding::App],  s_binding[Binding::App]);
 	inputAddBindings(s_bindingName[Binding::View], s_binding[Binding::View]);
 
 	View view;
 	cmdAdd("view", cmdView, &view);
 
+	VideoPlayer videoPlayer;
+	cmdAdd("video", cmdVideo, &videoPlayer);
+
 	entry::setWindowFlags(entry::kDefaultWindowHandle, ENTRY_WINDOW_FLAG_ASPECT_RATIO, false);
 	entry::setWindowSize(entry::kDefaultWindowHandle, view.m_width, view.m_height);
 
 	bgfx::Init init;
-	init.type = view.m_rendererType;
+	init.type = bgfx::RendererType::Count != args.m_type
+		? args.m_type
+		: view.m_rendererType
+		;
+	init.vendorId          = args.m_pciId;
 	init.platformData.nwh  = entry::getNativeWindowHandle(entry::kDefaultWindowHandle);
 	init.platformData.ndt  = entry::getNativeDisplayHandle();
 	init.resolution.width  = view.m_width;
 	init.resolution.height = view.m_height;
 	init.resolution.reset  = BGFX_RESET_VSYNC;
+	init.videoDecode       = true;
 
 	bgfx::init(init);
 
@@ -1389,6 +1486,12 @@ int _main_(int _argc, char** _argv)
 
 	const bgfx::Caps* caps = bgfx::getCaps();
 	bgfx::RendererType::Enum type = caps->rendererType;
+
+	if (0 != (caps->supported & BGFX_CAPS_VIDEO_DECODE) )
+	{
+		s_supportedExt[s_numSupportedExt++] = "mp4";
+		bx::quickSort(s_supportedExt, s_numSupportedExt, sizeof(s_supportedExt[0]), compareExt);
+	}
 
 	bgfx::UniformHandle s_texColor = bgfx::createUniform("s_texColor", bgfx::UniformType::Sampler);
 	bgfx::UniformHandle u_mtx      = bgfx::createUniform("u_mtx",      bgfx::UniformType::Mat4);
@@ -1495,12 +1598,26 @@ int _main_(int _argc, char** _argv)
 			;
 	};
 
-	const char* filePath = _argc < 2 ? "" : _argv[1];
+	// Accept the file path as the first non-flag positional argument so
+	// renderer / vendor switches can appear in any order on the command
+	// line (e.g. `texturev clip.mp4 --vk --intel` or
+	// `texturev --vk --intel clip.mp4` both work).
+	const char* filePath = "";
+	for (int32_t ii = 1; ii < _argc; ++ii)
+	{
+		if (_argv[ii][0] != '-')
+		{
+			filePath = _argv[ii];
+			break;
+		}
+	}
 
 	view.updateFileList(filePath);
 
 	int exitcode = bx::kExitSuccess;
 	bgfx::TextureHandle texture = BGFX_INVALID_HANDLE;
+	bool videoOwnsTexture = false;
+	int playbackBinding = Binding::View;
 
 	{
 		uint32_t fileIndex = UINT32_MAX;
@@ -1736,14 +1853,82 @@ int _main_(int _argc, char** _argv)
 						name = " 2D Array";
 					}
 
-					ImGui::Text("%d x %d%s, mips: %d, layers %d, %s"
+					const char* codecName = "";
+
+					if (videoPlayer.isOpen() )
+					{
+						static const char* s_videoCodecName[] =
+						{
+							", H.264", // VideoCodec::H264
+							", H.265", // VideoCodec::H265
+							", AV1",   // VideoCodec::AV1
+						};
+						static_assert(BX_COUNTOF(s_videoCodecName) == bgfx::VideoCodec::Count);
+						const bgfx::VideoCodec::Enum codec = videoPlayer.codec();
+						codecName = s_videoCodecName[codec];
+					}
+
+					ImGui::Text("%d x %d%s, mips: %d, layers %d, %s%s"
 						, view.m_textureInfo.width
 						, view.m_textureInfo.height
 						, name
 						, view.m_textureInfo.numMips
 						, view.m_textureInfo.numLayers
 						, bimg::getName(bimg::TextureFormat::Enum(view.m_textureInfo.format) )
+						, codecName
 						);
+				}
+
+				if (videoPlayer.isOpen() )
+				{
+					ImGui::Separator();
+
+					const bool paused = videoPlayer.isPaused();
+					if (ImGui::Button(paused ? ICON_FA_PLAY : ICON_FA_PAUSE) )
+					{
+						videoPlayer.togglePause();
+					}
+
+					const int64_t curUs = videoPlayer.playbackTimeUs();
+					const int64_t durUs = int64_t(videoPlayer.durationUs() );
+					const float   curS  = float(double(curUs) * 1e-6);
+					const float   durS  = bx::max(0.001f, float(double(durUs) * 1e-6) );
+
+					float sliderS = bx::clamp(curS, 0.0f, durS);
+					ImGui::PushItemWidth(240.0f);
+
+					ImGui::PushItemFlag(ImGuiItemFlags_NoNav, true);
+					if (ImGui::SliderFloat("##videoProgress", &sliderS, 0.0f, durS, "%.2fs", ImGuiSliderFlags_AlwaysClamp) )
+					{
+						videoPlayer.seekTo(uint64_t(double(sliderS) * 1e6) );
+					}
+
+					ImGui::PopItemFlag();
+					ImGui::PopItemWidth();
+
+					ImGui::Text("/ %5.2fs  " ICON_FA_FORWARD " %.2fx", durS, videoPlayer.playbackRate() );
+
+					const int64_t aUs = videoPlayer.aMarkerUs();
+					const int64_t bUs = videoPlayer.bMarkerUs();
+					if (aUs >= 0 && bUs >= 0)
+					{
+						ImGui::Separator();
+						ImGui::TextColored(
+							  ImVec4(1.0f, 1.0f, 0.0f, 1.0f)
+							, ICON_FA_REPEAT " A=%.2fs  B=%.2fs"
+							, double(aUs)*1e-6
+							, double(bUs)*1e-6
+							);
+					}
+					else if (aUs >= 0)
+					{
+						ImGui::Separator();
+						ImGui::TextColored(
+							  ImVec4(1.0f, 1.0f, 0.0f, 1.0f)
+							, "A=%.2fs"
+							, double(aUs)*1e-6
+							);
+					}
 				}
 
 				ImGui::EndMainMenuBar();
@@ -1802,13 +1987,13 @@ int _main_(int _argc, char** _argv)
 				if (!help)
 				{
 					ImGui::OpenPopup("Help");
-					inputRemoveBindings(s_bindingName[Binding::View]);
+					inputRemoveBindings(s_bindingName[playbackBinding]);
 					inputAddBindings(s_bindingName[Binding::Help], s_binding[Binding::Help]);
 				}
 				else
 				{
 					inputRemoveBindings(s_bindingName[Binding::Help]);
-					inputAddBindings(s_bindingName[Binding::View], s_binding[Binding::View]);
+					inputAddBindings(s_bindingName[playbackBinding], s_binding[playbackBinding]);
 				}
 
 				help = view.m_help;
@@ -1819,13 +2004,13 @@ int _main_(int _argc, char** _argv)
 				if (!about)
 				{
 					ImGui::OpenPopup("About");
-					inputRemoveBindings(s_bindingName[Binding::View]);
+					inputRemoveBindings(s_bindingName[playbackBinding]);
 					inputAddBindings(s_bindingName[Binding::About], s_binding[Binding::About]);
 				}
 				else
 				{
 					inputRemoveBindings(s_bindingName[Binding::About]);
-					inputAddBindings(s_bindingName[Binding::View], s_binding[Binding::View]);
+					inputAddBindings(s_bindingName[playbackBinding], s_binding[playbackBinding]);
 				}
 
 				about = view.m_about;
@@ -2048,79 +2233,114 @@ int _main_(int _argc, char** _argv)
 			if (view.m_fileIndex != fileIndex
 			&&  0 != view.m_fileList.size() )
 			{
-				if (bgfx::isValid(texture) )
-				{
-					bgfx::destroy(texture);
-				}
-
 				fileIndex = view.m_fileIndex;
 
 				bx::FilePath fp = view.m_path;
 				fp.join(view.m_fileList[view.m_fileIndex].c_str() );
 
-				bimg::Orientation::Enum orientation;
-				bx::Error loadErr;
-				texture = loadTexture(fp.getCPtr()
-					, 0
-					| BGFX_SAMPLER_U_CLAMP
-					| BGFX_SAMPLER_V_CLAMP
-					| BGFX_SAMPLER_W_CLAMP
-					, 0
-					, &view.m_textureInfo
-					, &orientation
-					, &loadErr
-					);
+				bx::StringView fileName(view.m_fileList[view.m_fileIndex].c_str() );
 
-				bimg::TextureFormat::Enum format = bimg::TextureFormat::Enum(view.m_textureInfo.format);
-
-				if (format < bimg::TextureFormat::Count)
+				bx::StringView ext;
+				if (fileName.getLength() >= 4)
 				{
-					view.m_inLinear = bimg::isFloat(format);
-
-					switch (orientation)
-					{
-					default:
-					case bimg::Orientation::R0:        cmdExec("view orientation\nview orientation z    0"); break;
-					case bimg::Orientation::R90:       cmdExec("view orientation\nview orientation z  -90"); break;
-					case bimg::Orientation::R180:      cmdExec("view orientation\nview orientation z -180"); break;
-					case bimg::Orientation::R270:      cmdExec("view orientation\nview orientation z -270"); break;
-					case bimg::Orientation::HFlip:     cmdExec("view orientation\nview orientation x -180"); break;
-					case bimg::Orientation::HFlipR90:  cmdExec("view orientation\nview orientation z  -90\nview orientation x -180");  break;
-					case bimg::Orientation::HFlipR270: cmdExec("view orientation\nview orientation z -270\nview orientation x -180"); break;
-					case bimg::Orientation::VFlip:     cmdExec("view orientation\nview orientation y -180"); break;
-					}
+					ext.set(fileName.getTerm() - 4, fileName.getTerm() );
 				}
 
-				std::string title;
-				if (isValid(texture) )
-				{
-					const char* name = "";
-					if (view.m_textureInfo.cubeMap)
-					{
-						name = " CubeMap";
-					}
-					else if (1 < view.m_textureInfo.depth)
-					{
-						name = " 3D";
-						view.m_textureInfo.numLayers = view.m_textureInfo.depth;
-					}
-					else if (1 < view.m_textureInfo.numLayers)
-					{
-						name = " 2D Array";
-					}
+				const bool nextIsVideo = false
+					|| 0 == bx::strCmpI(ext, ".mp4")
+					|| 0 == bx::strCmpI(ext, ".m4v")
+					;
 
-					bx::stringPrintf(title, "%s (%d x %d%s, mips: %d, layers %d, %s)"
-						, fp.getCPtr()
-						, view.m_textureInfo.width
-						, view.m_textureInfo.height
-						, name
-						, view.m_textureInfo.numMips
-						, view.m_textureInfo.numLayers
-						, bimg::getName(bimg::TextureFormat::Enum(view.m_textureInfo.format) )
-						);
+				if (videoOwnsTexture)
+				{
+					videoPlayer.close();
+					videoOwnsTexture = false;
+					texture = BGFX_INVALID_HANDLE;
+				}
+				else if (bgfx::isValid(texture) )
+				{
+					bgfx::destroy(texture);
+					texture = BGFX_INVALID_HANDLE;
+				}
+
+				const int desiredBinding = nextIsVideo ? Binding::Video : Binding::View;
+				const bool modalOpen = view.m_help || view.m_about;
+				if (desiredBinding != playbackBinding && !modalOpen)
+				{
+					inputRemoveBindings(s_bindingName[playbackBinding]);
+					inputAddBindings(s_bindingName[desiredBinding], s_binding[desiredBinding]);
+				}
+				playbackBinding = desiredBinding;
+
+				std::string title;
+
+				if (nextIsVideo)
+				{
+					if (videoPlayer.open(fp.getCPtr() ) )
+					{
+						texture = videoPlayer.texture();
+						videoOwnsTexture = true;
+
+						view.m_textureInfo.format       = bgfx::TextureFormat::BGRA8;
+						view.m_textureInfo.storageSize  = 0;
+						view.m_textureInfo.width        = uint16_t(videoPlayer.width() );
+						view.m_textureInfo.height       = uint16_t(videoPlayer.height() );
+						view.m_textureInfo.depth        = 1;
+						view.m_textureInfo.numLayers    = 1;
+						view.m_textureInfo.numMips      = 1;
+						view.m_textureInfo.bitsPerPixel = 32;
+						view.m_textureInfo.cubeMap      = false;
+						view.m_inLinear = false;
+
+						cmdExec("view orientation\nview orientation z 0");
+
+						bx::stringPrintf(title, "%s (%d x %d, video, %5.2fs)"
+							, fp.getCPtr()
+							, view.m_textureInfo.width
+							, view.m_textureInfo.height
+							, double(videoPlayer.durationUs() ) * 1e-6
+							);
+					}
+					else
+					{
+						bx::stringPrintf(title, "Failed to load %s!", filePath);
+					}
 				}
 				else
 				{
+					bimg::Orientation::Enum orientation;
+					bx::Error loadErr;
+					texture = loadTexture(fp.getCPtr()
+						, 0
+						| BGFX_SAMPLER_U_CLAMP
+						| BGFX_SAMPLER_V_CLAMP
+						| BGFX_SAMPLER_W_CLAMP
+						, 0
+						, &view.m_textureInfo
+						, &orientation
+						, &loadErr
+						);
+
+					bimg::TextureFormat::Enum format = bimg::TextureFormat::Enum(view.m_textureInfo.format);
+
+					if (format < bimg::TextureFormat::Count)
+					{
+						view.m_inLinear = bimg::isFloat(format);
+
+						switch (orientation)
+						{
+						default:
+						case bimg::Orientation::R0:        cmdExec("view orientation\nview orientation z    0"); break;
+						case bimg::Orientation::R90:       cmdExec("view orientation\nview orientation z  -90"); break;
+						case bimg::Orientation::R180:      cmdExec("view orientation\nview orientation z -180"); break;
+						case bimg::Orientation::R270:      cmdExec("view orientation\nview orientation z -270"); break;
+						case bimg::Orientation::HFlip:     cmdExec("view orientation\nview orientation x -180"); break;
+						case bimg::Orientation::HFlipR90:  cmdExec("view orientation\nview orientation z  -90\nview orientation x -180");  break;
+						case bimg::Orientation::HFlipR270: cmdExec("view orientation\nview orientation z -270\nview orientation x -180"); break;
+						case bimg::Orientation::VFlip:     cmdExec("view orientation\nview orientation y -180"); break;
+						}
+					}
+
 					if (!loadErr.isOk() )
 					{
 						const bx::StringView& msg = loadErr.getMessage();
@@ -2129,7 +2349,30 @@ int _main_(int _argc, char** _argv)
 					}
 					else
 					{
-						bx::stringPrintf(title, "Failed to load %s!", filePath);
+						const char* name = "";
+						if (view.m_textureInfo.cubeMap)
+						{
+							name = " CubeMap";
+						}
+						else if (1 < view.m_textureInfo.depth)
+						{
+							name = " 3D";
+							view.m_textureInfo.numLayers = view.m_textureInfo.depth;
+						}
+						else if (1 < view.m_textureInfo.numLayers)
+						{
+							name = " 2D Array";
+						}
+
+						bx::stringPrintf(title, "%s (%d x %d%s, mips: %d, layers %d, %s)"
+							, fp.getCPtr()
+							, view.m_textureInfo.width
+							, view.m_textureInfo.height
+							, name
+							, view.m_textureInfo.numMips
+							, view.m_textureInfo.numLayers
+							, bimg::getName(bimg::TextureFormat::Enum(view.m_textureInfo.format) )
+							);
 					}
 				}
 
@@ -2321,18 +2564,29 @@ int _main_(int _argc, char** _argv)
 				bgfx::discard();
 			}
 
+			if (videoPlayer.isOpen() )
+			{
+				videoPlayer.tick();
+			}
+
 			bgfx::frame();
 
 			// Slow down when nothing is animating...
 			if (!dragging
-			&&  !anyActive() )
+			&&  !anyActive()
+			&&  !videoPlayer.isOpen() )
 			{
 				bx::sleep(100);
 			}
 		}
 	}
 
-	if (bgfx::isValid(texture) )
+	if (videoOwnsTexture)
+	{
+		videoPlayer.close();
+		texture = BGFX_INVALID_HANDLE;
+	}
+	else if (bgfx::isValid(texture) )
 	{
 		bgfx::destroy(texture);
 	}

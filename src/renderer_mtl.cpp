@@ -13,6 +13,7 @@
 #include <metal-cpp/metal.hpp>
 
 #include "renderer_mtl.h"
+#include "video_mtl.h"
 #include "renderer.h"
 #include <bx/macros.h>
 
@@ -767,9 +768,6 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 #define SHADER_FUNCTION_NAME "xlatMtlMain"
 #define SHADER_UNIFORM_NAME  "_mtl_u"
 
-	struct RendererContextMtl;
-	static RendererContextMtl* s_renderMtl;
-
 	struct ChunkedScratchBufferOffset
 	{
 		MTL::Buffer* buffer;
@@ -791,6 +789,9 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 		void flushChunk(ChunkMtl& _chunk, uint32_t _size);
 		uint32_t currentFrameInFlight() const;
 	};
+
+	struct RendererContextMtl;
+	static RendererContextMtl* s_renderMtl;
 
 	struct RendererContextMtl : public RendererContextI
 	{
@@ -1053,6 +1054,11 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 				}
 			}
 
+			if (_init.videoDecode)
+			{
+				initVideoDecoder();
+			}
+
 			for (uint32_t ii = 1, last = 0; ii < BX_COUNTOF(s_msaa); ++ii)
 			{
 				const int32_t sampleCount = 1<<ii;
@@ -1163,6 +1169,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 			return true;
 		}
+
 
 		void shutdown()
 		{
@@ -3140,6 +3147,32 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 		FrameBufferHandle           m_renderCommandEncoderFbh;
 	};
 
+	PipelineStateMtl* videoGetComputePipelineState(RendererContextMtl* _renderer, ProgramHandle _handle)
+	{
+		return _renderer->getComputePipelineState(_handle);
+	}
+
+	void videoEndEncoding(RendererContextMtl* _renderer)
+	{
+		_renderer->endEncoding();
+	}
+
+	MTL::CommandBuffer* videoEnsureCommandBuffer(RendererContextMtl* _renderer)
+	{
+		MTL::CommandBuffer* commandBuffer = _renderer->m_commandBuffer;
+		if (NULL == commandBuffer)
+		{
+			commandBuffer = _renderer->m_cmd.alloc();
+			_renderer->m_commandBuffer = commandBuffer;
+		}
+		return commandBuffer;
+	}
+
+	MTL::SamplerState* videoGetSamplerState(RendererContextMtl* _renderer, uint64_t _samplerFlags)
+	{
+		return _renderer->getSamplerState(_samplerFlags);
+	}
+
 	void ChunkedScratchBufferMtl::createUniform(uint32_t _chunkSize, uint32_t _numChunks)
 	{
 		create(_chunkSize, _numChunks, 256);
@@ -3512,6 +3545,8 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			const uint32_t msaaQuality = bx::satSub<uint32_t>(uint32_t( (_flags&BGFX_TEXTURE_RT_MSAA_MASK) >> BGFX_TEXTURE_RT_MSAA_SHIFT ), 1u);
 			const int32_t  sampleCount = s_msaa[msaaQuality];
 
+			const bool isVideoDecodeDst = 0 != (_flags & BGFX_TEXTURE_INTERNAL_VIDEO_DECODE_DST);
+
 			const TextureFormatInfo& tfi = s_textureFormat[m_textureFormat];
 
 			MTL::PixelFormat format = MTL::PixelFormatInvalid;
@@ -3554,8 +3589,9 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 				MTL::TextureUsage usage = 0
 					|                 MTL::TextureUsageShaderRead
-					| (computeWrite ? MTL::TextureUsageShaderWrite  : 0)
-					| (renderTarget ? MTL::TextureUsageRenderTarget : 0)
+					| (computeWrite    ? MTL::TextureUsageShaderWrite  : 0)
+					| (isVideoDecodeDst? MTL::TextureUsageShaderWrite  : 0)
+					| (renderTarget    ? MTL::TextureUsageRenderTarget : 0)
 					;
 
 				desc->setUsage(usage);
@@ -3590,6 +3626,29 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			{
 				desc->setPixelFormat(MTL::PixelFormatStencil8);
 				m_ptrStencil = s_renderMtl->m_device->newTexture(desc);
+			}
+
+			if (isVideoDecodeDst)
+			{
+				BX_ASSERT(imageContainer.m_size >= sizeof(VideoDecoderInit)
+					, "VIDEO_DECODE_DST texture: Memory too small for VideoDecoderInit (got %d, want %zu)."
+					, imageContainer.m_size
+					, sizeof(VideoDecoderInit)
+					);
+				const VideoDecoderInit* init = (const VideoDecoderInit*)imageContainer.m_data;
+				BX_ASSERT(kVideoDecoderInitMagic == init->magic
+					, "VIDEO_DECODE_DST texture: bad VideoDecoderInit magic (0x%08x)."
+					, init->magic
+					);
+
+				m_videoDecoder = videoDecoderCreate(*init, s_renderMtl, s_renderMtl->m_device, uint16_t(ti.width), uint16_t(ti.height) );
+				if (NULL == m_videoDecoder)
+				{
+					BX_TRACE("Failed to initialize hardware video decoder.");
+				}
+
+				MTL_RELEASE(desc, 0);
+				return;
 			}
 
 			uint8_t* temp = NULL;
@@ -3680,6 +3739,9 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 	void TextureMtl::destroy()
 	{
+		videoDecoderDestroy(m_videoDecoder);
+		m_videoDecoder = NULL;
+
 		if (0 == (m_flags & BGFX_SAMPLER_INTERNAL_SHARED) )
 		{
 			MTL_RELEASE_W(m_ptr, 0);
@@ -3710,6 +3772,25 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 	void TextureMtl::update(uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem)
 	{
+		if (0 != (m_flags & BGFX_TEXTURE_INTERNAL_VIDEO_DECODE_DST) )
+		{
+			BX_ASSERT(_mem->size >= sizeof(VideoDecoderFrame)
+				, "VIDEO_DECODE_DST update: Memory too small for VideoDecoderFrame (got %d, want %zu)."
+				, _mem->size
+				, sizeof(VideoDecoderFrame)
+				);
+			const VideoDecoderFrame* frame = (const VideoDecoderFrame*)_mem->data;
+			BX_ASSERT(kVideoDecoderFrameMagic == frame->magic
+				, "VIDEO_DECODE_DST update: bad VideoDecoderFrame magic (0x%08x)."
+				, frame->magic
+				);
+			if (NULL != m_videoDecoder)
+			{
+				videoDecoderDecode(m_videoDecoder, *frame, m_ptr);
+			}
+			return;
+		}
+
 		const uint32_t bpp       = bimg::getBitsPerPixel(bimg::TextureFormat::Enum(m_textureFormat) );
 		uint32_t rectpitch  = _rect.m_width*bpp/8;
 		if (bimg::isCompressed(bimg::TextureFormat::Enum(m_textureFormat) ) )

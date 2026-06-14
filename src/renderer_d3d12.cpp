@@ -7,6 +7,7 @@
 
 #if BGFX_CONFIG_RENDERER_DIRECT3D12
 #	include "renderer_d3d12.h"
+#	include "video_d3d12.h"
 
 #if !BX_PLATFORM_WINDOWS && !BX_PLATFORM_LINUX
 #	include <inspectable.h>
@@ -482,7 +483,6 @@ namespace bgfx { namespace d3d12
 	static const GUID IID_ID3D12Resource2             = { 0xbe36ec3b, 0xea85, 0x4aeb, { 0xa4, 0x5a, 0xe9, 0xd7, 0x64, 0x04, 0xa4, 0x95 } };
 	static const GUID IID_ID3D12RootSignature         = { 0xc54a6b66, 0x72df, 0x4ee8, { 0x8b, 0xe5, 0xa9, 0x46, 0xa1, 0x42, 0x92, 0x14 } };
 	static const GUID IID_ID3D12QueryHeap             = { 0x0d9658ae, 0xed45, 0x469e, { 0xa6, 0x1d, 0x97, 0x0e, 0xc5, 0x83, 0xca, 0xb4 } };
-
 	BX_PRAGMA_DIAGNOSTIC_POP();
 
 	static const GUID s_d3dDeviceIIDs[] =
@@ -1858,6 +1858,22 @@ namespace bgfx { namespace d3d12
 					g_caps.formats[ii] = support;
 				}
 
+				if (_init.videoDecode)
+				{
+					initVideoDecoder(
+						{
+							.device               = m_device,
+							.computeRootSignature = m_computeRootSignature,
+							.samplerHeap          = m_samplerAllocator.getHeap(),
+							.commandQueue      = m_cmd.m_commandQueue,
+#if !BX_PLATFORM_LINUX
+							.vendorId             = uint16_t(m_dxgi.m_adapterDesc.VendorId),
+#else
+							.vendorId             = 0,
+#endif // !BX_PLATFORM_LINUX
+						});
+				}
+
 				// Init reserved part of view name.
 				for (uint32_t ii = 0; ii < BGFX_CONFIG_MAX_VIEWS; ++ii)
 				{
@@ -1948,6 +1964,7 @@ namespace bgfx { namespace d3d12
 
 			return false;
 		}
+
 
 		void shutdown()
 		{
@@ -3915,6 +3932,32 @@ namespace bgfx { namespace d3d12
 
 	static RendererContextD3D12* s_renderD3D12;
 
+	ID3D12PipelineState* videoGetPipelineState(RendererContextD3D12* _renderer, ProgramHandle _handle)
+	{
+		return _renderer->getPipelineState(_handle);
+	}
+
+	ScratchBufferD3D12& videoGetScratchBuffer(RendererContextD3D12* _renderer)
+	{
+		return _renderer->m_scratchBuffer[_renderer->m_backBufferColorIdx];
+	}
+
+	D3D12_GPU_DESCRIPTOR_HANDLE videoGetSamplerHandle(RendererContextD3D12* _renderer, const uint32_t* _samplerFlags)
+	{
+		const uint16_t samplerStateIdx = _renderer->getSamplerState(_samplerFlags, BGFX_MAX_COMPUTE_BINDINGS, NULL);
+		return _renderer->m_samplerAllocator.get(samplerStateIdx);
+	}
+
+	ID3D12GraphicsCommandList* videoGetCommandList(RendererContextD3D12* _renderer)
+	{
+		return _renderer->m_commandList;
+	}
+
+	void videoReleaseResource(RendererContextD3D12* _renderer, ID3D12Resource* _resource)
+	{
+		_renderer->m_cmd.release(_resource);
+	}
+
 	RendererContextI* rendererCreate(const Init& _init)
 	{
 		s_renderD3D12 = BX_NEW(g_allocator, RendererContextD3D12);
@@ -4135,13 +4178,25 @@ namespace bgfx { namespace d3d12
 		m_gpuHandle.ptr += m_incrementSize;
 	}
 
-	void ScratchBufferD3D12::allocSrv(D3D12_GPU_DESCRIPTOR_HANDLE& _gpuHandle, BufferD3D12& _buffer)
+	void ScratchBufferD3D12::allocSrv(D3D12_GPU_DESCRIPTOR_HANDLE& _gpuHandle, ID3D12Resource* _resource, const D3D12_SHADER_RESOURCE_VIEW_DESC& _desc)
 	{
 		ID3D12Device* device = s_renderD3D12->m_device;
-		device->CreateShaderResourceView(_buffer.m_ptr
-			, &_buffer.m_srvd
-			, m_cpuHandle
-			);
+		device->CreateShaderResourceView(_resource, &_desc, m_cpuHandle);
+		m_cpuHandle.ptr += m_incrementSize;
+
+		_gpuHandle = m_gpuHandle;
+		m_gpuHandle.ptr += m_incrementSize;
+	}
+
+	void ScratchBufferD3D12::allocSrv(D3D12_GPU_DESCRIPTOR_HANDLE& _gpuHandle, BufferD3D12& _buffer)
+	{
+		allocSrv(_gpuHandle, _buffer.m_ptr, _buffer.m_srvd);
+	}
+
+	void ScratchBufferD3D12::allocUav(D3D12_GPU_DESCRIPTOR_HANDLE& _gpuHandle, ID3D12Resource* _resource, const D3D12_UNORDERED_ACCESS_VIEW_DESC& _desc)
+	{
+		ID3D12Device* device = s_renderD3D12->m_device;
+		device->CreateUnorderedAccessView(_resource, NULL, &_desc, m_cpuHandle);
 		m_cpuHandle.ptr += m_incrementSize;
 
 		_gpuHandle = m_gpuHandle;
@@ -4150,16 +4205,7 @@ namespace bgfx { namespace d3d12
 
 	void ScratchBufferD3D12::allocUav(D3D12_GPU_DESCRIPTOR_HANDLE& _gpuHandle, BufferD3D12& _buffer)
 	{
-		ID3D12Device* device = s_renderD3D12->m_device;
-		device->CreateUnorderedAccessView(_buffer.m_ptr
-			, NULL
-			, &_buffer.m_uavd
-			, m_cpuHandle
-			);
-		m_cpuHandle.ptr += m_incrementSize;
-
-		_gpuHandle = m_gpuHandle;
-		m_gpuHandle.ptr += m_incrementSize;
+		allocUav(_gpuHandle, _buffer.m_ptr, _buffer.m_uavd);
 	}
 
 	void ChunkedScratchBufferD3D12::createUniform(uint32_t _chunkSize, uint32_t _numChunks)
@@ -5548,12 +5594,16 @@ namespace bgfx { namespace d3d12
 			uint32_t kk = 0;
 
 			const bool compressed = bimg::isCompressed(bimg::TextureFormat::Enum(m_textureFormat) );
-			const bool swizzle    = TextureFormat::BGRA8 == m_textureFormat && 0 != (m_flags&BGFX_TEXTURE_COMPUTE_WRITE);
+			const bool isVideoDecodeDst = 0 != (m_flags & BGFX_TEXTURE_INTERNAL_VIDEO_DECODE_DST);
+			const bool swizzle    = TextureFormat::BGRA8 == m_textureFormat
+				&& (0 != (m_flags&BGFX_TEXTURE_COMPUTE_WRITE) || isVideoDecodeDst)
+				;
 
 			const bool writeOnly      = 0 != (m_flags & BGFX_TEXTURE_RT_WRITE_ONLY);
 			const bool renderTarget   = 0 != (m_flags & BGFX_TEXTURE_RT_MASK);
 			const bool computeWrite   = 0 != (m_flags & BGFX_TEXTURE_COMPUTE_WRITE)
 				|| (renderTarget && 1 < ti.numMips)
+				|| isVideoDecodeDst
 				;
 			const bool blit           = 0 != (m_flags & BGFX_TEXTURE_BLIT_DST);
 			const bool externalShared = 0 != (m_flags & BGFX_TEXTURE_EXTERNAL_SHARED);
@@ -5580,7 +5630,7 @@ namespace bgfx { namespace d3d12
 				, swizzle ? " (swizzle BGRA8 -> RGBA8)" : ""
 				);
 
-			for (uint16_t side = 0; side < numSides; ++side)
+			for (uint16_t side = 0; !isVideoDecodeDst && side < numSides; ++side)
 			{
 				for (uint8_t lod = 0; lod < ti.numMips; ++lod)
 				{
@@ -5945,6 +5995,29 @@ namespace bgfx { namespace d3d12
 					, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE
 				);
 			}
+
+			if (isVideoDecodeDst)
+			{
+				BX_TRACE("TextureD3D12::create VIDEO_DECODE_DST imgSize=%u want=%zu"
+					, imageContainer.m_size, sizeof(VideoDecoderInit) );
+
+				BX_ASSERT(imageContainer.m_size >= sizeof(VideoDecoderInit)
+					, "VIDEO_DECODE_DST texture: Memory too small for VideoDecoderInit (got %d, want %zu)."
+					, imageContainer.m_size
+					, sizeof(VideoDecoderInit)
+					);
+				const VideoDecoderInit* init = (const VideoDecoderInit*)imageContainer.m_data;
+				BX_ASSERT(kVideoDecoderInitMagic == init->magic
+					, "VIDEO_DECODE_DST texture: bad VideoDecoderInit magic (0x%08x)."
+					, init->magic
+					);
+
+				m_videoDecoder = videoDecoderCreate(*init, s_renderD3D12, uint16_t(ti.width), uint16_t(ti.height) );
+				if (NULL == m_videoDecoder)
+				{
+					BX_TRACE("Failed to initialize hardware video decoder for texture.");
+				}
+			}
 		}
 
 		return m_directAccessPtr;
@@ -5952,6 +6025,9 @@ namespace bgfx { namespace d3d12
 
 	void TextureD3D12::destroy()
 	{
+		videoDecoderDestroy(m_videoDecoder);
+		m_videoDecoder = NULL;
+
 		if (NULL != m_ptr)
 		{
 			if (NULL != m_directAccessPtr)
@@ -6001,6 +6077,27 @@ namespace bgfx { namespace d3d12
 
 	void TextureD3D12::update(ID3D12GraphicsCommandList* _commandList, uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem)
 	{
+		if (0 != (m_flags & BGFX_TEXTURE_INTERNAL_VIDEO_DECODE_DST) )
+		{
+			BX_ASSERT(_mem->size >= sizeof(VideoDecoderFrame)
+				, "VIDEO_DECODE_DST update: Memory too small for VideoDecoderFrame (got %d, want %zu)."
+				, _mem->size
+				, sizeof(VideoDecoderFrame)
+				);
+
+			const VideoDecoderFrame* frame = (const VideoDecoderFrame*)_mem->data;
+			BX_ASSERT(kVideoDecoderFrameMagic == frame->magic
+				, "VIDEO_DECODE_DST update: bad VideoDecoderFrame magic (0x%08x)."
+				, frame->magic
+				);
+			if (NULL != m_videoDecoder)
+			{
+				videoDecoderDecode(m_videoDecoder, *frame, *this);
+			}
+
+			return;
+		}
+
 		D3D12_RESOURCE_STATES state = setState(_commandList, D3D12_RESOURCE_STATE_COPY_DEST);
 
 		const uint32_t bpp    = bimg::getBitsPerPixel(bimg::TextureFormat::Enum(m_textureFormat) );
