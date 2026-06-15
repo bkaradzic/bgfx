@@ -6,14 +6,14 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>API Reference &mdash; bgfx 1.142.9194 documentation</title>
+  <title>API Reference &mdash; bgfx 1.146.9292 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
 
   
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="_static/documentation_options.js?v=9c0e2687"></script>
+      <script src="_static/documentation_options.js?v=6b816648"></script>
       <script src="_static/doctools.js?v=9bcbadda"></script>
       <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/js/theme.js"></script>
@@ -97,7 +97,6 @@
 <li class="toctree-l4"><a class="reference internal" href="#_CPPv4N4bgfx10vertexPackEAL4E_KfbN6Attrib4EnumERK12VertexLayoutPv8uint32_t"><code class="docutils literal notranslate"><span class="pre">vertexPack()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#_CPPv4N4bgfx12vertexUnpackEAL4E_fN6Attrib4EnumERK12VertexLayoutPKv8uint32_t"><code class="docutils literal notranslate"><span class="pre">vertexUnpack()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#_CPPv4N4bgfx13vertexConvertERK12VertexLayoutPvRK12VertexLayoutPKv8uint32_t"><code class="docutils literal notranslate"><span class="pre">vertexConvert()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N4bgfx12weldVerticesEPvRK12VertexLayoutPKv8uint32_tbf"><code class="docutils literal notranslate"><span class="pre">weldVertices()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#_CPPv4N4bgfx15topologyConvertEN15TopologyConvert4EnumEPv8uint32_tPKv8uint32_tb"><code class="docutils literal notranslate"><span class="pre">topologyConvert()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#_CPPv4N4bgfx19topologySortTriListEN12TopologySort4EnumEPv8uint32_tAL3E_KfAL3E_KfPKv8uint32_tPKv8uint32_tb"><code class="docutils literal notranslate"><span class="pre">topologySortTriList()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#_CPPv4N4bgfx15setPaletteColorE7uint8_tAL4E_Kf"><code class="docutils literal notranslate"><span class="pre">setPaletteColor()</span></code></a></li>
@@ -229,7 +228,11 @@
 <li class="toctree-l4"><a class="reference internal" href="#c.BGFX_TEXTURE_RT_WRITE_ONLY"><code class="docutils literal notranslate"><span class="pre">BGFX_TEXTURE_RT_WRITE_ONLY</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#_CPPv4N4bgfx13TextureFormatE"><code class="docutils literal notranslate"><span class="pre">bgfx::TextureFormat</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#_CPPv4N4bgfx11TextureInfoE"><code class="docutils literal notranslate"><span class="pre">bgfx::TextureInfo</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N4bgfx16VideoDecoderInitE"><code class="docutils literal notranslate"><span class="pre">bgfx::VideoDecoderInit</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N4bgfx14VideoDecoderAuE"><code class="docutils literal notranslate"><span class="pre">bgfx::VideoDecoderAu</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N4bgfx17VideoDecoderFrameE"><code class="docutils literal notranslate"><span class="pre">bgfx::VideoDecoderFrame</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#_CPPv4N4bgfx14isTextureValidE8uint16_tb8uint16_tN13TextureFormat4EnumE8uint64_t"><code class="docutils literal notranslate"><span class="pre">isTextureValid()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N4bgfx17isVideoCodecValidEN10VideoCodec4EnumE7uint8_t7uint8_t8uint16_t8uint16_t7uint8_t7uint8_t"><code class="docutils literal notranslate"><span class="pre">isVideoCodecValid()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#_CPPv4N4bgfx15calcTextureSizeER11TextureInfo8uint16_t8uint16_t8uint16_tbb8uint16_tN13TextureFormat4EnumE"><code class="docutils literal notranslate"><span class="pre">calcTextureSize()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#_CPPv4N4bgfx13createTextureEPK6Memory8uint64_t7uint8_tP11TextureInfo"><code class="docutils literal notranslate"><span class="pre">createTexture()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#_CPPv4N4bgfx15createTexture2DE8uint16_t8uint16_tb8uint16_tN13TextureFormat4EnumE8uint64_tPK6Memory8uint64_t"><code class="docutils literal notranslate"><span class="pre">createTexture2D()</span></code></a></li>
@@ -239,7 +242,7 @@
 <li class="toctree-l4"><a class="reference internal" href="#_CPPv4N4bgfx15updateTexture2DE13TextureHandle8uint16_t7uint8_t8uint16_t8uint16_t8uint16_t8uint16_tPK6Memory8uint16_t"><code class="docutils literal notranslate"><span class="pre">updateTexture2D()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#_CPPv4N4bgfx15updateTexture3DE13TextureHandle7uint8_t8uint16_t8uint16_t8uint16_t8uint16_t8uint16_t8uint16_tPK6Memory"><code class="docutils literal notranslate"><span class="pre">updateTexture3D()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#_CPPv4N4bgfx17updateTextureCubeE13TextureHandle8uint16_t7uint8_t7uint8_t8uint16_t8uint16_t8uint16_t8uint16_tPK6Memory8uint16_t"><code class="docutils literal notranslate"><span class="pre">updateTextureCube()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N4bgfx11readTextureE13TextureHandlePv7uint8_t"><code class="docutils literal notranslate"><span class="pre">readTexture()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N4bgfx11readTextureE13TextureHandlePv8uint16_t7uint8_t"><code class="docutils literal notranslate"><span class="pre">readTexture()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#_CPPv4N4bgfx18getDirectAccessPtrE13TextureHandle"><code class="docutils literal notranslate"><span class="pre">getDirectAccessPtr()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#_CPPv4N4bgfx7destroyE13TextureHandle"><code class="docutils literal notranslate"><span class="pre">destroy()</span></code></a></li>
 </ul>
@@ -496,6 +499,12 @@
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx4Init8fallbackE">
 <span id="_CPPv3N4bgfx4Init8fallbackE"></span><span id="_CPPv2N4bgfx4Init8fallbackE"></span><span id="bgfx::Init::fallback__b"></span><span class="target" id="structbgfx_1_1_init_1aefe6e75e932796ecae19dead24ba6e1a"></span><span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">fallback</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx4Init8fallbackE" title="Link to this definition"></a><br /></dt>
 <dd><p>Enable fallback to next available renderer. </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4bgfx4Init11videoDecodeE">
+<span id="_CPPv3N4bgfx4Init11videoDecodeE"></span><span id="_CPPv2N4bgfx4Init11videoDecodeE"></span><span id="bgfx::Init::videoDecode__b"></span><span class="target" id="structbgfx_1_1_init_1aca0ed7ad13daf980edb92f4e300d208b"></span><span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">videoDecode</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx4Init11videoDecodeE" title="Link to this definition"></a><br /></dt>
+<dd><p>Enable video decoding. </p>
 </dd></dl>
 
 <dl class="cpp var">
@@ -1280,6 +1289,12 @@
 <dt class="sig sig-object cpp" id="c.BGFX_CAPS_VERTEX_ID">
 <span class="target" id="defines_8h_1a63af3c34318335de4b4fa64af87dcc5c"></span><span class="sig-name descname"><span class="n"><span class="pre">BGFX_CAPS_VERTEX_ID</span></span></span><a class="headerlink" href="#c.BGFX_CAPS_VERTEX_ID" title="Link to this definition"></a><br /></dt>
 <dd><p>Rendering with VertexID only is supported. </p>
+</dd></dl>
+
+<dl class="cpp macro">
+<dt class="sig sig-object cpp" id="c.BGFX_CAPS_VIDEO_DECODE">
+<span class="target" id="defines_8h_1a7f4e6d33a8b9d3fe8d2992ece3f6bf60"></span><span class="sig-name descname"><span class="n"><span class="pre">BGFX_CAPS_VIDEO_DECODE</span></span></span><a class="headerlink" href="#c.BGFX_CAPS_VIDEO_DECODE" title="Link to this definition"></a><br /></dt>
+<dd><p>Hardware video decode is supported. </p>
 </dd></dl>
 
 <dl class="cpp macro">
@@ -2107,32 +2122,6 @@ It is only necessary to use these APIs in conjunction with creating windows.</p>
 <li><p><strong>_srcData</strong> – <strong>[in]</strong> Source vertex stream data. </p></li>
 <li><p><strong>_num</strong> – <strong>[in]</strong> Number of vertices to convert from source to destination.</p></li>
 </ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="cpp function">
-<dt class="sig sig-object cpp" id="_CPPv4N4bgfx12weldVerticesEPvRK12VertexLayoutPKv8uint32_tbf">
-<span id="_CPPv3N4bgfx12weldVerticesEPvRK12VertexLayoutPKv8uint32_tbf"></span><span id="_CPPv2N4bgfx12weldVerticesEPvRK12VertexLayoutPKv8uint32_tbf"></span><span id="bgfx::weldVertices__voidP.VertexLayoutCR.voidCP.uint32_t.b.float"></span><span class="target" id="namespacebgfx_1a9242a9ab0e66291a8952ec3222519bce"></span><span class="n"><span class="pre">uint32_t</span></span><span class="w"> </span><span class="sig-prename descclassname"><span class="n"><span class="pre">bgfx</span></span><span class="p"><span class="pre">::</span></span></span><span class="sig-name descname"><span class="n"><span class="pre">weldVertices</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n sig-param"><span class="pre">_output</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4N4bgfx12VertexLayoutE" title="bgfx::VertexLayout"><span class="n"><span class="pre">VertexLayout</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">_layout</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n sig-param"><span class="pre">_data</span></span>, <span class="n"><span class="pre">uint32_t</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">_num</span></span>, <span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">_index32</span></span>, <span class="kt"><span class="pre">float</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">_epsilon</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0.001f</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4bgfx12weldVerticesEPvRK12VertexLayoutPKv8uint32_tbf" title="Link to this definition"></a><br /></dt>
-<dd><p>Weld vertices. Returns number of unique vertices after welding. </p>
-<p><dl class="simple">
-<dt><strong>Attention</strong></dt><dd><p>C99’s equivalent binding is <code class="docutils literal notranslate"><span class="pre">bgfx_weld_vertices</span></code>. </p>
-</dd>
-</dl>
-</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>_output</strong> – <strong>[in]</strong> Welded vertices remapping table. The size of buffer must be the same as number of vertices. </p></li>
-<li><p><strong>_layout</strong> – <strong>[in]</strong> Vertex stream layout. </p></li>
-<li><p><strong>_data</strong> – <strong>[in]</strong> Vertex stream. </p></li>
-<li><p><strong>_num</strong> – <strong>[in]</strong> Number of vertices in vertex stream. </p></li>
-<li><p><strong>_index32</strong> – <strong>[in]</strong> Set to <code class="docutils literal notranslate"><span class="pre">true</span></code> if input indices are 32-bit. </p></li>
-<li><p><strong>_epsilon</strong> – <strong>[in]</strong> Error tolerance for vertex position comparison.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Number of unique vertices after vertex welding.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -3281,6 +3270,35 @@ In graphics debugger view name will appear as: <div class="highlight-default not
 <li><p><strong>_stage</strong> – <strong>[in]</strong> Texture unit. </p></li>
 <li><p><strong>_sampler</strong> – <strong>[in]</strong> Program sampler. </p></li>
 <li><p><strong>_handle</strong> – <strong>[in]</strong> Texture handle. </p></li>
+<li><p><strong>_flags</strong> – <strong>[in]</strong> Texture sampling mode. Default value UINT32_MAX uses texture sampling settings from the texture.<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">BGFX_SAMPLER_[U/V/W]_[MIRROR/CLAMP]</span></code> - Mirror or clamp to edge wrap mode.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">BGFX_SAMPLER_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]</span></code> - Point or anisotropic sampling.</p></li>
+</ul>
+</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4bgfx7Encoder10setTextureE7uint8_t13UniformHandle13TextureHandle8uint16_t8uint16_t7uint8_t7uint8_t8uint32_t">
+<span id="_CPPv3N4bgfx7Encoder10setTextureE7uint8_t13UniformHandle13TextureHandle8uint16_t8uint16_t7uint8_t7uint8_t8uint32_t"></span><span id="_CPPv2N4bgfx7Encoder10setTextureE7uint8_t13UniformHandle13TextureHandle8uint16_t8uint16_t7uint8_t7uint8_t8uint32_t"></span><span id="bgfx::Encoder::setTexture__uint8_t.UniformHandle.TextureHandle.uint16_t.uint16_t.uint8_t.uint8_t.uint32_t"></span><span class="target" id="structbgfx_1_1_encoder_1a698e551e27ea26d3f1e78cc1e001847c"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">setTexture</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">uint8_t</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">_stage</span></span>, <span class="n"><span class="pre">UniformHandle</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">_sampler</span></span>, <span class="n"><span class="pre">TextureHandle</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">_handle</span></span>, <span class="n"><span class="pre">uint16_t</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">_firstLayer</span></span>, <span class="n"><span class="pre">uint16_t</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">_numLayers</span></span>, <span class="n"><span class="pre">uint8_t</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">_firstMip</span></span>, <span class="n"><span class="pre">uint8_t</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">_numMips</span></span>, <span class="n"><span class="pre">uint32_t</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">_flags</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="n"><span class="pre">UINT32_MAX</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4bgfx7Encoder10setTextureE7uint8_t13UniformHandle13TextureHandle8uint16_t8uint16_t7uint8_t7uint8_t8uint32_t" title="Link to this definition"></a><br /></dt>
+<dd><p>Set texture stage for draw primitive, selecting a sub-range of the texture’s array layers and mip levels. </p>
+<p><dl class="simple">
+<dt><strong>Attention</strong></dt><dd><p>C99’s equivalent binding is <code class="docutils literal notranslate"><span class="pre">bgfx_encoder_set_texture_view</span></code>. </p>
+</dd>
+</dl>
+</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>_stage</strong> – <strong>[in]</strong> Texture unit. </p></li>
+<li><p><strong>_sampler</strong> – <strong>[in]</strong> Program sampler. </p></li>
+<li><p><strong>_handle</strong> – <strong>[in]</strong> Texture handle. </p></li>
+<li><p><strong>_firstLayer</strong> – <strong>[in]</strong> First array layer. </p></li>
+<li><p><strong>_numLayers</strong> – <strong>[in]</strong> Number of array layers. </p></li>
+<li><p><strong>_firstMip</strong> – <strong>[in]</strong> First (most detailed) mip level. </p></li>
+<li><p><strong>_numMips</strong> – <strong>[in]</strong> Number of mip levels. </p></li>
 <li><p><strong>_flags</strong> – <strong>[in]</strong> Texture sampling mode. Default value UINT32_MAX uses texture sampling settings from the texture.<ul>
 <li><p><code class="docutils literal notranslate"><span class="pre">BGFX_SAMPLER_[U/V/W]_[MIRROR/CLAMP]</span></code> - Mirror or clamp to edge wrap mode.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">BGFX_SAMPLER_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]</span></code> - Point or anisotropic sampling.</p></li>
@@ -4762,6 +4780,35 @@ Otherwise, use <code class="docutils literal notranslate"><span class="pre">bgfx
 <li><p><strong>_stage</strong> – <strong>[in]</strong> Texture unit. </p></li>
 <li><p><strong>_sampler</strong> – <strong>[in]</strong> Program sampler. </p></li>
 <li><p><strong>_handle</strong> – <strong>[in]</strong> Texture handle. </p></li>
+<li><p><strong>_flags</strong> – <strong>[in]</strong> Texture sampling mode. Default value UINT32_MAX uses texture sampling settings from the texture.<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">BGFX_SAMPLER_[U/V/W]_[MIRROR/CLAMP]</span></code> - Mirror or clamp to edge wrap mode.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">BGFX_SAMPLER_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]</span></code> - Point or anisotropic sampling.</p></li>
+</ul>
+</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4bgfx10setTextureE7uint8_t13UniformHandle13TextureHandle8uint16_t8uint16_t7uint8_t7uint8_t8uint32_t">
+<span id="_CPPv3N4bgfx10setTextureE7uint8_t13UniformHandle13TextureHandle8uint16_t8uint16_t7uint8_t7uint8_t8uint32_t"></span><span id="_CPPv2N4bgfx10setTextureE7uint8_t13UniformHandle13TextureHandle8uint16_t8uint16_t7uint8_t7uint8_t8uint32_t"></span><span id="bgfx::setTexture__uint8_t.UniformHandle.TextureHandle.uint16_t.uint16_t.uint8_t.uint8_t.uint32_t"></span><span class="target" id="namespacebgfx_1adc739f3eb201defd1c6f42f530df36e8"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-prename descclassname"><span class="n"><span class="pre">bgfx</span></span><span class="p"><span class="pre">::</span></span></span><span class="sig-name descname"><span class="n"><span class="pre">setTexture</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">uint8_t</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">_stage</span></span>, <span class="n"><span class="pre">UniformHandle</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">_sampler</span></span>, <span class="n"><span class="pre">TextureHandle</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">_handle</span></span>, <span class="n"><span class="pre">uint16_t</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">_firstLayer</span></span>, <span class="n"><span class="pre">uint16_t</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">_numLayers</span></span>, <span class="n"><span class="pre">uint8_t</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">_firstMip</span></span>, <span class="n"><span class="pre">uint8_t</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">_numMips</span></span>, <span class="n"><span class="pre">uint32_t</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">_flags</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="n"><span class="pre">UINT32_MAX</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4bgfx10setTextureE7uint8_t13UniformHandle13TextureHandle8uint16_t8uint16_t7uint8_t7uint8_t8uint32_t" title="Link to this definition"></a><br /></dt>
+<dd><p>Set texture stage for draw primitive, selecting a sub-range of the texture’s array layers and mip levels. </p>
+<p><dl class="simple">
+<dt><strong>Attention</strong></dt><dd><p>C99’s equivalent binding is <code class="docutils literal notranslate"><span class="pre">bgfx_set_texture_view</span></code>. </p>
+</dd>
+</dl>
+</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>_stage</strong> – <strong>[in]</strong> Texture unit. </p></li>
+<li><p><strong>_sampler</strong> – <strong>[in]</strong> Program sampler. </p></li>
+<li><p><strong>_handle</strong> – <strong>[in]</strong> Texture handle. </p></li>
+<li><p><strong>_firstLayer</strong> – <strong>[in]</strong> First array layer. </p></li>
+<li><p><strong>_numLayers</strong> – <strong>[in]</strong> Number of array layers. </p></li>
+<li><p><strong>_firstMip</strong> – <strong>[in]</strong> First (most detailed) mip level. </p></li>
+<li><p><strong>_numMips</strong> – <strong>[in]</strong> Number of mip levels. </p></li>
 <li><p><strong>_flags</strong> – <strong>[in]</strong> Texture sampling mode. Default value UINT32_MAX uses texture sampling settings from the texture.<ul>
 <li><p><code class="docutils literal notranslate"><span class="pre">BGFX_SAMPLER_[U/V/W]_[MIRROR/CLAMP]</span></code> - Mirror or clamp to edge wrap mode.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">BGFX_SAMPLER_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]</span></code> - Point or anisotropic sampling.</p></li>
@@ -7247,6 +7294,134 @@ Otherwise, use <code class="docutils literal notranslate"><span class="pre">bgfx
 </div>
 </dd></dl>
 
+<dl class="cpp struct">
+<dt class="sig sig-object cpp" id="_CPPv4N4bgfx16VideoDecoderInitE">
+<span id="_CPPv3N4bgfx16VideoDecoderInitE"></span><span id="_CPPv2N4bgfx16VideoDecoderInitE"></span><span id="bgfx::VideoDecoderInit"></span><span class="target" id="structbgfx_1_1_video_decoder_init"></span><span class="k"><span class="pre">struct</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">VideoDecoderInit</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx16VideoDecoderInitE" title="Link to this definition"></a><br /></dt>
+<dd><p>Video decoder initialization. Serialized into the Memory passed to <code class="docutils literal notranslate"><span class="pre">createTexture2D</span></code>. When the memory blob begins with <code class="docutils literal notranslate"><span class="pre">magic</span></code>, bgfx infers the texture is a video decode destination (the caller need not set any extra texture flag). Everything else the renderer needs about the stream (chroma format, bit depth, profile, level, coded dimensions, DPB layout, color metadata) is parsed out of the codec parameter sets at create time. </p>
+<p><dl class="simple">
+<dt><strong>Attention</strong></dt><dd><p>C99’s equivalent binding is <code class="docutils literal notranslate"><span class="pre">bgfx_video_decoder_init_t</span></code>. </p>
+</dd>
+</dl>
+</p>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-members">Public Members</p>
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4bgfx16VideoDecoderInit5magicE">
+<span id="_CPPv3N4bgfx16VideoDecoderInit5magicE"></span><span id="_CPPv2N4bgfx16VideoDecoderInit5magicE"></span><span id="bgfx::VideoDecoderInit::magic__uint32_t"></span><span class="target" id="structbgfx_1_1_video_decoder_init_1ae6d3e480b6bc13e0cf41d7a512a96e9c"></span><span class="n"><span class="pre">uint32_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">magic</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx16VideoDecoderInit5magicE" title="Link to this definition"></a><br /></dt>
+<dd><p>Structure magic. Must be BX_MAKEFOURCC(‘V, ‘D’, ‘I’, 0x0)`. </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4bgfx16VideoDecoderInit5codecE">
+<span id="_CPPv3N4bgfx16VideoDecoderInit5codecE"></span><span id="_CPPv2N4bgfx16VideoDecoderInit5codecE"></span><span id="bgfx::VideoDecoderInit::codec__VideoCodec::Enum"></span><span class="target" id="structbgfx_1_1_video_decoder_init_1a23e3828293e86938c9e9990d303456f8"></span><span class="n"><span class="pre">VideoCodec</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">Enum</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">codec</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx16VideoDecoderInit5codecE" title="Link to this definition"></a><br /></dt>
+<dd><p>Video codec. See: <code class="docutils literal notranslate"><span class="pre">VideoCodec::Enum</span></code>. </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4bgfx16VideoDecoderInit13parameterSetsE">
+<span id="_CPPv3N4bgfx16VideoDecoderInit13parameterSetsE"></span><span id="_CPPv2N4bgfx16VideoDecoderInit13parameterSetsE"></span><span id="bgfx::VideoDecoderInit::parameterSets__uint8_tCP"></span><span class="target" id="structbgfx_1_1_video_decoder_init_1ad56f68cb525be263fcc6d9d4e3fabca7"></span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">uint8_t</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">parameterSets</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx16VideoDecoderInit13parameterSetsE" title="Link to this definition"></a><br /></dt>
+<dd><p>Codec parameter sets (Annex B for H.264/H.265, OBUs for AV1). </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4bgfx16VideoDecoderInit17parameterSetsSizeE">
+<span id="_CPPv3N4bgfx16VideoDecoderInit17parameterSetsSizeE"></span><span id="_CPPv2N4bgfx16VideoDecoderInit17parameterSetsSizeE"></span><span id="bgfx::VideoDecoderInit::parameterSetsSize__uint32_t"></span><span class="target" id="structbgfx_1_1_video_decoder_init_1adcc069ab3649883d6684afaf79347651"></span><span class="n"><span class="pre">uint32_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">parameterSetsSize</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx16VideoDecoderInit17parameterSetsSizeE" title="Link to this definition"></a><br /></dt>
+<dd><p>Parameter sets size in bytes. </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4bgfx16VideoDecoderInit13cachedAuBytesE">
+<span id="_CPPv3N4bgfx16VideoDecoderInit13cachedAuBytesE"></span><span id="_CPPv2N4bgfx16VideoDecoderInit13cachedAuBytesE"></span><span id="bgfx::VideoDecoderInit::cachedAuBytes__uint32_t"></span><span class="target" id="structbgfx_1_1_video_decoder_init_1adac9872a2a297748c00e283ad970fb7e"></span><span class="n"><span class="pre">uint32_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">cachedAuBytes</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx16VideoDecoderInit13cachedAuBytesE" title="Link to this definition"></a><br /></dt>
+<dd><p>Soft cap (in bytes) on the streaming access-unit FIFO (when <code class="docutils literal notranslate"><span class="pre">BGFX_VIDEO_DECODER_INIT_RETAIN</span></code> is NOT set). 0 selects the default. Ignored in RETAIN mode (the retain cache is unbounded). </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4bgfx16VideoDecoderInit5flagsE">
+<span id="_CPPv3N4bgfx16VideoDecoderInit5flagsE"></span><span id="_CPPv2N4bgfx16VideoDecoderInit5flagsE"></span><span id="bgfx::VideoDecoderInit::flags__uint8_t"></span><span class="target" id="structbgfx_1_1_video_decoder_init_1a22b08ddbb7d2b57c2bb437f9148f4f9a"></span><span class="n"><span class="pre">uint8_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">flags</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx16VideoDecoderInit5flagsE" title="Link to this definition"></a><br /></dt>
+<dd><p>Decoder lifetime flags. See: <code class="docutils literal notranslate"><span class="pre">BGFX_VIDEO_DECODER_INIT_*</span></code>. </p>
+</dd></dl>
+
+</div>
+</dd></dl>
+
+<dl class="cpp struct">
+<dt class="sig sig-object cpp" id="_CPPv4N4bgfx14VideoDecoderAuE">
+<span id="_CPPv3N4bgfx14VideoDecoderAuE"></span><span id="_CPPv2N4bgfx14VideoDecoderAuE"></span><span id="bgfx::VideoDecoderAu"></span><span class="target" id="structbgfx_1_1_video_decoder_au"></span><span class="k"><span class="pre">struct</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">VideoDecoderAu</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx14VideoDecoderAuE" title="Link to this definition"></a><br /></dt>
+<dd><p>One access unit entry inside a <code class="docutils literal notranslate"><a class="reference internal" href="#structbgfx_1_1_video_decoder_frame"><span class="std std-ref"><span class="pre">VideoDecoderFrame</span></span></a></code> batch. The bitstream for the AU lives at offset <code class="docutils literal notranslate"><span class="pre">Σ</span> <span class="pre">aus[0..ii].size</span></code> inside the frame’s <code class="docutils literal notranslate"><span class="pre">bitstream</span></code> buffer (access units are stored back-to-back in decode / submission order). </p>
+<p><dl class="simple">
+<dt><strong>Attention</strong></dt><dd><p>C99’s equivalent binding is <code class="docutils literal notranslate"><span class="pre">bgfx_video_decoder_au_t</span></code>. </p>
+</dd>
+</dl>
+</p>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-members">Public Members</p>
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4bgfx14VideoDecoderAu4sizeE">
+<span id="_CPPv3N4bgfx14VideoDecoderAu4sizeE"></span><span id="_CPPv2N4bgfx14VideoDecoderAu4sizeE"></span><span id="bgfx::VideoDecoderAu::size__uint32_t"></span><span class="target" id="structbgfx_1_1_video_decoder_au_1a29bde3cf45acda86c5810b5dec6b4c1e"></span><span class="n"><span class="pre">uint32_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">size</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx14VideoDecoderAu4sizeE" title="Link to this definition"></a><br /></dt>
+<dd><p><a class="reference internal" href="#structbgfx_1_1_access"><span class="std std-ref">Access</span></a> unit size in bytes. </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4bgfx14VideoDecoderAu5ptsUsE">
+<span id="_CPPv3N4bgfx14VideoDecoderAu5ptsUsE"></span><span id="_CPPv2N4bgfx14VideoDecoderAu5ptsUsE"></span><span id="bgfx::VideoDecoderAu::ptsUs__int64_t"></span><span class="target" id="structbgfx_1_1_video_decoder_au_1a31181b02b42f3d2106f21b6fe6038276"></span><span class="n"><span class="pre">int64_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">ptsUs</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx14VideoDecoderAu5ptsUsE" title="Link to this definition"></a><br /></dt>
+<dd><p>Presentation timestamp in microseconds for this access unit (container-provided). </p>
+</dd></dl>
+
+</div>
+</dd></dl>
+
+<dl class="cpp struct">
+<dt class="sig sig-object cpp" id="_CPPv4N4bgfx17VideoDecoderFrameE">
+<span id="_CPPv3N4bgfx17VideoDecoderFrameE"></span><span id="_CPPv2N4bgfx17VideoDecoderFrameE"></span><span id="bgfx::VideoDecoderFrame"></span><span class="target" id="structbgfx_1_1_video_decoder_frame"></span><span class="k"><span class="pre">struct</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">VideoDecoderFrame</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx17VideoDecoderFrameE" title="Link to this definition"></a><br /></dt>
+<dd><p>Video decoder per-frame submission. Serialized into the Memory passed to <code class="docutils literal notranslate"><span class="pre">updateTexture2D</span></code> for a video decode destination texture. The renderer parses the slice / tile-group header out of the bitstream and translates it to the backend-specific decoder arguments. </p>
+<p>A single call may submit a batch of access units: <code class="docutils literal notranslate"><span class="pre">bitstream</span></code> is the back-to-back concatenation of <code class="docutils literal notranslate"><span class="pre">numAus</span></code> access units, and <code class="docutils literal notranslate"><span class="pre">aus[ii]</span></code> holds the size and PTS of each. AUs are enqueued in array order (which is the codec’s decode order). Set <code class="docutils literal notranslate"><span class="pre">numAus</span> <span class="pre">==</span> <span class="pre">0</span></code> (and <code class="docutils literal notranslate"><span class="pre">bitstream</span> <span class="pre">==</span> <span class="pre">NULL</span></code>) for a presentation-only tick that only advances the playback clock.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">bitstream</span></code> and <code class="docutils literal notranslate"><span class="pre">aus</span></code> pointers must remain valid until bgfx has consumed the submission (<code class="docutils literal notranslate"><span class="pre">bgfx::copy</span></code> only deep-copies the <code class="docutils literal notranslate"><a class="reference internal" href="#structbgfx_1_1_video_decoder_frame"><span class="std std-ref"><span class="pre">VideoDecoderFrame</span></span></a></code> struct itself, not the buffers it references).</p>
+<p><dl class="simple">
+<dt><strong>Attention</strong></dt><dd><p>C99’s equivalent binding is <code class="docutils literal notranslate"><span class="pre">bgfx_video_decoder_frame_t</span></code>. </p>
+</dd>
+</dl>
+</p>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-members">Public Members</p>
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4bgfx17VideoDecoderFrame5magicE">
+<span id="_CPPv3N4bgfx17VideoDecoderFrame5magicE"></span><span id="_CPPv2N4bgfx17VideoDecoderFrame5magicE"></span><span id="bgfx::VideoDecoderFrame::magic__uint32_t"></span><span class="target" id="structbgfx_1_1_video_decoder_frame_1adb067a3964d4364a160df5d718862264"></span><span class="n"><span class="pre">uint32_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">magic</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx17VideoDecoderFrame5magicE" title="Link to this definition"></a><br /></dt>
+<dd><p>Structure magic. Must be BX_MAKEFOURCC(‘V, ‘D’, ‘F’, 0x0)`. </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4bgfx17VideoDecoderFrame9bitstreamE">
+<span id="_CPPv3N4bgfx17VideoDecoderFrame9bitstreamE"></span><span id="_CPPv2N4bgfx17VideoDecoderFrame9bitstreamE"></span><span id="bgfx::VideoDecoderFrame::bitstream__uint8_tCP"></span><span class="target" id="structbgfx_1_1_video_decoder_frame_1a20d2ea27834351dd152b03d9efa29b9c"></span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">uint8_t</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">bitstream</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx17VideoDecoderFrame9bitstreamE" title="Link to this definition"></a><br /></dt>
+<dd><p>Concatenated access-unit bitstream (decode order). NULL for presentation-only ticks. </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4bgfx17VideoDecoderFrame3ausE">
+<span id="_CPPv3N4bgfx17VideoDecoderFrame3ausE"></span><span id="_CPPv2N4bgfx17VideoDecoderFrame3ausE"></span><span id="bgfx::VideoDecoderFrame::aus__VideoDecoderAuCP"></span><span class="target" id="structbgfx_1_1_video_decoder_frame_1a23553f640117aa519606c9a34c43588d"></span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4N4bgfx14VideoDecoderAuE" title="bgfx::VideoDecoderAu"><span class="n"><span class="pre">VideoDecoderAu</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">aus</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx17VideoDecoderFrame3ausE" title="Link to this definition"></a><br /></dt>
+<dd><p>Per-AU size and PTS array. NULL when <code class="docutils literal notranslate"><span class="pre">numAus</span> <span class="pre">==</span> <span class="pre">0</span></code>. </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4bgfx17VideoDecoderFrame6numAusE">
+<span id="_CPPv3N4bgfx17VideoDecoderFrame6numAusE"></span><span id="_CPPv2N4bgfx17VideoDecoderFrame6numAusE"></span><span id="bgfx::VideoDecoderFrame::numAus__uint32_t"></span><span class="target" id="structbgfx_1_1_video_decoder_frame_1a02569a4e667a3d877d1bad6c7de9172e"></span><span class="n"><span class="pre">uint32_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">numAus</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx17VideoDecoderFrame6numAusE" title="Link to this definition"></a><br /></dt>
+<dd><p>Number of access units in this batch. 0 for presentation-only ticks. </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4bgfx17VideoDecoderFrame18presentationTimeUsE">
+<span id="_CPPv3N4bgfx17VideoDecoderFrame18presentationTimeUsE"></span><span id="_CPPv2N4bgfx17VideoDecoderFrame18presentationTimeUsE"></span><span id="bgfx::VideoDecoderFrame::presentationTimeUs__int64_t"></span><span class="target" id="structbgfx_1_1_video_decoder_frame_1ad3363cbf443b9d50d490634dc1041529"></span><span class="n"><span class="pre">int64_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">presentationTimeUs</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx17VideoDecoderFrame18presentationTimeUsE" title="Link to this definition"></a><br /></dt>
+<dd><p>Current playback wall-clock time. Driver dispatches the picture whose <code class="docutils literal notranslate"><span class="pre">ptsUs</span></code> best matches. Must be monotonically non-decreasing between non-<code class="docutils literal notranslate"><span class="pre">SET</span></code> calls. </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4bgfx17VideoDecoderFrame5flagsE">
+<span id="_CPPv3N4bgfx17VideoDecoderFrame5flagsE"></span><span id="_CPPv2N4bgfx17VideoDecoderFrame5flagsE"></span><span id="bgfx::VideoDecoderFrame::flags__uint8_t"></span><span class="target" id="structbgfx_1_1_video_decoder_frame_1ac44e0dd109f2aaa4274ede9556c75585"></span><span class="n"><span class="pre">uint8_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">flags</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx17VideoDecoderFrame5flagsE" title="Link to this definition"></a><br /></dt>
+<dd><p>Per-frame submission flags. See: <code class="docutils literal notranslate"><span class="pre">BGFX_VIDEO_DECODE_FRAME_*</span></code>. </p>
+</dd></dl>
+
+</div>
+</dd></dl>
+
 <dl class="cpp function">
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx14isTextureValidE8uint16_tb8uint16_tN13TextureFormat4EnumE8uint64_t">
 <span id="_CPPv3N4bgfx14isTextureValidE8uint16_tb8uint16_tN13TextureFormat4EnumE8uint64_t"></span><span id="_CPPv2N4bgfx14isTextureValidE8uint16_tb8uint16_tN13TextureFormat4EnumE8uint64_t"></span><span id="bgfx::isTextureValid__uint16_t.b.uint16_t.TextureFormat::Enum.uint64_t"></span><span class="target" id="namespacebgfx_1a3c7386558ec793583dd0ce0db77b8c17"></span><span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="sig-prename descclassname"><span class="n"><span class="pre">bgfx</span></span><span class="p"><span class="pre">::</span></span></span><span class="sig-name descname"><span class="n"><span class="pre">isTextureValid</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">uint16_t</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">_depth</span></span>, <span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">_cubeMap</span></span>, <span class="n"><span class="pre">uint16_t</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">_numLayers</span></span>, <a class="reference internal" href="#_CPPv4N4bgfx13TextureFormatE" title="bgfx::TextureFormat"><span class="n"><span class="pre">TextureFormat</span></span></a><span class="p"><span class="pre">::</span></span><a class="reference internal" href="#_CPPv4N4bgfx13TextureFormat4EnumE" title="bgfx::TextureFormat::Enum"><span class="n"><span class="pre">Enum</span></span></a><span class="w"> </span><span class="n sig-param"><span class="pre">_format</span></span>, <span class="n"><span class="pre">uint64_t</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">_flags</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4bgfx14isTextureValidE8uint16_tb8uint16_tN13TextureFormat4EnumE8uint64_t" title="Link to this definition"></a><br /></dt>
@@ -7268,6 +7443,33 @@ Otherwise, use <code class="docutils literal notranslate"><span class="pre">bgfx
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>True if a texture with the same parameters can be created.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4bgfx17isVideoCodecValidEN10VideoCodec4EnumE7uint8_t7uint8_t8uint16_t8uint16_t7uint8_t7uint8_t">
+<span id="_CPPv3N4bgfx17isVideoCodecValidEN10VideoCodec4EnumE7uint8_t7uint8_t8uint16_t8uint16_t7uint8_t7uint8_t"></span><span id="_CPPv2N4bgfx17isVideoCodecValidEN10VideoCodec4EnumE7uint8_t7uint8_t8uint16_t8uint16_t7uint8_t7uint8_t"></span><span id="bgfx::isVideoCodecValid__VideoCodec::Enum.uint8_t.uint8_t.uint16_t.uint16_t.uint8_t.uint8_t"></span><span class="target" id="namespacebgfx_1a2a64d4df717a15a0263fa10d90480ff6"></span><span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="sig-prename descclassname"><span class="n"><span class="pre">bgfx</span></span><span class="p"><span class="pre">::</span></span></span><span class="sig-name descname"><span class="n"><span class="pre">isVideoCodecValid</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">VideoCodec</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">Enum</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">_codec</span></span>, <span class="n"><span class="pre">uint8_t</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">_chroma</span></span>, <span class="n"><span class="pre">uint8_t</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">_bitDepth</span></span>, <span class="n"><span class="pre">uint16_t</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">_codedWidth</span></span>, <span class="n"><span class="pre">uint16_t</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">_codedHeight</span></span>, <span class="n"><span class="pre">uint8_t</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">_maxDpbSlots</span></span>, <span class="n"><span class="pre">uint8_t</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">_maxActiveReferences</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4bgfx17isVideoCodecValidEN10VideoCodec4EnumE7uint8_t7uint8_t8uint16_t8uint16_t7uint8_t7uint8_t" title="Link to this definition"></a><br /></dt>
+<dd><p>Validate video codec parameters. Use to check whether the requested combination of codec / bit depth / chroma / dimensions / DPB layout can be hardware decoded on the current device. Coarse capability discovery is <code class="docutils literal notranslate"><span class="pre">Caps::supported</span> <span class="pre">&amp;</span> <span class="pre">BGFX_CAPS_VIDEO_DECODE</span></code> and <code class="docutils literal notranslate"><span class="pre">Caps::codecs</span><span class="pre">[]</span></code>. </p>
+<p><dl class="simple">
+<dt><strong>Attention</strong></dt><dd><p>C99’s equivalent binding is <code class="docutils literal notranslate"><span class="pre">bgfx_is_video_codec_valid</span></code>. </p>
+</dd>
+</dl>
+</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>_codec</strong> – <strong>[in]</strong> Video codec. See: <code class="docutils literal notranslate"><span class="pre">VideoCodec::Enum</span></code>. </p></li>
+<li><p><strong>_chroma</strong> – <strong>[in]</strong> Chroma subsampling. 0 = 4:2:0, 2 = 4:2:2, 4 = 4:4:4. </p></li>
+<li><p><strong>_bitDepth</strong> – <strong>[in]</strong> Bit depth per component. 8, 10 or 12. </p></li>
+<li><p><strong>_codedWidth</strong> – <strong>[in]</strong> Coded picture width (macroblock / CTU / superblock aligned). </p></li>
+<li><p><strong>_codedHeight</strong> – <strong>[in]</strong> Coded picture height. </p></li>
+<li><p><strong>_maxDpbSlots</strong> – <strong>[in]</strong> Maximum decoded picture buffer slot count. </p></li>
+<li><p><strong>_maxActiveReferences</strong> – <strong>[in]</strong> Maximum number of reference frames active at once.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>True if a video decoder with the same parameters can be created.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -7535,11 +7737,11 @@ Otherwise, use <code class="docutils literal notranslate"><span class="pre">bgfx
 </dd></dl>
 
 <dl class="cpp function">
-<dt class="sig sig-object cpp" id="_CPPv4N4bgfx11readTextureE13TextureHandlePv7uint8_t">
-<span id="_CPPv3N4bgfx11readTextureE13TextureHandlePv7uint8_t"></span><span id="_CPPv2N4bgfx11readTextureE13TextureHandlePv7uint8_t"></span><span id="bgfx::readTexture__TextureHandle.voidP.uint8_t"></span><span class="target" id="namespacebgfx_1a917250df0398e10837853d1a2d416279"></span><span class="n"><span class="pre">uint32_t</span></span><span class="w"> </span><span class="sig-prename descclassname"><span class="n"><span class="pre">bgfx</span></span><span class="p"><span class="pre">::</span></span></span><span class="sig-name descname"><span class="n"><span class="pre">readTexture</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">TextureHandle</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">_handle</span></span>, <span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n sig-param"><span class="pre">_data</span></span>, <span class="n"><span class="pre">uint8_t</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">_mip</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4bgfx11readTextureE13TextureHandlePv7uint8_t" title="Link to this definition"></a><br /></dt>
+<dt class="sig sig-object cpp" id="_CPPv4N4bgfx11readTextureE13TextureHandlePv8uint16_t7uint8_t">
+<span id="_CPPv3N4bgfx11readTextureE13TextureHandlePv8uint16_t7uint8_t"></span><span id="_CPPv2N4bgfx11readTextureE13TextureHandlePv8uint16_t7uint8_t"></span><span id="bgfx::readTexture__TextureHandle.voidP.uint16_t.uint8_t"></span><span class="target" id="namespacebgfx_1a698edd3e47fe09ddbfb79ce56a479eab"></span><span class="n"><span class="pre">uint32_t</span></span><span class="w"> </span><span class="sig-prename descclassname"><span class="n"><span class="pre">bgfx</span></span><span class="p"><span class="pre">::</span></span></span><span class="sig-name descname"><span class="n"><span class="pre">readTexture</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">TextureHandle</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">_handle</span></span>, <span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n sig-param"><span class="pre">_data</span></span>, <span class="n"><span class="pre">uint16_t</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">_layer</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span>, <span class="n"><span class="pre">uint8_t</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">_mip</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4bgfx11readTextureE13TextureHandlePv8uint16_t7uint8_t" title="Link to this definition"></a><br /></dt>
 <dd><p>Read back texture content. </p>
 <p><dl class="simple">
-<dt><strong>Attention</strong></dt><dd><p>Texture must be created with <code class="docutils literal notranslate"><span class="pre">BGFX_TEXTURE_READ_BACK</span></code> flag.</p>
+<dt><strong>Attention</strong></dt><dd><p>Texture must be created with <code class="docutils literal notranslate"><span class="pre">BGFX_TEXTURE_READ_BACK</span></code> flag. It’s a texture for CPU readback, and can’t be a GPU resource at the same time. See <code class="docutils literal notranslate"><span class="pre">examples/30-picking</span></code>.</p>
 </dd>
 <dt><strong>Attention</strong></dt><dd><p>Availability depends on: <code class="docutils literal notranslate"><span class="pre">BGFX_CAPS_TEXTURE_READ_BACK</span></code>.</p>
 </dd>
@@ -7552,6 +7754,7 @@ Otherwise, use <code class="docutils literal notranslate"><span class="pre">bgfx
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>_handle</strong> – <strong>[in]</strong> Texture handle. </p></li>
 <li><p><strong>_data</strong> – <strong>[in]</strong> Destination buffer. </p></li>
+<li><p><strong>_layer</strong> – <strong>[in]</strong> Texture layer. </p></li>
 <li><p><strong>_mip</strong> – <strong>[in]</strong> Mip level.</p></li>
 </ul>
 </dd>
