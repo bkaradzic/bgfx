@@ -201,6 +201,7 @@ function bgfxProjectBase(_kind, _defines)
 			path.join(BGFX_DIR, "src/shader**.cpp"),
 			path.join(BGFX_DIR, "src/topology.cpp"),
 			path.join(BGFX_DIR, "src/vertexlayout.cpp"),
+			path.join(BGFX_DIR, "src/video_**.cpp"),
 		}
 	else
 		excludes {

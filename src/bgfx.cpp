@@ -2954,7 +2954,7 @@ namespace bgfx
 	};
 
 	BX_PRAGMA_DIAGNOSTIC_PUSH();
-	BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wtautological-constant-compare");
+	BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG("-Wtautological-constant-compare");
 	static RendererCreator s_rendererCreator[] =
 	{
 		{ noop::rendererCreate,   noop::rendererDestroy,   BGFX_RENDERER_NOOP_NAME,       true                              }, // Noop
