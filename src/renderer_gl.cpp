@@ -8463,20 +8463,23 @@ namespace bgfx { namespace gl
 					}
 
 					{
-						for (BitMaskToIndexIteratorT it(draw.m_streamMask); !it.isDone(); it.next() )
+						if (UINT32_MAX != draw.m_streamMask)
 						{
-							const uint8_t idx = it.idx;
-
-							if (currentState.m_stream[idx].m_handle.idx != draw.m_stream[idx].m_handle.idx)
+							for (BitMaskToIndexIteratorT it(draw.m_streamMask); !it.isDone(); it.next() )
 							{
-								currentState.m_stream[idx].m_handle = draw.m_stream[idx].m_handle;
-								bindAttribs = true;
-							}
+								const uint8_t idx = it.idx;
 
-							if (currentState.m_stream[idx].m_startVertex != draw.m_stream[idx].m_startVertex)
-							{
-								currentState.m_stream[idx].m_startVertex = draw.m_stream[idx].m_startVertex;
-								bindAttribs = true;
+								if (currentState.m_stream[idx].m_handle.idx != draw.m_stream[idx].m_handle.idx)
+								{
+									currentState.m_stream[idx].m_handle = draw.m_stream[idx].m_handle;
+									bindAttribs = true;
+								}
+
+								if (currentState.m_stream[idx].m_startVertex != draw.m_stream[idx].m_startVertex)
+								{
+									currentState.m_stream[idx].m_startVertex = draw.m_stream[idx].m_startVertex;
+									bindAttribs = true;
+								}
 							}
 						}
 
