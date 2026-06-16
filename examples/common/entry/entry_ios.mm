@@ -17,7 +17,7 @@
 #   define HAS_METAL_SDK
 #endif
 
-#include <bgfx/platform.h>
+#include <bgfx/bgfx.h>
 
 #include <bx/thread.h>
 

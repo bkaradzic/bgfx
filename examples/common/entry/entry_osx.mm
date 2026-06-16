@@ -9,7 +9,7 @@
 
 #import <Cocoa/Cocoa.h>
 
-#include <bgfx/platform.h>
+#include <bgfx/bgfx.h>
 
 #include <bx/thread.h>
 #include <bx/os.h>

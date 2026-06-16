@@ -7,7 +7,7 @@
 
 #if BX_PLATFORM_EMSCRIPTEN
 
-#include <bgfx/platform.h>
+#include <bgfx/bgfx.h>
 
 #include <emscripten.h>
 #include <emscripten/html5.h>

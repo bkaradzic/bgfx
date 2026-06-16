@@ -7,7 +7,7 @@
 
 #if ENTRY_CONFIG_USE_NATIVE && BX_PLATFORM_WINDOWS
 
-#include <bgfx/platform.h>
+#include <bgfx/bgfx.h>
 
 #include <bx/mutex.h>
 #include <bx/handlealloc.h>

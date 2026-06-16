@@ -141,7 +141,6 @@ namespace bgfx
 #include <bx/thread.h>
 #include <bx/timer.h>
 
-#include <bgfx/platform.h>
 #include <bimg/bimg.h>
 #include "shader.h"
 #include "vertexlayout.h"
