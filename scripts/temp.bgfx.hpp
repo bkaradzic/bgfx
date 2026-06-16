@@ -12,8 +12,6 @@
 #ifndef BGFX_H_HEADER_GUARD
 #define BGFX_H_HEADER_GUARD
 
-#define BGFX_IDL_CPP 1
-
 #include <stdarg.h> // va_list
 #include <stdint.h> // uint32_t
 #include <stdlib.h> // NULL

@@ -546,4 +546,9 @@ static_assert(BGFX_CONFIG_MAX_VERTEX_STREAMS < 32, "Must be less than 32!");
 #	define BGFX_CONFIG_ENCODER_API_ONLY 0
 #endif // BGFX_CONFIG_ENCODER_API_ONLY
 
+/// C99 API is used for shared library and language bindings.
+#ifndef BGFX_CONFIG_C99_API
+#	define BGFX_CONFIG_C99_API 1
+#endif // BGFX_CONFIG_C99_API
+
 #endif // BGFX_CONFIG_H_HEADER_GUARD

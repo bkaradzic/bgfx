@@ -50,6 +50,8 @@ BGFX_C99_STRUCT_SIZE_CHECK(bgfx::InternalData,          bgfx_internal_data_t);
 
 #undef BGFX_C99_STRUCT_SIZE_CHECK
 
+#if BGFX_CONFIG_C99_API
+
 BGFX_C_API void bgfx_attachment_init(bgfx_attachment_t* _this, bgfx_texture_handle_t _handle, bgfx_access_t _access, uint16_t _layer, uint16_t _numLayers, uint16_t _mip, uint8_t _resolve)
 {
 	bgfx::Attachment* This = (bgfx::Attachment*)_this;
@@ -1545,3 +1547,5 @@ BGFX_C_API bgfx_interface_vtbl_t* bgfx_get_interface(uint32_t _version)
 
 	return NULL;
 }
+
+#endif // BGFX_CONFIG_C99_API
