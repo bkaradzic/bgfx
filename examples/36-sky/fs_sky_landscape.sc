@@ -13,21 +13,13 @@ uniform vec4 u_sunLuminance;
 uniform vec4 u_skyLuminance;
 uniform vec4 u_parameters;
 
-// https://www.shadertoy.com/view/4ssXRX
-// http://www.loopit.dk/banding_in_games.pdf
-// http://www.dspguide.com/ch2/6.htm
-
-//uniformly distributed, normalized rand, [0, 1)
-float nrand(in vec2 n)
+// Interleaved gradient noise (better for Metal)
+// Reference: http://www.iryoku.com/next-generation-post-processing-in-call-of-duty-advanced-warfare
+float interleavedGradientNoise(vec2 screenPos, float temporalFactor)
 {
-	return fract(sin(dot(n.xy, vec2(12.9898, 78.233)))* 43758.5453);
-}
-
-float n4rand_ss(in vec2 n)
-{
-	float nrnd0 = nrand( n + 0.07*fract( u_parameters.w ) );
-	float nrnd1 = nrand( n + 0.11*fract( u_parameters.w + 0.573953 ) );
-	return 0.23*sqrt(-log(nrnd0+0.00001))*cos(2.0*3.141592*nrnd1)+0.5;
+	vec3 magic = vec3(0.06711056, 0.00583715, 52.9829189);
+	vec2 coord = screenPos + fract(temporalFactor) * vec2_splat(13.0);
+	return fract(magic.z * fract(dot(coord, magic.xy)));
 }
 
 float toLinear(float _rgb)
@@ -49,10 +41,11 @@ void main()
 	vec3 color = diffuseSun * u_sunLuminance.rgb + (diffuseSky * u_skyLuminance.rgb + 0.01) * occulsion;
 	color *= 0.5;
 
-	//color = mix(color, (u_skyLuminance + u_sunLuminance)*0.3, v_fogFactor);
-
 	gl_FragColor.xyz = color * u_parameters.z;
 	gl_FragColor.w = 1.0;
-	float r = n4rand_ss(gl_FragCoord.xy) / 40.0;
-	gl_FragColor.xyz = toGamma(gl_FragColor.xyz) + vec3(r, r, r);
+
+	float dither = interleavedGradientNoise(gl_FragCoord.xy, u_parameters.w);
+	dither = (dither - 0.5) / 255.0;
+
+	gl_FragColor.xyz = toGamma(gl_FragColor.xyz) + vec3_splat(dither);
 }
