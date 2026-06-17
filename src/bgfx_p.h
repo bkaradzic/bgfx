@@ -2248,6 +2248,16 @@ namespace bgfx
 			return 0 < m_depth;
 		}
 
+		bool isDepth() const
+		{
+			return bimg::isDepth(bimg::TextureFormat::Enum(m_format) );
+		}
+
+		bool hasMips() const
+		{
+			return 1 < m_numMips;
+		}
+
 		bx::FixedString64 m_name;
 		void*    m_ptr;
 		uint64_t m_flags;
