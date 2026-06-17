@@ -796,7 +796,7 @@ VK_DESTROY_FUNC(DescriptorSet);
 		uint32_t findPresentMode(bool _vsync);
 		TextureFormat::Enum findSurfaceFormat(TextureFormat::Enum _format, VkColorSpaceKHR _colorSpace, bool _srgb);
 
-		bool acquire(VkCommandBuffer _commandBuffer);
+		bool acquire(VkCommandBuffer _commandBuffer, bool _block = true);
 		void present();
 
 		void transitionImage(VkCommandBuffer _commandBuffer);
@@ -875,7 +875,7 @@ VK_DESTROY_FUNC(DescriptorSet);
 
 		void resolve();
 
-		bool acquire(VkCommandBuffer _commandBuffer);
+		bool acquire(VkCommandBuffer _commandBuffer, bool _block = true);
 		void present();
 
 		void markDirty() { m_needResolve = true; }
