@@ -4995,6 +4995,16 @@ namespace bgfx
 					, ii
 					, tr.m_flags
 					);
+
+				BGFX_ERROR_CHECK(
+					0 == (at.resolve & BGFX_RESOLVE_AUTO_GEN_MIPS)
+					, _err
+					, BGFX_ERROR_FRAME_BUFFER_VALIDATION
+					, "Frame buffer depth attachment cannot use `BGFX_RESOLVE_AUTO_GEN_MIPS`. Depth textures do not support MSAA resolve."
+					, "Attachment %d, resolve flags 0x%02x."
+					, ii
+					, at.resolve
+					);
 			}
 			else
 			{
