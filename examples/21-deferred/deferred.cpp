@@ -552,7 +552,7 @@ public:
 						;
 
 					m_gbufferTex[2] = bgfx::createTexture2D(uint16_t(m_width), uint16_t(m_height), false, 1, depthFormat, BGFX_TEXTURE_RT | tsFlags);
-					gbufferAt[2].init(m_gbufferTex[2]);
+					gbufferAt[2].init(m_gbufferTex[2], bgfx::Access::Write, 0, 1, 0, BGFX_RESOLVE_NONE);
 
 					m_gbuffer = bgfx::createFrameBuffer(BX_COUNTOF(gbufferAt), gbufferAt, true);
 
