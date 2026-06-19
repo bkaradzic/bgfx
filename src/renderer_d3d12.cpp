@@ -7248,6 +7248,7 @@ namespace bgfx { namespace d3d12
 
 		D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle;
 		ScratchBufferD3D12& scratchBuffer = m_scratchBuffer[m_backBufferColorIdx];
+		m_cmd.finish(m_backBufferColorFence[m_backBufferColorIdx]);
 		scratchBuffer.reset(gpuHandle);
 
 		m_uniformScratchBuffer.begin();
