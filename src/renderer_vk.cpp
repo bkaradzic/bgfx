@@ -9270,6 +9270,8 @@ VK_DESTROY
 		VkDescriptorSet currentDescriptorSet = VK_NULL_HANDLE;
 		uint32_t currentBindHash = 0;
 		uint32_t descriptorSetCount = 0;
+
+		StateCacheLru<VkDescriptorSet, BGFX_CONFIG_RENDERER_VULKAN_MAX_DESCRIPTOR_SETS_PER_FRAME> descriptorSetCache;
 		VkIndexType currentIndexFormat = VK_INDEX_TYPE_MAX_ENUM;
 		SortKey key;
 		uint16_t view = UINT16_MAX;
@@ -9682,14 +9684,21 @@ VK_DESTROY
 						{
 							currentBindHash = bindHash;
 
-							currentDescriptorSet = getDescriptorSet(
-								  program
-								, renderBind
-								, sbo.buffer
-								, _render->m_colorPalette
-							);
+							VkDescriptorSet* cached = descriptorSetCache.find(bindHash);
+							if (NULL == cached)
+							{
+								VkDescriptorSet descriptorSet = getDescriptorSet(
+									  program
+									, renderBind
+									, sbo.buffer
+									, _render->m_colorPalette
+								);
+								cached = descriptorSetCache.add(bindHash, descriptorSet, 0);
 
-							descriptorSetCount++;
+								descriptorSetCount++;
+							}
+
+							currentDescriptorSet = *cached;
 						}
 
 						vkCmdBindDescriptorSets(
@@ -9970,14 +9979,21 @@ VK_DESTROY
 						{
 							currentBindHash = bindHash;
 
-							currentDescriptorSet = getDescriptorSet(
-								  program
-								, renderBind
-								, sbo.buffer
-								, _render->m_colorPalette
-								);
+							VkDescriptorSet* cached = descriptorSetCache.find(bindHash);
+							if (NULL == cached)
+							{
+								VkDescriptorSet descriptorSet = getDescriptorSet(
+									  program
+									, renderBind
+									, sbo.buffer
+									, _render->m_colorPalette
+									);
+								cached = descriptorSetCache.add(bindHash, descriptorSet, 0);
 
-							descriptorSetCount++;
+								descriptorSetCount++;
+							}
+
+							currentDescriptorSet = *cached;
 						}
 
 						vkCmdBindDescriptorSets(
