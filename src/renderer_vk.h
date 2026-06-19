@@ -912,6 +912,7 @@ VK_DESTROY_FUNC(DescriptorSet);
 		void shutdown();
 
 		VkResult alloc(VkCommandBuffer* _outCommandBuffer);
+		void addWaitSemaphore(VkSemaphore _semaphore, VkPipelineStageFlags _waitStage);
 		void addSwapChain(SwapChainVK& _swapChain);
 		void kick(bool _wait = false);
 		void finish(bool _finishAll = false);

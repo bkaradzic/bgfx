@@ -8384,6 +8384,9 @@ VK_DESTROY
 			m_lastImageRenderedSemaphore = m_renderDoneSemaphore[m_backBufferColorIdx];
 
 			m_needPresent = true;
+
+			s_renderVK->m_cmd.addWaitSemaphore(m_lastImageAcquiredSemaphore, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT);
+			m_lastImageAcquiredSemaphore = VK_NULL_HANDLE;
 		}
 
 		return true;
@@ -8903,15 +8906,20 @@ VK_DESTROY
 		return result;
 	}
 
+	void CommandQueueVK::addWaitSemaphore(VkSemaphore _semaphore, VkPipelineStageFlags _waitStage)
+	{
+		BX_ASSERT(m_numWaitSemaphores < BX_COUNTOF(m_waitSemaphores), "Too many wait semaphores.");
+
+		m_waitSemaphores[m_numWaitSemaphores]      = _semaphore;
+		m_waitSemaphoreStages[m_numWaitSemaphores] = _waitStage;
+		m_numWaitSemaphores++;
+	}
+
 	void CommandQueueVK::addSwapChain(SwapChainVK& _swapChain)
 	{
 		if (VK_NULL_HANDLE != _swapChain.m_lastImageAcquiredSemaphore)
 		{
-			BX_ASSERT(m_numWaitSemaphores < BX_COUNTOF(m_waitSemaphores), "Too many wait semaphores.");
-
-			m_waitSemaphores[m_numWaitSemaphores]      = _swapChain.m_lastImageAcquiredSemaphore;
-			m_waitSemaphoreStages[m_numWaitSemaphores] = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
-			m_numWaitSemaphores++;
+			addWaitSemaphore(_swapChain.m_lastImageAcquiredSemaphore, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT);
 
 			_swapChain.m_lastImageAcquiredSemaphore = VK_NULL_HANDLE;
 		}

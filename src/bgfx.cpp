@@ -2778,7 +2778,7 @@ namespace bgfx
 
 		if (!m_flipAfterRender)
 		{
-			if (!m_render->m_flush)
+			if (!m_flushPrevFrame)
 			{
 				BGFX_PROFILER_SCOPE("bgfx/flip", kColorSubmit);
 				flip();
@@ -2825,6 +2825,8 @@ namespace bgfx
 					flip();
 				}
 			}
+
+			m_flushPrevFrame = m_render->m_flush;
 		}
 		else
 		{

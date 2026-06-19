@@ -3928,6 +3928,7 @@ namespace bgfx
 			, m_exit(false)
 			, m_flipAfterRender(false)
 			, m_singleThreaded(false)
+			, m_flushPrevFrame(false)
 		{
 		}
 
@@ -6209,6 +6210,7 @@ namespace bgfx
 		bool m_flipAfterRender;
 		bool m_singleThreaded;
 		bool m_flipped;
+		bool m_flushPrevFrame;
 
 		typedef UpdateBatchT<256> TextureUpdateBatch;
 		BX_ALIGN_DECL_CACHE_LINE(TextureUpdateBatch m_textureUpdateBatch);
