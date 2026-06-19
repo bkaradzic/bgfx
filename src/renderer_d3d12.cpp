@@ -528,6 +528,15 @@ namespace bgfx { namespace d3d12
 	};
 	static_assert(BX_COUNTOF(s_heapProperties) == HeapProperty::Count);
 
+	static const D3D12_HEAP_TYPE s_heapType[] =
+	{
+		D3D12_HEAP_TYPE_DEFAULT,  // Default
+		D3D12_HEAP_TYPE_DEFAULT,  // Texture
+		D3D12_HEAP_TYPE_UPLOAD,   // Upload
+		D3D12_HEAP_TYPE_READBACK, // ReadBack
+	};
+	static_assert(BX_COUNTOF(s_heapType) == HeapProperty::Count);
+
 	static inline D3D12_HEAP_PROPERTIES ID3D12DeviceGetCustomHeapProperties(ID3D12Device *device, uint32_t nodeMask, D3D12_HEAP_TYPE heapType)
 	{
 #if BX_COMPILER_MSVC || (BX_COMPILER_CLANG && defined(_MSC_VER) )
@@ -539,21 +548,13 @@ namespace bgfx { namespace d3d12
 #endif // BX_COMPILER_MSVC || (BX_COMPILER_CLANG && defined(_MSC_VER) )
 	}
 
-	static void initHeapProperties(ID3D12Device* _device, D3D12_HEAP_PROPERTIES& _properties)
-	{
-		if (D3D12_HEAP_TYPE_CUSTOM != _properties.Type)
-		{
-			_properties = ID3D12DeviceGetCustomHeapProperties(_device, 1, _properties.Type);
-		}
-	}
-
 	static void initHeapProperties(ID3D12Device* _device)
 	{
 #if BX_PLATFORM_LINUX || BX_PLATFORM_WINDOWS
-		initHeapProperties(_device, s_heapProperties[HeapProperty::Default ].m_properties);
-		initHeapProperties(_device, s_heapProperties[HeapProperty::Texture ].m_properties);
-		initHeapProperties(_device, s_heapProperties[HeapProperty::Upload  ].m_properties);
-		initHeapProperties(_device, s_heapProperties[HeapProperty::ReadBack].m_properties);
+		for (uint32_t ii = 0; ii < HeapProperty::Count; ++ii)
+		{
+			s_heapProperties[ii].m_properties = ID3D12DeviceGetCustomHeapProperties(_device, 1, s_heapType[ii]);
+		}
 #else
 		BX_UNUSED(_device);
 #endif // BX_PLATFORM_WINDOWS
