@@ -27,4 +27,3 @@ fonts: droidsans.ttf.h \
 	icons_kenney.ttf.h
 
 rebuild: fonts
-	@make -s --no-print-directory clean all
