@@ -7496,9 +7496,6 @@ VK_DESTROY
 
 		const VkPhysicalDevice physicalDevice = s_renderVK->m_physicalDevice;
 
-		m_lastImageRenderedSemaphore = VK_NULL_HANDLE;
-		m_lastImageAcquiredSemaphore = VK_NULL_HANDLE;
-
 		const uint64_t recreateSurfaceMask     = BGFX_RESET_HIDPI;
 		const uint64_t recreateSwapchainMask   = 0
 			| BGFX_RESET_SRGB_BACKBUFFER
@@ -7537,6 +7534,9 @@ VK_DESTROY
 
 			if (recreateSwapchain)
 			{
+				m_lastImageRenderedSemaphore = VK_NULL_HANDLE;
+				m_lastImageAcquiredSemaphore = VK_NULL_HANDLE;
+
 				releaseSwapChain();
 
 				if (recreateSurface)
