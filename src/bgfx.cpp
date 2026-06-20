@@ -1555,11 +1555,11 @@ namespace bgfx
 			m_draw.m_occlusionQuery = _occlusionQuery;
 		}
 
+		m_draw.m_bindIdx = bindStateIndexCached();
 		m_frame->m_renderItem[renderItemIdx].draw = m_draw;
-		m_frame->m_renderItemBind[renderItemIdx]  = m_bind;
 
 		m_draw.clear(_flags);
-		m_bind.clear(_flags);
+		clearBind(_flags);
 		if (_flags & BGFX_DISCARD_STATE)
 		{
 			m_uniformBegin = m_uniformEnd;
@@ -1610,11 +1610,11 @@ namespace bgfx
 		m_compute.m_uniformIdx   = m_uniformIdx;
 		m_compute.m_uniformBegin = m_uniformBegin;
 		m_compute.m_uniformEnd   = m_uniformEnd;
+		m_compute.m_bindIdx = bindStateIndexCached();
 		m_frame->m_renderItem[renderItemIdx].compute = m_compute;
-		m_frame->m_renderItemBind[renderItemIdx]     = m_bind;
 
 		m_compute.clear(_flags);
-		m_bind.clear(_flags);
+		clearBind(_flags);
 		m_uniformBegin = m_uniformEnd;
 	}
 

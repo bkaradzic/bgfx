@@ -9358,7 +9358,8 @@ VK_DESTROY
 
 				const uint32_t itemIdx       = _render->m_sortValues[item];
 				const RenderItem& renderItem = _render->m_renderItem[itemIdx];
-				const RenderBind& renderBind = _render->m_renderItemBind[itemIdx];
+				const uint32_t bindIdx       = isCompute ? renderItem.compute.m_bindIdx : renderItem.draw.m_bindIdx;
+				const RenderBind& renderBind = _render->m_renderBind[bindIdx];
 				++item;
 
 				if (viewChanged)
@@ -9682,7 +9683,7 @@ VK_DESTROY
 						bx::HashMurmur2A hash;
 						hash.begin();
 						hash.add(program.m_descriptorSetLayout);
-						hash.add(renderBind.m_bind, sizeof(renderBind.m_bind) );
+						hash.add(bindIdx);
 						hash.add(sbo.buffer);
 						hash.add(vsSize);
 						hash.add(0);
@@ -9977,7 +9978,7 @@ VK_DESTROY
 						bx::HashMurmur2A hash;
 						hash.begin();
 						hash.add(program.m_descriptorSetLayout);
-						hash.add(renderBind.m_bind, sizeof(renderBind.m_bind) );
+						hash.add(bindIdx);
 						hash.add(sbo.buffer);
 						hash.add(vsSize);
 						hash.add(fsSize);
@@ -10351,10 +10352,11 @@ VK_DESTROY
 					);
 
 				double elapsedCpuMs = double(frameTime)*toMs;
-				tvm.printf(10, pos++, 0x8b, "   Submitted: %5d (draw %5d, compute %4d) / CPU %7.4f [ms] %c GPU %7.4f [ms] (latency %d) "
+				tvm.printf(10, pos++, 0x8b, "   Submitted: %5d (draw %5d, compute %4d) / Binds %d / CPU %7.4f [ms] %c GPU %7.4f [ms] (latency %d) "
 					, _render->m_numRenderItems
 					, statsKeyType[0]
 					, statsKeyType[1]
+					, _render->m_numRenderBinds
 					, elapsedCpuMs
 					, elapsedCpuMs > maxGpuElapsed ? '>' : '<'
 					, maxGpuElapsed

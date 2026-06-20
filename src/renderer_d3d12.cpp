@@ -7011,6 +7011,10 @@ namespace bgfx { namespace d3d12
 		uint16_t m_samplerStateIdx;
 	};
 
+	static constexpr uint8_t kBindStateNotBuilt = 0;
+	static constexpr uint8_t kBindStateValid    = 1;
+	static constexpr uint8_t kBindStateEmpty    = 2;
+
 	void RendererContextD3D12::submitBlit(BlitState& _bs, uint16_t _view)
 	{
 		TextureHandle currentSrc = { kInvalidHandle };
@@ -7191,7 +7195,7 @@ namespace bgfx { namespace d3d12
 
 		uint16_t currentSamplerStateIdx = kInvalidHandle;
 		ProgramHandle currentProgram    = BGFX_INVALID_HANDLE;
-		uint32_t currentBindHash        = 0;
+		uint32_t currentBindIdx         = UINT32_MAX;
 		bool     hasPredefined          = false;
 		bool     commandListChanged     = false;
 		ID3D12PipelineState* currentPso = NULL;
@@ -7255,7 +7259,11 @@ namespace bgfx { namespace d3d12
 
 		D3D12_GPU_VIRTUAL_ADDRESS gpuAddress = UINT64_C(0);
 
-		StateCacheLru<Bind, 64> bindLru;
+		const uint32_t numRenderBinds = _render->m_numRenderBinds;
+		Bind*    bindCache = (Bind*   )BX_STACK_ALLOC(bx::max<uint32_t>(numRenderBinds, 1)*sizeof(Bind) );
+		uint8_t* bindState = (uint8_t*)BX_STACK_ALLOC(bx::max<uint32_t>(numRenderBinds, 1) );
+		bx::memSet(bindState, kBindStateNotBuilt, numRenderBinds);
+		uint32_t bindCacheCount = 0;
 
 		if (NULL != m_msaaRt)
 		{
@@ -7302,7 +7310,8 @@ namespace bgfx { namespace d3d12
 
 				const uint32_t itemIdx       = _render->m_sortValues[item];
 				const RenderItem& renderItem = _render->m_renderItem[itemIdx];
-				const RenderBind& renderBind = _render->m_renderItemBind[itemIdx];
+				const uint32_t bindIdx       = isCompute ? renderItem.compute.m_bindIdx : renderItem.draw.m_bindIdx;
+				const RenderBind& renderBind = _render->m_renderBind[bindIdx];
 				++item;
 
 				if (viewChanged)
@@ -7408,16 +7417,19 @@ namespace bgfx { namespace d3d12
 					{
 						currentPso = pso;
 						m_commandList->SetPipelineState(pso);
-						currentBindHash = 0;
+						currentBindIdx = UINT32_MAX;
 					}
 
-					uint32_t bindHash = bx::hash<bx::HashMurmur2A>(renderBind.m_bind, sizeof(renderBind.m_bind) );
-					if (currentBindHash != bindHash)
+					if (currentBindIdx != bindIdx)
 					{
-						currentBindHash  = bindHash;
+						currentBindIdx = bindIdx;
 
-						Bind* bindCached = bindLru.find(bindHash);
-						if (NULL == bindCached)
+						Bind* bindCached = kBindStateValid == bindState[bindIdx]
+							? &bindCache[bindIdx]
+							: NULL
+							;
+
+						if (kBindStateNotBuilt == bindState[bindIdx])
 						{
 							uint32_t numSet = 0;
 							D3D12_GPU_DESCRIPTOR_HANDLE srvHandle[BGFX_MAX_COMPUTE_BINDINGS] = {};
@@ -7498,10 +7510,16 @@ namespace bgfx { namespace d3d12
 
 								if (0 != numSet)
 								{
-									Bind bind;
+									Bind& bind = bindCache[bindIdx];
 									bind.m_srvHandle = srvHandle[0];
 									bind.m_samplerStateIdx = getSamplerState(samplerFlags, maxComputeBindings, _render->m_colorPalette);
-									bindCached = bindLru.add(bindHash, bind, 0);
+									bindState[bindIdx] = kBindStateValid;
+									++bindCacheCount;
+									bindCached = &bind;
+								}
+								else
+								{
+									bindState[bindIdx] = kBindStateEmpty;
 								}
 							}
 						}
@@ -7640,7 +7658,7 @@ namespace bgfx { namespace d3d12
 						m_commandList->SetDescriptorHeaps(BX_COUNTOF(heaps), heaps);
 
 						currentPso             = NULL;
-						currentBindHash        = 0;
+						currentBindIdx         = UINT32_MAX;
 						currentSamplerStateIdx = kInvalidHandle;
 						currentProgram         = BGFX_INVALID_HANDLE;
 						currentState.clear();
@@ -7709,9 +7727,7 @@ namespace bgfx { namespace d3d12
 						, uint8_t(draw.m_instanceDataStride/16)
 						);
 
-					const uint32_t bindHash = bx::hash<bx::HashMurmur2A>(renderBind.m_bind, sizeof(renderBind.m_bind) );
-
-					if (currentBindHash != bindHash
+					if (currentBindIdx != bindIdx
 					||  0 != changedStencil
 					|| (hasFactor && blendFactor != draw.m_rgba)
 					|| (0 != (BGFX_STATE_PT_MASK & changedFlags)
@@ -7723,12 +7739,12 @@ namespace bgfx { namespace d3d12
 						m_batch.flush(m_commandList);
 					}
 
-					if (currentBindHash != bindHash)
+					if (currentBindIdx != bindIdx)
 					{
-						currentBindHash  = bindHash;
+						currentBindIdx = bindIdx;
 
-						Bind* bindCached = bindLru.find(bindHash);
-						if (NULL == bindCached)
+						Bind* bindCached = kBindStateValid == bindState[bindIdx] ? &bindCache[bindIdx] : NULL;
+						if (kBindStateNotBuilt == bindState[bindIdx])
 						{
 							uint32_t numSet = 0;
 							D3D12_GPU_DESCRIPTOR_HANDLE srvHandle[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS] = {};
@@ -7812,10 +7828,16 @@ namespace bgfx { namespace d3d12
 
 							if (0 != numSet)
 							{
-								Bind bind;
+								Bind& bind = bindCache[bindIdx];
 								bind.m_srvHandle       = srvHandle[0];
 								bind.m_samplerStateIdx = getSamplerState(samplerFlags, BGFX_CONFIG_MAX_TEXTURE_SAMPLERS, _render->m_colorPalette);
-								bindCached = bindLru.add(bindHash, bind, 0);
+								bindState[bindIdx] = kBindStateValid;
+								++bindCacheCount;
+								bindCached = &bind;
+							}
+							else
+							{
+								bindState[bindIdx] = kBindStateEmpty;
 							}
 						}
 
@@ -8156,10 +8178,11 @@ namespace bgfx { namespace d3d12
 					);
 
 				double elapsedCpuMs = double(frameTime)*toMs;
-				tvm.printf(10, pos++, 0x8b, "   Submitted: %5d (draw %5d, compute %4d) / CPU %7.4f [ms] %c GPU %7.4f [ms] (latency %d) "
+				tvm.printf(10, pos++, 0x8b, "   Submitted: %5d (draw %5d, compute %4d) / Binds: %4d / CPU %7.4f [ms] %c GPU %7.4f [ms] (latency %d) "
 					, _render->m_numRenderItems
 					, statsKeyType[0]
 					, statsKeyType[1]
+					, _render->m_numRenderBinds
 					, elapsedCpuMs
 					, elapsedCpuMs > maxGpuElapsed ? '>' : '<'
 					, maxGpuElapsed
@@ -8205,7 +8228,7 @@ namespace bgfx { namespace d3d12
 				tvm.printf(10, pos++, 0x8b, " %6d |  %6d | %6d | %6d  "
 					, m_pipelineStateCache.getCount()
 					, m_samplerAllocator.getCount()
-					, bindLru.getCount()
+					, bindCacheCount
 					, m_cmd.m_control.getNumUsed()
 					);
 				pos++;
