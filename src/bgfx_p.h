@@ -1998,6 +1998,7 @@ namespace bgfx
 			m_indirectBuffer    = BGFX_INVALID_HANDLE;
 			m_numIndirectBuffer = BGFX_INVALID_HANDLE;
 			m_occlusionQuery    = BGFX_INVALID_HANDLE;
+			m_bindIdx           = 0;
 		}
 
 		bool setStreamBit(uint8_t _stream, VertexBufferHandle _handle)
@@ -2030,6 +2031,7 @@ namespace bgfx
 		uint32_t m_numIndirect;
 		uint32_t m_numIndirectIndex;
 		uint32_t m_streamMask;
+		uint32_t m_bindIdx;
 		uint16_t m_instanceDataStride;
 		uint16_t m_numMatrices;
 		uint16_t m_scissor;
@@ -2042,6 +2044,8 @@ namespace bgfx
 		IndexBufferHandle    m_numIndirectBuffer;
 		OcclusionQueryHandle m_occlusionQuery;
 	};
+
+	static_assert(sizeof(RenderDraw) == 128, "RenderDraw size changed.");
 
 	BX_ALIGN_DECL_CACHE_LINE(struct) RenderCompute
 	{
@@ -2067,6 +2071,7 @@ namespace bgfx
 			m_indirectBuffer = BGFX_INVALID_HANDLE;
 			m_startIndirect  = 0;
 			m_numIndirect    = UINT32_MAX;
+			m_bindIdx        = 0;
 		}
 
 		uint32_t m_uniformBegin;
@@ -2079,6 +2084,7 @@ namespace bgfx
 		uint32_t m_numZ;
 		uint32_t m_startIndirect;
 		uint32_t m_numIndirect;
+		uint32_t m_bindIdx;
 		uint16_t m_numMatrices;
 		uint8_t  m_submitFlags;
 		uint8_t  m_uniformIdx;
@@ -2573,7 +2579,7 @@ namespace bgfx
 
 			m_perfStats.viewStats = m_viewStats;
 
-			bx::memSet(&m_renderItemBind[0], 0, sizeof(m_renderItemBind) );
+			bx::memSet(&m_renderBind[0], 0, sizeof(m_renderBind) );
 		}
 
 		~Frame()
@@ -2626,6 +2632,7 @@ namespace bgfx
 
 			m_frameCache.reset();
 			m_numRenderItems = 0;
+			m_numRenderBinds = 0;
 			m_numBlitItems   = 0;
 			m_iboffset = 0;
 			m_vboffset = 0;
@@ -2745,7 +2752,7 @@ namespace bgfx
 		uint64_t m_sortKeys[BGFX_CONFIG_MAX_DRAW_CALLS+1];
 		RenderItemCount m_sortValues[BGFX_CONFIG_MAX_DRAW_CALLS+1];
 		RenderItem m_renderItem[BGFX_CONFIG_MAX_DRAW_CALLS+1];
-		RenderBind m_renderItemBind[BGFX_CONFIG_MAX_DRAW_CALLS + 1];
+		RenderBind m_renderBind[BGFX_CONFIG_MAX_DRAW_CALLS + 1];
 
 		uint32_t m_blitKeys[BGFX_CONFIG_MAX_BLIT_ITEMS+1];
 		BlitItem m_blitItem[BGFX_CONFIG_MAX_BLIT_ITEMS+1];
@@ -2756,6 +2763,7 @@ namespace bgfx
 		UniformBuffer** m_uniformBuffer;
 
 		uint32_t m_numRenderItems;
+		uint32_t m_numRenderBinds;
 		uint32_t m_numBlitItems;
 
 		uint32_t m_iboffset;
@@ -2884,6 +2892,11 @@ namespace bgfx
 
 			m_numSubmitted = 0;
 			m_numDropped   = 0;
+
+			m_bindHashMap.clear();
+			m_bindLlastIdx  = 0;
+			m_bindEmptyIdx = UINT32_MAX;
+			m_bindDirty    = true;
 		}
 
 		void end(bool _finalize)
@@ -2904,6 +2917,64 @@ namespace bgfx
 			if (BX_ENABLED(BGFX_CONFIG_DEBUG_UNIFORM) )
 			{
 				m_uniformSet.clear();
+			}
+		}
+
+		uint32_t bindStateIndex()
+		{
+			const uint32_t hash = bx::hash<bx::HashMurmur3>(m_bind.m_bind, sizeof(m_bind.m_bind) );
+
+			BindHashMap::const_iterator it = m_bindHashMap.find(hash);
+			if (it != m_bindHashMap.end() )
+			{
+				const uint32_t idx = it->second;
+
+				BX_ASSERT(0 == bx::memCmp(&m_frame->m_renderBind[idx], &m_bind, sizeof(m_bind) )
+					, "RenderBind hash collision (hash 0x%08x)."
+					, hash
+					);
+
+				return idx;
+			}
+
+			const uint32_t idx = bx::atomicFetchAndAddsat<uint32_t>(&m_frame->m_numRenderBinds, 1, BGFX_CONFIG_MAX_DRAW_CALLS);
+			m_frame->m_renderBind[idx] = m_bind;
+			m_bindHashMap.insert(stl::make_pair(hash, idx) );
+
+			return idx;
+		}
+
+		uint32_t bindStateIndexCached()
+		{
+			if (m_bindDirty)
+			{
+				m_bindLlastIdx = bindStateIndex();
+				m_bindDirty    = false;
+			}
+			else
+			{
+				BX_ASSERT(0 == bx::memCmp(&m_frame->m_renderBind[m_bindLlastIdx], &m_bind, sizeof(m_bind) )
+					, "Stale bind dirty flag: cached index %d does not match current bind."
+					, m_bindLlastIdx
+					);
+			}
+
+			return m_bindLlastIdx;
+		}
+
+		void clearBind(uint8_t _flags)
+		{
+			m_bind.clear(_flags);
+
+			if (0 != (_flags & BGFX_DISCARD_BINDINGS) )
+			{
+				if (UINT32_MAX == m_bindEmptyIdx)
+				{
+					m_bindEmptyIdx = bindStateIndex();
+				}
+
+				m_bindLlastIdx = m_bindEmptyIdx;
+				m_bindDirty    = false;
 			}
 		}
 
@@ -3144,6 +3215,7 @@ namespace bgfx
 
 		void setTexture(uint8_t _stage, UniformHandle _sampler, TextureHandle _handle, uint32_t _flags)
 		{
+			m_bindDirty = true;
 			Binding& bind = m_bind.m_bind[_stage];
 			bind.setTexture(
 				  _handle
@@ -3161,6 +3233,7 @@ namespace bgfx
 
 		void setTexture(uint8_t _stage, UniformHandle _sampler, TextureHandle _handle, uint16_t _firstLayer, uint16_t _numLayers, uint8_t _firstMip, uint8_t _numMips, uint32_t _flags)
 		{
+			m_bindDirty = true;
 			Binding& bind = m_bind.m_bind[_stage];
 			bind.setTexture(
 				  _handle
@@ -3182,18 +3255,21 @@ namespace bgfx
 
 		void setBuffer(uint8_t _stage, IndexBufferHandle _handle, Access::Enum _access)
 		{
+			m_bindDirty = true;
 			Binding& bind = m_bind.m_bind[_stage];
 			bind.setIndexBuffer(_handle, _access);
 		}
 
 		void setBuffer(uint8_t _stage, VertexBufferHandle _handle, Access::Enum _access)
 		{
+			m_bindDirty = true;
 			Binding& bind = m_bind.m_bind[_stage];
 			bind.setBuffer(_handle, _access);
 		}
 
 		void setImage(uint8_t _stage, TextureHandle _handle, uint8_t _mip, Access::Enum _access, TextureFormat::Enum _format)
 		{
+			m_bindDirty = true;
 			Binding& bind = m_bind.m_bind[_stage];
 			bind.setImage(_handle, _mip, _access, _format);
 		}
@@ -3208,7 +3284,7 @@ namespace bgfx
 			m_discard = false;
 			m_draw.clear(_flags);
 			m_compute.clear(_flags);
-			m_bind.clear(_flags);
+			clearBind(_flags);
 
 			if (_flags & BGFX_DISCARD_STATE)
 			{
@@ -3268,6 +3344,12 @@ namespace bgfx
 		typedef stl::unordered_set<uint16_t> HandleSet;
 		HandleSet m_uniformSet;
 		HandleSet m_occlusionQuerySet;
+
+		typedef stl::unordered_map<uint32_t, uint32_t> BindHashMap;
+		BindHashMap m_bindHashMap;
+		uint32_t    m_bindLlastIdx;
+		uint32_t    m_bindEmptyIdx;
+		bool        m_bindDirty;
 
 		int64_t m_cpuTimeBegin;
 		int64_t m_cpuTimeEnd;
