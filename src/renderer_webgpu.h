@@ -638,7 +638,7 @@ namespace wgpu {
 		void update(uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem);
 
 		WGPUSampler getSamplerState(uint32_t _samplerFlags) const;
-		WGPUTextureView getTextureView(uint8_t _baseMipLevel, uint8_t _mipLevelCount, bool _storage, uint16_t _baseArrayLayer = 0, uint16_t _arrayLayerCount = UINT16_MAX) const;
+		WGPUTextureView getTextureView(uint8_t _baseMipLevel, uint8_t _mipLevelCount, bool _storage, uint16_t _baseArrayLayer = 0, uint16_t _arrayLayerCount = UINT16_MAX, bool _force2DArray = false) const;
 
 		WGPUTexture m_texture;
 		WGPUTexture m_textureResolve;

@@ -4127,7 +4127,7 @@ WGPU_IMPORT
 			rectPitch = (_rect.m_width / blockInfo.blockWidth) * blockInfo.blockSize;
 		}
 
-		const uint32_t bytesPerRow = UINT16_MAX == _pitch ? rectPitch : _pitch;
+		uint32_t bytesPerRow = UINT16_MAX == _pitch ? rectPitch : _pitch;
 		const uint32_t slicePitch  = rectPitch*_rect.m_height;
 
 		const bool convert = m_textureFormat != m_requestedFormat;
@@ -4137,10 +4137,10 @@ WGPU_IMPORT
 
 		if (convert)
 		{
+			bytesPerRow = rectPitch;
 			temp = (uint8_t*)bx::alloc(g_allocator, slicePitch);
-			bimg::imageDecodeToBgra8(g_allocator, temp, srcData, _rect.m_width, _rect.m_height, bytesPerRow, bimg::TextureFormat::Enum(m_requestedFormat) );
+			bimg::imageDecodeToBgra8(g_allocator, temp, srcData, _rect.m_width, _rect.m_height, rectPitch, bimg::TextureFormat::Enum(m_requestedFormat) );
 			srcData = temp;
-
 		}
 
 		const uint32_t width   = bx::min(bx::max(1u, bx::alignUp(m_width  >> _mip, blockInfo.blockWidth ) ), _rect.m_width);
@@ -4226,7 +4226,7 @@ WGPU_IMPORT
 		return sampler;
 	}
 
-	WGPUTextureView TextureWGPU::getTextureView(uint8_t _baseMipLevel, uint8_t _mipLevelCount, bool _storage, uint16_t _baseArrayLayer, uint16_t _arrayLayerCount) const
+	WGPUTextureView TextureWGPU::getTextureView(uint8_t _baseMipLevel, uint8_t _mipLevelCount, bool _storage, uint16_t _baseArrayLayer, uint16_t _arrayLayerCount, bool _force2DArray) const
 	{
 		bx::HashMurmur3 murmur;
 		murmur.begin();
@@ -4236,6 +4236,7 @@ WGPU_IMPORT
 		murmur.add(_storage);
 		murmur.add(_baseArrayLayer);
 		murmur.add(_arrayLayerCount);
+		murmur.add(_force2DArray);
 		const uint32_t hash = murmur.end();
 
 		WGPUTextureView textureView = s_renderWGPU->m_textureViewStateCache.find(hash);
@@ -4254,6 +4255,11 @@ WGPU_IMPORT
 				{
 					tvd = WGPUTextureViewDimension_2DArray;
 				}
+			}
+
+			if (_force2DArray)
+			{
+				tvd = WGPUTextureViewDimension_2DArray;
 			}
 
 			WGPUTextureViewDescriptor textureViewDesc =
@@ -5397,7 +5403,7 @@ m_resolution.formatColor = TextureFormat::BGRA8;
 				WGPUTextureView view;
 				if (ii < numMips)
 				{
-					view = _texture.getTextureView(uint8_t(topMip + 1 + ii), 1, true, true);
+					view = _texture.getTextureView(uint8_t(topMip + 1 + ii), 1, true, 0, UINT16_MAX, true);
 				}
 				else
 				{
@@ -5429,7 +5435,7 @@ m_resolution.formatColor = TextureFormat::BGRA8;
 						.offset      = 0,
 						.size        = 0,
 						.sampler     = NULL,
-						.textureView = _texture.getTextureView(uint8_t(topMip), 1, false, true),
+						.textureView = _texture.getTextureView(uint8_t(topMip), 1, false, 0, UINT16_MAX, true),
 					};
 
 					const uint32_t samplerFlags = 0
