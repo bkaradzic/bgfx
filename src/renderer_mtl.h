@@ -626,7 +626,7 @@ namespace bgfx { namespace mtl
 			uint64_t m_begin;
 			uint64_t m_end;
 			uint32_t m_pending;
-			uint32_t m_frameNum; // TODO: implement (currently stays 0)
+			uint32_t m_frameNum;
 		};
 
 		uint64_t m_begin;
