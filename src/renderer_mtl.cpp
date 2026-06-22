@@ -4613,9 +4613,16 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 		ra.clear();
 	}
 
+	static constexpr uint64_t kNanosecondsPerSecond = UINT64_C(1000000000);
+
 	void TimerQueryMtl::init()
 	{
-		m_frequency = bx::getHPFrequency();
+		m_frequency = kNanosecondsPerSecond;
+
+		for (uint32_t ii = 0; ii < BX_COUNTOF(m_result); ++ii)
+		{
+			m_result[ii].reset();
+		}
 	}
 
 	void TimerQueryMtl::shutdown()
@@ -4624,19 +4631,13 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 	uint32_t TimerQueryMtl::begin(uint32_t _resultIdx, uint32_t _frameNum)
 	{
-		BX_UNUSED(_resultIdx);
-		BX_UNUSED(_frameNum);
+		BX_UNUSED(_resultIdx, _frameNum);
 		return 0;
 	}
 
 	void TimerQueryMtl::end(uint32_t _idx)
 	{
 		BX_UNUSED(_idx);
-	}
-
-	static void setTimestamp(void* _data)
-	{
-		*( (int64_t*)_data) = bx::getHPCounter();
 	}
 
 	void TimerQueryMtl::addHandlers(MTL::CommandBuffer*& _commandBuffer)
@@ -4646,14 +4647,18 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			m_control.consume(1);
 		}
 
-		uint32_t offset = m_control.m_current;
+		const uint32_t offset = m_control.m_current;
 
-		_commandBuffer->addScheduledHandler(
-			MTL::HandlerFunction([pBegin = &m_result[offset].m_begin](MTL::CommandBuffer*) { setTimestamp(pBegin); })
-			);
 		_commandBuffer->addCompletedHandler(
-			MTL::HandlerFunction([pEnd = &m_result[offset].m_end](MTL::CommandBuffer*) { setTimestamp(pEnd); })
+			MTL::HandlerFunction([this, offset](MTL::CommandBuffer* _cmdBuf)
+			{
+				const double gpuBegin = _cmdBuf->GPUStartTime();
+				const double gpuEnd   = _cmdBuf->GPUEndTime();
+				m_result[offset].m_begin = uint64_t(gpuBegin * double(kNanosecondsPerSecond) );
+				m_result[offset].m_end   = uint64_t(gpuEnd   * double(kNanosecondsPerSecond) );
+			})
 			);
+
 		m_control.commit(1);
 	}
 
@@ -4662,8 +4667,8 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 		if (0 != m_control.getNumUsed() )
 		{
 			uint32_t offset = m_control.m_read;
-			m_begin = m_result[offset].m_begin;
-			m_end   = m_result[offset].m_end;
+			m_begin   = m_result[offset].m_begin;
+			m_end     = m_result[offset].m_end;
 			m_elapsed = m_end - m_begin;
 
 			m_control.consume(1);
@@ -4848,8 +4853,6 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 		int64_t timeBegin = bx::getHPCounter();
 		int64_t captureElapsed = 0;
-
-		m_gpuTimer.addHandlers(m_commandBuffer);
 
 		if (m_blitCommandEncoder)
 		{
@@ -6123,6 +6126,8 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 		if (NULL != m_commandBuffer)
 		{
+			m_gpuTimer.addHandlers(m_commandBuffer);
+
 			m_cmd.kick(true, false);
 			m_commandBuffer = NULL;
 		}
