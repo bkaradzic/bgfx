@@ -55,7 +55,7 @@ class BumpAllocator {
     /// BlockHeader is linked list of memory blocks.
     /// Blocks are allocated out of heap memory.
     struct BlockHeader {
-        BlockHeader* next;
+        BlockHeader* next = nullptr;
     };
 
   public:

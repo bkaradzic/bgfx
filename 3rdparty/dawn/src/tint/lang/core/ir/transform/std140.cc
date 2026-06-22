@@ -352,7 +352,7 @@ struct State {
                         indices.Push(b.Constant(0_u));
                     }
 
-                    for (size_t i = 0, n = access->Indices().Length(); i < n; i++) {
+                    for (size_t i = 0, n = access->Indices().size(); i < n; i++) {
                         auto* idx = access->Indices()[i];
 
                         if (auto* mat = NeedsDecomposing(current_type)) {
@@ -448,7 +448,7 @@ struct State {
 }  // namespace
 
 Result<SuccessType> Std140(Module& ir) {
-    TINT_CHECK_RESULT(ValidateBeforeIfNeeded(ir, kStd140Capabilities, "core.Std140"));
+    AssertValid(ir, kStd140Capabilities, "before core.Std140");
 
     State{ir}.Process();
 

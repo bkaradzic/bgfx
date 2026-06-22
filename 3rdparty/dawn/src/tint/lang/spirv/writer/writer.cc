@@ -34,16 +34,21 @@
 #include "src/tint/lang/core/ir/referenced_module_vars.h"
 #include "src/tint/lang/core/ir/validator.h"
 #include "src/tint/lang/core/ir/var.h"
+#include "src/tint/lang/core/type/f16.h"
 #include "src/tint/lang/core/type/pointer.h"
+#include "src/tint/lang/core/type/struct.h"
 #include "src/tint/lang/core/type/u16.h"
 #include "src/tint/lang/spirv/writer/common/option_helpers.h"
 #include "src/tint/lang/spirv/writer/printer/printer.h"
 #include "src/tint/lang/spirv/writer/raise/raise.h"
+#include "src/tint/utils/internal_limits.h"
 
 // Included by 'ast_printer.h', included again here for './tools/run gen' track the dependency.
 #include "spirv/unified1/spirv.h"  // IWYU pragma: export
 
 namespace tint::spirv::writer {
+
+namespace {
 
 Result<SuccessType> CanGenerate(const core::ir::Module& ir, const Options& options) {
     // The enum is accessible in the API so ensure we have a valid value.
@@ -63,11 +68,11 @@ Result<SuccessType> CanGenerate(const core::ir::Module& ir, const Options& optio
                 return Failure("using subgroup matrices requires the Vulkan Memory Model");
             }
         }
-        if (ty->Is<core::type::Buffer>()) {
-            return Failure("buffers are not supported by the SPIR-V backend");
-        }
-        if (ty->Is<core::type::U16>()) {
-            return Failure("16-bit unsigned integers are not supported by the SPIR-V backend");
+        if (auto* str = ty->As<core::type::Struct>()) {
+            auto res = str->PaddingWithinLimit();
+            if (res != Success) {
+                return res.Failure();
+            }
         }
     }
 
@@ -76,18 +81,6 @@ Result<SuccessType> CanGenerate(const core::ir::Module& ir, const Options& optio
     if (!options.remapped_entry_point_name.empty()) {
         if (options.remapped_entry_point_name.find('\0') != std::string::npos) {
             return Failure("remapped entry point name contains null character");
-        }
-
-        // Check for multiple entry points.
-        // TODO(375388101): Remove this check when SingleEntryPoint is part of the backend.
-        bool has_entry_point = false;
-        for (auto& func : ir.functions) {
-            if (func->IsEntryPoint()) {
-                if (has_entry_point) {
-                    return Failure("module must only contain a single entry point");
-                }
-                has_entry_point = true;
-            }
         }
     }
 
@@ -105,6 +98,36 @@ Result<SuccessType> CanGenerate(const core::ir::Module& ir, const Options& optio
     // No entrypoint, so no bindings needed
     if (!ep_func) {
         return Failure("entry point not found");
+    }
+
+    // Check for unsupported shader IO attributes.
+    auto check_io_attributes = [&](const core::IOAttributes& attributes) -> Result<SuccessType> {
+        if (attributes.location.has_value() &&
+            attributes.location.value() >= tint::internal_limits::kMaxLocations) {
+            return Failure("location(" + std::to_string(attributes.location.value()) +
+                           ") exceeds the maximum allowed value of '4095'");
+        }
+        return Success;
+    };
+
+    // Check input attributes.
+    for (auto* param : ep_func->Params()) {
+        if (auto* str = param->Type()->As<core::type::Struct>()) {
+            for (auto* member : str->Members()) {
+                TINT_CHECK_RESULT(check_io_attributes(member->Attributes()));
+            }
+        } else {
+            TINT_CHECK_RESULT(check_io_attributes(param->Attributes()));
+        }
+    }
+
+    // Check output attributes.
+    if (auto* str = ep_func->ReturnType()->As<core::type::Struct>()) {
+        for (auto* member : str->Members()) {
+            TINT_CHECK_RESULT(check_io_attributes(member->Attributes()));
+        }
+    } else {
+        TINT_CHECK_RESULT(check_io_attributes(ep_func->ReturnAttributes()));
     }
 
     core::ir::ReferencedModuleVars<const core::ir::Module> referenced_module_vars{ir};
@@ -128,42 +151,6 @@ Result<SuccessType> CanGenerate(const core::ir::Module& ir, const Options& optio
         if (call->Func() == core::BuiltinFn::kPrint) {
             return Failure("print is not supported by the SPIR-V backend");
         }
-        if (call->Func() == core::BuiltinFn::kHasResource ||
-            call->Func() == core::BuiltinFn::kGetResource) {
-            if (!options.resource_table) {
-                return Failure("hasResource and getResource require a resource table");
-            }
-        }
-    }
-
-    // Check for unsupported shader IO builtins.
-    auto check_io_attributes = [&](const core::IOAttributes& attributes) -> Result<SuccessType> {
-        if (attributes.builtin == core::BuiltinValue::kGlobalInvocationIndex) {
-            return Failure(
-                "@builtin(global_invocation_index) is not supported by the SPIR-V backend");
-        }
-        if (attributes.builtin == core::BuiltinValue::kWorkgroupIndex) {
-            return Failure("@builtin(workgroup_index) is not supported by the SPIR-V backend");
-        }
-        return Success;
-    };
-    // Check input attributes.
-    for (auto* param : ep_func->Params()) {
-        if (auto* str = param->Type()->As<core::type::Struct>()) {
-            for (auto* member : str->Members()) {
-                TINT_CHECK_RESULT(check_io_attributes(member->Attributes()));
-            }
-        } else {
-            TINT_CHECK_RESULT(check_io_attributes(param->Attributes()));
-        }
-    }
-    // Check output attributes.
-    if (auto* str = ep_func->ReturnType()->As<core::type::Struct>()) {
-        for (auto* member : str->Members()) {
-            TINT_CHECK_RESULT(check_io_attributes(member->Attributes()));
-        }
-    } else {
-        TINT_CHECK_RESULT(check_io_attributes(ep_func->ReturnAttributes()));
     }
 
     TINT_CHECK_RESULT(ValidateBindingOptions(options));
@@ -171,7 +158,11 @@ Result<SuccessType> CanGenerate(const core::ir::Module& ir, const Options& optio
     return Success;
 }
 
+}  // namespace
+
 Result<Output> Generate(core::ir::Module& ir, const Options& options) {
+    TINT_CHECK_RESULT(CanGenerate(ir, options));
+
     // There are currently no plans on supporting override-expressions, so we can pull this
     // information out before the raise. If we want to support overrides then this either needs to
     // happen in raise, before the builtins are polyfilled, or the analysis needs to also look for

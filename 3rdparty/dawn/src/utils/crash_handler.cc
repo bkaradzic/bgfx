@@ -1,4 +1,4 @@
-// Copyright 2023 The Dawn & Tint Authors
+// Copyright 2026 The Dawn & Tint Authors
 //
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are met:
@@ -25,14 +25,21 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "src/tint/lang/spirv/ir/literal_operand.h"
+#include "src/utils/crash_handler.h"
 
-TINT_INSTANTIATE_TYPEINFO(tint::spirv::ir::LiteralOperand);
+#include "absl/debugging/failure_signal_handler.h"
+#include "absl/debugging/symbolize.h"
 
-namespace tint::spirv::ir {
+namespace dawn {
 
-LiteralOperand::LiteralOperand(const core::constant::Value* value) : Base(value) {}
+void InstallCrashHandler(const char* argv0) {
+    absl::InitializeSymbolizer(argv0);
+    absl::FailureSignalHandlerOptions options;
+    options.symbolize_stacktrace = true;
+    options.use_alternate_stack = true;
+    options.alarm_on_failure_secs = 3;
+    options.call_previous_handler = true;
+    absl::InstallFailureSignalHandler(options);
+}
 
-LiteralOperand::~LiteralOperand() = default;
-
-}  // namespace tint::spirv::ir
+}  // namespace dawn

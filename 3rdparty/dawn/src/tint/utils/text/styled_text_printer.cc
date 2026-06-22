@@ -25,16 +25,12 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifdef UNSAFE_BUFFERS_BUILD
-// TODO(crbug.com/439062058): Remove this and convert code to safer constructs.
-#pragma allow_unsafe_buffers
-#endif
-
 #include "src/tint/utils/text/styled_text_printer.h"
 
 #include <cstring>
 
 #include "src/tint/utils/system/terminal.h"
+#include "src/utils/compiler.h"
 
 namespace tint {
 namespace {
@@ -45,7 +41,7 @@ class Plain : public StyledTextPrinter {
 
     void Print(const StyledText& text) override {
         auto plain = text.Plain();
-        fwrite(plain.data(), 1, plain.size(), file_);
+        DAWN_UNSAFE_TODO(fwrite(plain.data(), 1, plain.size(), file_));
     }
 
   private:

@@ -61,6 +61,7 @@ wgsl::BuiltinFn Convert(core::BuiltinFn fn) {
         CASE(kAtan)
         CASE(kAtan2)
         CASE(kAtanh)
+        CASE(kBitcast)
         CASE(kCeil)
         CASE(kClamp)
         CASE(kCos)
@@ -209,6 +210,8 @@ wgsl::BuiltinFn Convert(core::BuiltinFn fn) {
         CASE(kGetResource)
         CASE(kBufferView)
         CASE(kBufferLength)
+        CASE(kBufferArrayView)
+        case core::BuiltinFn::kAddSat:  // lowered below
         case core::BuiltinFn::kNone:
             break;
     }
@@ -220,7 +223,7 @@ void ReplaceBuiltinFnCall(core::ir::Builder& b, core::ir::CoreBuiltinCall* call)
     auto* replacement = b.CallWithResult<wgsl::ir::BuiltinCall>(
         call->DetachResult(), Convert(call->Func()), std::move(args));
     if (!call->ExplicitTemplateParams().IsEmpty()) {
-        Vector<const core::type::Type*, 4> tmpl_args;
+        Vector<core::ir::TemplateParameter, 4> tmpl_args;
         for (auto p : call->ExplicitTemplateParams()) {
             tmpl_args.Push(p);
         }
@@ -264,6 +267,19 @@ void ReplaceWorkgroupBarrier(core::ir::Builder& b, core::ir::CoreBuiltinCall* ca
     load->Destroy();
 }
 
+void ReplaceAddSat(core::ir::Builder& b, core::ir::CoreBuiltinCall* call) {
+    auto* lhs = call->Args()[0];
+    auto* rhs = call->Args()[1];
+    b.InsertBefore(call, [&] {
+        auto* add = b.Add(lhs, rhs);
+        auto* lt = b.LessThan(add, lhs);
+        auto* splat = b.Splat(call->Result()->Type(), b.Constant(core::u32(0xffffffff)));
+        b.CallWithResult<wgsl::ir::BuiltinCall>(call->DetachResult(), wgsl::BuiltinFn::kSelect, add,
+                                                splat, lt);
+    });
+    call->Destroy();
+}
+
 }  // namespace
 
 Result<SuccessType> Raise(core::ir::Module& mod) {
@@ -278,6 +294,9 @@ Result<SuccessType> Raise(core::ir::Module& mod) {
             switch (call->Func()) {
                 case core::BuiltinFn::kWorkgroupBarrier:
                     ReplaceWorkgroupBarrier(b, call);
+                    break;
+                case core::BuiltinFn::kAddSat:
+                    ReplaceAddSat(b, call);
                     break;
                 default:
                     ReplaceBuiltinFnCall(b, call);

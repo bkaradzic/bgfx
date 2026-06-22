@@ -147,17 +147,11 @@ struct State {
 
 Result<SuccessType> ChangeImmediateToUniform(core::ir::Module& ir,
                                              const ChangeImmediateToUniformConfig& config) {
-    TINT_CHECK_RESULT(
-        ValidateBeforeIfNeeded(ir,
-                               core::ir::Capabilities{
-                                   core::ir::Capability::kAllow8BitIntegers,
-                                   core::ir::Capability::kAllowPointSizeBuiltin,
-                                   core::ir::Capability::kAllowClipDistancesOnF32ScalarAndVector,
-                                   core::ir::Capability::kAllowDuplicateBindings,
-                                   core::ir::Capability::kAllowNonCoreTypes,
-                                   core::ir::Capability::kMslAllowEntryPointInterface,
-                               },
-                               "core.ChangeImmediateToUniform"));
+    core::ir::AssertValid(ir,
+                          core::ir::Capabilities{
+                              core::ir::Capability::kAllow16BitIntegers,
+                          },
+                          "before core.ChangeImmediateToUniform");
 
     State{config, ir}.Process();
 

@@ -25,17 +25,14 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifdef UNSAFE_BUFFERS_BUILD
-// TODO(crbug.com/439062058): Remove this and convert code to safer constructs.
-#pragma allow_unsafe_buffers
-#endif
-
 #ifndef SRC_TINT_UTILS_MEMORY_BITCAST_H_
 #define SRC_TINT_UTILS_MEMORY_BITCAST_H_
 
 #include <cstddef>
 #include <cstring>
 #include <type_traits>
+
+#include "src/utils/compiler.h"
 
 namespace tint {
 
@@ -61,8 +58,8 @@ inline TO Bitcast(FROM&& from) {
     static_assert(std::is_trivially_copyable_v<std::decay_t<FROM>>);
     static_assert(std::is_trivially_copyable_v<std::decay_t<TO>>);
     TO to;
-    memcpy(reinterpret_cast<std::byte*>(&to), reinterpret_cast<const std::byte*>(&from),
-           sizeof(TO));
+    DAWN_UNSAFE_TODO(memcpy(reinterpret_cast<std::byte*>(&to),
+                            reinterpret_cast<const std::byte*>(&from), sizeof(TO)));
     return to;
 }
 

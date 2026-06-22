@@ -56,6 +56,11 @@ project "tint-core"
 		path.join(TINT, "src/tint/lang/null/**.h"),
 	}
 
+	configuration { "osx*" }
+		buildoptions {
+			"-Wno-unknown-warning-option",
+		}
+
 project "tint-lang"
 	kind "StaticLib"
 
@@ -96,6 +101,11 @@ project "tint-lang"
 		path.join(TINT, "src/tint/lang/wgsl/**.h"),
 	}
 
+	configuration { "osx*" }
+		buildoptions {
+			"-Wno-unknown-warning-option",
+		}
+
 project "tint-api"
 	kind "StaticLib"
 
@@ -133,6 +143,11 @@ project "tint-api"
 		path.join(TINT, "src/tint/api/**.cc"),
 		path.join(TINT, "src/tint/api/**.h"),
 	}
+
+	configuration { "osx*" }
+		buildoptions {
+			"-Wno-unknown-warning-option",
+		}
 
 project "spirv-opt"
 	kind "StaticLib"
@@ -285,6 +300,13 @@ project "spirv-cross"
 	configuration { "mingw* or linux* or osx*" }
 		buildoptions {
 			"-Wno-type-limits",
+		}
+
+
+	configuration { "osx*" }
+		buildoptions {
+			"-Wno-deprecated-this-capture",
+			"-Wno-nan-infinity-disabled",
 		}
 
 	configuration {}

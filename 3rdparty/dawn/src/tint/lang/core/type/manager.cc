@@ -262,12 +262,6 @@ const core::type::SampledTexture* Manager::sampled_texture(TextureDimension dim,
     return Get<core::type::SampledTexture>(dim, type);
 }
 
-const core::type::SampledTexture* Manager::sampled_texture(TextureDimension dim,
-                                                           const core::type::Type* type,
-                                                           TextureFilterable filterable) {
-    return Get<core::type::SampledTexture>(dim, type, filterable);
-}
-
 const core::type::MultisampledTexture* Manager::multisampled_texture(TextureDimension dim,
                                                                      const core::type::Type* type) {
     return Get<core::type::MultisampledTexture>(dim, type);

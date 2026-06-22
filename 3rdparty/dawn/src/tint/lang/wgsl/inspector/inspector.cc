@@ -31,6 +31,7 @@
 #include <unordered_set>
 #include <utility>
 
+#include "src/tint/api/common/resource_type.h"
 #include "src/tint/lang/core/enums.h"
 #include "src/tint/lang/core/fluent_types.h"
 #include "src/tint/lang/core/type/array.h"
@@ -118,7 +119,8 @@ std::tuple<ComponentType, CompositionType> CalculateComponentAndComposition(
     return {componentType, compositionType};
 }
 
-ResourceBinding ConvertBufferToResourceBinding(const tint::sem::GlobalVariable* buffer) {
+ResourceBinding ConvertBufferToResourceBinding(const tint::sem::GlobalVariable* buffer,
+                                               std::optional<uint64_t> buffer_size = std::nullopt) {
     ResourceBinding result;
     result.bind_group = buffer->Attributes().binding_point->group;
     result.binding = buffer->Attributes().binding_point->binding;
@@ -126,6 +128,9 @@ ResourceBinding ConvertBufferToResourceBinding(const tint::sem::GlobalVariable* 
 
     auto* unwrapped_type = buffer->Type()->UnwrapRef();
     result.size = unwrapped_type->Size();
+    if (buffer_size) {
+        result.size = static_cast<uint32_t>(buffer_size.value());
+    }
     result.size_no_padding = result.size;
     if (auto* str = unwrapped_type->As<sem::Struct>()) {
         result.size_no_padding = str->SizeNoPadding();
@@ -175,7 +180,14 @@ ResourceBinding ConvertHandleToResourceBinding(const tint::sem::GlobalVariable* 
         [&](const core::type::MultisampledTexture* tex) {
             result.resource_type = ResourceBinding::ResourceType::kMultisampledTexture;
             result.dim = TypeTextureDimensionToResourceBindingTextureDimension(tex->Dim());
-            result.sampled_kind = BaseTypeToSampledKind(tex->Type());
+
+            auto kind = BaseTypeToSampledKind(tex->Type());
+            // The base `f32` type will be `Float` but for a multisampled it is always
+            // an unfilterable.
+            if (kind == ResourceBinding::SampledKind::kFloat) {
+                kind = ResourceBinding::SampledKind::kUnfilterable;
+            }
+            result.sampled_kind = kind;
         },
         [&](const core::type::DepthTexture* tex) {
             result.resource_type = ResourceBinding::ResourceType::kDepthTexture;
@@ -350,6 +362,12 @@ EntryPoint Inspector::GetEntryPoint(const tint::ast::Function* func) {
             core::BuiltinValue::kSampleMask, param->Type(), param->Declaration()->attributes);
         entry_point.num_workgroups_used |= ContainsBuiltin(
             core::BuiltinValue::kNumWorkgroups, param->Type(), param->Declaration()->attributes);
+        // global_invocation_index and workgroup_index are polyfilled using num_workgroups
+        entry_point.num_workgroups_used |= ContainsBuiltin(
+            core::BuiltinValue::kWorkgroupIndex, param->Type(), param->Declaration()->attributes);
+        entry_point.num_workgroups_used |=
+            ContainsBuiltin(core::BuiltinValue::kGlobalInvocationIndex, param->Type(),
+                            param->Declaration()->attributes);
         entry_point.vertex_index_used |= ContainsBuiltin(
             core::BuiltinValue::kVertexIndex, param->Type(), param->Declaration()->attributes);
         entry_point.instance_index_used |= ContainsBuiltin(
@@ -361,6 +379,11 @@ EntryPoint Inspector::GetEntryPoint(const tint::ast::Function* func) {
                             param->Declaration()->attributes);
         entry_point.subgroup_size_used |= ContainsBuiltin(
             core::BuiltinValue::kSubgroupSize, param->Type(), param->Declaration()->attributes);
+        entry_point.global_invocation_index_used |=
+            ContainsBuiltin(core::BuiltinValue::kGlobalInvocationIndex, param->Type(),
+                            param->Declaration()->attributes);
+        entry_point.workgroup_index_used |= ContainsBuiltin(
+            core::BuiltinValue::kWorkgroupIndex, param->Type(), param->Declaration()->attributes);
 
         if (entry_point.stage == PipelineStage::kFragment) {
             entry_point.frag_position_used = ContainsBuiltin(
@@ -454,9 +477,11 @@ std::vector<ResourceBinding> Inspector::GetResourceBindings(const std::string& e
                 continue;
 
             case core::AddressSpace::kUniform:
-            case core::AddressSpace::kStorage:
-                result.push_back(ConvertBufferToResourceBinding(global));
+            case core::AddressSpace::kStorage: {
+                auto size = func_sem->TransitivelyReferencedUnsizedBufferSize(global);
+                result.push_back(ConvertBufferToResourceBinding(global, size));
                 break;
+            }
             case core::AddressSpace::kHandle:
                 result.push_back(ConvertHandleToResourceBinding(global));
                 break;
@@ -620,6 +645,7 @@ const Inspector::EntryPointTextureMetadata& Inspector::ComputeTextureMetadata(
         }
 
         bool uses_num_levels = false;
+        bool uses_num_samples = false;
         switch (builtin->Fn()) {
             case wgsl::BuiltinFn::kTextureNumLevels:
                 uses_num_levels = true;
@@ -637,6 +663,8 @@ const Inspector::EntryPointTextureMetadata& Inspector::ComputeTextureMetadata(
                 uses_num_levels = !texture_type->IsAnyOf<core::type::MultisampledTexture,
                                                          core::type::DepthMultisampledTexture,
                                                          core::type::ExternalTexture>();
+                uses_num_samples = texture_type->IsAnyOf<core::type::MultisampledTexture,
+                                                         core::type::DepthMultisampledTexture>();
                 metadata.has_texture_load_with_depth_texture |=
                     texture_type
                         ->IsAnyOf<core::type::DepthTexture, core::type::DepthMultisampledTexture>();
@@ -651,10 +679,7 @@ const Inspector::EntryPointTextureMetadata& Inspector::ComputeTextureMetadata(
                 break;
 
             case wgsl::BuiltinFn::kTextureNumSamples:
-                for (const auto* texture : textures) {
-                    auto texture_binding_point = texture->Attributes().binding_point.value();
-                    metadata.textures_with_num_samples.insert(texture_binding_point);
-                }
+                uses_num_samples = true;
                 break;
 
             default:
@@ -665,6 +690,12 @@ const Inspector::EntryPointTextureMetadata& Inspector::ComputeTextureMetadata(
             for (const auto* texture : textures) {
                 auto texture_binding_point = texture->Attributes().binding_point.value();
                 metadata.textures_with_num_levels.insert(texture_binding_point);
+            }
+        }
+        if (uses_num_samples) {
+            for (const auto* texture : textures) {
+                auto texture_binding_point = texture->Attributes().binding_point.value();
+                metadata.textures_with_num_samples.insert(texture_binding_point);
             }
         }
     };

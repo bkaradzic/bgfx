@@ -1,4 +1,4 @@
-// Copyright 2023 The Dawn & Tint Authors
+// Copyright 2026 The Dawn & Tint Authors
 //
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are met:
@@ -25,25 +25,25 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef SRC_TINT_LANG_SPIRV_IR_LITERAL_OPERAND_H_
-#define SRC_TINT_LANG_SPIRV_IR_LITERAL_OPERAND_H_
+#ifndef SRC_TINT_LANG_CORE_IR_TRANSFORM_COLLAPSE_SUBGROUP_MIN_MAX_H_
+#define SRC_TINT_LANG_CORE_IR_TRANSFORM_COLLAPSE_SUBGROUP_MIN_MAX_H_
 
-#include "src/tint/lang/core/ir/constant.h"
-#include "src/tint/utils/rtti/castable.h"
+#include "src/tint/utils/result.h"
 
-namespace tint::spirv::ir {
+// Forward declarations.
+namespace tint::core::ir {
+class Module;
+}
 
-/// LiteralOperand is a type of constant value that is intended to be emitted as a literal in
-/// the SPIR-V instruction stream.
-class LiteralOperand final : public Castable<LiteralOperand, core::ir::Constant> {
-  public:
-    /// Constructor
-    /// @param value the operand value
-    explicit LiteralOperand(const core::constant::Value* value);
-    /// Destructor
-    ~LiteralOperand() override;
-};
+namespace tint::core::ir::transform {
 
-}  // namespace tint::spirv::ir
+/// CollapseSubgroupMinMax is a transform that replaces calls to subgroupMin and
+/// subgroupMax builtins with their argument if that argument is also a subgroupMin/Max call which
+/// is then by definition subgroup uniform.
+/// @param module the module to transform
+/// @returns success or failure
+Result<SuccessType> CollapseSubgroupMinMax(Module& module);
 
-#endif  // SRC_TINT_LANG_SPIRV_IR_LITERAL_OPERAND_H_
+}  // namespace tint::core::ir::transform
+
+#endif  // SRC_TINT_LANG_CORE_IR_TRANSFORM_COLLAPSE_SUBGROUP_MIN_MAX_H_

@@ -171,10 +171,11 @@ struct State {
                     TINT_ASSERT(as_inst_result);
                     auto* as_inst = as_inst_result->Instruction();
                     TINT_ASSERT(as_inst);
-                    auto* as_bitcast = as_inst->As<core::ir::Bitcast>();
+                    auto* as_bitcast = as_inst->As<core::ir::CoreBuiltinCall>();
                     TINT_ASSERT(as_bitcast);
+                    TINT_ASSERT(as_bitcast->Func() == core::BuiltinFn::kBitcast);
                     TINT_ASSERT(as_bitcast->Result()->NumUsages() == 1);
-                    param_u64 = as_bitcast->Val();
+                    param_u64 = as_bitcast->Args()[0];
                     as_bitcast->Destroy();
 
                     wgsl::BuiltinFn wgsl_fn = call->Func() == core::BuiltinFn::kAtomicStoreMax
@@ -247,16 +248,7 @@ struct State {
 }  // namespace
 
 Result<SuccessType> AtomicVec2uToFromU64(core::ir::Module& ir, AtomicVec2uU64Direction direction) {
-    auto result =
-        core::ir::ValidateBeforeIfNeeded(ir,
-                                         core::ir::Capabilities{
-                                             core::ir::Capability::kAllowMultipleEntryPoints,
-                                             core::ir::Capability::kAllowOverrides,
-                                         },
-                                         "transform::AtomicVec2uToFromU64");
-    if (result != Success) {
-        return result;
-    }
+    core::ir::AssertValid(ir, "before transform::AtomicVec2uToFromU64");
 
     State{ir, direction}.Process();
 

@@ -36,7 +36,6 @@
 #include "src/tint/lang/core/fluent_types.h"
 #include "src/tint/lang/core/ir/access.h"
 #include "src/tint/lang/core/ir/binary.h"
-#include "src/tint/lang/core/ir/bitcast.h"
 #include "src/tint/lang/core/ir/block.h"
 #include "src/tint/lang/core/ir/break_if.h"
 #include "src/tint/lang/core/ir/call.h"
@@ -44,6 +43,7 @@
 #include "src/tint/lang/core/ir/construct.h"
 #include "src/tint/lang/core/ir/continue.h"
 #include "src/tint/lang/core/ir/convert.h"
+#include "src/tint/lang/core/ir/core_builtin_call.h"
 #include "src/tint/lang/core/ir/discard.h"
 #include "src/tint/lang/core/ir/exit_if.h"
 #include "src/tint/lang/core/ir/exit_loop.h"
@@ -102,13 +102,7 @@ class State {
     explicit State(const core::ir::Module& m) : mod(m) {}
 
     Program Run(const Options& options) {
-        core::ir::Capabilities caps{
-            core::ir::Capability::kAllowMultipleEntryPoints,
-            core::ir::Capability::kAllowOverrides,
-            core::ir::Capability::kAllowPhonyInstructions,
-            core::ir::Capability::kAllowRefTypes,
-        };
-        if (auto res = ValidateBeforeIfNeeded(mod, caps, "wgsl.to_program"); res != Success) {
+        if (auto res = Validate(mod, "before wgsl.to_program"); res != Success) {
             // IR module failed validation.
             b.Diagnostics().AddError(Source{}) << res.Failure();
             return Program{resolver::Resolve(b)};
@@ -131,16 +125,19 @@ class State {
         if (options.allow_non_uniform_derivatives) {
             // Suppress errors regarding non-uniform derivative operations if requested, by adding a
             // diagnostic directive to the module.
-            b.DiagnosticDirective(wgsl::DiagnosticSeverity::kOff, "derivative_uniformity");
+            b.DiagnosticDirective(wgsl::DiagnosticSeverity::kOff,
+                                  b.DiagnosticRuleName("derivative_uniformity"));
         }
         if (options.allow_non_uniform_subgroup_operations) {
             // Suppress errors regarding non-uniform subgroups operations if requested, by adding a
             // diagnostic directive to the module.
-            b.DiagnosticDirective(wgsl::DiagnosticSeverity::kOff, "subgroup_uniformity");
+            b.DiagnosticDirective(wgsl::DiagnosticSeverity::kOff,
+                                  b.DiagnosticRuleName("subgroup_uniformity"));
         }
         if (options.disable_unreachable_code_warning) {
             // Suppress warnings regarding unreachable code
-            b.DiagnosticDirective(wgsl::DiagnosticSeverity::kOff, "chromium", "unreachable_code");
+            b.DiagnosticDirective(wgsl::DiagnosticSeverity::kOff,
+                                  b.DiagnosticRuleName("chromium", "unreachable_code"));
         }
 
         return Program{resolver::Resolve(b, options.allowed_features)};
@@ -199,10 +196,7 @@ class State {
                 [&](const core::ir::Override* override_) { Override(override_); },  //
                 [&](const core::ir::Binary* binary) { Binary(binary); },            //
                 [&](const core::ir::Unary* unary) { Unary(unary); },                //
-                [&](const core::ir::Bitcast* c) {
-                    auto ty = Type(c->Result()->Type());
-                    Bind(c->Result(), b.Bitcast(ty, Expr(c->Args()[0])));
-                },
+                [&](const wgsl::ir::BuiltinCall* c) { Call(c); },                   //
                 TINT_ICE_ON_NO_MATCH);
         }
     }
@@ -589,7 +583,7 @@ class State {
     void BreakIf(const core::ir::BreakIf* i) { Append(b.BreakIf(Expr(i->Condition()))); }
 
     void Return(const core::ir::Return* ret) {
-        if (ret->Args().IsEmpty()) {
+        if (ret->Args().empty()) {
             // Return has no arguments.
             // If this block is nested withing some control flow, then we must
             // emit a 'return' statement, otherwise we've just naturally reached
@@ -601,11 +595,11 @@ class State {
         }
 
         // Return has arguments - this is the return value.
-        if (ret->Args().Length() != 1) {
-            TINT_IR_ICE(mod) << "expected 1 value for return, got " << ret->Args().Length();
+        if (ret->Args().size() != 1) {
+            TINT_IR_ICE(mod) << "expected 1 value for return, got " << ret->Args().size();
         }
 
-        Append(b.Return(Expr(ret->Args().Front())));
+        Append(b.Return(Expr(ret->Args().front())));
     }
 
     void Var(const core::ir::Var* var) {
@@ -743,8 +737,16 @@ class State {
                 const ast::CallExpression* expr = nullptr;
                 if (!c->ExplicitTemplateParams().IsEmpty()) {
                     Vector<const ast::Expression*, 4> tmpl_args;
-                    for (auto* e : c->ExplicitTemplateParams()) {
-                        tmpl_args.Push(Type(e).expr);
+                    for (auto& e : c->ExplicitTemplateParams()) {
+                        if (std::holds_alternative<const core::type::Type*>(e)) {
+                            tmpl_args.Push(Type(std::get<const core::type::Type*>(e)).expr);
+                        } else if (std::holds_alternative<core::Majorness>(e)) {
+                            StringStream str;
+                            str << std::get<core::Majorness>(e);
+                            tmpl_args.Push(b.Expr(str.str()));
+                        } else {
+                            TINT_UNREACHABLE() << "Unhandled template parameter kind";
+                        }
                     }
                     expr = b.Call(b.Ident(c->Func(), std::move(tmpl_args)), std::move(args));
                 } else {
@@ -764,10 +766,6 @@ class State {
             [&](const core::ir::Convert* c) {
                 auto ty = Type(c->Result()->Type());
                 Bind(c->Result(), b.Call(ty, std::move(args)));
-            },
-            [&](const core::ir::Bitcast* c) {
-                auto ty = Type(c->Result()->Type());
-                Bind(c->Result(), b.Bitcast(ty, args[0]));
             },
             [&](const core::ir::Discard*) { Append(b.Discard()); },  //
             TINT_ICE_ON_NO_MATCH);

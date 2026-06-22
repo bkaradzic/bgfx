@@ -127,7 +127,7 @@ struct Override {
     };
 
     /// Type of the scalar
-    Type type;
+    Type type = Type::kBool;
 
     /// Does this override have an initializer?
     bool is_initialized = false;
@@ -162,7 +162,7 @@ struct EntryPoint {
     /// The entry point name
     std::string name;
     /// The entry point stage
-    PipelineStage stage;
+    PipelineStage stage = PipelineStage::kVertex;
     /// The workgroup size. If PipelineStage is kCompute and this holds no value, then the workgroup
     /// size is derived from an override-expression. In this situation you first need to run the
     /// SubstituteOverride transform before using the inspector.
@@ -212,6 +212,10 @@ struct EntryPoint {
     bool subgroup_invocation_id_used = false;
     /// Does the entry point use subgroup_size
     bool subgroup_size_used = false;
+    /// Does the entry point use global_invocation_index
+    bool global_invocation_index_used = false;
+    /// Does the entry point use wokgroup_index
+    bool workgroup_index_used = false;
     /// The array length of the clip_distances builtin. Holding no value means the clip_distances
     /// is not used.
     std::optional<uint32_t> clip_distances_size;

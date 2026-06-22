@@ -32,7 +32,7 @@
 
 #include "src/tint/api/common/substitute_overrides_config.h"
 #include "src/tint/lang/core/ir/validator.h"
-#include "src/tint/utils/reflection.h"
+#include "src/tint/utils/reflection/reflection.h"
 #include "src/tint/utils/result.h"
 
 // Forward declarations.
@@ -44,8 +44,7 @@ namespace tint::core::ir::transform {
 
 /// The capabilities that the transform can support.
 const core::ir::Capabilities kSubstituteOverridesCapabilities{
-    core::ir::Capability::kAllowOverrides,
-    core::ir::Capability::kAllow8BitIntegers,
+    core::ir::Capability::kAllow16BitIntegers,
 };
 
 /// Substitute overrides to their constant values.

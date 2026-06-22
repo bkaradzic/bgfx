@@ -65,7 +65,7 @@ class ResourceTableHelper {
 /// @param helper the resource binding helper
 /// @returns success or failure
 Result<SuccessType> ResourceTable(core::ir::Module& module,
-                                  const ResourceTableConfig& config,
+                                  const std::optional<ResourceTableConfig>& config,
                                   ResourceTableHelper* helper);
 
 }  // namespace tint::core::ir::transform

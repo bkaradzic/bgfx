@@ -73,6 +73,11 @@ class Disassembler {
         }
     };
 
+    /// @param mod the module
+    /// @param inst the instruction to disassemble
+    /// @returns the disassembled instruction
+    static std::string Disassemble(const Module& mod, const Instruction* inst);
+
     /// Constructor.
     /// Performs the disassembly of the module @p mod, constructing a Source::File with the name @p
     /// file_name.

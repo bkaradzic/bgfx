@@ -27,7 +27,6 @@
 
 #include "src/tint/lang/spirv/writer/raise/resource_table_helper.h"
 
-#include "src/tint/lang/core/type/pointer.h"
 #include "src/tint/lang/core/type/resource_table.h"
 #include "src/tint/lang/core/type/resource_type.h"
 
@@ -45,6 +44,12 @@ Hashmap<const core::type::Type*, core::ir::Var*, 4> ResourceTableHelper::Generat
 
     for (auto& type : types) {
         auto* t = core::type::ResourceTypeToType(b.ir.Types(), type);
+
+        // The defaults can include both filterable/unfilterable variants, but they collapse to the
+        // same type in WGSL, so only emit them once.
+        if (res.Contains(t)) {
+            continue;
+        }
 
         auto* spv_ty = b.ir.Types().Get<core::type::ResourceTable>(t);
         auto* v = b.Var(b.ir.Types().ptr(handle, spv_ty));

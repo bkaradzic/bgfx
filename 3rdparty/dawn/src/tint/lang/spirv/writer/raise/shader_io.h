@@ -44,10 +44,6 @@ namespace tint::spirv::writer::raise {
 
 /// The capabilities that the transform can support.
 const core::ir::Capabilities kShaderIOCapabilities{
-    core::ir::Capability::kAllowDuplicateBindings,
-    core::ir::Capability::kAllowAnyInputAttachmentIndexType,
-    core::ir::Capability::kAllowNonCoreTypes,
-    core::ir::Capability::kAllow8BitIntegers,
     core::ir::Capability::kLoosenValidationForShaderIO,
 };
 
@@ -64,7 +60,9 @@ struct ShaderIOConfig {
     /// true if f16 IO types should be replaced with f32 types and converted
     bool polyfill_f16_io = false;
     /// true if we should force pixel centers via polyfill when multi-sampling.
-    bool polyfill_pixel_center = false;
+    std::optional<uint32_t> polyfill_pixel_center = std::nullopt;
+    /// true if the framebuffer fetch should be multisampled
+    bool multisampled_framebuffer_fetch = false;
     /// offsets for clamping frag depth
     std::optional<Options::RangeOffsets> depth_range_offsets{};
 };

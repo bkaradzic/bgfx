@@ -29,6 +29,7 @@
 #define SRC_TINT_UTILS_CONTAINERS_HASHMAP_BASE_H_
 
 #include <algorithm>
+#include <array>
 #include <functional>
 #include <optional>
 #include <tuple>

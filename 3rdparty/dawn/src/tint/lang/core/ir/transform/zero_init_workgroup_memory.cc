@@ -84,6 +84,10 @@ struct State {
         const type::Type* store_type = nullptr;
         /// The list of index operands to get to the element.
         Vector<Index, 4> indices;
+        /// The bufferView call (nullptr unless var's type is a buffer).
+        /// This gets set just before generating stores so all the bufferView calls go at the shared
+        /// count.
+        CoreBuiltinCall* buffer_view = nullptr;
     };
 
     /// StoreList is a list of `Store` descriptors.
@@ -140,6 +144,23 @@ struct State {
             for (auto count : sorted_iteration_counts) {
                 auto element_stores = stores.Get(count);
                 TINT_IR_ASSERT(ir, count);
+                for (auto& store : *element_stores) {
+                    // For buffers, add a buffer view call to an appropriate array (u32/f16)
+                    // of count elements.
+                    if (auto* buf_ty =
+                            store.var->Result()->Type()->UnwrapPtr()->As<core::type::Buffer>()) {
+                        auto buf_count = buf_ty->ConstantCount().value();
+                        const core::type::Type* ele_ty = ty.u32();
+                        if (buf_count % 4 != 0) {
+                            ele_ty = ty.f16();
+                        }
+                        auto* arr_ty = ty.array(ele_ty, count);
+                        store.buffer_view =
+                            b.CallExplicit(ty.ptr(workgroup, arr_ty), core::BuiltinFn::kBufferView,
+                                           Vector<TemplateParameter, 1>{arr_ty}, store.var, 0_u);
+                    }
+                }
+
                 // No loop is required if we have at least as many invocations than counts.
                 if (count <= wgsize) {
                     // Make the first |count| invocations in the group perform the arrayed stores.
@@ -205,6 +226,28 @@ struct State {
                     new_indices.Push(member->Index());
                     PrepareStores(var, member->Type(), iteration_count, new_indices, stores);
                 }
+            },
+            [&](const type::Buffer* buf) {
+                // TODO(crbug.com/tint/495142520): This could be more efficient than just choosing
+                // between an array of one type. Instead we could pick a size a larger size and add
+                // a small tail as a separate set of stores.
+                TINT_IR_ASSERT(ir, buf->ConstantCount());
+                auto len = buf->ConstantCount().value();
+                // This assumes 8-bit types are not encountered in workgroup.
+                bool four_byte = len % 4 == 0;
+                if (four_byte) {
+                    len /= 4;
+                } else {
+                    TINT_IR_ASSERT(ir, len % 2 == 0);
+                    len /= 2;
+                }
+                auto new_indices = indices;
+                new_indices.Push(ArrayIndex{len});
+                const core::type::Type* ele_ty = ty.u32();
+                if (!four_byte) {
+                    ele_ty = ty.f16();
+                }
+                PrepareStores(var, ele_ty, len * iteration_count, new_indices, stores);
             },  //
             TINT_ICE_ON_NO_MATCH);
     }
@@ -244,7 +287,8 @@ struct State {
     /// @param total_count the total number of elements that will be zeroed
     /// @param linear_index the linear index of the single element that will be zeroed
     void GenerateStore(const Store& store, uint32_t total_count, Value* linear_index) {
-        auto* to = store.var->Result();
+        // If a bufferView call exists for `store`, use it over the var.
+        auto* to = store.buffer_view ? store.buffer_view->Result() : store.var->Result();
         if (!store.indices.IsEmpty()) {
             // Build the access indices to get to the target element.
             // We walk backwards along the index list so that adjacent invocation store to
@@ -289,7 +333,7 @@ struct State {
     /// @param type the type to inspect
     /// @returns true if a variable with store type @p ty can be efficiently zeroed
     bool CanTriviallyZero(const core::type::Type* type) {
-        if (type->IsAnyOf<core::type::Atomic, core::type::Array>()) {
+        if (type->IsAnyOf<core::type::Atomic, core::type::Array, core::type::Buffer>()) {
             return false;
         }
         if (auto* str = type->As<core::type::Struct>()) {
@@ -306,8 +350,7 @@ struct State {
 }  // namespace
 
 Result<SuccessType> ZeroInitWorkgroupMemory(Module& ir) {
-    TINT_CHECK_RESULT(ValidateBeforeIfNeeded(ir, kZeroInitWorkgroupMemoryCapabilities,
-                                             "core.ZeroInitWorkgroupMemory"));
+    AssertValid(ir, kZeroInitWorkgroupMemoryCapabilities, "before core.ZeroInitWorkgroupMemory");
 
     State{ir}.Process();
 

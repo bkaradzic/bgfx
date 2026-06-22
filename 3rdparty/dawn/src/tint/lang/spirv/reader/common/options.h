@@ -31,7 +31,6 @@
 #include <unordered_map>
 
 #include "src/tint/api/common/binding_point.h"
-#include "src/tint/lang/wgsl/allowed_features.h"
 
 namespace tint::spirv::reader {
 
@@ -43,6 +42,12 @@ struct Options {
     /// If this map is empty, any binding conflicts will be automatically resolved by incrementing
     /// binding numbers until they are unique.
     std::unordered_map<BindingPoint, BindingPoint> sampler_mappings{};
+
+    /// If true, dump the IR whenever validation is performed.
+    bool dump_ir_when_validating = false;
+
+    /// If true, enable validation assertions.
+    bool enable_validation_asserts = false;
 };
 
 }  // namespace tint::spirv::reader

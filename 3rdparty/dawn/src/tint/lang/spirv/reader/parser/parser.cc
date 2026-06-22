@@ -31,6 +31,7 @@
 #include <list>
 #include <memory>
 #include <optional>
+#include <span>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
@@ -46,9 +47,11 @@ TINT_BEGIN_DISABLE_WARNING(OLD_STYLE_CAST);
 TINT_BEGIN_DISABLE_WARNING(SIGN_CONVERSION);
 TINT_BEGIN_DISABLE_WARNING(WEAK_VTABLES);
 TINT_BEGIN_DISABLE_WARNING(UNSAFE_BUFFER_USAGE);
+TINT_BEGIN_DISABLE_WARNING(LIFETIME_SAFETY_INVALIDATION);
 #include "source/opt/build_module.h"
 #include "source/opt/resolve_binding_conflicts_pass.h"
 #include "source/opt/split_combined_image_sampler_pass.h"
+TINT_END_DISABLE_WARNING(LIFETIME_SAFETY_INVALIDATION);
 TINT_END_DISABLE_WARNING(UNSAFE_BUFFER_USAGE);
 TINT_END_DISABLE_WARNING(WEAK_VTABLES);
 TINT_END_DISABLE_WARNING(SIGN_CONVERSION);
@@ -63,6 +66,7 @@ TINT_END_DISABLE_WARNING(NEWLINE_EOF);
 #include "src/tint/lang/spirv/ir/builtin_call.h"
 #include "src/tint/lang/spirv/type/explicit_layout_array.h"
 #include "src/tint/lang/spirv/type/image.h"
+#include "src/tint/lang/spirv/type/literal.h"
 #include "src/tint/lang/spirv/type/sampled_image.h"
 #include "src/tint/lang/spirv/validate/validate.h"
 
@@ -97,14 +101,18 @@ class Parser {
 
     /// @param spirv the SPIR-V binary data
     /// @returns the generated SPIR-V IR module on success, or failure
-    Result<core::ir::Module> Run(Slice<const uint32_t> spirv) {
+    Result<core::ir::Module> Run(std::span<const uint32_t> spirv) {
         // Validate the incoming SPIR-V binary.
-        TINT_CHECK_RESULT(validate::Validate(spirv, kTargetEnv));
+        validate::Options options{
+            .target_env = kTargetEnv,
+            .uniform_buffer_standard_layout = true,
+        };
+        TINT_CHECK_RESULT(validate::Validate(spirv, options));
 
         // Build the SPIR-V tools internal representation of the SPIR-V module.
         spvtools::Context context(kTargetEnv);
-        spirv_context_ =
-            spvtools::BuildModule(kTargetEnv, context.CContext()->consumer, spirv.data, spirv.len);
+        spirv_context_ = spvtools::BuildModule(kTargetEnv, context.CContext()->consumer,
+                                               spirv.data(), spirv.size());
         if (!spirv_context_) {
             return Failure("failed to build the internal representation of the module");
         }
@@ -140,6 +148,29 @@ class Parser {
             }
         }
 
+        // Check for unsupported types.
+        for (const auto& type : *spirv_context_->get_type_mgr()) {
+            switch (type.second->kind()) {
+                case spvtools::opt::analysis::Type::kArray: {
+                    auto kind = type.second->AsArray()->element_type()->kind();
+                    if (kind == spvtools::opt::analysis::Type::kImage ||
+                        kind == spvtools::opt::analysis::Type::kSampler) {
+                        return Failure("arrays of handle types are not supported");
+                    }
+                    break;
+                }
+                case spvtools::opt::analysis::Type::kImage: {
+                    auto* img = type.second->AsImage();
+                    if (img->is_arrayed() && img->is_multisampled()) {
+                        return Failure("arrayed multisampled images are not supported");
+                    }
+                    break;
+                }
+                default:
+                    break;
+            }
+        }
+
         // Register imported instruction sets
         for (const auto& import : spirv_context_->ext_inst_imports()) {
             auto name = import.GetInOperand(0).AsString();
@@ -152,6 +183,18 @@ class Parser {
                 return Failure("Unrecognized extended instruction set: " + name);
             }
         }
+
+        // Set properties that are supported by the SPIR-V parser.
+        ir_.properties.Add(core::ir::Property::kAllowLocationForNumericComposites);
+        ir_.properties.Add(core::ir::Property::kAllowMultipleEntryPoints);
+        ir_.properties.Add(core::ir::Property::kAllowNonCoreTypes);
+        ir_.properties.Add(core::ir::Property::kAllowOverrides);
+        ir_.properties.Add(core::ir::Property::kAllowPhonyInstructions);
+        ir_.properties.Add(core::ir::Property::kAllowPointSizeBuiltin);
+        ir_.properties.Add(core::ir::Property::kAllowPointerToHandle);
+        ir_.properties.Add(core::ir::Property::kAllowStructMatrixDecorations);
+        ir_.properties.Add(core::ir::Property::kAllowUnannotatedModuleIOVariables);
+        ir_.properties.Add(core::ir::Property::kAllowVectorElementPointer);
 
         RegisterNames();
 
@@ -1406,15 +1449,32 @@ class Parser {
             return *v;
         }
 
-        if (auto* c = SpvConstant(id)) {
-            auto* val = b_.Constant(Constant(c));
+        const spvtools::opt::Instruction* inst = spirv_context_->get_def_use_mgr()->GetDef(id);
+        const core::type::Type* inst_ty = Type(inst->type_id());
+
+        if (const spvtools::opt::analysis::Constant* c = SpvConstant(id)) {
+            core::ir::Constant* val = b_.Constant(Constant(c));
+            // SPIR-V opt will deduplicate structs with the same shape. We handle this in the type
+            // code below by using the specific instructions type, not the spirv-opt type. But, when
+            // we retrieve constants, then opt might have used the other type for the struct type.
+            // So, check the instructions type, if it doesn't match what opt returns, then we
+            // rebuild the struct below with our corrected type.
+            if (val->Type() == inst_ty) {
+                values_.Add(id, val);
+                return val;
+            }
+        }
+
+        // In the case of a deduplicated structure, we may need to re-create a null constant
+        if (inst->opcode() == spv::Op::OpConstantNull) {
+            TINT_ASSERT(inst_ty->Is<core::type::Struct>());
+            core::ir::Value* val = b_.Zero(inst_ty);
             values_.Add(id, val);
             return val;
         }
 
         // If we didn't have a value already, and this instruction is a constructed constant, then
         // do the construction.
-        const spvtools::opt::Instruction* inst = spirv_context_->get_def_use_mgr()->GetDef(id);
         if (inst->opcode() == spv::Op::OpConstantComposite) {
             Vector<const core::constant::Value*, 4> args;
             args.Reserve(inst->NumInOperands());
@@ -1425,7 +1485,7 @@ class Parser {
                 args.Push(cnst->Value());
             }
 
-            auto* composite = b_.Composite(Type(inst->type_id()), args);
+            auto* composite = b_.Composite(inst_ty, args);
             AddValue(id, composite);
             return composite;
         }
@@ -1534,6 +1594,12 @@ class Parser {
                 Type(spirv_context_->get_type_mgr()->GetId(s->type())), std::move(elements));
         }
         TINT_UNIMPLEMENTED() << "unhandled constant type";
+    }
+
+    /// @returns a literal operand with the given value
+    core::ir::Value* Literal(uint32_t value) {
+        return b_.Constant(ir_.constant_values.Get<core::constant::Scalar<u32>>(
+            ty_.Get<type::Literal>(), u32(value)));
     }
 
     /// Register an IR value for a SPIR-V result ID.
@@ -1847,7 +1913,7 @@ class Parser {
             for (auto incoming : loop->Continuing()->InboundSiblingBranches()) {
                 TINT_ASSERT(incoming->Is<core::ir::Continue>());
 
-                if (incoming->Args().Length() == loop->Continuing()->Params().Length()) {
+                if (incoming->Args().size() == loop->Continuing()->Params().Length()) {
                     continue;
                 }
 
@@ -3105,7 +3171,9 @@ class Parser {
         auto* si = Value(inst.GetSingleWordInOperand(0));
         Emit(b_.CallExplicit<spirv::ir::BuiltinCall>(
                  Type(inst.type_id()), spirv::BuiltinFn::kOpImage,
-                 Vector{si->Type()->As<spirv::type::SampledImage>()->Image()}, Args(inst, 2)),
+                 Vector<core::ir::TemplateParameter, 1>{
+                     si->Type()->As<spirv::type::SampledImage>()->Image()},
+                 Args(inst, 2)),
              inst.result_id());
     }
 
@@ -3115,9 +3183,9 @@ class Parser {
         TINT_ASSERT(img_type);
         TINT_ASSERT(img_type->GetMultisampled() != type::Multisampled::kMultisampled)
             << "Creating an OpTypeSampledImage from a multisampled image is not supported";
-        Emit(b_.CallExplicit<spirv::ir::BuiltinCall>(Type(inst.type_id()),
-                                                     spirv::BuiltinFn::kOpSampledImage,
-                                                     Vector{tex->Type()}, Args(inst, 2)),
+        Emit(b_.CallExplicit<spirv::ir::BuiltinCall>(
+                 Type(inst.type_id()), spirv::BuiltinFn::kOpSampledImage,
+                 Vector<core::ir::TemplateParameter, 1>{tex->Type()}, Args(inst, 2)),
              inst.result_id());
     }
 
@@ -3127,15 +3195,10 @@ class Parser {
 
         Vector<core::ir::Value*, 4> args = {sampled_image, coord};
 
-        if (inst.NumInOperands() > 2) {
-            uint32_t literal_mask = inst.GetSingleWordInOperand(2);
-            args.Push(b_.Constant(u32(literal_mask)));
-
-            if (literal_mask != 0) {
-                args.Push(Value(inst.GetSingleWordInOperand(3)));
-            }
-        } else {
-            args.Push(b_.Zero(ty_.u32()));
+        uint32_t literal_mask = inst.NumInOperands() > 2 ? inst.GetSingleWordInOperand(2) : 0u;
+        args.Push(Literal(literal_mask));
+        if (literal_mask != 0) {
+            args.Push(Value(inst.GetSingleWordInOperand(3)));
         }
 
         Emit(b_.Call<spirv::ir::BuiltinCall>(Type(inst.type_id()), fn, args), inst.result_id());
@@ -3148,18 +3211,13 @@ class Parser {
 
         Vector<core::ir::Value*, 4> args = {sampled_image, coord, dref};
 
-        if (inst.NumInOperands() > 3) {
-            uint32_t literal_mask = inst.GetSingleWordInOperand(3);
-            args.Push(b_.Constant(u32(literal_mask)));
-
-            if (literal_mask != 0) {
-                TINT_ASSERT(static_cast<spv::ImageOperandsMask>(literal_mask) ==
-                            spv::ImageOperandsMask::ConstOffset);
-                TINT_ASSERT(inst.NumInOperands() > 4);
-                args.Push(Value(inst.GetSingleWordInOperand(4)));
-            }
-        } else {
-            args.Push(b_.Zero(ty_.u32()));
+        uint32_t literal_mask = inst.NumInOperands() > 3 ? inst.GetSingleWordInOperand(3) : 0u;
+        args.Push(Literal(literal_mask));
+        if (literal_mask != 0) {
+            TINT_ASSERT(static_cast<spv::ImageOperandsMask>(literal_mask) ==
+                        spv::ImageOperandsMask::ConstOffset);
+            TINT_ASSERT(inst.NumInOperands() > 4);
+            args.Push(Value(inst.GetSingleWordInOperand(4)));
         }
 
         Emit(b_.Call<spirv::ir::BuiltinCall>(Type(inst.type_id()),
@@ -3174,18 +3232,13 @@ class Parser {
 
         Vector<core::ir::Value*, 4> args = {sampled_image, coord, comp};
 
-        if (inst.NumInOperands() > 3) {
-            uint32_t literal_mask = inst.GetSingleWordInOperand(3);
-            args.Push(b_.Constant(u32(literal_mask)));
-
-            if (literal_mask != 0) {
-                TINT_ASSERT(static_cast<spv::ImageOperandsMask>(literal_mask) ==
-                            spv::ImageOperandsMask::ConstOffset);
-                TINT_ASSERT(inst.NumInOperands() > 4);
-                args.Push(Value(inst.GetSingleWordInOperand(4)));
-            }
-        } else {
-            args.Push(b_.Zero(ty_.u32()));
+        uint32_t literal_mask = inst.NumInOperands() > 3 ? inst.GetSingleWordInOperand(3) : 0u;
+        args.Push(Literal(literal_mask));
+        if (literal_mask != 0) {
+            TINT_ASSERT(static_cast<spv::ImageOperandsMask>(literal_mask) ==
+                        spv::ImageOperandsMask::ConstOffset);
+            TINT_ASSERT(inst.NumInOperands() > 4);
+            args.Push(Value(inst.GetSingleWordInOperand(4)));
         }
 
         Emit(b_.Call<spirv::ir::BuiltinCall>(Type(inst.type_id()), spirv::BuiltinFn::kImageGather,
@@ -3199,19 +3252,11 @@ class Parser {
 
         Vector<core::ir::Value*, 4> args = {sampled_image, coord};
 
-        if (inst.NumInOperands() > 2) {
-            uint32_t literal_mask = inst.GetSingleWordInOperand(2);
-            args.Push(b_.Constant(u32(literal_mask)));
-
-            if (literal_mask != 0) {
-                TINT_ASSERT(inst.NumInOperands() > 3);
-            }
-
-            for (uint32_t i = 3; i < inst.NumInOperands(); ++i) {
-                args.Push(Value(inst.GetSingleWordInOperand(i)));
-            }
-        } else {
-            args.Push(b_.Zero(ty_.u32()));
+        uint32_t literal_mask = inst.NumInOperands() > 2 ? inst.GetSingleWordInOperand(2) : 0u;
+        args.Push(Literal(literal_mask));
+        TINT_ASSERT(literal_mask == 0 || inst.NumInOperands() > 3);
+        for (uint32_t i = 3; i < inst.NumInOperands(); ++i) {
+            args.Push(Value(inst.GetSingleWordInOperand(i)));
         }
 
         Emit(b_.Call<spirv::ir::BuiltinCall>(Type(inst.type_id()), fn, args), inst.result_id());
@@ -3228,28 +3273,20 @@ class Parser {
 
         Vector<core::ir::Value*, 4> args = {sampled_image, coord, dref};
 
-        if (inst.NumInOperands() > 3) {
-            uint32_t literal_mask = inst.GetSingleWordInOperand(3);
-            args.Push(b_.Constant(u32(literal_mask)));
+        uint32_t literal_mask = inst.NumInOperands() > 3 ? inst.GetSingleWordInOperand(3) : 0u;
+        args.Push(Literal(literal_mask));
+        TINT_ASSERT(literal_mask == 0 || inst.NumInOperands() > 4);
+        for (uint32_t i = 4; i < inst.NumInOperands(); ++i) {
+            args.Push(Value(inst.GetSingleWordInOperand(i)));
+        }
 
-            if (literal_mask != 0) {
-                TINT_ASSERT(inst.NumInOperands() > 4);
-            }
+        if (HasLod(literal_mask)) {
+            core::ir::Value* lod = args[4];
+            TINT_ASSERT(lod->Is<core::ir::Constant>());
+            TINT_ASSERT(lod->Type()->As<core::type::F32>());
 
-            for (uint32_t i = 4; i < inst.NumInOperands(); ++i) {
-                args.Push(Value(inst.GetSingleWordInOperand(i)));
-            }
-
-            if (HasLod(literal_mask)) {
-                core::ir::Value* lod = args[4];
-                TINT_ASSERT(lod->Is<core::ir::Constant>());
-                TINT_ASSERT(lod->Type()->As<core::type::F32>());
-
-                auto v = lod->As<core::ir::Constant>()->Value()->ValueAs<float>();
-                TINT_ASSERT(v == 0.0f) << "Dref LOD values must be 0.0";
-            }
-        } else {
-            args.Push(b_.Zero(ty_.u32()));
+            auto v = lod->As<core::ir::Constant>()->Value()->ValueAs<float>();
+            TINT_ASSERT(v == 0.0f) << "Dref LOD values must be 0.0";
         }
 
         Emit(b_.Call<spirv::ir::BuiltinCall>(Type(inst.type_id()), fn, args), inst.result_id());
@@ -3283,15 +3320,9 @@ class Parser {
             }
         }
 
-        Vector<core::ir::Value*, 4> args = {image, coord, texel};
-        if (inst.NumInOperands() > 3) {
-            uint32_t literal_mask = inst.GetSingleWordInOperand(3);
-            args.Push(b_.Constant(u32(literal_mask)));
-            TINT_ASSERT(literal_mask == 0);
-        } else {
-            args.Push(b_.Zero(ty_.u32()));
-        }
-
+        uint32_t literal_mask = inst.NumInOperands() > 3 ? inst.GetSingleWordInOperand(3) : 0u;
+        TINT_ASSERT(literal_mask == 0);
+        Vector<core::ir::Value*, 4> args = {image, coord, texel, Literal(literal_mask)};
         Emit(b_.Call<spirv::ir::BuiltinCall>(ty_.void_(), spirv::BuiltinFn::kImageWrite, args),
              inst.result_id());
     }
@@ -3300,7 +3331,8 @@ class Parser {
         auto* image = Value(inst.GetSingleWordInOperand(0));
 
         auto* ty = Type(inst.type_id());
-        Emit(b_.CallExplicit<spirv::ir::BuiltinCall>(ty, fn, Vector{ty->DeepestElement()}, image),
+        Emit(b_.CallExplicit<spirv::ir::BuiltinCall>(
+                 ty, fn, Vector<core::ir::TemplateParameter, 1>{ty->DeepestElement()}, image),
              inst.result_id());
     }
 
@@ -3309,8 +3341,9 @@ class Parser {
         auto* level = Value(inst.GetSingleWordInOperand(1));
 
         auto* ty = Type(inst.type_id());
-        Emit(b_.CallExplicit<spirv::ir::BuiltinCall>(ty, spirv::BuiltinFn::kImageQuerySizeLod,
-                                                     Vector{ty->DeepestElement()}, image, level),
+        Emit(b_.CallExplicit<spirv::ir::BuiltinCall>(
+                 ty, spirv::BuiltinFn::kImageQuerySizeLod,
+                 Vector<core::ir::TemplateParameter, 1>{ty->DeepestElement()}, image, level),
              inst.result_id());
     }
 
@@ -3806,8 +3839,8 @@ class Parser {
             default_blk->Append(b_.ExitSwitch(switch_));
         }
 
-        std::unordered_map<uint32_t, core::ir::Switch::Case*> block_id_to_case;
-        block_id_to_case[default_id] = &(switch_->Cases().Back());
+        std::unordered_map<uint32_t, size_t> block_id_to_case_index;
+        block_id_to_case_index[default_id] = switch_->Cases().Length() - 1;
 
         for (uint32_t i = 2; i < inst.NumInOperandWords(); i += 2) {
             auto blk_id = inst.GetSingleWordInOperand(i + 1);
@@ -3830,9 +3863,10 @@ class Parser {
             }
 
             // Determine if we've seen this block and should combine selectors
-            auto iter = block_id_to_case.find(blk_id);
-            if (iter != block_id_to_case.end()) {
-                iter->second->selectors.Push(core::ir::Switch::CaseSelector{sel});
+            auto case_index_iter = block_id_to_case_index.find(blk_id);
+            if (case_index_iter != block_id_to_case_index.end()) {
+                switch_->Cases()[case_index_iter->second].selectors.Push(
+                    core::ir::Switch::CaseSelector{sel});
                 continue;
             }
 
@@ -3844,7 +3878,7 @@ class Parser {
             if (!blk->Terminator()) {
                 blk->Append(b_.ExitSwitch(switch_));
             }
-            block_id_to_case[blk_id] = &(switch_->Cases().Back());
+            block_id_to_case_index[blk_id] = switch_->Cases().Length() - 1;
         }
 
         current_switch_blocks_.pop_back();
@@ -3868,9 +3902,10 @@ class Parser {
     void EmitSpirvExplicitBuiltinCall(const spvtools::opt::Instruction& inst,
                                       spirv::BuiltinFn fn,
                                       uint32_t first_operand_idx = 2) {
-        Emit(b_.CallExplicit<spirv::ir::BuiltinCall>(Type(inst.type_id()), fn,
-                                                     Vector{Type(inst.type_id())->DeepestElement()},
-                                                     Args(inst, first_operand_idx)),
+        Emit(b_.CallExplicit<spirv::ir::BuiltinCall>(
+                 Type(inst.type_id()), fn,
+                 Vector<core::ir::TemplateParameter, 1>{Type(inst.type_id())->DeepestElement()},
+                 Args(inst, first_operand_idx)),
              inst.result_id());
     }
 
@@ -3884,9 +3919,9 @@ class Parser {
 
     void EmitBitCount(const spvtools::opt::Instruction& inst) {
         auto* res_ty = Type(inst.type_id());
-        Emit(b_.CallExplicit<spirv::ir::BuiltinCall>(res_ty, spirv::BuiltinFn::kBitCount,
-                                                     Vector{res_ty->DeepestElement()},
-                                                     Args(inst, 2)),
+        Emit(b_.CallExplicit<spirv::ir::BuiltinCall>(
+                 res_ty, spirv::BuiltinFn::kBitCount,
+                 Vector<core::ir::TemplateParameter, 1>{res_ty->DeepestElement()}, Args(inst, 2)),
              inst.result_id());
     }
 
@@ -4115,8 +4150,9 @@ class Parser {
         return spirv::BuiltinFn::kNone;
     }
 
-    Vector<const core::type::Type*, 1> GlslStd450ExplicitParams(uint32_t ext_opcode,
-                                                                const core::type::Type* result_ty) {
+    Vector<core::ir::TemplateParameter, 1> GlslStd450ExplicitParams(
+        uint32_t ext_opcode,
+        const core::type::Type* result_ty) {
         if (ext_opcode == GLSLstd450SSign || ext_opcode == GLSLstd450SAbs ||
             ext_opcode == GLSLstd450SMax || ext_opcode == GLSLstd450SMin ||
             ext_opcode == GLSLstd450SClamp || ext_opcode == GLSLstd450UMax ||
@@ -4650,7 +4686,7 @@ class Parser {
 
 }  // namespace
 
-Result<core::ir::Module> Parse(Slice<const uint32_t> spirv, const Options& options) {
+Result<core::ir::Module> Parse(std::span<const uint32_t> spirv, const Options& options) {
     return Parser(options).Run(spirv);
 }
 

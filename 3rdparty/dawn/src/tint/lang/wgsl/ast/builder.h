@@ -322,11 +322,8 @@ class Builder {
     /// @param args the remaining arguments to pass to the constructor
     /// @returns the node pointer
     template <typename T, typename ARG0, typename... ARGS>
-    std::enable_if_t</* T is ast::Node and ARG0 is not Source */
-                     traits::IsTypeOrDerived<T, ast::Node> &&
-                         !traits::IsTypeOrDerived<ARG0, Source>,
-                     T>*
-    create(ARG0&& arg0, ARGS&&... args) {
+        requires(traits::IsTypeOrDerived<T, ast::Node> && !traits::IsTypeOrDerived<ARG0, Source>)
+    T* create(ARG0&& arg0, ARGS&&... args) {
         AssertNotMoved();
         return ast_nodes_.Create<T>(AllocateNodeID(), source_, std::forward<ARG0>(arg0),
                                     std::forward<ARGS>(args)...);
@@ -1157,19 +1154,10 @@ class Builder {
         /// @returns the sampler
         ast::Type sampler(core::type::SamplerKind kind) const;
 
-        /// @param filtering the filtering setting
-        /// @returns the sampler
-        ast::Type sampler(core::SamplerFiltering filtering) const;
-
         /// @param source the Source of the node
         /// @param kind the kind of sampler
         /// @returns the sampler
         ast::Type sampler(const Source& source, core::type::SamplerKind kind) const;
-
-        /// @param source the Source of the node
-        /// @param filtering the sampler filtering
-        /// @returns the sampler
-        ast::Type sampler(const Source& source, core::SamplerFiltering filtering) const;
 
         /// @param dims the dimensionality of the texture
         /// @returns the depth texture
@@ -1195,14 +1183,6 @@ class Builder {
         /// @returns the sampled texture
         ast::Type sampled_texture(core::type::TextureDimension dims, ast::Type subtype) const;
 
-        /// @param dims the dimensionality of the texture
-        /// @param subtype the texture subtype.
-        /// @param filterable the filterability
-        /// @returns the sampled texture
-        ast::Type sampled_texture(core::type::TextureDimension dims,
-                                  ast::Type subtype,
-                                  core::TextureFilterable filterable) const;
-
         /// @param source the Source of the node
         /// @param dims the dimensionality of the texture
         /// @param subtype the texture subtype.
@@ -1210,16 +1190,6 @@ class Builder {
         ast::Type sampled_texture(const Source& source,
                                   core::type::TextureDimension dims,
                                   ast::Type subtype) const;
-
-        /// @param source the Source of the node
-        /// @param dims the dimensionality of the texture
-        /// @param subtype the texture subtype.
-        /// @param filterable the filterability
-        /// @returns the sampled texture
-        ast::Type sampled_texture(const Source& source,
-                                  core::type::TextureDimension dims,
-                                  ast::Type subtype,
-                                  core::TextureFilterable filterable) const;
 
         /// @param dims the dimensionality of the texture
         /// @param subtype the texture subtype.
@@ -1386,7 +1356,8 @@ class Builder {
 
     /// @param enumerator the enumerator
     /// @return a Symbol with the given enum value
-    template <typename ENUM, typename = std::enable_if_t<std::is_enum_v<std::decay_t<ENUM>>>>
+    template <typename ENUM>
+        requires(std::is_enum_v<std::decay_t<ENUM>>)
     Symbol Sym(ENUM&& enumerator) {
         return Sym(tint::ToString(enumerator));
     }
@@ -1416,7 +1387,8 @@ class Builder {
     /// @param identifier the identifier symbol
     /// @param args the templated identifier arguments
     /// @return an ast::Identifier with the given symbol and template arguments
-    template <typename IDENTIFIER, typename... ARGS, typename = DisableIfSource<IDENTIFIER>>
+    template <typename IDENTIFIER, typename... ARGS>
+        requires(!IsSource<std::decay_t<IDENTIFIER>>)
     const ast::Identifier* Ident(IDENTIFIER&& identifier, ARGS&&... args) {
         return Ident(source_, std::forward<IDENTIFIER>(identifier), std::forward<ARGS>(args)...);
     }
@@ -1459,7 +1431,8 @@ class Builder {
 
     /// @param name the identifier name
     /// @return an ast::IdentifierExpression with the given name
-    template <typename NAME, typename = EnableIfIdentifierLike<NAME>>
+    template <typename NAME>
+        requires(IsIdentifierLike<std::decay_t<NAME>>)
     const ast::IdentifierExpression* Expr(NAME&& name) {
         auto* ident = Ident(source_, name);
         return create<ast::IdentifierExpression>(ident->source, ident);
@@ -1468,7 +1441,8 @@ class Builder {
     /// @param source the source information
     /// @param name the identifier name
     /// @return an ast::IdentifierExpression with the given name
-    template <typename NAME, typename = EnableIfIdentifierLike<NAME>>
+    template <typename NAME>
+        requires(IsIdentifierLike<std::decay_t<NAME>>)
     const ast::IdentifierExpression* Expr(const Source& source, NAME&& name) {
         return create<ast::IdentifierExpression>(source, Ident(source, name));
     }
@@ -1491,9 +1465,8 @@ class Builder {
     /// @param value the boolean value
     /// @return a Scalar constructor for the given value
     template <typename BOOL>
-    std::enable_if_t<std::is_same_v<BOOL, bool>, const ast::BoolLiteralExpression*> Expr(
-        const Source& source,
-        BOOL value) {
+        requires(std::is_same_v<BOOL, bool>)
+    const ast::BoolLiteralExpression* Expr(const Source& source, BOOL value) {
         return create<ast::BoolLiteralExpression>(source, value);
     }
 
@@ -3403,11 +3376,10 @@ class Builder {
     /// Creates an ast::DiagnosticRuleName
     /// @param name the diagnostic rule name
     /// @returns the diagnostic rule name
-    template <typename NAME>
-    const ast::DiagnosticRuleName* DiagnosticRuleName(NAME&& name) {
-        static_assert(!traits::IsType<traits::PtrElTy<NAME>, ast::TemplatedIdentifier>,
-                      "it is invalid for a diagnostic rule name to be templated");
-        auto* name_ident = Ident(std::forward<NAME>(name));
+    const ast::DiagnosticRuleName* DiagnosticRuleName(const ast::Identifier* name) {
+        TINT_ASSERT(!name->Is<ast::TemplatedIdentifier>())
+            << "it is invalid for a diagnostic rule name to be templated";
+        auto* name_ident = Ident(name);
         return create<ast::DiagnosticRuleName>(name_ident->source, name_ident);
     }
 
@@ -3415,14 +3387,15 @@ class Builder {
     /// @param category the diagnostic rule category
     /// @param name the diagnostic rule name
     /// @returns the diagnostic rule name
-    template <typename CATEGORY, typename NAME, typename = DisableIfSource<CATEGORY>>
-    const ast::DiagnosticRuleName* DiagnosticRuleName(CATEGORY&& category, NAME&& name) {
-        static_assert(!traits::IsType<traits::PtrElTy<NAME>, ast::TemplatedIdentifier>,
-                      "it is invalid for a diagnostic rule name to be templated");
-        static_assert(!traits::IsType<traits::PtrElTy<CATEGORY>, ast::TemplatedIdentifier>,
-                      "it is invalid for a diagnostic rule category to be templated");
-        auto* category_ident = Ident(std::forward<CATEGORY>(category));
-        auto* name_ident = Ident(std::forward<NAME>(name));
+    const ast::DiagnosticRuleName* DiagnosticRuleName(const ast::Identifier* category,
+                                                      const ast::Identifier* name) {
+        TINT_ASSERT(!category->Is<ast::TemplatedIdentifier>())
+            << "it is invalid for a diagnostic rule category to be templated";
+        TINT_ASSERT(!name->Is<ast::TemplatedIdentifier>())
+            << "it is invalid for a diagnostic rule name to be templated";
+
+        auto* category_ident = Ident(category);
+        auto* name_ident = Ident(name);
         Source source = category_ident->source;
         source.range.end = name_ident->source.range.end;
         return create<ast::DiagnosticRuleName>(source, category_ident, name_ident);
@@ -3432,12 +3405,16 @@ class Builder {
     /// @param source the source information
     /// @param name the diagnostic rule name
     /// @returns the diagnostic rule name
-    template <typename NAME>
-    const ast::DiagnosticRuleName* DiagnosticRuleName(const Source& source, NAME&& name) {
-        static_assert(!traits::IsType<traits::PtrElTy<NAME>, ast::TemplatedIdentifier>,
-                      "it is invalid for a diagnostic rule name to be templated");
-        auto* name_ident = Ident(std::forward<NAME>(name));
+    const ast::DiagnosticRuleName* DiagnosticRuleName(const Source& source, std::string_view name) {
+        auto* name_ident = Ident(name);
         return create<ast::DiagnosticRuleName>(source, name_ident);
+    }
+
+    /// Creates an ast::DiagnosticRuleName
+    /// @param name the diagnostic rule name
+    /// @returns the diagnostic rule name
+    const ast::DiagnosticRuleName* DiagnosticRuleName(std::string_view name) {
+        return DiagnosticRuleName(source_, name);
     }
 
     /// Creates an ast::DiagnosticRuleName
@@ -3445,55 +3422,51 @@ class Builder {
     /// @param category the diagnostic rule category
     /// @param name the diagnostic rule name
     /// @returns the diagnostic rule name
-    template <typename CATEGORY, typename NAME>
     const ast::DiagnosticRuleName* DiagnosticRuleName(const Source& source,
-                                                      CATEGORY&& category,
-                                                      NAME&& name) {
-        static_assert(!traits::IsType<traits::PtrElTy<NAME>, ast::TemplatedIdentifier>,
-                      "it is invalid for a diagnostic rule name to be templated");
-        static_assert(!traits::IsType<traits::PtrElTy<CATEGORY>, ast::TemplatedIdentifier>,
-                      "it is invalid for a diagnostic rule category to be templated");
-        auto* category_ident = Ident(std::forward<CATEGORY>(category));
-        auto* name_ident = Ident(std::forward<NAME>(name));
+                                                      std::string_view category,
+                                                      std::string_view name) {
+        auto* category_ident = Ident(category);
+        auto* name_ident = Ident(name);
         return create<ast::DiagnosticRuleName>(source, category_ident, name_ident);
+    }
+
+    /// Creates an ast::DiagnosticRuleName
+    /// @param category the diagnostic rule category
+    /// @param name the diagnostic rule name
+    /// @returns the diagnostic rule name
+    const ast::DiagnosticRuleName* DiagnosticRuleName(std::string_view category,
+                                                      std::string_view name) {
+        return DiagnosticRuleName(source_, category, name);
     }
 
     /// Creates an ast::DiagnosticAttribute
     /// @param source the source information
     /// @param severity the diagnostic severity control
-    /// @param rule_args the arguments used to construct the rule name
+    /// @param rule the diagnostic rule
     /// @returns the diagnostic attribute pointer
-    template <typename... RULE_ARGS>
     const ast::DiagnosticAttribute* DiagnosticAttribute(const Source& source,
                                                         wgsl::DiagnosticSeverity severity,
-                                                        RULE_ARGS&&... rule_args) {
-        return create<ast::DiagnosticAttribute>(
-            source, ast::DiagnosticControl(
-                        severity, DiagnosticRuleName(std::forward<RULE_ARGS>(rule_args)...)));
+                                                        const ast::DiagnosticRuleName* rule) {
+        return create<ast::DiagnosticAttribute>(source, ast::DiagnosticControl(severity, rule));
     }
 
     /// Creates an ast::DiagnosticAttribute
     /// @param severity the diagnostic severity control
-    /// @param rule_args the arguments used to construct the rule name
+    /// @param rule the diagnostic rule
     /// @returns the diagnostic attribute pointer
-    template <typename... RULE_ARGS>
     const ast::DiagnosticAttribute* DiagnosticAttribute(wgsl::DiagnosticSeverity severity,
-                                                        RULE_ARGS&&... rule_args) {
-        return create<ast::DiagnosticAttribute>(
-            source_, ast::DiagnosticControl(
-                         severity, DiagnosticRuleName(std::forward<RULE_ARGS>(rule_args)...)));
+                                                        const ast::DiagnosticRuleName* rule) {
+        return DiagnosticAttribute(source_, severity, rule);
     }
 
     /// Add a diagnostic directive to the module.
     /// @param source the source information
     /// @param severity the diagnostic severity control
-    /// @param rule_args the arguments used to construct the rule name
+    /// @param rule the diagnostic rule
     /// @returns the diagnostic directive pointer
-    template <typename... RULE_ARGS>
     const ast::DiagnosticDirective* DiagnosticDirective(const Source& source,
                                                         wgsl::DiagnosticSeverity severity,
-                                                        RULE_ARGS&&... rule_args) {
-        auto* rule = DiagnosticRuleName(std::forward<RULE_ARGS>(rule_args)...);
+                                                        const ast::DiagnosticRuleName* rule) {
         auto* directive =
             create<ast::DiagnosticDirective>(source, ast::DiagnosticControl(severity, rule));
         AST().AddDiagnosticDirective(directive);
@@ -3502,16 +3475,11 @@ class Builder {
 
     /// Add a diagnostic directive to the module.
     /// @param severity the diagnostic severity control
-    /// @param rule_args the arguments used to construct the rule name
+    /// @param rule the diagnostic rule
     /// @returns the diagnostic directive pointer
-    template <typename... RULE_ARGS>
     const ast::DiagnosticDirective* DiagnosticDirective(wgsl::DiagnosticSeverity severity,
-                                                        RULE_ARGS&&... rule_args) {
-        auto* rule = DiagnosticRuleName(std::forward<RULE_ARGS>(rule_args)...);
-        auto* directive =
-            create<ast::DiagnosticDirective>(source_, ast::DiagnosticControl(severity, rule));
-        AST().AddDiagnosticDirective(directive);
-        return directive;
+                                                        const ast::DiagnosticRuleName* rule) {
+        return DiagnosticDirective(source_, severity, rule);
     }
 
     /// Sets the current builder source to `src`
@@ -3549,8 +3517,8 @@ class Builder {
     /// by the Resolver.
     /// @param args a mix of ast::Expression, ast::Statement, ast::Variables.
     /// @returns the function
-    template <typename... ARGS,
-              typename = std::enable_if_t<(CanWrapInStatement<ARGS>::value && ...)>>
+    template <typename... ARGS>
+        requires(CanWrapInStatement<ARGS>::value && ...)
     const ast::Function* WrapInFunction(ARGS&&... args) {
         Vector stmts{
             WrapInStatement(std::forward<ARGS>(args))...,

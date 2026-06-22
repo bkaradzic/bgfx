@@ -69,9 +69,6 @@ Extension ParseExtension(std::string_view str) {
     if (str == "chromium_experimental_subgroup_matrix") {
         return Extension::kChromiumExperimentalSubgroupMatrix;
     }
-    if (str == "chromium_experimental_subgroup_size_control") {
-        return Extension::kChromiumExperimentalSubgroupSizeControl;
-    }
     if (str == "chromium_internal_input_attachments") {
         return Extension::kChromiumInternalInputAttachments;
     }
@@ -86,6 +83,9 @@ Extension ParseExtension(std::string_view str) {
     }
     if (str == "primitive_index") {
         return Extension::kPrimitiveIndex;
+    }
+    if (str == "subgroup_size_control") {
+        return Extension::kSubgroupSizeControl;
     }
     if (str == "subgroups") {
         return Extension::kSubgroups;
@@ -110,8 +110,6 @@ std::string_view ToString(Extension value) {
             return "chromium_experimental_resource_table";
         case Extension::kChromiumExperimentalSubgroupMatrix:
             return "chromium_experimental_subgroup_matrix";
-        case Extension::kChromiumExperimentalSubgroupSizeControl:
-            return "chromium_experimental_subgroup_size_control";
         case Extension::kChromiumInternalInputAttachments:
             return "chromium_internal_input_attachments";
         case Extension::kClipDistances:
@@ -122,6 +120,8 @@ std::string_view ToString(Extension value) {
             return "f16";
         case Extension::kPrimitiveIndex:
             return "primitive_index";
+        case Extension::kSubgroupSizeControl:
+            return "subgroup_size_control";
         case Extension::kSubgroups:
             return "subgroups";
     }
@@ -201,9 +201,6 @@ LanguageFeature ParseLanguageFeature(std::string_view str) {
     if (str == "chromium_testing_unsafe_experimental") {
         return LanguageFeature::kChromiumTestingUnsafeExperimental;
     }
-    if (str == "filtering_parameters") {
-        return LanguageFeature::kFilteringParameters;
-    }
     if (str == "fragment_depth") {
         return LanguageFeature::kFragmentDepth;
     }
@@ -240,6 +237,9 @@ LanguageFeature ParseLanguageFeature(std::string_view str) {
     if (str == "texture_and_sampler_let") {
         return LanguageFeature::kTextureAndSamplerLet;
     }
+    if (str == "texture_formats_tier1") {
+        return LanguageFeature::kTextureFormatsTier1;
+    }
     if (str == "uniform_buffer_standard_layout") {
         return LanguageFeature::kUniformBufferStandardLayout;
     }
@@ -266,8 +266,6 @@ std::string_view ToString(LanguageFeature value) {
             return "chromium_testing_unimplemented";
         case LanguageFeature::kChromiumTestingUnsafeExperimental:
             return "chromium_testing_unsafe_experimental";
-        case LanguageFeature::kFilteringParameters:
-            return "filtering_parameters";
         case LanguageFeature::kFragmentDepth:
             return "fragment_depth";
         case LanguageFeature::kImmediateAddressSpace:
@@ -292,6 +290,8 @@ std::string_view ToString(LanguageFeature value) {
             return "texel_buffers";
         case LanguageFeature::kTextureAndSamplerLet:
             return "texture_and_sampler_let";
+        case LanguageFeature::kTextureFormatsTier1:
+            return "texture_formats_tier1";
         case LanguageFeature::kUniformBufferStandardLayout:
             return "uniform_buffer_standard_layout";
         case LanguageFeature::kUnrestrictedPointerParameters:
@@ -820,6 +820,9 @@ BuiltinFn ParseBuiltinFn(std::string_view name) {
     if (name == "bufferView") {
         return BuiltinFn::kBufferView;
     }
+    if (name == "bufferArrayView") {
+        return BuiltinFn::kBufferArrayView;
+    }
     if (name == "bufferLength") {
         return BuiltinFn::kBufferLength;
     }
@@ -1153,6 +1156,8 @@ const char* str(BuiltinFn i) {
             return "subgroupMatrixScalarMultiply";
         case BuiltinFn::kBufferView:
             return "bufferView";
+        case BuiltinFn::kBufferArrayView:
+            return "bufferArrayView";
         case BuiltinFn::kBufferLength:
             return "bufferLength";
         case BuiltinFn::kPrint:

@@ -134,16 +134,8 @@ class LocalVariable final : public Castable<LocalVariable, Variable> {
     /// @returns the statement that declares this local variable
     const sem::Statement* Statement() const { return statement_; }
 
-    /// Sets the Type, Function or Variable that this local variable shadows
-    /// @param shadows the Type, Function or Variable that this variable shadows
-    void SetShadows(const CastableBase* shadows) { shadows_ = shadows; }
-
-    /// @returns the Type, Function or Variable that this local variable shadows
-    const CastableBase* Shadows() const { return shadows_; }
-
   private:
     const sem::Statement* const statement_;
-    const CastableBase* shadows_ = nullptr;
 };
 
 /// Attributes that can be applied to global variables
@@ -230,13 +222,6 @@ class Parameter final : public Castable<Parameter, Variable> {
     /// @returns the CallTarget owner of this parameter
     const CallTarget* Owner() const { return owner_; }
 
-    /// Sets the Type, Function or Variable that this local variable shadows
-    /// @param shadows the Type, Function or Variable that this variable shadows
-    void SetShadows(const CastableBase* shadows) { shadows_ = shadows; }
-
-    /// @returns the Type, Function or Variable that this local variable shadows
-    const CastableBase* Shadows() const { return shadows_; }
-
     /// @return the mutable attributes for the parameter
     ParameterAttributes& Attributes() { return attributes_; }
 
@@ -247,7 +232,6 @@ class Parameter final : public Castable<Parameter, Variable> {
     const uint32_t index_ = 0;
     core::ParameterUsage usage_ = core::ParameterUsage::kNone;
     CallTarget const* owner_ = nullptr;
-    const CastableBase* shadows_ = nullptr;
     ParameterAttributes attributes_;
 };
 
