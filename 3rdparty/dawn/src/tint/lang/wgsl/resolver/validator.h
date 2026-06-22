@@ -56,6 +56,7 @@ class Variable;
 namespace tint::sem {
 class Array;
 class BreakIfStatement;
+class BuiltinFn;
 class Call;
 class ForLoopStatement;
 class IfStatement;
@@ -545,7 +546,7 @@ class Validator {
     /// @returns true on success, false otherwise
     bool QuadBroadcast(const sem::Call* call) const;
 
-    /// Validates a bufferView builtin function
+    /// Validates a bufferView or bufferArrayView builtin function
     /// @param call the builtin call to validate
     /// @returns true on success, false otherwise
     bool BufferView(const sem::Call* call) const;
@@ -651,6 +652,15 @@ class Validator {
     /// @returns true if no duplicate uses were found or false if an error was raised.
     bool CheckNoMultipleModuleScopeVarsOfAddressSpace(sem::Function* entry_point,
                                                       core::AddressSpace space) const;
+
+    /// Validates the offset argument of a subgroupMatrixLoad or subgroupMatrixStore call.
+    /// @param fn the builtin function symbol
+    /// @param p_arg the pointer argument
+    /// @param offset_arg the offset argument
+    /// @returns true on success, false if an error was raised.
+    bool CheckSubgroupMatrixOpOffset(const sem::BuiltinFn* fn,
+                                     const sem::ValueExpression* p_arg,
+                                     const sem::ValueExpression* offset_arg) const;
 
     SymbolTable& symbols_;
     diag::List& diagnostics_;

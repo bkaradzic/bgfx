@@ -65,7 +65,7 @@ size_t Distance(std::string_view str_a, std::string_view str_b) {
 }
 
 void SuggestAlternatives(std::string_view got,
-                         Slice<const std::string_view> strings,
+                         std::span<const std::string_view> strings,
                          StyledText& ss,
                          const SuggestAlternativeOptions& options /* = {} */) {
     // If the string typed was within kSuggestionDistance of one of the possible enum values,

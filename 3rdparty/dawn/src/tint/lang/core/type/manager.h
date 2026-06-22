@@ -193,9 +193,8 @@ class Manager final {
     /// @param args the arguments used to create the temporary used for the search.
     /// @return a pointer to an instance of `T` with the provided arguments, or nullptr if the item
     ///         was not found.
-    template <typename TYPE,
-              typename _ = std::enable_if<tint::traits::IsTypeOrDerived<TYPE, Type>>,
-              typename... ARGS>
+    template <typename TYPE, typename... ARGS>
+        requires(tint::traits::IsTypeOrDerived<TYPE, Type>)
     auto* Find(ARGS&&... args) const {
         return types_.Find<TYPE>(std::forward<ARGS>(args)...);
     }
@@ -319,14 +318,6 @@ class Manager final {
     /// @returns a sampled texture type with the provided params
     const core::type::SampledTexture* sampled_texture(TextureDimension dim,
                                                       const core::type::Type* type);
-
-    /// @param dim the dimensionality of the texture
-    /// @param type the data type of the sampled texture
-    /// @param filterable the filterablity
-    /// @returns a sampled texture type with the provided params
-    const core::type::SampledTexture* sampled_texture(TextureDimension dim,
-                                                      const core::type::Type* type,
-                                                      TextureFilterable filterable);
 
     /// @param dim the dimensionality of the texture
     /// @param type the data type of the sampled texture
@@ -676,12 +667,6 @@ class Manager final {
     /// @returns the sampler type
     const core::type::Sampler* sampler() {
         return Get<core::type::Sampler>(core::type::SamplerKind::kSampler);
-    }
-
-    /// @param filtering the sampler filtering parameter
-    /// @returns the sampler type
-    const core::type::Sampler* sampler(SamplerFiltering filtering) {
-        return Get<core::type::Sampler>(core::type::SamplerKind::kSampler, filtering);
     }
 
     /// @returns the comparison sampler type

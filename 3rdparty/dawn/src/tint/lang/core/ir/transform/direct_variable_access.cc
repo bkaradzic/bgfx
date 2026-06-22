@@ -37,6 +37,7 @@
 #include "src/tint/lang/core/ir/user_call.h"
 #include "src/tint/lang/core/ir/validator.h"
 #include "src/tint/lang/core/ir/var.h"
+#include "src/tint/lang/core/type/external_texture.h"
 #include "src/tint/utils/containers/reverse.h"
 
 using namespace tint::core::fluent_types;     // NOLINT
@@ -97,8 +98,30 @@ struct IndexAccess {
     bool operator!=(const IndexAccess&) const { return false; }
 };
 
-/// An access operation. Either a MemberAccess or IndexAccess.
-using AccessOp = std::variant<MemberAccess, IndexAccess>;
+/// BufferViewAccess is an access operator for a bufferView or bufferArrayView builtin call.
+/// The arguments are passed by parameter.
+struct BufferViewAccess {
+    /// The type of call
+    BuiltinFn fn;
+    /// The result type
+    const core::type::Type* type;
+    /// Whether the length is encoded in the call
+    bool has_length = false;
+
+    /// @return a hash value for this object
+    tint::HashCode HashCode() const { return Hash(static_cast<uint32_t>(fn), type, has_length); }
+
+    /// Inequality operator
+    bool operator!=(const BufferViewAccess& other) const {
+        return fn != other.fn || type != other.type || has_length != other.has_length;
+    }
+};
+
+/// An access operation. One of:
+/// * MemberAccess
+/// * IndexAccess
+/// * BufferViewAccess
+using AccessOp = std::variant<MemberAccess, IndexAccess, BufferViewAccess>;
 
 /// A AccessShape describes the static "path" from a root variable to an element within the
 /// variable.
@@ -122,6 +145,13 @@ using AccessOp = std::variant<MemberAccess, IndexAccess>;
 ///     y : array<A, 4>
 /// };
 /// var<workgroup> C : B;
+/// var<workgroup> D : buffer<128>;
+///
+/// fn foo() {
+///   let d1 = bufferView<array<u32>>(&D, o1);
+///   d1[0] = 1u;
+///   let d2 = bufferArrayView<array<vec4u>>(&D, o2, s);
+///   d2[1].y = 2u;
 /// ```
 ///
 /// The following AccessShape would describe the following:
@@ -145,6 +175,20 @@ using AccessOp = std::variant<MemberAccess, IndexAccess>;
 /// +------------------------------------+---------------+---------------------------------+
 /// | [ Var 'C', MemberAccess 'y',       | u32           |  C.y[indices[0]].y              |
 /// |   IndexAccess, MemberAccess 'y' ]  |               |                                 |
+/// +------------------------------------+---------------+---------------------------------+
+/// | [ Var 'D',                         | u32           |  bufferView<array<u32>>(        |
+/// |   BufferViewAccess                 |               |    &D,                          |
+/// |     'kBufferView'                  |               |    view_offset,                 |
+/// |     'ptr<workgroup, array<u32>'    |               |    view_length).                |
+/// |     'true',                        |               |  [indices[0]]                   |
+/// |   IndexAccess ]                    |               |                                 |
+/// +------------------------------------+---------------+---------------------------------+
+/// | [ Var 'D',                         | u32           |  bufferArrayView<array<vec4u>>( |
+/// |   BufferViewAccess                 |               |    &D,                          |
+/// |     'kBufferArrayView'             |               |    view_offset,                 |
+/// |     'ptr<workgroup, array<u32>'    |               |    view_size,                   |
+/// |     'true',                        |               |    view_length).                |
+/// |   IndexAccess ]                    |               |  [indices[0]].[indices[1]]      |
 /// +------------------------------------+---------------+---------------------------------+
 ///
 /// Where: `indices` is the AccessChain::indices.
@@ -182,6 +226,14 @@ struct AccessChain {
     Value* root_ptr = nullptr;
     /// The array of dynamic indices
     Vector<Value*, 8> indices;
+    /// Buffer view arguments. Only a single buffer view will be encountered along any chain (always
+    /// first).
+    /// The offset of bufferView or bufferArrayView
+    Value* view_offset = nullptr;
+    /// The size of bufferArrayView
+    Value* view_size = nullptr;
+    /// The length of bufferView or bufferArrayView
+    Value* view_length = nullptr;
 };
 
 /// A variant signature describes the access shape of all the function's pointer parameters.
@@ -309,7 +361,7 @@ struct State {
             VariantSignature signature;
 
             // For each argument / parameter...
-            for (size_t i = 0, n = call->Args().Length(); i < n; i++) {
+            for (size_t i = 0, n = call->Args().size(); i < n; i++) {
                 auto* arg = call->Args()[i];
                 auto* param = target->Params()[i];
 
@@ -335,6 +387,23 @@ struct State {
                     // as an argument.
                     if (std::holds_alternative<RootPtrParameter>(chain.shape.root)) {
                         new_args.Push(chain.root_ptr);
+                    }
+                    // The bufferView/bufferArrayView must be the first op.
+                    if (!chain.shape.ops.IsEmpty() &&
+                        std::holds_alternative<BufferViewAccess>(chain.shape.ops[0])) {
+                        uint32_t count =
+                            1 + (chain.view_size ? 1 : 0) + (chain.view_length ? 1 : 0);
+                        auto* array = ty.array(ty.u32(), count);
+                        Vector<Value*, 3> args;
+                        args.Push(chain.view_offset);
+                        if (chain.view_size) {
+                            args.Push(chain.view_size);
+                        }
+                        if (chain.view_length) {
+                            args.Push(chain.view_length);
+                        }
+                        auto* values = b.Construct(array, std::move(args));
+                        new_args.Push(values->Result());
                     }
                     // If the chain access contains indices, then pass these as an array of u32.
                     if (size_t array_len = chain.indices.Length(); array_len > 0) {
@@ -458,6 +527,37 @@ struct State {
                             TINT_IR_ASSERT(ir, obj_ty == access->Result()->Type()->UnwrapPtr());
                             return access->Object();
                         },
+                        [&](CoreBuiltinCall* call) {
+                            switch (call->Func()) {
+                                case BuiltinFn::kBufferView:
+                                case BuiltinFn::kBufferArrayView: {
+                                    BufferViewAccess access{.fn = call->Func(),
+                                                            .type = call->Result()->Type()};
+                                    chain.view_offset =
+                                        b.InsertConvertIfNeeded(ty.u32(), call->Args()[1]);
+                                    if (call->Func() == BuiltinFn::kBufferView) {
+                                        chain.view_length =
+                                            call->Args().size() > 2
+                                                ? b.InsertConvertIfNeeded(ty.u32(), call->Args()[2])
+                                                : nullptr;
+                                    } else {
+                                        chain.view_size = call->Args()[2];
+                                        chain.view_length =
+                                            call->Args().size() > 3
+                                                ? b.InsertConvertIfNeeded(ty.u32(), call->Args()[3])
+                                                : nullptr;
+                                    }
+                                    if (chain.view_length) {
+                                        access.has_length = true;
+                                    }
+                                    chain.shape.ops.Push(access);
+                                    return call->Args()[0];
+                                }
+                                default:
+                                    TINT_UNREACHABLE()
+                                        << "unhandle builtin call" << call->FriendlyName();
+                            }
+                        },
                         [&](Load* load) { return load->From(); },  //
                         [&](Var* var) {
                             // A 'var' is a pointer root.
@@ -531,6 +631,17 @@ struct State {
                     TINT_IR_ICE(ir) << "unhandled AccessShape root variant";
                 }
 
+                // Build the view args parameter, if required.
+                ir::FunctionParam* args_param = nullptr;
+                if (!shape->ops.IsEmpty() &&
+                    std::holds_alternative<BufferViewAccess>(shape->ops[0])) {
+                    auto* view = std::get_if<BufferViewAccess>(&shape->ops[0]);
+                    uint32_t n =
+                        (view->fn == BuiltinFn::kBufferView ? 1 : 2) + (view->has_length ? 1 : 0);
+                    args_param = b.FunctionParam(ty.array(ty.u32(), n));
+                    new_params.Push(args_param);
+                }
+
                 // Build the access indices parameter, if required.
                 ir::FunctionParam* indices_param = nullptr;
                 if (uint32_t n = shape->NumIndexAccesses(); n > 0) {
@@ -544,6 +655,9 @@ struct State {
                     // Propagate old parameter name to the new parameters
                     if (root_ptr_param) {
                         ir.SetName(root_ptr_param, param_name.Name() + "_root");
+                    }
+                    if (args_param) {
+                        ir.SetName(args_param, param_name.Name() + "_view_args");
                     }
                     if (indices_param) {
                         ir.SetName(indices_param, param_name.Name() + "_indices");
@@ -564,8 +678,38 @@ struct State {
                     }
 
                     // Rebuild the pointer from the root pointer and accesses.
+                    bool has_view = false;
                     uint32_t index_index = 0;
                     auto chain = Transform(shape->ops, [&](const AccessOp& op) -> Value* {
+                        if (auto* v = std::get_if<BufferViewAccess>(&op)) {
+                            has_view = true;
+                            Value* offset = b.Access(ty.u32(), args_param, 0_u)->Result();
+                            Value* size = nullptr;
+                            Value* length = nullptr;
+                            if (v->fn == BuiltinFn::kBufferArrayView) {
+                                size = b.Access(ty.u32(), args_param, 1_u)->Result();
+                            }
+                            if (v->has_length) {
+                                length = b.Access(ty.u32(), args_param,
+                                                  (v->fn == BuiltinFn::kBufferView ? 1_u : 2_u))
+                                             ->Result();
+                            }
+                            auto* call = b.CallExplicit(
+                                v->type, v->fn, Vector<TemplateParameter, 1>{v->type->UnwrapPtr()},
+                                replacement);
+                            call->AppendArg(offset);
+                            if (size) {
+                                call->AppendArg(size);
+                            }
+                            if (length) {
+                                call->AppendArg(length);
+                            }
+                            root_ptr = call->Result();
+                            if (shape->ops.Length() == 1) {
+                                replacement = root_ptr;
+                            }
+                            return root_ptr;
+                        }
                         if (auto* m = std::get_if<MemberAccess>(&op)) {
                             return b.Constant(u32(m->member->Index()));
                         }
@@ -573,7 +717,15 @@ struct State {
                         return access->Result();
                     });
 
-                    replacement = b.Access(access_type, root_ptr, std::move(chain))->Result();
+                    if (has_view) {
+                        if (chain.Length() > 1) {
+                            replacement = b.Access(access_type, root_ptr,
+                                                   ToVector<8>(chain.AsSpan().subspan(1)))
+                                              ->Result();
+                        }
+                    } else {
+                        replacement = b.Access(access_type, root_ptr, std::move(chain))->Result();
+                    }
                 }
 
                 // Replaced handles need the final load after the access chain.
@@ -608,6 +760,17 @@ struct State {
         }
     }
 
+    bool TransformHandle(const type::Type* param) const {
+        if (!param->IsHandle()) {
+            return false;
+        }
+        if (options.transform_handle == HandleTransformLevel::kFull) {
+            return true;
+        }
+        return options.transform_handle == HandleTransformLevel::kExternal &&
+               param->Is<type::ExternalTexture>();
+    }
+
     /// @return true if @p param is a parameter that requires transforming, based on the
     /// transform options.
     /// @param param the function parameter
@@ -631,12 +794,7 @@ struct State {
                     break;
             }
         }
-
-        if (param_type->IsHandle()) {
-            return options.transform_handle;
-        }
-
-        return false;
+        return TransformHandle(param_type);
     }
 
     /// Walks the instructions that built @p value, deleting those that are no longer used.
@@ -658,8 +816,12 @@ struct State {
                     TINT_DEFER(let->Destroy());
                     return let->Value();
                 },
+                [&](CoreBuiltinCall* call) {
+                    TINT_DEFER(call->Destroy());
+                    return call->Args()[0];
+                },
                 [&](Load* load) {
-                    if (options.transform_handle) {
+                    if (TransformHandle(load->From()->Type()->UnwrapPtr())) {
                         TINT_DEFER(load->Destroy());
                         return load->From();
                     }
@@ -672,8 +834,8 @@ struct State {
 }  // namespace
 
 Result<SuccessType> DirectVariableAccess(Module& ir, const DirectVariableAccessOptions& options) {
-    TINT_CHECK_RESULT(
-        ValidateBeforeIfNeeded(ir, kDirectVariableAccessCapabilities, "core.DirectVariableAccess"));
+    core::ir::AssertValid(ir, kDirectVariableAccessCapabilities,
+                          "before core.DirectVariableAccess");
 
     State{ir, options}.Process();
 

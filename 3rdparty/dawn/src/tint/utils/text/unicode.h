@@ -30,6 +30,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <span>
 #include <string_view>
 #include <utility>
 
@@ -75,11 +76,18 @@ namespace utf8 {
 uint8_t SequenceLength(uint8_t first_code_point);
 
 /// Decodes the first code point in the utf8 string.
-/// @param ptr the pointer to the first byte of the utf8 sequence
-/// @param len the maximum number of uint8_t to read
+/// @param buffer the buffer containing the utf8 sequence
 /// @returns a pair of CodePoint and width in code units (uint8_t).
 ///          If the next code point cannot be decoded then returns [0,0].
-std::pair<CodePoint, size_t> Decode(const uint8_t* ptr, size_t len);
+std::pair<CodePoint, size_t> Decode(std::span<const uint8_t> buffer);
+
+/// Decodes the first code point in the utf8 string.
+/// Note: This cannot be handled via the uint8_t version, because std::byte is not guaranteed to be
+///       8-bits wide in the spec.
+/// @param buffer the buffer containing the utf8 sequence
+/// @returns a pair of CodePoint and width in code units (uint8_t).
+///          If the next code point cannot be decoded then returns [0,0].
+std::pair<CodePoint, size_t> Decode(std::span<const std::byte> buffer);
 
 /// Decodes the first code point in the utf8 string.
 /// @param utf8_string the string view that contains the utf8 sequence
@@ -90,25 +98,38 @@ std::pair<CodePoint, size_t> Decode(std::string_view utf8_string);
 /// Encodes a code point to the utf8 string buffer or queries the number of code units used to
 /// encode the code point.
 /// @param code_point the code point to encode.
-/// @param ptr the pointer to the utf8 string buffer, or nullptr to query the number of code units
-/// that would be written if @p ptr is not nullptr.
+/// @param buffer the utf8 string buffer, or an empty span to query the number of code units
+/// that would be written if @p buffer had sufficient space.
 /// @returns the number of code units written / would be written (at most 4).
-size_t Encode(CodePoint code_point, uint8_t* ptr);
+size_t Encode(CodePoint code_point, std::span<uint8_t> buffer);
 
 /// @returns true if all the utf-8 code points in the string are ASCII
 /// (code-points 0x00..0x7f).
 bool IsASCII(std::string_view);
+
+/// @returns true if the string is a valid identifier (starts with a letter or underscore,
+/// followed by letters, numbers, or underscores).
+bool IsIdentifier(std::string_view);
+
+/// @returns true if the string is a valid WGSL identifier.
+/// @see https://www.w3.org/TR/WGSL/#identifiers
+bool IsWGSLIdentifier(std::string_view);
 
 }  // namespace utf8
 
 namespace utf16 {
 
 /// Decodes the first code point in the utf16 string.
-/// @param ptr the pointer to the first byte of the utf16 sequence
-/// @param len the maximum number of code units to read
+/// @param buffer the buffer containing the utf16 sequence
 /// @returns a pair of CodePoint and width in code units (16-bit integers).
 ///          If the next code point cannot be decoded then returns [0,0].
-std::pair<CodePoint, size_t> Decode(const uint16_t* ptr, size_t len);
+std::pair<CodePoint, size_t> Decode(std::span<const uint16_t> buffer);
+
+/// Decodes the first code point in the utf16 string.
+/// @param buffer the buffer containing the utf16 sequence
+/// @returns a pair of CodePoint and width in code units (16-bit integers).
+///          If the next code point cannot be decoded then returns [0,0].
+std::pair<CodePoint, size_t> Decode(std::span<const std::byte> buffer);
 
 /// Decodes the first code point in the utf16 string.
 /// @param utf16_string the string view that contains the utf16 sequence
@@ -119,10 +140,10 @@ std::pair<CodePoint, size_t> Decode(std::string_view utf16_string);
 /// Encodes a code point to the utf16 string buffer or queries the number of code units used to
 /// encode the code point.
 /// @param code_point the code point to encode.
-/// @param ptr the pointer to the utf16 string buffer, or nullptr to query the number of code units
-/// that would be written if @p ptr is not nullptr.
+/// @param buffer the utf16 string buffer, or an empty span to query the number of code units
+/// that would be written if @p buffer had sufficient space.
 /// @returns the number of code units written / would be written (at most 2).
-size_t Encode(CodePoint code_point, uint16_t* ptr);
+size_t Encode(CodePoint code_point, std::span<uint16_t> buffer);
 
 }  // namespace utf16
 

@@ -25,14 +25,10 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifdef UNSAFE_BUFFERS_BUILD
-// TODO(crbug.com/439062058): Remove this and convert code to safer constructs.
-#pragma allow_unsafe_buffers
-#endif
-
 #include "src/tint/utils/symbol/symbol_table.h"
 
 #include "src/tint/utils/ice/ice.h"
+#include "src/utils/compiler.h"
 
 namespace tint {
 
@@ -101,7 +97,7 @@ std::string_view SymbolTable::Allocate(std::string_view name) {
     char* name_mem = Bitcast<char*>(name_allocator_.Allocate(name.length() + 1));
     TINT_ASSERT(name_mem != nullptr) << "failed to allocate memory for symbol's string";
 
-    memcpy(name_mem, name.data(), name.length() + 1);
+    DAWN_UNSAFE_TODO(memcpy(name_mem, name.data(), name.length() + 1));
     return {name_mem, name.length()};
 }
 

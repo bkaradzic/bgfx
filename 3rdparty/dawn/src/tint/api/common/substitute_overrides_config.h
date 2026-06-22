@@ -31,7 +31,7 @@
 #include <unordered_map>
 
 #include "src/tint/api/common/override_id.h"
-#include "src/tint/utils/reflection.h"
+#include "src/tint/utils/reflection/reflection.h"
 
 namespace tint {
 
@@ -44,8 +44,9 @@ struct SubstituteOverridesConfig {
 
     /// Reflect the fields of this class so that it can be used by tint::ForeachField()
     TINT_REFLECT(SubstituteOverridesConfig, map);
-    TINT_REFLECT_EQUALS(SubstituteOverridesConfig);
     TINT_REFLECT_HASH_CODE(SubstituteOverridesConfig);
+
+    bool operator==(const SubstituteOverridesConfig&) const = default;
 };
 
 }  // namespace tint

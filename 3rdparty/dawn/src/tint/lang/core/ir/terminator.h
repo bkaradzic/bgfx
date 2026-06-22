@@ -28,6 +28,8 @@
 #ifndef SRC_TINT_LANG_CORE_IR_TERMINATOR_H_
 #define SRC_TINT_LANG_CORE_IR_TERMINATOR_H_
 
+#include <span>
+
 #include "src/tint/lang/core/ir/operand_instruction.h"
 #include "src/tint/lang/core/ir/value.h"
 #include "src/tint/utils/rtti/castable.h"
@@ -47,11 +49,11 @@ class Terminator : public Castable<Terminator, OperandInstruction<1, 0>> {
     virtual size_t ArgsOperandOffset() const { return 0; }
 
     /// @returns the call arguments
-    tint::Slice<Value* const> Args() { return operands_.Slice().Offset(ArgsOperandOffset()); }
+    std::span<Value* const> Args() { return operands_.AsSpan().subspan(ArgsOperandOffset()); }
 
     /// @returns the call arguments
-    tint::Slice<const Value* const> Args() const {
-        return operands_.Slice().Offset(ArgsOperandOffset());
+    std::span<const Value* const> Args() const {
+        return operands_.AsSpan().subspan(ArgsOperandOffset());
     }
 };
 

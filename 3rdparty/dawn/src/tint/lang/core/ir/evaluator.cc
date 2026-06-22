@@ -85,7 +85,6 @@ Evaluator::EvalResult Evaluator::EvalValue(core::ir::Value* val) {
         [&](core::ir::InstructionResult* r) {
             return tint::Switch(
                 r->Instruction(),  //
-                [&](core::ir::Bitcast* bc) { return EvalBitcast(bc); },
                 [&](core::ir::Access* a) { return EvalAccess(a); },
                 [&](core::ir::ConstExprIf* c) { return EvalConstExprIf(c); },
                 [&](core::ir::Construct* c) { return EvalConstruct(c); },
@@ -101,18 +100,6 @@ Evaluator::EvalResult Evaluator::EvalValue(core::ir::Value* val) {
                 });
         },
         TINT_ICE_ON_NO_MATCH);
-}
-
-Evaluator::EvalResult Evaluator::EvalBitcast(core::ir::Bitcast* bc) {
-    TINT_CHECK_RESULT_UNWRAP(val, EvalValue(bc->Val()));
-    // Check if the value could be evaluated
-    if (!val) {
-        return nullptr;
-    }
-
-    TINT_CHECK_RESULT_UNWRAP(r,
-                             const_eval_.bitcast(bc->Result()->Type(), Vector{val}, SourceOf(bc)));
-    return r;
 }
 
 Evaluator::EvalResult Evaluator::EvalAccess(core::ir::Access* a) {
@@ -151,9 +138,9 @@ Evaluator::EvalResult Evaluator::EvalConstruct(core::ir::Construct* c) {
     auto result_ty = c->Result()->Type();
 
     Vector<const core::type::Type*, 4> arg_types;
-    arg_types.Reserve(c->Args().Length());
+    arg_types.Reserve(c->Args().size());
     Vector<const core::constant::Value*, 4> arg_values;
-    arg_values.Reserve(c->Args().Length());
+    arg_values.Reserve(c->Args().size());
 
     for (auto* arg : c->Args()) {
         arg_types.Push(arg->Type());
@@ -168,8 +155,8 @@ Evaluator::EvalResult Evaluator::EvalConstruct(core::ir::Construct* c) {
 
     auto mat_vec = [&](const core::type::Type* type,
                        core::intrinsic::CtorConv intrinsic) -> constant::Eval::Result {
-        auto op =
-            table.Lookup(intrinsic, Vector{type}, arg_types, core::EvaluationStage::kOverride);
+        auto op = table.Lookup(intrinsic, Vector<TemplateParameter, 1>{type}, arg_types,
+                               core::EvaluationStage::kOverride);
         if (op != Success) {
             AddError(SourceOf(c)) << "unable to find intrinsic for construct: " << op.Failure();
             return Failure();
@@ -344,9 +331,9 @@ Evaluator::EvalResult Evaluator::EvalCoreBuiltinCall(core::ir::CoreBuiltinCall* 
     intrinsic::Context context{c->TableData(), b_.ir.Types(), b_.ir.symbols};
 
     Vector<const core::type::Type*, 0> arg_types;
-    arg_types.Reserve(c->Args().Length());
+    arg_types.Reserve(c->Args().size());
     Vector<const core::constant::Value*, 0> args;
-    args.Reserve(c->Args().Length());
+    args.Reserve(c->Args().size());
     for (auto* arg : c->Args()) {
         arg_types.Push(arg->Type());
 
@@ -359,7 +346,8 @@ Evaluator::EvalResult Evaluator::EvalCoreBuiltinCall(core::ir::CoreBuiltinCall* 
     }
 
     auto overload = core::intrinsic::LookupFn(context, c->FriendlyName().c_str(), c->FuncId(),
-                                              Empty, arg_types, core::EvaluationStage::kOverride);
+                                              c->ExplicitTemplateParams(), arg_types,
+                                              core::EvaluationStage::kOverride);
     if (overload != Success) {
         AddError(SourceOf(c)) << overload.Failure();
         return Failure();

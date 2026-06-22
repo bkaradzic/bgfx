@@ -460,7 +460,7 @@ struct State {
             if (!chain) {
                 continue;
             }
-            TINT_ASSERT(chain->Indices().Length() >= 1);
+            TINT_ASSERT(chain->Indices().size() >= 1);
 
             // A member access has to be a constant index
             auto* cnst = chain->Indices()[0]->As<core::ir::Constant>();
@@ -740,21 +740,18 @@ struct State {
 }  // namespace
 
 Result<SuccessType> ShaderIO(core::ir::Module& ir) {
-    TINT_CHECK_RESULT(
-        ValidateBeforeIfNeeded(ir,
-                               core::ir::Capabilities{
-                                   core::ir::Capability::kAllowMultipleEntryPoints,
-                                   core::ir::Capability::kAllowOverrides,
-                                   core::ir::Capability::kAllowPhonyInstructions,
-                                   core::ir::Capability::kAllowNonCoreTypes,
-                                   core::ir::Capability::kAllowStructMatrixDecorations,
-                                   core::ir::Capability::kAllowLocationForNumericElements,
-                                   core::ir::Capability::kAllowPointerToHandle,
-                                   core::ir::Capability::kLoosenValidationForShaderIO,
-                               },
-                               "spirv.ShaderIO"));
+    AssertValid(ir,
+                core::ir::Capabilities{
+                    core::ir::Capability::kLoosenValidationForShaderIO,
+                },
+                "before spirv.ShaderIO");
 
-    return State{ir}.Process();
+    TINT_CHECK_RESULT(State{ir}.Process());
+
+    ir.properties.Remove(core::ir::Property::kAllowLocationForNumericComposites);
+    ir.properties.Remove(core::ir::Property::kAllowPointSizeBuiltin);
+
+    return Success;
 }
 
 }  // namespace tint::spirv::reader::lower

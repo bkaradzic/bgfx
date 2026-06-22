@@ -28,13 +28,17 @@
 #ifndef SRC_TINT_LANG_CORE_IR_CALL_H_
 #define SRC_TINT_LANG_CORE_IR_CALL_H_
 
+#include <span>
 #include <string>
 
+#include "src/tint/lang/core/intrinsic/table.h"
 #include "src/tint/lang/core/ir/operand_instruction.h"
 #include "src/tint/lang/core/type/type.h"
 #include "src/tint/utils/rtti/castable.h"
 
 namespace tint::core::ir {
+
+using TemplateParameter = core::intrinsic::TemplateParameter;
 
 /// A Call instruction in the IR.
 class Call : public Castable<Call, OperandInstruction<4, 1>> {
@@ -45,20 +49,21 @@ class Call : public Castable<Call, OperandInstruction<4, 1>> {
     virtual size_t ArgsOperandOffset() const { return 0; }
 
     /// Sets the explicit template params for the call
-    void SetExplicitTemplateParams(VectorRef<const core::type::Type*> params) {
+    void SetExplicitTemplateParams(VectorRef<TemplateParameter> params) {
         explicit_template_params_ = params;
     }
+
     /// Retrieves the explicit template params for the call
-    tint::VectorRef<const core::type::Type*> ExplicitTemplateParams() const {
+    tint::VectorRef<TemplateParameter> ExplicitTemplateParams() const {
         return explicit_template_params_;
     }
 
     /// @returns the call arguments
-    tint::Slice<Value* const> Args() { return operands_.Slice().Offset(ArgsOperandOffset()); }
+    std::span<Value* const> Args() { return operands_.AsSpan().subspan(ArgsOperandOffset()); }
 
     /// @returns the call arguments
-    tint::Slice<const Value* const> Args() const {
-        return operands_.Slice().Offset(ArgsOperandOffset());
+    std::span<const Value* const> Args() const {
+        return operands_.AsSpan().subspan(ArgsOperandOffset());
     }
 
     /// Sets the argument at `idx` of `arg`. `idx` must be within bounds of the current argument
@@ -76,7 +81,7 @@ class Call : public Castable<Call, OperandInstruction<4, 1>> {
     /// Constructor
     explicit Call(Id id);
 
-    Vector<const core::type::Type*, 1> explicit_template_params_;
+    Vector<TemplateParameter, 1> explicit_template_params_;
 };
 
 }  // namespace tint::core::ir

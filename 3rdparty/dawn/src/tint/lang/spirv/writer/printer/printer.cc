@@ -37,7 +37,6 @@
 #include "src/tint/lang/core/enums.h"
 #include "src/tint/lang/core/fluent_types.h"
 #include "src/tint/lang/core/ir/access.h"
-#include "src/tint/lang/core/ir/bitcast.h"
 #include "src/tint/lang/core/ir/block.h"
 #include "src/tint/lang/core/ir/block_param.h"
 #include "src/tint/lang/core/ir/break_if.h"
@@ -91,8 +90,8 @@
 #include "src/tint/lang/spirv/ir/binary.h"
 #include "src/tint/lang/spirv/ir/builtin_call.h"
 #include "src/tint/lang/spirv/ir/copy_logical.h"
-#include "src/tint/lang/spirv/ir/literal_operand.h"
 #include "src/tint/lang/spirv/type/explicit_layout_array.h"
+#include "src/tint/lang/spirv/type/literal.h"
 #include "src/tint/lang/spirv/type/sampled_image.h"
 #include "src/tint/lang/spirv/writer/analysis/relaxed_precision_decorations.h"
 #include "src/tint/lang/spirv/writer/common/binary_writer.h"
@@ -151,9 +150,6 @@ const core::type::Type* DedupType(const core::type::Type* ty, core::type::Manage
             if (s->IsComparison()) {
                 return types.Get<core::type::Sampler>(core::type::SamplerKind::kSampler);
             }
-            if (s->Filtering() != core::SamplerFiltering::kUndefined) {
-                return types.Get<core::type::Sampler>(core::type::SamplerKind::kSampler);
-            }
             return s;
         },
 
@@ -184,6 +180,12 @@ const core::type::Type* DedupType(const core::type::Type* ty, core::type::Manage
 
         [&](Default) { return ty; });
 }
+
+// The list of properties that are not supported.
+const core::ir::Properties kUnsupportedProperties{
+    core::ir::Property::kAllowMultipleEntryPoints,
+    core::ir::Property::kAllowOverrides,
+};
 
 /// PIMPL class for SPIR-V writer
 class Printer {
@@ -298,7 +300,8 @@ class Printer {
 
     /// Builds the SPIR-V from the IR
     Result<SuccessType> Generate() {
-        TINT_CHECK_RESULT(ValidateBeforeIfNeeded(ir_, kPrinterCapabilities, "spirv.Printer"));
+        AssertValid(ir_, kPrinterCapabilities, "before spirv.Printer");
+        AssertNoUnsupportedProperties(ir_, kUnsupportedProperties);
 
         module_.PushCapability(SpvCapabilityShader);
 
@@ -324,11 +327,16 @@ class Printer {
 
         // Emit RelaxedPrecision decorations.
         auto relaxed_precision_decorations = analysis::GetRelaxedPrecisionDecorations(ir_);
+        Hashset<uint32_t, 32> decorated_ids;
         for (const auto& deco : relaxed_precision_decorations) {
-            module_.PushAnnot(spv::Op::OpDecorate, {
-                                                       Value(deco),
-                                                       U32Operand(SpvDecorationRelaxedPrecision),
-                                                   });
+            uint32_t id = Value(deco);
+            if (decorated_ids.Add(id)) {
+                module_.PushAnnot(spv::Op::OpDecorate,
+                                  {
+                                      id,
+                                      U32Operand(SpvDecorationRelaxedPrecision),
+                                  });
+            }
         }
 
         return Success;
@@ -413,8 +421,8 @@ class Printer {
     /// @returns the result ID of the constant
     uint32_t Constant(const core::ir::Constant* constant) {
         // If it is a literal operand, just return the value.
-        if (auto* literal = constant->As<spirv::ir::LiteralOperand>()) {
-            return literal->Value()->ValueAs<uint32_t>();
+        if (constant->Type()->Is<spirv::type::Literal>()) {
+            return constant->Value()->ValueAs<uint32_t>();
         }
 
         auto id = Constant(constant->Value());
@@ -446,18 +454,18 @@ class Printer {
                                      {Type(ty), id});
                 },
                 [&](const core::type::I32*) {
-                    module_.PushType(spv::Op::OpConstant, {Type(ty), id, constant->ValueAs<u32>()});
+                    module_.PushType(spv::Op::OpConstant,
+                                     {Type(ty), id, U32Operand(constant->ValueAs<i32>())});
                 },
                 [&](const core::type::U32*) {
-                    module_.PushType(spv::Op::OpConstant,
-                                     {Type(ty), id, U32Operand(constant->ValueAs<i32>())});
-                },
-                [&](const core::type::I8*) {
                     module_.PushType(spv::Op::OpConstant, {Type(ty), id, constant->ValueAs<u32>()});
                 },
-                [&](const core::type::U8*) {
+                [&](const core::type::I8*) {
                     module_.PushType(spv::Op::OpConstant,
                                      {Type(ty), id, U32Operand(constant->ValueAs<i32>())});
+                },
+                [&](const core::type::U8*) {
+                    module_.PushType(spv::Op::OpConstant, {Type(ty), id, constant->ValueAs<u32>()});
                 },
                 [&](const core::type::F32*) {
                     module_.PushType(spv::Op::OpConstant, {Type(ty), id, constant->ValueAs<f32>()});
@@ -998,7 +1006,6 @@ class Printer {
             Switch(
                 inst,                                                                 //
                 [&](core::ir::Access* a) { EmitAccess(a); },                          //
-                [&](core::ir::Bitcast* b) { EmitBitcast(b); },                        //
                 [&](core::ir::CoreBinary* b) { EmitBinary(b); },                      //
                 [&](spirv::ir::Binary* b) { EmitSpirvBinary(b); },                    //
                 [&](core::ir::CoreBuiltinCall* b) { EmitCoreBuiltinCall(b); },        //
@@ -1048,8 +1055,8 @@ class Printer {
         tint::Switch(  //
             t,         //
             [&](core::ir::Return*) {
-                if (!t->Args().IsEmpty()) {
-                    TINT_IR_ASSERT(ir_, t->Args().Length() == 1u);
+                if (!t->Args().empty()) {
+                    TINT_IR_ASSERT(ir_, t->Args().size() == 1u);
                     OperandList operands;
                     operands.push_back(Value(t->Args()[0]));
                     current_function_.PushInst(spv::Op::OpReturnValue, operands);
@@ -1410,14 +1417,14 @@ class Printer {
 
     /// Emit a bitcast instruction.
     /// @param bitcast the bitcast instruction to emit
-    void EmitBitcast(core::ir::Bitcast* bitcast) {
+    void EmitBitcast(core::ir::CoreBuiltinCall* bitcast) {
         auto* ty = bitcast->Result()->Type();
-        if (ty == bitcast->Val()->Type()) {
-            values_.Add(bitcast->Result(), Value(bitcast->Val()));
+        if (ty == bitcast->Args()[0]->Type()) {
+            values_.Add(bitcast->Result(), Value(bitcast->Args()[0]));
             return;
         }
         current_function_.PushInst(spv::Op::OpBitcast,
-                                   {Type(ty), Value(bitcast), Value(bitcast->Val())});
+                                   {Type(ty), Value(bitcast), Value(bitcast->Args()[0])});
     }
 
     /// Emit a builtin function call instruction.
@@ -1553,6 +1560,13 @@ class Printer {
                 break;
             case spirv::BuiltinFn::kImageWrite:
                 op = spv::Op::OpImageWrite;
+                break;
+            case spirv::BuiltinFn::kInterpolateAtOffset:
+                // InterpolateAtOffset requires the InterpolationFunction capability.
+                // In Dawn this is only used for the pixel center polyfill which is only
+                // enabled if SampleRateShading is available.
+                module_.PushCapability(SpvCapabilityInterpolationFunction);
+                ext_inst(GLSLstd450InterpolateAtOffset);
                 break;
             case spirv::BuiltinFn::kMatrixTimesMatrix:
                 op = spv::Op::OpMatrixTimesMatrix;
@@ -1785,6 +1799,9 @@ class Printer {
             case BuiltinFn::kSConvert:
                 op = spv::Op::OpSConvert;
                 break;
+            case BuiltinFn::kAddCarry:
+                op = spv::Op::OpIAddCarry;
+                break;
             case spirv::BuiltinFn::kNone:
                 TINT_IR_ICE(ir_) << "undefined spirv ir function";
         }
@@ -1830,6 +1847,11 @@ class Printer {
             builtin->Args()[0]->Type()->Is<core::type::Bool>()) {
             // all() and any() are passthroughs for scalar arguments.
             values_.Add(builtin->Result(), Value(builtin->Args()[0]));
+            return;
+        }
+
+        if (builtin->Func() == core::BuiltinFn::kBitcast) {
+            EmitBitcast(builtin);
             return;
         }
 
@@ -2338,7 +2360,7 @@ class Printer {
 
         // If there is just a single argument with the same type as the result, this is an identity
         // constructor and we can just pass through the ID of the argument.
-        if (construct->Args().Length() == 1 && result_ty == construct->Args()[0]->Type()) {
+        if (construct->Args().size() == 1 && result_ty == construct->Args()[0]->Type()) {
             values_.Add(construct->Result(), Value(construct->Args()[0]));
             return;
         }
@@ -2708,12 +2730,13 @@ class Printer {
         auto* ptr = var->Result()->Type()->As<core::type::Pointer>();
         if (ptr->AddressSpace() == core::AddressSpace::kWorkgroup) {
             auto* ty = ptr->StoreType();
-            uint32_t align = ty->Align();
-            uint32_t size = ty->Size();
+            uint64_t align = ty->Align();
+            uint64_t size = ty->Size();
 
             // This essentially matches std430 layout rules from GLSL, which are in
             // turn specified as an upper bound for Vulkan layout sizing.
-            output_.workgroup_info.storage_size += tint::RoundUp(16u, tint::RoundUp(align, size));
+            output_.workgroup_info.storage_size +=
+                tint::RoundUp(static_cast<uint64_t>(16u), tint::RoundUp(align, size));
         }
         EmitVar(var);
     }

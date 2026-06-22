@@ -1,4 +1,4 @@
-// Copyright 2023 The Dawn & Tint Authors
+// Copyright 2017 The Dawn & Tint Authors
 //
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are met:
@@ -25,28 +25,26 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifdef UNSAFE_BUFFERS_BUILD
-// TODO(crbug.com/439062058): Remove this and convert code to safer constructs.
-#pragma allow_unsafe_buffers
+#include "src/utils/assert.h"
+
+#include <cstdlib>
+
+#include "src/utils/force_crash.h"
+#include "src/utils/log.h"
+
+namespace dawn {
+
+void HandleAssertionFailure(const char* file,
+                            const char* function,
+                            int line,
+                            const char* condition) {
+    dawn::ErrorLog() << "Assertion failure at " << file << ":" << line << " (" << function
+                     << "): " << condition;
+#if defined(DAWN_ABORT_ON_ASSERT)
+    abort();
+#else
+    DAWN_FORCE_CRASH();
 #endif
-
-#ifndef SRC_TINT_UTILS_BYTES_ENDIANNESS_H_
-#define SRC_TINT_UTILS_BYTES_ENDIANNESS_H_
-
-#include <cstdint>
-#include <cstring>
-
-namespace tint::bytes {
-
-enum class Endianness : uint8_t { kBig, kLittle };
-
-inline Endianness NativeEndianness() {
-    uint8_t u8[4];
-    uint32_t u32 = 0x01020304;
-    memcpy(u8, &u32, 4);
-    return u8[0] == 1 ? Endianness::kBig : Endianness::kLittle;
 }
 
-}  // namespace tint::bytes
-
-#endif  // SRC_TINT_UTILS_BYTES_ENDIANNESS_H_
+}  // namespace dawn

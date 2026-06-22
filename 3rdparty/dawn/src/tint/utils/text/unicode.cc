@@ -30,6 +30,7 @@
 #include <algorithm>
 #include <array>
 
+#include "src/tint/utils/ice/ice.h"
 #include "src/tint/utils/macros/compiler.h"
 
 namespace tint {
@@ -372,48 +373,51 @@ uint8_t SequenceLength(uint8_t first_code_point) {
     return kSequenceLength[first_code_point];
 }
 
-// This is a C-style API that will always trigger -Wunsafe-buffer-usage
-TINT_BEGIN_DISABLE_WARNING(UNSAFE_BUFFER_USAGE);
-std::pair<CodePoint, size_t> Decode(const uint8_t* ptr, size_t len) {
-    if (len < 1) {
+std::pair<CodePoint, size_t> Decode(std::span<const uint8_t> buffer) {
+    if (buffer.empty()) {
         return {};
     }
     // Fast-path ASCII characters as they're always valid
-    if (ptr[0] <= 0x7f) {
-        return {CodePoint{ptr[0]}, 1};
+    if (buffer[0] <= 0x7f) {
+        return {CodePoint{buffer[0]}, 1};
     }
 
-    uint8_t n = SequenceLength(ptr[0]);
-    if (n > len) {
+    uint8_t n = SequenceLength(buffer[0]);
+    if (n > buffer.size() || n == 0) {
         return {};
     }
 
     CodePoint c;
-
     uint8_t top_bits = 0b11000000;
     switch (n) {
         // Note: n=0 (invalid) is correctly handled without a case.
         case 1:
-            c = CodePoint{ptr[0]};
+            c = CodePoint{buffer.first<1>()[0]};
             break;
-        case 2:
-            top_bits &= ptr[1] ^ 0b01000000;
-            c = CodePoint{(static_cast<uint32_t>(ptr[0] & 0b00011111) << 6) |
-                          (static_cast<uint32_t>(ptr[1] & 0b00111111))};
+        case 2: {
+            const auto view = buffer.first<2>();
+            top_bits &= view[1] ^ 0b01000000;
+            c = CodePoint{(static_cast<uint32_t>(view[0] & 0b00011111) << 6) |
+                          (static_cast<uint32_t>(view[1] & 0b00111111))};
             break;
-        case 3:
-            top_bits &= (ptr[1] ^ 0b01000000) & (ptr[2] ^ 0b01000000);
-            c = CodePoint{(static_cast<uint32_t>(ptr[0] & 0b00001111) << 12) |
-                          (static_cast<uint32_t>(ptr[1] & 0b00111111) << 6) |
-                          (static_cast<uint32_t>(ptr[2] & 0b00111111))};
+        }
+        case 3: {
+            const auto view = buffer.first<3>();
+            top_bits &= (view[1] ^ 0b01000000) & (view[2] ^ 0b01000000);
+            c = CodePoint{(static_cast<uint32_t>(view[0] & 0b00001111) << 12) |
+                          (static_cast<uint32_t>(view[1] & 0b00111111) << 6) |
+                          (static_cast<uint32_t>(view[2] & 0b00111111))};
             break;
-        case 4:
-            top_bits &= (ptr[1] ^ 0b01000000) & (ptr[2] ^ 0b01000000) & (ptr[3] ^ 0b01000000);
-            c = CodePoint{(static_cast<uint32_t>(ptr[0] & 0b00000111) << 18) |
-                          (static_cast<uint32_t>(ptr[1] & 0b00111111) << 12) |
-                          (static_cast<uint32_t>(ptr[2] & 0b00111111) << 6) |
-                          (static_cast<uint32_t>(ptr[3] & 0b00111111))};
+        }
+        case 4: {
+            const auto view = buffer.first<4>();
+            top_bits &= (view[1] ^ 0b01000000) & (view[2] ^ 0b01000000) & (view[3] ^ 0b01000000);
+            c = CodePoint{(static_cast<uint32_t>(view[0] & 0b00000111) << 18) |
+                          (static_cast<uint32_t>(view[1] & 0b00111111) << 12) |
+                          (static_cast<uint32_t>(view[2] & 0b00111111) << 6) |
+                          (static_cast<uint32_t>(view[3] & 0b00111111))};
             break;
+        }
     }
     if (top_bits != 0b11000000) {
         // Check that the two most significant bits of all the code units after the first code point
@@ -434,48 +438,70 @@ std::pair<CodePoint, size_t> Decode(const uint8_t* ptr, size_t len) {
 
     return {c, n};
 }
-TINT_END_DISABLE_WARNING(UNSAFE_BUFFER_USAGE);
 
-std::pair<CodePoint, size_t> Decode(std::string_view utf8_string) {
-    return Decode(reinterpret_cast<const uint8_t*>(utf8_string.data()), utf8_string.size());
-}
-
-// This is a C-style API that will always trigger -Wunsafe-buffer-usage
+// For most common platform sizeof(std::byte) == sizeof(uint8_t), but is not guaranteed by the spec,
+// which is why the compiler will not use Decode(uint8_t) when passing in a std::byte span. The use
+// of two-part span constructor is what causes the IN_CONTAINER warning. The other warning is
+// because the compiler cannot statically guarantee the calculation for size to the constructor, if
+// the sizes are not equal.
+// tint::Copy could be used here and below to remove the need for a suppression here, but that
+// would be less performant and as well as just hiding the need for a suppression.
+TINT_BEGIN_DISABLE_WARNING(UNSAFE_BUFFER_USAGE_IN_CONTAINER);
 TINT_BEGIN_DISABLE_WARNING(UNSAFE_BUFFER_USAGE);
-size_t Encode(CodePoint code_point, uint8_t* ptr) {
+std::pair<CodePoint, size_t> Decode(std::span<const std::byte> buffer) {
+    TINT_ASSERT(buffer.data());
+    return Decode({reinterpret_cast<const uint8_t*>(buffer.data()),
+                   buffer.size() * sizeof(std::byte) / sizeof(uint8_t)});
+}
+TINT_END_DISABLE_WARNING(UNSAFE_BUFFER_USAGE);
+TINT_END_DISABLE_WARNING(UNSAFE_BUFFER_USAGE_IN_CONTAINER);
+
+// Converting the string_view to a span requires usage of the two-part span constructor which will
+// always trigger this warning.
+TINT_BEGIN_DISABLE_WARNING(UNSAFE_BUFFER_USAGE_IN_CONTAINER);
+std::pair<CodePoint, size_t> Decode(std::string_view utf8_string) {
+    TINT_ASSERT(utf8_string.data());
+    auto buf = std::span{utf8_string.data(), utf8_string.size()};
+    return Decode(std::as_bytes(buf));
+}
+TINT_END_DISABLE_WARNING(UNSAFE_BUFFER_USAGE_IN_CONTAINER);
+
+size_t Encode(CodePoint code_point, std::span<uint8_t> buffer) {
     if (code_point <= 0x7f) {
-        if (ptr) {
-            ptr[0] = static_cast<uint8_t>(code_point);
+        if (buffer.size() >= 1) {
+            buffer.first<1>()[0] = static_cast<uint8_t>(code_point);
         }
         return 1;
     }
     if (code_point <= 0x7ff) {
-        if (ptr) {
-            ptr[0] = static_cast<uint8_t>(code_point >> 6) | 0b11000000;
-            ptr[1] = static_cast<uint8_t>(code_point & 0b00111111) | 0b10000000;
+        if (buffer.size() >= 2) {
+            auto view = buffer.first<2>();
+            view[0] = static_cast<uint8_t>(code_point >> 6) | 0b11000000;
+            view[1] = static_cast<uint8_t>(code_point & 0b00111111) | 0b10000000;
         }
         return 2;
     }
     if (code_point <= 0xffff) {
-        if (ptr) {
-            ptr[0] = static_cast<uint8_t>(code_point >> 12) | 0b11100000;
-            ptr[1] = static_cast<uint8_t>((code_point >> 6) & 0b00111111) | 0b10000000;
-            ptr[2] = static_cast<uint8_t>(code_point & 0b00111111) | 0b10000000;
+        if (buffer.size() >= 3) {
+            auto view = buffer.first<3>();
+            view[0] = static_cast<uint8_t>(code_point >> 12) | 0b11100000;
+            view[1] = static_cast<uint8_t>((code_point >> 6) & 0b00111111) | 0b10000000;
+            view[2] = static_cast<uint8_t>(code_point & 0b00111111) | 0b10000000;
         }
         return 3;
     }
     if (code_point <= 0x10ffff) {
-        if (ptr) {
-            ptr[0] = static_cast<uint8_t>(code_point >> 18) | 0b11110000;
-            ptr[1] = static_cast<uint8_t>((code_point >> 12) & 0b00111111) | 0b10000000;
-            ptr[2] = static_cast<uint8_t>((code_point >> 6) & 0b00111111) | 0b10000000;
-            ptr[3] = static_cast<uint8_t>(code_point & 0b00111111) | 0b10000000;
+        if (buffer.size() >= 4) {
+            auto view = buffer.first<4>();
+            view[0] = static_cast<uint8_t>(code_point >> 18) | 0b11110000;
+            view[1] = static_cast<uint8_t>((code_point >> 12) & 0b00111111) | 0b10000000;
+            view[2] = static_cast<uint8_t>((code_point >> 6) & 0b00111111) | 0b10000000;
+            view[3] = static_cast<uint8_t>(code_point & 0b00111111) | 0b10000000;
         }
         return 4;
     }
     return 0;  // invalid code point
 }
-TINT_END_DISABLE_WARNING(UNSAFE_BUFFER_USAGE);
 
 bool IsASCII(std::string_view str) {
     for (auto c : str) {
@@ -486,54 +512,124 @@ bool IsASCII(std::string_view str) {
     return true;
 }
 
+bool IsIdentifier(std::string_view str) {
+    if (str.empty()) {
+        return false;
+    }
+    auto is_alpha_or_underscore = [](char c) {
+        return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_';
+    };
+    auto is_digit = [](char c) { return c >= '0' && c <= '9'; };
+    if (!is_alpha_or_underscore(str.front())) {
+        return false;
+    }
+    for (size_t i = 1; i < str.length(); i++) {
+        if (!is_alpha_or_underscore(str[i]) && !is_digit(str[i])) {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool IsWGSLIdentifier(std::string_view str) {
+    if (str.empty()) {
+        return false;
+    }
+
+    // Identifiers must not start with two or more underscores.
+    if (str.length() > 1 && str[0] == '_' && str[1] == '_') {
+        return false;
+    }
+
+    // Must begin with an XID_Source unicode character, or underscore
+    auto [first_cp, first_n] = Decode(str);
+    if (first_n == 0 || (first_cp != '_' && !first_cp.IsXIDStart())) {
+        return false;
+    }
+
+    // Must continue with an XID_Continue unicode character
+    str.remove_prefix(first_n);
+    while (!str.empty()) {
+        auto [cp, n] = Decode(str);
+        if (n == 0 || !cp.IsXIDContinue()) {
+            return false;
+        }
+        str.remove_prefix(n);
+    }
+
+    return true;
+}
+
 }  // namespace utf8
 
 namespace utf16 {
 
-// This is a C-style API that will always trigger -Wunsafe-buffer-usage
-TINT_BEGIN_DISABLE_WARNING(UNSAFE_BUFFER_USAGE);
-std::pair<CodePoint, size_t> Decode(const uint16_t* ptr, size_t len) {
-    if (len < 1) {
+std::pair<CodePoint, size_t> Decode(std::span<const uint16_t> buffer) {
+    if (buffer.empty()) {
         return {};
     }
-    uint16_t a = ptr[0];
+    uint16_t a = buffer.first<1>()[0];
     if (a <= 0xd7ff || a >= 0xe000) {
         return {CodePoint{static_cast<uint32_t>(a)}, 1};
     }
-    if (len < 2) {
+    if (buffer.size() < 2) {
         return {};
     }
-    uint32_t b = ptr[1];
+
+    const auto view = buffer.first<2>();
+    const uint32_t b = view[1];
     if (b <= 0xd7ff || b >= 0xe000) {
         return {};
     }
-    uint32_t high = a - 0xd800;
-    uint32_t low = b - 0xdc00;
+    const uint32_t high = a - 0xd800;
+    const uint32_t low = b - 0xdc00;
     return {CodePoint{0x10000 + ((high << 10) | low)}, 2};
 }
 
-std::pair<CodePoint, size_t> Decode(std::string_view utf16_string) {
-    return Decode(reinterpret_cast<const uint16_t*>(utf16_string.data()), utf16_string.size() / 2);
+// For most platforms sizeof(std::byte) != sizeof(uint16_t), so there needs to be a reinterpretation
+// here, which needs the two-part span constructor. This causes the IN_CONTAINER warning. The other
+// warning is because the compiler cannot statically guarantee the calculation for size to the
+// constructor.
+// tint::Copy could be used here and below to remove the need for a suppression here, but that
+// would be less performant and as well as just hiding the need for a suppression.
+TINT_BEGIN_DISABLE_WARNING(UNSAFE_BUFFER_USAGE_IN_CONTAINER);
+TINT_BEGIN_DISABLE_WARNING(UNSAFE_BUFFER_USAGE);
+std::pair<CodePoint, size_t> Decode(std::span<const std::byte> buffer) {
+    TINT_ASSERT(buffer.data());
+    return Decode({reinterpret_cast<const uint16_t*>(buffer.data()),
+                   buffer.size() * sizeof(std::byte) / sizeof(uint16_t)});
 }
+TINT_END_DISABLE_WARNING(UNSAFE_BUFFER_USAGE);
+TINT_END_DISABLE_WARNING(UNSAFE_BUFFER_USAGE_IN_CONTAINER);
 
-size_t Encode(CodePoint code_point, uint16_t* ptr) {
+// Converting the string_view to a span requires usage of the two-part span constructor which will
+// always trigger this warning.
+TINT_BEGIN_DISABLE_WARNING(UNSAFE_BUFFER_USAGE_IN_CONTAINER);
+std::pair<CodePoint, size_t> Decode(std::string_view utf16_string) {
+    TINT_ASSERT(utf16_string.data());
+    auto buf = std::span{utf16_string.data(), utf16_string.size()};
+    return Decode(std::as_bytes(buf));
+}
+TINT_END_DISABLE_WARNING(UNSAFE_BUFFER_USAGE_IN_CONTAINER);
+
+size_t Encode(CodePoint code_point, std::span<uint16_t> buffer) {
     if (code_point <= 0xd7ff || (code_point >= 0xe000 && code_point <= 0xffff)) {
-        if (ptr) {
-            ptr[0] = static_cast<uint16_t>(code_point);
+        if (buffer.size() >= 1) {
+            buffer.first<1>()[0] = static_cast<uint16_t>(code_point);
         }
         return 1;
     }
     if (code_point >= 0x10000 && code_point <= 0x10ffff) {
-        if (ptr) {
+        if (buffer.size() >= 2) {
+            auto view = buffer.first<2>();
             auto biased = code_point - 0x10000;
-            ptr[0] = static_cast<uint16_t>((biased >> 10) + 0xd800);
-            ptr[1] = static_cast<uint16_t>((biased & 0b1111111111) + 0xdc00);
+            view[0] = static_cast<uint16_t>((biased >> 10) + 0xd800);
+            view[1] = static_cast<uint16_t>((biased & 0b1111111111) + 0xdc00);
         }
         return 2;
     }
     return 0;  // invalid code point
 }
-TINT_END_DISABLE_WARNING(UNSAFE_BUFFER_USAGE);
 
 }  // namespace utf16
 }  // namespace tint

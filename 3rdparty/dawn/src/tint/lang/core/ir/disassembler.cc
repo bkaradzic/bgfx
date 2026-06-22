@@ -37,6 +37,7 @@
 #include "src/tint/lang/core/constant/scalar.h"
 #include "src/tint/lang/core/constant/splat.h"
 #include "src/tint/lang/core/constant/string.h"
+#include "src/tint/lang/core/intrinsic/table.h"
 #include "src/tint/lang/core/ir/binary.h"
 #include "src/tint/lang/core/ir/block.h"
 #include "src/tint/lang/core/ir/block_param.h"
@@ -109,6 +110,19 @@ class ScopedIndent {
 };
 
 }  // namespace
+
+// Static
+std::string Disassembler::Disassemble(const Module& mod, const Instruction* inst) {
+    if (!inst) {
+        return "undef";
+    }
+    Disassembler d(mod);
+    d.out_.Clear();
+    d.current_output_line_ = 1;
+    d.current_output_start_pos_ = 0;
+    d.EmitInstruction(inst);
+    return std::string(TrimSuffix(d.Plain(), "\n"));
+}
 
 Disassembler::Disassembler(Disassembler&&) = default;
 
@@ -543,7 +557,7 @@ void Disassembler::EmitInstruction(const Instruction* inst) {
                     if (i > 0) {
                         out_ << ", ";
                     }
-                    out_ << ep[i]->FriendlyName();
+                    out_ << ep[i];
                 }
                 out_ << ">";
             }
@@ -758,14 +772,26 @@ void Disassembler::EmitLoop(const Loop* l) {
     }
     out_ << StyleInstruction("loop") << " [";
 
-    if (l->Initializer() != nullptr && !l->Initializer()->IsEmpty()) {
+    auto is_printable = [](const Block* b) {
+        if (b == nullptr) {
+            return false;
+        }
+        if (!b->IsEmpty()) {
+            return true;
+        }
+
+        auto* mb = b->As<MultiInBlock>();
+        return (mb && !mb->Params().IsEmpty());
+    };
+
+    if (is_printable(l->Initializer())) {
         out_ << StyleKeyword("i") << ": " << NameOf(l->Initializer());
         out_ << ", ";
     }
 
     out_ << StyleKeyword("b") << ": " << NameOf(l->Body());
 
-    if (l->Continuing() != nullptr && !l->Continuing()->IsEmpty()) {
+    if (is_printable(l->Continuing())) {
         out_ << ", ";
         out_ << StyleKeyword("c") << ": " << NameOf(l->Continuing());
     }
@@ -776,7 +802,7 @@ void Disassembler::EmitLoop(const Loop* l) {
     out_ << " {  " << StyleComment("# ", NameOf(l));
     EmitLine();
 
-    if (l->Initializer() != nullptr && !l->Initializer()->IsEmpty()) {
+    if (is_printable(l->Initializer())) {
         ScopedIndent si(indent_size_);
         EmitBlock(l->Initializer(), "initializer");
     }
@@ -786,7 +812,7 @@ void Disassembler::EmitLoop(const Loop* l) {
         EmitBlock(l->Body(), "body");
     }
 
-    if (l->Continuing() != nullptr && !l->Continuing()->IsEmpty()) {
+    if (is_printable(l->Continuing())) {
         ScopedIndent si(indent_size_);
         EmitBlock(l->Continuing(), "continuing");
     }
@@ -1036,6 +1062,9 @@ StyledText Disassembler::NameOf(const core::type::Type* ty) {
                         const core::ir::type::ValueArrayCount* cnt) -> void {
         out << "array<" << ary->ElemType()->FriendlyName() << ", " << NameOf(cnt->value) << ">";
     };
+    auto buf_emit = [&](StyledText& out, const core::ir::type::ValueArrayCount* cnt) -> void {
+        out << "buffer<" << NameOf(cnt->value) << ">";
+    };
 
     if (auto* ptr = ty->As<core::type::Pointer>()) {
         if (auto* ary = ty->UnwrapPtr()->As<core::type::Array>()) {
@@ -1050,10 +1079,28 @@ StyledText Disassembler::NameOf(const core::type::Type* ty) {
                 return out;
             }
         }
+        if (auto* buf = ty->UnwrapPtr()->As<core::type::Buffer>()) {
+            if (auto* cnt = buf->Count()->As<core::ir::type::ValueArrayCount>()) {
+                auto out = StyledText{} << "ptr<";
+                if (ptr->AddressSpace() != core::AddressSpace::kUndefined) {
+                    out << ptr->AddressSpace() << ", ";
+                }
+                buf_emit(out, cnt);
+                out << ", " << ptr->Access() << ">";
+
+                return out;
+            }
+        }
     } else if (auto* ary = ty->UnwrapPtr()->As<core::type::Array>()) {
         if (auto* cnt = ary->Count()->As<core::ir::type::ValueArrayCount>()) {
             auto out = StyledText{};
             ary_emit(out, ary, cnt);
+            return out;
+        }
+    } else if (auto* buf = ty->UnwrapPtr()->As<core::type::Buffer>()) {
+        if (auto* cnt = buf->Count()->As<core::ir::type::ValueArrayCount>()) {
+            auto out = StyledText{};
+            buf_emit(out, cnt);
             return out;
         }
     }

@@ -28,17 +28,24 @@
 #ifndef SRC_TINT_LANG_SPIRV_VALIDATE_VALIDATE_H_
 #define SRC_TINT_LANG_SPIRV_VALIDATE_VALIDATE_H_
 
+#include <span>
+
 #include "spirv-tools/libspirv.hpp"
-#include "src/tint/utils/containers/slice.h"
 #include "src/tint/utils/result.h"
 
 namespace tint::spirv::validate {
 
+/// The options to pass to the validator.
+struct Options {
+    spv_target_env target_env = SPV_ENV_MAX;
+    bool uniform_buffer_standard_layout = false;
+};
+
 /// Validate checks that the provided SPIR-V passes validation.
 /// @param spirv the SPIR-V binary data
-/// @param target_env the target environment to validate against
+/// @param options the options to use when validating
 /// @return success or failure(s)
-Result<SuccessType> Validate(Slice<const uint32_t> spirv, spv_target_env target_env);
+Result<SuccessType> Validate(std::span<const uint32_t> spirv, const Options& options);
 
 }  // namespace tint::spirv::validate
 

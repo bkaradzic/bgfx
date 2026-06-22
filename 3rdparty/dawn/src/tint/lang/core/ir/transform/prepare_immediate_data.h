@@ -31,7 +31,7 @@
 #include <map>
 
 #include "src/tint/utils/containers/hashmap.h"
-#include "src/tint/utils/reflection.h"
+#include "src/tint/utils/reflection/reflection.h"
 #include "src/tint/utils/result.h"
 #include "src/tint/utils/symbol/symbol.h"
 
@@ -46,7 +46,7 @@ class Type;
 
 namespace tint::core::ir::transform {
 
-/// A descriptor for an internal immediate constant.
+/// A descriptor for an internal immediate.
 struct InternalImmediateData {
     Symbol name;
     const core::type::Type* type = nullptr;
@@ -93,7 +93,7 @@ struct PrepareImmediateDataConfig {
 /// data to combine both user-defined and internally used immediate data values.
 /// @param module the module to transform
 /// @param config the transform config
-/// @returns the generated immediate constant layout or failure
+/// @returns the generated immediate layout or failure
 Result<ImmediateDataLayout> PrepareImmediateData(Module& module,
                                                  const PrepareImmediateDataConfig& config);
 

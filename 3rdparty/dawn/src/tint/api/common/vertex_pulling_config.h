@@ -31,7 +31,7 @@
 #include <cstdint>
 #include <vector>
 
-#include "src/tint/utils/reflection.h"
+#include "src/tint/utils/reflection/reflection.h"
 
 namespace tint {
 
@@ -80,22 +80,174 @@ enum class VertexFormat : uint8_t {
     kUnorm8x4BGRA,     // unorm8x4-bgra
 };
 
+/// @param out the stream to write to
+/// @param format the vertex format
+/// @returns @p out so calls can be chained
+template <typename STREAM>
+    requires(traits::IsOStream<STREAM>)
+auto& operator<<(STREAM& out, VertexFormat format) {
+    switch (format) {
+        case VertexFormat::kUint8:
+            out << "uint8";
+            break;
+        case VertexFormat::kUint8x2:
+            out << "uint8x2";
+            break;
+        case VertexFormat::kUint8x4:
+            out << "uint8x4";
+            break;
+        case VertexFormat::kSint8:
+            out << "sint8";
+            break;
+        case VertexFormat::kSint8x2:
+            out << "sint8x2";
+            break;
+        case VertexFormat::kSint8x4:
+            out << "sint8x4";
+            break;
+        case VertexFormat::kUnorm8:
+            out << "unorm8";
+            break;
+        case VertexFormat::kUnorm8x2:
+            out << "unorm8x2";
+            break;
+        case VertexFormat::kUnorm8x4:
+            out << "unorm8x4";
+            break;
+        case VertexFormat::kSnorm8:
+            out << "snorm8";
+            break;
+        case VertexFormat::kSnorm8x2:
+            out << "snorm8x2";
+            break;
+        case VertexFormat::kSnorm8x4:
+            out << "snorm8x4";
+            break;
+        case VertexFormat::kUint16:
+            out << "uint16";
+            break;
+        case VertexFormat::kUint16x2:
+            out << "uint16x2";
+            break;
+        case VertexFormat::kUint16x4:
+            out << "uint16x4";
+            break;
+        case VertexFormat::kSint16:
+            out << "sint16";
+            break;
+        case VertexFormat::kSint16x2:
+            out << "sint16x2";
+            break;
+        case VertexFormat::kSint16x4:
+            out << "sint16x4";
+            break;
+        case VertexFormat::kUnorm16:
+            out << "unorm16";
+            break;
+        case VertexFormat::kUnorm16x2:
+            out << "unorm16x2";
+            break;
+        case VertexFormat::kUnorm16x4:
+            out << "unorm16x4";
+            break;
+        case VertexFormat::kSnorm16:
+            out << "snorm16";
+            break;
+        case VertexFormat::kSnorm16x2:
+            out << "snorm16x2";
+            break;
+        case VertexFormat::kSnorm16x4:
+            out << "snorm16x4";
+            break;
+        case VertexFormat::kFloat16:
+            out << "float16";
+            break;
+        case VertexFormat::kFloat16x2:
+            out << "float16x2";
+            break;
+        case VertexFormat::kFloat16x4:
+            out << "float16x4";
+            break;
+        case VertexFormat::kFloat32:
+            out << "float32";
+            break;
+        case VertexFormat::kFloat32x2:
+            out << "float32x2";
+            break;
+        case VertexFormat::kFloat32x3:
+            out << "float32x3";
+            break;
+        case VertexFormat::kFloat32x4:
+            out << "float32x4";
+            break;
+        case VertexFormat::kUint32:
+            out << "uint32";
+            break;
+        case VertexFormat::kUint32x2:
+            out << "uint32x2";
+            break;
+        case VertexFormat::kUint32x3:
+            out << "uint32x3";
+            break;
+        case VertexFormat::kUint32x4:
+            out << "uint32x4";
+            break;
+        case VertexFormat::kSint32:
+            out << "sint32";
+            break;
+        case VertexFormat::kSint32x2:
+            out << "sint32x2";
+            break;
+        case VertexFormat::kSint32x3:
+            out << "sint32x3";
+            break;
+        case VertexFormat::kSint32x4:
+            out << "sint32x4";
+            break;
+        case VertexFormat::kUnorm10_10_10_2:
+            out << "unorm10_10_10_2";
+            break;
+        case VertexFormat::kUnorm8x4BGRA:
+            out << "unorm8x4BGRA";
+            break;
+    }
+    return out;
+}
+
 /// Describes if a vertex attribute increments with vertex index or instance index.
 enum class VertexStepMode : uint8_t { kVertex, kInstance };
+
+/// @param out the stream to write to
+/// @param mode the step mode
+/// @returns @p out so calls can be chained
+template <typename STREAM>
+    requires(traits::IsOStream<STREAM>)
+auto& operator<<(STREAM& out, VertexStepMode mode) {
+    switch (mode) {
+        case VertexStepMode::kVertex:
+            out << "vertex";
+            break;
+        case VertexStepMode::kInstance:
+            out << "instance";
+            break;
+    }
+    return out;
+}
 
 /// Describes a vertex attribute within a buffer
 struct VertexAttributeDescriptor {
     /// The format of the attribute.
-    VertexFormat format;
+    VertexFormat format = VertexFormat::kUint8;
     /// The byte offset of the attribute in the buffer.
-    uint32_t offset;
+    uint32_t offset = 0;
     /// The shader location used for the attribute.
-    uint32_t shader_location;
+    uint32_t shader_location = 0;
 
     /// Reflect the fields of this class so that it can be used by tint::ForeachField()
     TINT_REFLECT(VertexAttributeDescriptor, format, offset, shader_location);
-    TINT_REFLECT_EQUALS(VertexAttributeDescriptor);
     TINT_REFLECT_HASH_CODE(VertexAttributeDescriptor);
+
+    bool operator==(const VertexAttributeDescriptor&) const = default;
 };
 
 /// Describes a buffer containing multiple vertex attributes
@@ -118,8 +270,9 @@ struct VertexBufferLayoutDescriptor {
 
     /// Reflect the fields of this class so that it can be used by tint::ForeachField()
     TINT_REFLECT(VertexBufferLayoutDescriptor, array_stride, step_mode, attributes);
-    TINT_REFLECT_EQUALS(VertexBufferLayoutDescriptor);
     TINT_REFLECT_HASH_CODE(VertexBufferLayoutDescriptor);
+
+    bool operator==(const VertexBufferLayoutDescriptor&) const = default;
 };
 
 /// Configuration options that control the vertex pulling transform.
@@ -133,12 +286,13 @@ struct VertexPullingConfig {
 
     /// Reflect the fields of this class so that it can be used by tint::ForeachField()
     TINT_REFLECT(VertexPullingConfig, vertex_state, pulling_group);
-    TINT_REFLECT_EQUALS(VertexPullingConfig);
     TINT_REFLECT_HASH_CODE(VertexPullingConfig);
+
+    bool operator==(const VertexPullingConfig&) const = default;
 };
 
 /// Reflection for VertexFormat.
-TINT_REFLECT_ENUM_RANGE(tint::VertexFormat, kUint8x2, kUnorm8x4BGRA);
+TINT_REFLECT_ENUM_RANGE(tint::VertexFormat, kUint8, kUnorm8x4BGRA);
 
 /// Reflection for VertexStepMode.
 TINT_REFLECT_ENUM_RANGE(tint::VertexStepMode, kVertex, kInstance);

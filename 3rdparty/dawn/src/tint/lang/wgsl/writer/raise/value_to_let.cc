@@ -178,6 +178,7 @@ struct State {
         }
 
         if (!value->IsUsed() && !ir.NameOf(value).IsValid()) {
+            ir.properties.Add(core::ir::Property::kAllowPhonyInstructions);
             auto* phony = b.Phony(value);
             phony->InsertAfter(inst);
             return;
@@ -197,13 +198,7 @@ struct State {
 }  // namespace
 
 Result<SuccessType> ValueToLet(core::ir::Module& ir) {
-    TINT_CHECK_RESULT(
-        core::ir::ValidateBeforeIfNeeded(ir,
-                                         core::ir::Capabilities{
-                                             core::ir::Capability::kAllowMultipleEntryPoints,
-                                             core::ir::Capability::kAllowOverrides,
-                                         },
-                                         "wgsl.ValueToLet"));
+    core::ir::AssertValid(ir, "before wgsl.ValueToLet");
 
     State{ir}.Process();
 

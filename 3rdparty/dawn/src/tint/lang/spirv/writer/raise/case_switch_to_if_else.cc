@@ -30,33 +30,21 @@
 #include <algorithm>
 #include <cstdint>
 #include <limits>
-#include <utility>
 
 #include "src/tint/lang/core/ir/builder.h"
-#include "src/tint/lang/core/ir/control_instruction.h"
 #include "src/tint/lang/core/ir/exit_switch.h"
 #include "src/tint/lang/core/ir/if.h"
 #include "src/tint/lang/core/ir/instruction.h"
 #include "src/tint/lang/core/ir/module.h"
 #include "src/tint/lang/core/ir/switch.h"
-#include "src/tint/lang/core/ir/traverse.h"
 #include "src/tint/lang/core/ir/validator.h"
 #include "src/tint/lang/core/ir/value.h"
-#include "src/tint/lang/core/unary_op.h"
-#include "src/tint/lang/wgsl/ast/case_selector.h"
-#include "src/tint/utils/containers/transform.h"
 
 using namespace tint::core::fluent_types;  // NOLINT
 
 namespace tint::spirv::writer::raise {
 
 namespace {
-
-const core::ir::Capabilities kCaseSwitchToIfElseCapabilities{
-    core::ir::Capability::kAllowDuplicateBindings,
-    core::ir::Capability::kAllowAnyInputAttachmentIndexType,
-    core::ir::Capability::kAllowNonCoreTypes,
-};
 
 /// PIMPL state for the transform, for a single function.
 struct State {
@@ -153,8 +141,7 @@ struct State {
 }  // namespace
 
 Result<SuccessType> CaseSwitchToIfElse(core::ir::Module& ir) {
-    TINT_CHECK_RESULT(core::ir::ValidateBeforeIfNeeded(ir, kCaseSwitchToIfElseCapabilities,
-                                                       "spirv.CaseSwitchToIfElse"));
+    core::ir::AssertValid(ir, "before spirv.CaseSwitchToIfElse");
 
     State{ir}.Process();
 

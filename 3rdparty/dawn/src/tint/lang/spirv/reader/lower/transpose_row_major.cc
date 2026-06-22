@@ -27,6 +27,7 @@
 
 #include "src/tint/lang/spirv/reader/lower/transpose_row_major.h"
 
+#include <unordered_set>
 #include <utility>
 
 #include "src/tint/lang/core/ir/builder.h"
@@ -44,18 +45,10 @@ constexpr std::string_view kTintLoadRowMajor = "tint_load_row_major_column";
 constexpr std::string_view kTintTransposeRowMajorArray = "tint_transpose_row_major_array";
 constexpr std::string_view kTintStoreRowMajor = "tint_store_row_major_column";
 
-/// PIMPL state for the transform.
 struct State {
-    /// The IR module.
     core::ir::Module& ir;
-
-    /// The IR builder.
     core::ir::Builder b{ir};
-
-    /// The type manager.
     core::type::Manager& ty{ir.Types()};
-
-    /// The symbol manager.
     SymbolTable& sym{ir.symbols};
 
     // A map from a (type, is_row_major) pair to it's replacement (which maybe the same as the
@@ -92,6 +85,9 @@ struct State {
 
     /// Instructions which have been processed
     Hashset<core::ir::InstructionResult*, 32> processed_instructions{};
+
+    /// Results with the type replaced
+    std::unordered_set<core::ir::Value*> replaced_result_types{};
 
     /// Process the module.
     void Process() {
@@ -180,18 +176,26 @@ struct State {
             return;
         }
 
+        const core::type::Struct* new_struct_ty =
+            RewriteType(struct_type, false)->As<core::type::Struct>();
+
+        const core::type::Struct* original_ty = struct_to_original.GetOr(new_struct_ty, nullptr);
+        if (original_ty == nullptr) {
+            return;
+        }
+
         b.InsertBefore(construct, [&] {
             Vector<core::ir::Value*, 8> new_operands;
             for (uint32_t i = 0; i < construct->Operands().Length(); i++) {
                 auto* operand = construct->Operands()[i];
-                auto* member_type = struct_type->Members()[i]->Type();
-                if (member_type != operand->Type()) {
+                auto* member_type = original_ty->Members()[i]->Type();
+                if (member_type != operand->Type() || original_ty->Members()[i]->RowMajor()) {
                     tint::Switch(
                         member_type,
                         [&](const core::type::Matrix*) {
-                            new_operands.Push(
-                                b.Call(member_type, core::BuiltinFn::kTranspose, operand)
-                                    ->Result());
+                            new_operands.Push(b.Call(new_struct_ty->Members()[i]->Type(),
+                                                     core::BuiltinFn::kTranspose, operand)
+                                                  ->Result());
                         },
                         [&](const core::type::Array*) {
                             // TODO(437140112): Add support for arrays of matrices
@@ -279,7 +283,7 @@ struct State {
         const core::type::Matrix* mat_ty = nullptr;
         auto indices = access->Indices();
         int32_t matrix_index = -1;
-        for (uint32_t i = 0; i < indices.Length(); ++i) {
+        for (uint32_t i = 0; i < indices.size(); ++i) {
             auto* idx = indices[i];
 
             if (auto* struct_ty = cur_ty->As<core::type::Struct>()) {
@@ -321,7 +325,8 @@ struct State {
         }
 
         // The thing we're accessing has changed, so we need to change.
-        if (!indexed_through_row_major && cur_ty != access->Result()->Type()->UnwrapPtr()) {
+        if (!indexed_through_row_major && (replaced_result_types.contains(access->Object()) ||
+                                           cur_ty != access->Result()->Type()->UnwrapPtr())) {
             ReplacePointerAccess(access, parent_ty, cur_ty);
             return;
         }
@@ -345,15 +350,16 @@ struct State {
         // This isn't a pointer access, so we'll just split the access in half, transpose the
         // matrix itself and then access that matrix with the rest of the expression.
 
-        Vector<core::ir::Value*, 4> mat_indices = indices.Truncate(size_t(matrix_index) + 1);
+        auto mat_indices =
+            Vector<core::ir::Value*, 4>{indices.subspan(0, static_cast<size_t>(matrix_index) + 1)};
 
         b.InsertBefore(access, [&] {
             auto* m = b.Access(mat_ty, access->Object(), mat_indices);
             auto* t = b.Call(RewriteType(mat_ty, true), core::BuiltinFn::kTranspose, m)->Result();
 
-            if (uint32_t(matrix_index) != indices.Length() - 1) {
-                Vector<core::ir::Value*, 4> access_indices =
-                    indices.Offset(size_t(matrix_index) + 1);
+            if (static_cast<uint32_t>(matrix_index) != indices.size() - 1) {
+                auto access_indices = Vector<core::ir::Value*, 4>{
+                    indices.subspan(static_cast<size_t>(matrix_index) + 1)};
                 b.AccessWithResult(access->DetachResult(), t, access_indices)->Result();
             } else {
                 access->Result()->ReplaceAllUsesWith(t);
@@ -369,10 +375,9 @@ struct State {
         // the access result type, and if changed, update the uses of this access
         if (cur_ty->Is<core::type::Matrix>() || cur_ty->Is<core::type::Array>()) {
             auto* new_access_ty = RewriteType(access->Result()->Type(), true);
-            if (new_access_ty != access->Result()->Type()) {
-                access->Result()->SetType(new_access_ty);
-                results_to_update.Push(access->Result());
-            }
+            access->Result()->SetType(new_access_ty);
+            replaced_result_types.insert(access->Result());
+            results_to_update.Push(access->Result());
             return;
         }
 
@@ -389,6 +394,7 @@ struct State {
                 new_access_ty = ty.ptr(access_ptr->AddressSpace(), parent_ty, access_ptr->Access());
             }
             access->Result()->SetType(new_access_ty);
+            replaced_result_types.insert(access->Result());
 
             access_to_vector_index.Add(access->Result(), idx);
             results_to_update.Push(access->Result());
@@ -633,7 +639,7 @@ struct State {
 
     const core::type::Type* RewriteArray(const core::type::Array* arr, bool decorated_row_major) {
         auto* elem_ty = RewriteType(arr->ElemType(), decorated_row_major);
-        if (elem_ty == arr->ElemType()) {
+        if (!decorated_row_major && elem_ty == arr->ElemType()) {
             return arr;
         }
 
@@ -683,7 +689,7 @@ struct State {
                                                  bool is_row_major) {
         auto* orig_type = constant->Type();
         auto* new_type = RewriteType(orig_type, is_row_major);
-        if (new_type == orig_type) {
+        if (!is_row_major && new_type == orig_type) {
             return constant;
         }
 
@@ -728,6 +734,11 @@ struct State {
             [&](const core::type::Struct* str) {
                 TINT_ASSERT(constant->NumElements() == str->Members().Length());
 
+                auto* original_ty = struct_to_original.GetOr(str, nullptr);
+                if (original_ty == nullptr) {
+                    return constant;
+                }
+
                 Vector<const core::constant::Value*, 16> elements;
                 elements.Reserve(str->Members().Length());
 
@@ -740,7 +751,7 @@ struct State {
                     auto* value = constant->Index(i);
 
                     auto* new_member_type = new_mem->Type();
-                    if (new_member_type != value->Type()) {
+                    if (new_member_type != value->Type() || original_ty->Members()[i]->RowMajor()) {
                         elements.Push(RewriteConstant(value, orig_mem->RowMajor()));
                     } else {
                         elements.Push(value);
@@ -755,16 +766,7 @@ struct State {
 }  // namespace
 
 Result<SuccessType> TransposeRowMajor(core::ir::Module& ir) {
-    TINT_CHECK_RESULT(
-        ValidateBeforeIfNeeded(ir,
-                               core::ir::Capabilities{
-                                   core::ir::Capability::kAllowMultipleEntryPoints,
-                                   core::ir::Capability::kAllowStructMatrixDecorations,
-                                   core::ir::Capability::kAllowNonCoreTypes,
-                                   core::ir::Capability::kAllowOverrides,
-                                   core::ir::Capability::kAllowPointerToHandle,
-                               },
-                               "spirv.TransposeRowMajor"));
+    AssertValid(ir, "before spirv.TransposeRowMajor");
 
     State{ir}.Process();
 

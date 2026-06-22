@@ -33,9 +33,9 @@
 #include "src/tint/lang/core/constant/scalar.h"  // IWYU pragma: export
 #include "src/tint/lang/core/constant/splat.h"   // IWYU pragma: export
 #include "src/tint/lang/core/ir/access.h"
-#include "src/tint/lang/core/ir/bitcast.h"
 #include "src/tint/lang/core/ir/block_param.h"
 #include "src/tint/lang/core/ir/break_if.h"
+#include "src/tint/lang/core/ir/builtin_call.h"
 #include "src/tint/lang/core/ir/constant.h"
 #include "src/tint/lang/core/ir/constexpr_if.h"
 #include "src/tint/lang/core/ir/construct.h"
@@ -584,10 +584,10 @@ class Builder {
     }
 
     template <typename T>
-    auto Values(tint::Slice<T>&&) {
+    auto Values(std::span<T>&&) {
         static_assert(sizeof(T) != sizeof(T),  // Condition must be type-dependent
-                      "Cannot construct a Vector from a Slice as the size is not known at "
-                      "compile-time. Use ToVector<N>(Slice&&) instead.");
+                      "Cannot construct a Vector from a span as the size is not known at "
+                      "compile-time. Use ToVector<N>(span&&) instead.");
     }
 
     /// Overload for Values() with tint::Empty argument
@@ -666,12 +666,13 @@ class Builder {
         return Append(ir.CreateInstruction<KLASS>(result, op, lhs_val, rhs_val));
     }
 
-    /// Creates an And operation
+    /// Creates Binary operation
+    /// @parm op the operator
     /// @param lhs the lhs of the add
     /// @param rhs the rhs of the add
     /// @returns the operation
     template <typename LHS, typename RHS>
-    ir::CoreBinary* And(LHS&& lhs, RHS&& rhs) {
+    ir::CoreBinary* BinaryWithLHSType(BinaryOp op, LHS&& lhs, RHS&& rhs) {
         CheckForNonDeterministicEvaluation<LHS, RHS>();
         auto* lhs_value = Value(std::forward<LHS>(lhs));
         auto* rhs_value = Value(std::forward<RHS>(rhs));
@@ -679,8 +680,17 @@ class Builder {
         TINT_ASSERT(rhs_value);
         TINT_ASSERT(lhs_value->Type() == rhs_value->Type());
 
-        return Append(ir.CreateInstruction<ir::CoreBinary>(InstructionResult(lhs_value->Type()),
-                                                           BinaryOp::kAnd, lhs_value, rhs_value));
+        return Append(ir.CreateInstruction<ir::CoreBinary>(InstructionResult(lhs_value->Type()), op,
+                                                           lhs_value, rhs_value));
+    }
+
+    /// Creates an And operation
+    /// @param lhs the lhs of the add
+    /// @param rhs the rhs of the add
+    /// @returns the operation
+    template <typename LHS, typename RHS>
+    ir::CoreBinary* And(LHS&& lhs, RHS&& rhs) {
+        return BinaryWithLHSType(BinaryOp::kAnd, std::forward<LHS>(lhs), std::forward<RHS>(rhs));
     }
 
     /// Creates an Or operation
@@ -689,15 +699,7 @@ class Builder {
     /// @returns the operation
     template <typename LHS, typename RHS>
     ir::CoreBinary* Or(LHS&& lhs, RHS&& rhs) {
-        CheckForNonDeterministicEvaluation<LHS, RHS>();
-        auto* lhs_value = Value(std::forward<LHS>(lhs));
-        auto* rhs_value = Value(std::forward<RHS>(rhs));
-        TINT_ASSERT(lhs_value);
-        TINT_ASSERT(rhs_value);
-        TINT_ASSERT(lhs_value->Type() == rhs_value->Type());
-
-        return Append(ir.CreateInstruction<ir::CoreBinary>(InstructionResult(lhs_value->Type()),
-                                                           BinaryOp::kOr, lhs_value, rhs_value));
+        return BinaryWithLHSType(BinaryOp::kOr, std::forward<LHS>(lhs), std::forward<RHS>(rhs));
     }
 
     /// Creates an Xor operation
@@ -706,15 +708,24 @@ class Builder {
     /// @returns the operation
     template <typename LHS, typename RHS>
     ir::CoreBinary* Xor(LHS&& lhs, RHS&& rhs) {
+        return BinaryWithLHSType(BinaryOp::kXor, std::forward<LHS>(lhs), std::forward<RHS>(rhs));
+    }
+
+    /// Creates a Binary op
+    /// @param op the operator
+    /// @param lhs the lhs of the add
+    /// @param rhs the rhs of the add
+    /// @returns the operation
+    template <typename LHS, typename RHS>
+    ir::CoreBinary* BinaryWithBoolType(BinaryOp op, LHS&& lhs, RHS&& rhs) {
         CheckForNonDeterministicEvaluation<LHS, RHS>();
         auto* lhs_value = Value(std::forward<LHS>(lhs));
         auto* rhs_value = Value(std::forward<RHS>(rhs));
         TINT_ASSERT(lhs_value);
         TINT_ASSERT(rhs_value);
-        TINT_ASSERT(lhs_value->Type() == rhs_value->Type());
-
-        return Append(ir.CreateInstruction<ir::CoreBinary>(InstructionResult(lhs_value->Type()),
-                                                           BinaryOp::kXor, lhs_value, rhs_value));
+        auto* type = ir.Types().MatchWidth(ir.Types().bool_(), lhs_value->Type());
+        return Append(ir.CreateInstruction<ir::CoreBinary>(InstructionResult(type), op, lhs_value,
+                                                           rhs_value));
     }
 
     /// Creates an Equal operation
@@ -723,13 +734,7 @@ class Builder {
     /// @returns the operation
     template <typename LHS, typename RHS>
     ir::CoreBinary* Equal(LHS&& lhs, RHS&& rhs) {
-        auto* lhs_value = Value(std::forward<LHS>(lhs));
-        auto* rhs_value = Value(std::forward<RHS>(rhs));
-        TINT_ASSERT(lhs_value);
-        TINT_ASSERT(rhs_value);
-        auto* type = ir.Types().MatchWidth(ir.Types().bool_(), lhs_value->Type());
-        return Append(ir.CreateInstruction<ir::CoreBinary>(InstructionResult(type),
-                                                           BinaryOp::kEqual, lhs_value, rhs_value));
+        return BinaryWithBoolType(BinaryOp::kEqual, std::forward<LHS>(lhs), std::forward<RHS>(rhs));
     }
 
     /// Creates an NotEqual operation
@@ -738,13 +743,8 @@ class Builder {
     /// @returns the operation
     template <typename LHS, typename RHS>
     ir::CoreBinary* NotEqual(LHS&& lhs, RHS&& rhs) {
-        auto* lhs_value = Value(std::forward<LHS>(lhs));
-        auto* rhs_value = Value(std::forward<RHS>(rhs));
-        TINT_ASSERT(lhs_value);
-        TINT_ASSERT(rhs_value);
-        auto* type = ir.Types().MatchWidth(ir.Types().bool_(), lhs_value->Type());
-        return Append(ir.CreateInstruction<ir::CoreBinary>(
-            InstructionResult(type), BinaryOp::kNotEqual, lhs_value, rhs_value));
+        return BinaryWithBoolType(BinaryOp::kNotEqual, std::forward<LHS>(lhs),
+                                  std::forward<RHS>(rhs));
     }
 
     /// Creates an LessThan operation
@@ -753,13 +753,8 @@ class Builder {
     /// @returns the operation
     template <typename LHS, typename RHS>
     ir::CoreBinary* LessThan(LHS&& lhs, RHS&& rhs) {
-        auto* lhs_value = Value(std::forward<LHS>(lhs));
-        auto* rhs_value = Value(std::forward<RHS>(rhs));
-        TINT_ASSERT(lhs_value);
-        TINT_ASSERT(rhs_value);
-        auto* type = ir.Types().MatchWidth(ir.Types().bool_(), lhs_value->Type());
-        return Append(ir.CreateInstruction<ir::CoreBinary>(
-            InstructionResult(type), BinaryOp::kLessThan, lhs_value, rhs_value));
+        return BinaryWithBoolType(BinaryOp::kLessThan, std::forward<LHS>(lhs),
+                                  std::forward<RHS>(rhs));
     }
 
     /// Creates an LessThan operation
@@ -768,13 +763,8 @@ class Builder {
     /// @returns the operation
     template <typename LHS, typename RHS>
     ir::CoreBinary* GreaterThan(LHS&& lhs, RHS&& rhs) {
-        auto* lhs_value = Value(std::forward<LHS>(lhs));
-        auto* rhs_value = Value(std::forward<RHS>(rhs));
-        TINT_ASSERT(lhs_value);
-        TINT_ASSERT(rhs_value);
-        auto* type = ir.Types().MatchWidth(ir.Types().bool_(), lhs_value->Type());
-        return Append(ir.CreateInstruction<ir::CoreBinary>(
-            InstructionResult(type), BinaryOp::kGreaterThan, lhs_value, rhs_value));
+        return BinaryWithBoolType(BinaryOp::kGreaterThan, std::forward<LHS>(lhs),
+                                  std::forward<RHS>(rhs));
     }
 
     /// Creates an LessThanEqual operation
@@ -783,13 +773,8 @@ class Builder {
     /// @returns the operation
     template <typename LHS, typename RHS>
     ir::CoreBinary* LessThanEqual(LHS&& lhs, RHS&& rhs) {
-        auto* lhs_value = Value(std::forward<LHS>(lhs));
-        auto* rhs_value = Value(std::forward<RHS>(rhs));
-        TINT_ASSERT(lhs_value);
-        TINT_ASSERT(rhs_value);
-        auto* type = ir.Types().MatchWidth(ir.Types().bool_(), lhs_value->Type());
-        return Append(ir.CreateInstruction<ir::CoreBinary>(
-            InstructionResult(type), BinaryOp::kLessThanEqual, lhs_value, rhs_value));
+        return BinaryWithBoolType(BinaryOp::kLessThanEqual, std::forward<LHS>(lhs),
+                                  std::forward<RHS>(rhs));
     }
 
     /// Creates an GreaterThanEqual operation
@@ -798,13 +783,8 @@ class Builder {
     /// @returns the operation
     template <typename LHS, typename RHS>
     ir::CoreBinary* GreaterThanEqual(LHS&& lhs, RHS&& rhs) {
-        auto* lhs_value = Value(std::forward<LHS>(lhs));
-        auto* rhs_value = Value(std::forward<RHS>(rhs));
-        TINT_ASSERT(lhs_value);
-        TINT_ASSERT(rhs_value);
-        auto* type = ir.Types().MatchWidth(ir.Types().bool_(), lhs_value->Type());
-        return Append(ir.CreateInstruction<ir::CoreBinary>(
-            InstructionResult(type), BinaryOp::kGreaterThanEqual, lhs_value, rhs_value));
+        return BinaryWithBoolType(BinaryOp::kGreaterThanEqual, std::forward<LHS>(lhs),
+                                  std::forward<RHS>(rhs));
     }
 
     /// Creates an ShiftLeft operation
@@ -837,12 +817,12 @@ class Builder {
             InstructionResult(lhs_value->Type()), BinaryOp::kShiftRight, lhs_value, rhs_value));
     }
 
-    /// Creates an Add operation
+    /// Creates a binary expression with a computed type
     /// @param lhs the lhs of the add
     /// @param rhs the rhs of the add
     /// @returns the operation
     template <typename LHS, typename RHS>
-    ir::CoreBinary* Add(LHS&& lhs, RHS&& rhs) {
+    ir::CoreBinary* BinaryWithComputedType(BinaryOp op, LHS&& lhs, RHS&& rhs) {
         CheckForNonDeterministicEvaluation<LHS, RHS>();
         auto* lhs_value = Value(std::forward<LHS>(lhs));
         auto* rhs_value = Value(std::forward<RHS>(rhs));
@@ -865,8 +845,18 @@ class Builder {
             result_type = lhs_type;
         }
 
-        return Append(ir.CreateInstruction<ir::CoreBinary>(InstructionResult(result_type),
-                                                           BinaryOp::kAdd, lhs_value, rhs_value));
+        return Append(ir.CreateInstruction<ir::CoreBinary>(InstructionResult(result_type), op,
+                                                           lhs_value, rhs_value));
+    }
+
+    /// Creates an Add operation
+    /// @param lhs the lhs of the add
+    /// @param rhs the rhs of the add
+    /// @returns the operation
+    template <typename LHS, typename RHS>
+    ir::CoreBinary* Add(LHS&& lhs, RHS&& rhs) {
+        return BinaryWithComputedType(BinaryOp::kAdd, std::forward<LHS>(lhs),
+                                      std::forward<RHS>(rhs));
     }
 
     /// Creates an Add operation
@@ -886,30 +876,8 @@ class Builder {
     /// @returns the operation
     template <typename LHS, typename RHS>
     ir::CoreBinary* Subtract(LHS&& lhs, RHS&& rhs) {
-        CheckForNonDeterministicEvaluation<LHS, RHS>();
-        auto* lhs_value = Value(std::forward<LHS>(lhs));
-        auto* rhs_value = Value(std::forward<RHS>(rhs));
-        TINT_ASSERT(lhs_value);
-        TINT_ASSERT(rhs_value);
-
-        auto* lhs_type = lhs_value->Type();
-        auto* rhs_type = rhs_value->Type();
-
-        const core::type::Type* result_type = nullptr;
-        if (lhs_type->template Is<core::type::Matrix>()) {
-            result_type = lhs_type;
-        } else if (rhs_type->template Is<core::type::Matrix>()) {
-            result_type = rhs_type;
-        } else if (lhs_type->template Is<core::type::Vector>()) {
-            result_type = lhs_type;
-        } else if (rhs_type->template Is<core::type::Vector>()) {
-            result_type = rhs_type;
-        } else {
-            result_type = lhs_type;
-        }
-
-        return Append(ir.CreateInstruction<ir::CoreBinary>(
-            InstructionResult(result_type), BinaryOp::kSubtract, lhs_value, rhs_value));
+        return BinaryWithComputedType(BinaryOp::kSubtract, std::forward<LHS>(lhs),
+                                      std::forward<RHS>(rhs));
     }
 
     /// Creates an Multiply operation
@@ -964,30 +932,8 @@ class Builder {
     /// @returns the operation
     template <typename LHS, typename RHS>
     ir::CoreBinary* Divide(LHS&& lhs, RHS&& rhs) {
-        CheckForNonDeterministicEvaluation<LHS, RHS>();
-        auto* lhs_value = Value(std::forward<LHS>(lhs));
-        auto* rhs_value = Value(std::forward<RHS>(rhs));
-        TINT_ASSERT(lhs_value);
-        TINT_ASSERT(rhs_value);
-
-        auto* lhs_type = lhs_value->Type();
-        auto* rhs_type = rhs_value->Type();
-
-        const core::type::Type* result_type = nullptr;
-        if (lhs_type->template Is<core::type::Matrix>()) {
-            result_type = lhs_type;
-        } else if (rhs_type->template Is<core::type::Matrix>()) {
-            result_type = rhs_type;
-        } else if (lhs_type->template Is<core::type::Vector>()) {
-            result_type = lhs_type;
-        } else if (rhs_type->template Is<core::type::Vector>()) {
-            result_type = rhs_type;
-        } else {
-            result_type = lhs_type;
-        }
-
-        return Append(ir.CreateInstruction<ir::CoreBinary>(
-            InstructionResult(result_type), BinaryOp::kDivide, lhs_value, rhs_value));
+        return BinaryWithComputedType(BinaryOp::kDivide, std::forward<LHS>(lhs),
+                                      std::forward<RHS>(rhs));
     }
 
     /// Creates an Modulo operation
@@ -996,30 +942,8 @@ class Builder {
     /// @returns the operation
     template <typename LHS, typename RHS>
     ir::CoreBinary* Modulo(LHS&& lhs, RHS&& rhs) {
-        CheckForNonDeterministicEvaluation<LHS, RHS>();
-        auto* lhs_value = Value(std::forward<LHS>(lhs));
-        auto* rhs_value = Value(std::forward<RHS>(rhs));
-        TINT_ASSERT(lhs_value);
-        TINT_ASSERT(rhs_value);
-
-        auto* lhs_type = lhs_value->Type();
-        auto* rhs_type = rhs_value->Type();
-
-        const core::type::Type* result_type = nullptr;
-        if (lhs_type->template Is<core::type::Matrix>()) {
-            result_type = lhs_type;
-        } else if (rhs_type->template Is<core::type::Matrix>()) {
-            result_type = rhs_type;
-        } else if (lhs_type->template Is<core::type::Vector>()) {
-            result_type = lhs_type;
-        } else if (rhs_type->template Is<core::type::Vector>()) {
-            result_type = rhs_type;
-        } else {
-            result_type = lhs_type;
-        }
-
-        return Append(ir.CreateInstruction<ir::CoreBinary>(
-            InstructionResult(result_type), BinaryOp::kModulo, lhs_value, rhs_value));
+        return BinaryWithComputedType(BinaryOp::kModulo, std::forward<LHS>(lhs),
+                                      std::forward<RHS>(rhs));
     }
 
     /// Creates a Min operation
@@ -1114,9 +1038,10 @@ class Builder {
     /// @param val the value being bitcast
     /// @returns the instruction
     template <typename VAL>
-    ir::Bitcast* Bitcast(const core::type::Type* type, VAL&& val) {
-        auto* value = Value(std::forward<VAL>(val));
-        return Append(ir.CreateInstruction<ir::Bitcast>(InstructionResult(type), value));
+    ir::CoreBuiltinCall* Bitcast(const core::type::Type* type, VAL&& val) {
+        return CallExplicit(type, core::BuiltinFn::kBitcast,
+                            Vector<core::ir::TemplateParameter, 1>{type},
+                            Vector{Value(std::forward<VAL>(val))});
     }
 
     /// Creates a bitcast instruction
@@ -1124,7 +1049,7 @@ class Builder {
     /// @param val the value being bitcast
     /// @returns the instruction
     template <typename TYPE, typename VAL>
-    ir::Bitcast* Bitcast(VAL&& val) {
+    ir::CoreBuiltinCall* Bitcast(VAL&& val) {
         auto* type = ir.Types().Get<TYPE>();
         auto* value = Value(std::forward<VAL>(val));
         return Bitcast(type, value);
@@ -1135,8 +1060,11 @@ class Builder {
     /// @param val the value being bitcast
     /// @returns the instruction
     template <typename VAL>
-    ir::Bitcast* BitcastWithResult(ir::InstructionResult* result, VAL&& val) {
-        return Append(ir.CreateInstruction<ir::Bitcast>(result, val));
+    ir::CoreBuiltinCall* BitcastWithResult(ir::InstructionResult* result, VAL&& val) {
+        return CallExplicitWithResult<ir::CoreBuiltinCall>(
+            result, core::BuiltinFn::kBitcast,
+            Vector<core::ir::TemplateParameter, 1>{result->Type()},
+            Vector{Value(std::forward<VAL>(val))});
     }
 
     /// Creates a discard instruction
@@ -1230,7 +1158,7 @@ class Builder {
         requires(tint::traits::IsTypeOrDerived<KLASS, ir::BuiltinCall>)
     KLASS* CallExplicitWithResult(ir::InstructionResult* result,
                                   FUNC func,
-                                  VectorRef<const core::type::Type*> explicit_params,
+                                  VectorRef<core::ir::TemplateParameter> explicit_params,
                                   ARGS&&... args) {
         auto* inst = ir.CreateInstruction<KLASS>(result, func, Values(std::forward<ARGS>(args)...));
         inst->SetExplicitTemplateParams(explicit_params);
@@ -1259,7 +1187,7 @@ class Builder {
         requires(tint::traits::IsTypeOrDerived<KLASS, ir::BuiltinCall>)
     KLASS* CallExplicit(const core::type::Type* type,
                         FUNC func,
-                        VectorRef<const core::type::Type*> explicit_params,
+                        VectorRef<core::ir::TemplateParameter> explicit_params,
                         ARGS&&... args) {
         return CallExplicitWithResult<KLASS>(InstructionResult(type), func, explicit_params,
                                              Values(std::forward<ARGS>(args)...));
@@ -1274,7 +1202,7 @@ class Builder {
     template <typename... ARGS>
     ir::CoreBuiltinCall* CallExplicit(const core::type::Type* type,
                                       core::BuiltinFn func,
-                                      VectorRef<const core::type::Type*> explicit_params,
+                                      VectorRef<core::ir::TemplateParameter> explicit_params,
                                       ARGS&&... args) {
         return CallExplicitWithResult<core::ir::CoreBuiltinCall>(
             InstructionResult(type), func, explicit_params, Values(std::forward<ARGS>(args)...));

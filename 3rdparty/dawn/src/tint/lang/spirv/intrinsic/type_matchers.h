@@ -30,11 +30,26 @@
 
 #include "src/tint/lang/core/intrinsic/table.h"
 #include "src/tint/lang/core/type/array.h"
+#include "src/tint/lang/core/type/builtin_structs.h"
 #include "src/tint/lang/core/type/manager.h"
 #include "src/tint/lang/core/type/struct.h"
+#include "src/tint/lang/core/type/vector.h"
+#include "src/tint/lang/spirv/type/literal.h"
 #include "src/tint/lang/spirv/type/sampled_image.h"
 
 namespace tint::spirv::intrinsic {
+
+inline bool MatchLiteral(core::intrinsic::MatchState&, const core::type::Type* ty) {
+    if (ty->Is<type::Literal>()) {
+        return true;
+    }
+    return false;
+}
+
+inline const core::type::Type* BuildLiteral(core::intrinsic::MatchState& state,
+                                            const core::type::Type*) {
+    return state.types.Get<type::Literal>();
+}
 
 inline bool MatchStructWithRuntimeArray(core::intrinsic::MatchState&, const core::type::Type* ty) {
     if (auto* str = ty->As<core::type::Struct>()) {
@@ -53,6 +68,42 @@ inline bool MatchStructWithRuntimeArray(core::intrinsic::MatchState&, const core
 inline const core::type::Type* BuildStructWithRuntimeArray(core::intrinsic::MatchState&,
                                                            const core::type::Type* ty) {
     return ty;
+}
+
+inline bool MatchStructAddCarryScalar(core::intrinsic::MatchState&,
+                                      const core::type::Type* ty,
+                                      const core::type::Type*& T) {
+    if (ty->Is<core::intrinsic::Any>()) {
+        T = ty;
+        return true;
+    }
+    return false;
+}
+
+inline const core::type::Type* BuildStructAddCarryScalar(core::intrinsic::MatchState& state,
+                                                         const core::type::Type*,
+                                                         const core::type::Type* T) {
+    return core::type::CreateAddCarryResult(state.types, state.symbols, T);
+}
+
+inline bool MatchStructAddCarryVec(core::intrinsic::MatchState&,
+                                   const core::type::Type* ty,
+                                   core::intrinsic::Number& N,
+                                   const core::type::Type*& T) {
+    if (ty->Is<core::intrinsic::Any>()) {
+        T = ty;
+        N = core::intrinsic::Number::any;
+        return true;
+    }
+    return false;
+}
+
+inline const core::type::Type* BuildStructAddCarryVec(core::intrinsic::MatchState& state,
+                                                      const core::type::Type*,
+                                                      core::intrinsic::Number& N,
+                                                      const core::type::Type* T) {
+    return core::type::CreateAddCarryResult(state.types, state.symbols,
+                                            state.types.vec(T, N.Value()));
 }
 
 inline bool MatchSampledImage(core::intrinsic::MatchState&,

@@ -31,12 +31,12 @@
 #include <unordered_map>
 
 #include "src/tint/api/common/binding_point.h"
-#include "src/tint/utils/reflection.h"
+#include "src/tint/utils/reflection/reflection.h"
 
 namespace tint {
 
-/// An external texture
-struct ExternalTexture {
+/// A multiplanar external texture
+struct ExternalMultiplanarTexture {
     /// Metadata
     BindingPoint metadata{};
     /// Plane0 binding data
@@ -45,14 +45,30 @@ struct ExternalTexture {
     BindingPoint plane1{};
 
     /// Reflect the fields of this class so that it can be used by tint::ForeachField()
-    TINT_REFLECT(ExternalTexture, metadata, plane0, plane1);
+    TINT_REFLECT(ExternalMultiplanarTexture, metadata, plane0, plane1);
+    TINT_REFLECT_HASH_CODE(ExternalMultiplanarTexture);
+    bool operator==(const ExternalMultiplanarTexture&) const = default;
+};
 
-    TINT_REFLECT_EQUALS(ExternalTexture);
-    TINT_REFLECT_HASH_CODE(ExternalTexture);
+/// A YCBcr external texture
+struct ExternalYCBCRTexture {
+    /// Metadata
+    BindingPoint metadata{};
+    /// texture binding data
+    BindingPoint texture{};
+    /// sampler binding data
+    BindingPoint sampler{};
+
+    /// Reflect the fields of this class so that it can be used by tint::ForeachField()
+    TINT_REFLECT(ExternalYCBCRTexture, metadata, texture, sampler);
+    TINT_REFLECT_HASH_CODE(ExternalYCBCRTexture);
+    bool operator==(const ExternalYCBCRTexture&) const = default;
 };
 
 using BindingMap = std::unordered_map<BindingPoint, BindingPoint>;
-using ExternalTextureBindings = std::unordered_map<BindingPoint, ExternalTexture>;
+using ExternalTextureBindings =
+    std::unordered_map<BindingPoint,
+                       std::variant<ExternalMultiplanarTexture, ExternalYCBCRTexture>>;
 
 /// Binding information
 struct Bindings {
@@ -64,6 +80,8 @@ struct Bindings {
     BindingMap texture{};
     /// Storage texture bindings
     BindingMap storage_texture{};
+    /// Texel buffer bindings
+    BindingMap texel_buffer{};
     /// Sampler bindings
     BindingMap sampler{};
     /// External bindings
@@ -77,12 +95,14 @@ struct Bindings {
                  storage,
                  texture,
                  storage_texture,
+                 texel_buffer,
                  sampler,
                  external_texture,
                  input_attachment);
 
-    TINT_REFLECT_EQUALS(Bindings);
     TINT_REFLECT_HASH_CODE(Bindings);
+
+    bool operator==(const Bindings&) const = default;
 };
 
 }  // namespace tint

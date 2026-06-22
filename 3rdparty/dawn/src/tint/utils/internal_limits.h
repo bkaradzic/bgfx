@@ -53,6 +53,13 @@ constexpr int64_t kQuadSize = 4;
 // A @size attribute maximum size
 constexpr int64_t kMaxStructMemberPadding = 10 * 1024 * 1024;
 
+// The maximum number of locations allowed for shader IO.
+// This hard limit is derived from spirv-val (kMaxLocations in
+// https://github.com/KhronosGroup/SPIRV-Tools/blob/main/source/val/validate_interfaces.cpp).
+// Device-specific API limits will likely be much lower, but will be caught by Dawn before
+// shader module generation.
+constexpr uint32_t kMaxLocations = 4096;
+
 }  // namespace tint::internal_limits
 
 #endif  // SRC_TINT_UTILS_INTERNAL_LIMITS_H_

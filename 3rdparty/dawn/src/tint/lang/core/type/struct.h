@@ -40,6 +40,7 @@
 #include "src/tint/lang/core/type/type.h"
 #include "src/tint/utils/containers/hashset.h"
 #include "src/tint/utils/containers/vector.h"
+#include "src/tint/utils/result.h"
 #include "src/tint/utils/symbol/symbol.h"
 #include "src/tint/utils/text/styled_text.h"
 
@@ -128,6 +129,10 @@ class Struct : public Castable<Struct, Type> {
     /// @returns the byte size of the members without the end of structure
     /// alignment padding
     uint32_t SizeNoPadding() const;
+
+    /// @returns success if the structure has no excessive padding between members or at the end,
+    /// otherwise a Failure reason
+    Result<SuccessType> PaddingWithinLimit() const;
 
     /// @returns the structure flags
     core::type::StructFlags StructFlags() const { return struct_flags_; }

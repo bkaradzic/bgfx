@@ -32,7 +32,7 @@
 
 #include "src/tint/api/common/binding_point.h"
 #include "src/tint/lang/core/ir/validator.h"
-#include "src/tint/utils/reflection.h"
+#include "src/tint/utils/reflection/reflection.h"
 #include "src/tint/utils/result.h"
 
 // Forward declarations.
@@ -44,8 +44,7 @@ namespace tint::core::ir::transform {
 
 /// The capabilities that the transform can support.
 const Capabilities kRobustnessCapabilities{
-    Capability::kAllowDuplicateBindings,
-    Capability::kAllow8BitIntegers,
+    Capability::kAllow16BitIntegers,
 };
 
 /// Configuration options that control when to clamp accesses.

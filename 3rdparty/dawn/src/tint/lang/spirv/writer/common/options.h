@@ -37,7 +37,7 @@
 #include "src/tint/api/common/bindings.h"
 #include "src/tint/api/common/resource_table_config.h"
 #include "src/tint/api/common/substitute_overrides_config.h"
-#include "src/tint/utils/reflection.h"
+#include "src/tint/utils/reflection/reflection.h"
 
 namespace tint::spirv::writer {
 
@@ -53,6 +53,26 @@ enum class SpvVersion : uint32_t {
     kSpv14,  // SPIR-V 1.4
     kSpv15,  // SPIR-V 1.5, for testing purposes only
 };
+
+/// @param out the stream to write to
+/// @param version the SpvVersion
+/// @returns @p out so calls can be chained
+template <typename STREAM>
+    requires(traits::IsOStream<STREAM>)
+auto& operator<<(STREAM& out, SpvVersion version) {
+    switch (version) {
+        case SpvVersion::kSpv13:
+            out << "1.3";
+            break;
+        case SpvVersion::kSpv14:
+            out << "1.4";
+            break;
+        case SpvVersion::kSpv15:
+            out << "1.5";
+            break;
+    }
+    return out;
+}
 
 /// Configuration options used for generating SPIR-V.
 struct Options {
@@ -87,13 +107,13 @@ struct Options {
         /// and `unpack4x8unorm` builtins
         bool polyfill_pack_unpack_4x8_norm = false;
 
-        /// Set to `true` to generate a polyfill clamp of `id` param of subgroupShuffle to within
-        /// the spec max subgroup size.
-        bool subgroup_shuffle_clamped = false;
-
         /// Set to 'true' to force workaround for 'textureSampleCompare(Level)' for texture arrays
         /// of cube depth.
         bool texture_sample_compare_depth_cube_array = false;
+
+        /// Set to 'true' to force a polyfill for 'textureSampleCompare(Level)' for all 2D
+        /// textures (and arrays) using bilinear interpolation.
+        bool texture_sample_compare_2d_polyfill = false;
 
         /// Set to `true` to generate polyfill for `subgroupBroadcast(f16)`
         bool polyfill_subgroup_broadcast_f16 = false;
@@ -101,27 +121,44 @@ struct Options {
         /// Set to `true` to always pass matrices to user functions by pointer instead of by value.
         bool pass_matrix_by_pointer = false;
 
-        /// Set to `true` to generate polyfill for f32 negation.
-        bool polyfill_unary_f32_negation = false;
+        /// Set to `true` to generate polyfill for f32 and f16 negation.
+        bool polyfill_float_negation = false;
 
-        /// Set to `true` to generate polyfill for f32 abs.
-        bool polyfill_f32_abs = false;
+        /// Set to `true` to generate polyfill for f32 and f16 abs.
+        bool polyfill_float_abs = false;
+
+        /// Set to `true` to generate polyfill for length(scalar f32 and f16).
+        bool polyfill_length_scalar_float = false;
+
+        /// Set to `true` to generate polyfill for distance(scalar f32 and f16).
+        bool polyfill_distance_scalar_float = false;
 
         /// Set to `true` to generate polyfill for f16 saturate.
         bool polyfill_saturate_as_min_max_f16 = false;
+
+        /// Set to `true` to treat the stride operand of cooperative matrix load and store
+        /// instructions as matrix elements instead of a source/dest pointee elements.
+        bool cooperative_matrix_stride_is_matrix_elements = false;
+
+        /// Set to `true` to collapse redundant subgroup min and max operations
+        bool collapse_subgroup_min_max = false;
 
         TINT_REFLECT(Workarounds,
                      polyfill_case_switch,
                      scalarize_max_min_clamp,
                      dva_transform_handle,
                      polyfill_pack_unpack_4x8_norm,
-                     subgroup_shuffle_clamped,
                      texture_sample_compare_depth_cube_array,
+                     texture_sample_compare_2d_polyfill,
                      polyfill_subgroup_broadcast_f16,
                      pass_matrix_by_pointer,
-                     polyfill_unary_f32_negation,
-                     polyfill_f32_abs,
-                     polyfill_saturate_as_min_max_f16);
+                     polyfill_float_negation,
+                     polyfill_float_abs,
+                     polyfill_length_scalar_float,
+                     polyfill_distance_scalar_float,
+                     polyfill_saturate_as_min_max_f16,
+                     cooperative_matrix_stride_is_matrix_elements,
+                     collapse_subgroup_min_max);
     };
 
     /// Any options which are controlled by the presence/absence of a vulkan extension.
@@ -212,8 +249,12 @@ struct Options {
     /// from all vertex shaders in the module.
     bool emit_vertex_point_size = true;
 
-    /// Set to `true` to apply builtin 'position' pixel center emulation.
-    bool polyfill_pixel_center = false;
+    /// If the optional is set, then we apply the builtin 'position' pixel center emulation with a
+    /// location provided by the optional.
+    std::optional<uint32_t> polyfill_pixel_center = std::nullopt;
+
+    /// Set to `true` if framebuffer fetch should be multisampled
+    bool multisampled_framebuffer_fetch = false;
 
     /// Any workarounds to enable/disable.
     Workarounds workarounds{};
@@ -247,6 +288,7 @@ struct Options {
                  disable_integer_range_analysis,
                  emit_vertex_point_size,
                  polyfill_pixel_center,
+                 multisampled_framebuffer_fetch,
                  workarounds,
                  extensions,
                  depth_range_offsets,

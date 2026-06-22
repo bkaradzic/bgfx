@@ -30,8 +30,46 @@
 
 #include <limits>
 #include <type_traits>
+#include <utility>
+
+#include "src/utils/assert.h"
+#include "src/utils/underlying_type.h"
 
 namespace dawn {
+
+// Checked conversion between differently sized integer-likes (i.e. all the types that can be used
+// by ityp: integers, TypedIntegers, and enum classes). This is only defined for unsigned types
+// because that is all that is needed at the time of writing, however eventually we will want to use
+// this more widely, and we'll need to upgrade it (and the tests) to allow signed types.
+template <HasUnderlyingType Dst, HasUnderlyingType Src>
+constexpr inline Dst checked_cast(const Src& value) {
+    using ISrc = UnderlyingType<Src>;
+    using IDst = UnderlyingType<Dst>;
+    // The compiler seems to be able to optimize away this CHECK, for Src/Dst pairs that can never
+    // fail (verified in Compiler Explorer with plain integers and enum classes).
+    //
+    // Note, we choose not to disallow checked_cast for casts that are always safe, even though that
+    // would guide authors toward static_casts that are statically-guaranteed safe. This is because
+    // when used with things like size_t, which one you would need to use could differ by bitness.
+    ISrc valueISrc = static_cast<ISrc>(value);
+    DAWN_CHECK(std::in_range<IDst>(valueISrc));
+    return Dst{static_cast<IDst>(valueISrc)};
+}
+
+template <HasUnderlyingType Dst, HasUnderlyingType Src>
+constexpr inline Dst dchecked_cast(const Src& value) {
+    using ISrc = UnderlyingType<Src>;
+    using IDst = UnderlyingType<Dst>;
+    ISrc valueISrc = static_cast<ISrc>(value);
+    DAWN_ASSERT(std::in_range<IDst>(valueISrc));
+    return Dst{static_cast<IDst>(valueISrc)};
+}
+
+template <std::integral From, std::integral To>
+constexpr inline bool kIsCastAlwaysInRange =
+    std::in_range<To>(std::numeric_limits<From>::lowest()) &&
+    std::in_range<To>(std::numeric_limits<From>::max());
+
 template <typename T>
 bool inline IsDoubleValueRepresentable(double value) {
     if constexpr (std::is_same_v<T, float> || std::is_integral_v<T>) {
@@ -51,6 +89,7 @@ inline bool IsDoubleValueRepresentableAsF16(double value) {
     constexpr double kMaxF16 = 65504.0;
     return kLowestF16 <= value && value <= kMaxF16;
 }
+
 }  // namespace dawn
 
 #endif  // SRC_UTILS_NUMERIC_H_

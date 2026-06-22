@@ -44,7 +44,7 @@ struct WorkgroupInfo {
     uint32_t z = 0;
 
     /// The needed workgroup storage size
-    size_t storage_size = 0;
+    uint64_t storage_size = 0;
 
     /// The `@subgroup_size` attribute
     std::optional<uint32_t> subgroup_size;

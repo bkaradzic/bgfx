@@ -1,4 +1,4 @@
-// Copyright 2023 The Dawn & Tint Authors
+// Copyright 2020 The Dawn & Tint Authors
 //
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are met:
@@ -25,28 +25,53 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "src/tint/lang/core/ir/bitcast.h"
+#ifndef SRC_UTILS_UNDERLYING_TYPE_H_
+#define SRC_UTILS_UNDERLYING_TYPE_H_
 
-#include "src/tint/lang/core/ir/clone_context.h"
-#include "src/tint/lang/core/ir/module.h"
+#include <concepts>
+#include <type_traits>
 
-TINT_INSTANTIATE_TYPEINFO(tint::core::ir::Bitcast);
+namespace dawn {
 
-namespace tint::core::ir {
+// UnderlyingType is similar to std::underlying_type_t. It is a passthrough for already
+// integer types which simplifies getting the underlying primitive type for an arbitrary
+// template parameter. It includes a specialization for detail::TypedIntegerImpl which yields
+// the wrapped integer type.
+namespace detail {
+template <typename T, typename Enable = void>
+struct UnderlyingTypeImpl;
 
-Bitcast::Bitcast(Id id) : Base(id) {}
+template <typename I>
+    requires std::integral<I>
+struct UnderlyingTypeImpl<I> {
+    using type = I;
+};
 
-Bitcast::Bitcast(Id id, InstructionResult* result, Value* val) : Base(id) {
-    AddOperand(Bitcast::kValueOperandOffset, val);
-    AddResult(result);
-}
+template <typename E>
+    requires std::is_enum_v<E>
+struct UnderlyingTypeImpl<E> {
+    using type = std::underlying_type_t<E>;
+};
 
-Bitcast::~Bitcast() = default;
+// Forward declare the TypedInteger impl.
+template <typename Tag, typename T>
+class TypedIntegerImpl;
 
-Bitcast* Bitcast::Clone(CloneContext& ctx) {
-    auto* new_result = ctx.Clone(Result());
-    auto* val = ctx.Remap(Val());
-    return ctx.ir.CreateInstruction<Bitcast>(new_result, val);
-}
+template <typename Tag, typename I>
+struct UnderlyingTypeImpl<TypedIntegerImpl<Tag, I>> {
+    using type = typename UnderlyingTypeImpl<I>::type;
+};
+}  // namespace detail
 
-}  // namespace tint::core::ir
+template <typename T>
+using UnderlyingType = typename detail::UnderlyingTypeImpl<T>::type;
+
+template <typename T>
+concept HasUnderlyingType = std::integral<UnderlyingType<T>>;
+
+template <typename T>
+concept HasUnsignedUnderlyingType = std::unsigned_integral<UnderlyingType<T>>;
+
+}  // namespace dawn
+
+#endif  // SRC_UTILS_UNDERLYING_TYPE_H_

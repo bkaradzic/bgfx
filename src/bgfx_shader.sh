@@ -24,7 +24,6 @@
 
 #define BGFX_SHADER_MATRIX_COLUMN_MAJOR (0 \
 	|| BGFX_SHADER_LANGUAGE_GLSL           \
-	|| BGFX_SHADER_LANGUAGE_WGSL           \
 	)
 
 #if BGFX_SHADER_TYPE_FRAGMENT
@@ -681,7 +680,7 @@ uvec4 uvec4_splat(uint _x) { return uvec4(_x, _x, _x, _x); }
 
 #if BGFX_SHADER_LANGUAGE_GLSL
 #	define mul(_a, _b) ( (_a) * (_b) )
-#elif BGFX_SHADER_LANGUAGE_WGSL
+#elif BGFX_SHADER_LANGUAGE_WGSL && BGFX_SHADER_MATRIX_COLUMN_MAJOR
 #	define mul(_a, _b) mul(_b, _a)
 #	define mat3x4 float3x4
 #	define mat4x3 float4x3
