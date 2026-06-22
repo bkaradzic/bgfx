@@ -6456,6 +6456,11 @@ namespace bgfx { namespace d3d11
 					}
 				}
 
+				if (UINT32_MAX == draw.m_streamMask)
+				{
+					currentNumVertices = draw.m_numVertices;
+				}
+
 				if (currentState.m_indexBuffer.idx != draw.m_indexBuffer.idx
 				||  currentState.isIndex16() != draw.isIndex16() )
 				{

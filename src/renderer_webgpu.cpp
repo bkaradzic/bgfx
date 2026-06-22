@@ -2742,17 +2742,20 @@ WGPU_IMPORT
 				murmur.add(program.m_fsh->m_hash);
 			}
 
-			for (BitMaskToIndexIteratorT it(_streamMask); !it.isDone(); it.next() )
+			if (UINT32_MAX != _streamMask)
 			{
-				const uint8_t idx = it.idx;
+				for (BitMaskToIndexIteratorT it(_streamMask); !it.isDone(); it.next() )
+				{
+					const uint8_t idx = it.idx;
 
-				uint16_t handle = _stream[idx].m_handle.idx;
-				const VertexBufferWGPU& vb = m_vertexBuffers[handle];
-				const uint16_t layoutIdx = isValid(_stream[idx].m_layoutHandle)
-					? _stream[idx].m_layoutHandle.idx
-					: vb.m_layoutHandle.idx;
+					uint16_t handle = _stream[idx].m_handle.idx;
+					const VertexBufferWGPU& vb = m_vertexBuffers[handle];
+					const uint16_t layoutIdx = isValid(_stream[idx].m_layoutHandle)
+						? _stream[idx].m_layoutHandle.idx
+						: vb.m_layoutHandle.idx;
 
-				murmur.add(m_vertexLayouts[layoutIdx].m_hash);
+					murmur.add(m_vertexLayouts[layoutIdx].m_hash);
+				}
 			}
 
 			murmur.add(layout.m_attributes, sizeof(layout.m_attributes) );
@@ -3036,7 +3039,8 @@ WGPU_IMPORT
 				const Binding& bind = _renderBind.m_bind[stage];
 				const ShaderBinding& shaderBind = _program.m_shaderBinding[stage];
 
-				if (isValid(shaderBind.uniformHandle) )
+				if (isValid(shaderBind.uniformHandle)
+				&&  kInvalidHandle != bind.m_idx)
 				{
 					switch (bind.m_type)
 					{
@@ -5536,8 +5540,6 @@ m_resolution.formatColor = TextureFormat::BGRA8;
 		currentState.m_stateFlags = BGFX_STATE_NONE;
 		currentState.m_stencil    = packStencil(BGFX_STENCIL_NONE, BGFX_STENCIL_NONE);
 
-		uint32_t currentNumVertices = 0;
-
 		static ViewState viewState;
 		viewState.reset(_render);
 
@@ -5976,8 +5978,6 @@ m_resolution.formatColor = TextureFormat::BGRA8;
 				bool constantsChanged = draw.m_uniformBegin < draw.m_uniformEnd;
 				rendererUpdateUniforms(this, _render->m_uniformBuffer[draw.m_uniformIdx], draw.m_uniformBegin, draw.m_uniformEnd);
 
-				currentNumVertices = draw.m_numVertices;
-
 				const uint64_t state = draw.m_stateFlags;
 
 				const RenderPipeline& renderPipeline = *getPipeline(
@@ -6217,7 +6217,16 @@ m_resolution.formatColor = TextureFormat::BGRA8;
 
 				if (0 != currentState.m_streamMask)
 				{
-					uint32_t numVertices       = currentNumVertices;
+					uint32_t numVertices = draw.m_numVertices;
+
+					if (UINT32_MAX == numVertices)
+					{
+						const VertexBufferWGPU& vb = m_vertexBuffers[currentState.m_stream[0].m_handle.idx];
+						const uint16_t decl = isValid(draw.m_stream[0].m_layoutHandle) ? draw.m_stream[0].m_layoutHandle.idx : vb.m_layoutHandle.idx;
+						const VertexLayout& layout = m_vertexLayouts[decl];
+						numVertices = vb.m_size/layout.m_stride;
+					}
+
 					uint32_t numIndices        = 0;
 					uint32_t numPrimsSubmitted = 0;
 					uint32_t numInstances      = 0;
