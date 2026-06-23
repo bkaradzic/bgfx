@@ -24,7 +24,9 @@
 #	define WGPU_CHECK(_call) _call
 #endif // BGFX_CONFIG_DEBUG
 
-#define WGPU_SKIP_DECLARATIONS
+#if !BX_PLATFORM_EMSCRIPTEN
+#	define WGPU_SKIP_DECLARATIONS
+#endif // !BX_PLATFORM_EMSCRIPTEN
 #include <dawn/include/webgpu/webgpu.h>
 
 #if USE_WEBGPU_DYNAMIC_LIB
@@ -307,11 +309,11 @@
 		WGPU_IGNORE_____(false, TextureGetDepthOrArrayLayers);                      \
 		WGPU_IGNORE_____(false, TextureGetDimension);                               \
 		WGPU_IGNORE_____(false, TextureGetFormat);                                  \
-		WGPU_IGNORE_____(false, TextureGetHeight);                                  \
+		WGPU_IMPORT_FUNC(false, TextureGetHeight);                                  \
 		WGPU_IGNORE_____(false, TextureGetMipLevelCount);                           \
 		WGPU_IGNORE_____(false, TextureGetSampleCount);                             \
 		WGPU_IGNORE_____(false, TextureGetUsage);                                   \
-		WGPU_IGNORE_____(false, TextureGetWidth);                                   \
+		WGPU_IMPORT_FUNC(false, TextureGetWidth);                                   \
 		WGPU_IGNORE_____(false, TexturePin);                                        \
 		WGPU_IMPORT_FUNC(false, TextureSetLabel);                                   \
 		WGPU_IGNORE_____(false, TextureUnpin);                                      \
@@ -744,6 +746,7 @@ namespace wgpu {
 			: m_queue(NULL)
 			, m_commandEncoder(NULL)
 			, m_counter(0)
+			, m_future(WGPU_FUTURE_INIT)
 		{
 		}
 
@@ -767,6 +770,7 @@ namespace wgpu {
 		WGPUCommandEncoder m_commandEncoder;
 		uint32_t m_currentFrameInFlight;
 		uint32_t m_counter;
+		WGPUFuture m_future;
 	};
 
 	struct TimerQueryWGPU
