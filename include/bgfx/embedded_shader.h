@@ -90,7 +90,6 @@
 
 #ifndef BGFX_PLATFORM_SUPPORTS_WGSL
 #	define BGFX_PLATFORM_SUPPORTS_WGSL (0 \
-		|| BX_PLATFORM_EMSCRIPTEN          \
 		|| BX_PLATFORM_LINUX              \
 		|| BX_PLATFORM_WINDOWS            \
 		|| BX_PLATFORM_OSX                \
