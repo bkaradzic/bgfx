@@ -887,12 +887,6 @@ WGPU_IMPORT
 			renderCtx->m_device = _device;
 		}
 
-		WGPUWaitStatus waitForFuture(WGPUFutureWaitInfo& _fwi)
-		{
-			wgpuInstanceProcessEvents(m_instance);
-			return wgpuInstanceWaitAny(m_instance, 1, &_fwi, UINT64_MAX);
-		}
-
 		bool init(const Init& _init)
 		{
 			struct ErrorState
@@ -929,7 +923,6 @@ WGPU_IMPORT
 
 			bool imported = true;
 
-#if !BX_PLATFORM_EMSCRIPTEN
 			m_webgpuDll = bx::dlopen(
 #if BX_PLATFORM_WINDOWS
 				"webgpu_dawn.dll"
@@ -977,21 +970,12 @@ WGPU_IMPORT
 				goto error;
 			}
 
-#else // BX_PLATFORM_EMSCRIPTEN
-			BX_TRACE("Emscripten: Using statically linked WebGPU.");
-			m_webgpuDll = NULL;
-			errorState = ErrorState::LoadedWebGPU;
-
-#endif // !BX_PLATFORM_EMSCRIPTEN
-
 			{
 				{
 					WGPUInstanceFeatureName requiredFeatures[] =
 					{
 						WGPUInstanceFeatureName_TimedWaitAny,
-#if !BX_PLATFORM_EMSCRIPTEN
 						WGPUInstanceFeatureName_ShaderSourceSPIRV,
-#endif // !BX_PLATFORM_EMSCRIPTEN
 					};
 
 					WGPUInstanceDescriptor instanceDesc =
@@ -1037,7 +1021,7 @@ WGPU_IMPORT
 						.completed = false,
 					};
 
-					WGPUWaitStatus waitStatus = waitForFuture(fwi);
+					WGPUWaitStatus waitStatus = wgpuInstanceWaitAny(m_instance, 1, &fwi, UINT64_MAX);
 
 					if (WGPUWaitStatus_Success != waitStatus
 					||  NULL == m_adapter)
@@ -1173,18 +1157,15 @@ WGPU_IMPORT
 
 					if (WGPUStatus_Success == status)
 					{
-#if !BX_PLATFORM_EMSCRIPTEN
 						requiredLimits.maxComputeWorkgroupSizeX = 1024;
 						requiredLimits.maxComputeWorkgroupSizeY = 1024;
 						requiredLimits.maxComputeWorkgroupSizeZ = 64;
-#endif // !BX_PLATFORM_EMSCRIPTEN
 					}
 
 					static constexpr uint32_t kMaxEnabledTogles = 10;
 					const char* enabledToggles[kMaxEnabledTogles];
 					uint32_t enabledTogglesCount = 0;
 
-#if !BX_PLATFORM_EMSCRIPTEN
 					enabledToggles[enabledTogglesCount++] = "allow_unsafe_apis"; // TimestampWrite requires this.
 
 					if (_init.debug)
@@ -1226,15 +1207,10 @@ WGPU_IMPORT
 						.disabledToggleCount = 0,
 						.disabledToggles     = NULL,
 					};
-#endif // !BX_PLATFORM_EMSCRIPTEN
 
 					WGPUDeviceDescriptor deviceDesc =
 					{
-#if !BX_PLATFORM_EMSCRIPTEN
 						.nextInChain            = &dawnTogglesDescriptor.chain,
-#else
-						.nextInChain            = NULL,
-#endif
 						.label                  = WGPU_STRING_VIEW_INIT,
 						.requiredFeatureCount   = requiredFeatureCount,
 						.requiredFeatures       = requiredFeatures,
@@ -1243,7 +1219,7 @@ WGPU_IMPORT
 						.deviceLostCallbackInfo =
 							{
 								.nextInChain = NULL,
-								.mode        = WGPUCallbackMode_AllowSpontaneous,
+								.mode        = WGPUCallbackMode_WaitAnyOnly,
 								.callback    = deviceLostCb,
 								.userdata1   = this,
 								.userdata2   = NULL,
@@ -1270,7 +1246,7 @@ WGPU_IMPORT
 						.completed = false,
 					};
 
-					WGPUWaitStatus waitStatus = waitForFuture(fwi);
+					WGPUWaitStatus waitStatus = wgpuInstanceWaitAny(m_instance, 1, &fwi, UINT64_MAX);
 
 					if (WGPUWaitStatus_Success != waitStatus
 					||  NULL == m_device)
@@ -4361,7 +4337,7 @@ WGPU_IMPORT
 	{
 		m_resolution = _resolution;
 
-		WGPUSurfaceCapabilities surfaceCaps = WGPU_SURFACE_CAPABILITIES_INIT;
+		WGPUSurfaceCapabilities surfaceCaps;
 		WGPUStatus status = WGPU_CHECK(wgpuSurfaceGetCapabilities(m_surface, s_renderWGPU->m_adapter, &surfaceCaps) );
 
 		if (WGPUStatus_Success != status)
@@ -4384,24 +4360,6 @@ m_resolution.formatColor = TextureFormat::BGRA8;
 				}
 			}
 		}
-
-#if BX_PLATFORM_EMSCRIPTEN
-		if (WGPUTextureFormat_Undefined != format
-		&&  surfaceCaps.formatCount > 0
-		&&  format != surfaceCaps.formats[0])
-		{
-			format = surfaceCaps.formats[0];
-
-			if (WGPUTextureFormat_BGRA8Unorm == format)
-			{
-				m_resolution.formatColor = TextureFormat::BGRA8;
-			}
-			else if (WGPUTextureFormat_RGBA8Unorm == format)
-			{
-				m_resolution.formatColor = TextureFormat::RGBA8;
-			}
-		}
-#endif // BX_PLATFORM_EMSCRIPTEN
 
 		BX_ASSERT(WGPUTextureFormat_Undefined != format, "SwapChain surface format is not available!");
 
@@ -4427,9 +4385,6 @@ m_resolution.formatColor = TextureFormat::BGRA8;
 		wgpuRelease(surfaceTexture.texture);
 
 		const uint32_t msaa = s_msaa[(_resolution.reset&BGFX_RESET_MSAA_MASK)>>BGFX_RESET_MSAA_SHIFT];
-
-		wgpuRelease(m_depthStencilView);
-		wgpuRelease(m_msaaTextureView);
 
 		if (bimg::isDepth(bimg::TextureFormat::Enum(m_resolution.formatDepthStencil) ) )
 		{
@@ -4516,7 +4471,6 @@ m_resolution.formatColor = TextureFormat::BGRA8;
 			};
 
 			m_msaaTextureView = WGPU_CHECK(wgpuTextureCreateView(texture, &textureViewDesc) );
-			wgpuRelease(texture);
 		}
 
 		return true;
@@ -4693,26 +4647,6 @@ m_resolution.formatColor = TextureFormat::BGRA8;
 			.nextInChain = &surfaceSource.chain,
 			.label = toWGPUStringView("SwapChainWGPU"),
 		};
-#elif BX_PLATFORM_EMSCRIPTEN
-		WGPUEmscriptenSurfaceSourceCanvasHTMLSelector surfaceSource =
-		{
-			.chain =
-			{
-				.next  = NULL,
-				.sType = WGPUSType_EmscriptenSurfaceSourceCanvasHTMLSelector,
-			},
-			.selector =
-			{
-				.data   = static_cast<const char*>(m_nwh),
-				.length = uint32_t(bx::strLen(static_cast<const char*>(m_nwh))),
-			},
-		};
-
-		surfaceDesc =
-		{
-			.nextInChain = &surfaceSource.chain,
-			.label = toWGPUStringView("SwapChainWGPU"),
-		};
 #else
 #	error "Figure out WGPU surface..."
 #endif // BX_PLATFORM_*
@@ -4725,9 +4659,7 @@ m_resolution.formatColor = TextureFormat::BGRA8;
 	void SwapChainWGPU::present()
 	{
 		wgpuRelease(m_textureView);
-#if !BX_PLATFORM_EMSCRIPTEN
 		WGPU_CHECK(wgpuSurfacePresent(m_surface) );
-#endif // !BX_PLATFORM_EMSCRIPTEN
 
 		WGPUSurfaceTexture surfaceTexture = WGPU_SURFACE_TEXTURE_INIT;
 		wgpuSurfaceGetCurrentTexture(m_surface, &surfaceTexture);
@@ -4942,42 +4874,30 @@ m_resolution.formatColor = TextureFormat::BGRA8;
 		WGPUCommandBuffer commandBuffer = WGPU_CHECK(wgpuCommandEncoderFinish(m_commandEncoder, NULL) );
 
 		WGPU_CHECK(wgpuQueueSubmit(m_queue, 1, &commandBuffer) );
-		m_future = wgpuQueueOnSubmittedWorkDone(
-			m_queue
+		WGPU_CHECK(wgpuQueueOnSubmittedWorkDone(
+			  m_queue
 			, {
 				.nextInChain = NULL,
 				.mode        = WGPUCallbackMode_AllowProcessEvents,
 				.callback    = queueWorkDoneCb,
 				.userdata1   = (void*)uintptr_t(m_counter),
 				.userdata2   = NULL,
-			});
+			}) );
 		wgpuRelease(commandBuffer);
 		wgpuRelease(m_commandEncoder);
 		++m_counter;
 
-	#if !BX_PLATFORM_EMSCRIPTEN
 		WGPU_CHECK(wgpuInstanceProcessEvents(s_renderWGPU->m_instance) );
-	#endif // !BX_PLATFORM_EMSCRIPTEN
 
 		m_commandEncoder = WGPU_CHECK(wgpuDeviceCreateCommandEncoder(s_renderWGPU->m_device, NULL) );
 	}
 
 	void CommandQueueWGPU::wait()
 	{
-	#if BX_PLATFORM_EMSCRIPTEN
-		wgpuInstanceProcessEvents(s_renderWGPU->m_instance);
-	#else
 		while (0 < m_counter)
 		{
-			WGPUFutureWaitInfo fwi =
-			{
-				.future = m_future,
-				.completed = false,
-			};
-
-			wgpuInstanceWaitAny(s_renderWGPU->m_instance, 1, &fwi, 1000000);
+			WGPU_CHECK(wgpuInstanceProcessEvents(s_renderWGPU->m_instance) );
 		}
-	#endif // BX_PLATFORM_EMSCRIPTEN
 	}
 
 	void CommandQueueWGPU::frame()
