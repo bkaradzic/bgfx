@@ -3004,7 +3004,7 @@ VK_IMPORT_DEVICE
 			{
 				const uint8_t  bpp         = bimg::getBitsPerPixel(bimg::TextureFormat::Enum(m_backBuffer.m_swapChain.m_colorFormat) );
 				const uint32_t pitch       = m_backBuffer.m_width * bpp / 8;
-				const uint32_t captureSize = m_backBuffer.m_width * pitch;
+				const uint32_t captureSize = m_backBuffer.m_height * pitch;
 
 				if (captureSize > m_captureSize)
 				{
