@@ -580,11 +580,17 @@ namespace bgfx
 #include "fs_clear5.bin.h"
 #include "fs_clear6.bin.h"
 #include "fs_clear7.bin.h"
-#include "cs_mipgen_pow2.bin.h"
-#include "cs_mipgen_oddx.bin.h"
-#include "cs_mipgen_oddy.bin.h"
-#include "cs_mipgen_oddxy.bin.h"
-#include "cs_yuv_to_rgb.bin.h"
+
+#if BGFX_CONFIG_MIP_GEN_FALLBACK
+#	include "cs_mipgen_pow2.bin.h"
+#	include "cs_mipgen_oddx.bin.h"
+#	include "cs_mipgen_oddy.bin.h"
+#	include "cs_mipgen_oddxy.bin.h"
+#endif // BGFX_CONFIG_MIP_GEN_FALLBACK
+
+#if BGFX_CONFIG_VIDEO
+#	include "cs_yuv_to_rgb.bin.h"
+#endif // BGFX_CONFIG_VIDEO
 
 	static const EmbeddedShader s_embeddedShaders[] =
 	{
@@ -599,11 +605,17 @@ namespace bgfx
 		BGFX_EMBEDDED_SHADER(fs_clear5),
 		BGFX_EMBEDDED_SHADER(fs_clear6),
 		BGFX_EMBEDDED_SHADER(fs_clear7),
+
+#if BGFX_CONFIG_MIP_GEN_FALLBACK
 		BGFX_EMBEDDED_SHADER(cs_mipgen_pow2),
 		BGFX_EMBEDDED_SHADER(cs_mipgen_oddx),
 		BGFX_EMBEDDED_SHADER(cs_mipgen_oddy),
 		BGFX_EMBEDDED_SHADER(cs_mipgen_oddxy),
+#endif // BGFX_CONFIG_MIP_GEN_FALLBACK
+
+#if BGFX_CONFIG_VIDEO
 		BGFX_EMBEDDED_SHADER(cs_yuv_to_rgb),
+#endif // BGFX_CONFIG_VIDEO
 
 		BGFX_EMBEDDED_SHADER_END()
 	};
@@ -1060,6 +1072,7 @@ namespace bgfx
 		}
 	}
 
+#if BGFX_CONFIG_MIP_GEN_FALLBACK
 	void MipGen::init()
 	{
 		BGFX_CHECK_API_THREAD();
@@ -1121,7 +1134,17 @@ namespace bgfx
 			s_texMipSrc = BGFX_INVALID_HANDLE;
 		}
 	}
+#else
+	void MipGen::init()
+	{
+	}
 
+	void MipGen::shutdown()
+	{
+	}
+#endif // BGFX_CONFIG_MIP_GEN_FALLBACK
+
+#if BGFX_CONFIG_VIDEO
 	VideoDecode* g_videoDecode = NULL;
 
 	void VideoDecode::init()
@@ -1179,6 +1202,15 @@ namespace bgfx
 			s_texCbCr = BGFX_INVALID_HANDLE;
 		}
 	}
+#else
+	void VideoDecode::init()
+	{
+	}
+
+	void VideoDecode::shutdown()
+	{
+	}
+#endif // BGFX_CONFIG_VIDEO
 
 	const char* s_uniformTypeName[] =
 	{

@@ -915,13 +915,15 @@ namespace bgfx
 
 		static bool isSupported(TextureFormat::Enum _format)
 		{
-			return false
-				|| TextureFormat::RGBA8   == _format
-				|| TextureFormat::BGRA8   == _format
-				|| TextureFormat::RGBA16  == _format
-				|| TextureFormat::RGBA16F == _format
-				|| TextureFormat::RGBA32F == _format
-				;
+
+			return BX_ENABLED(BGFX_CONFIG_MIP_GEN_FALLBACK)
+				&& (false
+					|| TextureFormat::RGBA8   == _format
+					|| TextureFormat::BGRA8   == _format
+					|| TextureFormat::RGBA16  == _format
+					|| TextureFormat::RGBA16F == _format
+					|| TextureFormat::RGBA32F == _format
+				);
 		}
 
 		ProgramHandle m_program[4];
