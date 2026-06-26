@@ -8,6 +8,7 @@
 
 #include <bx/thread.h>
 #include <bx/os.h>
+#include <bx/pixelformat.h>
 #include "imgui/imgui.h"
 
 #include <bgfx/embedded_shader.h>
@@ -15,6 +16,8 @@
 // embedded shaders
 #include "vs_drawstress.bin.h"
 #include "fs_drawstress.bin.h"
+#include "vs_drawstress_tex.bin.h"
+#include "fs_drawstress_tex.bin.h"
 
 namespace
 {
@@ -23,6 +26,8 @@ static const bgfx::EmbeddedShader s_embeddedShaders[] =
 {
 	BGFX_EMBEDDED_SHADER(vs_drawstress),
 	BGFX_EMBEDDED_SHADER(fs_drawstress),
+	BGFX_EMBEDDED_SHADER(vs_drawstress_tex),
+	BGFX_EMBEDDED_SHADER(fs_drawstress_tex),
 
 	BGFX_EMBEDDED_SHADER_END()
 };
@@ -76,6 +81,78 @@ static const uint16_t s_cubeIndices[36] =
 	6, 3, 7,
 };
 
+struct PosColorTexVertex
+{
+	float m_x;
+	float m_y;
+	float m_z;
+	uint32_t m_abgr;
+	float m_u;
+	float m_v;
+
+	static void init()
+	{
+		ms_layout
+			.begin()
+			.add(bgfx::Attrib::Position,  3, bgfx::AttribType::Float)
+			.add(bgfx::Attrib::Color0,    4, bgfx::AttribType::Uint8, true)
+			.add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float)
+			.end();
+	}
+
+	static bgfx::VertexLayout ms_layout;
+};
+
+bgfx::VertexLayout PosColorTexVertex::ms_layout;
+
+static constexpr uint32_t kFaceT = 0xff'ff'ff'ff; // 1.00 - top
+static constexpr uint32_t kFaceF = 0xff'd9'd9'd9; // 0.85 - front/back
+static constexpr uint32_t kFaceS = 0xff'b2'b2'b2; // 0.70 - sides
+static constexpr uint32_t kFaceB = 0xff'80'80'80; // 0.50 - bottom
+
+static PosColorTexVertex s_cubeTexVertices[24] =
+{
+	{-1.0f,  1.0f,  1.0f, kFaceF, 0.0f, 0.0f }, // +Z front
+	{ 1.0f,  1.0f,  1.0f, kFaceF, 1.0f, 0.0f },
+	{-1.0f, -1.0f,  1.0f, kFaceF, 0.0f, 1.0f },
+	{ 1.0f, -1.0f,  1.0f, kFaceF, 1.0f, 1.0f },
+
+	{-1.0f,  1.0f, -1.0f, kFaceF, 0.0f, 0.0f }, // -Z back
+	{ 1.0f,  1.0f, -1.0f, kFaceF, 1.0f, 0.0f },
+	{-1.0f, -1.0f, -1.0f, kFaceF, 0.0f, 1.0f },
+	{ 1.0f, -1.0f, -1.0f, kFaceF, 1.0f, 1.0f },
+
+	{-1.0f,  1.0f,  1.0f, kFaceS, 0.0f, 0.0f }, // -X left
+	{-1.0f,  1.0f, -1.0f, kFaceS, 1.0f, 0.0f },
+	{-1.0f, -1.0f,  1.0f, kFaceS, 0.0f, 1.0f },
+	{-1.0f, -1.0f, -1.0f, kFaceS, 1.0f, 1.0f },
+
+	{ 1.0f,  1.0f,  1.0f, kFaceS, 0.0f, 0.0f }, // +X right
+	{ 1.0f, -1.0f,  1.0f, kFaceS, 1.0f, 0.0f },
+	{ 1.0f,  1.0f, -1.0f, kFaceS, 0.0f, 1.0f },
+	{ 1.0f, -1.0f, -1.0f, kFaceS, 1.0f, 1.0f },
+
+	{-1.0f,  1.0f,  1.0f, kFaceT, 0.0f, 0.0f }, // +Y top
+	{ 1.0f,  1.0f,  1.0f, kFaceT, 1.0f, 0.0f },
+	{-1.0f,  1.0f, -1.0f, kFaceT, 0.0f, 1.0f },
+	{ 1.0f,  1.0f, -1.0f, kFaceT, 1.0f, 1.0f },
+
+	{-1.0f, -1.0f,  1.0f, kFaceB, 0.0f, 0.0f }, // -Y bottom
+	{-1.0f, -1.0f, -1.0f, kFaceB, 1.0f, 0.0f },
+	{ 1.0f, -1.0f,  1.0f, kFaceB, 0.0f, 1.0f },
+	{ 1.0f, -1.0f, -1.0f, kFaceB, 1.0f, 1.0f },
+};
+
+static const uint16_t s_cubeTexIndices[36] =
+{
+	 0,  1,  2,   1,  3,  2,
+	 4,  6,  5,   5,  6,  7,
+	 8, 10,  9,   9, 10, 11,
+	12, 14, 13,  14, 15, 13,
+	16, 18, 17,  18, 19, 17,
+	20, 22, 21,  21, 22, 23,
+};
+
 static const float s_mod[6][3] =
 {
 	{ 1.0f, 1.0f, 1.0f },
@@ -96,6 +173,20 @@ static const int64_t lowwm  = 1000000/57;
 
 int32_t threadFunc(bx::Thread* _thread, void* _userData);
 
+static uint32_t hsvToRgba8(float _h, float _s, float _v)
+{
+	const float hsv[3] = { _h, _s, _v };
+	float rgba[4];
+	bx::hsvToRgb(rgba, hsv);
+	rgba[3] = 1.0f;
+
+	uint32_t rgba8;
+	bx::packRgba8(&rgba8, rgba);
+	return rgba8;
+}
+
+static constexpr uint32_t kMaxBenchTextures = 1024;
+
 class ExampleDrawStress : public entry::AppI
 {
 public:
@@ -113,11 +204,12 @@ public:
 		m_debug  = BGFX_DEBUG_NONE;
 		m_reset  = BGFX_RESET_NONE;
 
-		m_autoAdjust = true;
-		m_scrollArea = 0;
-		m_dim        = 16;
-		m_maxDim     = 40;
-		m_transform  = 0;
+		m_autoAdjust  = false;
+		m_scrollArea  = 0;
+		m_dim         = 40;
+		m_maxDim      = 40;
+		m_transform   = 0;
+		m_numTextures = 0;
 
 		m_last = m_timeOffset = bx::getHPCounter();
 
@@ -150,8 +242,9 @@ public:
 			, 0
 			);
 
-		// Create vertex stream declaration.
+		// Create vertex stream declarations.
 		PosColorVertex::init();
+		PosColorTexVertex::init();
 
 		bgfx::RendererType::Enum type = bgfx::getRendererType();
 
@@ -162,14 +255,46 @@ public:
 			, true /* destroy shaders when program is destroyed */
 			);
 
-		// Create static vertex buffer.
+		m_programTex = bgfx::createProgram(
+			  bgfx::createEmbeddedShader(s_embeddedShaders, type, "vs_drawstress_tex")
+			, bgfx::createEmbeddedShader(s_embeddedShaders, type, "fs_drawstress_tex")
+			, true /* destroy shaders when program is destroyed */
+			);
+
 		m_vbh = bgfx::createVertexBuffer(
 			  bgfx::makeRef(s_cubeVertices, sizeof(s_cubeVertices) )
 			, PosColorVertex::ms_layout
 			);
-
-		// Create static index buffer.
 		m_ibh = bgfx::createIndexBuffer(bgfx::makeRef(s_cubeIndices, sizeof(s_cubeIndices) ) );
+
+		m_vbhTex = bgfx::createVertexBuffer(
+			  bgfx::makeRef(s_cubeTexVertices, sizeof(s_cubeTexVertices) )
+			, PosColorTexVertex::ms_layout
+			);
+		m_ibhTex = bgfx::createIndexBuffer(bgfx::makeRef(s_cubeTexIndices, sizeof(s_cubeTexIndices) ) );
+
+		s_texColor = bgfx::createUniform("s_texColor", bgfx::UniformType::Sampler);
+
+		for (uint32_t ii = 0; ii < kMaxBenchTextures; ++ii)
+		{
+			float hue = float(ii)*0.61803398875f;
+			hue -= float(int32_t(hue) );
+
+			const uint32_t color0 = hsvToRgba8(hue, 0.35f, 1.00f);
+			const uint32_t color1 = hsvToRgba8(hue, 0.45f, 0.80f);
+
+			const bgfx::Memory* mem = bgfx::alloc(8*8*4);
+			uint32_t* pixels = (uint32_t*)mem->data;
+			for (uint32_t yy = 0; yy < 8; ++yy)
+			{
+				for (uint32_t xx = 0; xx < 8; ++xx)
+				{
+					pixels[yy*8 + xx] = 0 != ( ( (xx>>1) ^ (yy>>1) ) & 1) ? color0 : color1;
+				}
+			}
+
+			m_textures[ii] = bgfx::createTexture2D(8, 8, false, 1, bgfx::TextureFormat::RGBA8, BGFX_SAMPLER_NONE, mem);
+		}
 
 		// Imgui.
 		imguiCreate();
@@ -193,9 +318,17 @@ public:
 
 		// Cleanup.
 		imguiDestroy();
+		for (uint32_t ii = 0; ii < kMaxBenchTextures; ++ii)
+		{
+			bgfx::destroy(m_textures[ii]);
+		}
+		bgfx::destroy(s_texColor);
 		bgfx::destroy(m_ibh);
 		bgfx::destroy(m_vbh);
+		bgfx::destroy(m_ibhTex);
+		bgfx::destroy(m_vbhTex);
 		bgfx::destroy(m_program);
+		bgfx::destroy(m_programTex);
 
 		// Shutdown bgfx.
 		bgfx::shutdown();
@@ -278,10 +411,23 @@ public:
 						mtx[14] = pos[2] + float(zz)*step;
 
 						encoder->setTransform(mtx);
-						encoder->setVertexBuffer(0, m_vbh);
-						encoder->setIndexBuffer(m_ibh);
 						encoder->setState(BGFX_STATE_DEFAULT);
-						encoder->submit(0, m_program);
+
+						const uint32_t idx = (zz*uint32_t(m_dim) + yy)*uint32_t(m_dim) + xx;
+						if (0 < m_numTextures
+						&&  0 != (idx & 1) )
+						{
+							encoder->setVertexBuffer(0, m_vbhTex);
+							encoder->setIndexBuffer(m_ibhTex);
+							encoder->setTexture(0, s_texColor, m_textures[idx % uint32_t(m_numTextures)]);
+							encoder->submit(0, m_programTex);
+						}
+						else
+						{
+							encoder->setVertexBuffer(0, m_vbh);
+							encoder->setIndexBuffer(m_ibh);
+							encoder->submit(0, m_program);
+						}
 					}
 				}
 			}
@@ -344,7 +490,7 @@ public:
 				, ImGuiCond_FirstUseEver
 				);
 			ImGui::SetNextWindowSize(
-				  ImVec2((float)m_width / 4.0f, (float)m_height / 2.0f)
+				  ImVec2((float)m_width / 4.0f, (float)m_height / 1.8f)
 				, ImGuiCond_FirstUseEver
 				);
 			ImGui::Begin("Settings"
@@ -363,6 +509,8 @@ public:
 
 			ImGui::SliderInt("Dim", &m_dim, 5, m_maxDim);
 			ImGui::Text("Draw calls: %d", m_dim*m_dim*m_dim);
+			ImGui::SliderInt("Textures", &m_numTextures, 0, kMaxBenchTextures);
+			ImGui::TextWrapped("0 = no texture bind\n>0 cycles N textures, one setTexture per draw");
 			ImGui::Text("Avg Delta Time (1 second) [ms]: %0.4f", m_deltaTimeAvgNs/1000.0f);
 
 			ImGui::Separator();
@@ -437,6 +585,7 @@ public:
 	int32_t  m_transform;
 	int32_t  m_numThreads;
 	int32_t  m_maxThreads;
+	int32_t  m_numTextures;
 
 	int64_t  m_last;
 	int64_t  m_timeOffset;
@@ -449,8 +598,13 @@ public:
 	bx::Semaphore m_sync;
 
 	bgfx::ProgramHandle m_program;
+	bgfx::ProgramHandle m_programTex;
 	bgfx::VertexBufferHandle m_vbh;
 	bgfx::IndexBufferHandle  m_ibh;
+	bgfx::VertexBufferHandle m_vbhTex;
+	bgfx::IndexBufferHandle  m_ibhTex;
+	bgfx::UniformHandle s_texColor;
+	bgfx::TextureHandle m_textures[kMaxBenchTextures];
 };
 
 int32_t threadFunc(bx::Thread* _thread, void* _userData)

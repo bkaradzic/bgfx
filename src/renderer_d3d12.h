@@ -351,6 +351,7 @@ namespace bgfx { namespace d3d12
 		{
 			bx::memSet(&m_srvd, 0, sizeof(m_srvd) );
 			bx::memSet(&m_uavd, 0, sizeof(m_uavd) );
+			m_srvHandle.ptr = 0;
 		}
 
 		void* create(const Memory* _mem, uint64_t _flags, uint8_t _skip, uint64_t _external);
@@ -362,6 +363,7 @@ namespace bgfx { namespace d3d12
 
 		D3D12_SHADER_RESOURCE_VIEW_DESC  m_srvd;
 		D3D12_UNORDERED_ACCESS_VIEW_DESC m_uavd;
+		D3D12_CPU_DESCRIPTOR_HANDLE m_srvHandle;
 		ID3D12Resource* m_ptr;
 		ID3D12Resource* m_singleMsaa;
 		HANDLE m_handle;
@@ -524,6 +526,7 @@ namespace bgfx { namespace d3d12
 			, m_flushPerBatch(0)
 		{
 			bx::memSet(m_num, 0, sizeof(m_num) );
+			bx::memSet(m_indirectFence, 0, sizeof(m_indirectFence) );
 		}
 
 		~BatchD3D12()
@@ -582,8 +585,10 @@ namespace bgfx { namespace d3d12
 		};
 
 		BufferD3D12 m_indirect[32];
+		uint64_t m_indirectFence[32];
 		uint32_t m_currIndirect;
 		DrawIndexedIndirectCommand m_current;
+		uint8_t m_currentNumVbv;
 
 		Stats m_stats;
 		uint32_t m_maxDrawPerBatch;
