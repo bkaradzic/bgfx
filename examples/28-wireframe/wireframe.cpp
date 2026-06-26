@@ -17,6 +17,7 @@ struct DrawMode
 		WireframeShaded,
 		Wireframe,
 		Shaded,
+		VertexPullingWireframe,
 	};
 };
 
@@ -239,6 +240,7 @@ struct Uniforms
 		m_wfColor[3] = 1.0f;
 		m_drawEdges = 0.0f;
 		m_wfThickness = 1.5f;
+		m_wfStride = 0.0f;
 
 		u_params = bgfx::createUniform("u_params", bgfx::UniformType::Vec4, NumVec4);
 	}
@@ -259,7 +261,7 @@ struct Uniforms
 		{
 			/*0*/struct { float m_camPos[3], m_unused0; };
 			/*1*/struct { float m_wfColor[4]; };
-			/*2*/struct { float m_drawEdges, m_wfThickness, m_unused2[2]; };
+			/*2*/struct { float m_drawEdges, m_wfThickness, m_wfStride, m_unused2; };
 		};
 
 		float m_params[NumVec4*4];
@@ -310,8 +312,9 @@ public:
 			, 0
 			);
 
-		m_wfProgram   = loadProgram("vs_wf_wireframe", "fs_wf_wireframe");
-		m_meshProgram = loadProgram("vs_wf_mesh",      "fs_wf_mesh");
+		m_wfProgram   = loadProgram("vs_wf_wireframe",      "fs_wf_wireframe");
+		m_vpProgram   = loadProgram("vs_wf_vertex_pulling", "fs_wf_vertex_pulling");
+		m_meshProgram = loadProgram("vs_wf_mesh",           "fs_wf_mesh");
 
 		m_uniforms.init();
 
@@ -342,6 +345,7 @@ public:
 		m_meshes[2].destroy();
 
 		bgfx::destroy(m_wfProgram);
+		bgfx::destroy(m_vpProgram);
 		bgfx::destroy(m_meshProgram);
 
 		m_uniforms.destroy();
@@ -399,6 +403,7 @@ public:
 			ImGui::RadioButton("Wireframe + Shaded", &m_drawMode, 0);
 			ImGui::RadioButton("Wireframe", &m_drawMode, 1);
 			ImGui::RadioButton("Shaded", &m_drawMode, 2);
+			ImGui::RadioButton("Vertex Pulling Wireframe", &m_drawMode, 3);
 
 			const bool wfEnabled = (DrawMode::Shaded != m_drawMode);
 			if ( wfEnabled )
@@ -461,6 +466,7 @@ public:
 			bgfx::setViewTransform(0, view, proj);
 
 			m_uniforms.m_drawEdges = (DrawMode::WireframeShaded == m_drawMode) ? 1.0f : 0.0f;
+			m_uniforms.m_wfStride = (float)(m_meshes[m_meshSelection].m_mesh->m_layout.getStride() / 4);
 			m_uniforms.submit();
 
 			if (DrawMode::Wireframe == m_drawMode)
@@ -474,6 +480,18 @@ public:
 					| BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_SRC_ALPHA, BGFX_STATE_BLEND_INV_SRC_ALPHA)
 					;
 				meshSubmit(m_meshes[m_meshSelection].m_mesh, 0, m_wfProgram, m_meshes[m_meshSelection].m_mtx, state);
+			}
+			else if (DrawMode::VertexPullingWireframe == m_drawMode)
+			{
+				uint64_t state = 0
+					 | BGFX_STATE_WRITE_RGB
+					 | BGFX_STATE_WRITE_A
+					 | BGFX_STATE_WRITE_Z
+					 | BGFX_STATE_CULL_CCW
+					 | BGFX_STATE_MSAA
+					 | BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_SRC_ALPHA, BGFX_STATE_BLEND_INV_SRC_ALPHA)
+					;
+				drawVertexPullingWireframe(m_meshes[m_meshSelection].m_mesh, 0, m_vpProgram, m_meshes[m_meshSelection].m_mtx, state);
 			}
 			else
 			{
@@ -498,9 +516,31 @@ public:
 		return false;
 	}
 
+	void drawVertexPullingWireframe(const Mesh* mesh, bgfx::ViewId _id, bgfx::ProgramHandle _program, const float* _mtx, uint64_t _state)
+	{
+		bgfx::setTransform(_mtx);
+		bgfx::setState(_state);
+		for (const Group& group : mesh->m_groups)
+		{
+			bgfx::setBuffer(0, group.m_vbh, bgfx::Access::Read);
+			bgfx::setBuffer(1, group.m_ibh, bgfx::Access::Read);
+
+			// 6 vertices per line
+			bgfx::setVertexCount(group.m_numIndices * 6);
+			bgfx::submit(
+				_id
+				, _program
+				, 0
+				, BGFX_DISCARD_INDEX_BUFFER
+					| BGFX_DISCARD_VERTEX_STREAMS
+				);
+		}
+	}
+
 	entry::MouseState m_mouseState;
 
 	bgfx::ProgramHandle m_wfProgram;
+	bgfx::ProgramHandle m_vpProgram;
 	bgfx::ProgramHandle m_meshProgram;
 
 	uint32_t m_width;
@@ -530,3 +570,4 @@ ENTRY_IMPLEMENT_MAIN(
 	, "Drawing wireframe mesh."
 	, "https://bkaradzic.github.io/bgfx/examples.html#wireframe"
 	);
+

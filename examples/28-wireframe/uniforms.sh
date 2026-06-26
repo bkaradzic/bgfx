@@ -10,3 +10,5 @@ uniform vec4 u_params[3];
 #define u_wfOpacity    u_params[1].w
 #define u_drawEdges    u_params[2].x
 #define u_wfThickness  u_params[2].y
+#define u_wfStride     u_params[2].z
+
