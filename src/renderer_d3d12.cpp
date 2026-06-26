@@ -757,6 +757,7 @@ namespace bgfx { namespace d3d12
 			, m_directAccessSupport(false)
 			, m_variableRateShadingSupport(false)
 			, m_mipGen(NULL)
+			, m_lastPso(NULL)
 		{
 		}
 
@@ -1433,6 +1434,16 @@ namespace bgfx { namespace d3d12
 					, (void**)&m_dsvDescriptorHeap
 					) );
 
+				D3D12_DESCRIPTOR_HEAP_DESC textureSrvDescHeap;
+				textureSrvDescHeap.NumDescriptors = BGFX_CONFIG_MAX_TEXTURES;
+				textureSrvDescHeap.Type     = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+				textureSrvDescHeap.Flags    = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+				textureSrvDescHeap.NodeMask = 1;
+				DX_CHECK(m_device->CreateDescriptorHeap(&textureSrvDescHeap
+					, IID_ID3D12DescriptorHeap
+					, (void**)&m_textureSrvHeap
+					) );
+
 				for (uint32_t ii = 0; ii < BX_COUNTOF(m_scratchBuffer); ++ii)
 				{
 					m_scratchBuffer[ii].create(BGFX_CONFIG_MAX_TEXTURES + BGFX_CONFIG_MAX_SHADERS + BGFX_CONFIG_MAX_DRAW_CALLS);
@@ -1987,6 +1998,7 @@ namespace bgfx { namespace d3d12
 			m_uniformScratchBuffer.destroy();
 
 			m_pipelineStateCache.invalidate();
+			m_lastPso = NULL;
 
 			for (uint32_t ii = 0; ii < BX_COUNTOF(m_indexBuffers); ++ii)
 			{
@@ -2014,6 +2026,7 @@ namespace bgfx { namespace d3d12
 
 			DX_RELEASE(m_rtvDescriptorHeap, 0);
 			DX_RELEASE(m_dsvDescriptorHeap, 0);
+			DX_RELEASE(m_textureSrvHeap, 0);
 
 			for (uint32_t ii = 0; ii < BX_COUNTOF(m_commandSignature); ++ii)
 			{
@@ -2774,6 +2787,7 @@ namespace bgfx { namespace d3d12
 		void invalidateCache()
 		{
 			m_pipelineStateCache.invalidate();
+			m_lastPso = NULL;
 
 			m_samplerAllocator.reset();
 		}
@@ -2831,6 +2845,7 @@ namespace bgfx { namespace d3d12
 			{
 				m_depthClamp = depthClamp;
 				m_pipelineStateCache.invalidate();
+				m_lastPso = NULL;
 			}
 
 			if (_resolution.reset & BGFX_RESET_VSYNC)
@@ -3433,6 +3448,43 @@ namespace bgfx { namespace d3d12
 
 			_stencil &= kStencilNoRefMask;
 
+			const uint32_t rgba = !!(BGFX_STATE_BLEND_INDEPENDENT & _state) ? _rgba : 0;
+
+			if (NULL != m_lastPso
+			&&  m_lastPsoState.state           == _state
+			&&  m_lastPsoState.stencil         == _stencil
+			&&  m_lastPsoState.rgba            == rgba
+			&&  m_lastPsoState.program         == _program.idx
+			&&  m_lastPsoState.numStreams      == _numStreams
+			&&  m_lastPsoState.numInstanceData == _numInstanceData
+			&&  m_lastPsoState.fbh             == m_fbh.idx
+			   )
+			{
+				bool match = true;
+				for (uint32_t ii = 0; ii < _numStreams && match; ++ii)
+				{
+					match &= _layouts[ii] == m_lastPsoState.layouts[ii];
+				}
+
+				if (match)
+				{
+					return m_lastPso;
+				}
+			}
+
+			m_lastPsoState.state           = _state;
+			m_lastPsoState.stencil         = _stencil;
+			m_lastPsoState.rgba            = rgba;
+			m_lastPsoState.program         = _program.idx;
+			m_lastPsoState.numStreams      = _numStreams;
+			m_lastPsoState.numInstanceData = _numInstanceData;
+			m_lastPsoState.fbh             = m_fbh.idx;
+
+			for (uint32_t ii = 0; ii < _numStreams; ++ii)
+			{
+				m_lastPsoState.layouts[ii] = _layouts[ii];
+			}
+
 			VertexLayout layout;
 			if (0 < _numStreams)
 			{
@@ -3447,10 +3499,10 @@ namespace bgfx { namespace d3d12
 				}
 			}
 
-			bx::HashMurmur2A murmur;
+			bx::HashMurmur3 murmur;
 			murmur.begin();
 			murmur.add(_state);
-			murmur.add(!!(BGFX_STATE_BLEND_INDEPENDENT & _state) ? _rgba : 0);
+			murmur.add(rgba);
 			murmur.add(_stencil);
 			murmur.add(program.m_vsh->m_hash);
 			murmur.add(program.m_vsh->m_attrMask, sizeof(program.m_vsh->m_attrMask) );
@@ -3474,6 +3526,7 @@ namespace bgfx { namespace d3d12
 
 			if (NULL != pso)
 			{
+				m_lastPso = pso;
 				return pso;
 			}
 
@@ -3627,12 +3680,13 @@ namespace bgfx { namespace d3d12
 				bx::free(g_allocator, cachedData);
 			}
 
+			m_lastPso = pso;
 			return pso;
 		}
 
 		uint16_t getSamplerState(const uint32_t* _flags, uint32_t _num, const float _palette[][4])
 		{
-			bx::HashMurmur2A murmur;
+			bx::HashMurmur3 murmur;
 			murmur.begin();
 			murmur.add(_flags, _num * sizeof(uint32_t) );
 			uint32_t hash = murmur.end();
@@ -3874,6 +3928,7 @@ namespace bgfx { namespace d3d12
 
 		ID3D12DescriptorHeap* m_rtvDescriptorHeap;
 		ID3D12DescriptorHeap* m_dsvDescriptorHeap;
+		ID3D12DescriptorHeap* m_textureSrvHeap;
 		D3D12_CPU_DESCRIPTOR_HANDLE m_rtvHandle;
 		D3D12_CPU_DESCRIPTOR_HANDLE m_dsvHandle;
 		D3D12_CPU_DESCRIPTOR_HANDLE* m_currentColor;
@@ -3914,6 +3969,21 @@ namespace bgfx { namespace d3d12
 		UniformRegistry m_uniformReg;
 
 		StateCacheT<ID3D12PipelineState*> m_pipelineStateCache;
+
+		struct PsoState
+		{
+			uint64_t state;
+			uint64_t stencil;
+			uint32_t rgba;
+			uint16_t program;
+			uint16_t fbh;
+			uint8_t  numStreams;
+			uint8_t  numInstanceData;
+			const VertexLayout* layouts[BGFX_CONFIG_MAX_VERTEX_STREAMS];
+		};
+
+		PsoState m_lastPsoState;
+		ID3D12PipelineState* m_lastPso;
 
 		TextVideoMem m_textVideoMem;
 
@@ -4081,10 +4151,26 @@ namespace bgfx { namespace d3d12
 			}
 		}
 
-		device->CreateShaderResourceView(NULL != _texture.m_singleMsaa ? _texture.m_singleMsaa : _texture.m_ptr
-			, srvd
-			, m_cpuHandle
-			);
+		ID3D12Resource* resource = NULL != _texture.m_singleMsaa ? _texture.m_singleMsaa : _texture.m_ptr;
+
+		if (fullRange
+		&&  NULL == _texture.m_singleMsaa)
+		{
+			if (0 == _texture.m_srvHandle.ptr)
+			{
+				D3D12_CPU_DESCRIPTOR_HANDLE cached = getCPUHandleHeapStart(s_renderD3D12->m_textureSrvHeap);
+				cached.ptr += uint32_t(&_texture - s_renderD3D12->m_textures) * m_incrementSize;
+				device->CreateShaderResourceView(resource, srvd, cached);
+				_texture.m_srvHandle = cached;
+			}
+
+			device->CopyDescriptorsSimple(1, m_cpuHandle, _texture.m_srvHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+		}
+		else
+		{
+			device->CreateShaderResourceView(resource, srvd, m_cpuHandle);
+		}
+
 		m_cpuHandle.ptr += m_incrementSize;
 
 		_gpuHandle = m_gpuHandle;
@@ -4868,6 +4954,75 @@ namespace bgfx { namespace d3d12
 
 		uint32_t numIndices = 0;
 
+		// Immediate fast path when batching is disabled.
+		if (UINT32_MAX == m_minIndirect
+		&&  0 == (_draw.m_stateFlags & BGFX_STATE_INTERNAL_OCCLUSION_QUERY) )
+		{
+			if (m_current.cbv != _cbv)
+			{
+				m_current.cbv = _cbv;
+				_commandList->SetGraphicsRootConstantBufferView(RenderRp::CBV, _cbv);
+				_commandList->SetGraphicsRootConstantBufferView(RenderRp::CBF, _cbf);
+			}
+
+			D3D12_VERTEX_BUFFER_VIEW vbv[BGFX_CONFIG_MAX_VERTEX_STREAMS+1];
+			uint32_t numVertices;
+			uint8_t  numStreams = fill(_commandList, vbv, _draw, numVertices);
+
+			if (isValid(_draw.m_instanceDataBuffer) )
+			{
+				VertexBufferD3D12& inst = s_renderD3D12->m_vertexBuffers[_draw.m_instanceDataBuffer.idx];
+				inst.setState(_commandList, D3D12_RESOURCE_STATE_GENERIC_READ);
+				D3D12_VERTEX_BUFFER_VIEW& vb = vbv[numStreams++];
+				vb.BufferLocation = inst.m_gpuVA + _draw.m_instanceDataOffset;
+				vb.StrideInBytes  = _draw.m_instanceDataStride;
+				vb.SizeInBytes    = _draw.m_numInstances * _draw.m_instanceDataStride;
+			}
+
+			const uint32_t vbvSize = numStreams*sizeof(D3D12_VERTEX_BUFFER_VIEW);
+			if (m_currentNumVbv != numStreams
+			||  0 != bx::memCmp(m_current.vbv, vbv, vbvSize) )
+			{
+				m_currentNumVbv = numStreams;
+				bx::memCopy(m_current.vbv, vbv, vbvSize);
+				_commandList->IASetVertexBuffers(0, numStreams, vbv);
+			}
+
+			if (DrawIndexed == type)
+			{
+				BufferD3D12& ib = s_renderD3D12->m_indexBuffers[_draw.m_indexBuffer.idx];
+				ib.setState(_commandList, D3D12_RESOURCE_STATE_GENERIC_READ);
+
+				const bool isIndex16          = _draw.isIndex16();
+				const uint32_t indexSize      = isIndex16 ? 2 : 4;
+				const DXGI_FORMAT indexFormat = isIndex16 ? DXGI_FORMAT_R16_UINT : DXGI_FORMAT_R32_UINT;
+
+				numIndices = UINT32_MAX == _draw.m_numIndices
+					? ib.m_size / indexSize
+					: _draw.m_numIndices
+					;
+
+				D3D12_INDEX_BUFFER_VIEW ibv;
+				ibv.BufferLocation = ib.m_gpuVA;
+				ibv.SizeInBytes    = ib.m_size;
+				ibv.Format         = indexFormat;
+
+				if (0 != bx::memCmp(&m_current.ibv, &ibv, sizeof(ibv) ) )
+				{
+					bx::memCopy(&m_current.ibv, &ibv, sizeof(ibv) );
+					_commandList->IASetIndexBuffer(&ibv);
+				}
+
+				_commandList->DrawIndexedInstanced(numIndices, _draw.m_numInstances, _draw.m_startIndex, 0, 0);
+			}
+			else
+			{
+				_commandList->DrawInstanced(numVertices, _draw.m_numInstances, 0, 0);
+			}
+
+			return numIndices;
+		}
+
 		if (Draw == type)
 		{
 			DrawIndirectCommand& cmd = getCmd<DrawIndirectCommand>(Draw);
@@ -4971,10 +5126,19 @@ namespace bgfx { namespace d3d12
 			{
 				m_stats.m_numIndirect[_type]++;
 
-				BufferD3D12& indirect = m_indirect[m_currIndirect++];
-				m_currIndirect %= BX_COUNTOF(m_indirect);
+				const uint32_t indirectIdx = m_currIndirect;
+				m_currIndirect = (m_currIndirect + 1) % BX_COUNTOF(m_indirect);
+
+				BufferD3D12& indirect = m_indirect[indirectIdx];
+
+				if (m_indirectFence[indirectIdx] > s_renderD3D12->m_cmd.m_completedFence)
+				{
+					s_renderD3D12->m_cmd.finish(m_indirectFence[indirectIdx], false);
+				}
 
 				indirect.update(_commandList, 0, num*s_indirectCommandSize[_type], m_cmds[_type]);
+
+				m_indirectFence[indirectIdx] = s_renderD3D12->m_cmd.m_currentFence;
 
 				_commandList->ExecuteIndirect(m_commandSignature[_type]
 					, num
@@ -5069,6 +5233,7 @@ namespace bgfx { namespace d3d12
 		if (_clean)
 		{
 			bx::memSet(&m_current, 0, sizeof(m_current) );
+			m_currentNumVbv = 0;
 		}
 	}
 
@@ -5076,6 +5241,7 @@ namespace bgfx { namespace d3d12
 	{
 		bx::memSet(&m_stats,   0, sizeof(m_stats) );
 		bx::memSet(&m_current, 0, sizeof(m_current) );
+		m_currentNumVbv = 0;
 	}
 
 	void BatchD3D12::end(ID3D12GraphicsCommandList* _commandList)
@@ -5392,7 +5558,7 @@ namespace bgfx { namespace d3d12
 			}
 		}
 
-		bx::HashMurmur2A murmur;
+		bx::HashMurmur3 murmur;
 		murmur.begin();
 		murmur.add(hashIn);
 		murmur.add(hashOut);
@@ -5544,6 +5710,8 @@ namespace bgfx { namespace d3d12
 
 	void* TextureD3D12::create(const Memory* _mem, uint64_t _flags, uint8_t _skip, uint64_t _external)
 	{
+		m_srvHandle.ptr = 0;
+
 		bimg::ImageContainer imageContainer;
 
 		if (bimg::imageParse(imageContainer, _mem->data, _mem->size) )
@@ -7199,6 +7367,7 @@ namespace bgfx { namespace d3d12
 		bool     hasPredefined          = false;
 		bool     commandListChanged     = false;
 		ID3D12PipelineState* currentPso = NULL;
+		m_lastPso = NULL;
 		SortKey key;
 		uint16_t view = UINT16_MAX;
 		FrameBufferHandle fbh = { BGFX_CONFIG_MAX_FRAME_BUFFERS };
