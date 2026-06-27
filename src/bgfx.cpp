@@ -1737,6 +1737,66 @@ namespace bgfx
 		bx::radixSort(m_blitKeys, (uint32_t*)&s_ctx->m_tempKeys, m_numBlitItems);
 
 		m_uniformCacheFrame.sort(viewRemap, s_ctx->m_tempKeys);
+
+		dedupBind();
+	}
+
+	void Frame::dedupBind()
+	{
+		if (!m_needBindDedup)
+		{
+			return;
+		}
+
+		BGFX_PROFILER_SCOPE("bgfx/DedupBind", kColorSubmit);
+
+		Context::BindHashMap& bindHashMap = s_ctx->m_renderBindHashMap;
+		bindHashMap.clear();
+
+		RenderItemCount* remap = s_ctx->m_tempValues;
+
+		uint32_t numUnique = 0;
+		for (uint32_t ii = 0, num = m_numRenderBinds; ii < num; ++ii)
+		{
+			const RenderBind& renderBind = m_renderBind[ii];
+			const uint32_t hash = bx::hash<bx::HashMurmur3>(renderBind.m_bind, sizeof(renderBind.m_bind) );
+
+			Context::BindHashMap::const_iterator it = bindHashMap.find(hash);
+
+			if (it != bindHashMap.end()
+			&&   0 == bx::memCmp(renderBind.m_bind, m_renderBind[it->second].m_bind, sizeof(renderBind.m_bind) ) )
+			{
+				remap[ii] = RenderItemCount(it->second);
+			}
+			else
+			{
+				if (numUnique != ii)
+				{
+					m_renderBind[numUnique] = renderBind;
+				}
+
+				bindHashMap.insert(stl::make_pair(hash, numUnique) );
+				remap[ii] = RenderItemCount(numUnique);
+				++numUnique;
+			}
+		}
+
+		m_numRenderBinds = numUnique;
+
+		for (uint32_t ii = 0, num = m_numRenderItems; ii < num; ++ii)
+		{
+			const bool  isCompute = 0 == (m_sortKeys[ii] & kSortKeyDrawBit);
+			RenderItem& item      = m_renderItem[m_sortValues[ii] ];
+
+			if (isCompute)
+			{
+				item.compute.m_bindIdx = remap[item.compute.m_bindIdx];
+			}
+			else
+			{
+				item.draw.m_bindIdx = remap[item.draw.m_bindIdx];
+			}
+		}
 	}
 
 	RenderFrame::Enum renderFrame(int32_t _msecs)

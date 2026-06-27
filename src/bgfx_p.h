@@ -1826,15 +1826,13 @@ namespace bgfx
 
 		void reset()
 		{
+			// Zero the whole struct, including any trailing padding, so it hashes and
+			// compares deterministically when used as a bind-state key.
+			bx::memSet(this, 0, sizeof(*this) );
 			m_samplerFlags = BGFX_SAMPLER_NONE;
-			m_firstLayer   = 0;
 			m_numLayers    = UINT16_MAX;
 			m_idx          = kInvalidHandle;
-			m_type     = 0;
-			m_format   = 0;
-			m_access   = 0;
-			m_firstMip = 0;
-			m_numMips  = UINT8_MAX;
+			m_numMips      = UINT8_MAX;
 		}
 
 		void setTexture(TextureHandle _handle, uint32_t _samplerFlags, uint8_t _firstMip = 0, uint8_t _numMips = UINT8_MAX)
@@ -1912,6 +1910,8 @@ namespace bgfx
 		uint8_t  m_firstMip;
 		uint8_t  m_numMips;
 	};
+
+	static_assert(16 == sizeof(Binding), "Binding size changed. Whole struct must be properly initialized for hashing and comparing!");
 
 	struct Stream
 	{
@@ -2571,6 +2571,7 @@ namespace bgfx
 			, m_frameNum(0)
 			, m_capture(false)
 			, m_flush(false)
+			, m_needBindDedup(false)
 		{
 			SortKey term;
 			term.reset();
@@ -2653,6 +2654,7 @@ namespace bgfx
 		}
 
 		void sort();
+		void dedupBind();
 
 		uint32_t getAvailTransientIndexBuffer(uint32_t _num, uint16_t _indexSize)
 		{
@@ -2859,6 +2861,7 @@ namespace bgfx
 
 		bool m_capture;
 		bool m_flush;
+		bool m_needBindDedup;
 	};
 
 	BX_ALIGN_DECL_CACHE_LINE(struct) EncoderImpl
@@ -6161,14 +6164,19 @@ namespace bgfx
 				m_encoderEndSem.wait();
 			}
 
+			uint16_t numSubmittingEncoders = 0;
+
 			for (uint16_t ii = 0; ii < numEncoders; ++ii)
 			{
 				uint16_t idx = m_encoderHandle->getHandleAt(ii);
 				m_encoderStats[ii].cpuTimeBegin = m_encoder[idx].m_cpuTimeBegin;
 				m_encoderStats[ii].cpuTimeEnd   = m_encoder[idx].m_cpuTimeEnd;
+
+				numSubmittingEncoders += 0 < m_encoder[idx].m_numSubmitted;
 			}
 
 			m_submit->m_perfStats.numEncoders = uint8_t(numEncoders);
+			m_submit->m_needBindDedup = 1 < numSubmittingEncoders;
 		}
 
 		bx::Semaphore m_renderSem;
@@ -6202,6 +6210,7 @@ namespace bgfx
 			m_encoderStats[0].cpuTimeBegin = m_encoder[0].m_cpuTimeBegin;
 			m_encoderStats[0].cpuTimeEnd   = m_encoder[0].m_cpuTimeEnd;
 			m_submit->m_perfStats.numEncoders = 1;
+			m_submit->m_needBindDedup = false;
 		}
 #endif // BGFX_CONFIG_MULTITHREADED
 
@@ -6217,6 +6226,9 @@ namespace bgfx
 
 		uint64_t m_tempKeys[BGFX_CONFIG_MAX_DRAW_CALLS];
 		RenderItemCount m_tempValues[BGFX_CONFIG_MAX_DRAW_CALLS];
+
+		typedef stl::unordered_map<uint32_t, uint32_t> BindHashMap;
+		BindHashMap m_renderBindHashMap;
 
 		IndexBuffer  m_indexBuffers[BGFX_CONFIG_MAX_INDEX_BUFFERS];
 		VertexBuffer m_vertexBuffers[BGFX_CONFIG_MAX_VERTEX_BUFFERS];
