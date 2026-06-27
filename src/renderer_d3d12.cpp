@@ -1896,7 +1896,12 @@ namespace bgfx { namespace d3d12
 
 				m_batch.create(4<<10);
 #if !BX_PLATFORM_LINUX
-				m_batch.setIndirectMode(BGFX_PCI_ID_MICROSOFT != m_dxgi.m_adapterDesc.VendorId);
+				// ExecuteIndirect is a net loss on following GPU vendors:
+				m_batch.setIndirectMode(true
+					&& BGFX_PCI_ID_NVIDIA    != m_dxgi.m_adapterDesc.VendorId
+					&& BGFX_PCI_ID_INTEL     != m_dxgi.m_adapterDesc.VendorId
+					&& BGFX_PCI_ID_MICROSOFT != m_dxgi.m_adapterDesc.VendorId
+					);
 #endif // !BX_PLATFORM_LINUX
 
 				m_gpuTimer.init();
