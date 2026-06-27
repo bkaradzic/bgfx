@@ -1896,7 +1896,7 @@ namespace bgfx { namespace d3d12
 
 				m_batch.create(4<<10);
 #if !BX_PLATFORM_LINUX
-				m_batch.setIndirectMode(BGFX_PCI_ID_NVIDIA != m_dxgi.m_adapterDesc.VendorId && BGFX_PCI_ID_MICROSOFT != m_dxgi.m_adapterDesc.VendorId);
+				m_batch.setIndirectMode(BGFX_PCI_ID_MICROSOFT != m_dxgi.m_adapterDesc.VendorId);
 #endif // !BX_PLATFORM_LINUX
 
 				m_gpuTimer.init();
@@ -5126,19 +5126,10 @@ namespace bgfx { namespace d3d12
 			{
 				m_stats.m_numIndirect[_type]++;
 
-				const uint32_t indirectIdx = m_currIndirect;
-				m_currIndirect = (m_currIndirect + 1) % BX_COUNTOF(m_indirect);
-
-				BufferD3D12& indirect = m_indirect[indirectIdx];
-
-				if (m_indirectFence[indirectIdx] > s_renderD3D12->m_cmd.m_completedFence)
-				{
-					s_renderD3D12->m_cmd.finish(m_indirectFence[indirectIdx], false);
-				}
+				BufferD3D12& indirect = m_indirect[m_currIndirect++];
+				m_currIndirect %= BX_COUNTOF(m_indirect);
 
 				indirect.update(_commandList, 0, num*s_indirectCommandSize[_type], m_cmds[_type]);
-
-				m_indirectFence[indirectIdx] = s_renderD3D12->m_cmd.m_currentFence;
 
 				_commandList->ExecuteIndirect(m_commandSignature[_type]
 					, num
@@ -5147,6 +5138,9 @@ namespace bgfx { namespace d3d12
 					, NULL
 					, 0
 					);
+
+				bx::memSet(&m_current, 0, sizeof(m_current) );
+				m_currentNumVbv = 0;
 			}
 			else
 			{

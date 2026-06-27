@@ -526,7 +526,6 @@ namespace bgfx { namespace d3d12
 			, m_flushPerBatch(0)
 		{
 			bx::memSet(m_num, 0, sizeof(m_num) );
-			bx::memSet(m_indirectFence, 0, sizeof(m_indirectFence) );
 		}
 
 		~BatchD3D12()
@@ -585,7 +584,6 @@ namespace bgfx { namespace d3d12
 		};
 
 		BufferD3D12 m_indirect[32];
-		uint64_t m_indirectFence[32];
 		uint32_t m_currIndirect;
 		DrawIndexedIndirectCommand m_current;
 		uint8_t m_currentNumVbv;
