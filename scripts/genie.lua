@@ -50,6 +50,11 @@ newoption {
 	description = "Enable building bimg with libheif HEIF and AVIF file format decoder.",
 }
 
+newoption {
+	trigger = "without-video",
+	description = "Disable building video support in bgfx."
+}
+
 newaction {
 	trigger = "idl",
 	description = "Generate bgfx interface source code",
@@ -206,6 +211,12 @@ if _OPTIONS["with-profiler"] then
 	defines {
 		"ENTRY_CONFIG_PROFILER=1",
 		"BGFX_CONFIG_PROFILER=1",
+	}
+end
+
+if _OPTIONS["without-video"] then
+	defines {
+		"BGFX_CONFIG_VIDEO=0",
 	}
 end
 
