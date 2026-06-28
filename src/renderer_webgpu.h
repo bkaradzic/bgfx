@@ -24,7 +24,9 @@
 #	define WGPU_CHECK(_call) _call
 #endif // BGFX_CONFIG_DEBUG
 
-#define WGPU_SKIP_DECLARATIONS
+#if !BX_PLATFORM_EMSCRIPTEN
+#	define WGPU_SKIP_DECLARATIONS
+#endif // !BX_PLATFORM_EMSCRIPTEN
 #include <dawn/include/webgpu/webgpu.h>
 
 #if USE_WEBGPU_DYNAMIC_LIB
@@ -307,11 +309,11 @@
 		WGPU_IGNORE_____(false, TextureGetDepthOrArrayLayers);                      \
 		WGPU_IGNORE_____(false, TextureGetDimension);                               \
 		WGPU_IGNORE_____(false, TextureGetFormat);                                  \
-		WGPU_IGNORE_____(false, TextureGetHeight);                                  \
+		WGPU_IMPORT_FUNC(false, TextureGetHeight);                                  \
 		WGPU_IGNORE_____(false, TextureGetMipLevelCount);                           \
 		WGPU_IGNORE_____(false, TextureGetSampleCount);                             \
 		WGPU_IGNORE_____(false, TextureGetUsage);                                   \
-		WGPU_IGNORE_____(false, TextureGetWidth);                                   \
+		WGPU_IMPORT_FUNC(false, TextureGetWidth);                                   \
 		WGPU_IGNORE_____(false, TexturePin);                                        \
 		WGPU_IMPORT_FUNC(false, TextureSetLabel);                                   \
 		WGPU_IGNORE_____(false, TextureUnpin);                                      \
