@@ -9319,6 +9319,23 @@ VK_DESTROY
 		uint32_t currentBindHash = 0;
 		uint32_t descriptorSetCount = 0;
 
+		struct PipelineState
+		{
+			const VertexLayout* layouts[BGFX_CONFIG_MAX_VERTEX_STREAMS];
+			VkPipeline          pipeline;
+			uint64_t            state;
+			uint64_t            stencil;
+			uint32_t            rgba;
+			uint16_t            program;
+			uint16_t            fbh;
+			uint8_t             numStreams;
+			uint8_t             numInstanceData;
+			bool                valid;
+		};
+
+		PipelineState pipelineState;
+		bx::memSet(&pipelineState, 0, sizeof(PipelineState) );
+
 		VkIndexType currentIndexFormat = VK_INDEX_TYPE_MAX_ENUM;
 		SortKey key;
 		uint16_t view = UINT16_MAX;
@@ -9887,15 +9904,44 @@ VK_DESTROY
 						}
 					}
 
-					const VkPipeline pipeline =
-						getPipeline(draw.m_stateFlags
+					const uint8_t numInstanceData = uint8_t(draw.m_instanceDataStride/16);
+
+					VkPipeline pipeline;
+
+					if (pipelineState.valid
+					&&  pipelineState.state           == draw.m_stateFlags
+					&&  pipelineState.rgba            == draw.m_rgba
+					&&  pipelineState.stencil         == draw.m_stencil
+					&&  pipelineState.program         == key.m_program.idx
+					&&  pipelineState.fbh             == m_fbh.idx
+					&&  pipelineState.numStreams      == numStreams
+					&&  pipelineState.numInstanceData == numInstanceData
+					&&  0 == bx::memCmp(pipelineState.layouts, layouts, numStreams*sizeof(layouts[0]) ) )
+					{
+						pipeline = pipelineState.pipeline;
+					}
+					else
+					{
+						pipeline = getPipeline(draw.m_stateFlags
 							, draw.m_rgba
 							, draw.m_stencil
 							, numStreams
 							, layouts
 							, key.m_program
-							, uint8_t(draw.m_instanceDataStride/16)
+							, numInstanceData
 							);
+
+						bx::memCopy(pipelineState.layouts, layouts, numStreams*sizeof(layouts[0]) );
+						pipelineState.pipeline        = pipeline;
+						pipelineState.state           = draw.m_stateFlags;
+						pipelineState.stencil         = draw.m_stencil;
+						pipelineState.rgba            = draw.m_rgba;
+						pipelineState.program         = key.m_program.idx;
+						pipelineState.fbh             = m_fbh.idx;
+						pipelineState.numStreams      = numStreams;
+						pipelineState.numInstanceData = numInstanceData;
+						pipelineState.valid           = true;
+					}
 
 					if (currentPipeline != pipeline)
 					{
