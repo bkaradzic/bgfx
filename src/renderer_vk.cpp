@@ -1187,8 +1187,6 @@ VK_IMPORT_DEVICE
 			);
 	}
 
-#define MAX_DESCRIPTOR_SETS (BGFX_CONFIG_RENDERER_VULKAN_MAX_DESCRIPTOR_SETS_PER_FRAME * BGFX_CONFIG_MAX_FRAME_LATENCY)
-
 	struct RendererContextVK : public RendererContextI
 	{
 		RendererContextVK()
@@ -2205,32 +2203,11 @@ VK_IMPORT_DEVICE
 			errorState = ErrorState::SwapChainCreated;
 
 			{
-				VkDescriptorPoolSize dps[] =
-				{
-					{ VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,          MAX_DESCRIPTOR_SETS * BGFX_CONFIG_MAX_TEXTURE_SAMPLERS },
-					{ VK_DESCRIPTOR_TYPE_SAMPLER,                MAX_DESCRIPTOR_SETS * BGFX_CONFIG_MAX_TEXTURE_SAMPLERS },
-					{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, MAX_DESCRIPTOR_SETS * 2                                },
-					{ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,         MAX_DESCRIPTOR_SETS * BGFX_CONFIG_MAX_TEXTURE_SAMPLERS },
-					{ VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,          MAX_DESCRIPTOR_SETS * BGFX_CONFIG_MAX_TEXTURE_SAMPLERS },
-				};
-
-				VkDescriptorPoolCreateInfo dpci;
-				dpci.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-				dpci.pNext = NULL;
-				dpci.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
-				dpci.maxSets       = MAX_DESCRIPTOR_SETS;
-				dpci.poolSizeCount = BX_COUNTOF(dps);
-				dpci.pPoolSizes    = dps;
-
+				m_descriptorPoolIdx = 0;
 				for (uint32_t ii = 0; ii < m_maxFrameLatency; ++ii)
 				{
-					result = vkCreateDescriptorPool(m_device, &dpci, m_allocatorCb, &m_descriptorPool[ii]);
-
-					if (VK_SUCCESS != result)
-					{
-						BX_TRACE("Init error: vkCreateDescriptorPool failed %d: %s.", result, getName(result) );
-						goto error;
-					}
+					m_descriptorPool[ii][0] = createDescriptorPool();
+					m_numDescriptorPools[ii] = 1;
 				}
 
 				VkPipelineCacheCreateInfo pcci;
@@ -2324,7 +2301,10 @@ VK_IMPORT_DEVICE
 				for (uint32_t ii = 0; ii < m_maxFrameLatency; ++ii)
 				{
 					m_scratchStagingBuffer[ii].destroy();
-					vkDestroy(m_descriptorPool[ii]);
+					for (uint32_t jj = 0; jj < m_numDescriptorPools[ii]; ++jj)
+					{
+						vkDestroy(m_descriptorPool[ii][jj]);
+					}
 				}
 				vkDestroy(m_pipelineCache);
 				[[fallthrough]];
@@ -2426,7 +2406,10 @@ VK_IMPORT_DEVICE
 
 			for (uint32_t ii = 0; ii < m_maxFrameLatency; ++ii)
 			{
-				vkDestroy(m_descriptorPool[ii]);
+				for (uint32_t jj = 0; jj < m_numDescriptorPools[ii]; ++jj)
+				{
+					vkDestroy(m_descriptorPool[ii][jj]);
+				}
 			}
 
 			if (NULL != m_externalDevice)
@@ -4142,18 +4125,66 @@ VK_IMPORT_DEVICE
 			return pipeline;
 		}
 
-		VkDescriptorSet getDescriptorSet(const ProgramVK& _program, const RenderBind& _renderBind, VkBuffer _uniformBuffer, const float _palette[][4])
+		VkDescriptorPool createDescriptorPool()
 		{
-			VkDescriptorSet descriptorSet;
+			const VkDescriptorPoolSize dps[] =
+			{
+				{ VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,          kDescriptorPoolChunkSize * BGFX_CONFIG_MAX_TEXTURE_SAMPLERS },
+				{ VK_DESCRIPTOR_TYPE_SAMPLER,                kDescriptorPoolChunkSize * BGFX_CONFIG_MAX_TEXTURE_SAMPLERS },
+				{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, kDescriptorPoolChunkSize * 2                                },
+				{ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,         kDescriptorPoolChunkSize * BGFX_CONFIG_MAX_TEXTURE_SAMPLERS },
+				{ VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,          kDescriptorPoolChunkSize * BGFX_CONFIG_MAX_TEXTURE_SAMPLERS },
+			};
+
+			VkDescriptorPoolCreateInfo dpci;
+			dpci.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+			dpci.pNext = NULL;
+			dpci.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
+			dpci.maxSets       = kDescriptorPoolChunkSize;
+			dpci.poolSizeCount = BX_COUNTOF(dps);
+			dpci.pPoolSizes    = dps;
+
+			VkDescriptorPool pool = VK_NULL_HANDLE;
+			VK_CHECK(vkCreateDescriptorPool(m_device, &dpci, m_allocatorCb, &pool) );
+			return pool;
+		}
+
+		VkDescriptorSet allocDescriptorSet(const VkDescriptorSetLayout& _layout)
+		{
+			const uint32_t frame = m_cmd.m_currentFrameInFlight;
 
 			VkDescriptorSetAllocateInfo dsai;
 			dsai.sType              = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
 			dsai.pNext              = NULL;
-			dsai.descriptorPool     = m_descriptorPool[m_cmd.m_currentFrameInFlight];
+			dsai.descriptorPool     = m_descriptorPool[frame][m_descriptorPoolIdx];
 			dsai.descriptorSetCount = 1;
-			dsai.pSetLayouts        = &_program.m_descriptorSetLayout;
+			dsai.pSetLayouts        = &_layout;
 
-			VK_CHECK(vkAllocateDescriptorSets(m_device, &dsai, &descriptorSet) );
+			VkDescriptorSet descriptorSet = VK_NULL_HANDLE;
+			VkResult result = vkAllocateDescriptorSets(m_device, &dsai, &descriptorSet);
+
+			if (VK_SUCCESS != result
+			&&  m_descriptorPoolIdx + 1 < kMaxDescriptorPoolChunks)
+			{
+				++m_descriptorPoolIdx;
+
+				if (m_descriptorPoolIdx >= m_numDescriptorPools[frame])
+				{
+					m_descriptorPool[frame][m_descriptorPoolIdx] = createDescriptorPool();
+					m_numDescriptorPools[frame] = uint16_t(m_descriptorPoolIdx + 1);
+				}
+
+				dsai.descriptorPool = m_descriptorPool[frame][m_descriptorPoolIdx];
+				result = vkAllocateDescriptorSets(m_device, &dsai, &descriptorSet);
+			}
+
+			VK_CHECK(result);
+			return descriptorSet;
+		}
+
+		VkDescriptorSet getDescriptorSet(const ProgramVK& _program, const RenderBind& _renderBind, VkBuffer _uniformBuffer, const float _palette[][4])
+		{
+			VkDescriptorSet descriptorSet = allocDescriptorSet(_program.m_descriptorSetLayout);
 
 			VkDescriptorImageInfo  imageInfo[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS];
 			VkDescriptorBufferInfo bufferInfo[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS];
@@ -4866,7 +4897,16 @@ VK_IMPORT_DEVICE
 		VkQueue  m_globalQueue;
 		uint32_t m_videoDecodeQueueFamily;
 		VkQueue  m_videoDecodeQueue;
-		VkDescriptorPool m_descriptorPool[BGFX_CONFIG_MAX_FRAME_LATENCY];
+
+		static constexpr uint32_t kDescriptorPoolChunkSize = BGFX_CONFIG_RENDERER_VULKAN_DESCRIPTOR_SETS_PER_POOL;
+		static constexpr uint32_t kMaxDescriptorPoolChunks = 64;
+		VkDescriptorPool m_descriptorPool[BGFX_CONFIG_MAX_FRAME_LATENCY][kMaxDescriptorPoolChunks];
+		uint16_t m_numDescriptorPools[BGFX_CONFIG_MAX_FRAME_LATENCY];
+		uint16_t m_descriptorPoolIdx;
+
+		typedef stl::unordered_map<uint32_t, VkDescriptorSet> DescriptorSetMap;
+		DescriptorSetMap m_descriptorSetMap;
+
 		VkPipelineCache  m_pipelineCache;
 
 		TimerQueryVK m_gpuTimer;
@@ -9279,7 +9319,6 @@ VK_DESTROY
 		uint32_t currentBindHash = 0;
 		uint32_t descriptorSetCount = 0;
 
-		StateCacheLru<VkDescriptorSet, BGFX_CONFIG_RENDERER_VULKAN_MAX_DESCRIPTOR_SETS_PER_FRAME> descriptorSetCache;
 		VkIndexType currentIndexFormat = VK_INDEX_TYPE_MAX_ENUM;
 		SortKey key;
 		uint16_t view = UINT16_MAX;
@@ -9309,8 +9348,13 @@ VK_DESTROY
 		const uint64_t f2 = BGFX_STATE_BLEND_FACTOR<<4;
 		const uint64_t f3 = BGFX_STATE_BLEND_INV_FACTOR<<4;
 
-		VkDescriptorPool& descriptorPool = m_descriptorPool[m_cmd.m_currentFrameInFlight];
-		vkResetDescriptorPool(m_device, descriptorPool, 0);
+		const uint32_t descriptorFrame = m_cmd.m_currentFrameInFlight;
+		for (uint32_t ii = 0; ii < m_numDescriptorPools[descriptorFrame]; ++ii)
+		{
+			vkResetDescriptorPool(m_device, m_descriptorPool[descriptorFrame][ii], 0);
+		}
+		m_descriptorPoolIdx = 0;
+		m_descriptorSetMap.clear();
 
 		ChunkedScratchBufferVK& uniformScratchBuffer = m_uniformScratchBuffer;
 		uniformScratchBuffer.begin();
@@ -9693,8 +9737,8 @@ VK_DESTROY
 						{
 							currentBindHash = bindHash;
 
-							VkDescriptorSet* cached = descriptorSetCache.find(bindHash);
-							if (NULL == cached)
+							DescriptorSetMap::const_iterator it = m_descriptorSetMap.find(bindHash);
+							if (it == m_descriptorSetMap.end() )
 							{
 								VkDescriptorSet descriptorSet = getDescriptorSet(
 									  program
@@ -9702,12 +9746,16 @@ VK_DESTROY
 									, sbo.buffer
 									, _render->m_colorPalette
 								);
-								cached = descriptorSetCache.add(bindHash, descriptorSet, 0);
+
+								m_descriptorSetMap.insert(stl::make_pair(bindHash, descriptorSet) );
+								currentDescriptorSet = descriptorSet;
 
 								descriptorSetCount++;
 							}
-
-							currentDescriptorSet = *cached;
+							else
+							{
+								currentDescriptorSet = it->second;
+							}
 						}
 
 						vkCmdBindDescriptorSets(
@@ -9988,8 +10036,8 @@ VK_DESTROY
 						{
 							currentBindHash = bindHash;
 
-							VkDescriptorSet* cached = descriptorSetCache.find(bindHash);
-							if (NULL == cached)
+							DescriptorSetMap::const_iterator it = m_descriptorSetMap.find(bindHash);
+							if (it == m_descriptorSetMap.end() )
 							{
 								VkDescriptorSet descriptorSet = getDescriptorSet(
 									  program
@@ -9997,12 +10045,16 @@ VK_DESTROY
 									, sbo.buffer
 									, _render->m_colorPalette
 									);
-								cached = descriptorSetCache.add(bindHash, descriptorSet, 0);
+
+								m_descriptorSetMap.insert(stl::make_pair(bindHash, descriptorSet) );
+								currentDescriptorSet = descriptorSet;
 
 								descriptorSetCount++;
 							}
-
-							currentDescriptorSet = *cached;
+							else
+							{
+								currentDescriptorSet = it->second;
+							}
 						}
 
 						vkCmdBindDescriptorSets(

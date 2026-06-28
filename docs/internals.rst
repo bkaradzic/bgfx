@@ -164,7 +164,7 @@ Renderer backends
 
 ``BGFX_CONFIG_RENDERER_DIRECT3D11_USE_STAGING_BUFFER`` - Enable use of staging buffers in the Direct3D 11 renderer for texture and buffer updates. Default is 0.
 
-``BGFX_CONFIG_RENDERER_VULKAN_MAX_DESCRIPTOR_SETS_PER_FRAME`` - Maximum number of Vulkan descriptor sets allocated per frame. Default is 1024. Each draw/compute call may consume one descriptor set.
+``BGFX_CONFIG_RENDERER_VULKAN_DESCRIPTOR_SETS_PER_POOL`` - Number of Vulkan descriptor sets per descriptor-pool chunk. The per-frame descriptor pool is a chain of chunks of this size, grown on demand and reset/reused each frame; this is the allocation granularity and initial per-frame footprint, not a hard cap. Each unique draw/compute bind consumes one descriptor set. Default is 1024.
 
 Resource limits
 ^^^^^^^^^^^^^^^
