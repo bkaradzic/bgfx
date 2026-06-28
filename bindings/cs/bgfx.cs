@@ -2625,6 +2625,8 @@ public static partial class bgfx
 		public unsafe struct Limits
 		{
 			public ushort maxEncoders;
+			public uint numDrawCalls;
+			public uint numDrawCallPeakFrames;
 			public uint minResourceCbSize;
 			public uint maxTransientVbSize;
 			public uint maxTransientIbSize;
@@ -2774,6 +2776,7 @@ public static partial class bgfx
 		public uint numDraw;
 		public uint numCompute;
 		public uint numBlit;
+		public uint numDrawCallsPeak;
 		public uint maxGpuLatency;
 		public uint gpuFrameNum;
 		public ushort numDynamicIndexBuffers;

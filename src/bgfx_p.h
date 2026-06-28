@@ -313,6 +313,16 @@ namespace bgfx
 	typedef uint32_t RenderItemCount;
 #endif // BGFX_CONFIG_MAX_DRAW_CALLS < (64<<10)
 
+	static constexpr uint32_t kDrawCallBlock = 1024;
+
+	inline uint32_t alignDrawCalls(uint32_t _num)
+	{
+		return _num >= BGFX_CONFIG_MAX_DRAW_CALLS
+			? uint32_t(BGFX_CONFIG_MAX_DRAW_CALLS)
+			: bx::min<uint32_t>(BGFX_CONFIG_MAX_DRAW_CALLS, uint32_t(bx::alignUp(_num, kDrawCallBlock) ) )
+			;
+	}
+
 	///
 	struct Handle
 	{
@@ -1529,23 +1539,96 @@ namespace bgfx
 	struct MatrixCache
 	{
 		MatrixCache()
-			: m_num(1)
+			: m_cache(NULL)
+			, m_num(1)
+			, m_max(0)
+			, m_peak(0)
+			, m_observe(0)
+			, m_numPeakFrames(0)
+			, m_overflowed(false)
 		{
+		}
+
+		void create(uint32_t _max, uint32_t _numPeakFrames)
+		{
+			m_max   = bx::min<uint32_t>(_max, BGFX_CONFIG_MAX_MATRIX_CACHE);
+			m_cache = (Matrix4*)bx::alloc(g_allocator, sizeof(Matrix4)*m_max);
 			m_cache[0].setIdentity();
+			m_num   = 1;
+			m_peak   = 0;
+			m_observe = 0;
+			m_numPeakFrames = _numPeakFrames;
+			m_overflowed = false;
+		}
+
+		void destroy()
+		{
+			bx::free(g_allocator, m_cache);
+			m_cache = NULL;
+		}
+
+		void resize(uint32_t _max)
+		{
+			bx::free(g_allocator, m_cache);
+			m_max   = _max;
+			m_cache = (Matrix4*)bx::alloc(g_allocator, sizeof(Matrix4)*m_max);
+			m_cache[0].setIdentity();
+		}
+
+		static uint32_t capacityFor(uint32_t _used)
+		{
+			return bx::min<uint32_t>(BGFX_CONFIG_MAX_MATRIX_CACHE, uint32_t(bx::alignUp(_used, kDrawCallBlock) )+1);
 		}
 
 		void reset()
 		{
+			const uint32_t used = m_num;
+
+			if (0 != m_numPeakFrames)
+			{
+				if (m_overflowed
+				&&  m_max < BGFX_CONFIG_MAX_MATRIX_CACHE)
+				{
+					resize(bx::min<uint32_t>(BGFX_CONFIG_MAX_MATRIX_CACHE, m_max*2) );
+					m_peak     = 0;
+					m_observe = 0;
+				}
+				else
+				{
+					m_peak = bx::max(m_peak, used);
+
+					if (++m_observe >= m_numPeakFrames)
+					{
+						const uint32_t want = bx::max<uint32_t>(kDrawCallBlock+1, capacityFor(m_peak) );
+
+						if (want < m_max)
+						{
+							resize(want);
+						}
+
+						m_peak     = 0;
+						m_observe = 0;
+					}
+				}
+			}
+
+			m_overflowed = false;
 			m_num = 1;
 		}
 
 		uint32_t reserve(uint16_t* _num)
 		{
 			uint32_t num = *_num;
-			uint32_t first = bx::atomicFetchAndAddsat<uint32_t>(&m_num, num, BGFX_CONFIG_MAX_MATRIX_CACHE - 1);
-			BX_WARN(first+num < BGFX_CONFIG_MAX_MATRIX_CACHE, "Matrix cache overflow. %d (max: %d)", first+num, BGFX_CONFIG_MAX_MATRIX_CACHE);
-			num = bx::min(num, BGFX_CONFIG_MAX_MATRIX_CACHE-1-first);
+			uint32_t first = bx::atomicFetchAndAddsat<uint32_t>(&m_num, num, m_max - 1);
+
+			if (first+num >= m_max)
+			{
+				m_overflowed = true;
+			}
+
+			num   = bx::min(num, m_max-1-first);
 			*_num = bx::narrowCast<uint16_t>(num);
+
 			return first;
 		}
 
@@ -1563,9 +1646,9 @@ namespace bgfx
 
 		float* toPtr(uint32_t _cacheIdx)
 		{
-			BX_ASSERT(_cacheIdx < BGFX_CONFIG_MAX_MATRIX_CACHE, "Matrix cache out of bounds index %d (max: %d)"
+			BX_ASSERT(_cacheIdx < m_max, "Matrix cache out of bounds index %d (max: %d)"
 				, _cacheIdx
-				, BGFX_CONFIG_MAX_MATRIX_CACHE
+				, m_max
 				);
 			return m_cache[_cacheIdx].un.val;
 		}
@@ -1575,8 +1658,13 @@ namespace bgfx
 			return uint32_t( (const Matrix4*)_ptr - m_cache);
 		}
 
-		Matrix4 m_cache[BGFX_CONFIG_MAX_MATRIX_CACHE];
+		Matrix4* m_cache;
 		uint32_t m_num;
+		uint32_t m_max;
+		uint32_t m_peak;
+		uint32_t m_observe;
+		uint32_t m_numPeakFrames;
+		bool     m_overflowed;
 	};
 
 	struct RectCache
@@ -2535,6 +2623,16 @@ namespace bgfx
 
 	struct FrameCache
 	{
+		void create(uint32_t _maxMatrices, uint32_t _numHwmFrames)
+		{
+			m_matrixCache.create(_maxMatrices, _numHwmFrames);
+		}
+
+		void destroy()
+		{
+			m_matrixCache.destroy();
+		}
+
 		void reset()
 		{
 			m_matrixCache.reset();
@@ -2572,27 +2670,114 @@ namespace bgfx
 			, m_capture(false)
 			, m_flush(false)
 			, m_needBindDedup(false)
+			, m_sortKeys(NULL)
+			, m_sortValues(NULL)
+			, m_renderItem(NULL)
+			, m_renderBind(NULL)
+			, m_maxDrawCalls(0)
+			, m_numRenderItemsRequested(0)
+			, m_peak(0)
+			, m_observe(0)
+			, m_numPeakFrames(0)
 		{
-			SortKey term;
-			term.reset();
-			term.m_program = BGFX_INVALID_HANDLE;
-			m_sortKeys[BGFX_CONFIG_MAX_DRAW_CALLS]   = term.encodeDraw(SortKey::SortProgram);
-			m_sortValues[BGFX_CONFIG_MAX_DRAW_CALLS] = BGFX_CONFIG_MAX_DRAW_CALLS;
+			m_numRenderItems = 0;
+			m_numRenderBinds = 0;
 			bx::memSet(m_occlusion, 0xff, sizeof(m_occlusion) );
 
 			m_perfStats.viewStats = m_viewStats;
-
-			bx::memSet(&m_renderBind[0], 0, sizeof(m_renderBind) );
 		}
 
 		~Frame()
 		{
+			m_frameCache.destroy();
+			freeArrays();
 		}
 
-		void create(uint32_t _minResourceCbSize)
+		void allocArrays(uint32_t _maxDrawCalls)
+		{
+			freeArrays();
+
+			m_maxDrawCalls = _maxDrawCalls;
+
+			const uint32_t num = m_maxDrawCalls + 1;
+			m_sortKeys   = (uint64_t*       )bx::alloc(g_allocator, sizeof(uint64_t       )*num);
+			m_sortValues = (RenderItemCount*)bx::alloc(g_allocator, sizeof(RenderItemCount)*num);
+			m_renderItem = (RenderItem*     )bx::alloc(g_allocator, sizeof(RenderItem     )*num);
+			m_renderBind = (RenderBind*     )bx::alloc(g_allocator, sizeof(RenderBind     )*num);
+
+			bx::memSet(m_renderBind, 0, sizeof(RenderBind)*num);
+
+			setSentinel();
+		}
+
+		void freeArrays()
+		{
+			bx::free(g_allocator, m_sortKeys);
+			bx::free(g_allocator, m_sortValues);
+			bx::free(g_allocator, m_renderItem);
+			bx::free(g_allocator, m_renderBind);
+			m_sortKeys   = NULL;
+			m_sortValues = NULL;
+			m_renderItem = NULL;
+			m_renderBind = NULL;
+		}
+
+		void setSentinel()
+		{
+			SortKey term;
+			term.reset();
+			term.m_program = BGFX_INVALID_HANDLE;
+			m_sortKeys[m_maxDrawCalls]   = term.encodeDraw(SortKey::SortProgram);
+			m_sortValues[m_maxDrawCalls] = RenderItemCount(m_maxDrawCalls);
+		}
+
+		void adjustCapacity()
+		{
+			if (0 == m_numPeakFrames)
+			{
+				return;
+			}
+
+			const uint32_t requested = m_numRenderItemsRequested;
+
+			if (requested >= m_maxDrawCalls
+			&&  m_maxDrawCalls < BGFX_CONFIG_MAX_DRAW_CALLS)
+			{
+				const uint32_t want = alignDrawCalls(requested+1);
+				if (want > m_maxDrawCalls)
+				{
+					allocArrays(want);
+				}
+
+				m_peak     = 0;
+				m_observe = 0;
+			}
+			else
+			{
+				m_peak = bx::max(m_peak, requested);
+
+				if (++m_observe >= m_numPeakFrames)
+				{
+					const uint32_t want = bx::max(kDrawCallBlock, alignDrawCalls(m_peak+1) );
+					if (want < m_maxDrawCalls)
+					{
+						allocArrays(want);
+					}
+
+					m_peak     = 0;
+					m_observe = 0;
+				}
+			}
+		}
+
+		void create(uint32_t _minResourceCbSize, uint32_t _maxDrawCalls, uint32_t _numHwmFrames)
 		{
 			m_cmdPre.init(_minResourceCbSize);
 			m_cmdPost.init(_minResourceCbSize);
+
+			m_numPeakFrames = _numHwmFrames;
+			allocArrays(_maxDrawCalls);
+			m_frameCache.create(_maxDrawCalls + 1, _numHwmFrames);
 
 			{
 				const uint32_t num = g_caps.limits.maxEncoders;
@@ -2632,6 +2817,8 @@ namespace bgfx
 		{
 			m_perfStats.transientVbUsed = m_vboffset;
 			m_perfStats.transientIbUsed = m_iboffset;
+
+			adjustCapacity();
 
 			m_frameCache.reset();
 			m_numRenderItems = 0;
@@ -2753,10 +2940,15 @@ namespace bgfx
 
 		int32_t m_occlusion[BGFX_CONFIG_MAX_OCCLUSION_QUERIES];
 
-		uint64_t m_sortKeys[BGFX_CONFIG_MAX_DRAW_CALLS+1];
-		RenderItemCount m_sortValues[BGFX_CONFIG_MAX_DRAW_CALLS+1];
-		RenderItem m_renderItem[BGFX_CONFIG_MAX_DRAW_CALLS+1];
-		RenderBind m_renderBind[BGFX_CONFIG_MAX_DRAW_CALLS + 1];
+		uint64_t*        m_sortKeys;
+		RenderItemCount* m_sortValues;
+		RenderItem*      m_renderItem;
+		RenderBind*      m_renderBind;
+		uint32_t         m_maxDrawCalls;
+		uint32_t         m_numRenderItemsRequested;
+		uint32_t         m_peak;
+		uint32_t         m_observe;
+		uint32_t         m_numPeakFrames;
 
 		uint32_t m_blitKeys[BGFX_CONFIG_MAX_BLIT_ITEMS+1];
 		BlitItem m_blitItem[BGFX_CONFIG_MAX_BLIT_ITEMS+1];
@@ -2942,7 +3134,7 @@ namespace bgfx
 				return idx;
 			}
 
-			const uint32_t idx = bx::atomicFetchAndAddsat<uint32_t>(&m_frame->m_numRenderBinds, 1, BGFX_CONFIG_MAX_DRAW_CALLS);
+			const uint32_t idx = bx::atomicFetchAndAddsat<uint32_t>(&m_frame->m_numRenderBinds, 1, m_frame->m_maxDrawCalls);
 			m_frame->m_renderBind[idx] = m_bind;
 			m_bindHashMap.insert(stl::make_pair(hash, idx) );
 
@@ -4001,6 +4193,10 @@ namespace bgfx
 		Context()
 			: m_render(&m_frame[0])
 			, m_submit(&m_frame[BGFX_CONFIG_MULTITHREADED ? 1 : 0])
+			, m_tempKeys(NULL)
+			, m_tempValues(NULL)
+			, m_tempCapacity(0)
+			, m_numDrawCallsPeak(0)
 			, m_numFreeDynamicIndexBufferHandles(0)
 			, m_numFreeDynamicVertexBufferHandles(0)
 			, m_numFreeOcclusionQueryHandles(0)
@@ -4021,6 +4217,20 @@ namespace bgfx
 
 		~Context()
 		{
+			bx::free(g_allocator, m_tempKeys);
+			bx::free(g_allocator, m_tempValues);
+		}
+
+		void reserveTemp(uint32_t _num)
+		{
+			if (m_tempCapacity < _num)
+			{
+				bx::free(g_allocator, m_tempKeys);
+				bx::free(g_allocator, m_tempValues);
+				m_tempCapacity = _num;
+				m_tempKeys   = (uint64_t*       )bx::alloc(g_allocator, sizeof(uint64_t       )*_num);
+				m_tempValues = (RenderItemCount*)bx::alloc(g_allocator, sizeof(RenderItemCount)*_num);
+			}
 		}
 
 #if BX_CONFIG_SUPPORTS_THREADING
@@ -4198,6 +4408,8 @@ namespace bgfx
 
 			stats.textureMemoryUsed = m_textureMemoryUsed;
 			stats.rtMemoryUsed      = m_rtMemoryUsed;
+
+			stats.numDrawCallsPeak  = m_numDrawCallsPeak;
 
 			return &stats;
 		}
@@ -6165,6 +6377,7 @@ namespace bgfx
 			}
 
 			uint16_t numSubmittingEncoders = 0;
+			uint32_t numRenderItemsRequested = 0;
 
 			for (uint16_t ii = 0; ii < numEncoders; ++ii)
 			{
@@ -6172,11 +6385,14 @@ namespace bgfx
 				m_encoderStats[ii].cpuTimeBegin = m_encoder[idx].m_cpuTimeBegin;
 				m_encoderStats[ii].cpuTimeEnd   = m_encoder[idx].m_cpuTimeEnd;
 
-				numSubmittingEncoders += 0 < m_encoder[idx].m_numSubmitted;
+				numSubmittingEncoders   += 0 < m_encoder[idx].m_numSubmitted;
+				numRenderItemsRequested += m_encoder[idx].m_numSubmitted + m_encoder[idx].m_numDropped;
 			}
 
 			m_submit->m_perfStats.numEncoders = uint8_t(numEncoders);
 			m_submit->m_needBindDedup = 1 < numSubmittingEncoders;
+			m_submit->m_numRenderItemsRequested = numRenderItemsRequested;
+			m_numDrawCallsPeak = bx::max(m_numDrawCallsPeak, numRenderItemsRequested);
 		}
 
 		bx::Semaphore m_renderSem;
@@ -6211,6 +6427,8 @@ namespace bgfx
 			m_encoderStats[0].cpuTimeEnd   = m_encoder[0].m_cpuTimeEnd;
 			m_submit->m_perfStats.numEncoders = 1;
 			m_submit->m_needBindDedup = false;
+			m_submit->m_numRenderItemsRequested = m_encoder[0].m_numSubmitted + m_encoder[0].m_numDropped;
+			m_numDrawCallsPeak = bx::max(m_numDrawCallsPeak, m_submit->m_numRenderItemsRequested);
 		}
 #endif // BGFX_CONFIG_MULTITHREADED
 
@@ -6224,8 +6442,10 @@ namespace bgfx
 		Frame* m_render;
 		Frame* m_submit;
 
-		uint64_t m_tempKeys[BGFX_CONFIG_MAX_DRAW_CALLS];
-		RenderItemCount m_tempValues[BGFX_CONFIG_MAX_DRAW_CALLS];
+		uint64_t*        m_tempKeys;
+		RenderItemCount* m_tempValues;
+		uint32_t         m_tempCapacity;
+		uint32_t         m_numDrawCallsPeak;
 
 		typedef stl::unordered_map<uint32_t, uint32_t> BindHashMap;
 		BindHashMap m_renderBindHashMap;

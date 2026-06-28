@@ -226,6 +226,8 @@ public:
 		init.resolution.width  = m_width;
 		init.resolution.height = m_height;
 		init.resolution.reset  = m_reset;
+		init.limits.numDrawCalls = UINT32_MAX; // Prealloc to maximum draw calls.
+		init.limits.numDrawCallPeakFrames = 0; // Do not adjust in runtime.
 		bgfx::init(init);
 
 		const bgfx::Caps* caps = bgfx::getCaps();

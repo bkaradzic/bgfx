@@ -2652,6 +2652,8 @@ public static class bgfx
 		public struct Limits
 		{
 			public uint16 maxEncoders;
+			public uint32 numDrawCalls;
+			public uint32 numDrawCallPeakFrames;
 			public uint32 minResourceCbSize;
 			public uint32 maxTransientVbSize;
 			public uint32 maxTransientIbSize;
@@ -2815,6 +2817,7 @@ public static class bgfx
 		public uint32 numDraw;
 		public uint32 numCompute;
 		public uint32 numBlit;
+		public uint32 numDrawCallsPeak;
 		public uint32 maxGpuLatency;
 		public uint32 gpuFrameNum;
 		public uint16 numDynamicIndexBuffers;

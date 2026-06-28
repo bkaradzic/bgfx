@@ -738,6 +738,21 @@ typedef struct bgfx_resolution_s
 typedef struct bgfx_init_limits_s
 {
     uint16_t             maxEncoders;        /** Maximum number of encoder threads.       */
+    
+    /**
+     * Initial number of draw calls per frame. Rounded up to a
+     * multiple of 1024 (the minimum); 0 selects the default of 1024.
+     * The render-item buffers grow on demand up to
+     * `BGFX_CONFIG_MAX_DRAW_CALLS` and lazily shrink.
+     */
+    uint32_t             numDrawCalls;
+    
+    /**
+     * Number of frames the draw-call peak (high-water mark) is observed
+     * before the render-item buffers are shrunk. Set to 0 to disable
+     * dynamic resizing and keep the buffers fixed at `numDrawCalls`.
+     */
+    uint32_t             numDrawCallPeakFrames;
     uint32_t             minResourceCbSize;  /** Minimum resource command buffer size.    */
     uint32_t             maxTransientVbSize; /** Maximum transient vertex buffer size.    */
     uint32_t             maxTransientIbSize; /** Maximum transient index buffer size.     */
@@ -1037,6 +1052,13 @@ typedef struct bgfx_stats_s
     uint32_t             numDraw;            /** Number of draw calls submitted.          */
     uint32_t             numCompute;         /** Number of compute calls submitted.       */
     uint32_t             numBlit;            /** Number of blit calls submitted.          */
+    
+    /**
+     * Highest number of draw+compute calls requested in a single
+     * frame so far (peak demand, before any were dropped). Useful
+     * to tune `Init::Limits::numDrawCalls`.
+     */
+    uint32_t             numDrawCallsPeak;
     uint32_t             maxGpuLatency;      /** GPU driver latency.                      */
     uint32_t             gpuFrameNum;        /** Frame which generated gpuTimeBegin, gpuTimeEnd. */
     uint16_t             numDynamicIndexBuffers; /** Number of used dynamic index buffers.    */

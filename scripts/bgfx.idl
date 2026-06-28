@@ -1,7 +1,7 @@
 -- vim: syntax=lua
 -- bgfx interface
 
-version(146)
+version(147)
 
 typedef "bool"
 typedef "char"
@@ -909,11 +909,18 @@ struct.Resolution { ctor, section = "Initialization and Shutdown" }
 
 --- Configurable runtime limits parameters.
 struct.Limits { ctor, namespace = "Init" }
-	.maxEncoders          "uint16_t" --- Maximum number of encoder threads.
-	.minResourceCbSize    "uint32_t" --- Minimum resource command buffer size.
-	.maxTransientVbSize   "uint32_t" --- Maximum transient vertex buffer size.
-	.maxTransientIbSize   "uint32_t" --- Maximum transient index buffer size.
-	.minUniformBufferSize "uint32_t" --- Mimimum uniform buffer size.
+	.maxEncoders          "uint16_t"  --- Maximum number of encoder threads.
+	.numDrawCalls         "uint32_t"  --- Initial number of draw calls per frame. Rounded up to a
+	                                  --- multiple of 1024 (the minimum); 0 selects the default of 1024.
+	                                  --- The render-item buffers grow on demand up to
+	                                  --- `BGFX_CONFIG_MAX_DRAW_CALLS` and lazily shrink.
+	.numDrawCallPeakFrames "uint32_t" --- Number of frames the draw-call peak (high-water mark) is observed
+	                                  --- before the render-item buffers are shrunk. Set to 0 to disable
+	                                  --- dynamic resizing and keep the buffers fixed at `numDrawCalls`.
+	.minResourceCbSize    "uint32_t"  --- Minimum resource command buffer size.
+	.maxTransientVbSize   "uint32_t"  --- Maximum transient vertex buffer size.
+	.maxTransientIbSize   "uint32_t"  --- Maximum transient index buffer size.
+	.minUniformBufferSize "uint32_t"  --- Mimimum uniform buffer size.
 
 --- Initialization parameters used by `bgfx::init`.
 struct.Init { ctor, section = "Initialization and Shutdown" }
@@ -1112,6 +1119,9 @@ struct.Stats { section = "Statistics" }
 	.numDraw                 "uint32_t"      --- Number of draw calls submitted.
 	.numCompute              "uint32_t"      --- Number of compute calls submitted.
 	.numBlit                 "uint32_t"      --- Number of blit calls submitted.
+	.numDrawCallsPeak        "uint32_t"      --- Highest number of draw+compute calls requested in a single
+	                                         --- frame so far (peak demand, before any were dropped). Useful
+	                                         --- to tune `Init::Limits::numDrawCalls`.
 	.maxGpuLatency           "uint32_t"      --- GPU driver latency.
 	.gpuFrameNum             "uint32_t"      --- Frame which generated gpuTimeBegin, gpuTimeEnd.
 
