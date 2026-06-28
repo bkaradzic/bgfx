@@ -1528,8 +1528,8 @@ namespace bgfx
 			return;
 		}
 
-		const uint32_t renderItemIdx = bx::atomicFetchAndAddsat<uint32_t>(&m_frame->m_numRenderItems, 1, BGFX_CONFIG_MAX_DRAW_CALLS);
-		if (BGFX_CONFIG_MAX_DRAW_CALLS <= renderItemIdx)
+		const uint32_t renderItemIdx = bx::atomicFetchAndAddsat<uint32_t>(&m_frame->m_numRenderItems, 1, m_frame->m_maxDrawCalls);
+		if (m_frame->m_maxDrawCalls <= renderItemIdx)
 		{
 			discard(_flags);
 			++m_numDropped;
@@ -1611,8 +1611,8 @@ namespace bgfx
 			return;
 		}
 
-		const uint32_t renderItemIdx = bx::atomicFetchAndAddsat<uint32_t>(&m_frame->m_numRenderItems, 1, BGFX_CONFIG_MAX_DRAW_CALLS);
-		if (BGFX_CONFIG_MAX_DRAW_CALLS-1 <= renderItemIdx)
+		const uint32_t renderItemIdx = bx::atomicFetchAndAddsat<uint32_t>(&m_frame->m_numRenderItems, 1, m_frame->m_maxDrawCalls);
+		if (m_frame->m_maxDrawCalls-1 <= renderItemIdx)
 		{
 			discard(_flags);
 			++m_numDropped;
@@ -1727,6 +1727,13 @@ namespace bgfx
 			m_sortKeys[ii] = SortKey::remapView(m_sortKeys[ii], viewRemap);
 		}
 
+		s_ctx->reserveTemp(bx::max(
+			  m_numRenderItems
+			, m_numRenderBinds
+			, m_numBlitItems
+			, m_uniformCacheFrame.m_numItems
+			) );
+
 		bx::radixSort(m_sortKeys, s_ctx->m_tempKeys, m_sortValues, s_ctx->m_tempValues, m_numRenderItems);
 
 		for (uint32_t ii = 0, num = m_numBlitItems; ii < num; ++ii)
@@ -1734,7 +1741,7 @@ namespace bgfx
 			m_blitKeys[ii] = BlitKey::remapView(m_blitKeys[ii], viewRemap);
 		}
 
-		bx::radixSort(m_blitKeys, (uint32_t*)&s_ctx->m_tempKeys, m_numBlitItems);
+		bx::radixSort(m_blitKeys, (uint32_t*)s_ctx->m_tempKeys, m_numBlitItems);
 
 		m_uniformCacheFrame.sort(viewRemap, s_ctx->m_tempKeys);
 
@@ -2326,10 +2333,10 @@ namespace bgfx
 		m_frameTimeLast = bx::getHPCounter();
 		m_flipAfterRender = !!(m_init.resolution.reset & BGFX_RESET_FLIP_AFTER_RENDER);
 
-		m_submit->create(_init.limits.minResourceCbSize);
+		m_submit->create(_init.limits.minResourceCbSize, _init.limits.numDrawCalls, _init.limits.numDrawCallPeakFrames);
 
 #if BGFX_CONFIG_MULTITHREADED
-		m_render->create(_init.limits.minResourceCbSize);
+		m_render->create(_init.limits.minResourceCbSize, _init.limits.numDrawCalls, _init.limits.numDrawCallPeakFrames);
 
 		if (s_renderFrameCalled)
 		{
@@ -2517,6 +2524,7 @@ namespace bgfx
 
 		if (m_thread.isRunning() )
 		{
+			s_renderFrameCalled = false;
 			m_thread.shutdown();
 		}
 
@@ -3961,6 +3969,8 @@ namespace bgfx
 
 	Init::Limits::Limits()
 		: maxEncoders(BGFX_CONFIG_DEFAULT_MAX_ENCODERS)
+		, numDrawCalls(4096)
+		, numDrawCallPeakFrames(120)
 		, minResourceCbSize(BGFX_CONFIG_MIN_RESOURCE_COMMAND_BUFFER_SIZE)
 		, maxTransientVbSize(BGFX_CONFIG_MAX_TRANSIENT_VERTEX_BUFFER_SIZE)
 		, maxTransientIbSize(BGFX_CONFIG_MAX_TRANSIENT_INDEX_BUFFER_SIZE)
@@ -4003,6 +4013,7 @@ namespace bgfx
 		Init init = _userInit;
 
 		init.limits.maxEncoders       = bx::clamp<uint16_t>(init.limits.maxEncoders, 1, (0 != BGFX_CONFIG_MULTITHREADED) ? 128 : 1);
+		init.limits.numDrawCalls      = alignDrawCalls(bx::max(init.limits.numDrawCalls, kDrawCallBlock) );
 		init.limits.minResourceCbSize = bx::min<uint32_t>(init.limits.minResourceCbSize, BGFX_CONFIG_MIN_RESOURCE_COMMAND_BUFFER_SIZE);
 
 		struct ErrorState
@@ -4038,7 +4049,10 @@ namespace bgfx
 		}
 
 		bx::memSet(&g_caps, 0, sizeof(g_caps) );
-		g_caps.limits.maxDrawCalls            = BGFX_CONFIG_MAX_DRAW_CALLS;
+		g_caps.limits.maxDrawCalls = 0 == init.limits.numDrawCallPeakFrames
+			? init.limits.numDrawCalls
+			: BGFX_CONFIG_MAX_DRAW_CALLS
+			;
 		g_caps.limits.maxBlits                = BGFX_CONFIG_MAX_BLIT_ITEMS;
 		g_caps.limits.maxTextureSize          = 0;
 		g_caps.limits.maxTextureLayers        = 1;
@@ -4149,7 +4163,6 @@ namespace bgfx
 		}
 
 		s_threadIndex = 0;
-		s_renderFrameCalled = false;
 		g_callback    = NULL;
 		g_allocator   = NULL;
 	}

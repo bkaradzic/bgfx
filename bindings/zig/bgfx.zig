@@ -1640,6 +1640,8 @@ pub const Caps = extern struct {
 pub const Init = extern struct {
     pub const Limits = extern struct {
         maxEncoders: u16,
+        numDrawCalls: u32,
+        numDrawCallPeakFrames: u32,
         minResourceCbSize: u32,
         maxTransientVbSize: u32,
         maxTransientIbSize: u32,
@@ -1785,6 +1787,7 @@ pub const Init = extern struct {
         numDraw: u32,
         numCompute: u32,
         numBlit: u32,
+        numDrawCallsPeak: u32,
         maxGpuLatency: u32,
         gpuFrameNum: u32,
         numDynamicIndexBuffers: u16,

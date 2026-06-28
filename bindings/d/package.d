@@ -9,7 +9,7 @@ import bindbc.common.types: c_int64, c_uint64, va_list;
 import bindbc.bgfx.config;
 static import bgfx.impl;
 
-enum uint apiVersion = 146;
+enum uint apiVersion = 147;
 
 alias ViewID = ushort;
 
@@ -1266,6 +1266,21 @@ extern(C++, "bgfx") struct Init{
 	///Configurable runtime limits parameters.
 	extern(C++) struct Limits{
 		ushort maxEncoders; ///Maximum number of encoder threads.
+		
+		/**
+		Initial number of draw calls per frame. Rounded up to a
+		multiple of 1024 (the minimum); 0 selects the default of 1024.
+		The render-item buffers grow on demand up to
+		`BGFX_CONFIG_MAX_DRAW_CALLS` and lazily shrink.
+		*/
+		uint numDrawCalls;
+		
+		/**
+		Number of frames the draw-call peak (high-water mark) is observed
+		before the render-item buffers are shrunk. Set to 0 to disable
+		dynamic resizing and keep the buffers fixed at `numDrawCalls`.
+		*/
+		uint numDrawCallPeakFrames;
 		uint minResourceCBSize; ///Minimum resource command buffer size.
 		uint maxTransientVBSize; ///Maximum transient vertex buffer size.
 		uint maxTransientIBSize; ///Maximum transient index buffer size.
@@ -1525,6 +1540,13 @@ extern(C++, "bgfx") struct Stats{
 	uint numDraw; ///Number of draw calls submitted.
 	uint numCompute; ///Number of compute calls submitted.
 	uint numBlit; ///Number of blit calls submitted.
+	
+	/**
+	Highest number of draw+compute calls requested in a single
+	frame so far (peak demand, before any were dropped). Useful
+	to tune `Init::Limits::numDrawCalls`.
+	*/
+	uint numDrawCallsPeak;
 	uint maxGpuLatency; ///GPU driver latency.
 	uint gpuFrameNum; ///Frame which generated gpuTimeBegin, gpuTimeEnd.
 	ushort numDynamicIndexBuffers; ///Number of used dynamic index buffers.

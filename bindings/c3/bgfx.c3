@@ -1801,6 +1801,15 @@ struct InitLimits
 {
 	// Maximum number of encoder threads.
 	ushort maxEncoders;
+	// Initial number of draw calls per frame. Rounded up to a
+	// multiple of 1024 (the minimum); 0 selects the default of 1024.
+	// The render-item buffers grow on demand up to
+	// `BGFX_CONFIG_MAX_DRAW_CALLS` and lazily shrink.
+	uint numDrawCalls;
+	// Number of frames the draw-call peak (high-water mark) is observed
+	// before the render-item buffers are shrunk. Set to 0 to disable
+	// dynamic resizing and keep the buffers fixed at `numDrawCalls`.
+	uint numDrawCallPeakFrames;
 	// Minimum resource command buffer size.
 	uint minResourceCbSize;
 	// Maximum transient vertex buffer size.
@@ -2103,6 +2112,10 @@ struct Stats
 	uint numCompute;
 	// Number of blit calls submitted.
 	uint numBlit;
+	// Highest number of draw+compute calls requested in a single
+	// frame so far (peak demand, before any were dropped). Useful
+	// to tune `Init::Limits::numDrawCalls`.
+	uint numDrawCallsPeak;
 	// GPU driver latency.
 	uint maxGpuLatency;
 	// Frame which generated gpuTimeBegin, gpuTimeEnd.
