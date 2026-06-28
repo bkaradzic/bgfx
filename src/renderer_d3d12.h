@@ -108,6 +108,13 @@ namespace bgfx { namespace d3d12
 	{
 	public:
 		ScratchBufferD3D12()
+			: m_heap(NULL)
+			, m_incrementSize(0)
+			, m_size(0)
+			, m_max(0)
+			, m_pos(0)
+			, m_high(0)
+			, m_overflow(false)
 		{
 		}
 
@@ -115,7 +122,7 @@ namespace bgfx { namespace d3d12
 		{
 		}
 
-		void create(uint32_t _maxDescriptors);
+		void create(uint32_t _maxDescriptors, uint32_t _initDescriptors);
 		void destroy();
 		void reset(D3D12_GPU_DESCRIPTOR_HANDLE& _gpuHandle);
 
@@ -139,10 +146,20 @@ namespace bgfx { namespace d3d12
 		}
 
 	private:
+		void allocHeap(uint32_t _num);
+		bool alloc(D3D12_GPU_DESCRIPTOR_HANDLE& _gpuHandle, D3D12_CPU_DESCRIPTOR_HANDLE& _cpuHandle);
+
 		ID3D12DescriptorHeap* m_heap;
 		D3D12_CPU_DESCRIPTOR_HANDLE m_cpuHandle;
 		D3D12_GPU_DESCRIPTOR_HANDLE m_gpuHandle;
+		D3D12_CPU_DESCRIPTOR_HANDLE m_cpuHandleStart;
+		D3D12_GPU_DESCRIPTOR_HANDLE m_gpuHandleStart;
 		uint32_t m_incrementSize;
+		uint32_t m_size;
+		uint32_t m_max;
+		uint32_t m_pos;
+		uint32_t m_high;
+		bool m_overflow;
 	};
 
 	struct ChunkedScratchBufferOffset
@@ -524,6 +541,7 @@ namespace bgfx { namespace d3d12
 			, m_maxDrawPerBatch(0)
 			, m_minIndirect(0)
 			, m_flushPerBatch(0)
+			, m_indirectAllocated(false)
 		{
 			bx::memSet(m_num, 0, sizeof(m_num) );
 		}
@@ -534,6 +552,8 @@ namespace bgfx { namespace d3d12
 
 		void create(uint32_t _maxDrawPerBatch);
 		void destroy();
+
+		void allocIndirectBuffers();
 
 		template<typename Ty>
 		Ty& getCmd(Enum _type);
@@ -592,6 +612,7 @@ namespace bgfx { namespace d3d12
 		uint32_t m_maxDrawPerBatch;
 		uint32_t m_minIndirect;
 		uint32_t m_flushPerBatch;
+		bool m_indirectAllocated;
 	};
 
 	struct TimerQueryD3D12

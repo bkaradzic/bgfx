@@ -1446,10 +1446,15 @@ namespace bgfx { namespace d3d12
 
 				for (uint32_t ii = 0; ii < BX_COUNTOF(m_scratchBuffer); ++ii)
 				{
-					m_scratchBuffer[ii].create(BGFX_CONFIG_MAX_TEXTURES + BGFX_CONFIG_MAX_SHADERS + BGFX_CONFIG_MAX_DRAW_CALLS);
+					m_scratchBuffer[ii].create(
+						  BGFX_CONFIG_MAX_TEXTURES + BGFX_CONFIG_MAX_SHADERS + BGFX_CONFIG_MAX_DRAW_CALLS
+						, _init.limits.numDrawCalls
+						);
 				}
 
-				m_uniformScratchBuffer.createUniform(2<<20, BGFX_CONFIG_MAX_BACK_BUFFERS);
+				m_uniformScratchBuffer.createUniform(2<<20
+					, bx::clamp<uint32_t>(m_scd.bufferCount, 2, BGFX_CONFIG_MAX_BACK_BUFFERS)
+					);
 
 				m_samplerAllocator.create(D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER
 					, 2048
@@ -4052,22 +4057,60 @@ namespace bgfx { namespace d3d12
 		s_renderD3D12 = NULL;
 	}
 
-	void ScratchBufferD3D12::create(uint32_t _maxDescriptors)
+	void ScratchBufferD3D12::create(uint32_t _maxDescriptors, uint32_t _initDescriptors)
 	{
 		ID3D12Device* device = s_renderD3D12->m_device;
 		m_incrementSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
+		m_heap     = NULL;
+		m_size     = 0;
+		m_max      = _maxDescriptors;
+		m_pos      = 0;
+		m_high     = 0;
+		m_overflow = false;
+
+		allocHeap(bx::min<uint32_t>(_initDescriptors, m_max) );
+
+		D3D12_GPU_DESCRIPTOR_HANDLE dummy;
+		reset(dummy);
+	}
+
+	void ScratchBufferD3D12::allocHeap(uint32_t _num)
+	{
+		ID3D12Device* device = s_renderD3D12->m_device;
+
+		const uint32_t guard = BGFX_CONFIG_MAX_TEXTURE_SAMPLERS;
+
+		ID3D12DescriptorHeap* heap = NULL;
 		D3D12_DESCRIPTOR_HEAP_DESC desc;
-		desc.NumDescriptors = _maxDescriptors;
+		desc.NumDescriptors = _num + guard;
 		desc.Type     = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
 		desc.Flags    = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 		desc.NodeMask = 1;
 		DX_CHECK(device->CreateDescriptorHeap(&desc
 			, IID_ID3D12DescriptorHeap
-			, (void**)&m_heap
+			, (void**)&heap
 			) );
 
-		reset(m_gpuHandle);
+		DX_RELEASE(m_heap, 0);
+		m_heap = heap;
+		m_size = _num;
+		m_cpuHandleStart = getCPUHandleHeapStart(m_heap);
+		m_gpuHandleStart = getGPUHandleHeapStart(m_heap);
+
+		D3D12_SHADER_RESOURCE_VIEW_DESC srvd = {};
+		srvd.Format                  = DXGI_FORMAT_R8G8B8A8_UNORM;
+		srvd.ViewDimension           = D3D12_SRV_DIMENSION_TEXTURE2D;
+		srvd.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+		srvd.Texture2D.MipLevels     = 1;
+
+		D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle = m_cpuHandleStart;
+		cpuHandle.ptr += uint64_t(_num) * m_incrementSize;
+		for (uint32_t ii = 0; ii < guard; ++ii)
+		{
+			device->CreateShaderResourceView(NULL, &srvd, cpuHandle);
+			cpuHandle.ptr += m_incrementSize;
+		}
 	}
 
 	void ScratchBufferD3D12::destroy()
@@ -4077,17 +4120,58 @@ namespace bgfx { namespace d3d12
 
 	void ScratchBufferD3D12::reset(D3D12_GPU_DESCRIPTOR_HANDLE& _gpuHandle)
 	{
-		m_cpuHandle = getCPUHandleHeapStart(m_heap);
-		m_gpuHandle = getGPUHandleHeapStart(m_heap);
+		if (m_size < m_max
+		&& (m_overflow || m_high*4 > m_size*3) )
+		{
+			uint32_t want = m_size * 2;
+			if (want < m_high + m_high/2)
+			{
+				want = m_high + m_high/2;
+			}
+			want = bx::min<uint32_t>(want, m_max);
+
+			if (want > m_size)
+			{
+				allocHeap(want);
+			}
+		}
+
+		m_overflow  = false;
+		m_high      = 0;
+		m_pos       = 0;
+		m_cpuHandle = m_cpuHandleStart;
+		m_gpuHandle = m_gpuHandleStart;
+
 		_gpuHandle = m_gpuHandle;
+	}
+
+	bool ScratchBufferD3D12::alloc(D3D12_GPU_DESCRIPTOR_HANDLE& _gpuHandle, D3D12_CPU_DESCRIPTOR_HANDLE& _cpuHandle)
+	{
+		_cpuHandle = m_cpuHandle;
+		_gpuHandle = m_gpuHandle;
+
+		if (m_pos >= m_size)
+		{
+			m_overflow = true;
+			return false;
+		}
+
+		m_cpuHandle.ptr += m_incrementSize;
+		m_gpuHandle.ptr += m_incrementSize;
+
+		++m_pos;
+		if (m_pos > m_high)
+		{
+			m_high = m_pos;
+		}
+
+		return true;
 	}
 
 	void ScratchBufferD3D12::allocEmpty(D3D12_GPU_DESCRIPTOR_HANDLE& _gpuHandle)
 	{
-		m_cpuHandle.ptr += m_incrementSize;
-
-		_gpuHandle = m_gpuHandle;
-		m_gpuHandle.ptr += m_incrementSize;
+		D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle;
+		alloc(_gpuHandle, cpuHandle);
 	}
 
 	void ScratchBufferD3D12::allocSrv(D3D12_GPU_DESCRIPTOR_HANDLE& _gpuHandle, TextureD3D12& _texture, uint16_t _firstLayer, uint16_t _numLayers, uint8_t _firstMip, uint8_t _numMips)
@@ -4158,6 +4242,12 @@ namespace bgfx { namespace d3d12
 
 		ID3D12Resource* resource = NULL != _texture.m_singleMsaa ? _texture.m_singleMsaa : _texture.m_ptr;
 
+		D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle;
+		if (!alloc(_gpuHandle, cpuHandle) )
+		{
+			return;
+		}
+
 		if (fullRange
 		&&  NULL == _texture.m_singleMsaa)
 		{
@@ -4169,17 +4259,12 @@ namespace bgfx { namespace d3d12
 				_texture.m_srvHandle = cached;
 			}
 
-			device->CopyDescriptorsSimple(1, m_cpuHandle, _texture.m_srvHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+			device->CopyDescriptorsSimple(1, cpuHandle, _texture.m_srvHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 		}
 		else
 		{
-			device->CreateShaderResourceView(resource, srvd, m_cpuHandle);
+			device->CreateShaderResourceView(resource, srvd, cpuHandle);
 		}
-
-		m_cpuHandle.ptr += m_incrementSize;
-
-		_gpuHandle = m_gpuHandle;
-		m_gpuHandle.ptr += m_incrementSize;
 	}
 
 	void ScratchBufferD3D12::allocUav(D3D12_GPU_DESCRIPTOR_HANDLE& _gpuHandle, TextureD3D12& _texture, uint8_t _mip)
@@ -4212,15 +4297,17 @@ namespace bgfx { namespace d3d12
 			}
 		}
 
+		D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle;
+		if (!alloc(_gpuHandle, cpuHandle) )
+		{
+			return;
+		}
+
 		device->CreateUnorderedAccessView(_texture.m_ptr
 			, NULL
 			, uavd
-			, m_cpuHandle
+			, cpuHandle
 			);
-		m_cpuHandle.ptr += m_incrementSize;
-
-		_gpuHandle = m_gpuHandle;
-		m_gpuHandle.ptr += m_incrementSize;
 	}
 
 	void ScratchBufferD3D12::allocSrvArray(D3D12_GPU_DESCRIPTOR_HANDLE& _gpuHandle, TextureD3D12& _texture, uint32_t _numSlices)
@@ -4237,14 +4324,16 @@ namespace bgfx { namespace d3d12
 		srvd.Texture2DArray.PlaneSlice          = 0;
 		srvd.Texture2DArray.ResourceMinLODClamp = 0.0f;
 
+		D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle;
+		if (!alloc(_gpuHandle, cpuHandle) )
+		{
+			return;
+		}
+
 		device->CreateShaderResourceView(NULL != _texture.m_singleMsaa ? _texture.m_singleMsaa : _texture.m_ptr
 			, &srvd
-			, m_cpuHandle
+			, cpuHandle
 			);
-		m_cpuHandle.ptr += m_incrementSize;
-
-		_gpuHandle = m_gpuHandle;
-		m_gpuHandle.ptr += m_incrementSize;
 	}
 
 	void ScratchBufferD3D12::allocUavArray(D3D12_GPU_DESCRIPTOR_HANDLE& _gpuHandle, TextureD3D12& _texture, uint8_t _mip, uint32_t _numSlices)
@@ -4259,25 +4348,30 @@ namespace bgfx { namespace d3d12
 		uavd.Texture2DArray.ArraySize       = _numSlices;
 		uavd.Texture2DArray.PlaneSlice      = 0;
 
+		D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle;
+		if (!alloc(_gpuHandle, cpuHandle) )
+		{
+			return;
+		}
+
 		device->CreateUnorderedAccessView(_texture.m_ptr
 			, NULL
 			, &uavd
-			, m_cpuHandle
+			, cpuHandle
 			);
-		m_cpuHandle.ptr += m_incrementSize;
-
-		_gpuHandle = m_gpuHandle;
-		m_gpuHandle.ptr += m_incrementSize;
 	}
 
 	void ScratchBufferD3D12::allocSrv(D3D12_GPU_DESCRIPTOR_HANDLE& _gpuHandle, ID3D12Resource* _resource, const D3D12_SHADER_RESOURCE_VIEW_DESC& _desc)
 	{
 		ID3D12Device* device = s_renderD3D12->m_device;
-		device->CreateShaderResourceView(_resource, &_desc, m_cpuHandle);
-		m_cpuHandle.ptr += m_incrementSize;
 
-		_gpuHandle = m_gpuHandle;
-		m_gpuHandle.ptr += m_incrementSize;
+		D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle;
+		if (!alloc(_gpuHandle, cpuHandle) )
+		{
+			return;
+		}
+
+		device->CreateShaderResourceView(_resource, &_desc, cpuHandle);
 	}
 
 	void ScratchBufferD3D12::allocSrv(D3D12_GPU_DESCRIPTOR_HANDLE& _gpuHandle, BufferD3D12& _buffer)
@@ -4288,11 +4382,14 @@ namespace bgfx { namespace d3d12
 	void ScratchBufferD3D12::allocUav(D3D12_GPU_DESCRIPTOR_HANDLE& _gpuHandle, ID3D12Resource* _resource, const D3D12_UNORDERED_ACCESS_VIEW_DESC& _desc)
 	{
 		ID3D12Device* device = s_renderD3D12->m_device;
-		device->CreateUnorderedAccessView(_resource, NULL, &_desc, m_cpuHandle);
-		m_cpuHandle.ptr += m_incrementSize;
 
-		_gpuHandle = m_gpuHandle;
-		m_gpuHandle.ptr += m_incrementSize;
+		D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle;
+		if (!alloc(_gpuHandle, cpuHandle) )
+		{
+			return;
+		}
+
+		device->CreateUnorderedAccessView(_resource, NULL, &_desc, cpuHandle);
 	}
 
 	void ScratchBufferD3D12::allocUav(D3D12_GPU_DESCRIPTOR_HANDLE& _gpuHandle, BufferD3D12& _buffer)
@@ -4790,8 +4887,19 @@ namespace bgfx { namespace d3d12
 
 		m_cmds[Draw       ] = bx::alloc(g_allocator, m_maxDrawPerBatch*sizeof(DrawIndirectCommand) );
 		m_cmds[DrawIndexed] = bx::alloc(g_allocator, m_maxDrawPerBatch*sizeof(DrawIndexedIndirectCommand) );
+	}
 
-		uint32_t cmdSize = bx::max<uint32_t>(sizeof(DrawIndirectCommand), sizeof(DrawIndexedIndirectCommand) );
+	void BatchD3D12::allocIndirectBuffers()
+	{
+		if (m_indirectAllocated)
+		{
+			return;
+		}
+
+		m_indirectAllocated = true;
+
+		const uint32_t cmdSize = bx::max<uint32_t>(sizeof(DrawIndirectCommand), sizeof(DrawIndexedIndirectCommand) );
+
 		for (uint32_t ii = 0; ii < BX_COUNTOF(m_indirect); ++ii)
 		{
 			m_indirect[ii].create(m_maxDrawPerBatch*cmdSize
@@ -5130,6 +5238,8 @@ namespace bgfx { namespace d3d12
 			if (m_minIndirect < num)
 			{
 				m_stats.m_numIndirect[_type]++;
+
+				allocIndirectBuffers();
 
 				BufferD3D12& indirect = m_indirect[m_currIndirect++];
 				m_currIndirect %= BX_COUNTOF(m_indirect);
