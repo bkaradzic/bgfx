@@ -215,11 +215,12 @@
 #	define BGFX_CONFIG_RENDERER_DIRECT3D11_USE_STAGING_BUFFER 0
 #endif // BGFX_CONFIG_RENDERER_DIRECT3D11_USE_STAGING_BUFFER
 
-/// Maximum number of Vulkan descriptor sets allocated per frame. Default is
-/// 1024. Each draw/compute call may consume one descriptor set.
-#ifndef BGFX_CONFIG_RENDERER_VULKAN_MAX_DESCRIPTOR_SETS_PER_FRAME
-#	define BGFX_CONFIG_RENDERER_VULKAN_MAX_DESCRIPTOR_SETS_PER_FRAME 1024
-#endif // BGFX_CONFIG_RENDERER_VULKAN_MAX_DESCRIPTOR_SETS_PER_FRAME
+/// Number of descriptor sets per descriptor-pool chunk. The per-frame
+/// descriptor pool is a chain of chunks of this size, grown on demand and reset/
+/// reused each frame.
+#ifndef BGFX_CONFIG_RENDERER_VULKAN_DESCRIPTOR_SETS_PER_POOL
+#	define BGFX_CONFIG_RENDERER_VULKAN_DESCRIPTOR_SETS_PER_POOL 1024
+#endif // BGFX_CONFIG_RENDERER_VULKAN_DESCRIPTOR_SETS_PER_POOL
 
 /// Enable use of tinystl instead of std containers for internal data
 /// structures. Default is 1 (enabled). Reduces binary size and avoids
