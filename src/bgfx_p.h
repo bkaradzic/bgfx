@@ -2664,13 +2664,7 @@ namespace bgfx
 	BX_ALIGN_DECL_CACHE_LINE(struct) Frame
 	{
 		Frame()
-			: m_waitSubmit(0)
-			, m_waitRender(0)
-			, m_frameNum(0)
-			, m_capture(false)
-			, m_flush(false)
-			, m_needBindDedup(false)
-			, m_sortKeys(NULL)
+			: m_sortKeys(NULL)
 			, m_sortValues(NULL)
 			, m_renderItem(NULL)
 			, m_renderBind(NULL)
@@ -2679,6 +2673,12 @@ namespace bgfx
 			, m_peak(0)
 			, m_observe(0)
 			, m_numPeakFrames(0)
+			, m_waitSubmit(0)
+			, m_waitRender(0)
+			, m_frameNum(0)
+			, m_capture(false)
+			, m_flush(false)
+			, m_needBindDedup(false)
 		{
 			m_numRenderItems = 0;
 			m_numRenderBinds = 0;
