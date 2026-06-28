@@ -4161,7 +4161,7 @@ VK_IMPORT_DEVICE
 			dsai.pSetLayouts        = &_layout;
 
 			VkDescriptorSet descriptorSet = VK_NULL_HANDLE;
-			VkResult result = vkAllocateDescriptorSets(m_device, &dsai, &descriptorSet);
+			const VkResult result = vkAllocateDescriptorSets(m_device, &dsai, &descriptorSet);
 
 			if (VK_SUCCESS != result
 			&&  m_descriptorPoolIdx + 1 < kMaxDescriptorPoolChunks)
@@ -4175,10 +4175,15 @@ VK_IMPORT_DEVICE
 				}
 
 				dsai.descriptorPool = m_descriptorPool[frame][m_descriptorPoolIdx];
-				result = vkAllocateDescriptorSets(m_device, &dsai, &descriptorSet);
+				VK_CHECK(vkAllocateDescriptorSets(m_device, &dsai, &descriptorSet) );
 			}
 
-			VK_CHECK(result);
+			BX_ASSERT(VK_SUCCESS == result
+				, "vkAllocateDescriptorSets: VK error %d: %s"
+				, result
+				, getName(result)
+				);
+
 			return descriptorSet;
 		}
 
