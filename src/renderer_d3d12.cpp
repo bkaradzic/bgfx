@@ -752,12 +752,12 @@ namespace bgfx { namespace d3d12
 			, m_lost(false)
 			, m_maxAnisotropy(1)
 			, m_depthClamp(false)
+			, m_lastPso(NULL)
 			, m_backBufferColorIdx(0)
 			, m_rtMsaa(false)
 			, m_directAccessSupport(false)
 			, m_variableRateShadingSupport(false)
 			, m_mipGen(NULL)
-			, m_lastPso(NULL)
 		{
 		}
 
