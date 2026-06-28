@@ -1492,6 +1492,8 @@ WGPU_IMPORT
 		{
 			preReset();
 
+			invalidateBindGroupCache();
+
 			for (uint32_t ii = 0; ii < BX_COUNTOF(m_mipGenStubTextureView); ++ii)
 			{
 				if (NULL != m_mipGenStubTextureView[ii])
@@ -1589,6 +1591,7 @@ WGPU_IMPORT
 
 		void destroyIndexBuffer(IndexBufferHandle _handle) override
 		{
+			invalidateBindGroupCache();
 			m_indexBuffers[_handle.idx].destroy();
 		}
 
@@ -1610,6 +1613,7 @@ WGPU_IMPORT
 
 		void destroyVertexBuffer(VertexBufferHandle _handle) override
 		{
+			invalidateBindGroupCache();
 			m_vertexBuffers[_handle.idx].destroy();
 		}
 
@@ -1625,6 +1629,7 @@ WGPU_IMPORT
 
 		void destroyDynamicIndexBuffer(IndexBufferHandle _handle) override
 		{
+			invalidateBindGroupCache();
 			m_indexBuffers[_handle.idx].destroy();
 		}
 
@@ -1641,6 +1646,7 @@ WGPU_IMPORT
 
 		void destroyDynamicVertexBuffer(VertexBufferHandle _handle) override
 		{
+			invalidateBindGroupCache();
 			m_vertexBuffers[_handle.idx].destroy();
 		}
 
@@ -1845,6 +1851,7 @@ WGPU_IMPORT
 
 		void destroyTexture(TextureHandle _handle) override
 		{
+			invalidateBindGroupCache();
 			m_textures[_handle.idx].destroy();
 		}
 
@@ -1872,6 +1879,8 @@ WGPU_IMPORT
 
 		void destroyFrameBuffer(FrameBufferHandle _handle) override
 		{
+			invalidateBindGroupCache();
+
 			FrameBufferWGPU& frameBuffer = m_frameBuffers[_handle.idx];
 
 			uint16_t denseIdx = frameBuffer.destroy();
@@ -2224,6 +2233,16 @@ WGPU_IMPORT
 			m_renderPipelineCache.invalidate();
 			m_textureViewStateCache.invalidate();
 			m_samplerStateCache.invalidate();
+		}
+
+		void invalidateBindGroupCache()
+		{
+			for (BindGroupMap::iterator it = m_bindGroupMap.begin(), end = m_bindGroupMap.end(); it != end; ++it)
+			{
+				release(it->second);
+			}
+
+			m_bindGroupMap.clear();
 		}
 
 		bool updateResolution(const Resolution& _resolution)
@@ -2755,12 +2774,20 @@ WGPU_IMPORT
 				}
 			}
 
-			bx::HashMurmur2A murmur;
+			bx::HashMurmur3 murmur;
 			murmur.begin();
 			murmur.add(_state);
 			murmur.add(!!(BGFX_STATE_BLEND_INDEPENDENT & _state) ? _rgba : 0);
 			murmur.add(_stencil);
-			murmur.add(&_renderBind.m_bind, sizeof(_renderBind.m_bind) );
+
+			for (uint32_t stage = 0; stage < BGFX_CONFIG_MAX_TEXTURE_SAMPLERS; ++stage)
+			{
+				if (isValid(program.m_shaderBinding[stage].uniformHandle) )
+				{
+					murmur.add(&_renderBind.m_bind[stage], sizeof(_renderBind.m_bind[stage]) );
+				}
+			}
+
 			murmur.add(program.m_vsh->m_hash);
 			murmur.add(program.m_vsh->m_attrMask, sizeof(program.m_vsh->m_attrMask) );
 
@@ -5667,6 +5694,41 @@ m_resolution.formatColor = TextureFormat::BGRA8;
 		WGPUComputePassEncoder computePassEncoder = NULL;
 
 		WGPUBindGroupLayout bindGroupLayout = NULL;
+		WGPURenderPipeline  currentPipeline = NULL;
+
+		struct PipelineState
+		{
+			Stream                stream[BGFX_CONFIG_MAX_VERTEX_STREAMS];
+			const RenderPipeline* pipeline;
+			uint64_t              state;
+			uint64_t              stencil;
+			uint32_t              msaaCount;
+			uint32_t              rgba;
+			uint32_t              streamMask;
+			uint32_t              bindIdx;
+			uint16_t              program;
+			uint16_t              fbh;
+			uint8_t               numInstanceData;
+			bool                  valid;
+			bool                  isIndex16;
+		};
+
+		PipelineState pipelineState;
+		bx::memSet(&pipelineState, 0, sizeof(pipelineState) );
+
+		struct BindState
+		{
+			const BindGroup* bindGroup;
+			WGPUBuffer       buffer;
+			uint32_t         bindIdx;
+			uint32_t         vsSize;
+			uint32_t         fsSize;
+			uint16_t         program;
+			bool             valid;
+		};
+
+		BindState bindState;
+		bx::memSet(&bindState, 0, sizeof(bindState) );
 
 		Profiler<TimerQueryWGPU> profiler(
 			  _render
@@ -5704,6 +5766,8 @@ m_resolution.formatColor = TextureFormat::BGRA8;
 					currentProgram = BGFX_INVALID_HANDLE;
 					currentState.clear();
 					hasPredefined = false;
+					pipelineState.valid = false;
+					bindState.valid     = false;
 
 					if (_render->m_view[view].m_fbh.idx != fbh.idx)
 					{
@@ -5898,6 +5962,7 @@ m_resolution.formatColor = TextureFormat::BGRA8;
 
 					WGPUCommandEncoder cmdEncoder = m_cmd.alloc();
 					renderPassEncoder = WGPU_CHECK(wgpuCommandEncoderBeginRenderPass(cmdEncoder, &renderPassDesc) );
+					currentPipeline   = NULL;
 
 					wgpuRenderPassEncoderSetViewport(
 						  renderPassEncoder
@@ -6037,6 +6102,7 @@ m_resolution.formatColor = TextureFormat::BGRA8;
 				}
 
 				const RenderDraw& draw = renderItem.draw;
+				const uint32_t bindIdx = draw.m_bindIdx;
 
 				const bool hasOcclusionQuery = 0 != (draw.m_stateFlags & BGFX_STATE_INTERNAL_OCCLUSION_QUERY);
 				{
@@ -6065,21 +6131,64 @@ m_resolution.formatColor = TextureFormat::BGRA8;
 
 				const uint64_t state = draw.m_stateFlags;
 
-				const RenderPipeline& renderPipeline = *getPipeline(
-					  key.m_program
-					, fbh
-					, msaaCount
-					, draw.m_stateFlags
-					, draw.m_rgba
-					, draw.m_stencil
-					, draw.m_streamMask
-					, draw.m_stream
-					, uint8_t(draw.m_instanceDataStride/16)
-					, draw.isIndex16()
-					, renderBind
-					);
+				const uint8_t numInstanceData = uint8_t(draw.m_instanceDataStride/16);
+				const bool    drawIsIndex16   = draw.isIndex16();
+
+				const RenderPipeline* renderPipelinePtr;
+				if (pipelineState.valid
+				&&  pipelineState.program         == key.m_program.idx
+				&&  pipelineState.fbh             == fbh.idx
+				&&  pipelineState.msaaCount       == msaaCount
+				&&  pipelineState.state           == draw.m_stateFlags
+				&&  pipelineState.rgba            == draw.m_rgba
+				&&  pipelineState.stencil         == draw.m_stencil
+				&&  pipelineState.streamMask      == draw.m_streamMask
+				&&  pipelineState.numInstanceData == numInstanceData
+				&&  pipelineState.isIndex16       == drawIsIndex16
+				&&  pipelineState.bindIdx         == bindIdx
+				&&  0 == bx::memCmp(pipelineState.stream, draw.m_stream, sizeof(pipelineState.stream) ) )
+				{
+					renderPipelinePtr = pipelineState.pipeline;
+				}
+				else
+				{
+					renderPipelinePtr = getPipeline(
+						  key.m_program
+						, fbh
+						, msaaCount
+						, draw.m_stateFlags
+						, draw.m_rgba
+						, draw.m_stencil
+						, draw.m_streamMask
+						, draw.m_stream
+						, numInstanceData
+						, drawIsIndex16
+						, renderBind
+						);
+
+					pipelineState.valid           = true;
+					pipelineState.program         = key.m_program.idx;
+					pipelineState.fbh             = fbh.idx;
+					pipelineState.msaaCount       = msaaCount;
+					pipelineState.state           = draw.m_stateFlags;
+					pipelineState.rgba            = draw.m_rgba;
+					pipelineState.stencil         = draw.m_stencil;
+					pipelineState.streamMask      = draw.m_streamMask;
+					pipelineState.numInstanceData = numInstanceData;
+					pipelineState.isIndex16       = drawIsIndex16;
+					pipelineState.bindIdx         = bindIdx;
+					bx::memCopy(pipelineState.stream, draw.m_stream, sizeof(pipelineState.stream) );
+					pipelineState.pipeline        = renderPipelinePtr;
+				}
+
+				const RenderPipeline& renderPipeline = *renderPipelinePtr;
 				bindGroupLayout = renderPipeline.bindGroupLayout;
-				WGPU_CHECK(wgpuRenderPassEncoderSetPipeline(renderPassEncoder, renderPipeline.pipeline) );
+
+				if (currentPipeline != renderPipeline.pipeline)
+				{
+					currentPipeline = renderPipeline.pipeline;
+					WGPU_CHECK(wgpuRenderPassEncoderSetPipeline(renderPassEncoder, renderPipeline.pipeline) );
+				}
 
 				const ProgramWGPU& program = m_program[key.m_program.idx];
 
@@ -6120,21 +6229,51 @@ m_resolution.formatColor = TextureFormat::BGRA8;
 				const uint32_t fsSize = NULL != program.m_fsh ? program.m_fsh->m_size : 0;
 				m_uniformScratchBuffer.write(sbo, m_vsScratch, vsSize, m_fsScratch, fsSize);
 
-				bx::HashMurmur3 murmur;
-				murmur.begin(0x44524157);
-				murmur.add(renderBind.m_bind, sizeof(renderBind.m_bind) );
-				murmur.add(sbo.buffer);
-				murmur.add(vsSize);
-				murmur.add(fsSize);
-				const uint32_t bindHash = murmur.end();
-
-				BindGroupMap::iterator bindIt = m_bindGroupMap.find(bindHash);
-				if (bindIt == m_bindGroupMap.end() )
+				const BindGroup* bindGroupCached;
+				if (bindState.valid
+				&&  bindState.program == key.m_program.idx
+				&&  bindState.bindIdx == bindIdx
+				&&  bindState.buffer  == sbo.buffer
+				&&  bindState.vsSize  == vsSize
+				&&  bindState.fsSize  == fsSize)
 				{
-					const BindGroup bind = createBindGroup(bindGroupLayout, program, renderBind, sbo, false);
-					bindIt = m_bindGroupMap.insert(stl::make_pair(bindHash, bind) ).first;
+					bindGroupCached = bindState.bindGroup;
 				}
-				const BindGroup* bindGroupCached = &bindIt->second;
+				else
+				{
+					bx::HashMurmur3 murmur;
+					murmur.begin(0x44524157);
+
+					for (uint32_t stage = 0; stage < BGFX_CONFIG_MAX_TEXTURE_SAMPLERS; ++stage)
+					{
+						if (isValid(program.m_shaderBinding[stage].uniformHandle) )
+						{
+							murmur.add(&renderBind.m_bind[stage], sizeof(renderBind.m_bind[stage]) );
+						}
+					}
+
+					murmur.add(sbo.buffer);
+					murmur.add(vsSize);
+					murmur.add(fsSize);
+					const uint32_t bindHash = murmur.end();
+
+					BindGroupMap::iterator bindIt = m_bindGroupMap.find(bindHash);
+					if (bindIt == m_bindGroupMap.end() )
+					{
+						const BindGroup bind = createBindGroup(bindGroupLayout, program, renderBind, sbo, false);
+						bindIt = m_bindGroupMap.insert(stl::make_pair(bindHash, bind) ).first;
+					}
+
+					bindGroupCached = &bindIt->second;
+
+					bindState.valid     = true;
+					bindState.program   = key.m_program.idx;
+					bindState.bindIdx   = bindIdx;
+					bindState.buffer    = sbo.buffer;
+					bindState.vsSize    = vsSize;
+					bindState.fsSize    = fsSize;
+					bindState.bindGroup = bindGroupCached;
+				}
 
 				WGPU_CHECK(wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, bindGroupCached->bindGroup, bindGroupCached->numOffsets, sbo.offsets) );
 
@@ -6624,13 +6763,6 @@ m_resolution.formatColor = TextureFormat::BGRA8;
 		m_uniformScratchBuffer.end();
 
 		m_cmd.frame();
-
-		for (BindGroupMap::iterator it = m_bindGroupMap.begin(), end = m_bindGroupMap.end(); it != end; ++it)
-		{
-			release(it->second);
-		}
-
-		m_bindGroupMap.clear();
 	}
 
 

@@ -2025,7 +2025,6 @@ namespace bgfx
 				{
 					Binding& bind = m_bind[ii];
 					bind.reset();
-
 				}
 			}
 		};
