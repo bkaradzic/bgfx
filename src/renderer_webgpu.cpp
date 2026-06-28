@@ -3323,6 +3323,9 @@ WGPU_IMPORT
 		StateCacheT<WGPUTextureView>         m_textureViewStateCache;
 		StateCacheT<WGPUSampler>             m_samplerStateCache;
 
+		typedef stl::unordered_map<uint32_t, BindGroup> BindGroupMap;
+		BindGroupMap m_bindGroupMap;
+
 		void* m_uniforms[BGFX_CONFIG_MAX_UNIFORMS];
 		Matrix4 m_predefinedUniforms[PredefinedUniform::Count];
 		UniformRegistry m_uniformReg;
@@ -5595,8 +5598,6 @@ m_resolution.formatColor = TextureFormat::BGRA8;
 			, true
 			);
 
-		StateCacheLru<BindGroup, 64> bindGroupLru;
-
 		uint32_t msaaCount = 1;
 
 		if (0 == (_render->m_debug&BGFX_DEBUG_IFH) )
@@ -5913,12 +5914,13 @@ m_resolution.formatColor = TextureFormat::BGRA8;
 					murmur.add(vsSize);
 					const uint32_t bindHash = murmur.end();
 
-					const BindGroup* bindGroupCached = bindGroupLru.find(bindHash);
-					if (NULL == bindGroupCached)
+					BindGroupMap::iterator it = m_bindGroupMap.find(bindHash);
+					if (it == m_bindGroupMap.end() )
 					{
 						const BindGroup bindGroup = createBindGroup(bindGroupLayout, program, renderBind, sbo, true);
-						bindGroupCached = bindGroupLru.add(bindHash, bindGroup, 0);
+						it = m_bindGroupMap.insert(stl::make_pair(bindHash, bindGroup) ).first;
 					}
+					const BindGroup* bindGroupCached = &it->second;
 
 					WGPU_CHECK(wgpuComputePassEncoderSetBindGroup(computePassEncoder, 0, bindGroupCached->bindGroup, bindGroupCached->numOffsets, sbo.offsets) );
 
@@ -6049,12 +6051,13 @@ m_resolution.formatColor = TextureFormat::BGRA8;
 				murmur.add(fsSize);
 				const uint32_t bindHash = murmur.end();
 
-				const BindGroup* bindGroupCached = bindGroupLru.find(bindHash);
-				if (NULL == bindGroupCached)
+				BindGroupMap::iterator bindIt = m_bindGroupMap.find(bindHash);
+				if (bindIt == m_bindGroupMap.end() )
 				{
 					const BindGroup bind = createBindGroup(bindGroupLayout, program, renderBind, sbo, false);
-					bindGroupCached = bindGroupLru.add(bindHash, bind, 0);
+					bindIt = m_bindGroupMap.insert(stl::make_pair(bindHash, bind) ).first;
 				}
+				const BindGroup* bindGroupCached = &bindIt->second;
 
 				WGPU_CHECK(wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, bindGroupCached->bindGroup, bindGroupCached->numOffsets, sbo.offsets) );
 
@@ -6544,6 +6547,13 @@ m_resolution.formatColor = TextureFormat::BGRA8;
 		m_uniformScratchBuffer.end();
 
 		m_cmd.frame();
+
+		for (BindGroupMap::iterator it = m_bindGroupMap.begin(), end = m_bindGroupMap.end(); it != end; ++it)
+		{
+			release(it->second);
+		}
+
+		m_bindGroupMap.clear();
 	}
 
 
