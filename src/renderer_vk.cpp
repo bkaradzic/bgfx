@@ -7885,21 +7885,36 @@ VK_DESTROY
 			: s_textureFormat[m_colorFormat].m_fmt
 			;
 
+		const VkSurfaceTransformFlagBitsKHR preTransform = BX_ENABLED(BX_PLATFORM_NX)
+			? VK_SURFACE_TRANSFORM_INHERIT_BIT_KHR
+			: surfaceCapabilities.currentTransform
+			;
+
+		const bool swapExtent = !BX_ENABLED(BX_PLATFORM_NX)
+			&& 0 != (surfaceCapabilities.currentTransform & (0
+				| VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR
+				| VK_SURFACE_TRANSFORM_ROTATE_270_BIT_KHR
+				) )
+			;
+
+		const uint32_t reqWidth  = swapExtent ? m_resolution.height : m_resolution.width;
+		const uint32_t reqHeight = swapExtent ? m_resolution.width  : m_resolution.height;
+
 		const uint32_t width = bx::clamp<uint32_t>(
-			  m_resolution.width
+			  reqWidth
 			, surfaceCapabilities.minImageExtent.width
 			, surfaceCapabilities.maxImageExtent.width
 			);
 		const uint32_t height = bx::clamp<uint32_t>(
-			  m_resolution.height
+			  reqHeight
 			, surfaceCapabilities.minImageExtent.height
 			, surfaceCapabilities.maxImageExtent.height
 			);
-		if (width != m_resolution.width || height != m_resolution.height)
+		if (width != reqWidth || height != reqHeight)
 		{
 			BX_TRACE("Clamped swapchain resolution from %dx%d to %dx%d"
-					, m_resolution.width
-					, m_resolution.height
+					, reqWidth
+					, reqHeight
 					, width
 					, height
 					);
@@ -7956,6 +7971,7 @@ VK_DESTROY
 		m_sci.imageExtent.width  = width;
 		m_sci.imageExtent.height = height;
 		m_sci.imageUsage         = imageUsage;
+		m_sci.preTransform       = preTransform;
 		m_sci.compositeAlpha     = compositeAlpha;
 		m_sci.presentMode        = s_presentMode[presentModeIdx].mode;
 		m_sci.clipped            = VK_FALSE;
