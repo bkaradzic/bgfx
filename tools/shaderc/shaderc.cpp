@@ -1155,57 +1155,57 @@ namespace bgfx
 		strReplace(_data, find, replace);
 	}
 
-	const char* getVoidValueForType(const std::string_view& type)
+	const char* getVoidValueForType(const bx::StringView& type)
 	{
-		if (type == "float")
+		if (0 == bx::strCmp(type, "float", 5))
 		{
 			return "0.0";
 		}
-		else if (type == "int")
+		else if (0 == bx::strCmp(type, "int", 3))
 		{
 			return "0";
 		}
-		else if (type == "uint")
+		else if (0 == bx::strCmp(type, "uint", 4))
 		{
 			return "0";
 		}
-		else if (type == "bool")
+		else if (0 == bx::strCmp(type, "bool", 4))
 		{
 			return "false";
 		}
-		else if (type == "vec2")
+		else if (0 == bx::strCmp(type, "vec2", 4))
 		{
 			return "vec2_splat(0.0)";
 		}
-		else if (type == "ivec2")
+		else if (0 == bx::strCmp(type, "ivec2", 5))
 		{
 			return "ivec2_splat(0)";
 		}
-		else if (type == "uvec2")
+		else if (0 == bx::strCmp(type, "uvec2", 5))
 		{
 			return "uvec2_splat(0)";
 		}
-		else if (type == "vec3")
+		else if (0 == bx::strCmp(type, "vec3", 4))
 		{
 			return "vec3_splat(0.0)";
 		}
-		else if (type == "ivec3")
+		else if (0 == bx::strCmp(type, "ivec3", 5))
 		{
 			return "ivec3_splat(0)";
 		}
-		else if (type == "uvec3")
+		else if (0 == bx::strCmp(type, "uvec3", 5))
 		{
 			return "uvec3_splat(0)";
 		}
-		else if (type == "vec4")
+		else if (0 == bx::strCmp(type, "vec4", 4))
 		{
 			return "vec4_splat(0.0)";
 		}
-		else if (type == "ivec4")
+		else if (0 == bx::strCmp(type, "ivec4", 5))
 		{
 			return "ivec4_splat(0)";
 		}
-		else if (type == "uvec4")
+		else if (0 == bx::strCmp(type, "uvec4", 5))
 		{
 			return "uvec4_splat(0)";
 		}
@@ -2246,7 +2246,9 @@ namespace bgfx
 							{
 								const Varying& var = varyingIt->second;
 								char temp[64];
-								bx::snprintf(temp, BX_COUNTOF(temp), "\n%s bgfx_VoidFrag = %s;\n", var.m_type.c_str(), getVoidValueForType(var.m_type) );
+								bx::snprintf(temp, BX_COUNTOF(temp), "\n%s bgfx_VoidFrag = %s;\n",
+									var.m_type.c_str(),
+									getVoidValueForType(bx::StringView(var.m_type.data(), var.m_type.size())) );
 								insert = strInsert(const_cast<char*>(insert.getPtr()+1), temp);
 							}
 							else
@@ -2273,7 +2275,9 @@ namespace bgfx
 								{
 									const Varying& var = varyingIt->second;
 									char temp[64];
-									bx::snprintf(temp, BX_COUNTOF(temp), "\n%s bgfx_VoidFrag%d = %s;\n", var.m_type.c_str(), ii, getVoidValueForType(var.m_type) );
+									bx::snprintf(temp, BX_COUNTOF(temp), "\n%s bgfx_VoidFrag%d = %s;\n",
+										var.m_type.c_str(), ii,
+										getVoidValueForType(bx::StringView(var.m_type.data(), var.m_type.size())) );
 									insert = strInsert(const_cast<char*>(insert.getPtr()+1), temp);
 								}
 							}
