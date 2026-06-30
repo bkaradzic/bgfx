@@ -935,6 +935,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 				| BGFX_CAPS_VERTEX_ATTRIB_HALF
 				| BGFX_CAPS_VERTEX_ATTRIB_UINT10
 				| BGFX_CAPS_VERTEX_ID
+				| BGFX_CAPS_VIEWPORT_LAYER_ARRAY
 				);
 
 			g_caps.supported |= (m_device->supportsFamily(MTL::GPUFamilyApple7) || m_device->supportsFamily(MTL::GPUFamilyMac2) )
@@ -2240,6 +2241,21 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			{
 				FrameBufferMtl& frameBuffer = m_frameBuffers[_fbh.idx];
 
+				uint16_t maxNumLayers = 65535;
+				for (uint32_t ii = 0; ii < frameBuffer.m_num; ++ii)
+				{
+					if (frameBuffer.m_colorAttachment[ii].numLayers < maxNumLayers)
+					{
+						maxNumLayers = frameBuffer.m_colorAttachment[ii].numLayers;
+					}
+				}
+				if (isValid(frameBuffer.m_depthHandle) && frameBuffer.m_depthAttachment.numLayers < maxNumLayers)
+				{
+					maxNumLayers = frameBuffer.m_depthAttachment.numLayers;
+				}
+
+				_renderPassDescriptor->setRenderTargetArrayLength(maxNumLayers);
+
 				for (uint32_t ii = 0; ii < frameBuffer.m_num; ++ii)
 				{
 					const TextureMtl& texture = m_textures[frameBuffer.m_colorHandle[ii].idx];
@@ -2825,11 +2841,28 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 					: NULL
 					);
 
+				bool layeredTarget = false;
+				if (isValid(_fbh) )
+				{
+					const FrameBufferMtl& frameBuffer = m_frameBuffers[_fbh.idx];
+					for (uint32_t ii = 0; ii < frameBuffer.m_num; ++ii)
+					{
+						layeredTarget |= frameBuffer.m_colorAttachment[ii].numLayers > 1;
+					}
+					if (isValid(frameBuffer.m_depthHandle) )
+					{
+						layeredTarget |= frameBuffer.m_depthAttachment.numLayers > 1;
+					}
+				}
+
+				const uint64_t pt = _state & BGFX_STATE_PT_MASK;
 				pd->setInputPrimitiveTopology(
-						  BGFX_STATE_PT_POINTS == (_state & BGFX_STATE_PT_MASK)
-						? MTL::PrimitiveTopologyClassPoint
-						: MTL::PrimitiveTopologyClassUnspecified
-						);
+					  BGFX_STATE_PT_POINTS == pt ? MTL::PrimitiveTopologyClassPoint
+					: !layeredTarget            ? MTL::PrimitiveTopologyClassUnspecified
+					: BGFX_STATE_PT_LINES     == pt
+					||BGFX_STATE_PT_LINESTRIP == pt ? MTL::PrimitiveTopologyClassLine
+					:                            MTL::PrimitiveTopologyClassTriangle
+					);
 
 				MTL::VertexDescriptor* vertexDesc = m_vertexDescriptor;
 				reset(vertexDesc);
