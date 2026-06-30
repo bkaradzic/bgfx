@@ -605,6 +605,13 @@ public:
 		return used_swizzle_buffer;
 	}
 
+	// Provide feedback to calling API to determine if shader writes to point size.
+	// This allows shaderc to only add point_size when actually needed.
+	bool get_writes_to_point_size() const
+	{
+		return writes_to_point_size;
+	}
+
 	// Provide feedback to calling API to allow it to pass a buffer
 	// containing STORAGE_BUFFER buffer sizes to support OpArrayLength.
 	bool needs_buffer_size_buffer() const

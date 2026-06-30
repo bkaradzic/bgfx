@@ -755,13 +755,19 @@ namespace bgfx { namespace metal
 					// insert struct member which declares point size, defaulted to 1
 					if ('v' == _options.shaderType)
 					{
-						const bx::StringView xlatMtlMainOut("xlatMtlMain_out\n{");
-						size_t pos = source.find(xlatMtlMainOut.getPtr() );
-
-						if (pos != std::string::npos)
+						if (msl.get_writes_to_point_size())
 						{
-							pos += xlatMtlMainOut.getLength();
-							source.insert(pos, "\n\tfloat bgfx_metal_pointSize [[point_size]] = 1;");
+							if (source.find("[[point_size]]") == std::string::npos)
+							{
+								const bx::StringView xlatMtlMainOut("xlatMtlMain_out\n{");
+								size_t pos = source.find(xlatMtlMainOut.getPtr());
+
+								if (pos != std::string::npos)
+								{
+									pos += xlatMtlMainOut.getLength();
+									source.insert(pos, "\n\tfloat bgfx_metal_pointSize [[point_size]] = 1;");
+								}
+							}
 						}
 					}
 

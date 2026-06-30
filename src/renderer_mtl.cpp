@@ -2617,6 +2617,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 				| BGFX_STATE_BLEND_INDEPENDENT
 				| BGFX_STATE_MSAA
 				| BGFX_STATE_BLEND_ALPHA_TO_COVERAGE
+				| BGFX_STATE_PT_MASK
 				);
 
 			const bool independentBlendEnable = !!(BGFX_STATE_BLEND_INDEPENDENT & _state);
@@ -2823,6 +2824,20 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 					? program.m_fsh->m_function
 					: NULL
 					);
+
+				switch (_state & BGFX_STATE_PT_MASK)
+				{
+					case BGFX_STATE_PT_POINTS:
+						pd->setInputPrimitiveTopology(MTL::PrimitiveTopologyClassPoint);
+						break;
+					case BGFX_STATE_PT_LINES:
+					case BGFX_STATE_PT_LINESTRIP:
+						pd->setInputPrimitiveTopology(MTL::PrimitiveTopologyClassLine);
+						break;
+					default:
+						pd->setInputPrimitiveTopology(MTL::PrimitiveTopologyClassTriangle);
+						break;
+				}
 
 				MTL::VertexDescriptor* vertexDesc = m_vertexDescriptor;
 				reset(vertexDesc);
@@ -5653,6 +5668,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 				   | BGFX_STATE_BLEND_INDEPENDENT
 				   | BGFX_STATE_MSAA
 				   | BGFX_STATE_BLEND_ALPHA_TO_COVERAGE
+				   | BGFX_STATE_PT_MASK
 				   ) & changedFlags
 				|| ( (blendFactor != draw.m_rgba) && !!(newFlags & BGFX_STATE_BLEND_INDEPENDENT) ) )
 				{
