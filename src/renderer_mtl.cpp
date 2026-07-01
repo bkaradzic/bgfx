@@ -2825,19 +2825,11 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 					: NULL
 					);
 
-				switch (_state & BGFX_STATE_PT_MASK)
-				{
-					case BGFX_STATE_PT_POINTS:
-						pd->setInputPrimitiveTopology(MTL::PrimitiveTopologyClassPoint);
-						break;
-					case BGFX_STATE_PT_LINES:
-					case BGFX_STATE_PT_LINESTRIP:
-						pd->setInputPrimitiveTopology(MTL::PrimitiveTopologyClassLine);
-						break;
-					default:
-						pd->setInputPrimitiveTopology(MTL::PrimitiveTopologyClassTriangle);
-						break;
-				}
+				pd->setInputPrimitiveTopology(
+						  BGFX_STATE_PT_POINTS == (_state & BGFX_STATE_PT_MASK)
+						? MTL::PrimitiveTopologyClassPoint
+						: MTL::PrimitiveTopologyClassUnspecified
+						);
 
 				MTL::VertexDescriptor* vertexDesc = m_vertexDescriptor;
 				reset(vertexDesc);
@@ -5738,7 +5730,8 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 							);
 					}
 
-					if (NULL == currentPso)
+					if (NULL == currentPso
+					||  NULL == currentPso->m_rps)
 					{
 						currentProgram = BGFX_INVALID_HANDLE;
 						continue;
