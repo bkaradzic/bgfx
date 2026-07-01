@@ -2518,14 +2518,26 @@ namespace bgfx
 #if BGFX_CONFIG_MULTITHREADED
 		// Render thread shutdown sequence.
 		renderSemWait(); // Wait for previous frame.
-		apiSemPost();   // OK to set context to NULL.
+		apiSemPost();    // OK to set context to NULL.
 		// s_ctx is NULL here.
 		renderSemWait(); // In RenderFrame::Exiting state.
 
 		if (m_thread.isRunning() )
 		{
-			s_renderFrameCalled = false;
 			m_thread.shutdown();
+
+			// Internal render thread was created it owns the latch, clear it as the thread exits.
+			s_renderFrameCalled = false;
+		}
+		else if (m_singleThreaded)
+		{
+			// bgfx::renderFrame() was latched on API thread.
+			s_renderFrameCalled = false;
+		}
+		else
+		{
+			// Otherwise bgfx::renderFrame() was called manually, and latched on different thread.
+			// So we don't control it...
 		}
 
 		m_render->destroy();
