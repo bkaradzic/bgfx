@@ -774,7 +774,20 @@ namespace wgpu {
 	struct TimerQueryWGPU
 	{
 		TimerQueryWGPU()
-			: m_control(BX_COUNTOF(m_result) )
+			: m_frequency(1000000000)
+			, m_querySet(NULL)
+			, m_resolve(NULL)
+			, m_readback(NULL)
+			, m_frameResultIdx(0)
+			, m_frameNum(0)
+			, m_pendingResultIdx(0)
+			, m_pendingFrameNum(0)
+			, m_enabled(false)
+			, m_frameActive(false)
+			, m_firstPass(false)
+			, m_hadPass(false)
+			, m_pendingReadback(false)
+			, m_readbackInFlight(false)
 		{
 		}
 
@@ -782,14 +795,16 @@ namespace wgpu {
 		void shutdown();
 		uint32_t begin(uint32_t _resultIdx, uint32_t _frameNum);
 		void end(uint32_t _idx);
-
-		struct Query
-		{
-			uint32_t m_resultIdx;
-			uint32_t m_frameNum;
-			uint64_t m_fence;
-			bool     m_ready;
-		};
+		// Returns the timestampWrites to attach to the current frame's next
+		// render/compute pass descriptor, or NULL when the timer is inactive.
+		// GPUCommandEncoder.writeTimestamp was removed from the WebGPU spec, so
+		// timestamps can only be written at pass boundaries: the first pass of
+		// the frame writes the begin timestamp and every pass (re)writes the end
+		// timestamp, so after all passes the query set holds first-pass-begin ..
+		// last-pass-end == the frame's GPU time.
+		const WGPUPassTimestampWrites* passTimestampWrites();
+		void readResultsAsync();
+		void consumeResults(WGPUMapAsyncStatus _status);
 
 		struct Result
 		{
@@ -809,14 +824,28 @@ namespace wgpu {
 
 		uint64_t m_frequency;
 
+		// Indexed by view for per-view profiling and by BGFX_CONFIG_MAX_VIEWS for
+		// the whole-frame timer. Only the frame slot is populated on WebGPU: a
+		// render/compute pass descriptor carries a single timestampWrites, so it
+		// cannot serve both the frame timer and a per-view timer at once.
 		Result m_result[BGFX_CONFIG_MAX_VIEWS+1];
-		Query m_query[BGFX_CONFIG_MAX_VIEWS*4];
 
 		WGPUQuerySet m_querySet;
-		WGPUBuffer m_resolve;
-		WGPUBuffer m_readback;
+		WGPUBuffer   m_resolve;
+		WGPUBuffer   m_readback;
+		WGPUPassTimestampWrites m_timestampWrites; // reused across the frame's passes
 
-		bx::RingBufferControl m_control;
+		uint32_t m_frameResultIdx;    // result slot the active frame writes to
+		uint32_t m_frameNum;          // bgfx frame number of the active frame
+		uint32_t m_pendingResultIdx;  // result slot awaiting async readback
+		uint32_t m_pendingFrameNum;   // frame number awaiting async readback
+
+		bool m_enabled;           // TimestampQuery feature available
+		bool m_frameActive;       // between begin()/end() this frame
+		bool m_firstPass;         // next pass is the frame's first (writes begin)
+		bool m_hadPass;           // at least one pass carried timestamps this frame
+		bool m_pendingReadback;   // timestamps resolved into m_readback, not yet mapped
+		bool m_readbackInFlight;  // an async map is outstanding
 	};
 
 	struct OcclusionQueryWGPU
