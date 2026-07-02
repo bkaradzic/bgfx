@@ -6243,8 +6243,7 @@ namespace bgfx { namespace d3d11
 						deviceCtx->VSSetConstantBuffers(0, 1, &vsh->m_buffer);
 
 						const ShaderD3D11* fsh = program.m_fsh;
-						if (NULL != fsh
-						&& (NULL != m_currentColor) )
+						if (NULL != fsh)
 						{
 							deviceCtx->PSSetShader(fsh->m_pixelShader, NULL, 0);
 							deviceCtx->PSSetConstantBuffers(0, 1, &fsh->m_buffer);
