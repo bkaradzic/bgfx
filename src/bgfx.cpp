@@ -1612,7 +1612,7 @@ namespace bgfx
 		}
 
 		const uint32_t renderItemIdx = bx::atomicFetchAndAddsat<uint32_t>(&m_frame->m_numRenderItems, 1, m_frame->m_maxDrawCalls);
-		if (m_frame->m_maxDrawCalls-1 <= renderItemIdx)
+		if (m_frame->m_maxDrawCalls <= renderItemIdx)
 		{
 			discard(_flags);
 			++m_numDropped;
