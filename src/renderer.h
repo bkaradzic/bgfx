@@ -788,8 +788,9 @@ namespace bgfx
 			{
 				const uint8_t idx = it.idx;
 
-				if (_current.m_stream[idx].m_handle.idx  != _new.m_stream[idx].m_handle.idx
-				||  _current.m_stream[idx].m_startVertex != _new.m_stream[idx].m_startVertex)
+				if (_current.m_stream[idx].m_handle.idx       != _new.m_stream[idx].m_handle.idx
+				||  _current.m_stream[idx].m_startVertex      != _new.m_stream[idx].m_startVertex
+				||  _current.m_stream[idx].m_layoutHandle.idx != _new.m_stream[idx].m_layoutHandle.idx)
 				{
 					return true;
 				}

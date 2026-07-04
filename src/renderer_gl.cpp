@@ -8480,6 +8480,12 @@ namespace bgfx { namespace gl
 									currentState.m_stream[idx].m_startVertex = draw.m_stream[idx].m_startVertex;
 									bindAttribs = true;
 								}
+
+								if (currentState.m_stream[idx].m_layoutHandle.idx != draw.m_stream[idx].m_layoutHandle.idx)
+								{
+									currentState.m_stream[idx].m_layoutHandle = draw.m_stream[idx].m_layoutHandle;
+									bindAttribs = true;
+								}
 							}
 						}
 
