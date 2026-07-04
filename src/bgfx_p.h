@@ -2701,8 +2701,8 @@ namespace bgfx
 			const uint32_t num = m_maxDrawCalls + 1;
 			m_sortKeys   = (uint64_t*       )bx::alloc(g_allocator, sizeof(uint64_t       )*num);
 			m_sortValues = (RenderItemCount*)bx::alloc(g_allocator, sizeof(RenderItemCount)*num);
-			m_renderItem = (RenderItem*     )bx::alloc(g_allocator, sizeof(RenderItem     )*num);
-			m_renderBind = (RenderBind*     )bx::alloc(g_allocator, sizeof(RenderBind     )*num);
+			m_renderItem = (RenderItem*     )bx::alloc(g_allocator, sizeof(RenderItem     )*num, BX_ALIGNOF(RenderItem) );
+			m_renderBind = (RenderBind*     )bx::alloc(g_allocator, sizeof(RenderBind     )*num, BX_ALIGNOF(RenderBind) );
 
 			bx::memSet(m_renderBind, 0, sizeof(RenderBind)*num);
 
@@ -2713,8 +2713,8 @@ namespace bgfx
 		{
 			bx::free(g_allocator, m_sortKeys);
 			bx::free(g_allocator, m_sortValues);
-			bx::free(g_allocator, m_renderItem);
-			bx::free(g_allocator, m_renderBind);
+			bx::free(g_allocator, m_renderItem, BX_ALIGNOF(RenderItem) );
+			bx::free(g_allocator, m_renderBind, BX_ALIGNOF(RenderBind) );
 			m_sortKeys   = NULL;
 			m_sortValues = NULL;
 			m_renderItem = NULL;
