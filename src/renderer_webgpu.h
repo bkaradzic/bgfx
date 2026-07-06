@@ -224,8 +224,8 @@
 		WGPU_IMPORT_FUNC(false, RenderPassEncoderEndOcclusionQuery);                \
 		WGPU_IGNORE_____(false, RenderPassEncoderExecuteBundles);                   \
 		WGPU_IMPORT_FUNC(false, RenderPassEncoderInsertDebugMarker);                \
-		WGPU_IMPORT_FUNC(false, RenderPassEncoderMultiDrawIndexedIndirect);         \
-		WGPU_IMPORT_FUNC(false, RenderPassEncoderMultiDrawIndirect);                \
+		WGPU_IGNORE_____(false, RenderPassEncoderMultiDrawIndexedIndirect);         \
+		WGPU_IGNORE_____(false, RenderPassEncoderMultiDrawIndirect);                \
 		WGPU_IGNORE_____(false, RenderPassEncoderPixelLocalStorageBarrier);         \
 		WGPU_IMPORT_FUNC(false, RenderPassEncoderPopDebugGroup);                    \
 		WGPU_IMPORT_FUNC(false, RenderPassEncoderPushDebugGroup);                   \
