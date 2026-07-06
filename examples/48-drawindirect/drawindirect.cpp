@@ -181,6 +181,21 @@ public:
 			bgfx::makeRef(s_multiMeshIndices, sizeof(s_multiMeshIndices) )
 			);
 
+		// Dynamic index buffer (with padding)
+		m_dibhPad = bgfx::createDynamicIndexBuffer(64);
+		m_dibh = bgfx::createDynamicIndexBuffer(
+			bgfx::makeRef(s_multiMeshIndices, sizeof(s_multiMeshIndices) )
+			);
+		m_indexBufferType = 0;
+
+		// Dynamic vertex buffer (with padding)
+		m_dvbhPad = bgfx::createDynamicVertexBuffer(32, PosColorVertex::ms_layout);
+		m_dvbh = bgfx::createDynamicVertexBuffer(
+			  bgfx::makeRef(s_multiMeshVertices, sizeof(s_multiMeshVertices) )
+			, PosColorVertex::ms_layout
+			);
+		m_vertexBufferType = 0;
+
 		// Create program from shaders.
 		m_program = loadProgram("vs_instancing", "fs_instancing"); // These are reused from 05-instancing
 
@@ -261,6 +276,10 @@ public:
 
 		// Cleanup.
 		bgfx::destroy(m_ibh);
+		bgfx::destroy(m_dibh);
+		bgfx::destroy(m_dibhPad);
+		bgfx::destroy(m_dvbh);
+		bgfx::destroy(m_dvbhPad);
 		bgfx::destroy(m_vbh);
 		bgfx::destroy(m_program);
 
@@ -347,6 +366,14 @@ public:
 			ImGui::Text("Grid Side Size:");
 			ImGui::SliderInt("##size", (int32_t*)&m_sideSize, 1, kMaxSideSize);
 
+			ImGui::Text("Vertex Buffer:");
+			const char* vbItems[] = { "Static", "Dynamic (non-zero base)", "Transient" };
+			ImGui::Combo("##vbtype", &m_vertexBufferType, vbItems, BX_COUNTOF(vbItems) );
+
+			ImGui::Text("Index Buffer:");
+			const char* ibItems[] = { "Static", "Dynamic (non-zero base)", "Transient" };
+			ImGui::Combo("##ibtype", &m_indexBufferType, ibItems, BX_COUNTOF(ibItems) );
+
 			ImGui::BeginDisabled(!indirectCountSupported);
 			ImGui::Checkbox("Indirect Count", &m_useIndirectCount);
 			ImGui::EndDisabled();
@@ -398,6 +425,21 @@ public:
 
 				bgfx::setUniform(u_drawParams, ud);
 
+				bgfx::TransientIndexBuffer tib;
+				if (2 == m_indexBufferType)
+				{
+					bgfx::allocTransientIndexBuffer(&tib, BX_COUNTOF(s_multiMeshIndices) );
+					bx::memCopy(tib.data, s_multiMeshIndices, sizeof(s_multiMeshIndices) );
+				}
+
+				switch (m_indexBufferType)
+				{
+				default:
+				case 0: bgfx::setIndexBuffer(m_ibh);  break; // Static - base 0.
+				case 1: bgfx::setIndexBuffer(m_dibh); break; // Dynamic - non-zero pool base.
+				case 2: bgfx::setIndexBuffer(&tib);   break; // Transient - non-zero per-frame base.
+				}
+
 				bgfx::setBuffer(0, m_objectListBuffer, bgfx::Access::Read);
 				bgfx::setBuffer(1, m_indirectBuffer, bgfx::Access::Write);
 				bgfx::setBuffer(2, m_instanceBuffer, bgfx::Access::Write);
@@ -414,10 +456,28 @@ public:
 					bgfx::dispatch(0, m_indirectProgram, uint32_t(numToDraw/64 + 1), 1, 1);
 				}
 
-				// Submit our 1 draw call
-				// Set vertex and index buffer.
-				bgfx::setIndexBuffer(m_ibh);
-				bgfx::setVertexBuffer(0, m_vbh);
+				// Submit our 1 draw call. Re-bind the same index buffer for the draw.
+				switch (m_indexBufferType)
+				{
+				default:
+				case 0: bgfx::setIndexBuffer(m_ibh);  break;
+				case 1: bgfx::setIndexBuffer(m_dibh); break;
+				case 2: bgfx::setIndexBuffer(&tib);   break;
+				}
+
+				bgfx::TransientVertexBuffer tvb;
+				switch (m_vertexBufferType)
+				{
+				default:
+				case 0: bgfx::setVertexBuffer(0, m_vbh);  break; // Static - base 0.
+				case 1: bgfx::setVertexBuffer(0, m_dvbh); break; // Dynamic - non-zero pool base.
+				case 2: // Transient - non-zero per-frame base.
+					bgfx::allocTransientVertexBuffer(&tvb, BX_COUNTOF(s_multiMeshVertices), PosColorVertex::ms_layout);
+					bx::memCopy(tvb.data, s_multiMeshVertices, sizeof(s_multiMeshVertices) );
+					bgfx::setVertexBuffer(0, &tvb);
+					break;
+				}
+
 				bgfx::setInstanceDataBuffer(m_instanceBuffer, 0, numToDraw);
 
 				// Set render states.
@@ -463,6 +523,12 @@ public:
 
 	bgfx::VertexBufferHandle m_vbh;
 	bgfx::IndexBufferHandle  m_ibh;
+	bgfx::DynamicIndexBufferHandle m_dibhPad;
+	bgfx::DynamicIndexBufferHandle m_dibh;
+	bgfx::DynamicVertexBufferHandle m_dvbhPad;
+	bgfx::DynamicVertexBufferHandle m_dvbh;
+	int32_t m_indexBufferType;
+	int32_t m_vertexBufferType;
 	bgfx::ProgramHandle m_program;
 	bgfx::ProgramHandle m_indirectProgram;
 	bgfx::ProgramHandle m_indirectCountProgram;

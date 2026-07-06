@@ -357,6 +357,7 @@ namespace bgfx { namespace wgpu
 
 	static const char* s_adapterType[] =
 	{
+		/* WGPUAdapterType starts from 1 */ NULL,
 		"DiscreteGPU",
 		"IntegratedGPU",
 		"CPU",

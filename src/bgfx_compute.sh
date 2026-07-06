@@ -316,6 +316,8 @@ __IMAGE_IMPL_ATOMIC(uint, x, uvec4, xxxx)
 	)                 \
 	_buffer[(_offset)*2+0] = uvec4(_numVertices, _numInstances, _startVertex, _startInstance)
 
+uniform vec4 bgfx_indirectArgBase;
+
 #define drawIndexedIndirect( \
 	  _buffer                \
 	, _offset                \
@@ -325,7 +327,7 @@ __IMAGE_IMPL_ATOMIC(uint, x, uvec4, xxxx)
 	, _startVertex           \
 	, _startInstance         \
 	)                        \
-	_buffer[(_offset)*2+0] = uvec4(_numIndices, _numInstances, _startIndex, _startVertex); \
+	_buffer[(_offset)*2+0] = uvec4(_numIndices, _numInstances, floatBitsToUint(bgfx_indirectArgBase.x) + uint(_startIndex), _startVertex); \
 	_buffer[(_offset)*2+1] = uvec4(_startInstance, 0u, 0u, 0u)
 
 #endif // __cplusplus

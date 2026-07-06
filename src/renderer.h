@@ -316,6 +316,17 @@ namespace bgfx
 					}
 					break;
 
+				case PredefinedUniform::IndirectArgBase:
+					{
+						const float base[4] = { bx::bitsToFloat(_draw.m_startIndex), 0.0f, 0.0f, 0.0f };
+						_renderer->setShaderUniform4f(flags
+							, predefined.m_loc
+							, base
+							, 1
+							);
+					}
+					break;
+
 				default:
 					BX_ASSERT(false, "predefined %d not handled", predefined.m_type);
 					break;

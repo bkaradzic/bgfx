@@ -978,6 +978,8 @@ namespace bgfx
 			InvModelView,
 			ModelViewProj,
 			AlphaRef,
+			IndirectArgBase,
+
 			Count
 		};
 
@@ -2162,11 +2164,13 @@ namespace bgfx
 			m_startIndirect  = 0;
 			m_numIndirect    = UINT32_MAX;
 			m_bindIdx        = 0;
+			m_startIndex     = 0;
 		}
 
 		uint32_t m_uniformBegin;
 		uint32_t m_uniformEnd;
 		uint32_t m_startMatrix;
+		uint32_t m_startIndex;
 		IndirectBufferHandle m_indirectBuffer;
 
 		uint32_t m_numX;
