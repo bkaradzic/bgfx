@@ -2757,11 +2757,15 @@ WGPU_IMPORT
 			const uint8_t numVertexStreams = bx::countBits(_streamMask);
 
 			VertexLayout layout;
-			if (0 < numVertexStreams)
+			bx::memSet(&layout, 0, sizeof(layout) );
+
+			if (0 < numVertexStreams
+			&&  UINT32_MAX != _streamMask)
 			{
-				const uint16_t layoutIdx = isValid(_stream[0].m_layoutHandle)
-					? _stream[0].m_layoutHandle.idx
-					: m_vertexBuffers[_stream[0].m_handle.idx].m_layoutHandle.idx
+				const uint8_t firstStream = BitMaskToIndexIteratorT(_streamMask).idx;
+				const uint16_t layoutIdx = isValid(_stream[firstStream].m_layoutHandle)
+					? _stream[firstStream].m_layoutHandle.idx
+					: m_vertexBuffers[_stream[firstStream].m_handle.idx].m_layoutHandle.idx
 					;
 
 				bx::memCopy(&layout, &m_vertexLayouts[layoutIdx], sizeof(VertexLayout) );
@@ -2862,7 +2866,7 @@ WGPU_IMPORT
 
 						bx::memCopy(&layout, &m_vertexLayouts[layoutIdx], sizeof(VertexLayout) );
 
-						const bool lastStream = idx == uint32_t(numVertexStreams-1);
+						const bool lastStream = numStreams == uint32_t(numVertexStreams-1);
 
 						for (uint32_t ii = 0; ii < Attrib::Count; ++ii)
 						{
@@ -2882,7 +2886,7 @@ WGPU_IMPORT
 
 						WGPUVertexAttribute* last = fillVertexLayout(program.m_vsh, elem, layout);
 
-						vertexBufferLayout[idx] =
+						vertexBufferLayout[numStreams] =
 						{
 							.nextInChain    = NULL,
 							.stepMode       = WGPUVertexStepMode_Vertex,
@@ -6447,10 +6451,14 @@ m_resolution.formatColor = TextureFormat::BGRA8;
 
 					if (UINT32_MAX == numVertices)
 					{
-						const VertexBufferWGPU& vb = m_vertexBuffers[currentState.m_stream[0].m_handle.idx];
-						const uint16_t decl = isValid(draw.m_stream[0].m_layoutHandle) ? draw.m_stream[0].m_layoutHandle.idx : vb.m_layoutHandle.idx;
-						const VertexLayout& layout = m_vertexLayouts[decl];
-						numVertices = vb.m_size/layout.m_stride;
+						for (BitMaskToIndexIteratorT it(currentState.m_streamMask); !it.isDone(); it.next() )
+						{
+							const uint8_t idx = it.idx;
+							const VertexBufferWGPU& vb = m_vertexBuffers[currentState.m_stream[idx].m_handle.idx];
+							const uint16_t decl = isValid(draw.m_stream[idx].m_layoutHandle) ? draw.m_stream[idx].m_layoutHandle.idx : vb.m_layoutHandle.idx;
+							const VertexLayout& layout = m_vertexLayouts[decl];
+							numVertices = bx::min(numVertices, vb.m_size/layout.m_stride);
+						}
 					}
 
 					uint32_t numIndices        = 0;
