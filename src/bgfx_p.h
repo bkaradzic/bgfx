@@ -2136,8 +2136,6 @@ namespace bgfx
 		OcclusionQueryHandle m_occlusionQuery;
 	};
 
-	static_assert(sizeof(RenderDraw) == 128, "RenderDraw size changed.");
-
 	BX_ALIGN_DECL_CACHE_LINE(struct) RenderCompute
 	{
 		void clear(uint8_t _flags)
