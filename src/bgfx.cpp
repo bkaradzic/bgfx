@@ -3983,8 +3983,8 @@ namespace bgfx
 
 	Init::Limits::Limits()
 		: maxEncoders(BGFX_CONFIG_DEFAULT_MAX_ENCODERS)
-		, numDrawCalls(4096)
-		, numDrawCallPeakFrames(120)
+		, numDrawCalls(BGFX_CONFIG_MAX_DRAW_CALLS)
+		, numDrawCallPeakFrames(0)
 		, minResourceCbSize(BGFX_CONFIG_MIN_RESOURCE_COMMAND_BUFFER_SIZE)
 		, maxTransientVbSize(BGFX_CONFIG_MAX_TRANSIENT_VERTEX_BUFFER_SIZE)
 		, maxTransientIbSize(BGFX_CONFIG_MAX_TRANSIENT_INDEX_BUFFER_SIZE)
