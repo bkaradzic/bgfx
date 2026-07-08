@@ -6397,21 +6397,22 @@ namespace bgfx { namespace d3d12
 		box.right  = box.left + _rect.m_width;
 		box.bottom = box.top  + _rect.m_height;
 
+		box.front = 0;
+		box.back  = _depth;
+
 		uint32_t layer = 0;
+		uint32_t dstZ  = 0;
 
 		if (TextureD3D12::Texture3D == m_type)
 		{
-			box.front = _z;
-			box.back  = box.front + _depth;
+			dstZ = _z;
 		}
 		else
 		{
 			layer = _z * (TextureD3D12::TextureCube == m_type ? 6 : 1);
-			box.front = 0;
-			box.back  = 1;
 		}
 
-		const uint32_t subres = _mip + ((layer + _side) * m_numMips);
+		const uint32_t subres = _mip + (layer + _side) * m_numMips;
 
 		uint32_t copyPitch = srcPitch;
 
@@ -6434,6 +6435,11 @@ namespace bgfx { namespace d3d12
 		desc.Width  = _rect.m_width;
 		desc.Height = _rect.m_height;
 
+		if (TextureD3D12::Texture3D == m_type)
+		{
+			desc.DepthOrArraySize = uint16_t(_depth);
+		}
+
 		uint32_t numRows;
 		uint64_t totalBytes;
 		D3D12_PLACED_SUBRESOURCE_FOOTPRINT layout;
@@ -6455,20 +6461,27 @@ namespace bgfx { namespace d3d12
 		D3D12_RANGE readRange = { 0, 0 };
 		DX_CHECK(staging->Map(0, &readRange, (void**)&dstData) );
 
-		bx::memCopy(dstData, rowPitch, srcData, copyPitch, rectPitch, numRows);
+		const uint32_t dstSlicePitch = rowPitch  * numRows;
+		const uint32_t srcSlicePitch = copyPitch * numRows;
+		const uint32_t numSlices     = convert ? 1 : _depth;
+
+		for (uint32_t zz = 0; zz < numSlices; ++zz)
+		{
+			bx::memCopy(dstData + zz*dstSlicePitch, rowPitch, srcData + zz*srcSlicePitch, copyPitch, rectPitch, numRows);
+		}
 
 		if (NULL != temp)
 		{
 			bx::free(g_allocator, temp);
 		}
 
-		D3D12_RANGE writeRange = { 0, numRows*rowPitch };
+		D3D12_RANGE writeRange = { 0, numSlices*dstSlicePitch };
 		staging->Unmap(0, &writeRange);
 
 		D3D12_TEXTURE_COPY_LOCATION dst = { m_ptr,   D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX, {        } };
 		dst.SubresourceIndex = subres;
 		D3D12_TEXTURE_COPY_LOCATION src = { staging, D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT,  { layout } };
-		_commandList->CopyTextureRegion(&dst, _rect.m_x, _rect.m_y, 0, &src, &box);
+		_commandList->CopyTextureRegion(&dst, _rect.m_x, _rect.m_y, dstZ, &src, &box);
 
 		setState(_commandList, state);
 
