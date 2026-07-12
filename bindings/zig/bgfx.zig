@@ -176,9 +176,12 @@ pub const StencilFlags_FuncRefShift: StencilFlags           = 0;
 pub const StencilFlags_FuncRefMask: StencilFlags            = 0x000000ff;
 pub const StencilFlags_FuncRmaskShift: StencilFlags         = 8;
 pub const StencilFlags_FuncRmaskMask: StencilFlags          = 0x0000ff00;
-pub const StencilFlags_None: StencilFlags                   = 0x00000000;
+
+/// No stencil test.
+pub const StencilFlags_None: StencilFlags                   = 0x0000ff00;
+
+/// Stencil front or back mask.
 pub const StencilFlags_Mask: StencilFlags                   = 0xffffffff;
-pub const StencilFlags_Default: StencilFlags                = 0x00000000;
 
 /// Enable stencil test, less.
 pub const StencilFlags_TestLess: StencilFlags               = 0x00010000;

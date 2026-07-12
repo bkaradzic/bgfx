@@ -178,9 +178,12 @@ constdef StencilFlags : inline uint
 	FUNCREFMASK            = 0x000000ff,
 	FUNCRMASKSHIFT         = 8,
 	FUNCRMASKMASK          = 0x0000ff00,
-	NONE                   = 0x00000000,
+
+	// No stencil test.
+	NONE                   = 0x0000ff00,
+
+	// Stencil front or back mask.
 	MASK                   = 0xffffffff,
-	DEFAULT                = 0x00000000,
 
 	// Enable stencil test, less.
 	TESTLESS               = 0x00010000,

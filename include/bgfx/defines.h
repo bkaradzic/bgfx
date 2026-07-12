@@ -15,7 +15,7 @@
 #ifndef BGFX_DEFINES_H_HEADER_GUARD
 #define BGFX_DEFINES_H_HEADER_GUARD
 
-#define BGFX_API_VERSION UINT32_C(147)
+#define BGFX_API_VERSION UINT32_C(148)
 
 /**
  * Color RGB/alpha/depth write. When it's not specified write will be disabled.
@@ -170,9 +170,8 @@
 #define BGFX_STENCIL_FUNC_RMASK_MASK              UINT32_C(0x0000ff00)
 #define BGFX_STENCIL_FUNC_RMASK(v) ( ( (uint32_t)(v)<<BGFX_STENCIL_FUNC_RMASK_SHIFT )&BGFX_STENCIL_FUNC_RMASK_MASK)
 
-#define BGFX_STENCIL_NONE                         UINT32_C(0x00000000)
-#define BGFX_STENCIL_MASK                         UINT32_C(0xffffffff)
-#define BGFX_STENCIL_DEFAULT                      UINT32_C(0x00000000)
+#define BGFX_STENCIL_NONE                         UINT32_C(0x0000ff00) //!< No stencil test.
+#define BGFX_STENCIL_MASK                         UINT32_C(0xffffffff) //!< Stencil front or back mask.
 
 #define BGFX_STENCIL_TEST_LESS                    UINT32_C(0x00010000) //!< Enable stencil test, less.
 #define BGFX_STENCIL_TEST_LEQUAL                  UINT32_C(0x00020000) //!< Enable stencil test, less or equal.

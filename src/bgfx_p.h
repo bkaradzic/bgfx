@@ -643,6 +643,8 @@ namespace bgfx
 		release( (const Memory*)_mem);
 	}
 
+	static_assert(BGFX_STENCIL_NONE == BGFX_STENCIL_FUNC_RMASK_MASK, "");
+
 	inline constexpr uint64_t packStencil(uint32_t _fstencil, uint32_t _bstencil)
 	{
 		return (uint64_t(_bstencil)<<32)|uint64_t(_fstencil);
@@ -653,11 +655,30 @@ namespace bgfx
 		return uint32_t( (_stencil >> (32*_0or1) ) );
 	}
 
-	static constexpr uint64_t kStencilNoRefMask = packStencil(~BGFX_STENCIL_FUNC_REF_MASK, ~BGFX_STENCIL_FUNC_REF_MASK);
-	static constexpr uint64_t kStencilDisabled  = packStencil(
+	inline constexpr uint8_t unpackStencilWriteMask(uint64_t _stencil)
+	{
+		return uint8_t( (unpackStencil(1, _stencil) & BGFX_STENCIL_FUNC_RMASK_MASK) >> BGFX_STENCIL_FUNC_RMASK_SHIFT);
+	}
+
+	inline constexpr bool stencilFrontAndBack(uint64_t _stencil)
+	{
+		const uint32_t fstencil = unpackStencil(0, _stencil) & ~BGFX_STENCIL_FUNC_RMASK_MASK;
+		const uint32_t bstencil = unpackStencil(1, _stencil) & ~BGFX_STENCIL_FUNC_RMASK_MASK;
+		return bstencil != (BGFX_STENCIL_NONE & ~BGFX_STENCIL_FUNC_RMASK_MASK)
+			&& bstencil != fstencil;
+	}
+
+	static constexpr uint64_t kStencilNoRefMask      = packStencil(~BGFX_STENCIL_FUNC_REF_MASK, ~BGFX_STENCIL_FUNC_REF_MASK);
+	static constexpr uint64_t kStencilNoRefAndRwMask = packStencil(~(BGFX_STENCIL_FUNC_REF_MASK|BGFX_STENCIL_FUNC_RMASK_MASK), ~(BGFX_STENCIL_FUNC_REF_MASK|BGFX_STENCIL_FUNC_RMASK_MASK));
+	static constexpr uint64_t kStencilDisabled       = packStencil(
 		  BGFX_STENCIL_TEST_ALWAYS | BGFX_STENCIL_OP_FAIL_S_KEEP | BGFX_STENCIL_OP_FAIL_Z_KEEP | BGFX_STENCIL_OP_PASS_Z_KEEP
 		, BGFX_STENCIL_TEST_ALWAYS | BGFX_STENCIL_OP_FAIL_S_KEEP | BGFX_STENCIL_OP_FAIL_Z_KEEP | BGFX_STENCIL_OP_PASS_Z_KEEP
 		);
+
+	inline constexpr bool stencilEnabled(uint64_t _stencil)
+	{
+		return 0 != (_stencil & kStencilNoRefAndRwMask);
+	}
 
 	inline constexpr bool needBorderColor(uint64_t _flags)
 	{
@@ -2045,7 +2066,7 @@ namespace bgfx
 				m_uniformIdx    = UINT8_MAX;
 
 				m_stateFlags    = BGFX_STATE_DEFAULT;
-				m_stencil       = packStencil(BGFX_STENCIL_DEFAULT, BGFX_STENCIL_DEFAULT);
+				m_stencil       = packStencil(BGFX_STENCIL_NONE, BGFX_STENCIL_NONE);
 				m_rgba          = 0;
 				m_scissor       = UINT16_MAX;
 			}

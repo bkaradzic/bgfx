@@ -280,9 +280,16 @@ public static partial class bgfx
 		FuncRefMask            = 0x000000ff,
 		FuncRmaskShift         = 8,
 		FuncRmaskMask          = 0x0000ff00,
-		None                   = 0x00000000,
+	
+		/// <summary>
+		/// No stencil test.
+		/// </summary>
+		None                   = 0x0000ff00,
+	
+		/// <summary>
+		/// Stencil front or back mask.
+		/// </summary>
 		Mask                   = 0xffffffff,
-		Default                = 0x00000000,
 	
 		/// <summary>
 		/// Enable stencil test, less.

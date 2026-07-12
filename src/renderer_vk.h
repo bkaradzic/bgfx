@@ -189,6 +189,7 @@
 			VK_IMPORT_DEVICE_FUNC(false, vkCmdDispatchIndirect);                      \
 			VK_IMPORT_DEVICE_FUNC(false, vkCmdBindPipeline);                          \
 			VK_IMPORT_DEVICE_FUNC(false, vkCmdSetStencilReference);                   \
+			VK_IMPORT_DEVICE_FUNC(false, vkCmdSetStencilWriteMask);                   \
 			VK_IMPORT_DEVICE_FUNC(false, vkCmdSetBlendConstants);                     \
 			VK_IMPORT_DEVICE_FUNC(false, vkCmdSetScissor);                            \
 			VK_IMPORT_DEVICE_FUNC(false, vkCmdBindDescriptorSets);                    \

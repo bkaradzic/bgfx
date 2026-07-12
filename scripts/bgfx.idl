@@ -1,7 +1,7 @@
 -- vim: syntax=lua
 -- bgfx interface
 
-version(147)
+version(148)
 
 typedef "bool"
 typedef "char"
@@ -120,9 +120,8 @@ flag.StencilFuncRef { bits = 32, shift = 0, range = 8, "helper" }
 flag.StencilFuncRmask { bits = 32, shift = 8, range = 8, "helper" }
 
 flag.Stencil { bits = 32, const }
-	.None    (0x00000000)
-	.Mask    (0xffffffff)
-	.Default (0x00000000)
+	.None    (0x0000ff00) --- No stencil test.
+	.Mask    (0xffffffff) --- Stencil front or back mask.
 
 flag.StencilTest { bits = 32, shift = 16, range = 4, base = 1, desc = "Stencil test", section = "Stencil Flags" }
 	.Less     --- Enable stencil test, less.

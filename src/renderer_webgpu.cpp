@@ -2032,7 +2032,7 @@ WGPU_IMPORT
 				, 1
 				, state
 				, 0
-				, packStencil(BGFX_STENCIL_DEFAULT, BGFX_STENCIL_DEFAULT)
+				, packStencil(BGFX_STENCIL_NONE, BGFX_STENCIL_NONE)
 				, 1
 				, &stream
 				, 0
@@ -2756,7 +2756,10 @@ WGPU_IMPORT
 				| BGFX_STATE_PT_MASK
 				;
 
-			_stencil &= kStencilNoRefMask;
+			_stencil = stencilEnabled(_stencil)
+				? (_stencil & kStencilNoRefMask)
+				: 0
+				;
 
 			const uint8_t numVertexStreams = bx::countBits(_streamMask);
 
@@ -3311,12 +3314,12 @@ WGPU_IMPORT
 				_stencil = 0;
 			}
 
-			_stencil = 0 == _stencil ? kStencilDisabled : _stencil;
+			_stencil = !stencilEnabled(_stencil) ? kStencilDisabled : _stencil;
 
+			const uint8_t  writeMask = unpackStencilWriteMask(_stencil);
 			const uint32_t fstencil = unpackStencil(0, _stencil);
-			      uint32_t bstencil = unpackStencil(1, _stencil);
-			const uint32_t frontAndBack = bstencil != BGFX_STENCIL_NONE && bstencil != fstencil;
-			bstencil = frontAndBack ? bstencil : fstencil;
+			const uint32_t frontAndBack = stencilFrontAndBack(_stencil);
+			      uint32_t bstencil = frontAndBack ? unpackStencil(1, _stencil) : fstencil;
 
 			const uint32_t func = (_state&BGFX_STATE_DEPTH_TEST_MASK)>>BGFX_STATE_DEPTH_TEST_SHIFT;
 
@@ -3341,7 +3344,7 @@ WGPU_IMPORT
 					.passOp      = s_stencilOp[(bstencil & BGFX_STENCIL_OP_PASS_Z_MASK) >> BGFX_STENCIL_OP_PASS_Z_SHIFT],
 				},
 				.stencilReadMask     = (fstencil & BGFX_STENCIL_FUNC_RMASK_MASK) >> BGFX_STENCIL_FUNC_RMASK_SHIFT,
-				.stencilWriteMask    = 0xff,
+				.stencilWriteMask    = writeMask,
 				.depthBias           = 0,
 				.depthBiasSlopeScale = 0.0f,
 				.depthBiasClamp      = 0.0f,

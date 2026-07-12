@@ -2865,7 +2865,7 @@ VK_IMPORT_DEVICE
 			const VertexLayout* layout = &m_vertexLayouts[_blitter.m_vb->layoutHandle.idx];
 			VkPipeline pso = getPipeline(state
 				, 0
-				, packStencil(BGFX_STENCIL_DEFAULT, BGFX_STENCIL_DEFAULT)
+				, packStencil(BGFX_STENCIL_NONE, BGFX_STENCIL_NONE)
 				, 1
 				, &layout
 				, _blitter.m_program
@@ -3376,11 +3376,10 @@ VK_IMPORT_DEVICE
 			_desc.depthCompareOp   = s_cmpFunc[func];
 			_desc.depthBoundsTestEnable = VK_FALSE;
 
-			_desc.stencilTestEnable = 0 != _stencil;
+			_desc.stencilTestEnable = stencilEnabled(_stencil);
 
-			uint32_t bstencil = unpackStencil(1, _stencil);
-			uint32_t frontAndBack = bstencil != BGFX_STENCIL_NONE && bstencil != fstencil;
-			bstencil = frontAndBack ? bstencil : fstencil;
+			uint32_t frontAndBack = stencilFrontAndBack(_stencil);
+			uint32_t bstencil = frontAndBack ? unpackStencil(1, _stencil) : fstencil;
 
 			_desc.front.failOp      = s_stencilOp[(fstencil & BGFX_STENCIL_OP_FAIL_S_MASK) >> BGFX_STENCIL_OP_FAIL_S_SHIFT];
 			_desc.front.passOp      = s_stencilOp[(fstencil & BGFX_STENCIL_OP_PASS_Z_MASK) >> BGFX_STENCIL_OP_PASS_Z_SHIFT];
@@ -3888,7 +3887,7 @@ VK_IMPORT_DEVICE
 				| BGFX_STATE_PT_MASK
 				;
 
-			_stencil &= kStencilNoRefMask;
+			_stencil &= kStencilNoRefAndRwMask;
 
 			VertexLayout layout;
 			if (0 < _numStreams)
@@ -3989,6 +3988,7 @@ VK_IMPORT_DEVICE
 				VK_DYNAMIC_STATE_SCISSOR,
 				VK_DYNAMIC_STATE_BLEND_CONSTANTS,
 				VK_DYNAMIC_STATE_STENCIL_REFERENCE,
+				VK_DYNAMIC_STATE_STENCIL_WRITE_MASK,
 				VK_DYNAMIC_STATE_FRAGMENT_SHADING_RATE_KHR, // optional
 			};
 
@@ -9954,7 +9954,7 @@ VK_DESTROY
 						vkCmdBindPipeline(m_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
 					}
 
-					const bool hasStencil = 0 != draw.m_stencil;
+					const bool hasStencil = stencilEnabled(draw.m_stencil);
 
 					if (hasStencil
 					&&  currentState.m_stencil != draw.m_stencil)
@@ -9964,6 +9964,7 @@ VK_DESTROY
 						const uint32_t fstencil = unpackStencil(0, draw.m_stencil);
 						const uint32_t ref = (fstencil&BGFX_STENCIL_FUNC_REF_MASK)>>BGFX_STENCIL_FUNC_REF_SHIFT;
 						vkCmdSetStencilReference(m_commandBuffer, VK_STENCIL_FRONT_AND_BACK, ref);
+						vkCmdSetStencilWriteMask(m_commandBuffer, VK_STENCIL_FRONT_AND_BACK, unpackStencilWriteMask(draw.m_stencil) );
 					}
 
 					const bool hasFactor = 0

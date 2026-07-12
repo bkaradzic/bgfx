@@ -4670,6 +4670,7 @@ namespace bgfx { namespace gl
 				{
 					flags |= GL_STENCIL_BUFFER_BIT;
 					GL_CHECK(glClearStencil(_clear.m_stencil) );
+					GL_CHECK(glStencilMask(0xff) );
 				}
 
 				if (0 != flags)
@@ -4708,6 +4709,7 @@ namespace bgfx { namespace gl
 				if (BGFX_CLEAR_STENCIL & _clear.m_flags)
 				{
 					GL_CHECK(glEnable(GL_STENCIL_TEST) );
+					GL_CHECK(glStencilMask(0xff) );
 					GL_CHECK(glStencilFuncSeparate(GL_FRONT_AND_BACK, GL_ALWAYS, _clear.m_stencil,  0xff) );
 					GL_CHECK(glStencilOpSeparate(GL_FRONT_AND_BACK, GL_REPLACE, GL_REPLACE, GL_REPLACE) );
 				}
@@ -8078,32 +8080,31 @@ namespace bgfx { namespace gl
 
 				if (0 != changedStencil)
 				{
-					if (0 != newStencil)
+					if (stencilEnabled(newStencil) )
 					{
 						GL_CHECK(glEnable(GL_STENCIL_TEST) );
 
-						uint32_t bstencil = unpackStencil(1, newStencil);
-						uint8_t frontAndBack = bstencil != BGFX_STENCIL_NONE && bstencil != unpackStencil(0, newStencil);
+						const uint32_t frmaskChanged = unpackStencil(0, changedStencil) & BGFX_STENCIL_FUNC_RMASK_MASK;
+						const GLint    readMask      = (unpackStencil(0, newStencil)&BGFX_STENCIL_FUNC_RMASK_MASK)>>BGFX_STENCIL_FUNC_RMASK_SHIFT;
 
-// 						uint32_t bchanged = unpackStencil(1, changedStencil);
-// 						if (BGFX_STENCIL_FUNC_RMASK_MASK & bchanged)
-// 						{
-// 							uint32_t wmask = (bstencil&BGFX_STENCIL_FUNC_RMASK_MASK)>>BGFX_STENCIL_FUNC_RMASK_SHIFT;
-// 							GL_CHECK(glStencilMask(wmask) );
-// 						}
+						uint8_t frontAndBack = stencilFrontAndBack(newStencil);
+
+						if (0 != (changedStencil & (uint64_t(BGFX_STENCIL_FUNC_RMASK_MASK)<<32) ) )
+						{
+							GL_CHECK(glStencilMask(unpackStencilWriteMask(newStencil) ) );
+						}
 
 						for (uint8_t ii = 0, num = frontAndBack+1; ii < num; ++ii)
 						{
-							uint32_t stencil = unpackStencil(ii, newStencil);
-							uint32_t changed = unpackStencil(ii, changedStencil);
-							GLenum face = s_stencilFace[frontAndBack+ii];
+							uint32_t stencil =  unpackStencil(ii, newStencil);
+							uint32_t changed = (unpackStencil(ii, changedStencil) & ~BGFX_STENCIL_FUNC_RMASK_MASK) | frmaskChanged;
+							GLenum      face = s_stencilFace[frontAndBack+ii];
 
 							if ( (BGFX_STENCIL_TEST_MASK|BGFX_STENCIL_FUNC_REF_MASK|BGFX_STENCIL_FUNC_RMASK_MASK) & changed)
 							{
-								GLint ref = (stencil&BGFX_STENCIL_FUNC_REF_MASK)>>BGFX_STENCIL_FUNC_REF_SHIFT;
-								GLint mask = (stencil&BGFX_STENCIL_FUNC_RMASK_MASK)>>BGFX_STENCIL_FUNC_RMASK_SHIFT;
-								uint32_t func = (stencil&BGFX_STENCIL_TEST_MASK)>>BGFX_STENCIL_TEST_SHIFT;
-								GL_CHECK(glStencilFuncSeparate(face, s_cmpFunc[func], ref, mask) );
+								GLint    ref  = (stencil&BGFX_STENCIL_FUNC_REF_MASK)>>BGFX_STENCIL_FUNC_REF_SHIFT;
+								uint32_t func = (stencil&BGFX_STENCIL_TEST_MASK    )>>BGFX_STENCIL_TEST_SHIFT;
+								GL_CHECK(glStencilFuncSeparate(face, s_cmpFunc[func], ref, readMask) );
 							}
 
 							if ( (BGFX_STENCIL_OP_FAIL_S_MASK|BGFX_STENCIL_OP_FAIL_Z_MASK|BGFX_STENCIL_OP_PASS_Z_MASK) & changed)

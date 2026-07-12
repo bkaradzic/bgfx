@@ -2580,7 +2580,7 @@ namespace bgfx { namespace d3d12
 			const VertexLayout* layouts[1] = { &m_vertexLayouts[_blitter.m_vb->layoutHandle.idx] };
 			ID3D12PipelineState* pso = getPipelineState(state
 				, 0
-				, packStencil(BGFX_STENCIL_DEFAULT, BGFX_STENCIL_DEFAULT)
+				, packStencil(BGFX_STENCIL_NONE, BGFX_STENCIL_NONE)
 				, 1
 				, layouts
 				, _blitter.m_program
@@ -3243,6 +3243,7 @@ namespace bgfx { namespace d3d12
 		void setDepthStencilState(D3D12_DEPTH_STENCIL_DESC& _desc, uint64_t _state, uint64_t _stencil = 0)
 		{
 			const uint32_t fstencil = unpackStencil(0, _stencil);
+			const uint8_t writeMask = unpackStencilWriteMask(_stencil);
 
 			bx::memSet(&_desc, 0, sizeof(_desc) );
 			uint32_t func = (_state&BGFX_STATE_DEPTH_TEST_MASK)>>BGFX_STATE_DEPTH_TEST_SHIFT;
@@ -3253,13 +3254,12 @@ namespace bgfx { namespace d3d12
 				;
 			_desc.DepthFunc = s_cmpFunc[func];
 
-			uint32_t bstencil = unpackStencil(1, _stencil);
-			uint32_t frontAndBack = bstencil != BGFX_STENCIL_NONE && bstencil != fstencil;
-			bstencil = frontAndBack ? bstencil : fstencil;
+			uint32_t frontAndBack = stencilFrontAndBack(_stencil);
+			uint32_t bstencil = frontAndBack ? unpackStencil(1, _stencil) : fstencil;
 
-			_desc.StencilEnable    = 0 != _stencil;
+			_desc.StencilEnable    = stencilEnabled(_stencil);
 			_desc.StencilReadMask  = (fstencil & BGFX_STENCIL_FUNC_RMASK_MASK) >> BGFX_STENCIL_FUNC_RMASK_SHIFT;
-			_desc.StencilWriteMask = 0xff;
+			_desc.StencilWriteMask = writeMask;
 
 			_desc.FrontFace.StencilFailOp      = s_stencilOp[(fstencil & BGFX_STENCIL_OP_FAIL_S_MASK) >> BGFX_STENCIL_OP_FAIL_S_SHIFT];
 			_desc.FrontFace.StencilDepthFailOp = s_stencilOp[(fstencil & BGFX_STENCIL_OP_FAIL_Z_MASK) >> BGFX_STENCIL_OP_FAIL_Z_SHIFT];
@@ -3456,7 +3456,10 @@ namespace bgfx { namespace d3d12
 				| BGFX_STATE_PT_MASK
 				;
 
-			_stencil &= kStencilNoRefMask;
+			_stencil = stencilEnabled(_stencil)
+				? (_stencil & kStencilNoRefMask)
+				: 0
+				;
 
 			const uint32_t rgba = !!(BGFX_STATE_BLEND_INDEPENDENT & _state) ? _rgba : 0;
 
