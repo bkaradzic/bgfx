@@ -70,7 +70,7 @@ namespace bgfx
 				s_renderDoc->SetCaptureKeys(captureKeys, BX_COUNTOF(captureKeys) );
 
 				s_renderDoc->SetCaptureOptionU32(eRENDERDOC_Option_AllowVSync,    1);
-				s_renderDoc->SetCaptureOptionU32(eRENDERDOC_Option_APIValidation, 1);
+				s_renderDoc->SetCaptureOptionU32(eRENDERDOC_Option_APIValidation, 0);
 
 				s_renderDoc->MaskOverlayBits(eRENDERDOC_Overlay_None, eRENDERDOC_Overlay_None);
 

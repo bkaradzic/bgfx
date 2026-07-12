@@ -925,7 +925,18 @@ namespace bgfx { namespace d3d12
 									// Setting SetEnableSynchronizedCommandQueueValidation below to false avoids the bug
 									// It was fixed in (probably) the first windows 11 sdk, 22000
 									// However, the fix causes any dx12 context with validation to break if this is set to false, so we can't do that anymore
-									if (windowsVersionIs(Condition::GreaterEqual, 0x0A00, 22000) )
+									const bool graphicsDebugger = false
+										|| NULL != m_renderDocDll
+										|| NULL != m_winPixEvent
+										;
+
+									if (graphicsDebugger)
+									{
+										// RenderDoc/PIX already hook and wrap the D3D12 device. GPU-based validation conflicts
+										// with that wrapping and can intermittently deadlock CreateGraphicsPipelineState during
+										// heavy PSO creation.
+									}
+									else if (windowsVersionIs(Condition::GreaterEqual, 0x0A00, 22000) )
 									{
 										debug1->SetEnableGPUBasedValidation(true);
 									}
