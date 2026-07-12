@@ -2198,6 +2198,19 @@ VK_IMPORT_DEVICE
 						}
 					}
 				}
+				else
+				{
+					static const TextureFormat::Enum headlessBackbufferFormats[] =
+					{
+						TextureFormat::BGRA8,
+						TextureFormat::RGBA8,
+					};
+
+					for (uint32_t ii = 0; ii < BX_COUNTOF(headlessBackbufferFormats); ++ii)
+					{
+						g_caps.formats[headlessBackbufferFormats[ii] ] |= BGFX_CAPS_FORMAT_TEXTURE_BACKBUFFER;
+					}
+				}
 			}
 
 			errorState = ErrorState::SwapChainCreated;
