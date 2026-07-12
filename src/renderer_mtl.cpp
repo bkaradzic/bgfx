@@ -2351,7 +2351,10 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			uint32_t fstencil = unpackStencil(0, _stencil);
 			uint32_t ref      = (fstencil&BGFX_STENCIL_FUNC_REF_MASK)>>BGFX_STENCIL_FUNC_REF_SHIFT;
 
-			_stencil &= kStencilNoRefMask;
+			_stencil = stencilEnabled(_stencil)
+				? (_stencil & kStencilNoRefMask)
+				: 0
+				;
 
 			bx::HashMurmur3 murmur;
 			murmur.begin();
@@ -2368,17 +2371,16 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 				desc->setDepthWriteEnabled(!!(BGFX_STATE_WRITE_Z & _state) );
 				desc->setDepthCompareFunction( (MTL::CompareFunction)s_cmpFunc[func]);
 
-				uint32_t bstencil = unpackStencil(1, _stencil);
-				uint32_t frontAndBack = bstencil != BGFX_STENCIL_NONE && bstencil != fstencil;
-				bstencil = frontAndBack ? bstencil : fstencil;
+				uint32_t frontAndBack = stencilFrontAndBack(_stencil);
+				uint32_t bstencil = frontAndBack ? unpackStencil(1, _stencil) : fstencil;
 
-				if (0 != _stencil)
+				if (stencilEnabled(_stencil) )
 				{
 					MTL::StencilDescriptor* frontFaceDesc = m_frontFaceStencilDescriptor;
 					MTL::StencilDescriptor* backfaceDesc  = m_backFaceStencilDescriptor;
 
 					uint32_t readMask  = (fstencil&BGFX_STENCIL_FUNC_RMASK_MASK)>>BGFX_STENCIL_FUNC_RMASK_SHIFT;
-					uint32_t writeMask = 0xff;
+					uint32_t writeMask = unpackStencilWriteMask(_stencil);
 
 					frontFaceDesc->setStencilFailureOperation(   (MTL::StencilOperation)s_stencilOp[(fstencil&BGFX_STENCIL_OP_FAIL_S_MASK)>>BGFX_STENCIL_OP_FAIL_S_SHIFT]);
 					frontFaceDesc->setDepthFailureOperation(     (MTL::StencilOperation)s_stencilOp[(fstencil&BGFX_STENCIL_OP_FAIL_Z_MASK)>>BGFX_STENCIL_OP_FAIL_Z_SHIFT]);
@@ -5552,7 +5554,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 					currentBind.clear();
 
 					currentProgram = BGFX_INVALID_HANDLE;
-					setDepthStencilState(newFlags, packStencil(BGFX_STENCIL_DEFAULT, BGFX_STENCIL_DEFAULT) );
+					setDepthStencilState(newFlags, packStencil(BGFX_STENCIL_NONE, BGFX_STENCIL_NONE) );
 
 					const uint64_t pt = newFlags&BGFX_STATE_PT_MASK;
 					primIndex = uint8_t(pt>>BGFX_STATE_PT_SHIFT);
@@ -5606,7 +5608,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 					 ) & changedFlags
 				|| 0 != changedStencil)
 				{
-					setDepthStencilState(newFlags,newStencil);
+					setDepthStencilState(newFlags, newStencil);
 				}
 
 				if ( (0

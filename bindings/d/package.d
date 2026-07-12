@@ -9,7 +9,7 @@ import bindbc.common.types: c_int64, c_uint64, va_list;
 import bindbc.bgfx.config;
 static import bgfx.impl;
 
-enum uint apiVersion = 147;
+enum uint apiVersion = 148;
 
 alias ViewID = ushort;
 
@@ -171,9 +171,8 @@ StencilFuncRMask_ toStencilFuncRMask(uint v) nothrow @nogc pure @safe{ return (v
 
 alias Stencil_ = uint;
 enum Stencil: Stencil_{
-	none     = 0x0000_0000,
-	mask     = 0xFFFF_FFFF,
-	default_ = 0x0000_0000,
+	none  = 0x0000_FF00, ///No stencil test.
+	mask  = 0xFFFF_FFFF, ///Stencil front or back mask.
 }
 
 alias StencilTest_ = uint;

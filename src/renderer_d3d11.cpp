@@ -2982,9 +2982,14 @@ namespace bgfx { namespace d3d11
 			uint32_t func = (_state&BGFX_STATE_DEPTH_TEST_MASK)>>BGFX_STATE_DEPTH_TEST_SHIFT;
 			_state &= 0 == func ? 0 : BGFX_D3D11_DEPTH_STENCIL_MASK;
 
-			uint32_t fstencil = unpackStencil(0, _stencil);
-			uint32_t ref = (fstencil&BGFX_STENCIL_FUNC_REF_MASK)>>BGFX_STENCIL_FUNC_REF_SHIFT;
-			_stencil &= kStencilNoRefMask;
+			const uint32_t ref = (unpackStencil(0, _stencil)&BGFX_STENCIL_FUNC_REF_MASK)>>BGFX_STENCIL_FUNC_REF_SHIFT;
+			_stencil = stencilEnabled(_stencil)
+				? (_stencil & kStencilNoRefMask)
+				: 0
+				;
+
+			const uint32_t fstencil  = unpackStencil(0, _stencil);
+			const uint8_t  writeMask = unpackStencilWriteMask(_stencil);
 
 			bx::HashMurmur2A murmur;
 			murmur.begin();
@@ -3001,13 +3006,12 @@ namespace bgfx { namespace d3d11
 				desc.DepthWriteMask = !!(BGFX_STATE_WRITE_Z & _state) ? D3D11_DEPTH_WRITE_MASK_ALL : D3D11_DEPTH_WRITE_MASK_ZERO;
 				desc.DepthFunc      = s_cmpFunc[func];
 
-				uint32_t bstencil     = unpackStencil(1, _stencil);
-				uint32_t frontAndBack = bstencil != BGFX_STENCIL_NONE && bstencil != fstencil;
-				bstencil = frontAndBack ? bstencil : fstencil;
+				uint32_t frontAndBack = stencilFrontAndBack(_stencil);
+				uint32_t bstencil     = frontAndBack ? unpackStencil(1, _stencil) : fstencil;
 
 				desc.StencilEnable    = 0 != _stencil;
 				desc.StencilReadMask  = (fstencil&BGFX_STENCIL_FUNC_RMASK_MASK)>>BGFX_STENCIL_FUNC_RMASK_SHIFT;
-				desc.StencilWriteMask = 0xff;
+				desc.StencilWriteMask = writeMask;
 				desc.FrontFace.StencilFailOp      = s_stencilOp[(fstencil&BGFX_STENCIL_OP_FAIL_S_MASK)>>BGFX_STENCIL_OP_FAIL_S_SHIFT];
 				desc.FrontFace.StencilDepthFailOp = s_stencilOp[(fstencil&BGFX_STENCIL_OP_FAIL_Z_MASK)>>BGFX_STENCIL_OP_FAIL_Z_SHIFT];
 				desc.FrontFace.StencilPassOp      = s_stencilOp[(fstencil&BGFX_STENCIL_OP_PASS_Z_MASK)>>BGFX_STENCIL_OP_PASS_Z_SHIFT];
@@ -6123,7 +6127,7 @@ namespace bgfx { namespace d3d11
 					currentBind.clear();
 
 					setBlendState(newFlags, draw.m_rgba);
-					setDepthStencilState(newFlags, packStencil(BGFX_STENCIL_DEFAULT, BGFX_STENCIL_DEFAULT) );
+					setDepthStencilState(newFlags, packStencil(BGFX_STENCIL_NONE, BGFX_STENCIL_NONE) );
 
 					const uint64_t pt = newFlags&BGFX_STATE_PT_MASK;
 					primIndex = uint8_t(pt>>BGFX_STATE_PT_SHIFT);
