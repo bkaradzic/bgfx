@@ -1305,6 +1305,10 @@ WGPU_IMPORT
 						BX_TRACE("\t    VendorId: %x", adapterInfo.vendorID);
 						BX_TRACE("\t    DeviceId: %x", adapterInfo.deviceID);
 
+						m_webgpuInfo.set(toStringView(adapterInfo.architecture) );
+						m_webgpuInfo.append(" / ");
+						m_webgpuInfo.append(s_backendType[bx::min<uint32_t>(adapterInfo.backendType, BX_COUNTOF(s_backendType)-1)]);
+
 						BX_TRACE("\tBackend type (%x): %s"
 							, adapterInfo.backendType
 							, s_backendType[bx::min<uint32_t>(adapterInfo.backendType, BX_COUNTOF(s_backendType)-1)]
@@ -3355,7 +3359,8 @@ WGPU_IMPORT
 		OcclusionQueryWGPU       m_occlusionQuery;
 		ChunkedScratchBufferWGPU m_uniformScratchBuffer;
 
-		WGPULimits m_limits;
+		bx::FixedString256 m_webgpuInfo;
+		WGPULimits         m_limits;
 
 		uint32_t         m_maxFrameLatency;
 		CommandQueueWGPU m_cmd;
@@ -6689,6 +6694,8 @@ m_resolution.formatColor = TextureFormat::BGRA8;
 					, BGFX_API_VERSION
 					, BGFX_REV_NUMBER
 					);
+				const bx::StringView str = m_webgpuInfo;
+				tvm.printf(0, pos++, 0x8f, " WebGPU vendor info: %S ", &str);
 
 				pos = 10;
 				tvm.printf(10, pos++, 0x8b, "       Frame: % 7.3f, % 7.3f \x1f, % 7.3f \x1e [ms] / % 6.2f FPS "
