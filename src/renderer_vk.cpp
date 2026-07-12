@@ -6358,9 +6358,10 @@ VK_DESTROY
 
 	uint32_t ReadbackVK::pitch(uint8_t _mip) const
 	{
-		uint32_t mipWidth = bx::max(1, m_width >> _mip);
-		uint8_t bpp = bimg::getBitsPerPixel(bimg::TextureFormat::Enum(m_format) );
-		return mipWidth * bpp / 8;
+		const uint32_t mipWidth = bx::max(1, m_width >> _mip);
+		const bimg::ImageBlockInfo& blockInfo = bimg::getBlockInfo(bimg::TextureFormat::Enum(m_format) );
+		const uint32_t numBlocksX = (mipWidth + blockInfo.blockWidth - 1) / blockInfo.blockWidth;
+		return numBlocksX * blockInfo.blockSize;
 	}
 
 	void ReadbackVK::copyImageToBuffer(VkCommandBuffer _commandBuffer, VkBuffer _buffer, VkImageLayout _layout, VkImageAspectFlags _aspect, uint16_t _layer, uint8_t _mip) const
@@ -6369,6 +6370,10 @@ VK_DESTROY
 
 		uint32_t mipWidth  = bx::max(1, m_width  >> _mip);
 		uint32_t mipHeight = bx::max(1, m_height >> _mip);
+
+		const bimg::ImageBlockInfo& blockInfo = bimg::getBlockInfo(bimg::TextureFormat::Enum(m_format) );
+		const uint32_t numBlocksX = (mipWidth  + blockInfo.blockWidth  - 1) / blockInfo.blockWidth;
+		const uint32_t numBlocksY = (mipHeight + blockInfo.blockHeight - 1) / blockInfo.blockHeight;
 
 		setImageMemoryBarrier(
 			  _commandBuffer
@@ -6384,8 +6389,8 @@ VK_DESTROY
 
 		VkBufferImageCopy bic;
 		bic.bufferOffset = 0;
-		bic.bufferRowLength   = mipWidth;
-		bic.bufferImageHeight = mipHeight;
+		bic.bufferRowLength   = numBlocksX * blockInfo.blockWidth;
+		bic.bufferImageHeight = numBlocksY * blockInfo.blockHeight;
 		bic.imageSubresource.aspectMask     = _aspect;
 		bic.imageSubresource.mipLevel       = _mip;
 		bic.imageSubresource.baseArrayLayer = _layer;
@@ -6434,11 +6439,14 @@ VK_DESTROY
 		const uint32_t mipHeight = bx::max(1, m_height >> _mip);
 		const uint32_t rowPitch = pitch(_mip);
 
+		const bimg::ImageBlockInfo& blockInfo = bimg::getBlockInfo(bimg::TextureFormat::Enum(m_format) );
+		const uint32_t numRows = (mipHeight + blockInfo.blockHeight - 1) / blockInfo.blockHeight;
+
 		const uint8_t* src;
 		VK_CHECK(vkMapMemory(s_renderVK->m_device, _memory, 0, VK_WHOLE_SIZE, 0, (void**)&src) );
 		src += _offset;
 
-		bx::gather(_data, src, rowPitch, rowPitch, mipHeight);
+		bx::gather(_data, src, rowPitch, rowPitch, numRows);
 
 		vkUnmapMemory(s_renderVK->m_device, _memory);
 	}
@@ -6810,15 +6818,17 @@ VK_DESTROY
 						}
 						else if (compressed)
 						{
-							const uint32_t pitch = bx::strideAlign( (mip.m_width / blockInfo.blockWidth) * mip.m_blockSize, alignment);
-							const uint32_t slice = bx::strideAlign( (mip.m_height / blockInfo.blockHeight) * pitch, alignment);
+							const uint32_t numBlocksX = (mip.m_width  + blockInfo.blockWidth  - 1) / blockInfo.blockWidth;
+							const uint32_t numBlocksY = (mip.m_height + blockInfo.blockHeight - 1) / blockInfo.blockHeight;
+							const uint32_t pitch = bx::strideAlign(numBlocksX * mip.m_blockSize, alignment);
+							const uint32_t slice = bx::strideAlign(numBlocksY * pitch, alignment);
 							const uint32_t size  = slice * mip.m_depth;
 
 							uint8_t* temp = (uint8_t*)bx::alloc(g_allocator, size);
 							bimg::imageCopy(
 								  temp
-								, mip.m_height / blockInfo.blockHeight
-								, (mip.m_width / blockInfo.blockWidth) * mip.m_blockSize
+								, numBlocksY
+								, numBlocksX * mip.m_blockSize
 								, mip.m_depth
 								, mip.m_data
 								, pitch
@@ -7032,8 +7042,14 @@ VK_DESTROY
 			numRows    = numBlocksY;
 		}
 
-		const uint32_t srcPitch = UINT16_MAX == _pitch ? rectPitch : _pitch;
-		const uint32_t size = convert || UINT16_MAX == _pitch
+		const bool repackPitch = true
+			&& !convert
+			&& UINT16_MAX != _pitch
+			&& _pitch != rectPitch
+			;
+
+		const uint32_t srcPitch = (UINT16_MAX == _pitch || repackPitch) ? rectPitch : _pitch;
+		const uint32_t size = convert || UINT16_MAX == _pitch || repackPitch
 			? slicePitch * _depth
 			: numRows * srcPitch * _depth
 			;
@@ -7042,7 +7058,8 @@ VK_DESTROY
 		// formats, must be a multiple of the block width.
 		uint32_t bufferRowLength = 0;
 		if (!convert
-		&&  UINT16_MAX != _pitch)
+		&&  UINT16_MAX != _pitch
+		&&  !repackPitch)
 		{
 			bufferRowLength = compressed
 				? (srcPitch / blockInfo.blockSize) * blockInfo.blockWidth
@@ -7072,6 +7089,12 @@ VK_DESTROY
 
 			region.imageExtent.width  = bx::clamp<uint32_t>(region.imageExtent.width,  0u, bx::max(1u, m_width  >> _mip) - _rect.m_x);
 			region.imageExtent.height = bx::clamp<uint32_t>(region.imageExtent.height, 0u, bx::max(1u, m_height >> _mip) - _rect.m_y);
+		}
+		else if (repackPitch)
+		{
+			temp = (uint8_t*)bx::alloc(g_allocator, slicePitch * _depth);
+			bimg::imageCopy(temp, numRows, _pitch, _depth, data, rectPitch);
+			data = temp;
 		}
 
 		StagingBufferVK stagingBuffer = s_renderVK->allocFromScratchStagingBuffer(size, align, data);

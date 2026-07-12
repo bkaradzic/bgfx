@@ -1923,13 +1923,16 @@ namespace bgfx { namespace d3d11
 			uint8_t* src       = (uint8_t*)mapped.pData;
 			uint32_t srcPitch  = mapped.RowPitch;
 
-			const uint8_t bpp = bimg::getBitsPerPixel(bimg::TextureFormat::Enum(texture.m_textureFormat) );
+			const bimg::ImageBlockInfo& blockInfo = bimg::getBlockInfo(bimg::TextureFormat::Enum(texture.m_textureFormat) );
+			const uint32_t blockWidth  = bx::max<uint32_t>(1, blockInfo.blockWidth);
+			const uint32_t blockHeight = bx::max<uint32_t>(1, blockInfo.blockHeight);
 			uint8_t* dst      = (uint8_t*)_data;
-			uint32_t dstPitch = srcWidth*bpp/8;
+			uint32_t dstPitch = ( (srcWidth + blockWidth - 1)/blockWidth)*blockInfo.blockSize;
+			uint32_t numRows  = (srcHeight + blockHeight - 1)/blockHeight;
 
 			uint32_t pitch = bx::min(srcPitch, dstPitch);
 
-			bx::memCopy(dst, dstPitch, src, srcPitch, pitch, srcHeight);
+			bx::memCopy(dst, dstPitch, src, srcPitch, pitch, numRows);
 
 			m_deviceCtx->Unmap(texture.m_ptr, subresource);
 		}
@@ -4451,8 +4454,8 @@ namespace bgfx { namespace d3d11
 						}
 						else if (compressed)
 						{
-							srd[kk].SysMemPitch      = (mip.m_width /blockInfo.blockWidth )*mip.m_blockSize;
-							srd[kk].SysMemSlicePitch = (mip.m_height/blockInfo.blockHeight)*srd[kk].SysMemPitch;
+							const uint32_t numBlocksX = (mip.m_width + blockInfo.blockWidth - 1) / blockInfo.blockWidth;
+							srd[kk].SysMemPitch = numBlocksX * mip.m_blockSize;
 						}
 						else
 						{
@@ -4478,7 +4481,7 @@ namespace bgfx { namespace d3d11
 							}
 						}
 
-						srd[kk].SysMemSlicePitch = mip.m_height*srd[kk].SysMemPitch;
+						srd[kk].SysMemSlicePitch = ( (mip.m_height + blockInfo.blockHeight - 1) / blockInfo.blockHeight) * srd[kk].SysMemPitch;
 						++kk;
 					}
 				}
@@ -4885,7 +4888,13 @@ namespace bgfx { namespace d3d11
 		uint32_t rectPitch  = _rect.m_width*bpp/8;
 		if (bimg::isCompressed(bimg::TextureFormat::Enum(m_textureFormat) ) )
 		{
-			rectPitch = (_rect.m_width / blockInfo.blockWidth)*blockInfo.blockSize;
+			const uint32_t blockW   = blockInfo.blockWidth;
+			const uint32_t blockH   = blockInfo.blockHeight;
+			const uint32_t alignedW = bx::max<uint32_t>(blockW, bx::alignUp(_rect.m_width,  blockW) );
+			const uint32_t alignedH = bx::max<uint32_t>(blockH, bx::alignUp(_rect.m_height, blockH) );
+			box.right  = box.left + alignedW;
+			box.bottom = box.top  + alignedH;
+			rectPitch  = (alignedW / blockW) * blockInfo.blockSize;
 		}
 
 		const uint32_t srcPitch   = UINT16_MAX == _pitch ? rectPitch : _pitch;
