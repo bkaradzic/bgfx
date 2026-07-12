@@ -539,6 +539,13 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 	{
 		setWindowSize(kDefaultWindowHandle, s_width, s_height);
 
+		bx::FilePath fp(_argv[0]);
+		char title[bx::kMaxFilePath];
+		const bx::StringView exeName(fp.getBaseName() );
+
+		bx::snprintf(title, BX_COUNTOF(title), "%S - %s", &exeName, _app->getName() );
+		setWindowTitle(kDefaultWindowHandle, title);
+
 		_app->init(_argc, _argv, s_width, s_height);
 		bgfx::frame();
 
