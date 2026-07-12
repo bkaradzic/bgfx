@@ -2268,16 +2268,19 @@ namespace bgfx { namespace d3d12
 			finish();
 			m_commandList = m_cmd.alloc();
 
-			const uint8_t bpp = bimg::getBitsPerPixel(bimg::TextureFormat::Enum(texture.m_textureFormat) );
+			const bimg::ImageBlockInfo& blockInfo = bimg::getBlockInfo(bimg::TextureFormat::Enum(texture.m_textureFormat) );
+			const uint32_t blockWidth  = bx::max<uint32_t>(1, blockInfo.blockWidth);
+			const uint32_t blockHeight = bx::max<uint32_t>(1, blockInfo.blockHeight);
 			uint8_t* dst      = (uint8_t*)_data;
-			uint32_t dstPitch = srcWidth*bpp/8;
+			uint32_t dstPitch = ( (srcWidth + blockWidth - 1)/blockWidth)*blockInfo.blockSize;
+			uint32_t numBlockRows = (srcHeight + blockHeight - 1)/blockHeight;
 
 			uint32_t pitch = bx::min(srcPitch, dstPitch);
 
 			uint8_t* src;
 			readback->Map(0, NULL, (void**)&src);
 
-			bx::memCopy(dst, dstPitch, src, srcPitch, pitch, srcHeight);
+			bx::memCopy(dst, dstPitch, src, srcPitch, pitch, numBlockRows);
 
 			D3D12_RANGE writeRange = { 0, 0 };
 			readback->Unmap(0, &writeRange);
@@ -5938,14 +5941,16 @@ namespace bgfx { namespace d3d12
 						}
 						else if (compressed)
 						{
-							const uint32_t pitch = bx::strideAlign( (mip.m_width /blockInfo.blockWidth )*mip.m_blockSize, D3D12_TEXTURE_DATA_PITCH_ALIGNMENT);
-							const uint32_t slice = bx::strideAlign( (mip.m_height/blockInfo.blockHeight)*pitch,           D3D12_TEXTURE_DATA_PLACEMENT_ALIGNMENT);
+							const uint32_t numBlocksX = (mip.m_width  + blockInfo.blockWidth  - 1) / blockInfo.blockWidth;
+							const uint32_t numBlocksY = (mip.m_height + blockInfo.blockHeight - 1) / blockInfo.blockHeight;
+							const uint32_t pitch = bx::strideAlign(numBlocksX*mip.m_blockSize, D3D12_TEXTURE_DATA_PITCH_ALIGNMENT);
+							const uint32_t slice = bx::strideAlign(numBlocksY*pitch,           D3D12_TEXTURE_DATA_PLACEMENT_ALIGNMENT);
 							const uint32_t size  = slice*mip.m_depth;
 
 							uint8_t* temp = (uint8_t*)bx::alloc(g_allocator, size);
 							bimg::imageCopy(temp
-									,  mip.m_height/blockInfo.blockHeight
-									, (mip.m_width /blockInfo.blockWidth )*mip.m_blockSize
+									, numBlocksY
+									, numBlocksX*mip.m_blockSize
 									, mip.m_depth
 									, mip.m_data
 									, pitch
@@ -6380,10 +6385,16 @@ namespace bgfx { namespace d3d12
 
 		const uint32_t bpp    = bimg::getBitsPerPixel(bimg::TextureFormat::Enum(m_textureFormat) );
 		uint32_t rectPitch    = _rect.m_width*bpp/8;
+		uint32_t boxWidth     = _rect.m_width;
+		uint32_t boxHeight    = _rect.m_height;
 		if (bimg::isCompressed(bimg::TextureFormat::Enum(m_textureFormat) ) )
 		{
 			const bimg::ImageBlockInfo& blockInfo = bimg::getBlockInfo(bimg::TextureFormat::Enum(m_textureFormat) );
-			rectPitch = (_rect.m_width / blockInfo.blockWidth) * blockInfo.blockSize;
+			const uint32_t blockW = blockInfo.blockWidth;
+			const uint32_t blockH = blockInfo.blockHeight;
+			boxWidth  = bx::max<uint32_t>(blockW, bx::alignUp(_rect.m_width,  blockW) );
+			boxHeight = bx::max<uint32_t>(blockH, bx::alignUp(_rect.m_height, blockH) );
+			rectPitch = (boxWidth / blockW) * blockInfo.blockSize;
 		}
 
 		const uint32_t srcPitch   = UINT16_MAX == _pitch ? rectPitch : _pitch;
@@ -6394,8 +6405,8 @@ namespace bgfx { namespace d3d12
 		D3D12_BOX box;
 		box.left   = 0;
 		box.top    = 0;
-		box.right  = box.left + _rect.m_width;
-		box.bottom = box.top  + _rect.m_height;
+		box.right  = box.left + boxWidth;
+		box.bottom = box.top  + boxHeight;
 
 		box.front = 0;
 		box.back  = _depth;
@@ -6432,8 +6443,8 @@ namespace bgfx { namespace d3d12
 
 		D3D12_RESOURCE_DESC desc = getResourceDesc(m_ptr);
 
-		desc.Width  = _rect.m_width;
-		desc.Height = _rect.m_height;
+		desc.Width  = boxWidth;
+		desc.Height = boxHeight;
 
 		if (TextureD3D12::Texture3D == m_type)
 		{

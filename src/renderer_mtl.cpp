@@ -1374,9 +1374,17 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			const uint32_t srcHeight = bx::max(1, texture.m_ptr->height() >> _mip);
 			const uint8_t  bpp       = bimg::getBitsPerPixel(bimg::TextureFormat::Enum(texture.m_textureFormat) );
 
+			const bimg::ImageBlockInfo& blockInfo = bimg::getBlockInfo(bimg::TextureFormat::Enum(texture.m_textureFormat) );
+			const uint32_t numBlocksX = (srcWidth + blockInfo.blockWidth - 1) / blockInfo.blockWidth;
+			const uint32_t bytesPerRow = bimg::isCompressed(bimg::TextureFormat::Enum(texture.m_textureFormat) )
+				? numBlocksX * blockInfo.blockSize
+				: srcWidth * bpp / 8
+				;
+			BX_UNUSED(bpp);
+
 			MTL::Region region(0, 0, 0, srcWidth, srcHeight, 1);
 
-			texture.m_ptr->getBytes(_data, srcWidth*bpp/8, 0, region, _mip, _layer);
+			texture.m_ptr->getBytes(_data, bytesPerRow, 0, region, _mip, _layer);
 		}
 
 		void resizeTexture(TextureHandle _handle, uint16_t _width, uint16_t _height, uint8_t _numMips, uint16_t _numLayers) override
@@ -3818,9 +3826,11 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 							}
 							else
 							{
-								bytesPerRow   = (mip.m_width / blockInfo.blockWidth)*mip.m_blockSize;
+								const uint32_t numBlocksX = (mip.m_width  + blockInfo.blockWidth  - 1) / blockInfo.blockWidth;
+								const uint32_t numBlocksY = (mip.m_height + blockInfo.blockHeight - 1) / blockInfo.blockHeight;
+								bytesPerRow   = numBlocksX * mip.m_blockSize;
 								bytesPerImage = desc->textureType() == MTL::TextureType3D
-									? (mip.m_height/blockInfo.blockHeight)*bytesPerRow
+									? numBlocksY * bytesPerRow
 									: 0
 									;
 							}
@@ -3918,7 +3928,9 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			else
 			{
 				const bimg::ImageBlockInfo& blockInfo = bimg::getBlockInfo(bimg::TextureFormat::Enum(m_textureFormat) );
-				rectpitch = (_rect.m_width / blockInfo.blockWidth)*blockInfo.blockSize;
+				const uint32_t blockW   = blockInfo.blockWidth;
+				const uint32_t alignedW = bx::max<uint32_t>(blockW, bx::alignUp(_rect.m_width, blockW) );
+				rectpitch = (alignedW / blockW)*blockInfo.blockSize;
 			}
 		}
 		const uint32_t srcpitch  = UINT16_MAX == _pitch ? rectpitch : _pitch;
