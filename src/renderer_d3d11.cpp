@@ -3391,9 +3391,20 @@ namespace bgfx { namespace d3d11
 					break;
 
 				case TextureD3D11::TextureCube:
-					desc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURECUBE;
-					desc.TextureCube.MostDetailedMip = _firstMip;
-					desc.TextureCube.MipLevels       = numMips;
+					if (1 < numLayers)
+					{
+						desc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURECUBEARRAY;
+						desc.TextureCubeArray.MostDetailedMip  = _firstMip;
+						desc.TextureCubeArray.MipLevels        = numMips;
+						desc.TextureCubeArray.First2DArrayFace = _firstLayer * 6;
+						desc.TextureCubeArray.NumCubes         = numLayers;
+					}
+					else
+					{
+						desc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURECUBE;
+						desc.TextureCube.MostDetailedMip = _firstMip;
+						desc.TextureCube.MipLevels       = numMips;
+					}
 					break;
 
 				case TextureD3D11::Texture3D:
@@ -6361,9 +6372,19 @@ namespace bgfx { namespace d3d11
 											? m_indexBuffers[bind.m_idx]
 											: m_vertexBuffers[bind.m_idx]
 											;
-										m_textureStage.m_srv[stage] = buffer.m_srv;
-										m_textureStage.m_sampler[stage] = NULL;
-										m_textureStage.m_uav[stage]     = NULL;
+										if (Access::Read != bind.m_access
+										&&  NULL != buffer.m_uav)
+										{
+											m_textureStage.m_srv[stage]     = NULL;
+											m_textureStage.m_sampler[stage] = NULL;
+											m_textureStage.m_uav[stage]     = buffer.m_uav;
+										}
+										else
+										{
+											m_textureStage.m_srv[stage] = buffer.m_srv;
+											m_textureStage.m_sampler[stage] = NULL;
+											m_textureStage.m_uav[stage]     = NULL;
+										}
 									}
 									break;
 								}
