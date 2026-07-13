@@ -4296,33 +4296,47 @@ namespace bgfx { namespace d3d12
 		}
 	}
 
-	void ScratchBufferD3D12::allocUav(D3D12_GPU_DESCRIPTOR_HANDLE& _gpuHandle, TextureD3D12& _texture, uint8_t _mip)
+	void ScratchBufferD3D12::allocUav(D3D12_GPU_DESCRIPTOR_HANDLE& _gpuHandle, TextureD3D12& _texture, uint8_t _mip, uint16_t _firstLayer, uint16_t _numLayers)
 	{
 		ID3D12Device* device = s_renderD3D12->m_device;
 
 		D3D12_UNORDERED_ACCESS_VIEW_DESC tmpUavd;
 		D3D12_UNORDERED_ACCESS_VIEW_DESC* uavd = &_texture.m_uavd;
 
-		if (0 != _mip)
+		const bool arrayed    = UINT16_MAX != _numLayers;
+		const bool forceArray = arrayed && D3D12_UAV_DIMENSION_TEXTURE2D == uavd->ViewDimension;
+
+		if (0 != _mip || forceArray)
 		{
 			bx::memCopy(&tmpUavd, uavd, sizeof(tmpUavd) );
 			uavd = &tmpUavd;
 
-			switch (_texture.m_uavd.ViewDimension)
+			if (forceArray)
 			{
-			default:
-			case D3D12_UAV_DIMENSION_TEXTURE2D:
-				uavd->Texture2D.MipSlice   = _mip;
-				uavd->Texture2D.PlaneSlice = 0;
-				break;
-			case D3D12_UAV_DIMENSION_TEXTURE2DARRAY:
-				uavd->Texture2DArray.MipSlice   = _mip;
-				uavd->Texture2DArray.PlaneSlice = 0;
-				break;
+				uavd->ViewDimension                  = D3D12_UAV_DIMENSION_TEXTURE2DARRAY;
+				uavd->Texture2DArray.MipSlice        = _mip;
+				uavd->Texture2DArray.FirstArraySlice = _firstLayer;
+				uavd->Texture2DArray.ArraySize       = bx::max<uint32_t>(_numLayers, 1);
+				uavd->Texture2DArray.PlaneSlice      = 0;
+			}
+			else
+			{
+				switch (uavd->ViewDimension)
+				{
+				default:
+				case D3D12_UAV_DIMENSION_TEXTURE2D:
+					uavd->Texture2D.MipSlice   = _mip;
+					uavd->Texture2D.PlaneSlice = 0;
+					break;
+				case D3D12_UAV_DIMENSION_TEXTURE2DARRAY:
+					uavd->Texture2DArray.MipSlice   = _mip;
+					uavd->Texture2DArray.PlaneSlice = 0;
+					break;
 
-			case D3D12_UAV_DIMENSION_TEXTURE3D:
-				uavd->Texture3D.MipSlice = _mip;
-				break;
+				case D3D12_UAV_DIMENSION_TEXTURE3D:
+					uavd->Texture3D.MipSlice = _mip;
+					break;
+				}
 			}
 		}
 
@@ -7782,7 +7796,7 @@ namespace bgfx { namespace d3d12
 												if (Access::Read != bind.m_access)
 												{
 													texture.setState(m_commandList, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
-													scratchBuffer.allocUav(srvHandle[stage], texture, bind.m_firstMip);
+													scratchBuffer.allocUav(srvHandle[stage], texture, bind.m_firstMip, bind.m_firstLayer, bind.m_numLayers);
 												}
 												else
 												{
@@ -8101,7 +8115,7 @@ namespace bgfx { namespace d3d12
 												if (Access::Read != bind.m_access)
 												{
 													texture.setState(m_commandList, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
-													scratchBuffer.allocUav(srvHandle[stage], texture, bind.m_firstMip);
+													scratchBuffer.allocUav(srvHandle[stage], texture, bind.m_firstMip, bind.m_firstLayer, bind.m_numLayers);
 												}
 												else
 												{

@@ -3225,6 +3225,21 @@ BGFX_C_API void bgfx_encoder_set_compute_indirect_buffer(bgfx_encoder_t* _this, 
 BGFX_C_API void bgfx_encoder_set_image(bgfx_encoder_t* _this, uint8_t _stage, bgfx_texture_handle_t _handle, uint8_t _mip, bgfx_access_t _access, bgfx_texture_format_t _format);
 
 /**
+ * Set compute image stage for draw primitive, selecting a sub-range of the
+ * texture's array layers and mip levels.
+ *
+ * @param[in] _stage Compute stage.
+ * @param[in] _handle Texture handle.
+ * @param[in] _firstLayer First array layer.
+ * @param[in] _numLayers Number of array layers.
+ * @param[in] _mip Mip level.
+ * @param[in] _access Image access. See `Access::Enum`.
+ * @param[in] _format Texture format. See: `TextureFormat::Enum`.
+ *
+ */
+BGFX_C_API void bgfx_encoder_set_image_view(bgfx_encoder_t* _this, uint8_t _stage, bgfx_texture_handle_t _handle, uint16_t _firstLayer, uint16_t _numLayers, uint8_t _mip, bgfx_access_t _access, bgfx_texture_format_t _format);
+
+/**
  * Dispatch compute.
  *
  * @param[in] _id View id.
@@ -3878,6 +3893,21 @@ BGFX_C_API void bgfx_set_compute_indirect_buffer(uint8_t _stage, bgfx_indirect_b
 BGFX_C_API void bgfx_set_image(uint8_t _stage, bgfx_texture_handle_t _handle, uint8_t _mip, bgfx_access_t _access, bgfx_texture_format_t _format);
 
 /**
+ * Set compute image stage for draw primitive, selecting a sub-range of the
+ * texture's array layers and mip levels.
+ *
+ * @param[in] _stage Compute stage.
+ * @param[in] _handle Texture handle.
+ * @param[in] _firstLayer First array layer.
+ * @param[in] _numLayers Number of array layers.
+ * @param[in] _mip Mip level.
+ * @param[in] _access Image access. See `Access::Enum`.
+ * @param[in] _format Texture format. See: `TextureFormat::Enum`.
+ *
+ */
+BGFX_C_API void bgfx_set_image_view(uint8_t _stage, bgfx_texture_handle_t _handle, uint16_t _firstLayer, uint16_t _numLayers, uint8_t _mip, bgfx_access_t _access, bgfx_texture_format_t _format);
+
+/**
  * Dispatch compute.
  *
  * @param[in] _id View id.
@@ -4096,6 +4126,7 @@ typedef enum bgfx_function_id
     BGFX_FUNCTION_ID_ENCODER_SET_COMPUTE_DYNAMIC_VERTEX_BUFFER,
     BGFX_FUNCTION_ID_ENCODER_SET_COMPUTE_INDIRECT_BUFFER,
     BGFX_FUNCTION_ID_ENCODER_SET_IMAGE,
+    BGFX_FUNCTION_ID_ENCODER_SET_IMAGE_VIEW,
     BGFX_FUNCTION_ID_ENCODER_DISPATCH,
     BGFX_FUNCTION_ID_ENCODER_DISPATCH_INDIRECT,
     BGFX_FUNCTION_ID_ENCODER_DISCARD,
@@ -4143,6 +4174,7 @@ typedef enum bgfx_function_id
     BGFX_FUNCTION_ID_SET_COMPUTE_DYNAMIC_VERTEX_BUFFER,
     BGFX_FUNCTION_ID_SET_COMPUTE_INDIRECT_BUFFER,
     BGFX_FUNCTION_ID_SET_IMAGE,
+    BGFX_FUNCTION_ID_SET_IMAGE_VIEW,
     BGFX_FUNCTION_ID_DISPATCH,
     BGFX_FUNCTION_ID_DISPATCH_INDIRECT,
     BGFX_FUNCTION_ID_DISCARD,
@@ -4308,6 +4340,7 @@ struct bgfx_interface_vtbl
     void (*encoder_set_compute_dynamic_vertex_buffer)(bgfx_encoder_t* _this, uint8_t _stage, bgfx_dynamic_vertex_buffer_handle_t _handle, bgfx_access_t _access);
     void (*encoder_set_compute_indirect_buffer)(bgfx_encoder_t* _this, uint8_t _stage, bgfx_indirect_buffer_handle_t _handle, bgfx_access_t _access);
     void (*encoder_set_image)(bgfx_encoder_t* _this, uint8_t _stage, bgfx_texture_handle_t _handle, uint8_t _mip, bgfx_access_t _access, bgfx_texture_format_t _format);
+    void (*encoder_set_image_view)(bgfx_encoder_t* _this, uint8_t _stage, bgfx_texture_handle_t _handle, uint16_t _firstLayer, uint16_t _numLayers, uint8_t _mip, bgfx_access_t _access, bgfx_texture_format_t _format);
     void (*encoder_dispatch)(bgfx_encoder_t* _this, bgfx_view_id_t _id, bgfx_program_handle_t _program, uint32_t _numX, uint32_t _numY, uint32_t _numZ, uint8_t _flags);
     void (*encoder_dispatch_indirect)(bgfx_encoder_t* _this, bgfx_view_id_t _id, bgfx_program_handle_t _program, bgfx_indirect_buffer_handle_t _indirectHandle, uint32_t _start, uint32_t _num, uint8_t _flags);
     void (*encoder_discard)(bgfx_encoder_t* _this, uint8_t _flags);
@@ -4355,6 +4388,7 @@ struct bgfx_interface_vtbl
     void (*set_compute_dynamic_vertex_buffer)(uint8_t _stage, bgfx_dynamic_vertex_buffer_handle_t _handle, bgfx_access_t _access);
     void (*set_compute_indirect_buffer)(uint8_t _stage, bgfx_indirect_buffer_handle_t _handle, bgfx_access_t _access);
     void (*set_image)(uint8_t _stage, bgfx_texture_handle_t _handle, uint8_t _mip, bgfx_access_t _access, bgfx_texture_format_t _format);
+    void (*set_image_view)(uint8_t _stage, bgfx_texture_handle_t _handle, uint16_t _firstLayer, uint16_t _numLayers, uint8_t _mip, bgfx_access_t _access, bgfx_texture_format_t _format);
     void (*dispatch)(bgfx_view_id_t _id, bgfx_program_handle_t _program, uint32_t _numX, uint32_t _numY, uint32_t _numZ, uint8_t _flags);
     void (*dispatch_indirect)(bgfx_view_id_t _id, bgfx_program_handle_t _program, bgfx_indirect_buffer_handle_t _indirectHandle, uint32_t _start, uint32_t _num, uint8_t _flags);
     void (*discard)(uint8_t _flags);

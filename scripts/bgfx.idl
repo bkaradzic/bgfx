@@ -1,7 +1,7 @@
 -- vim: syntax=lua
 -- bgfx interface
 
-version(148)
+version(149)
 
 typedef "bool"
 typedef "char"
@@ -2890,6 +2890,19 @@ func.Encoder.setImage { section = "Images" }
 	.format "TextureFormat::Enum"  --- Texture format. See: `TextureFormat::Enum`.
 	 { default = "TextureFormat::Count" }
 
+--- Set compute image stage for draw primitive, selecting a sub-range of the
+--- texture's array layers and mip levels.
+func.Encoder.setImage { cname = "set_image_view", section = "Images" }
+	"void"
+	.stage      "uint8_t"              --- Compute stage.
+	.handle     "TextureHandle"        --- Texture handle.
+	.firstLayer "uint16_t"             --- First array layer.
+	.numLayers  "uint16_t"             --- Number of array layers.
+	.mip        "uint8_t"              --- Mip level.
+	.access     "Access::Enum"         --- Image access. See `Access::Enum`.
+	.format     "TextureFormat::Enum"  --- Texture format. See: `TextureFormat::Enum`.
+	 { default = "TextureFormat::Count" }
+
 --- Dispatch compute.
 func.Encoder.dispatch { section = "Dispatch" }
 	"void"
@@ -3507,6 +3520,19 @@ func.setImage { section = "Images" }
 	.mip    "uint8_t"              --- Mip level.
 	.access "Access::Enum"         --- Image access. See `Access::Enum`.
 	.format "TextureFormat::Enum"  --- Texture format. See: `TextureFormat::Enum`.
+	 { default = "TextureFormat::Count" }
+
+--- Set compute image stage for draw primitive, selecting a sub-range of the
+--- texture's array layers and mip levels.
+func.setImage { cname = "set_image_view", section = "Images" }
+	"void"
+	.stage      "uint8_t"              --- Compute stage.
+	.handle     "TextureHandle"        --- Texture handle.
+	.firstLayer "uint16_t"             --- First array layer.
+	.numLayers  "uint16_t"             --- Number of array layers.
+	.mip        "uint8_t"              --- Mip level.
+	.access     "Access::Enum"         --- Image access. See `Access::Enum`.
+	.format     "TextureFormat::Enum"  --- Texture format. See: `TextureFormat::Enum`.
 	 { default = "TextureFormat::Count" }
 
 --- Dispatch compute.

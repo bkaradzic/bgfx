@@ -2188,6 +2188,18 @@ pub const Init = extern struct {
         pub inline fn setImage(self: ?*Encoder, _stage: u8, _handle: TextureHandle, _mip: u8, _access: Access, _format: TextureFormat) void {
             return bgfx_encoder_set_image(self, _stage, _handle, _mip, _access, _format);
         }
+        /// Set compute image stage for draw primitive, selecting a sub-range of the
+        /// texture's array layers and mip levels.
+        /// <param name="_stage">Compute stage.</param>
+        /// <param name="_handle">Texture handle.</param>
+        /// <param name="_firstLayer">First array layer.</param>
+        /// <param name="_numLayers">Number of array layers.</param>
+        /// <param name="_mip">Mip level.</param>
+        /// <param name="_access">Image access. See `Access::Enum`.</param>
+        /// <param name="_format">Texture format. See: `TextureFormat::Enum`.</param>
+        pub inline fn setImageView(self: ?*Encoder, _stage: u8, _handle: TextureHandle, _firstLayer: u16, _numLayers: u16, _mip: u8, _access: Access, _format: TextureFormat) void {
+            return bgfx_encoder_set_image_view(self, _stage, _handle, _firstLayer, _numLayers, _mip, _access, _format);
+        }
         /// Dispatch compute.
         /// <param name="_id">View id.</param>
         /// <param name="_program">Compute program.</param>
@@ -3781,6 +3793,17 @@ extern fn bgfx_encoder_set_compute_indirect_buffer(self: ?*Encoder, _stage: u8, 
 /// <param name="_format">Texture format. See: `TextureFormat::Enum`.</param>
 extern fn bgfx_encoder_set_image(self: ?*Encoder, _stage: u8, _handle: TextureHandle, _mip: u8, _access: Access, _format: TextureFormat) void;
 
+/// Set compute image stage for draw primitive, selecting a sub-range of the
+/// texture's array layers and mip levels.
+/// <param name="_stage">Compute stage.</param>
+/// <param name="_handle">Texture handle.</param>
+/// <param name="_firstLayer">First array layer.</param>
+/// <param name="_numLayers">Number of array layers.</param>
+/// <param name="_mip">Mip level.</param>
+/// <param name="_access">Image access. See `Access::Enum`.</param>
+/// <param name="_format">Texture format. See: `TextureFormat::Enum`.</param>
+extern fn bgfx_encoder_set_image_view(self: ?*Encoder, _stage: u8, _handle: TextureHandle, _firstLayer: u16, _numLayers: u16, _mip: u8, _access: Access, _format: TextureFormat) void;
+
 /// Dispatch compute.
 /// <param name="_id">View id.</param>
 /// <param name="_program">Compute program.</param>
@@ -4336,6 +4359,20 @@ pub inline fn setImage(_stage: u8, _handle: TextureHandle, _mip: u8, _access: Ac
     return bgfx_set_image(_stage, _handle, _mip, _access, _format);
 }
 extern fn bgfx_set_image(_stage: u8, _handle: TextureHandle, _mip: u8, _access: Access, _format: TextureFormat) void;
+
+/// Set compute image stage for draw primitive, selecting a sub-range of the
+/// texture's array layers and mip levels.
+/// <param name="_stage">Compute stage.</param>
+/// <param name="_handle">Texture handle.</param>
+/// <param name="_firstLayer">First array layer.</param>
+/// <param name="_numLayers">Number of array layers.</param>
+/// <param name="_mip">Mip level.</param>
+/// <param name="_access">Image access. See `Access::Enum`.</param>
+/// <param name="_format">Texture format. See: `TextureFormat::Enum`.</param>
+pub inline fn setImageView(_stage: u8, _handle: TextureHandle, _firstLayer: u16, _numLayers: u16, _mip: u8, _access: Access, _format: TextureFormat) void {
+    return bgfx_set_image_view(_stage, _handle, _firstLayer, _numLayers, _mip, _access, _format);
+}
+extern fn bgfx_set_image_view(_stage: u8, _handle: TextureHandle, _firstLayer: u16, _numLayers: u16, _mip: u8, _access: Access, _format: TextureFormat) void;
 
 /// Dispatch compute.
 /// <param name="_id">View id.</param>

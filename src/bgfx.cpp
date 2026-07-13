@@ -4515,6 +4515,11 @@ namespace bgfx
 
 	void Encoder::setImage(uint8_t _stage, TextureHandle _handle, uint8_t _mip, Access::Enum _access, TextureFormat::Enum _format)
 	{
+		setImage(_stage, _handle, 0, UINT16_MAX, _mip, _access, _format);
+	}
+
+	void Encoder::setImage(uint8_t _stage, TextureHandle _handle, uint16_t _firstLayer, uint16_t _numLayers, uint8_t _mip, Access::Enum _access, TextureFormat::Enum _format)
+	{
 		BX_ASSERT(_stage < g_caps.limits.maxComputeBindings, "Invalid stage %d (max %d).", _stage, g_caps.limits.maxComputeBindings);
 		BGFX_CHECK_HANDLE_INVALID_OK("setImage/TextureHandle", s_ctx->m_textureHandle, _handle);
 		_format = TextureFormat::Count == _format
@@ -4536,7 +4541,7 @@ namespace bgfx
 			BX_UNUSED(ref);
 		}
 
-		BGFX_ENCODER(setImage(_stage, _handle, _mip, _access, _format) );
+		BGFX_ENCODER(setImage(_stage, _handle, _firstLayer, _numLayers, _mip, _access, _format) );
 	}
 
 	void Encoder::dispatch(ViewId _id, ProgramHandle _program, uint32_t _numX, uint32_t _numY, uint32_t _numZ, uint8_t _flags)
@@ -6362,6 +6367,12 @@ namespace bgfx
 	{
 		BGFX_CHECK_ENCODER0();
 		s_ctx->m_encoder0->setImage(_stage, _handle, _mip, _access, _format);
+	}
+
+	void setImage(uint8_t _stage, TextureHandle _handle, uint16_t _firstLayer, uint16_t _numLayers, uint8_t _mip, Access::Enum _access, TextureFormat::Enum _format)
+	{
+		BGFX_CHECK_ENCODER0();
+		s_ctx->m_encoder0->setImage(_stage, _handle, _firstLayer, _numLayers, _mip, _access, _format);
 	}
 
 	void dispatch(ViewId _id, ProgramHandle _handle, uint32_t _numX, uint32_t _numY, uint32_t _numZ, uint8_t _flags)

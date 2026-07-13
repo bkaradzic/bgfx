@@ -2000,15 +2000,20 @@ namespace bgfx
 
 		void setImage(TextureHandle _handle, uint8_t _mip, Access::Enum _access, TextureFormat::Enum _format)
 		{
+			setImage(_handle, 0, UINT16_MAX, _mip, _access, _format);
+		}
+
+		void setImage(TextureHandle _handle, uint16_t _firstLayer, uint16_t _numLayers, uint8_t _mip, Access::Enum _access, TextureFormat::Enum _format)
+		{
 			m_samplerFlags = BGFX_SAMPLER_NONE;
-			m_firstLayer   = 0;
-			m_numLayers    = UINT16_MAX;
-			m_idx      = _handle.idx;
-			m_type     = uint8_t(Binding::Image);
-			m_format   = uint8_t(_format);
-			m_access   = uint8_t(_access);
-			m_firstMip = _mip;
-			m_numMips  = 1;
+			m_firstLayer = _firstLayer;
+			m_numLayers  = _numLayers;
+			m_idx        = _handle.idx;
+			m_type       = uint8_t(Binding::Image);
+			m_format     = uint8_t(_format);
+			m_access     = uint8_t(_access);
+			m_firstMip   = _mip;
+			m_numMips    = 1;
 		}
 
 		uint32_t m_samplerFlags;
@@ -3491,6 +3496,13 @@ namespace bgfx
 			m_bindDirty = true;
 			Binding& bind = m_bind.m_bind[_stage];
 			bind.setImage(_handle, _mip, _access, _format);
+		}
+
+		void setImage(uint8_t _stage, TextureHandle _handle, uint16_t _firstLayer, uint16_t _numLayers, uint8_t _mip, Access::Enum _access, TextureFormat::Enum _format)
+		{
+			m_bindDirty = true;
+			Binding& bind = m_bind.m_bind[_stage];
+			bind.setImage(_handle, _firstLayer, _numLayers, _mip, _access, _format);
 		}
 
 		void discard(uint8_t _flags)

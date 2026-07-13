@@ -992,6 +992,13 @@ BGFX_C_API void bgfx_encoder_set_image(bgfx_encoder_t* _this, uint8_t _stage, bg
 	This->setImage(_stage, handle.cpp, _mip, (bgfx::Access::Enum)_access, (bgfx::TextureFormat::Enum)_format);
 }
 
+BGFX_C_API void bgfx_encoder_set_image_view(bgfx_encoder_t* _this, uint8_t _stage, bgfx_texture_handle_t _handle, uint16_t _firstLayer, uint16_t _numLayers, uint8_t _mip, bgfx_access_t _access, bgfx_texture_format_t _format)
+{
+	bgfx::Encoder* This = (bgfx::Encoder*)_this;
+	union { bgfx_texture_handle_t c; bgfx::TextureHandle cpp; } handle = { _handle };
+	This->setImage(_stage, handle.cpp, _firstLayer, _numLayers, _mip, (bgfx::Access::Enum)_access, (bgfx::TextureFormat::Enum)_format);
+}
+
 BGFX_C_API void bgfx_encoder_dispatch(bgfx_encoder_t* _this, bgfx_view_id_t _id, bgfx_program_handle_t _program, uint32_t _numX, uint32_t _numY, uint32_t _numZ, uint8_t _flags)
 {
 	bgfx::Encoder* This = (bgfx::Encoder*)_this;
@@ -1271,6 +1278,12 @@ BGFX_C_API void bgfx_set_image(uint8_t _stage, bgfx_texture_handle_t _handle, ui
 	bgfx::setImage(_stage, handle.cpp, _mip, (bgfx::Access::Enum)_access, (bgfx::TextureFormat::Enum)_format);
 }
 
+BGFX_C_API void bgfx_set_image_view(uint8_t _stage, bgfx_texture_handle_t _handle, uint16_t _firstLayer, uint16_t _numLayers, uint8_t _mip, bgfx_access_t _access, bgfx_texture_format_t _format)
+{
+	union { bgfx_texture_handle_t c; bgfx::TextureHandle cpp; } handle = { _handle };
+	bgfx::setImage(_stage, handle.cpp, _firstLayer, _numLayers, _mip, (bgfx::Access::Enum)_access, (bgfx::TextureFormat::Enum)_format);
+}
+
 BGFX_C_API void bgfx_dispatch(bgfx_view_id_t _id, bgfx_program_handle_t _program, uint32_t _numX, uint32_t _numY, uint32_t _numZ, uint8_t _flags)
 {
 	union { bgfx_program_handle_t c; bgfx::ProgramHandle cpp; } program = { _program };
@@ -1489,6 +1502,7 @@ BGFX_C_API bgfx_interface_vtbl_t* bgfx_get_interface(uint32_t _version)
 			bgfx_encoder_set_compute_dynamic_vertex_buffer,
 			bgfx_encoder_set_compute_indirect_buffer,
 			bgfx_encoder_set_image,
+			bgfx_encoder_set_image_view,
 			bgfx_encoder_dispatch,
 			bgfx_encoder_dispatch_indirect,
 			bgfx_encoder_discard,
@@ -1536,6 +1550,7 @@ BGFX_C_API bgfx_interface_vtbl_t* bgfx_get_interface(uint32_t _version)
 			bgfx_set_compute_dynamic_vertex_buffer,
 			bgfx_set_compute_indirect_buffer,
 			bgfx_set_image,
+			bgfx_set_image_view,
 			bgfx_dispatch,
 			bgfx_dispatch_indirect,
 			bgfx_discard,

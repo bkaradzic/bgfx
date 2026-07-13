@@ -131,7 +131,7 @@ namespace bgfx { namespace d3d12
 		void  allocSrv(D3D12_GPU_DESCRIPTOR_HANDLE& _gpuHandle, struct TextureD3D12& _texture, uint16_t _firstLayer = 0, uint16_t _numLayers = UINT16_MAX, uint8_t _firstMip = 0, uint8_t _numMips = UINT8_MAX);
 		void  allocSrv(D3D12_GPU_DESCRIPTOR_HANDLE& _gpuHandle, struct BufferD3D12& _buffer);
 
-		void  allocUav(D3D12_GPU_DESCRIPTOR_HANDLE& _gpuHandle, struct TextureD3D12& _texture, uint8_t _mip = 0);
+		void  allocUav(D3D12_GPU_DESCRIPTOR_HANDLE& _gpuHandle, struct TextureD3D12& _texture, uint8_t _mip = 0, uint16_t _firstLayer = 0, uint16_t _numLayers = UINT16_MAX);
 		void  allocSrv(D3D12_GPU_DESCRIPTOR_HANDLE& _gpuHandle, ID3D12Resource* _resource, const D3D12_SHADER_RESOURCE_VIEW_DESC& _desc);
 
 		void  allocUav(D3D12_GPU_DESCRIPTOR_HANDLE& _gpuHandle, struct BufferD3D12& _buffer);

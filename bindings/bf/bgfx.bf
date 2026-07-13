@@ -4880,6 +4880,22 @@ public static class bgfx
 	public static extern void encoder_set_image(Encoder* _this, uint8 _stage, TextureHandle _handle, uint8 _mip, Access _access, TextureFormat _format);
 	
 	/// <summary>
+	/// Set compute image stage for draw primitive, selecting a sub-range of the
+	/// texture's array layers and mip levels.
+	/// </summary>
+	///
+	/// <param name="_stage">Compute stage.</param>
+	/// <param name="_handle">Texture handle.</param>
+	/// <param name="_firstLayer">First array layer.</param>
+	/// <param name="_numLayers">Number of array layers.</param>
+	/// <param name="_mip">Mip level.</param>
+	/// <param name="_access">Image access. See `Access::Enum`.</param>
+	/// <param name="_format">Texture format. See: `TextureFormat::Enum`.</param>
+	///
+	[LinkName("bgfx_encoder_set_image_view")]
+	public static extern void encoder_set_image_view(Encoder* _this, uint8 _stage, TextureHandle _handle, uint16 _firstLayer, uint16 _numLayers, uint8 _mip, Access _access, TextureFormat _format);
+	
+	/// <summary>
 	/// Dispatch compute.
 	/// </summary>
 	///
@@ -5539,6 +5555,22 @@ public static class bgfx
 	///
 	[LinkName("bgfx_set_image")]
 	public static extern void set_image(uint8 _stage, TextureHandle _handle, uint8 _mip, Access _access, TextureFormat _format);
+	
+	/// <summary>
+	/// Set compute image stage for draw primitive, selecting a sub-range of the
+	/// texture's array layers and mip levels.
+	/// </summary>
+	///
+	/// <param name="_stage">Compute stage.</param>
+	/// <param name="_handle">Texture handle.</param>
+	/// <param name="_firstLayer">First array layer.</param>
+	/// <param name="_numLayers">Number of array layers.</param>
+	/// <param name="_mip">Mip level.</param>
+	/// <param name="_access">Image access. See `Access::Enum`.</param>
+	/// <param name="_format">Texture format. See: `TextureFormat::Enum`.</param>
+	///
+	[LinkName("bgfx_set_image_view")]
+	public static extern void set_image_view(uint8 _stage, TextureHandle _handle, uint16 _firstLayer, uint16 _numLayers, uint8 _mip, Access _access, TextureFormat _format);
 	
 	/// <summary>
 	/// Dispatch compute.
