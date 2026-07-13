@@ -4830,6 +4830,22 @@ public static partial class bgfx
 	public static extern unsafe void encoder_set_image(Encoder* _this, byte _stage, TextureHandle _handle, byte _mip, Access _access, TextureFormat _format);
 	
 	/// <summary>
+	/// Set compute image stage for draw primitive, selecting a sub-range of the
+	/// texture's array layers and mip levels.
+	/// </summary>
+	///
+	/// <param name="_stage">Compute stage.</param>
+	/// <param name="_handle">Texture handle.</param>
+	/// <param name="_firstLayer">First array layer.</param>
+	/// <param name="_numLayers">Number of array layers.</param>
+	/// <param name="_mip">Mip level.</param>
+	/// <param name="_access">Image access. See `Access::Enum`.</param>
+	/// <param name="_format">Texture format. See: `TextureFormat::Enum`.</param>
+	///
+	[DllImport(DllName, EntryPoint="bgfx_encoder_set_image_view", CallingConvention = CallingConvention.Cdecl)]
+	public static extern unsafe void encoder_set_image_view(Encoder* _this, byte _stage, TextureHandle _handle, ushort _firstLayer, ushort _numLayers, byte _mip, Access _access, TextureFormat _format);
+	
+	/// <summary>
 	/// Dispatch compute.
 	/// </summary>
 	///
@@ -5489,6 +5505,22 @@ public static partial class bgfx
 	///
 	[DllImport(DllName, EntryPoint="bgfx_set_image", CallingConvention = CallingConvention.Cdecl)]
 	public static extern unsafe void set_image(byte _stage, TextureHandle _handle, byte _mip, Access _access, TextureFormat _format);
+	
+	/// <summary>
+	/// Set compute image stage for draw primitive, selecting a sub-range of the
+	/// texture's array layers and mip levels.
+	/// </summary>
+	///
+	/// <param name="_stage">Compute stage.</param>
+	/// <param name="_handle">Texture handle.</param>
+	/// <param name="_firstLayer">First array layer.</param>
+	/// <param name="_numLayers">Number of array layers.</param>
+	/// <param name="_mip">Mip level.</param>
+	/// <param name="_access">Image access. See `Access::Enum`.</param>
+	/// <param name="_format">Texture format. See: `TextureFormat::Enum`.</param>
+	///
+	[DllImport(DllName, EntryPoint="bgfx_set_image_view", CallingConvention = CallingConvention.Cdecl)]
+	public static extern unsafe void set_image_view(byte _stage, TextureHandle _handle, ushort _firstLayer, ushort _numLayers, byte _mip, Access _access, TextureFormat _format);
 	
 	/// <summary>
 	/// Dispatch compute.

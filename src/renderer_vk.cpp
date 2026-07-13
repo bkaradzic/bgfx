@@ -4284,6 +4284,12 @@ VK_IMPORT_DEVICE
 								type = VK_IMAGE_VIEW_TYPE_2D_ARRAY;
 							}
 
+							if (UINT16_MAX != bind.m_numLayers
+							&&  VK_IMAGE_VIEW_TYPE_2D == type)
+							{
+								type = VK_IMAGE_VIEW_TYPE_2D_ARRAY;
+							}
+
 							texture.setState(m_commandBuffer, texture.m_sampledLayout);
 
 							imageInfo[imageCount].imageLayout = texture.m_sampledLayout;

@@ -9,7 +9,7 @@ import bindbc.common.types: c_int64, c_uint64, va_list;
 import bindbc.bgfx.config;
 static import bgfx.impl;
 
-enum uint apiVersion = 148;
+enum uint apiVersion = 149;
 
 alias ViewID = ushort;
 
@@ -2096,6 +2096,20 @@ extern(C++, "bgfx") struct Encoder{
 			{q{void}, q{setImage}, q{ubyte stage, TextureHandle handle, ubyte mip, bgfx.impl.Access.Enum access, bgfx.impl.TextureFormat.Enum format=TextureFormat.count}, ext: `C++`},
 			
 			/**
+			Set compute image stage for draw primitive, selecting a sub-range of the
+			texture's array layers and mip levels.
+			Params:
+				stage = Compute stage.
+				handle = Texture handle.
+				firstLayer = First array layer.
+				numLayers = Number of array layers.
+				mip = Mip level.
+				access = Image access. See `Access::Enum`.
+				format = Texture format. See: `TextureFormat::Enum`.
+			*/
+			{q{void}, q{setImage}, q{ubyte stage, TextureHandle handle, ushort firstLayer, ushort numLayers, ubyte mip, bgfx.impl.Access.Enum access, bgfx.impl.TextureFormat.Enum format=TextureFormat.count}, ext: `C++`},
+			
+			/**
 			Dispatch compute.
 			Params:
 				id = View id.
@@ -4083,6 +4097,20 @@ mixin(joinFnBinds((){
 			format = Texture format. See: `TextureFormat::Enum`.
 		*/
 		{q{void}, q{setImage}, q{ubyte stage, TextureHandle handle, ubyte mip, bgfx.impl.Access.Enum access, bgfx.impl.TextureFormat.Enum format=TextureFormat.count}, ext: `C++, "bgfx"`},
+		
+		/**
+		* Set compute image stage for draw primitive, selecting a sub-range of the
+		* texture's array layers and mip levels.
+		Params:
+			stage = Compute stage.
+			handle = Texture handle.
+			firstLayer = First array layer.
+			numLayers = Number of array layers.
+			mip = Mip level.
+			access = Image access. See `Access::Enum`.
+			format = Texture format. See: `TextureFormat::Enum`.
+		*/
+		{q{void}, q{setImage}, q{ubyte stage, TextureHandle handle, ushort firstLayer, ushort numLayers, ubyte mip, bgfx.impl.Access.Enum access, bgfx.impl.TextureFormat.Enum format=TextureFormat.count}, ext: `C++, "bgfx"`},
 		
 		/**
 		* Dispatch compute.

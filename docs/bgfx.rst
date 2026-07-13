@@ -501,7 +501,8 @@ Images
 
 Bind texture images to compute stages.
 
-.. doxygenfunction:: bgfx::setImage
+.. doxygenfunction:: bgfx::setImage(uint8_t _stage, TextureHandle _handle, uint8_t _mip, Access::Enum _access, TextureFormat::Enum _format = TextureFormat::Count)
+.. doxygenfunction:: bgfx::setImage(uint8_t _stage, TextureHandle _handle, uint16_t _firstLayer, uint16_t _numLayers, uint8_t _mip, Access::Enum _access, TextureFormat::Enum _format = TextureFormat::Count)
 
 Dispatch
 ********

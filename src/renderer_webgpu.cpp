@@ -3124,7 +3124,7 @@ WGPU_IMPORT
 								.size        = 0,
 								.sampler     = NULL,
 								.textureView = _isCompute
-									? texture.getTextureView(bind.m_firstMip, bind.m_numMips, Binding::Image == bind.m_type)
+									? texture.getTextureView(bind.m_firstMip, bind.m_numMips, Binding::Image == bind.m_type, 0, UINT16_MAX, Binding::Image == bind.m_type && UINT16_MAX != bind.m_numLayers)
 									: texture.getTextureView(bind.m_firstMip, bind.m_numMips, false, bind.m_firstLayer, bind.m_numLayers)
 									,
 							};

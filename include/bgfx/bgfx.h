@@ -1724,6 +1724,29 @@ namespace bgfx
 			, TextureFormat::Enum _format = TextureFormat::Count
 			);
 
+		/// Set compute image stage for draw primitive, selecting a sub-range of the
+		/// texture's array layers and mip levels.
+		///
+		/// @param[in] _stage Compute stage.
+		/// @param[in] _handle Texture handle.
+		/// @param[in] _firstLayer First array layer.
+		/// @param[in] _numLayers Number of array layers.
+		/// @param[in] _mip Mip level.
+		/// @param[in] _access Image access. See `Access::Enum`.
+		/// @param[in] _format Texture format. See: `TextureFormat::Enum`.
+		///
+		/// @attention C99's equivalent binding is `bgfx_encoder_set_image_view`.
+		///
+		void setImage(
+			  uint8_t _stage
+			, TextureHandle _handle
+			, uint16_t _firstLayer
+			, uint16_t _numLayers
+			, uint8_t _mip
+			, Access::Enum _access
+			, TextureFormat::Enum _format = TextureFormat::Count
+			);
+
 		/// Dispatch compute.
 		///
 		/// @param[in] _id View id.
@@ -4733,6 +4756,29 @@ namespace bgfx
 	void setImage(
 		  uint8_t _stage
 		, TextureHandle _handle
+		, uint8_t _mip
+		, Access::Enum _access
+		, TextureFormat::Enum _format = TextureFormat::Count
+		);
+
+	/// Set compute image stage for draw primitive, selecting a sub-range of the
+	/// texture's array layers and mip levels.
+	///
+	/// @param[in] _stage Compute stage.
+	/// @param[in] _handle Texture handle.
+	/// @param[in] _firstLayer First array layer.
+	/// @param[in] _numLayers Number of array layers.
+	/// @param[in] _mip Mip level.
+	/// @param[in] _access Image access. See `Access::Enum`.
+	/// @param[in] _format Texture format. See: `TextureFormat::Enum`.
+	///
+	/// @attention C99's equivalent binding is `bgfx_set_image_view`.
+	///
+	void setImage(
+		  uint8_t _stage
+		, TextureHandle _handle
+		, uint16_t _firstLayer
+		, uint16_t _numLayers
 		, uint8_t _mip
 		, Access::Enum _access
 		, TextureFormat::Enum _format = TextureFormat::Count

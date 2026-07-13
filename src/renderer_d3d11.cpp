@@ -3276,13 +3276,16 @@ namespace bgfx { namespace d3d11
 			commitTextureStage();
 		}
 
-		ID3D11UnorderedAccessView* getCachedUav(TextureHandle _handle, uint8_t _mip)
+		ID3D11UnorderedAccessView* getCachedUav(TextureHandle _handle, uint8_t _mip, uint16_t _firstLayer = 0, uint16_t _numLayers = UINT16_MAX)
 		{
+			const bool arrayed = UINT16_MAX != _numLayers;
+
 			bx::HashMurmur2A murmur;
 			murmur.begin();
 			murmur.add(_handle);
 			murmur.add(_mip);
-			murmur.add(1);
+			murmur.add(_firstLayer);
+			murmur.add(arrayed ? _numLayers : 0);
 			uint32_t hash = murmur.end();
 
 			IUnknown** ptr = m_srvUavLru.find(hash);
@@ -3296,12 +3299,16 @@ namespace bgfx { namespace d3d11
 				switch (texture.m_type)
 				{
 				case TextureD3D11::Texture2D:
-					if (1 < texture.m_numLayers)
+					if (1 < texture.m_numLayers || arrayed)
 					{
+						const uint16_t numLayers = arrayed
+							? _numLayers
+							: uint16_t(texture.m_numLayers)
+							;
 						desc.ViewDimension = D3D11_UAV_DIMENSION_TEXTURE2DARRAY;
 						desc.Texture2DArray.MipSlice = _mip;
-						desc.Texture2DArray.FirstArraySlice = 0;
-						desc.Texture2DArray.ArraySize = texture.m_numLayers;
+						desc.Texture2DArray.FirstArraySlice = _firstLayer;
+						desc.Texture2DArray.ArraySize = bx::max<uint16_t>(numLayers, 1);
 					}
 					else
 					{
@@ -6012,9 +6019,10 @@ namespace bgfx { namespace d3d11
 									TextureD3D11& texture = m_textures[bind.m_idx];
 									if (Access::Read != bind.m_access)
 									{
-										uav[stage] = 0 == bind.m_firstMip
+										const bool arrayed = (UINT16_MAX != bind.m_numLayers);
+										uav[stage] = (0 == bind.m_firstMip && !arrayed)
 											? texture.m_uav
-											: s_renderD3D11->getCachedUav(texture.getHandle(), bind.m_firstMip)
+											: s_renderD3D11->getCachedUav(texture.getHandle(), bind.m_firstMip, bind.m_firstLayer, bind.m_numLayers)
 											;
 										m_textureStage.m_srv[stage]     = NULL;
 										m_textureStage.m_sampler[stage] = NULL;
@@ -6350,9 +6358,10 @@ namespace bgfx { namespace d3d11
 										TextureD3D11& texture = m_textures[bind.m_idx];
 										if (Access::Read != bind.m_access)
 										{
-											m_textureStage.m_uav[stage] = 0 == bind.m_firstMip
+											const bool arrayed = (UINT16_MAX != bind.m_numLayers);
+											m_textureStage.m_uav[stage] = (0 == bind.m_firstMip && !arrayed)
 												? texture.m_uav
-												: s_renderD3D11->getCachedUav(texture.getHandle(), bind.m_firstMip)
+												: s_renderD3D11->getCachedUav(texture.getHandle(), bind.m_firstMip, bind.m_firstLayer, bind.m_numLayers)
 												;
 										}
 										else

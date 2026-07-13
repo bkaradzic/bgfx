@@ -4105,12 +4105,29 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 		return view;
 	}
 
-	MTL::Texture* TextureMtl::getTextureMipLevel(uint8_t _mip)
+	MTL::Texture* TextureMtl::getTextureMipLevel(uint8_t _mip, bool _array)
 	{
 		_mip = bx::clamp(_mip, 0, m_numMips);
 
 		if (NULL != m_ptr)
 		{
+			if (_array
+			&&  TextureCube != m_type
+			&&  MTL::TextureType2DArray != m_ptr->textureType() )
+			{
+				if (NULL == m_ptrMipsArray[_mip])
+				{
+					m_ptrMipsArray[_mip] = m_ptr->newTextureView(
+						  m_ptr->pixelFormat()
+						, (MTL::TextureType)MTL::TextureType2DArray
+						, NS::Range::Make(_mip, 1)
+						, NS::Range::Make(0, m_ptr->arrayLength() )
+						);
+				}
+
+				return m_ptrMipsArray[_mip];
+			}
+
 			if (NULL == m_ptrMips[_mip])
 			{
 				if (TextureCube == m_type)
@@ -5445,7 +5462,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 								case Binding::Image:
 								{
 									TextureMtl& texture = m_textures[bind.m_idx];
-									m_computeCommandEncoder->setTexture(texture.getTextureMipLevel(bind.m_firstMip), stage);
+									m_computeCommandEncoder->setTexture(texture.getTextureMipLevel(bind.m_firstMip, UINT16_MAX != bind.m_numLayers), stage);
 								}
 								break;
 

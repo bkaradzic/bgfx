@@ -3440,6 +3440,17 @@ extern fn void encoder_set_compute_indirect_buffer(Encoder* _this, char _stage, 
 // _format : `Texture format. See: `TextureFormat::Enum`.`
 extern fn void encoder_set_image(Encoder* _this, char _stage, TextureHandle _handle, char _mip, Access _access, TextureFormat _format) @cname("bgfx_encoder_set_image");
 
+// Set compute image stage for draw primitive, selecting a sub-range of the
+// texture's array layers and mip levels.
+// _stage : `Compute stage.`
+// _handle : `Texture handle.`
+// _firstLayer : `First array layer.`
+// _numLayers : `Number of array layers.`
+// _mip : `Mip level.`
+// _access : `Image access. See `Access::Enum`.`
+// _format : `Texture format. See: `TextureFormat::Enum`.`
+extern fn void encoder_set_image_view(Encoder* _this, char _stage, TextureHandle _handle, ushort _firstLayer, ushort _numLayers, char _mip, Access _access, TextureFormat _format) @cname("bgfx_encoder_set_image_view");
+
 // Dispatch compute.
 // _id : `View id.`
 // _program : `Compute program.`
@@ -3866,6 +3877,17 @@ extern fn void set_compute_indirect_buffer(char _stage, IndirectBufferHandle _ha
 // _access : `Image access. See `Access::Enum`.`
 // _format : `Texture format. See: `TextureFormat::Enum`.`
 extern fn void set_image(char _stage, TextureHandle _handle, char _mip, Access _access, TextureFormat _format) @cname("bgfx_set_image");
+
+// Set compute image stage for draw primitive, selecting a sub-range of the
+// texture's array layers and mip levels.
+// _stage : `Compute stage.`
+// _handle : `Texture handle.`
+// _firstLayer : `First array layer.`
+// _numLayers : `Number of array layers.`
+// _mip : `Mip level.`
+// _access : `Image access. See `Access::Enum`.`
+// _format : `Texture format. See: `TextureFormat::Enum`.`
+extern fn void set_image_view(char _stage, TextureHandle _handle, ushort _firstLayer, ushort _numLayers, char _mip, Access _access, TextureFormat _format) @cname("bgfx_set_image_view");
 
 // Dispatch compute.
 // _id : `View id.`
