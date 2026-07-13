@@ -748,6 +748,8 @@ namespace bgfx { namespace d3d12
 			, m_featureLevel(D3D_FEATURE_LEVEL(0) )
 			, m_swapChain(NULL)
 			, m_backBufferDepthStencil(NULL)
+			, m_currentColor(NULL)
+			, m_currentDepthStencil(NULL)
 			, m_wireframe(false)
 			, m_lost(false)
 			, m_maxAnisotropy(1)
@@ -2378,6 +2380,11 @@ namespace bgfx { namespace d3d12
 				finishAll(true);
 			}
 
+			if (m_fbh.idx == _handle.idx)
+			{
+				m_fbh = BGFX_INVALID_HANDLE;
+			}
+
 			uint16_t denseIdx = frameBuffer.destroy();
 			if (UINT16_MAX != denseIdx)
 			{
@@ -3102,6 +3109,11 @@ namespace bgfx { namespace d3d12
 						;
 
 					m_commandList->OMSetRenderTargets(1, m_currentColor, true, m_currentDepthStencil);
+				}
+				else
+				{
+					m_currentColor        = NULL;
+					m_currentDepthStencil = NULL;
 				}
 			}
 			else
@@ -6774,6 +6786,7 @@ namespace bgfx { namespace d3d12
 
 		m_nwh   = NULL;
 		m_numTh = 0;
+		m_num   = 0;
 		m_needPresent = false;
 
 		m_depth.idx = bgfx::kInvalidHandle;
