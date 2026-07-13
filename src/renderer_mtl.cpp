@@ -1455,6 +1455,11 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 		void destroyFrameBuffer(FrameBufferHandle _handle) override
 		{
+			if (m_fbh.idx == _handle.idx)
+			{
+				m_fbh = BGFX_INVALID_HANDLE;
+			}
+
 			uint16_t denseIdx = m_frameBuffers[_handle.idx].destroy();
 
 			if (UINT16_MAX != denseIdx)

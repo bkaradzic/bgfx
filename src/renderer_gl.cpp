@@ -3633,6 +3633,11 @@ namespace bgfx { namespace gl
 
 		void destroyFrameBuffer(FrameBufferHandle _handle) override
 		{
+			if (m_fbh.idx == _handle.idx)
+			{
+				m_fbh = BGFX_INVALID_HANDLE;
+			}
+
 			uint16_t denseIdx = m_frameBuffers[_handle.idx].destroy();
 			if (UINT16_MAX != denseIdx)
 			{

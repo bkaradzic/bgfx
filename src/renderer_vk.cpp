@@ -489,6 +489,27 @@ VK_IMPORT_DEVICE
 		return supported;
 	}
 
+	static bool wsiSurfaceSupported()
+	{
+#if BX_PLATFORM_WINDOWS
+		return s_extension[Extension::KHR_win32_surface].m_supported;
+#elif BX_PLATFORM_ANDROID
+		return s_extension[Extension::KHR_android_surface].m_supported;
+#elif BX_PLATFORM_LINUX
+		return false
+			|| s_extension[Extension::KHR_wayland_surface].m_supported
+			|| s_extension[Extension::KHR_xlib_surface   ].m_supported
+			|| s_extension[Extension::KHR_xcb_surface    ].m_supported
+			;
+#elif BX_PLATFORM_OSX
+		return s_extension[Extension::MVK_macos_surface].m_supported;
+#elif BX_PLATFORM_NX
+		return s_extension[Extension::NN_vi_surface].m_supported;
+#else
+		return false;
+#endif // BX_PLATFORM_*
+	}
+
 	static const VkFormat s_attribType[][4][2] =
 	{
 		{ // Int8
@@ -1336,7 +1357,8 @@ VK_IMPORT
 				uint32_t numEnabledExtensions = 0;
 				const char* enabledExtension[Extension::Count + 1];
 
-				if (!headless)
+				if (!headless
+				||  wsiSurfaceSupported() )
 				{
 					enabledExtension[numEnabledExtensions++] = VK_KHR_SURFACE_EXTENSION_NAME;
 				}
@@ -1774,7 +1796,7 @@ VK_IMPORT_INSTANCE
 					| (m_deviceFeatures.fullDrawIndexUint32 ? BGFX_CAPS_INDEX32 : 0)
 					| BGFX_CAPS_INSTANCING
 					| BGFX_CAPS_OCCLUSION_QUERY
-					| (!headless ? BGFX_CAPS_SWAP_CHAIN : 0)
+					| ( (!headless || wsiSurfaceSupported() ) ? BGFX_CAPS_SWAP_CHAIN : 0)
 					| BGFX_CAPS_TEXTURE_2D_ARRAY
 					| BGFX_CAPS_TEXTURE_3D
 					| BGFX_CAPS_TEXTURE_BLIT
@@ -1991,7 +2013,8 @@ VK_IMPORT_INSTANCE
 
 				enabledExtension[numEnabledExtensions++] = VK_KHR_MAINTENANCE1_EXTENSION_NAME;
 
-				if (!headless)
+				if (!headless
+				||  wsiSurfaceSupported() )
 				{
 					enabledExtension[numEnabledExtensions++] = VK_KHR_SWAPCHAIN_EXTENSION_NAME;
 				}
@@ -2675,6 +2698,11 @@ VK_IMPORT_DEVICE
 		{
 			FrameBufferVK& frameBuffer = m_frameBuffers[_handle.idx];
 
+			if (m_fbh.idx == _handle.idx)
+			{
+				m_fbh = BGFX_INVALID_HANDLE;
+			}
+
 			uint16_t denseIdx = frameBuffer.destroy();
 			if (UINT16_MAX != denseIdx)
 			{
@@ -3154,12 +3182,6 @@ VK_IMPORT_DEVICE
 		{
 			BGFX_PROFILER_SCOPE("RendererContextVK::setFrameBuffer()", kColorFrame);
 
-			BX_ASSERT(false
-				  ||  isValid(_fbh)
-				  ||  NULL != m_backBuffer.m_nwh
-				, "Rendering to backbuffer in headless mode."
-				);
-
 			FrameBufferVK& newFrameBuffer = isValid(_fbh)
 				? m_frameBuffers[_fbh.idx]
 				: m_backBuffer
@@ -3195,6 +3217,13 @@ VK_IMPORT_DEVICE
 						texture.setState(m_commandBuffer, texture.m_sampledLayout);
 					}
 				}
+			}
+
+			if (!isValid(_fbh)
+			&&  NULL == m_backBuffer.m_nwh)
+			{
+				m_fbh = _fbh;
+				return;
 			}
 
 			if (NULL == newFrameBuffer.m_nwh)
