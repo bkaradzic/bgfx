@@ -6301,11 +6301,19 @@ m_resolution.formatColor = TextureFormat::BGRA8;
 				constexpr uint64_t kF1 = BGFX_STATE_BLEND_INV_FACTOR;
 				constexpr uint64_t kF2 = BGFX_STATE_BLEND_FACTOR<<4;
 				constexpr uint64_t kF3 = BGFX_STATE_BLEND_INV_FACTOR<<4;
+				constexpr uint64_t kF4 = BGFX_STATE_BLEND_FACTOR<<8;
+				constexpr uint64_t kF5 = BGFX_STATE_BLEND_INV_FACTOR<<8;
+				constexpr uint64_t kF6 = BGFX_STATE_BLEND_FACTOR<<12;
+				constexpr uint64_t kF7 = BGFX_STATE_BLEND_INV_FACTOR<<12;
 				bool hasFactor = 0
 					|| kF0 == (state & kF0)
 					|| kF1 == (state & kF1)
 					|| kF2 == (state & kF2)
 					|| kF3 == (state & kF3)
+					|| kF4 == (state & kF4)
+					|| kF5 == (state & kF5)
+					|| kF6 == (state & kF6)
+					|| kF7 == (state & kF7)
 					;
 
 				if (hasFactor
