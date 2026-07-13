@@ -4206,7 +4206,7 @@ VK_IMPORT_DEVICE
 			const VkResult result = vkAllocateDescriptorSets(m_device, &dsai, &descriptorSet);
 
 			if (VK_SUCCESS != result
-			&&  m_descriptorPoolIdx + 1 < kMaxDescriptorPoolChunks)
+			&&  uint32_t(m_descriptorPoolIdx + 1) < kMaxDescriptorPoolChunks)
 			{
 				++m_descriptorPoolIdx;
 
