@@ -3200,7 +3200,7 @@ namespace bgfx { namespace d3d12
 
 			if (_desc.IndependentBlendEnable)
 			{
-				for (uint32_t ii = 1, rgba = _rgba; ii < BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS; ++ii, rgba >>= 11)
+				for (uint32_t ii = 1, rgba = _rgba; ii < BX_COUNTOF(_desc.RenderTarget); ++ii, rgba >>= 11)
 				{
 					drt = &_desc.RenderTarget[ii];
 					drt->BlendEnable = 0 != (rgba & 0x7ff);
@@ -3224,7 +3224,7 @@ namespace bgfx { namespace d3d12
 			}
 			else
 			{
-				for (uint32_t ii = 1; ii < BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS; ++ii)
+				for (uint32_t ii = 1; ii < BX_COUNTOF(_desc.RenderTarget); ++ii)
 				{
 					bx::memCopy(&_desc.RenderTarget[ii], drt, sizeof(D3D12_RENDER_TARGET_BLEND_DESC) );
 				}
@@ -7565,6 +7565,10 @@ namespace bgfx { namespace d3d12
 		const uint64_t f1 = BGFX_STATE_BLEND_INV_FACTOR;
 		const uint64_t f2 = BGFX_STATE_BLEND_FACTOR<<4;
 		const uint64_t f3 = BGFX_STATE_BLEND_INV_FACTOR<<4;
+		const uint64_t f4 = BGFX_STATE_BLEND_FACTOR<<8;
+		const uint64_t f5 = BGFX_STATE_BLEND_INV_FACTOR<<8;
+		const uint64_t f6 = BGFX_STATE_BLEND_FACTOR<<12;
+		const uint64_t f7 = BGFX_STATE_BLEND_INV_FACTOR<<12;
 
 		D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle;
 		ScratchBufferD3D12& scratchBuffer = m_scratchBuffer[m_backBufferColorIdx];
@@ -8004,6 +8008,10 @@ namespace bgfx { namespace d3d12
 						|| f1 == (state & f1)
 						|| f2 == (state & f2)
 						|| f3 == (state & f3)
+						|| f4 == (state & f4)
+						|| f5 == (state & f5)
+						|| f6 == (state & f6)
+						|| f7 == (state & f7)
 						;
 
 					const VertexLayout* layouts[BGFX_CONFIG_MAX_VERTEX_STREAMS];

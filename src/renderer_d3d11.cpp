@@ -2924,7 +2924,7 @@ namespace bgfx { namespace d3d11
 
 				if (desc.IndependentBlendEnable)
 				{
-					for (uint32_t ii = 1, rgba = _rgba; ii < BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS; ++ii, rgba >>= 11)
+					for (uint32_t ii = 1, rgba = _rgba; ii < BX_COUNTOF(desc.RenderTarget); ++ii, rgba >>= 11)
 					{
 						drt = &desc.RenderTarget[ii];
 						drt->BlendEnable = 0 != (rgba & 0x7ff);
@@ -2946,7 +2946,7 @@ namespace bgfx { namespace d3d11
 				}
 				else
 				{
-					for (uint32_t ii = 1; ii < BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS; ++ii)
+					for (uint32_t ii = 1; ii < BX_COUNTOF(desc.RenderTarget); ++ii)
 					{
 						bx::memCopy(&desc.RenderTarget[ii], drt, sizeof(D3D11_RENDER_TARGET_BLEND_DESC) );
 					}
@@ -2961,11 +2961,19 @@ namespace bgfx { namespace d3d11
 			const uint64_t f1 = BGFX_STATE_BLEND_INV_FACTOR;
 			const uint64_t f2 = BGFX_STATE_BLEND_FACTOR<<4;
 			const uint64_t f3 = BGFX_STATE_BLEND_INV_FACTOR<<4;
+			const uint64_t f4 = BGFX_STATE_BLEND_FACTOR<<8;
+			const uint64_t f5 = BGFX_STATE_BLEND_INV_FACTOR<<8;
+			const uint64_t f6 = BGFX_STATE_BLEND_FACTOR<<12;
+			const uint64_t f7 = BGFX_STATE_BLEND_INV_FACTOR<<12;
 			bool hasFactor = 0
 				|| f0 == (_state & f0)
 				|| f1 == (_state & f1)
 				|| f2 == (_state & f2)
 				|| f3 == (_state & f3)
+				|| f4 == (_state & f4)
+				|| f5 == (_state & f5)
+				|| f6 == (_state & f6)
+				|| f7 == (_state & f7)
 				;
 
 			float blendFactor[4] = { 1.0f, 1.0f, 1.0f, 1.0f };

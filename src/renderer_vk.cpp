@@ -9405,6 +9405,10 @@ VK_DESTROY
 		const uint64_t f1 = BGFX_STATE_BLEND_INV_FACTOR;
 		const uint64_t f2 = BGFX_STATE_BLEND_FACTOR<<4;
 		const uint64_t f3 = BGFX_STATE_BLEND_INV_FACTOR<<4;
+		const uint64_t f4 = BGFX_STATE_BLEND_FACTOR<<8;
+		const uint64_t f5 = BGFX_STATE_BLEND_INV_FACTOR<<8;
+		const uint64_t f6 = BGFX_STATE_BLEND_FACTOR<<12;
+		const uint64_t f7 = BGFX_STATE_BLEND_INV_FACTOR<<12;
 
 		const uint32_t descriptorFrame = m_cmd.m_currentFrameInFlight;
 		for (uint32_t ii = 0; ii < m_numDescriptorPools[descriptorFrame]; ++ii)
@@ -10008,6 +10012,10 @@ VK_DESTROY
 						|| f1 == (draw.m_stateFlags & f1)
 						|| f2 == (draw.m_stateFlags & f2)
 						|| f3 == (draw.m_stateFlags & f3)
+						|| f4 == (draw.m_stateFlags & f4)
+						|| f5 == (draw.m_stateFlags & f5)
+						|| f6 == (draw.m_stateFlags & f6)
+						|| f7 == (draw.m_stateFlags & f7)
 						;
 
 					if (hasFactor
