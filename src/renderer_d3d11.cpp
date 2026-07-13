@@ -5022,7 +5022,7 @@ namespace bgfx { namespace d3d11
 		const bool needResolve = NULL != m_rt;
 		if (needResolve)
 		{
-			for (uint32_t ii = _layer; ii < _numLayers; ++ii)
+			for (uint32_t ii = _layer, end = _layer + _numLayers; ii < end; ++ii)
 			{
 				const UINT resource = _mip + (ii * m_numMips);
 				deviceCtx->ResolveSubresource(m_texture2d, resource, m_rt, resource, s_textureFormat[m_textureFormat].m_fmt);

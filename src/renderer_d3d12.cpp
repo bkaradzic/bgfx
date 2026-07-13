@@ -6526,7 +6526,7 @@ namespace bgfx { namespace d3d12
 				, D3D12_RESOURCE_STATE_RESOLVE_DEST
 			);
 
-			for (uint32_t ii = _layer; ii < _numLayers; ++ii)
+			for (uint32_t ii = _layer, end = _layer + _numLayers; ii < end; ++ii)
 			{
 				const uint32_t resource = _mip + (ii * m_numMips);
 
