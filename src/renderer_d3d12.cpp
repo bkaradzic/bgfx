@@ -2425,11 +2425,29 @@ namespace bgfx { namespace d3d12
 
 		void requestScreenShot(FrameBufferHandle _handle, const char* _filePath) override
 		{
-			BX_UNUSED(_handle);
+			FrameBufferD3D12* swapFb = NULL;
+			uint8_t           swapIdx = 0;
+			ID3D12Resource*   backBuffer = NULL;
 
-			uint32_t idx = (m_backBufferColorIdx-1) % m_scd.bufferCount;
-			m_cmd.finish(m_backBufferColorFence[idx]);
-			ID3D12Resource* backBuffer = m_backBufferColor[idx];
+			if (isValid(_handle)
+			&&  NULL != m_frameBuffers[_handle.idx].m_swapChain)
+			{
+				swapFb  = &m_frameBuffers[_handle.idx];
+				swapIdx = uint8_t(swapFb->m_swapChain->GetCurrentBackBufferIndex() );
+				DX_CHECK(swapFb->m_swapChain->GetBuffer(swapIdx, IID_ID3D12Resource, (void**)&backBuffer) );
+			}
+			else if (NULL != m_swapChain)
+			{
+				uint32_t idx = (m_backBufferColorIdx-1) % m_scd.bufferCount;
+				m_cmd.finish(m_backBufferColorFence[idx]);
+				backBuffer = m_backBufferColor[idx];
+			}
+
+			if (NULL == backBuffer)
+			{
+				BX_TRACE("Unable to capture screenshot %s.", _filePath);
+				return;
+			}
 
 			D3D12_RESOURCE_DESC desc = getResourceDesc(backBuffer);
 
@@ -2452,6 +2470,10 @@ namespace bgfx { namespace d3d12
 			if (colorFormat == TextureFormat::Enum::Count)
 			{
 				BX_TRACE("Unable to capture screenshot %s.", _filePath);
+				if (NULL != swapFb)
+				{
+					DX_RELEASE(backBuffer, 0);
+				}
 				return;
 			}
 
@@ -2482,11 +2504,15 @@ namespace bgfx { namespace d3d12
 			box.front  = 0;
 			box.back   = 1;
 
-			setResourceBarrier(m_commandList, backBuffer, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_COPY_SOURCE);
+			const D3D12_RESOURCE_STATES curState = (NULL != swapFb)
+				? swapFb->m_state
+				: D3D12_RESOURCE_STATE_PRESENT
+				;
+			setResourceBarrier(m_commandList, backBuffer, curState, D3D12_RESOURCE_STATE_COPY_SOURCE);
 			D3D12_TEXTURE_COPY_LOCATION dst = { readback,   D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT,  { layout } };
 			D3D12_TEXTURE_COPY_LOCATION src = { backBuffer, D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX, {}     };
 			m_commandList->CopyTextureRegion(&dst, 0, 0, 0, &src, &box);
-			setResourceBarrier(m_commandList, backBuffer, D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_PRESENT);
+			setResourceBarrier(m_commandList, backBuffer, D3D12_RESOURCE_STATE_COPY_SOURCE, curState);
 			finish();
 			m_commandList = m_cmd.alloc();
 
@@ -2507,6 +2533,11 @@ namespace bgfx { namespace d3d12
 			readback->Unmap(0, &writeRange);
 
 			DX_RELEASE(readback, 0);
+
+			if (NULL != swapFb)
+			{
+				DX_RELEASE(backBuffer, 0);
+			}
 		}
 
 		void updateViewName(ViewId _id, const char* _name) override
