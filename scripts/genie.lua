@@ -581,6 +581,7 @@ or _OPTIONS["with-combined-examples"] then
 		, "48-drawindirect"
 		, "49-hextile"
 		, "51-gpufont"
+		, "52-layered"
 		)
 
 

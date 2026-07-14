@@ -942,6 +942,11 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 				: 0
 				;
 
+			g_caps.supported |= (m_device->supportsFamily(MTL::GPUFamilyApple5) || m_device->supportsFamily(MTL::GPUFamilyMac2) )
+				? BGFX_CAPS_VIEWPORT_LAYER_ARRAY
+				: 0
+				;
+
 			// Reference(s):
 			// - Metal feature set tables
 			//   https://web.archive.org/web/20230330111145/https://developer.apple.com/metal/Metal-Feature-Set-Tables.pdf
@@ -2254,6 +2259,21 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			{
 				FrameBufferMtl& frameBuffer = m_frameBuffers[_fbh.idx];
 
+				uint16_t numLayers = 65535;
+				for (uint32_t ii = 0; ii < frameBuffer.m_num; ++ii)
+				{
+					numLayers = bx::min(numLayers, frameBuffer.m_colorAttachment[ii].numLayers);
+				}
+				if (isValid(frameBuffer.m_depthHandle) )
+				{
+					numLayers = bx::min(numLayers, frameBuffer.m_depthAttachment.numLayers);
+				}
+
+				if (numLayers > 1)
+				{
+					_renderPassDescriptor->setRenderTargetArrayLength(numLayers);
+				}
+
 				for (uint32_t ii = 0; ii < frameBuffer.m_num; ++ii)
 				{
 					const TextureMtl& texture = m_textures[frameBuffer.m_colorHandle[ii].idx];
@@ -2841,11 +2861,28 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 					: NULL
 					);
 
+				bool layeredTarget = false;
+				if (isValid(_fbh) )
+				{
+					const FrameBufferMtl& frameBuffer = m_frameBuffers[_fbh.idx];
+					for (uint32_t ii = 0; ii < frameBuffer.m_num; ++ii)
+					{
+						layeredTarget |= frameBuffer.m_colorAttachment[ii].numLayers > 1;
+					}
+					if (isValid(frameBuffer.m_depthHandle) )
+					{
+						layeredTarget |= frameBuffer.m_depthAttachment.numLayers > 1;
+					}
+				}
+
+				const uint64_t pt = _state & BGFX_STATE_PT_MASK;
 				pd->setInputPrimitiveTopology(
-						  BGFX_STATE_PT_POINTS == (_state & BGFX_STATE_PT_MASK)
-						? MTL::PrimitiveTopologyClassPoint
-						: MTL::PrimitiveTopologyClassUnspecified
-						);
+					  BGFX_STATE_PT_POINTS == pt ? MTL::PrimitiveTopologyClassPoint
+					: !layeredTarget            ? MTL::PrimitiveTopologyClassUnspecified
+					: BGFX_STATE_PT_LINES     == pt
+					||BGFX_STATE_PT_LINESTRIP == pt ? MTL::PrimitiveTopologyClassLine
+					:                            MTL::PrimitiveTopologyClassTriangle
+					);
 
 				MTL::VertexDescriptor* vertexDesc = m_vertexDescriptor;
 				reset(vertexDesc);
