@@ -5013,7 +5013,7 @@ namespace bgfx { namespace d3d11
 		}
 	}
 
-	void TextureD3D11::commit(uint8_t _stage, uint32_t _flags, const float _palette[][4], uint16_t _firstLayer, uint16_t _numLayers, uint8_t _firstMip, uint8_t _numMips)
+	void TextureD3D11::commit(uint32_t _stage, uint32_t _flags, const float _palette[][4], uint16_t _firstLayer, uint16_t _numLayers, uint8_t _firstMip, uint8_t _numMips)
 	{
 		TextureStage& ts = s_renderD3D11->m_textureStage;
 
@@ -6030,7 +6030,7 @@ namespace bgfx { namespace d3d11
 					BX_UNUSED(programChanged);
 					ID3D11UnorderedAccessView* uav[BGFX_MAX_COMPUTE_BINDINGS] = {};
 
-					for (uint8_t stage = 0; stage < maxComputeBindings; ++stage)
+					for (uint32_t stage = 0; stage < maxComputeBindings; ++stage)
 					{
 						const Binding& bind = renderBind.m_bind[stage];
 						if (kInvalidHandle != bind.m_idx)
@@ -6359,7 +6359,7 @@ namespace bgfx { namespace d3d11
 
 				{
 					uint32_t changes = 0;
-					for (uint8_t stage = 0; stage < maxTextureSamplers; ++stage)
+					for (uint32_t stage = 0; stage < maxTextureSamplers; ++stage)
 					{
 						const Binding& bind = renderBind.m_bind[stage];
 						Binding& current = currentBind.m_bind[stage];
