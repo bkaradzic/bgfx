@@ -98,6 +98,18 @@ namespace bgfx { namespace wgpu
 			{ WGPUVertexFormat_Float32x3, WGPUVertexFormat_Float32x3 },
 			{ WGPUVertexFormat_Float32x4, WGPUVertexFormat_Float32x4 },
 		},
+		{ // Int32 (32-bit integers can't be normalized; both slots are the SINT format)
+			{ WGPUVertexFormat_Sint32,    WGPUVertexFormat_Sint32    },
+			{ WGPUVertexFormat_Sint32x2,  WGPUVertexFormat_Sint32x2  },
+			{ WGPUVertexFormat_Sint32x3,  WGPUVertexFormat_Sint32x3  },
+			{ WGPUVertexFormat_Sint32x4,  WGPUVertexFormat_Sint32x4  },
+		},
+		{ // Uint32
+			{ WGPUVertexFormat_Uint32,    WGPUVertexFormat_Uint32    },
+			{ WGPUVertexFormat_Uint32x2,  WGPUVertexFormat_Uint32x2  },
+			{ WGPUVertexFormat_Uint32x3,  WGPUVertexFormat_Uint32x3  },
+			{ WGPUVertexFormat_Uint32x4,  WGPUVertexFormat_Uint32x4  },
+		},
 	};
 	static_assert(AttribType::Count == BX_COUNTOF(s_attribType) );
 
@@ -1370,6 +1382,8 @@ WGPU_IMPORT
 						g_caps.limits.maxComputeBindings = BGFX_CONFIG_MAX_TEXTURE_SAMPLERS;
 						g_caps.limits.maxFBAttachments   = bx::min(m_limits.maxColorAttachments, BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS);
 						g_caps.limits.maxVertexStreams   = bx::min(m_limits.maxVertexBuffers, BGFX_CONFIG_MAX_VERTEX_STREAMS);
+						g_caps.limits.maxVertexAttributes = m_limits.maxVertexAttributes;
+						g_caps.limits.maxInstanceData    = bx::min<uint32_t>(g_caps.limits.maxInstanceData, g_caps.limits.maxVertexAttributes);
 
 						g_caps.supported = 0
 							| BGFX_CAPS_ALPHA_TO_COVERAGE

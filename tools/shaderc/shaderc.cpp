@@ -339,11 +339,30 @@ namespace bgfx
 		"a_texcoord5",
 		"a_texcoord6",
 		"a_texcoord7",
+		"a_texcoord8",
+		"a_texcoord9",
+		"a_texcoord10",
+		"a_texcoord11",
+		"a_texcoord12",
+		"a_texcoord13",
+		"a_texcoord14",
+		"a_texcoord15",
 		"i_data0",
 		"i_data1",
 		"i_data2",
 		"i_data3",
 		"i_data4",
+		"i_data5",
+		"i_data6",
+		"i_data7",
+		"i_data8",
+		"i_data9",
+		"i_data10",
+		"i_data11",
+		"i_data12",
+		"i_data13",
+		"i_data14",
+		"i_data15",
 		NULL
 	};
 
@@ -1695,9 +1714,8 @@ namespace bgfx
 						  "Invalid vertex shader input attribute '%s'.\n"
 						  "\n"
 						  "Valid input attributes:\n"
-						  "  a_position, a_normal, a_tangent, a_bitangent, a_color0, a_color1, a_color2, a_color3, a_indices, a_weight,\n"
-						  "  a_texcoord0, a_texcoord1, a_texcoord2, a_texcoord3, a_texcoord4, a_texcoord5, a_texcoord6, a_texcoord7,\n"
-						  "  i_data0, i_data1, i_data2, i_data3, i_data4.\n"
+						  "  a_position, a_normal, a_tangent, a_bitangent, a_color0-3, a_indices, a_weight,\n"
+						  "  a_texcoord0-15, i_data0-15.\n"
 						  "\n"
 						, it->c_str() );
 					break;

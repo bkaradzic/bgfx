@@ -13,7 +13,7 @@
 
 namespace bgfx
 {
-	static const uint8_t s_attribTypeSizeD3D1x[AttribType::Count][4] =
+	static const uint8_t s_attribTypeSizeD3D1x[][4] =
 	{
 		{  1,  2,  4,  4 }, // Int8
 		{  1,  2,  4,  4 }, // Uint8
@@ -22,9 +22,12 @@ namespace bgfx
 		{  2,  4,  8,  8 }, // Uint16
 		{  2,  4,  8,  8 }, // Half
 		{  4,  8, 12, 16 }, // Float
+		{  4,  8, 12, 16 }, // Int32
+		{  4,  8, 12, 16 }, // Uint32
 	};
+	static_assert(BX_COUNTOF(s_attribTypeSizeD3D1x) == AttribType::Count);
 
-	static const uint8_t s_attribTypeSizeGl[AttribType::Count][4] =
+	static const uint8_t s_attribTypeSizeGl[][4] =
 	{
 		{  1,  2,  4,  4 }, // Int8
 		{  1,  2,  4,  4 }, // Uint8
@@ -33,9 +36,12 @@ namespace bgfx
 		{  2,  4,  6,  8 }, // Uint16
 		{  2,  4,  6,  8 }, // Half
 		{  4,  8, 12, 16 }, // Float
+		{  4,  8, 12, 16 }, // Int32
+		{  4,  8, 12, 16 }, // Uint32
 	};
+	static_assert(BX_COUNTOF(s_attribTypeSizeGl) == AttribType::Count);
 
-	static const uint8_t (*s_attribTypeSize[])[AttribType::Count][4] =
+	static const uint8_t (*s_attribTypeSize[])[][4] =
 	{
 		&s_attribTypeSizeD3D1x, // Noop
 		&s_attribTypeSizeD3D1x, // Agc
@@ -88,9 +94,9 @@ namespace bgfx
 	VertexLayout& VertexLayout::add(Attrib::Enum _attrib, uint8_t _num, AttribType::Enum _type, bool _normalized, bool _asInt)
 	{
 		const uint16_t encodedNorm = (_normalized&1)<<7;
-		const uint16_t encodedType = (_type&7)<<3;
+		const uint16_t encodedType = (_type&0xf)<<3; // 4 bits (up to 16 attrib types)
 		const uint16_t encodedNum  = (_num-1)&3;
-		const uint16_t encodeAsInt = (_asInt&(!!"\x1\x1\x1\x1\x1\x0\x0"[_type]) )<<8;
+		const uint16_t encodeAsInt = (_asInt&(!!"\x1\x1\x1\x1\x1\x0\x0\x1\x1"[_type]) )<<8;
 		m_attributes[_attrib] = encodedNorm|encodedType|encodedNum|encodeAsInt;
 
 		m_offset[_attrib] = m_stride;
@@ -110,7 +116,7 @@ namespace bgfx
 	{
 		uint16_t val = m_attributes[_attrib];
 		_num        = (val&3)+1;
-		_type       = AttribType::Enum( (val>>3)&7);
+		_type       = AttribType::Enum( (val>>3)&0xf);
 		_normalized = !!(val&(1<<7) );
 		_asInt      = !!(val&(1<<8) );
 	}
@@ -124,6 +130,8 @@ namespace bgfx
 		false, // Uint16
 		true,  // Half
 		true,  // Float
+		false, // Int32
+		false, // Uint32
 	};
 	static_assert(BX_COUNTOF(s_attribTypeIsFloat) == AttribType::Count);
 
@@ -134,24 +142,32 @@ namespace bgfx
 
 	static const char* s_attrName[] =
 	{
-		"P",  "Attrib::Position",
-		"N",  "Attrib::Normal",
-		"T",  "Attrib::Tangent",
-		"B",  "Attrib::Bitangent",
-		"C0", "Attrib::Color0",
-		"C1", "Attrib::Color1",
-		"C2", "Attrib::Color2",
-		"C3", "Attrib::Color3",
-		"I",  "Attrib::Indices",
-		"W",  "Attrib::Weights",
-		"T0", "Attrib::TexCoord0",
-		"T1", "Attrib::TexCoord1",
-		"T2", "Attrib::TexCoord2",
-		"T3", "Attrib::TexCoord3",
-		"T4", "Attrib::TexCoord4",
-		"T5", "Attrib::TexCoord5",
-		"T6", "Attrib::TexCoord6",
-		"T7", "Attrib::TexCoord7",
+		"P",   "Attrib::Position",
+		"N",   "Attrib::Normal",
+		"T",   "Attrib::Tangent",
+		"B",   "Attrib::Bitangent",
+		"C0",  "Attrib::Color0",
+		"C1",  "Attrib::Color1",
+		"C2",  "Attrib::Color2",
+		"C3",  "Attrib::Color3",
+		"I",   "Attrib::Indices",
+		"W",   "Attrib::Weights",
+		"T0",  "Attrib::TexCoord0",
+		"T1",  "Attrib::TexCoord1",
+		"T2",  "Attrib::TexCoord2",
+		"T3",  "Attrib::TexCoord3",
+		"T4",  "Attrib::TexCoord4",
+		"T5",  "Attrib::TexCoord5",
+		"T6",  "Attrib::TexCoord6",
+		"T7",  "Attrib::TexCoord7",
+		"T8",  "Attrib::TexCoord8",
+		"T9",  "Attrib::TexCoord9",
+		"T10", "Attrib::TexCoord10",
+		"T11", "Attrib::TexCoord11",
+		"T12", "Attrib::TexCoord12",
+		"T13", "Attrib::TexCoord13",
+		"T14", "Attrib::TexCoord14",
+		"T15", "Attrib::TexCoord15",
 	};
 	static_assert(BX_COUNTOF(s_attrName) == Attrib::Count*2);
 
@@ -176,24 +192,32 @@ namespace bgfx
 		// NOTICE:
 		// Attrib must be in order how it appears in Attrib::Enum! id is
 		// unique and should not be changed if new Attribs are added.
-		{ Attrib::Position,  0x0001 },
-		{ Attrib::Normal,    0x0002 },
-		{ Attrib::Tangent,   0x0003 },
-		{ Attrib::Bitangent, 0x0004 },
-		{ Attrib::Color0,    0x0005 },
-		{ Attrib::Color1,    0x0006 },
-		{ Attrib::Color2,    0x0018 },
-		{ Attrib::Color3,    0x0019 },
-		{ Attrib::Indices,   0x000e },
-		{ Attrib::Weight,    0x000f },
-		{ Attrib::TexCoord0, 0x0010 },
-		{ Attrib::TexCoord1, 0x0011 },
-		{ Attrib::TexCoord2, 0x0012 },
-		{ Attrib::TexCoord3, 0x0013 },
-		{ Attrib::TexCoord4, 0x0014 },
-		{ Attrib::TexCoord5, 0x0015 },
-		{ Attrib::TexCoord6, 0x0016 },
-		{ Attrib::TexCoord7, 0x0017 },
+		{ Attrib::Position,   0x0001 },
+		{ Attrib::Normal,     0x0002 },
+		{ Attrib::Tangent,    0x0003 },
+		{ Attrib::Bitangent,  0x0004 },
+		{ Attrib::Color0,     0x0005 },
+		{ Attrib::Color1,     0x0006 },
+		{ Attrib::Color2,     0x0018 },
+		{ Attrib::Color3,     0x0019 },
+		{ Attrib::Indices,    0x000e },
+		{ Attrib::Weight,     0x000f },
+		{ Attrib::TexCoord0,  0x0010 },
+		{ Attrib::TexCoord1,  0x0011 },
+		{ Attrib::TexCoord2,  0x0012 },
+		{ Attrib::TexCoord3,  0x0013 },
+		{ Attrib::TexCoord4,  0x0014 },
+		{ Attrib::TexCoord5,  0x0015 },
+		{ Attrib::TexCoord6,  0x0016 },
+		{ Attrib::TexCoord7,  0x0017 },
+		{ Attrib::TexCoord8,  0x001a },
+		{ Attrib::TexCoord9,  0x001b },
+		{ Attrib::TexCoord10, 0x001c },
+		{ Attrib::TexCoord11, 0x001d },
+		{ Attrib::TexCoord12, 0x001e },
+		{ Attrib::TexCoord13, 0x001f },
+		{ Attrib::TexCoord14, 0x0020 },
+		{ Attrib::TexCoord15, 0x0021 },
 	};
 	static_assert(BX_COUNTOF(s_attribToId) == Attrib::Count);
 
@@ -234,6 +258,8 @@ namespace bgfx
 		{ AttribType::Uint16, 0x0007 },
 		{ AttribType::Half,   0x0003 },
 		{ AttribType::Float,  0x0004 },
+		{ AttribType::Int32,  0x0008 },
+		{ AttribType::Uint32, 0x0009 },
 	};
 	static_assert(BX_COUNTOF(s_attribTypeToId) == AttribType::Count);
 

@@ -71,6 +71,14 @@ namespace bgfx { namespace mtl
 		"a_texcoord5",
 		"a_texcoord6",
 		"a_texcoord7",
+		"a_texcoord8",
+		"a_texcoord9",
+		"a_texcoord10",
+		"a_texcoord11",
+		"a_texcoord12",
+		"a_texcoord13",
+		"a_texcoord14",
+		"a_texcoord15",
 	};
 	static_assert(Attrib::Count == BX_COUNTOF(s_attribName) );
 
@@ -81,6 +89,17 @@ namespace bgfx { namespace mtl
 		"i_data2",
 		"i_data3",
 		"i_data4",
+		"i_data5",
+		"i_data6",
+		"i_data7",
+		"i_data8",
+		"i_data9",
+		"i_data10",
+		"i_data11",
+		"i_data12",
+		"i_data13",
+		"i_data14",
+		"i_data15",
 	};
 	static_assert(BGFX_CONFIG_MAX_INSTANCE_DATA_COUNT == BX_COUNTOF(s_instanceDataName) );
 
@@ -127,6 +146,18 @@ namespace bgfx { namespace mtl
 			{ MTL::VertexFormatFloat2,                MTL::VertexFormatFloat2                },
 			{ MTL::VertexFormatFloat3,                MTL::VertexFormatFloat3                },
 			{ MTL::VertexFormatFloat4,                MTL::VertexFormatFloat4                },
+		},
+		{ // Int32 (32-bit integers can't be normalized; both slots are the SINT format)
+			{ MTL::VertexFormatInt,                   MTL::VertexFormatInt                   },
+			{ MTL::VertexFormatInt2,                  MTL::VertexFormatInt2                  },
+			{ MTL::VertexFormatInt3,                  MTL::VertexFormatInt3                  },
+			{ MTL::VertexFormatInt4,                  MTL::VertexFormatInt4                  },
+		},
+		{ // Uint32
+			{ MTL::VertexFormatUInt,                  MTL::VertexFormatUInt                  },
+			{ MTL::VertexFormatUInt2,                 MTL::VertexFormatUInt2                 },
+			{ MTL::VertexFormatUInt3,                 MTL::VertexFormatUInt3                 },
+			{ MTL::VertexFormatUInt4,                 MTL::VertexFormatUInt4                 },
 		},
 	};
 	static_assert(AttribType::Count == BX_COUNTOF(s_attribType) );
@@ -961,6 +992,8 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 			g_caps.limits.maxTextureLayers = 2048;
 			g_caps.limits.maxVertexStreams = BGFX_CONFIG_MAX_VERTEX_STREAMS;
+			g_caps.limits.maxVertexAttributes = 31;
+			g_caps.limits.maxInstanceData = bx::min<uint32_t>(g_caps.limits.maxInstanceData, g_caps.limits.maxVertexAttributes);
 			// Maximum number of entries in the buffer argument table, per graphics or compute function are 31.
 			// It is decremented by 1 because 1 entry is used for uniforms.
 			g_caps.limits.maxComputeBindings = bx::min(30, BGFX_MAX_COMPUTE_BINDINGS);

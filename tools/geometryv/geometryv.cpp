@@ -48,24 +48,32 @@ static const bgfx::EmbeddedShader s_embeddedShaders[] =
 
 static const char* s_attribShortNames[] =
 {
-	"P",   // Position
-	"N",   // Normal
-	"T",   // Tangent
-	"B",   // Bitangent
-	"C0",  // Color0
-	"C1",  // Color1
-	"C2",  // Color2
-	"C3",  // Color3
-	"I",   // Indices
-	"W",   // Weight
-	"TC0", // TexCoord0
-	"TC1", // TexCoord1
-	"TC2", // TexCoord2
-	"TC3", // TexCoord3
-	"TC4", // TexCoord4
-	"TC5", // TexCoord5
-	"TC6", // TexCoord6
-	"TC7", // TexCoord7
+	"P",    // Position
+	"N",    // Normal
+	"T",    // Tangent
+	"B",    // Bitangent
+	"C0",   // Color0
+	"C1",   // Color1
+	"C2",   // Color2
+	"C3",   // Color3
+	"I",    // Indices
+	"W",    // Weight
+	"TC0",  // TexCoord0
+	"TC1",  // TexCoord1
+	"TC2",  // TexCoord2
+	"TC3",  // TexCoord3
+	"TC4",  // TexCoord4
+	"TC5",  // TexCoord5
+	"TC6",  // TexCoord6
+	"TC7",  // TexCoord7
+	"TC8",  // TexCoord8
+	"TC9",  // TexCoord9
+	"TC10", // TexCoord10
+	"TC11", // TexCoord11
+	"TC12", // TexCoord12
+	"TC13", // TexCoord13
+	"TC14", // TexCoord14
+	"TC15", // TexCoord15
 };
 static_assert(BX_COUNTOF(s_attribShortNames) == bgfx::Attrib::Count);
 

@@ -134,6 +134,14 @@ typedef enum bgfx_attrib
     BGFX_ATTRIB_TEXCOORD5,                    /** (15) a_texcoord5                    */
     BGFX_ATTRIB_TEXCOORD6,                    /** (16) a_texcoord6                    */
     BGFX_ATTRIB_TEXCOORD7,                    /** (17) a_texcoord7                    */
+    BGFX_ATTRIB_TEXCOORD8,                    /** (18) a_texcoord8                    */
+    BGFX_ATTRIB_TEXCOORD9,                    /** (19) a_texcoord9                    */
+    BGFX_ATTRIB_TEXCOORD10,                   /** (20) a_texcoord10                   */
+    BGFX_ATTRIB_TEXCOORD11,                   /** (21) a_texcoord11                   */
+    BGFX_ATTRIB_TEXCOORD12,                   /** (22) a_texcoord12                   */
+    BGFX_ATTRIB_TEXCOORD13,                   /** (23) a_texcoord13                   */
+    BGFX_ATTRIB_TEXCOORD14,                   /** (24) a_texcoord14                   */
+    BGFX_ATTRIB_TEXCOORD15,                   /** (25) a_texcoord15                   */
 
     BGFX_ATTRIB_COUNT
 
@@ -152,6 +160,8 @@ typedef enum bgfx_attrib_type
     BGFX_ATTRIB_TYPE_UINT16,                  /** ( 4) Uint16                         */
     BGFX_ATTRIB_TYPE_HALF,                    /** ( 5) Half, availability depends on: `BGFX_CAPS_VERTEX_ATTRIB_HALF`. */
     BGFX_ATTRIB_TYPE_FLOAT,                   /** ( 6) Float                          */
+    BGFX_ATTRIB_TYPE_INT32,                   /** ( 7) Int32                          */
+    BGFX_ATTRIB_TYPE_UINT32,                  /** ( 8) Uint32                         */
 
     BGFX_ATTRIB_TYPE_COUNT
 
@@ -586,6 +596,8 @@ typedef struct bgfx_caps_limits_s
     uint32_t             maxComputeBindings; /** Maximum number of compute bindings.      */
     uint32_t             maxVertexLayouts;   /** Maximum number of vertex format layouts. */
     uint32_t             maxVertexStreams;   /** Maximum number of vertex streams.        */
+    uint32_t             maxVertexAttributes; /** Maximum number of vertex attributes.     */
+    uint32_t             maxInstanceData;    /** Maximum number of instance data slots.   */
     uint32_t             maxIndexBuffers;    /** Maximum number of index buffer handles.  */
     uint32_t             maxVertexBuffers;   /** Maximum number of vertex buffer handles. */
     uint32_t             maxDynamicIndexBuffers; /** Maximum number of dynamic index buffer handles. */

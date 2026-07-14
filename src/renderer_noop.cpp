@@ -75,6 +75,7 @@ namespace bgfx { namespace noop
 			g_caps.limits.maxComputeBindings = g_caps.limits.maxTextureSamplers;
 			g_caps.limits.maxFBAttachments   = BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS;
 			g_caps.limits.maxVertexStreams   = BGFX_CONFIG_MAX_VERTEX_STREAMS;
+			g_caps.limits.maxVertexAttributes = 32;
 		}
 
 		~RendererContextNOOP()

@@ -1072,6 +1072,30 @@ enum Attrib : uint
 	// a_texcoord7
 	TEXCOORD7,
 
+	// a_texcoord8
+	TEXCOORD8,
+
+	// a_texcoord9
+	TEXCOORD9,
+
+	// a_texcoord10
+	TEXCOORD10,
+
+	// a_texcoord11
+	TEXCOORD11,
+
+	// a_texcoord12
+	TEXCOORD12,
+
+	// a_texcoord13
+	TEXCOORD13,
+
+	// a_texcoord14
+	TEXCOORD14,
+
+	// a_texcoord15
+	TEXCOORD15,
+
 	COUNT
 }
 
@@ -1097,6 +1121,12 @@ enum AttribType : uint
 
 	// Float
 	FLOAT,
+
+	// Int32
+	INT32,
+
+	// Uint32
+	UINT32,
 
 	COUNT
 }
@@ -1660,6 +1690,10 @@ struct CapsLimits
 	uint maxVertexLayouts;
 	// Maximum number of vertex streams.
 	uint maxVertexStreams;
+	// Maximum number of vertex attributes.
+	uint maxVertexAttributes;
+	// Maximum number of instance data slots.
+	uint maxInstanceData;
 	// Maximum number of index buffer handles.
 	uint maxIndexBuffers;
 	// Maximum number of vertex buffer handles.
@@ -2185,9 +2219,9 @@ struct VertexLayout
 	// Stride.
 	ushort stride;
 	// Attribute offsets.
-	ushort[18] offset;
+	ushort[26] offset;
 	// Used attributes.
-	ushort[18] attributes;
+	ushort[26] attributes;
 }
 
 // Encoders are used for submitting draw calls from multiple threads. Only one encoder

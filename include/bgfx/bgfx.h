@@ -101,24 +101,32 @@ namespace bgfx
 		/// Corresponds to vertex shader attribute.
 		enum Enum
 		{
-			Position,  //!< a_position
-			Normal,    //!< a_normal
-			Tangent,   //!< a_tangent
-			Bitangent, //!< a_bitangent
-			Color0,    //!< a_color0
-			Color1,    //!< a_color1
-			Color2,    //!< a_color2
-			Color3,    //!< a_color3
-			Indices,   //!< a_indices
-			Weight,    //!< a_weight
-			TexCoord0, //!< a_texcoord0
-			TexCoord1, //!< a_texcoord1
-			TexCoord2, //!< a_texcoord2
-			TexCoord3, //!< a_texcoord3
-			TexCoord4, //!< a_texcoord4
-			TexCoord5, //!< a_texcoord5
-			TexCoord6, //!< a_texcoord6
-			TexCoord7, //!< a_texcoord7
+			Position,   //!< a_position
+			Normal,     //!< a_normal
+			Tangent,    //!< a_tangent
+			Bitangent,  //!< a_bitangent
+			Color0,     //!< a_color0
+			Color1,     //!< a_color1
+			Color2,     //!< a_color2
+			Color3,     //!< a_color3
+			Indices,    //!< a_indices
+			Weight,     //!< a_weight
+			TexCoord0,  //!< a_texcoord0
+			TexCoord1,  //!< a_texcoord1
+			TexCoord2,  //!< a_texcoord2
+			TexCoord3,  //!< a_texcoord3
+			TexCoord4,  //!< a_texcoord4
+			TexCoord5,  //!< a_texcoord5
+			TexCoord6,  //!< a_texcoord6
+			TexCoord7,  //!< a_texcoord7
+			TexCoord8,  //!< a_texcoord8
+			TexCoord9,  //!< a_texcoord9
+			TexCoord10, //!< a_texcoord10
+			TexCoord11, //!< a_texcoord11
+			TexCoord12, //!< a_texcoord12
+			TexCoord13, //!< a_texcoord13
+			TexCoord14, //!< a_texcoord14
+			TexCoord15, //!< a_texcoord15
 
 			Count
 		};
@@ -140,6 +148,8 @@ namespace bgfx
 			Uint16, //!< Uint16
 			Half,   //!< Half, availability depends on: `BGFX_CAPS_VERTEX_ATTRIB_HALF`.
 			Float,  //!< Float
+			Int32,  //!< Int32
+			Uint32, //!< Uint32
 
 			Count
 		};
@@ -545,6 +555,8 @@ namespace bgfx
 			uint32_t maxComputeBindings;      //!< Maximum number of compute bindings.
 			uint32_t maxVertexLayouts;        //!< Maximum number of vertex format layouts.
 			uint32_t maxVertexStreams;        //!< Maximum number of vertex streams.
+			uint32_t maxVertexAttributes;     //!< Maximum number of vertex attributes.
+			uint32_t maxInstanceData;         //!< Maximum number of instance data slots.
 			uint32_t maxIndexBuffers;         //!< Maximum number of index buffer handles.
 			uint32_t maxVertexBuffers;        //!< Maximum number of vertex buffer handles.
 			uint32_t maxDynamicIndexBuffers;  //!< Maximum number of dynamic index buffer handles.

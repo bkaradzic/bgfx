@@ -1692,6 +1692,46 @@ public static partial class bgfx
 		/// </summary>
 		TexCoord7,
 	
+		/// <summary>
+		/// a_texcoord8
+		/// </summary>
+		TexCoord8,
+	
+		/// <summary>
+		/// a_texcoord9
+		/// </summary>
+		TexCoord9,
+	
+		/// <summary>
+		/// a_texcoord10
+		/// </summary>
+		TexCoord10,
+	
+		/// <summary>
+		/// a_texcoord11
+		/// </summary>
+		TexCoord11,
+	
+		/// <summary>
+		/// a_texcoord12
+		/// </summary>
+		TexCoord12,
+	
+		/// <summary>
+		/// a_texcoord13
+		/// </summary>
+		TexCoord13,
+	
+		/// <summary>
+		/// a_texcoord14
+		/// </summary>
+		TexCoord14,
+	
+		/// <summary>
+		/// a_texcoord15
+		/// </summary>
+		TexCoord15,
+	
 		Count
 	}
 	
@@ -1731,6 +1771,16 @@ public static partial class bgfx
 		/// Float
 		/// </summary>
 		Float,
+	
+		/// <summary>
+		/// Int32
+		/// </summary>
+		Int32,
+	
+		/// <summary>
+		/// Uint32
+		/// </summary>
+		Uint32,
 	
 		Count
 	}
@@ -2572,6 +2622,8 @@ public static partial class bgfx
 			public uint maxComputeBindings;
 			public uint maxVertexLayouts;
 			public uint maxVertexStreams;
+			public uint maxVertexAttributes;
+			public uint maxInstanceData;
 			public uint maxIndexBuffers;
 			public uint maxVertexBuffers;
 			public uint maxDynamicIndexBuffers;
@@ -2818,8 +2870,8 @@ public static partial class bgfx
 	{
 		public uint hash;
 		public ushort stride;
-		public fixed ushort offset[18];
-		public fixed ushort attributes[18];
+		public fixed ushort offset[26];
+		public fixed ushort attributes[26];
 	}
 	
 	public unsafe struct Encoder
