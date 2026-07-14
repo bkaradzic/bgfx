@@ -1033,6 +1033,30 @@ pub const Attrib = enum(c_int) {
     /// a_texcoord7
     TexCoord7,
 
+    /// a_texcoord8
+    TexCoord8,
+
+    /// a_texcoord9
+    TexCoord9,
+
+    /// a_texcoord10
+    TexCoord10,
+
+    /// a_texcoord11
+    TexCoord11,
+
+    /// a_texcoord12
+    TexCoord12,
+
+    /// a_texcoord13
+    TexCoord13,
+
+    /// a_texcoord14
+    TexCoord14,
+
+    /// a_texcoord15
+    TexCoord15,
+
     Count
 };
 
@@ -1057,6 +1081,12 @@ pub const AttribType = enum(c_int) {
 
     /// Float
     Float,
+
+    /// Int32
+    Int32,
+
+    /// Uint32
+    Uint32,
 
     Count
 };
@@ -1588,6 +1618,8 @@ pub const Caps = extern struct {
         maxComputeBindings: u32,
         maxVertexLayouts: u32,
         maxVertexStreams: u32,
+        maxVertexAttributes: u32,
+        maxInstanceData: u32,
         maxIndexBuffers: u32,
         maxVertexBuffers: u32,
         maxDynamicIndexBuffers: u32,
@@ -1824,8 +1856,8 @@ pub const Init = extern struct {
     pub const VertexLayout = extern struct {
         hash: u32,
         stride: u16,
-        offset: [18]u16,
-        attributes: [18]u16,
+        offset: [26]u16,
+        attributes: [26]u16,
         /// Start VertexLayout.
         /// <param name="_rendererType">Renderer backend type. See: `bgfx::RendererType`</param>
         pub inline fn begin(self: *VertexLayout, _rendererType: RendererType) *VertexLayout {

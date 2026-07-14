@@ -1,7 +1,7 @@
 -- vim: syntax=lua
 -- bgfx interface
 
-version(149)
+version(150)
 
 typedef "bool"
 typedef "char"
@@ -549,6 +549,14 @@ enum.Attrib { comment = "Corresponds to vertex shader attribute.", section = "Ve
 	.TexCoord5 --- a_texcoord5
 	.TexCoord6 --- a_texcoord6
 	.TexCoord7 --- a_texcoord7
+	.TexCoord8  --- a_texcoord8
+	.TexCoord9  --- a_texcoord9
+	.TexCoord10 --- a_texcoord10
+	.TexCoord11 --- a_texcoord11
+	.TexCoord12 --- a_texcoord12
+	.TexCoord13 --- a_texcoord13
+	.TexCoord14 --- a_texcoord14
+	.TexCoord15 --- a_texcoord15
 	()
 
 --- Vertex attribute type enum.
@@ -560,6 +568,8 @@ enum.AttribType { comment = "Attribute types:", section = "Vertex Buffers" }
 	.Uint16 --- Uint16
 	.Half   --- Half, availability depends on: `BGFX_CAPS_VERTEX_ATTRIB_HALF`.
 	.Float  --- Float
+	.Int32  --- Int32
+	.Uint32 --- Uint32
 	()
 
 --- Texture format enum.
@@ -808,6 +818,8 @@ struct.Limits  { namespace = "Caps" }
 	.maxComputeBindings      "uint32_t" --- Maximum number of compute bindings.
 	.maxVertexLayouts        "uint32_t" --- Maximum number of vertex format layouts.
 	.maxVertexStreams        "uint32_t" --- Maximum number of vertex streams.
+	.maxVertexAttributes     "uint32_t" --- Maximum number of vertex attributes.
+	.maxInstanceData         "uint32_t" --- Maximum number of instance data slots.
 	.maxIndexBuffers         "uint32_t" --- Maximum number of index buffer handles.
 	.maxVertexBuffers        "uint32_t" --- Maximum number of vertex buffer handles.
 	.maxDynamicIndexBuffers  "uint32_t" --- Maximum number of dynamic index buffer handles.

@@ -9,7 +9,7 @@ import bindbc.common.types: c_int64, c_uint64, va_list;
 import bindbc.bgfx.config;
 static import bgfx.impl;
 
-enum uint apiVersion = 149;
+enum uint apiVersion = 150;
 
 alias ViewID = ushort;
 
@@ -709,6 +709,14 @@ enum Attrib: bgfx.impl.Attrib.Enum{
 	texCoord5 = bgfx.impl.Attrib.Enum.texCoord5,
 	texCoord6 = bgfx.impl.Attrib.Enum.texCoord6,
 	texCoord7 = bgfx.impl.Attrib.Enum.texCoord7,
+	texCoord8 = bgfx.impl.Attrib.Enum.texCoord8,
+	texCoord9 = bgfx.impl.Attrib.Enum.texCoord9,
+	texCoord10 = bgfx.impl.Attrib.Enum.texCoord10,
+	texCoord11 = bgfx.impl.Attrib.Enum.texCoord11,
+	texCoord12 = bgfx.impl.Attrib.Enum.texCoord12,
+	texCoord13 = bgfx.impl.Attrib.Enum.texCoord13,
+	texCoord14 = bgfx.impl.Attrib.Enum.texCoord14,
+	texCoord15 = bgfx.impl.Attrib.Enum.texCoord15,
 	count = bgfx.impl.Attrib.Enum.count,
 }
 
@@ -721,6 +729,8 @@ enum AttribType: bgfx.impl.AttribType.Enum{
 	uint16 = bgfx.impl.AttribType.Enum.uint16,
 	half = bgfx.impl.AttribType.Enum.half,
 	float_ = bgfx.impl.AttribType.Enum.float_,
+	int32 = bgfx.impl.AttribType.Enum.int32,
+	uint32 = bgfx.impl.AttribType.Enum.uint32,
 	count = bgfx.impl.AttribType.Enum.count,
 }
 
@@ -1132,6 +1142,8 @@ extern(C++, "bgfx") struct Caps{
 		uint maxComputeBindings; ///Maximum number of compute bindings.
 		uint maxVertexLayouts; ///Maximum number of vertex format layouts.
 		uint maxVertexStreams; ///Maximum number of vertex streams.
+		uint maxVertexAttributes; ///Maximum number of vertex attributes.
+		uint maxInstanceData; ///Maximum number of instance data slots.
 		uint maxIndexBuffers; ///Maximum number of index buffer handles.
 		uint maxVertexBuffers; ///Maximum number of vertex buffer handles.
 		uint maxDynamicIndexBuffers; ///Maximum number of dynamic index buffer handles.

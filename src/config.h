@@ -460,11 +460,16 @@ static_assert(BGFX_CONFIG_MAX_VERTEX_STREAMS < 32, "Must be less than 32!");
 #   define BGFX_CONFIG_MAX_SCRATCH_STAGING_BUFFER_PER_FRAME_SIZE (32<<20)
 #endif // BGFX_CONFIG_MAX_SCRATCH_STAGING_BUFFER_PER_FRAME_SIZE
 
+/// First TEXCOORD<N> representing instanced data. N is decreasing.
+#ifndef BGFX_CONFIG_INSTANCE_DATA_FIRST_TEXCOORD
+#	define BGFX_CONFIG_INSTANCE_DATA_FIRST_TEXCOORD 31
+#endif // BGFX_CONFIG_INSTANCE_DATA_FIRST_TEXCOORD
+
 /// Maximum number of instance data vec4 attributes per draw call. Default is 5.
 /// Each instance data element is a vec4 (16 bytes). Total instance stride is
 /// BGFX_CONFIG_MAX_INSTANCE_DATA_COUNT * 16 bytes.
 #ifndef BGFX_CONFIG_MAX_INSTANCE_DATA_COUNT
-#	define BGFX_CONFIG_MAX_INSTANCE_DATA_COUNT 5
+#	define BGFX_CONFIG_MAX_INSTANCE_DATA_COUNT 16
 #endif // BGFX_CONFIG_MAX_INSTANCE_DATA_COUNT
 
 /// Maximum number of color palette entries. Default is 16.

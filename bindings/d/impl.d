@@ -36,12 +36,12 @@ extern(C++, "bgfx") package final abstract class Access{
 }
 extern(C++, "bgfx") package final abstract class Attrib{
 	enum Enum{
-		position,normal,tangent,bitangent,color0,color1,color2,color3,indices,weight,texCoord0,texCoord1,texCoord2,texCoord3,texCoord4,texCoord5,texCoord6,texCoord7,count
+		position,normal,tangent,bitangent,color0,color1,color2,color3,indices,weight,texCoord0,texCoord1,texCoord2,texCoord3,texCoord4,texCoord5,texCoord6,texCoord7,texCoord8,texCoord9,texCoord10,texCoord11,texCoord12,texCoord13,texCoord14,texCoord15,count
 	}
 }
 extern(C++, "bgfx") package final abstract class AttribType{
 	enum Enum{
-		int8,uint8,uint10,int16,uint16,half,float_,count
+		int8,uint8,uint10,int16,uint16,half,float_,int32,uint32,count
 	}
 }
 extern(C++, "bgfx") package final abstract class TextureFormat{

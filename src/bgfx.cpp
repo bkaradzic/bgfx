@@ -815,7 +815,7 @@ namespace bgfx
 		ShaderHandle vsh = createEmbeddedShader(s_embeddedShaders, g_caps.rendererType, "vs_debugfont");
 		ShaderHandle fsh = createEmbeddedShader(s_embeddedShaders, g_caps.rendererType, "fs_debugfont");
 
-		BX_ASSERT(isValid(vsh) && isValid(fsh), "Failed to create embedded blit shaders");
+		BX_ASSERT(isValid(vsh) && isValid(fsh), "Failed to create embedded debug font shaders");
 
 		m_program = createProgram(vsh, fsh, true);
 
@@ -2033,6 +2033,8 @@ namespace bgfx
 		LIMITS(maxComputeBindings);
 		LIMITS(maxVertexLayouts);
 		LIMITS(maxVertexStreams);
+		LIMITS(maxVertexAttributes);
+		LIMITS(maxInstanceData);
 		LIMITS(maxIndexBuffers);
 		LIMITS(maxVertexBuffers);
 		LIMITS(maxDynamicIndexBuffers);
@@ -4077,8 +4079,10 @@ namespace bgfx
 		g_caps.limits.maxTextures             = BGFX_CONFIG_MAX_TEXTURES;
 		g_caps.limits.maxTextureSamplers      = BGFX_CONFIG_MAX_TEXTURE_SAMPLERS;
 		g_caps.limits.maxComputeBindings      = 0;
+		g_caps.limits.maxInstanceData         = BGFX_CONFIG_MAX_INSTANCE_DATA_COUNT;
 		g_caps.limits.maxVertexLayouts        = BGFX_CONFIG_MAX_VERTEX_LAYOUTS;
 		g_caps.limits.maxVertexStreams        = 1;
+		g_caps.limits.maxVertexAttributes     = 16;
 		g_caps.limits.maxIndexBuffers         = BGFX_CONFIG_MAX_INDEX_BUFFERS;
 		g_caps.limits.maxVertexBuffers        = BGFX_CONFIG_MAX_VERTEX_BUFFERS;
 		g_caps.limits.maxDynamicIndexBuffers  = BGFX_CONFIG_MAX_DYNAMIC_INDEX_BUFFERS;

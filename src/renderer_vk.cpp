@@ -554,6 +554,18 @@ VK_IMPORT_DEVICE
 			{ VK_FORMAT_R32G32B32_SFLOAT,        VK_FORMAT_R32G32B32_SFLOAT         },
 			{ VK_FORMAT_R32G32B32A32_SFLOAT,     VK_FORMAT_R32G32B32A32_SFLOAT      },
 		},
+		{ // Int32 (32-bit integers can't be normalized; both slots are the SINT format)
+			{ VK_FORMAT_R32_SINT,                VK_FORMAT_R32_SINT                 },
+			{ VK_FORMAT_R32G32_SINT,             VK_FORMAT_R32G32_SINT              },
+			{ VK_FORMAT_R32G32B32_SINT,          VK_FORMAT_R32G32B32_SINT           },
+			{ VK_FORMAT_R32G32B32A32_SINT,       VK_FORMAT_R32G32B32A32_SINT        },
+		},
+		{ // Uint32
+			{ VK_FORMAT_R32_UINT,                VK_FORMAT_R32_UINT                 },
+			{ VK_FORMAT_R32G32_UINT,             VK_FORMAT_R32G32_UINT              },
+			{ VK_FORMAT_R32G32B32_UINT,          VK_FORMAT_R32G32B32_UINT           },
+			{ VK_FORMAT_R32G32B32A32_UINT,       VK_FORMAT_R32G32B32A32_UINT        },
+		},
 	};
 	static_assert(AttribType::Count == BX_COUNTOF(s_attribType) );
 
@@ -598,7 +610,7 @@ VK_IMPORT_DEVICE
 
 		uint32_t numBindings = _vertexInputState.vertexBindingDescriptionCount;
 		uint32_t numAttribs  = _vertexInputState.vertexAttributeDescriptionCount;
-		VkVertexInputBindingDescription*   inputBinding = const_cast<VkVertexInputBindingDescription*>(_vertexInputState.pVertexBindingDescriptions + numBindings);
+		VkVertexInputBindingDescription*   inputBinding = const_cast<VkVertexInputBindingDescription  *>(_vertexInputState.pVertexBindingDescriptions   + numBindings);
 		VkVertexInputAttributeDescription* inputAttrib  = const_cast<VkVertexInputAttributeDescription*>(_vertexInputState.pVertexAttributeDescriptions + numAttribs);
 
 		inputBinding->binding   = numBindings;
@@ -1834,6 +1846,8 @@ VK_IMPORT_INSTANCE
 				g_caps.limits.maxTextureSamplers = bx::min<uint32_t>(m_deviceProperties.limits.maxPerStageResources, BGFX_CONFIG_MAX_TEXTURE_SAMPLERS);
 				g_caps.limits.maxComputeBindings = bx::min<uint32_t>(m_deviceProperties.limits.maxPerStageResources, BGFX_MAX_COMPUTE_BINDINGS);
 				g_caps.limits.maxVertexStreams   = bx::min<uint32_t>(m_deviceProperties.limits.maxVertexInputBindings, BGFX_CONFIG_MAX_VERTEX_STREAMS);
+				g_caps.limits.maxVertexAttributes = m_deviceProperties.limits.maxVertexInputAttributes;
+				g_caps.limits.maxInstanceData    = bx::min<uint32_t>(g_caps.limits.maxInstanceData, g_caps.limits.maxVertexAttributes);
 
 				{
 					const VkSampleCountFlags sampleMask = ~0

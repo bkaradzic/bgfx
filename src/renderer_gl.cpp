@@ -61,6 +61,14 @@ namespace bgfx { namespace gl
 		"a_texcoord5",
 		"a_texcoord6",
 		"a_texcoord7",
+		"a_texcoord8",
+		"a_texcoord9",
+		"a_texcoord10",
+		"a_texcoord11",
+		"a_texcoord12",
+		"a_texcoord13",
+		"a_texcoord14",
+		"a_texcoord15",
 	};
 	static_assert(Attrib::Count == BX_COUNTOF(s_attribName) );
 
@@ -71,6 +79,17 @@ namespace bgfx { namespace gl
 		"i_data2",
 		"i_data3",
 		"i_data4",
+		"i_data5",
+		"i_data6",
+		"i_data7",
+		"i_data8",
+		"i_data9",
+		"i_data10",
+		"i_data11",
+		"i_data12",
+		"i_data13",
+		"i_data14",
+		"i_data15",
 	};
 	static_assert(BGFX_CONFIG_MAX_INSTANCE_DATA_COUNT == BX_COUNTOF(s_instanceDataName) );
 
@@ -91,6 +110,8 @@ namespace bgfx { namespace gl
 		GL_UNSIGNED_SHORT,           // Uint16
 		GL_HALF_FLOAT,               // Half
 		GL_FLOAT,                    // Float
+		GL_INT,                      // Int32
+		GL_UNSIGNED_INT,             // Uint32
 	};
 	static_assert(AttribType::Count == BX_COUNTOF(s_attribType) );
 
@@ -2963,6 +2984,8 @@ namespace bgfx { namespace gl
 				g_caps.limits.maxTextureLayers   = BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL >= 30) || BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES >= 30) || s_extension[Extension::EXT_texture_array].m_supported ? uint16_t(bx::max(glGet(GL_MAX_ARRAY_TEXTURE_LAYERS), 1) ) : 1;
 				g_caps.limits.maxComputeBindings = computeSupport ? BGFX_MAX_COMPUTE_BINDINGS : 0;
 				g_caps.limits.maxVertexStreams   = BGFX_CONFIG_MAX_VERTEX_STREAMS;
+				g_caps.limits.maxVertexAttributes = uint32_t(glGet(GL_MAX_VERTEX_ATTRIBS) );
+				g_caps.limits.maxInstanceData    = bx::min<uint32_t>(g_caps.limits.maxInstanceData, g_caps.limits.maxVertexAttributes);
 
 				if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL)
 				||  m_gles3
