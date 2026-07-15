@@ -1998,12 +1998,16 @@ VK_IMPORT_INSTANCE
 				}
 			}
 
+			if (UINT32_MAX == m_videoDecodeQueueFamily
+			||  NULL != g_platformData.context)
+			{
+				m_videoDecodeQueueFamily = m_globalQueueFamily;
+			}
+
 			if (NULL != g_platformData.context)
 			{
 				m_device =
 					m_externalDevice = (VkDevice)g_platformData.context;
-
-				m_videoDecodeQueueFamily = m_globalQueueFamily;
 			}
 			else
 			{
@@ -2062,11 +2066,6 @@ VK_IMPORT_INSTANCE
 				for (uint32_t ii = 0; ii < numEnabledExtensions; ++ii)
 				{
 					BX_TRACE("\t%s", enabledExtension[ii]);
-				}
-
-				if (UINT32_MAX == m_videoDecodeQueueFamily)
-				{
-					m_videoDecodeQueueFamily = m_globalQueueFamily;
 				}
 
 				const float queuePriorities[] = { 0.0f };
