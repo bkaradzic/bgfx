@@ -3857,6 +3857,20 @@ public static partial class bgfx
 	public static extern unsafe void update_texture_cube(TextureHandle _handle, ushort _layer, byte _side, byte _mip, ushort _x, ushort _y, ushort _width, ushort _height, Memory* _mem, ushort _pitch);
 	
 	/// <summary>
+	/// Clear a texture subresource range to zero.
+	/// 
+	/// </summary>
+	///
+	/// <param name="_handle">Texture handle.</param>
+	/// <param name="_mip">First mip level.</param>
+	/// <param name="_numMips">Number of mip levels.</param>
+	/// <param name="_layer">First array layer (or 3D depth slice base).</param>
+	/// <param name="_numLayers">Number of layers.</param>
+	///
+	[DllImport(DllName, EntryPoint="bgfx_clear_texture", CallingConvention = CallingConvention.Cdecl)]
+	public static extern unsafe void clear_texture(TextureHandle _handle, byte _mip, byte _numMips, ushort _layer, ushort _numLayers);
+	
+	/// <summary>
 	/// Read back texture content.
 	/// 
 	/// @attention Texture must be created with `BGFX_TEXTURE_READ_BACK` flag.

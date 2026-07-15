@@ -3907,6 +3907,20 @@ public static class bgfx
 	public static extern void update_texture_cube(TextureHandle _handle, uint16 _layer, uint8 _side, uint8 _mip, uint16 _x, uint16 _y, uint16 _width, uint16 _height, Memory* _mem, uint16 _pitch);
 	
 	/// <summary>
+	/// Clear a texture subresource range to zero.
+	/// 
+	/// </summary>
+	///
+	/// <param name="_handle">Texture handle.</param>
+	/// <param name="_mip">First mip level.</param>
+	/// <param name="_numMips">Number of mip levels.</param>
+	/// <param name="_layer">First array layer (or 3D depth slice base).</param>
+	/// <param name="_numLayers">Number of layers.</param>
+	///
+	[LinkName("bgfx_clear_texture")]
+	public static extern void clear_texture(TextureHandle _handle, uint8 _mip, uint8 _numMips, uint16 _layer, uint16 _numLayers);
+	
+	/// <summary>
 	/// Read back texture content.
 	/// 
 	/// @attention Texture must be created with `BGFX_TEXTURE_READ_BACK` flag.

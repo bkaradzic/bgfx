@@ -759,6 +759,8 @@ namespace bgfx { namespace d3d12
 	}
 #endif // BGFX_CONFIG_DEBUG_ANNOTATION && (BX_PLATFORM_WINDOWS || BX_PLATFORM_WINRT)
 
+	struct TextureD3D12;
+
 	struct RendererContextD3D12 : public RendererContextI
 	{
 		RendererContextD3D12()
@@ -780,6 +782,7 @@ namespace bgfx { namespace d3d12
 			, m_directAccessSupport(false)
 			, m_variableRateShadingSupport(false)
 			, m_mipGen(NULL)
+			, m_zeroInitBuffer(NULL)
 		{
 		}
 
@@ -2028,6 +2031,8 @@ namespace bgfx { namespace d3d12
 			m_cmd.finish();
 			m_batch.destroy();
 
+			DX_RELEASE(m_zeroInitBuffer, 0);
+
 			preReset();
 
 			m_gpuTimer.shutdown();
@@ -2257,6 +2262,11 @@ namespace bgfx { namespace d3d12
 		void updateTexture(TextureHandle _handle, uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem) override
 		{
 			m_textures[_handle.idx].update(m_commandList, _side, _mip, _rect, _z, _depth, _pitch, _mem);
+		}
+
+		void clearTexture(TextureHandle _handle, uint8_t _mip, uint8_t _numMips, uint16_t _layer, uint16_t _numLayers) override
+		{
+			m_textures[_handle.idx].clear(m_commandList, _mip, _numMips, _layer, _numLayers);
 		}
 
 		void readTexture(TextureHandle _handle, void* _data, uint16_t _layer, uint8_t _mip) override
@@ -4089,6 +4099,7 @@ namespace bgfx { namespace d3d12
 		bool m_variableRateShadingSupport;
 
 		const MipGen* m_mipGen;
+		ID3D12Resource* m_zeroInitBuffer;
 
 		void generateMips(ID3D12GraphicsCommandList* _commandList, TextureD3D12& _texture);
 	};
@@ -6451,6 +6462,117 @@ namespace bgfx { namespace d3d12
 		m_ptr = (ID3D12Resource*)_ptr;
 	}
 
+	void TextureD3D12::clear(ID3D12GraphicsCommandList* _commandList, uint8_t _mip, uint8_t _numMips, uint16_t _layer, uint16_t _numLayers)
+	{
+		const D3D12_RESOURCE_STATES saved = setState(_commandList, D3D12_RESOURCE_STATE_COPY_DEST);
+
+		const bimg::TextureFormat::Enum tf = bimg::TextureFormat::Enum(m_textureFormat);
+
+		ID3D12Resource* zeroBuffer = s_renderD3D12->m_zeroInitBuffer;
+
+		if (NULL == zeroBuffer)
+		{
+			zeroBuffer = createCommittedResource(s_renderD3D12->m_device, HeapProperty::Upload, kTextureZeroInitBudget);
+
+			void* ptr = NULL;
+			D3D12_RANGE readRange = { 0, 0 };
+
+			if (SUCCEEDED(zeroBuffer->Map(0, &readRange, &ptr) ) )
+			{
+				bx::memSet(ptr, 0, kTextureZeroInitBudget);
+				zeroBuffer->Unmap(0, NULL);
+			}
+
+			s_renderD3D12->m_zeroInitBuffer = zeroBuffer;
+		}
+
+		if (NULL == zeroBuffer)
+		{
+			return;
+		}
+
+		const DXGI_FORMAT fmt = s_textureFormat[m_textureFormat].m_fmt;
+		const uint32_t    bpp = bimg::getBitsPerPixel(tf);
+		const uint32_t numMips  = m_numMips;
+		const bool     is3D     = TextureD3D12::Texture3D == m_type;
+		const uint32_t numSides = m_numLayers * (TextureD3D12::TextureCube == m_type ? 6 : 1);
+		uint32_t tile = 512;
+
+		while (tile > 1
+		&&     bx::strideAlign(tile*bpp/8, D3D12_TEXTURE_DATA_PITCH_ALIGNMENT)*tile > kTextureZeroInitBudget)
+		{
+			tile >>= 1;
+		}
+
+		const uint32_t mipBeg  = bx::min<uint32_t>(_mip, numMips);
+		const uint32_t mipEnd  = (UINT8_MAX  == _numMips)
+			? numMips
+			: bx::min<uint32_t>(numMips,  uint32_t(_mip)   + _numMips)
+			;
+		const uint32_t sideBeg = is3D
+			? 0
+			: bx::min<uint32_t>(_layer, numSides)
+			;
+		const uint32_t sideEnd = is3D
+			? 1
+			: ( (UINT16_MAX == _numLayers)
+				? numSides
+				: bx::min<uint32_t>(numSides, uint32_t(_layer) + _numLayers) )
+			;
+
+		for (uint32_t side = sideBeg; side < sideEnd; ++side)
+		{
+			for (uint32_t mip = mipBeg; mip < mipEnd; ++mip)
+			{
+				const uint32_t mipW   = bx::max<uint32_t>(1, m_width  >> mip);
+				const uint32_t mipH   = bx::max<uint32_t>(1, m_height >> mip);
+				const uint32_t mipD   = is3D ? bx::max<uint32_t>(1, m_depth >> mip) : 1;
+				const uint32_t dstSub = is3D ? mip : (mip + side * numMips);
+
+				for (uint32_t zz = 0; zz < mipD; ++zz)
+				{
+					for (uint32_t yy = 0; yy < mipH; yy += tile)
+					{
+						const uint32_t th = bx::min<uint32_t>(tile, mipH - yy);
+						for (uint32_t xx = 0; xx < mipW; xx += tile)
+						{
+							const uint32_t tw = bx::min<uint32_t>(tile, mipW - xx);
+
+							D3D12_TEXTURE_COPY_LOCATION src =
+							{
+								.pResource = zeroBuffer,
+								.Type      = D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT,
+								.PlacedFootprint =
+								{
+									.Offset    = 0,
+									.Footprint =
+									{
+										.Format   = fmt,
+										.Width    = tw,
+										.Height   = th,
+										.Depth    = 1,
+										.RowPitch = bx::strideAlign(tw * bpp / 8, D3D12_TEXTURE_DATA_PITCH_ALIGNMENT),
+									}
+								}
+							};
+
+							D3D12_TEXTURE_COPY_LOCATION dst =
+							{
+								.pResource        = m_ptr,
+								.Type             = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX,
+								.SubresourceIndex = dstSub,
+							};
+
+							_commandList->CopyTextureRegion(&dst, xx, yy, zz, &src, NULL);
+						}
+					}
+				}
+			}
+		}
+
+		setState(_commandList, saved);
+	}
+
 	void TextureD3D12::update(ID3D12GraphicsCommandList* _commandList, uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem)
 	{
 		if (0 != (m_flags & BGFX_TEXTURE_INTERNAL_VIDEO_DECODE_DST) )
@@ -7614,7 +7736,7 @@ namespace bgfx { namespace d3d12
 		Rect viewScissorRect;
 		viewScissorRect.clear();
 
-		const uint32_t maxComputeBindings = g_caps.limits.maxComputeBindings;
+		const uint8_t maxComputeBindings = bx::narrowCast<uint8_t>(g_caps.limits.maxComputeBindings);
 
 		uint32_t statsNumPrimsSubmitted[BX_COUNTOF(s_primInfo)] = {};
 		uint32_t statsNumPrimsRendered[BX_COUNTOF(s_primInfo)] = {};
@@ -7767,6 +7889,7 @@ namespace bgfx { namespace d3d12
 					restoreScissor = false;
 
 					const Clear& clr = renderView.m_clear;
+
 					if (BGFX_CLEAR_NONE != clr.m_flags)
 					{
 						Rect clearRect = rect;

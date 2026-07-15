@@ -643,6 +643,21 @@ namespace bgfx
 		release( (const Memory*)_mem);
 	}
 
+	static constexpr uint32_t kTextureZeroInitBudget = 64<<10;
+
+	inline constexpr uint32_t textureZeroInitTileDim(uint32_t _bpp, uint32_t _budget = kTextureZeroInitBudget)
+	{
+		uint32_t dim = 512;
+
+		while (dim > 1
+		&&     uint64_t(dim)*dim*_bpp/8 > _budget)
+		{
+			dim >>= 1;
+		}
+
+		return dim;
+	}
+
 	static_assert(BGFX_STENCIL_NONE == BGFX_STENCIL_FUNC_RMASK_MASK, "");
 
 	inline constexpr uint64_t packStencil(uint32_t _fstencil, uint32_t _bstencil)
@@ -1057,6 +1072,7 @@ namespace bgfx
 			CreateProgram,
 			CreateTexture,
 			UpdateTexture,
+			ClearTexture,
 			ResizeTexture,
 			CreateFrameBuffer,
 			CreateUniform,
@@ -4186,6 +4202,7 @@ namespace bgfx
 		virtual void destroyProgram(ProgramHandle _handle) = 0;
 		virtual void* createTexture(TextureHandle _handle, const Memory* _mem, uint64_t _flags, uint8_t _skip, uint64_t _external) = 0;
 		virtual void updateTexture(TextureHandle _handle, uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem) = 0;
+		virtual void clearTexture(TextureHandle _handle, uint8_t _mip, uint8_t _numMips, uint16_t _layer, uint16_t _numLayers) = 0;
 		virtual void readTexture(TextureHandle _handle, void* _data, uint16_t _layer, uint8_t _mip) = 0;
 		virtual void resizeTexture(TextureHandle _handle, uint16_t _width, uint16_t _height, uint8_t _numMips, uint16_t _numLayers) = 0;
 		virtual void overrideInternal(TextureHandle _handle, uintptr_t _ptr, uint16_t _layerIndex) = 0;
@@ -5878,6 +5895,18 @@ namespace bgfx
 			cmdbuf.write(_depth);
 			cmdbuf.write(_pitch);
 			cmdbuf.write(_mem);
+		}
+
+		BGFX_API_FUNC(void clearTexture(TextureHandle _handle, uint8_t _mip, uint8_t _numMips, uint16_t _layer, uint16_t _numLayers) )
+		{
+			BGFX_MUTEX_SCOPE(m_resourceApiLock);
+
+			CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::ClearTexture);
+			cmdbuf.write(_handle);
+			cmdbuf.write(_mip);
+			cmdbuf.write(_numMips);
+			cmdbuf.write(_layer);
+			cmdbuf.write(_numLayers);
 		}
 
 		BGFX_API_FUNC(FrameBufferHandle createFrameBuffer(uint8_t _num, const Attachment* _attachment, bool _destroyTextures) )

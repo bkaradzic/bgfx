@@ -707,6 +707,8 @@ namespace bgfx { namespace d3d11
 	int  WINAPI d3d11Annotation_EndEvent();
 	void WINAPI d3d11Annotation_SetMarker(DWORD _color, LPCWSTR _name);
 
+	struct TextureD3D11;
+
 	struct RendererContextD3D11 : public RendererContextI
 	{
 		RendererContextD3D11()
@@ -1778,6 +1780,8 @@ namespace bgfx { namespace d3d11
 			m_deviceCtx->ClearState();
 			m_deviceCtx->Flush();
 
+			m_zeroInitTileCache.invalidate();
+
 			invalidateCache();
 
 			for (uint32_t ii = 0; ii < BX_COUNTOF(m_frameBuffers); ++ii)
@@ -1932,6 +1936,11 @@ namespace bgfx { namespace d3d11
 		void updateTexture(TextureHandle _handle, uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem) override
 		{
 			m_textures[_handle.idx].update(_side, _mip, _rect, _z, _depth, _pitch, _mem);
+		}
+
+		void clearTexture(TextureHandle _handle, uint8_t _mip, uint8_t _numMips, uint16_t _layer, uint16_t _numLayers) override
+		{
+			m_textures[_handle.idx].clear(_mip, _numMips, _layer, _numLayers);
 		}
 
 		void readTexture(TextureHandle _handle, void* _data, uint16_t _layer, uint8_t _mip) override
@@ -3800,6 +3809,7 @@ namespace bgfx { namespace d3d11
 		StateCacheT<ID3D11RasterizerState*> m_rasterizerStateCache;
 		StateCacheT<ID3D11SamplerState*> m_samplerStateCache;
 		StateCacheLru<IUnknown*, 1024> m_srvUavLru;
+		StateCacheLru<IUnknown*, 16>   m_zeroInitTileCache;
 
 		TextVideoMem m_textVideoMem;
 
@@ -4410,6 +4420,137 @@ namespace bgfx { namespace d3d11
 			s_renderD3D11->m_deviceCtx->Unmap(m_ptr, 0);
 			m_descriptor = NULL;
 			DX_RELEASE(m_ptr, 0);
+		}
+	}
+
+	static ID3D11Texture2D* zeroInitTile(DXGI_FORMAT _fmt, uint32_t _tileDim, uint32_t _blockW, uint32_t _blockH, uint32_t _blockSize)
+	{
+		if (IUnknown** cached = s_renderD3D11->m_zeroInitTileCache.find(uint64_t(_fmt) ) )
+		{
+			return static_cast<ID3D11Texture2D*>(*cached);
+		}
+
+		const uint32_t rowPitch = (_tileDim / _blockW) * _blockSize;
+		const uint32_t numRows  = _tileDim / _blockH;
+		uint8_t zeros[kTextureZeroInitBudget] = {};
+		BX_ASSERT(rowPitch * numRows <= sizeof(zeros), "Zero-init tile exceeds budget.");
+
+		D3D11_TEXTURE2D_DESC desc;
+		bx::memSet(&desc, 0, sizeof(desc) );
+		desc.Width          = _tileDim;
+		desc.Height         = _tileDim;
+		desc.MipLevels      = 1;
+		desc.ArraySize      = 1;
+		desc.Format         = _fmt;
+		desc.SampleDesc.Count = 1;
+		desc.Usage          = D3D11_USAGE_DEFAULT;
+		desc.BindFlags      = D3D11_BIND_SHADER_RESOURCE;
+		D3D11_SUBRESOURCE_DATA srd = { zeros, rowPitch, 0 };
+
+		ID3D11Texture2D* tile = NULL;
+		s_renderD3D11->m_device->CreateTexture2D(&desc, &srd, &tile);
+
+		if (NULL != tile)
+		{
+			s_renderD3D11->m_zeroInitTileCache.add(uint64_t(_fmt), tile, 0);
+		}
+
+		return tile;
+	}
+
+	void TextureD3D11::clear(uint8_t _baseMip, uint8_t _numMips, uint16_t _baseLayer, uint16_t _numLayers)
+	{
+		const bimg::TextureFormat::Enum tf = bimg::TextureFormat::Enum(m_textureFormat);
+
+		ID3D11Device*        device = s_renderD3D11->m_device;
+		ID3D11DeviceContext* ctx    = s_renderD3D11->m_deviceCtx;
+
+		const DXGI_FORMAT fmt   = (0 != (m_flags & BGFX_TEXTURE_SRGB) )
+			? s_textureFormat[m_textureFormat].m_fmtSrgb
+			: s_textureFormat[m_textureFormat].m_fmt
+			;
+		const uint32_t numMips  = m_numMips;
+		const uint32_t numSides = m_numLayers * (TextureD3D11::TextureCube == m_type ? 6 : 1);
+		const bool     is3D     = TextureD3D11::Texture3D == m_type;
+		const bool     rtColor  = 0 != (m_flags & BGFX_TEXTURE_RT_MASK);
+
+		const uint32_t mipBeg  = bx::min<uint32_t>(_baseMip, numMips);
+		const uint32_t mipEnd  = (UINT8_MAX  == _numMips)   ? numMips  : bx::min<uint32_t>(numMips,  uint32_t(_baseMip)   + _numMips);
+		const uint32_t sideBeg = is3D ? 0 : bx::min<uint32_t>(_baseLayer, numSides);
+		const uint32_t sideEnd = is3D ? 1 : ( (UINT16_MAX == _numLayers) ? numSides : bx::min<uint32_t>(numSides, uint32_t(_baseLayer) + _numLayers) );
+
+		if (rtColor && !is3D)
+		{
+			const float black[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
+			for (uint32_t side = sideBeg; side < sideEnd; ++side)
+			{
+				for (uint32_t mip = mipBeg; mip < mipEnd; ++mip)
+				{
+					D3D11_RENDER_TARGET_VIEW_DESC rtvd;
+					bx::memSet(&rtvd, 0, sizeof(rtvd) );
+					rtvd.Format = fmt;
+					if (1 < numSides)
+					{
+						rtvd.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2DARRAY;
+						rtvd.Texture2DArray.MipSlice        = mip;
+						rtvd.Texture2DArray.FirstArraySlice = side;
+						rtvd.Texture2DArray.ArraySize       = 1;
+					}
+					else
+					{
+						rtvd.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
+						rtvd.Texture2D.MipSlice = mip;
+					}
+
+					ID3D11RenderTargetView* rtv = NULL;
+					if (SUCCEEDED(device->CreateRenderTargetView(m_ptr, &rtvd, &rtv) )
+					&&  NULL != rtv)
+					{
+						ctx->ClearRenderTargetView(rtv, black);
+						DX_RELEASE(rtv, 0);
+					}
+				}
+			}
+			return;
+		}
+
+		const bimg::ImageBlockInfo& bi = bimg::getBlockInfo(tf);
+		const uint32_t blockW    = bx::max<uint32_t>(1, bi.blockWidth);
+		const uint32_t blockH    = bx::max<uint32_t>(1, bi.blockHeight);
+		const uint32_t blockSize = bi.blockSize;
+		const uint32_t tileDim   = textureZeroInitTileDim(bimg::getBitsPerPixel(tf) );
+
+		ID3D11Texture2D* tile = zeroInitTile(fmt, tileDim, blockW, blockH, blockSize);
+		if (NULL == tile)
+		{
+			return;
+		}
+
+		for (uint32_t side = sideBeg; side < sideEnd; ++side)
+		{
+			for (uint32_t mip = mipBeg; mip < mipEnd; ++mip)
+			{
+				const uint32_t mipW   = bx::max<uint32_t>(1, m_width  >> mip);
+				const uint32_t mipH   = bx::max<uint32_t>(1, m_height >> mip);
+				const uint32_t mipD   = is3D ? bx::max<uint32_t>(1, m_depth >> mip) : 1;
+				const uint32_t dstSub = is3D ? mip : (mip + side * numMips);
+
+				for (uint32_t zz = 0; zz < mipD; ++zz)
+				{
+					for (uint32_t yy = 0; yy < mipH; yy += tileDim)
+					{
+						const uint32_t bh = bx::min<uint32_t>(tileDim, mipH - yy);
+						for (uint32_t xx = 0; xx < mipW; xx += tileDim)
+						{
+							const uint32_t bw = bx::min<uint32_t>(tileDim, mipW - xx);
+							D3D11_BOX box;
+							box.left = 0; box.top = 0; box.front = 0;
+							box.right = bw; box.bottom = bh; box.back = 1;
+							ctx->CopySubresourceRegion(m_ptr, dstSub, xx, yy, zz, tile, 0, &box);
+						}
+					}
+				}
+			}
 		}
 	}
 

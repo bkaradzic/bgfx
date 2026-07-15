@@ -1384,6 +1384,11 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			m_textures[_handle.idx].update(_side, _mip, _rect, _z, _depth, _pitch, _mem);
 		}
 
+		void clearTexture(TextureHandle _handle, uint8_t _mip, uint8_t _numMips, uint16_t _layer, uint16_t _numLayers) override
+		{
+			m_textures[_handle.idx].clear(_mip, _numMips, _layer, _numLayers);
+		}
+
 		static MTL::PixelFormat getSwapChainPixelFormat(SwapChainMtl* _swapChain)
 		{
 			return NULL != _swapChain
@@ -3656,6 +3661,55 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 		BufferMtl::create(_size, _data, _flags, stride, true);
 	}
 
+	void TextureMtl::clear(uint8_t _baseMip, uint8_t _numMipsArg, uint16_t _baseLayer, uint16_t _numLayersArg)
+	{
+		const bimg::TextureFormat::Enum tf = bimg::TextureFormat::Enum(m_textureFormat);
+		if (NULL == m_ptr)
+		{
+			return;
+		}
+
+		const uint32_t bpp      = bimg::getBitsPerPixel(tf);
+		const bool     is3D     = MTL::TextureType3D == m_ptr->textureType();
+		const bool     isCube   = TextureMtl::TextureCube == m_type;
+		const uint32_t numMips  = m_numMips;
+		const uint32_t numSides = uint32_t(m_ptr->arrayLength() ) * (isCube ? 6 : 1);
+
+		const uint32_t mipBeg  = bx::min<uint32_t>(_baseMip, numMips);
+		const uint32_t mipEnd  = (UINT8_MAX  == _numMipsArg)   ? numMips  : bx::min<uint32_t>(numMips,  uint32_t(_baseMip)   + _numMipsArg);
+		const uint32_t sideBeg = is3D ? 0 : bx::min<uint32_t>(_baseLayer, numSides);
+		const uint32_t sideEnd = is3D ? 1 : ( (UINT16_MAX == _numLayersArg) ? numSides : bx::min<uint32_t>(numSides, uint32_t(_baseLayer) + _numLayersArg) );
+
+		const uint32_t tile      = textureZeroInitTileDim(bpp);
+		const uint32_t zeroPitch = tile * bpp / 8;
+		uint8_t zeros[kTextureZeroInitBudget] = {};
+		BX_ASSERT(zeroPitch * tile <= sizeof(zeros), "Zero-init tile exceeds budget.");
+
+		for (uint32_t side = sideBeg; side < sideEnd; ++side)
+		{
+			for (uint32_t lod = mipBeg; lod < mipEnd; ++lod)
+			{
+				const uint32_t mipW = bx::max<uint32_t>(1, m_width  >> lod);
+				const uint32_t mipH = bx::max<uint32_t>(1, m_height >> lod);
+				const uint32_t mipD = is3D ? bx::max<uint32_t>(1, m_depth >> lod) : 1;
+
+				for (uint32_t zz = 0; zz < mipD; ++zz)
+				{
+					for (uint32_t yy = 0; yy < mipH; yy += tile)
+					{
+						const uint32_t th = bx::min<uint32_t>(tile, mipH - yy);
+						for (uint32_t xx = 0; xx < mipW; xx += tile)
+						{
+							const uint32_t tw = bx::min<uint32_t>(tile, mipW - xx);
+							MTL::Region region(xx, yy, zz, tw, th, 1);
+							m_ptr->replaceRegion(region, lod, side, zeros, tw * bpp / 8, 0);
+						}
+					}
+				}
+			}
+		}
+	}
+
 	void TextureMtl::create(const Memory* _mem, uint64_t _flags, uint8_t _skip, uint64_t _external)
 	{
 		m_sampler = s_renderMtl->getSamplerState(uint32_t(_flags) );
@@ -5175,8 +5229,8 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 		const uint64_t primType = 0;
 		uint8_t primIndex = uint8_t(primType>>BGFX_STATE_PT_SHIFT);
 		PrimInfo prim = s_primInfo[primIndex];
-		const uint32_t maxComputeBindings = g_caps.limits.maxComputeBindings;
-		const uint32_t maxTextureSamplers = g_caps.limits.maxTextureSamplers;
+		const uint8_t maxComputeBindings = bx::narrowCast<uint8_t>(g_caps.limits.maxComputeBindings);
+		const uint8_t maxTextureSamplers = bx::narrowCast<uint8_t>(g_caps.limits.maxTextureSamplers);
 
 		MTL::RenderCommandEncoder* rce = NULL;
 		PipelineStateMtl* currentPso = NULL;

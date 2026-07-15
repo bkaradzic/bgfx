@@ -449,6 +449,8 @@ namespace bgfx { namespace mtl
 			, const Memory* _mem
 			);
 
+		void clear(uint8_t _mip, uint8_t _numMips, uint16_t _layer, uint16_t _numLayers);
+
 		void commit(
 			  uint8_t _stage
 			, bool _vertex

@@ -1,7 +1,7 @@
 -- vim: syntax=lua
 -- bgfx interface
 
-version(150)
+version(151)
 
 typedef "bool"
 typedef "char"
@@ -2022,6 +2022,20 @@ func.updateTextureCube { section = "Textures" }
 	.pitch  "uint16_t"      --- Pitch of input image (bytes). When _pitch is set to
 	                        --- UINT16_MAX, it will be calculated internally based on _width.
 	 { default = UINT16_MAX }
+
+--- Clear a texture subresource range to zero.
+---
+func.clear { cname = "clear_texture", section = "Textures" }
+	"void"
+	.handle    "TextureHandle" --- Texture handle.
+	.mip       "uint8_t"       --- First mip level.
+	{ default = 0 }
+	.numMips   "uint8_t"       --- Number of mip levels.
+	{ default = UINT8_MAX }
+	.layer     "uint16_t"      --- First array layer (or 3D depth slice base).
+	{ default = 0 }
+	.numLayers "uint16_t"      --- Number of layers.
+	{ default = UINT16_MAX }
 
 --- Read back texture content.
 ---
