@@ -2002,6 +2002,8 @@ VK_IMPORT_INSTANCE
 			{
 				m_device =
 					m_externalDevice = (VkDevice)g_platformData.context;
+
+				m_videoDecodeQueueFamily = m_globalQueueFamily;
 			}
 			else
 			{
