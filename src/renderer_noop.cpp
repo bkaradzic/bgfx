@@ -174,6 +174,10 @@ namespace bgfx { namespace noop
 		{
 		}
 
+		void clearTexture(TextureHandle /*_handle*/, uint8_t /*_mip*/, uint8_t /*_numMips*/, uint16_t /*_layer*/, uint16_t /*_numLayers*/) override
+		{
+		}
+
 		void readTexture(TextureHandle /*_handle*/, void* /*_data*/, uint16_t /*_layer*/, uint8_t /*_mip*/) override
 		{
 		}

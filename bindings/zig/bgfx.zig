@@ -3060,6 +3060,18 @@ pub inline fn updateTextureCube(_handle: TextureHandle, _layer: u16, _side: u8, 
 }
 extern fn bgfx_update_texture_cube(_handle: TextureHandle, _layer: u16, _side: u8, _mip: u8, _x: u16, _y: u16, _width: u16, _height: u16, _mem: [*c]const Memory, _pitch: u16) void;
 
+/// Clear a texture subresource range to zero.
+/// 
+/// <param name="_handle">Texture handle.</param>
+/// <param name="_mip">First mip level.</param>
+/// <param name="_numMips">Number of mip levels.</param>
+/// <param name="_layer">First array layer (or 3D depth slice base).</param>
+/// <param name="_numLayers">Number of layers.</param>
+pub inline fn clearTexture(_handle: TextureHandle, _mip: u8, _numMips: u8, _layer: u16, _numLayers: u16) void {
+    return bgfx_clear_texture(_handle, _mip, _numMips, _layer, _numLayers);
+}
+extern fn bgfx_clear_texture(_handle: TextureHandle, _mip: u8, _numMips: u8, _layer: u16, _numLayers: u16) void;
+
 /// Read back texture content.
 /// 
 /// @attention Texture must be created with `BGFX_TEXTURE_READ_BACK` flag.

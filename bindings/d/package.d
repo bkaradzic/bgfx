@@ -9,7 +9,7 @@ import bindbc.common.types: c_int64, c_uint64, va_list;
 import bindbc.bgfx.config;
 static import bgfx.impl;
 
-enum uint apiVersion = 150;
+enum uint apiVersion = 151;
 
 alias ViewID = ushort;
 
@@ -3037,6 +3037,18 @@ mixin(joinFnBinds((){
 		UINT16_MAX, it will be calculated internally based on _width.
 		*/
 		{q{void}, q{updateTextureCube}, q{TextureHandle handle, ushort layer, ubyte side, ubyte mip, ushort x, ushort y, ushort width, ushort height, const(Memory)* mem, ushort pitch=ushort.max}, ext: `C++, "bgfx"`},
+		
+		/**
+		* Clear a texture subresource range to zero.
+		* 
+		Params:
+			handle = Texture handle.
+			mip = First mip level.
+			numMIPs = Number of mip levels.
+			layer = First array layer (or 3D depth slice base).
+			numLayers = Number of layers.
+		*/
+		{q{void}, q{clear}, q{TextureHandle handle, ubyte mip=0, ubyte numMIPs=ubyte.max, ushort layer=0, ushort numLayers=ushort.max}, ext: `C++, "bgfx"`},
 		
 		/**
 		* Read back texture content.

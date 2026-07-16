@@ -2221,6 +2221,18 @@ BGFX_C_API void bgfx_update_texture_3d(bgfx_texture_handle_t _handle, uint8_t _m
 BGFX_C_API void bgfx_update_texture_cube(bgfx_texture_handle_t _handle, uint16_t _layer, uint8_t _side, uint8_t _mip, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height, const bgfx_memory_t* _mem, uint16_t _pitch);
 
 /**
+ * Clear a texture subresource range to zero.
+ *
+ * @param[in] _handle Texture handle.
+ * @param[in] _mip First mip level.
+ * @param[in] _numMips Number of mip levels.
+ * @param[in] _layer First array layer (or 3D depth slice base).
+ * @param[in] _numLayers Number of layers.
+ *
+ */
+BGFX_C_API void bgfx_clear_texture(bgfx_texture_handle_t _handle, uint8_t _mip, uint8_t _numMips, uint16_t _layer, uint16_t _numLayers);
+
+/**
  * Read back texture content.
  *
  * @attention Texture must be created with `BGFX_TEXTURE_READ_BACK` flag.
@@ -4063,6 +4075,7 @@ typedef enum bgfx_function_id
     BGFX_FUNCTION_ID_UPDATE_TEXTURE_2D,
     BGFX_FUNCTION_ID_UPDATE_TEXTURE_3D,
     BGFX_FUNCTION_ID_UPDATE_TEXTURE_CUBE,
+    BGFX_FUNCTION_ID_CLEAR_TEXTURE,
     BGFX_FUNCTION_ID_READ_TEXTURE,
     BGFX_FUNCTION_ID_SET_TEXTURE_NAME,
     BGFX_FUNCTION_ID_GET_DIRECT_ACCESS_PTR,
@@ -4277,6 +4290,7 @@ struct bgfx_interface_vtbl
     void (*update_texture_2d)(bgfx_texture_handle_t _handle, uint16_t _layer, uint8_t _mip, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height, const bgfx_memory_t* _mem, uint16_t _pitch);
     void (*update_texture_3d)(bgfx_texture_handle_t _handle, uint8_t _mip, uint16_t _x, uint16_t _y, uint16_t _z, uint16_t _width, uint16_t _height, uint16_t _depth, const bgfx_memory_t* _mem);
     void (*update_texture_cube)(bgfx_texture_handle_t _handle, uint16_t _layer, uint8_t _side, uint8_t _mip, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height, const bgfx_memory_t* _mem, uint16_t _pitch);
+    void (*clear_texture)(bgfx_texture_handle_t _handle, uint8_t _mip, uint8_t _numMips, uint16_t _layer, uint16_t _numLayers);
     uint32_t (*read_texture)(bgfx_texture_handle_t _handle, void* _data, uint16_t _layer, uint8_t _mip);
     void (*set_texture_name)(bgfx_texture_handle_t _handle, const char* _name, int32_t _len);
     void* (*get_direct_access_ptr)(bgfx_texture_handle_t _handle);

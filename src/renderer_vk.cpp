@@ -1220,6 +1220,8 @@ VK_IMPORT_DEVICE
 			);
 	}
 
+	struct TextureVK;
+
 	struct RendererContextVK : public RendererContextI
 	{
 		RendererContextVK()
@@ -2611,6 +2613,11 @@ VK_IMPORT_DEVICE
 		void updateTexture(TextureHandle _handle, uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem) override
 		{
 			m_textures[_handle.idx].update(m_commandBuffer, _side, _mip, _rect, _z, _depth, _pitch, _mem);
+		}
+
+		void clearTexture(TextureHandle _handle, uint8_t _mip, uint8_t _numMips, uint16_t _layer, uint16_t _numLayers) override
+		{
+			m_textures[_handle.idx].clear(m_commandBuffer, _mip, _numMips, _layer, _numLayers);
 		}
 
 		void readTexture(TextureHandle _handle, void* _data, uint16_t _layer, uint8_t _mip) override
@@ -7386,6 +7393,44 @@ VK_DESTROY
 				);
 
 			currentLayout = _newImageLayout;
+		}
+	}
+
+	void TextureVK::clear(VkCommandBuffer _commandBuffer, uint8_t _mip, uint8_t _numMips, uint16_t _layer, uint16_t _numLayers)
+	{
+		const VkImageLayout saved = m_currentImageLayout;
+		setState(_commandBuffer, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+
+		const VkClearColorValue clearColor = { { 0.0f, 0.0f, 0.0f, 0.0f } };
+
+		VkImageSubresourceRange range =
+		{
+			.aspectMask     = m_aspectFlags,
+			.baseMipLevel   = _mip,
+			.levelCount     = (UINT8_MAX  == _numMips)
+				? VK_REMAINING_MIP_LEVELS
+				: _numMips
+				,
+			.baseArrayLayer = _layer,
+			.layerCount     = (UINT16_MAX == _numLayers)
+				? VK_REMAINING_ARRAY_LAYERS
+				: _numLayers
+				,
+		};
+
+		vkCmdClearColorImage(
+			  _commandBuffer
+			, m_textureImage
+			, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
+			, &clearColor
+			, 1
+			, &range
+			);
+
+		if (VK_IMAGE_LAYOUT_UNDEFINED      != saved
+		&&  VK_IMAGE_LAYOUT_PREINITIALIZED != saved)
+		{
+			setState(_commandBuffer, saved);
 		}
 	}
 

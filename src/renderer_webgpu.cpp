@@ -1701,6 +1701,11 @@ WGPU_IMPORT
 			m_textures[_handle.idx].update(_side, _mip, _rect, _z, _depth, _pitch, _mem);
 		}
 
+		void clearTexture(TextureHandle _handle, uint8_t _mip, uint8_t _numMips, uint16_t _layer, uint16_t _numLayers) override
+		{
+			m_textures[_handle.idx].clear(_mip, _numMips, _layer, _numLayers);
+		}
+
 		bool s_done;
 
 		struct ReadTexture
@@ -4198,6 +4203,81 @@ WGPU_IMPORT
 
 		wgpuDestroy(m_texture);
 		wgpuDestroy(m_textureResolve);
+	}
+
+	void TextureWGPU::clear(uint8_t _mip, uint8_t _numMips, uint16_t _layer, uint16_t _numLayers)
+	{
+		const bimg::TextureFormat::Enum format = bimg::TextureFormat::Enum(m_textureFormat);
+
+		if (0 != (m_flags & BGFX_TEXTURE_RT_WRITE_ONLY) )
+		{
+			return;
+		}
+
+		const bool     is3D    = TextureWGPU::Texture3D == m_type;
+		const uint32_t bpp     = bimg::getBitsPerPixel(format);
+		const uint8_t  numMips = (UINT8_MAX == _numMips)
+			? uint8_t(m_numMips - _mip)
+			: _numMips
+			;
+
+		const uint32_t tileDim     = textureZeroInitTileDim(bpp);
+		const uint32_t bytesPerRow = tileDim*bpp/8;
+		uint8_t zeros[kTextureZeroInitBudget] = {};
+		BX_ASSERT(bytesPerRow*tileDim <= sizeof(zeros), "Zero-init tile exceeds budget.");
+
+		for (uint8_t mip = _mip, mipEnd = uint8_t(_mip + numMips); mip < mipEnd; ++mip)
+		{
+			const uint32_t mipW = bx::max(1u, m_width  >> mip);
+			const uint32_t mipH = bx::max(1u, m_height >> mip);
+
+			const uint32_t totalSlices = is3D
+				? bx::max(1u, m_depth >> mip)
+				: m_numSides
+				;
+			const uint32_t numSlices = (UINT16_MAX == _numLayers)
+				? (totalSlices - _layer)
+				: _numLayers
+				;
+
+			for (uint32_t slice = _layer, sliceEnd = _layer + numSlices; slice < sliceEnd; ++slice)
+			{
+				for (uint32_t yy = 0; yy < mipH; yy += tileDim)
+				{
+					const uint32_t th = bx::min<uint32_t>(tileDim, mipH - yy);
+
+					for (uint32_t xx = 0; xx < mipW; xx += tileDim)
+					{
+						const uint32_t tw = bx::min<uint32_t>(tileDim, mipW - xx);
+
+						s_renderWGPU->m_cmd.writeTexture(
+							{
+								.texture  = m_texture,
+								.mipLevel = mip,
+								.origin =
+								{
+									.x = xx,
+									.y = yy,
+									.z = slice,
+								},
+								.aspect = WGPUTextureAspect_All,
+							}
+							, zeros
+							, bytesPerRow*th
+							, {
+								.offset       = 0,
+								.bytesPerRow  = bytesPerRow,
+								.rowsPerImage = th,
+							}
+							, {
+								.width              = tw,
+								.height             = th,
+								.depthOrArrayLayers = 1,
+							});
+					}
+				}
+			}
+		}
 	}
 
 	void TextureWGPU::update(uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem)

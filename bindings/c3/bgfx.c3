@@ -2823,6 +2823,15 @@ extern fn void update_texture_3d(TextureHandle _handle, char _mip, ushort _x, us
 // _pitch : `Pitch of input image (bytes). When _pitch is set to UINT16_MAX, it will be calculated internally based on _width.`
 extern fn void update_texture_cube(TextureHandle _handle, ushort _layer, char _side, char _mip, ushort _x, ushort _y, ushort _width, ushort _height, Memory* _mem, ushort _pitch) @cname("bgfx_update_texture_cube");
 
+// Clear a texture subresource range to zero.
+// 
+// _handle : `Texture handle.`
+// _mip : `First mip level.`
+// _numMips : `Number of mip levels.`
+// _layer : `First array layer (or 3D depth slice base).`
+// _numLayers : `Number of layers.`
+extern fn void clear_texture(TextureHandle _handle, char _mip, char _numMips, ushort _layer, ushort _numLayers) @cname("bgfx_clear_texture");
+
 // Read back texture content.
 // 
 // @attention Texture must be created with `BGFX_TEXTURE_READ_BACK` flag.

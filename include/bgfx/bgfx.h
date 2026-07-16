@@ -3315,6 +3315,24 @@ namespace bgfx
 		, uint16_t _pitch = UINT16_MAX
 		);
 
+	/// Clear a texture subresource range to zero.
+	///
+	/// @param[in] _handle Texture handle.
+	/// @param[in] _mip First mip level.
+	/// @param[in] _numMips Number of mip levels.
+	/// @param[in] _layer First array layer (or 3D depth slice base).
+	/// @param[in] _numLayers Number of layers.
+	///
+	/// @attention C99's equivalent binding is `bgfx_clear_texture`.
+	///
+	void clear(
+		  TextureHandle _handle
+		, uint8_t _mip = 0
+		, uint8_t _numMips = UINT8_MAX
+		, uint16_t _layer = 0
+		, uint16_t _numLayers = UINT16_MAX
+		);
+
 	/// Read back texture content.
 	///
 	/// @param[in] _handle Texture handle.

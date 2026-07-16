@@ -631,6 +631,7 @@ Textures
 .. doxygenfunction:: bgfx::updateTexture2D
 .. doxygenfunction:: bgfx::updateTexture3D
 .. doxygenfunction:: bgfx::updateTextureCube
+.. doxygenfunction:: bgfx::clear
 .. doxygenfunction:: bgfx::readTexture
 .. doxygenfunction:: bgfx::getDirectAccessPtr
 .. doxygenfunction:: bgfx::destroy(TextureHandle _handle)

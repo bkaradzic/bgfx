@@ -3462,6 +3462,11 @@ namespace bgfx { namespace gl
 			m_textures[_handle.idx].update(_side, _mip, _rect, _z, _depth, _pitch, _mem);
 		}
 
+		void clearTexture(TextureHandle _handle, uint8_t _mip, uint8_t _numMips, uint16_t _layer, uint16_t _numLayers) override
+		{
+			m_textures[_handle.idx].clear(_mip, _numMips, _layer, _numLayers);
+		}
+
 		void readTexture(TextureHandle _handle, void* _data, uint16_t _layer, uint8_t _mip) override
 		{
 			if (m_readBackSupported)
@@ -5838,6 +5843,37 @@ namespace bgfx { namespace gl
 		}
 
 		return true;
+	}
+
+	void TextureGL::clear(uint8_t _mip, uint8_t _numMips, uint16_t _layer, uint16_t _numLayers)
+	{
+		if (NULL == glClearTexSubImage)
+		{
+			return;
+		}
+
+		const bool     is3D     = GL_TEXTURE_3D == m_target;
+		const uint32_t numSides = m_numLayers * (isCubeMap() ? 6 : 1);
+
+		const uint8_t mipBeg = bx::min<uint8_t>(_mip, m_numMips);
+		const uint8_t mipEnd = (UINT8_MAX == _numMips)
+			? m_numMips
+			: bx::min<uint8_t>(m_numMips, uint8_t(_mip + _numMips) )
+			;
+
+		for (uint8_t lod = mipBeg; lod < mipEnd; ++lod)
+		{
+			const GLsizei mipW = GLsizei(bx::max<uint32_t>(1, m_width  >> lod) );
+			const GLsizei mipH = GLsizei(bx::max<uint32_t>(1, m_height >> lod) );
+
+			const GLint   zoffset = is3D ? 0 : GLint(_layer);
+			const GLsizei depth   = is3D
+				? GLsizei(bx::max<uint32_t>(1, m_depth >> lod) )
+				: GLsizei( (UINT16_MAX == _numLayers) ? numSides - _layer : _numLayers)
+				;
+
+			GL_CHECK(glClearTexSubImage(m_id, lod, 0, 0, zoffset, mipW, mipH, depth, m_fmt, m_type, NULL) );
+		}
 	}
 
 	void TextureGL::create(const Memory* _mem, uint64_t _flags, uint8_t _skip)

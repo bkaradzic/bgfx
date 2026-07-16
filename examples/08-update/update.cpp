@@ -232,6 +232,7 @@ bgfx::TextureHandle loadTextureWithUpdate(const char* _filePath, uint64_t _flags
 }
 
 static const uint16_t kTextureSide   = 512;
+static const uint32_t kClearCubeAfterAllocations = 1024;
 static const uint32_t kTexture2dSize = 256;
 
 class ExampleUpdate : public entry::AppI
@@ -471,6 +472,7 @@ public:
 
 		m_hit  = 0;
 		m_miss = 0;
+		m_lastClearHit = 0;
 
 		imguiCreate();
 
@@ -629,6 +631,15 @@ public:
 
 			if (bx::getNow() > m_updateTime)
 			{
+				if (m_hit - m_lastClearHit >= kClearCubeAfterAllocations)
+				{
+					bgfx::clear(m_textureCube[0]);
+					bgfx::clear(m_textureCube[1]);
+					m_cube.reset(kTextureSide);
+					m_quads.clear();
+					m_lastClearHit = m_hit;
+				}
+
 				PackCube face;
 
 				uint16_t bw = bx::max<uint16_t>(1, m_rng.gen()%(kTextureSide/4) );
@@ -1082,6 +1093,7 @@ public:
 
 	uint32_t m_hit;
 	uint32_t m_miss;
+	uint32_t m_lastClearHit;
 
 	uint8_t m_rr;
 	uint8_t m_gg;
