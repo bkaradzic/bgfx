@@ -2951,6 +2951,8 @@ namespace bgfx { namespace gl
 					: 0
 					;
 
+				g_caps.supported |= BGFX_CAPS_TEXTURE_EXTERNAL;
+
 				g_caps.supported |= false
 					|| s_extension[Extension::EXT_texture_array].m_supported
 					|| s_extension[Extension::EXT_gpu_shader4].m_supported
@@ -3452,8 +3454,7 @@ namespace bgfx { namespace gl
 
 		void* createTexture(TextureHandle _handle, const Memory* _mem, uint64_t _flags, uint8_t _skip, uint64_t _external) override
 		{
-			BX_UNUSED(_external);
-			m_textures[_handle.idx].create(_mem, _flags, _skip);
+			m_textures[_handle.idx].create(_mem, _flags, _skip, _external);
 			return NULL;
 		}
 
@@ -5688,7 +5689,7 @@ namespace bgfx { namespace gl
 		GL_CHECK(glDeleteBuffers(1, &m_id) );
 	}
 
-	bool TextureGL::init(GLenum _target, uint32_t _width, uint32_t _height, uint32_t _depth, uint8_t _numMips, uint64_t _flags)
+	bool TextureGL::init(GLenum _target, uint32_t _width, uint32_t _height, uint32_t _depth, uint8_t _numMips, uint64_t _flags, uint64_t _external)
 	{
 		m_target  = _target;
 		m_numMips = _numMips;
@@ -5706,6 +5707,18 @@ namespace bgfx { namespace gl
 			|| _target == GL_TEXTURE_2D_ARRAY
 			|| _target == GL_TEXTURE_CUBE_MAP_ARRAY
 			;
+
+		if (0 != _external)
+		{
+			m_id     = (GLuint)_external;
+			m_flags |= BGFX_SAMPLER_INTERNAL_SHARED;
+
+			const TextureFormatInfo& tfi = s_textureFormat[m_textureFormat];
+			m_fmt  = srgb ? tfi.m_fmtSrgb : tfi.m_fmt;
+			m_type = tfi.m_type;
+
+			return true;
+		}
 
 		if (!writeOnly
 		|| (renderTarget && textureArray) )
@@ -5876,7 +5889,7 @@ namespace bgfx { namespace gl
 		}
 	}
 
-	void TextureGL::create(const Memory* _mem, uint64_t _flags, uint8_t _skip)
+	void TextureGL::create(const Memory* _mem, uint64_t _flags, uint8_t _skip, uint64_t _external)
 	{
 		bimg::ImageContainer imageContainer;
 
@@ -5934,12 +5947,18 @@ namespace bgfx { namespace gl
 				, textureArray ? ti.numLayers : ti.depth
 				, ti.numMips
 				, _flags
+				, _external
 				) )
 			{
 				return;
 			}
 
 			m_numLayers = ti.numLayers;
+
+			if (0 != _external)
+			{
+				return;
+			}
 
 			target = isCubeMap()
 				? GL_TEXTURE_CUBE_MAP_POSITIVE_X
