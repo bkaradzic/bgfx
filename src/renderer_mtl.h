@@ -496,6 +496,7 @@ namespace bgfx { namespace mtl
 			, m_backBufferDepth()
 			, m_backBufferStencil()
 			, m_maxAnisotropy(0)
+			, m_maxFramesInFlight(2)
 		{
 		}
 
@@ -520,6 +521,9 @@ namespace bgfx { namespace mtl
 
 		uint32_t m_maxAnisotropy;
 		void* m_nwh;
+
+		bx::Semaphore m_presentSemaphore;
+		uint32_t      m_maxFramesInFlight;
 	};
 
 	struct FrameBufferMtl
