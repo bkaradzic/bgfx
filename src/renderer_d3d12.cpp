@@ -7935,6 +7935,41 @@ namespace bgfx { namespace d3d12
 
 					const RenderCompute& compute = renderItem.compute;
 
+					for (uint8_t stage = 0; stage < maxComputeBindings; ++stage)
+					{
+						const Binding& bind = renderBind.m_bind[stage];
+						if (kInvalidHandle == bind.m_idx)
+						{
+							continue;
+						}
+
+						switch (bind.m_type)
+						{
+						case Binding::Image:
+							m_textures[bind.m_idx].setState(m_commandList, Access::Read != bind.m_access
+								? D3D12_RESOURCE_STATE_UNORDERED_ACCESS : D3D12_RESOURCE_STATE_GENERIC_READ);
+							break;
+
+						case Binding::Texture:
+							m_textures[bind.m_idx].setState(m_commandList, D3D12_RESOURCE_STATE_GENERIC_READ);
+							break;
+
+						case Binding::IndexBuffer:
+						case Binding::VertexBuffer:
+							{
+								BufferD3D12& buffer = Binding::IndexBuffer == bind.m_type
+									? m_indexBuffers[bind.m_idx]
+									: m_vertexBuffers[bind.m_idx]
+									;
+								buffer.setState(m_commandList, Access::Read != bind.m_access
+									? D3D12_RESOURCE_STATE_UNORDERED_ACCESS
+									: D3D12_RESOURCE_STATE_GENERIC_READ
+									);
+							}
+							break;
+						}
+					}
+
 					ID3D12PipelineState* pso = getPipelineState(key.m_program);
 					if (pso != currentPso)
 					{
@@ -8110,6 +8145,18 @@ namespace bgfx { namespace d3d12
 					{
 						m_commandList->Dispatch(compute.m_numX, compute.m_numY, compute.m_numZ);
 					}
+
+					D3D12_RESOURCE_BARRIER uavBarrier =
+					{
+						.Type  = D3D12_RESOURCE_BARRIER_TYPE_UAV,
+						.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE,
+						.UAV   =
+						{
+							.pResource = NULL,
+						},
+					};
+
+					m_commandList->ResourceBarrier(1, &uavBarrier);
 
 					continue;
 				}
