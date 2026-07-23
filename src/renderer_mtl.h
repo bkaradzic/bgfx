@@ -492,10 +492,12 @@ namespace bgfx { namespace mtl
 			: m_metalLayer(NULL)
 			, m_drawable(NULL)
 			, m_drawableTexture(NULL)
+			, m_screenshotTarget(NULL)
 			, m_backBufferColorMsaa()
 			, m_backBufferDepth()
 			, m_backBufferStencil()
 			, m_maxAnisotropy(0)
+			, m_colorFormat(TextureFormat::Count)
 		{
 		}
 
@@ -513,6 +515,7 @@ namespace bgfx { namespace mtl
 		CA::MetalDrawable* m_drawable;
 
 		MTL::Texture* m_drawableTexture;
+		MTL::Texture* m_screenshotTarget;
 
 		MTL::Texture* m_backBufferColorMsaa;
 		MTL::Texture* m_backBufferDepth;
@@ -520,6 +523,7 @@ namespace bgfx { namespace mtl
 
 		uint32_t m_maxAnisotropy;
 		void* m_nwh;
+		TextureFormat::Enum m_colorFormat;
 	};
 
 	struct FrameBufferMtl
