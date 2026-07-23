@@ -144,8 +144,8 @@ ReturnCode fpp_dodefine(struct Global *global)
       }
       while (global->workp > global->work && type[(unsigned)*(global->workp - 1)] == SPA)
         --global->workp;                /* Erase leading spaces */
-//       if ((ret=save(global, TOK_SEP)))  /* Stuff a delimiter    */
-//         return(ret);
+      if ((ret=fpp_save(global, TOK_SEP)))  /* Stuff a delimiter    */
+        return(ret);
       c = fpp_skipws(global);               /* Eat whitespace       */
       continue;
     }

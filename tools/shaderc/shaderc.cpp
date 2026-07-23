@@ -916,6 +916,10 @@ namespace bgfx
 			m_tagptr->data = (void*)0;
 			m_tagptr++;
 
+			m_tagptr->tag = FPPTAG_RIGHTCONCAT;
+			m_tagptr->data = (void*)1;
+			m_tagptr++;
+
 			m_tagptr->tag = FPPTAG_INPUT_NAME;
 			m_tagptr->data = scratch(_filePath);
 			m_tagptr++;
