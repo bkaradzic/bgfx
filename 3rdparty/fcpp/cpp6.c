@@ -225,13 +225,13 @@ int fpp_catenate(struct Global *global, int lhs_number, ReturnCode *ret)
     }
     c= fpp_get(global);
     if(global->rightconcat) {
-      *ret=fpp_macroid(global, &c);           /* Scan next token      */
+      *ret=fpp_macroid(global, &c);           /* Scan and expand next token */
       if(*ret)
         return(FPP_FALSE);
-    } /* BK - BUG? Parses token into global->tokenbuf but never uses it.
-      else
-      fpp_lookid(global, c);
-      */
+    }
+    else if(type[c] == LET) {
+      fpp_lookid(global, c);                  /* Scan next token into tokenbuf */
+    }
     switch(type[c]) {                   /* What was it?         */
     case LET:                           /* An identifier, ...   */
       if ((int)strlen(token1) + (int)strlen(global->tokenbuf) >= NWORK) {
