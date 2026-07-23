@@ -7856,15 +7856,20 @@ VK_DESTROY
 						typedef xcb_connection_t* (*PFN_XGETXCBCONNECTION)(Display*);
 						PFN_XGETXCBCONNECTION XGetXCBConnection = (PFN_XGETXCBCONNECTION)bx::dlsym(xcbdll, "XGetXCBConnection");
 
-						VkXcbSurfaceCreateInfoKHR sci;
-						sci.sType      = VK_STRUCTURE_TYPE_XCB_SURFACE_CREATE_INFO_KHR;
-						sci.pNext      = NULL;
-						sci.flags      = 0;
-						sci.connection = XGetXCBConnection( (Display*)g_platformData.ndt);
-						sci.window     = bx::narrowCast<xcb_window_t>(uintptr_t(m_nwh) );
-						result = vkCreateXcbSurfaceKHR(instance, &sci, allocatorCb, &m_surface);
-						BX_WARN(VK_SUCCESS == result, "vkCreateXcbSurfaceKHR failed %d: %s.", result, getName(result) );
-
+						if (NULL != XGetXCBConnection)
+						{
+							VkXcbSurfaceCreateInfoKHR sci;
+							sci.sType      = VK_STRUCTURE_TYPE_XCB_SURFACE_CREATE_INFO_KHR;
+							sci.pNext      = NULL;
+							sci.flags      = 0;
+							sci.connection = XGetXCBConnection( (Display*)g_platformData.ndt);
+							if (NULL != sci.connection)
+							{
+								sci.window     = bx::narrowCast<xcb_window_t>(uintptr_t(m_nwh) );
+								result = vkCreateXcbSurfaceKHR(instance, &sci, allocatorCb, &m_surface);
+								BX_WARN(VK_SUCCESS == result, "vkCreateXcbSurfaceKHR failed %d: %s.", result, getName(result) );
+							}
+						}
 						bx::dlclose(xcbdll);
 					}
 				}
