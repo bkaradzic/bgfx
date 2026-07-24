@@ -523,6 +523,34 @@ namespace bgfx { namespace d3d12
 		IID_ID3D12Device1,
 	};
 
+#if BX_PLATFORM_WINDOWS
+	static const char* s_messageCategory[] =
+	{
+		"APPLICATION_DEFINED",
+		"MISCELLANEOUS",
+		"INITIALIZATION",
+		"CLEANUP",
+		"COMPILATION",
+		"STATE_CREATION",
+		"STATE_SETTING",
+		"STATE_GETTING",
+		"RESOURCE_MANIPULATION",
+		"EXECUTION",
+		"SHADER",
+	};
+	static_assert(BX_COUNTOF(s_messageCategory) == D3D12_MESSAGE_CATEGORY_SHADER+1);
+
+	static const char* s_messageSeverity[] =
+	{
+		"CORRUPTION",
+		"ERROR",
+		"WARNING",
+		"INFO",
+		"MESSAGE",
+	};
+	static_assert(BX_COUNTOF(s_messageSeverity) == D3D12_MESSAGE_SEVERITY_MESSAGE+1);
+#endif // BX_PLATFORM_WINDOWS
+
 	struct HeapProperty
 	{
 		enum Enum
@@ -2071,6 +2099,7 @@ namespace bgfx { namespace d3d12
 			}
 
 #if BX_PLATFORM_WINDOWS
+			dumpInfoQueue();
 			DX_RELEASE_W(m_infoQueue, 0);
 #endif // BX_PLATFORM_WINDOWS
 
@@ -3992,6 +4021,49 @@ namespace bgfx { namespace d3d12
 			uint64_t fence = m_cmd.kick();
 			m_cmd.finish(fence, true);
 			m_commandList = _alloc ? m_cmd.alloc() : NULL;
+		}
+
+		void dumpInfoQueue()
+		{
+#if BX_PLATFORM_WINDOWS
+			if (NULL == m_infoQueue)
+			{
+				return;
+			}
+
+			const uint64_t num = m_infoQueue->GetNumStoredMessages();
+
+			if (0 == num)
+			{
+				return;
+			}
+
+			uint8_t buffer[4<<10];
+			D3D12_MESSAGE* msg = (D3D12_MESSAGE*)buffer;
+
+			for (uint64_t ii = 0; ii < num; ++ii)
+			{
+				SIZE_T size = sizeof(buffer);
+
+				if (FAILED(m_infoQueue->GetMessage(ii, msg, &size) ) )
+				{
+					BX_TRACE("D3D12 message %d is too large (%d bytes) to dump.", uint32_t(ii), uint32_t(size) );
+					continue;
+				}
+
+				if (D3D12_MESSAGE_SEVERITY_WARNING >= msg->Severity)
+				{
+					BX_TRACE("D3D12 %s %s #%d: %s"
+						, s_messageSeverity[bx::min<uint32_t>(msg->Severity, BX_COUNTOF(s_messageSeverity)-1)]
+						, s_messageCategory[bx::min<uint32_t>(msg->Category, BX_COUNTOF(s_messageCategory)-1)]
+						, msg->ID
+						, msg->pDescription
+						);
+				}
+			}
+
+			m_infoQueue->ClearStoredMessages();
+#endif // BX_PLATFORM_WINDOWS
 		}
 
 #if !BX_PLATFORM_LINUX
@@ -8926,6 +8998,8 @@ namespace bgfx { namespace d3d12
 
 		m_backBufferColorFence[m_backBufferColorIdx] = kick();
 		m_cmd.m_pipelineStatsSum.reset();
+
+		dumpInfoQueue();
 	}
 
 } /* namespace d3d12 */ } // namespace bgfx
