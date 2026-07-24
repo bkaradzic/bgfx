@@ -4849,7 +4849,12 @@ namespace bgfx { namespace d3d11
 						desc.MipLevels = 1;
 						DX_CHECK(s_renderD3D11->m_device->CreateTexture2D(&desc, NULL, &m_rt2d) );
 
-						desc.BindFlags &= ~(D3D11_BIND_RENDER_TARGET|D3D11_BIND_DEPTH_STENCIL);
+						const bool autoGenMips = 0 != (desc.MiscFlags & D3D11_RESOURCE_MISC_GENERATE_MIPS);
+						desc.BindFlags &= ~D3D11_BIND_DEPTH_STENCIL;
+						if (!autoGenMips)
+						{
+							desc.BindFlags &= ~D3D11_BIND_RENDER_TARGET;
+						}
 						desc.SampleDesc = s_msaa[0];
 						desc.MipLevels  = savedMipLevels;
 					}

@@ -2749,9 +2749,9 @@ namespace bgfx { namespace d3d12
 					DX_RELEASE(m_backBufferColor[ii], 1);
 #endif // BX_PLATFORM_WINDOWS || BX_PLATFORM_WINRT
 				}
-
-				DX_RELEASE(m_backBufferDepthStencil, 0);
 			}
+
+			DX_RELEASE(m_backBufferDepthStencil, 0);
 
 			for (uint32_t ii = 0; ii < BX_COUNTOF(m_frameBuffers); ++ii)
 			{
@@ -4461,7 +4461,12 @@ namespace bgfx { namespace d3d12
 			return;
 		}
 
-		device->CreateUnorderedAccessView(_texture.m_ptr
+		ID3D12Resource* resource = NULL != _texture.m_singleMsaa
+			? _texture.m_singleMsaa
+			: _texture.m_ptr
+			;
+
+		device->CreateUnorderedAccessView(resource
 			, NULL
 			, &uavd
 			, cpuHandle
@@ -6753,11 +6758,28 @@ namespace bgfx { namespace d3d12
 
 		if (autoGenMips
 		&&  renderTarget
-		&&  1 < m_numMips
-		&&  NULL == m_singleMsaa
-		   )
+		&&  1 < m_numMips)
 		{
-			s_renderD3D12->generateMips(_commandList, *this);
+			if (NULL != m_singleMsaa)
+			{
+				setResourceBarrier(_commandList
+					, m_singleMsaa
+					, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE
+					, D3D12_RESOURCE_STATE_UNORDERED_ACCESS
+					);
+
+				s_renderD3D12->generateMips(_commandList, *this);
+
+				setResourceBarrier(_commandList
+					, m_singleMsaa
+					, D3D12_RESOURCE_STATE_UNORDERED_ACCESS
+					, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE
+					);
+			}
+			else
+			{
+				s_renderD3D12->generateMips(_commandList, *this);
+			}
 		}
 	}
 
@@ -6805,8 +6827,11 @@ namespace bgfx { namespace d3d12
 		uint16_t samplerStateIdx = getSamplerState(samplerFlags, BGFX_MAX_COMPUTE_BINDINGS, NULL);
 		_commandList->SetComputeRootDescriptorTable(ComputeRp::Sampler, m_samplerAllocator.get(samplerStateIdx) );
 
-		D3D12_RESOURCE_STATES prevState = _texture.setState(_commandList, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
-		BX_UNUSED(prevState);
+		if (NULL == _texture.m_singleMsaa)
+		{
+			D3D12_RESOURCE_STATES prevState = _texture.setState(_commandList, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+			BX_UNUSED(prevState);
+		}
 
 		const uint32_t numSlices = (TextureD3D12::TextureCube == _texture.m_type ? 6 : 1)
 			* bx::max<uint32_t>(_texture.m_numLayers, 1)
@@ -6902,7 +6927,7 @@ namespace bgfx { namespace d3d12
 
 			D3D12_RESOURCE_BARRIER barrier = {};
 			barrier.Type           = D3D12_RESOURCE_BARRIER_TYPE_UAV;
-			barrier.UAV.pResource  = _texture.m_ptr;
+			barrier.UAV.pResource  = NULL != _texture.m_singleMsaa ? _texture.m_singleMsaa : _texture.m_ptr;
 			_commandList->ResourceBarrier(1, &barrier);
 
 			topMip += numMips;
@@ -7548,7 +7573,18 @@ namespace bgfx { namespace d3d12
 			{
 				if (D3D12_RESOURCE_STATES(UINT32_MAX) != state)
 				{
-					m_textures[currentSrc.idx].setState(m_commandList, state);
+					TextureD3D12& prev = m_textures[currentSrc.idx];
+
+					if (NULL != prev.m_singleMsaa)
+					{
+						setResourceBarrier(m_commandList
+							, prev.m_singleMsaa
+							, D3D12_RESOURCE_STATE_COPY_SOURCE
+							, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE
+							);
+					}
+
+					prev.setState(m_commandList, state);
 				}
 
 				currentSrc = blit.m_src.to<TextureHandle>();
@@ -7633,22 +7669,23 @@ namespace bgfx { namespace d3d12
 					, depthStencil ? NULL : &box
 					);
 			}
-
-			if (NULL != src.m_singleMsaa)
-			{
-				setResourceBarrier(
-					  m_commandList
-					, src.m_singleMsaa
-					, D3D12_RESOURCE_STATE_COPY_SOURCE
-					, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE
-					);
-			}
 		}
 
 		if (isValid(currentSrc)
 		&&  D3D12_RESOURCE_STATES(UINT32_MAX) != state)
 		{
-			m_textures[currentSrc.idx].setState(m_commandList, state);
+			TextureD3D12& src = m_textures[currentSrc.idx];
+
+			if (NULL != src.m_singleMsaa)
+			{
+				setResourceBarrier(m_commandList
+					, src.m_singleMsaa
+					, D3D12_RESOURCE_STATE_COPY_SOURCE
+					, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE
+					);
+			}
+
+			src.setState(m_commandList, state);
 		}
 	}
 

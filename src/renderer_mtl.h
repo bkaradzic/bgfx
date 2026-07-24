@@ -565,9 +565,9 @@ namespace bgfx { namespace mtl
 		uint32_t m_height;
 		uint16_t m_denseIdx;
 
-		TextureHandle m_colorHandle[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS-1];
+		TextureHandle m_colorHandle[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
 		TextureHandle m_depthHandle;
-		Attachment m_colorAttachment[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS-1];
+		Attachment m_colorAttachment[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
 		Attachment m_depthAttachment;
 		uint8_t m_num; // number of color handles
 	};
