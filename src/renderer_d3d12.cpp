@@ -2297,11 +2297,21 @@ namespace bgfx { namespace d3d12
 			const uint32_t srcWidth  = bx::max(1u, texture.m_width >>_mip);
 			const uint32_t srcHeight = bx::max(1u, texture.m_height>>_mip);
 
+			const bimg::ImageBlockInfo& blockInfo = bimg::getBlockInfo(bimg::TextureFormat::Enum(texture.m_textureFormat) );
+			const uint32_t blockWidth  = bx::max<uint32_t>(1, blockInfo.blockWidth);
+			const uint32_t blockHeight = bx::max<uint32_t>(1, blockInfo.blockHeight);
+
+			const uint32_t alignedWidth  = bx::alignUp(srcWidth,  blockWidth);
+			const uint32_t alignedHeight = bx::alignUp(srcHeight, blockHeight);
+
+			layout.Footprint.Width  = alignedWidth;
+			layout.Footprint.Height = alignedHeight;
+
 			D3D12_BOX box;
 			box.left   = 0;
 			box.top    = 0;
-			box.right  = srcWidth;
-			box.bottom = srcHeight;
+			box.right  = alignedWidth;
+			box.bottom = alignedHeight;
 			box.front  = 0;
 			box.back   = 1;
 
@@ -2313,9 +2323,6 @@ namespace bgfx { namespace d3d12
 			finish();
 			m_commandList = m_cmd.alloc();
 
-			const bimg::ImageBlockInfo& blockInfo = bimg::getBlockInfo(bimg::TextureFormat::Enum(texture.m_textureFormat) );
-			const uint32_t blockWidth  = bx::max<uint32_t>(1, blockInfo.blockWidth);
-			const uint32_t blockHeight = bx::max<uint32_t>(1, blockInfo.blockHeight);
 			uint8_t* dst      = (uint8_t*)_data;
 			uint32_t dstPitch = ( (srcWidth + blockWidth - 1)/blockWidth)*blockInfo.blockSize;
 			uint32_t numBlockRows = (srcHeight + blockHeight - 1)/blockHeight;
