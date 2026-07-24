@@ -7922,10 +7922,11 @@ namespace bgfx { namespace gl
 					profiler.begin(view);
 
 					viewState.m_rect = _render->m_view[view].m_rect;
+					const Rect& clippedRect = _render->m_view[view].m_clippedRect;
 
 					const Rect& scissorRect = _render->m_view[view].m_scissor;
 					viewHasScissor  = !scissorRect.isZero();
-					viewScissorRect = viewHasScissor ? scissorRect : viewState.m_rect;
+					viewScissorRect = viewHasScissor ? scissorRect : clippedRect;
 
 					GL_CHECK(glViewport(viewState.m_rect.m_x
 						, resolutionHeight-viewState.m_rect.m_height-viewState.m_rect.m_y
@@ -7938,7 +7939,7 @@ namespace bgfx { namespace gl
 
 					if (BGFX_CLEAR_NONE != (clear.m_flags & BGFX_CLEAR_MASK) )
 					{
-						clearQuad(_clearQuad, viewState.m_rect, clear, resolutionHeight, _render->m_colorPalette);
+						clearQuad(_clearQuad, clippedRect, clear, resolutionHeight, _render->m_colorPalette);
 					}
 
 					GL_CHECK(glDisable(GL_STENCIL_TEST) );

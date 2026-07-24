@@ -4317,8 +4317,8 @@ WGPU_IMPORT
 				.mipLevel = _mip,
 				.origin =
 				{
-					.x = _rect.m_x,
-					.y = _rect.m_y,
+					.x = uint32_t(_rect.m_x),
+					.y = uint32_t(_rect.m_y),
 					.z = originZ,
 				},
 				.aspect = WGPUTextureAspect_All,
@@ -5949,21 +5949,21 @@ m_resolution.formatColor = TextureFormat::BGRA8;
 						;
 
 					viewState.m_rect = _render->m_view[view].m_rect;
-					Rect viewRect    = _render->m_view[view].m_rect;
+					const Rect& viewRect    = _render->m_view[view].m_rect;
+					const Rect& clippedRect = _render->m_view[view].m_clippedRect;
 					Rect scissorRect = _render->m_view[view].m_scissor;
 
 					const Rect fbRect(0, 0, bx::narrowCast<uint16_t>(fb.m_width), bx::narrowCast<uint16_t>(fb.m_height) );
-					viewRect.intersect(fbRect);
 					scissorRect.intersect(fbRect);
 
 					viewHasScissor   = !scissorRect.isZero();
-					viewScissorRect  = viewHasScissor ? scissorRect : viewRect;
+					viewScissorRect  = viewHasScissor ? scissorRect : clippedRect;
 					restoreScissor   = false;
 
 					const Clear& clr = _render->m_view[view].m_clear;
 
 					const bool needClear  = BGFX_CLEAR_NONE != ( (BGFX_CLEAR_COLOR|BGFX_CLEAR_DEPTH|BGFX_CLEAR_STENCIL) & clr.m_flags);
-					const bool clearWhole = viewRect.isEqual(fbRect);
+					const bool clearWhole = clippedRect.isEqual(fbRect);
 
 					WGPURenderPassColorAttachment colorAttachment[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
 
@@ -6083,13 +6083,13 @@ m_resolution.formatColor = TextureFormat::BGRA8;
 
 					if (!clearWhole && needClear)
 					{
-						clearQuad(renderPassEncoder, fbh, msaaCount, _clearQuad, viewRect, clr, _render->m_colorPalette);
+						clearQuad(renderPassEncoder, fbh, msaaCount, _clearQuad, clippedRect, clr, _render->m_colorPalette);
 					}
 
 					wgpuRenderPassEncoderSetScissorRect(
 						  renderPassEncoder
-						, viewScissorRect.m_x
-						, viewScissorRect.m_y
+						, uint32_t(viewScissorRect.m_x)
+						, uint32_t(viewScissorRect.m_y)
 						, viewScissorRect.m_width
 						, viewScissorRect.m_height
 						);
@@ -6440,8 +6440,8 @@ m_resolution.formatColor = TextureFormat::BGRA8;
 
 							wgpuRenderPassEncoderSetScissorRect(
 								  renderPassEncoder
-								, viewScissorRect.m_x
-								, viewScissorRect.m_y
+								, uint32_t(viewScissorRect.m_x)
+								, uint32_t(viewScissorRect.m_y)
 								, viewScissorRect.m_width
 								, viewScissorRect.m_height
 								);
@@ -6459,8 +6459,8 @@ m_resolution.formatColor = TextureFormat::BGRA8;
 
 						wgpuRenderPassEncoderSetScissorRect(
 							  renderPassEncoder
-							, scissorRect.m_x
-							, scissorRect.m_y
+							, uint32_t(scissorRect.m_x)
+							, uint32_t(scissorRect.m_y)
 							, scissorRect.m_width
 							, scissorRect.m_height
 							);

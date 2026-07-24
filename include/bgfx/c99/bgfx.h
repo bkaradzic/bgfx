@@ -2570,25 +2570,29 @@ BGFX_C_API void bgfx_set_view_name(bgfx_view_id_t _id, const char* _name, int32_
  * Set view rectangle. Draw primitive outside view will be clipped.
  *
  * @param[in] _id View id.
- * @param[in] _x Position x from the left corner of the window.
- * @param[in] _y Position y from the top corner of the window.
+ * @param[in] _x Position x from the left corner of the window. Can be
+ *  negative to place view origin outside of the window.
+ * @param[in] _y Position y from the top corner of the window. Can be
+ *  negative to place view origin outside of the window.
  * @param[in] _width Width of view port region.
  * @param[in] _height Height of view port region.
  *
  */
-BGFX_C_API void bgfx_set_view_rect(bgfx_view_id_t _id, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height);
+BGFX_C_API void bgfx_set_view_rect(bgfx_view_id_t _id, int16_t _x, int16_t _y, uint16_t _width, uint16_t _height);
 
 /**
  * Set view rectangle. Draw primitive outside view will be clipped.
  *
  * @param[in] _id View id.
- * @param[in] _x Position x from the left corner of the window.
- * @param[in] _y Position y from the top corner of the window.
+ * @param[in] _x Position x from the left corner of the window. Can be
+ *  negative to place view origin outside of the window.
+ * @param[in] _y Position y from the top corner of the window. Can be
+ *  negative to place view origin outside of the window.
  * @param[in] _ratio Width and height will be set in respect to back-buffer size.
  *  See: `BackbufferRatio::Enum`.
  *
  */
-BGFX_C_API void bgfx_set_view_rect_ratio(bgfx_view_id_t _id, uint16_t _x, uint16_t _y, bgfx_backbuffer_ratio_t _ratio);
+BGFX_C_API void bgfx_set_view_rect_ratio(bgfx_view_id_t _id, int16_t _x, int16_t _y, bgfx_backbuffer_ratio_t _ratio);
 
 /**
  * Set view scissor. Draw primitive outside view will be clipped. When
@@ -4314,8 +4318,8 @@ struct bgfx_interface_vtbl
     void (*set_palette_color_rgba32f)(uint8_t _index, float _r, float _g, float _b, float _a);
     void (*set_palette_color_rgba8)(uint8_t _index, uint32_t _rgba);
     void (*set_view_name)(bgfx_view_id_t _id, const char* _name, int32_t _len);
-    void (*set_view_rect)(bgfx_view_id_t _id, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height);
-    void (*set_view_rect_ratio)(bgfx_view_id_t _id, uint16_t _x, uint16_t _y, bgfx_backbuffer_ratio_t _ratio);
+    void (*set_view_rect)(bgfx_view_id_t _id, int16_t _x, int16_t _y, uint16_t _width, uint16_t _height);
+    void (*set_view_rect_ratio)(bgfx_view_id_t _id, int16_t _x, int16_t _y, bgfx_backbuffer_ratio_t _ratio);
     void (*set_view_scissor)(bgfx_view_id_t _id, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height);
     void (*set_view_clear)(bgfx_view_id_t _id, uint16_t _flags, uint32_t _rgba, float _depth, uint8_t _stencil);
     void (*set_view_clear_mrt)(bgfx_view_id_t _id, uint16_t _flags, float _depth, uint8_t _stencil, uint8_t _c0, uint8_t _c1, uint8_t _c2, uint8_t _c3, uint8_t _c4, uint8_t _c5, uint8_t _c6, uint8_t _c7);

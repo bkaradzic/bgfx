@@ -1716,7 +1716,8 @@ namespace bgfx
 				}
 			}
 
-			view.m_rect.intersect(rect);
+			view.m_clippedRect = view.m_rect;
+			view.m_clippedRect.intersect(rect);
 
 			if (!view.m_scissor.isZero() )
 			{
@@ -6072,13 +6073,13 @@ namespace bgfx
 		s_ctx->setViewName(_id, bx::StringView(_name, _len) );
 	}
 
-	void setViewRect(ViewId _id, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height)
+	void setViewRect(ViewId _id, int16_t _x, int16_t _y, uint16_t _width, uint16_t _height)
 	{
 		BX_ASSERT(checkView(_id), "Invalid view id: %d", _id);
 		s_ctx->setViewRect(_id, _x, _y, _width, _height);
 	}
 
-	void setViewRect(ViewId _id, uint16_t _x, uint16_t _y, BackbufferRatio::Enum _ratio)
+	void setViewRect(ViewId _id, int16_t _x, int16_t _y, BackbufferRatio::Enum _ratio)
 	{
 		BX_ASSERT(checkView(_id), "Invalid view id: %d", _id);
 
