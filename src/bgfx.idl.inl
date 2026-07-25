@@ -667,12 +667,12 @@ BGFX_C_API void bgfx_set_view_name(bgfx_view_id_t _id, const char* _name, int32_
 	bgfx::setViewName((bgfx::ViewId)_id, _name, _len);
 }
 
-BGFX_C_API void bgfx_set_view_rect(bgfx_view_id_t _id, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height)
+BGFX_C_API void bgfx_set_view_rect(bgfx_view_id_t _id, int16_t _x, int16_t _y, uint16_t _width, uint16_t _height)
 {
 	bgfx::setViewRect((bgfx::ViewId)_id, _x, _y, _width, _height);
 }
 
-BGFX_C_API void bgfx_set_view_rect_ratio(bgfx_view_id_t _id, uint16_t _x, uint16_t _y, bgfx_backbuffer_ratio_t _ratio)
+BGFX_C_API void bgfx_set_view_rect_ratio(bgfx_view_id_t _id, int16_t _x, int16_t _y, bgfx_backbuffer_ratio_t _ratio)
 {
 	bgfx::setViewRect((bgfx::ViewId)_id, _x, _y, (bgfx::BackbufferRatio::Enum)_ratio);
 }

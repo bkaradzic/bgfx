@@ -5334,9 +5334,10 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 					if (!isCompute)
 					{
+						const Rect& clippedRect = _render->m_view[view].m_clippedRect;
 						const Rect& scissorRect = _render->m_view[view].m_scissor;
 						viewHasScissor = !scissorRect.isZero();
-						viewScissorRect = viewHasScissor ? scissorRect : viewState.m_rect;
+						viewScissorRect = viewHasScissor ? scissorRect : clippedRect;
 						Clear& clr = _render->m_view[view].m_clear;
 
 						const Rect viewRect = viewState.m_rect;
@@ -5525,10 +5526,10 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 							rce->setViewport(vp);
 
 							MTL::ScissorRect sciRect = {
-								viewState.m_rect.m_x,
-								viewState.m_rect.m_y,
-								viewState.m_rect.m_width,
-								viewState.m_rect.m_height
+								NS::UInteger(clippedRect.m_x),
+								NS::UInteger(clippedRect.m_y),
+								NS::UInteger(clippedRect.m_width),
+								NS::UInteger(clippedRect.m_height)
 							};
 							rce->setScissorRect(sciRect);
 						}
@@ -5536,7 +5537,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 						if (BGFX_CLEAR_NONE != (clr.m_flags & BGFX_CLEAR_MASK)
 							&& !clearWithRenderPass)
 						{
-							clearQuad(_clearQuad, viewState.m_rect, clr, _render->m_colorPalette);
+							clearQuad(_clearQuad, clippedRect, clr, _render->m_colorPalette);
 						}
 					}
 				}
@@ -5764,30 +5765,21 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 					MTL::ScissorRect rc;
 					if (UINT16_MAX == scissor)
 					{
-						if (viewHasScissor)
-						{
-							rc.x   = viewScissorRect.m_x;
-							rc.y    = viewScissorRect.m_y;
-							rc.width  = viewScissorRect.m_width;
-							rc.height = viewScissorRect.m_height;
-						}
-						else
-						{   // can't disable: set to view rect
-							rc.x   = viewState.m_rect.m_x;
-							rc.y    = viewState.m_rect.m_y;
-							rc.width  = viewState.m_rect.m_width;
-							rc.height = viewState.m_rect.m_height;
-						}
+						// Can't disable scissor, so it's set to view scissor rect.
+						rc.x      = NS::UInteger(viewScissorRect.m_x);
+						rc.y      = NS::UInteger(viewScissorRect.m_y);
+						rc.width  = NS::UInteger(viewScissorRect.m_width);
+						rc.height = NS::UInteger(viewScissorRect.m_height);
 					}
 					else
 					{
 						Rect scissorRect;
 						scissorRect.setIntersect(viewScissorRect, _render->m_frameCache.m_rectCache.m_cache[scissor]);
 
-						rc.x      = scissorRect.m_x;
-						rc.y      = scissorRect.m_y;
-						rc.width  = scissorRect.m_width;
-						rc.height = scissorRect.m_height;
+						rc.x      = NS::UInteger(scissorRect.m_x);
+						rc.y      = NS::UInteger(scissorRect.m_y);
+						rc.width  = NS::UInteger(scissorRect.m_width);
+						rc.height = NS::UInteger(scissorRect.m_height);
 					}
 
 					rce->setScissorRect(rc);

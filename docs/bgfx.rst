@@ -252,8 +252,8 @@ A View's state is preserved between frames.
     :members:
 
 .. doxygenfunction:: bgfx::setViewName
-.. doxygenfunction:: bgfx::setViewRect(ViewId _id, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height)
-.. doxygenfunction:: bgfx::setViewRect(ViewId _id, uint16_t _x, uint16_t _y, BackbufferRatio::Enum _ratio)
+.. doxygenfunction:: bgfx::setViewRect(ViewId _id, int16_t _x, int16_t _y, uint16_t _width, uint16_t _height)
+.. doxygenfunction:: bgfx::setViewRect(ViewId _id, int16_t _x, int16_t _y, BackbufferRatio::Enum _ratio)
 .. doxygenfunction:: bgfx::setViewScissor
 .. doxygenfunction:: bgfx::setViewClear(ViewId _id, uint16_t _flags, uint32_t _rgba = 0x000000ff, float _depth = 1.0f, uint8_t _stencil = 0)
 .. doxygenfunction:: bgfx::setViewClear(ViewId _id, uint16_t _flags, float _depth, uint8_t _stencil, uint8_t _c0 = UINT8_MAX, uint8_t _c1 = UINT8_MAX, uint8_t _c2 = UINT8_MAX, uint8_t _c3 = UINT8_MAX, uint8_t _c4 = UINT8_MAX, uint8_t _c5 = UINT8_MAX, uint8_t _c6 = UINT8_MAX, uint8_t _c7 = UINT8_MAX)

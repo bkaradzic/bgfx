@@ -3042,18 +3042,18 @@ extern fn void set_view_name(ushort _id, ZString _name, int _len) @cname("bgfx_s
 
 // Set view rectangle. Draw primitive outside view will be clipped.
 // _id : `View id.`
-// _x : `Position x from the left corner of the window.`
-// _y : `Position y from the top corner of the window.`
+// _x : `Position x from the left corner of the window. Can be negative to place view origin outside of the window.`
+// _y : `Position y from the top corner of the window. Can be negative to place view origin outside of the window.`
 // _width : `Width of view port region.`
 // _height : `Height of view port region.`
-extern fn void set_view_rect(ushort _id, ushort _x, ushort _y, ushort _width, ushort _height) @cname("bgfx_set_view_rect");
+extern fn void set_view_rect(ushort _id, short _x, short _y, ushort _width, ushort _height) @cname("bgfx_set_view_rect");
 
 // Set view rectangle. Draw primitive outside view will be clipped.
 // _id : `View id.`
-// _x : `Position x from the left corner of the window.`
-// _y : `Position y from the top corner of the window.`
+// _x : `Position x from the left corner of the window. Can be negative to place view origin outside of the window.`
+// _y : `Position y from the top corner of the window. Can be negative to place view origin outside of the window.`
 // _ratio : `Width and height will be set in respect to back-buffer size. See: `BackbufferRatio::Enum`.`
-extern fn void set_view_rect_ratio(ushort _id, ushort _x, ushort _y, BackbufferRatio _ratio) @cname("bgfx_set_view_rect_ratio");
+extern fn void set_view_rect_ratio(ushort _id, short _x, short _y, BackbufferRatio _ratio) @cname("bgfx_set_view_rect_ratio");
 
 // Set view scissor. Draw primitive outside view will be clipped. When
 // _x, _y, _width and _height are set to 0, scissor will be disabled.

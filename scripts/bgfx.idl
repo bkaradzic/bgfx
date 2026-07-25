@@ -1,12 +1,13 @@
 -- vim: syntax=lua
 -- bgfx interface
 
-version(151)
+version(152)
 
 typedef "bool"
 typedef "char"
 typedef "float"
 typedef "int8_t"
+typedef "int16_t"
 typedef "int32_t"
 typedef "int64_t"
 typedef "uint8_t"
@@ -2303,8 +2304,10 @@ func.setViewName { section = "Views" }
 func.setViewRect { section = "Views" }
 	"void"
 	.id     "ViewId"   --- View id.
-	.x      "uint16_t" --- Position x from the left corner of the window.
-	.y      "uint16_t" --- Position y from the top corner of the window.
+	.x      "int16_t"  --- Position x from the left corner of the window. Can be
+	                   --- negative to place view origin outside of the window.
+	.y      "int16_t"  --- Position y from the top corner of the window. Can be
+	                   --- negative to place view origin outside of the window.
 	.width  "uint16_t" --- Width of view port region.
 	.height "uint16_t" --- Height of view port region.
 
@@ -2312,8 +2315,10 @@ func.setViewRect { section = "Views" }
 func.setViewRect { cname = "set_view_rect_ratio", section = "Views" }
 	"void"
 	.id    "ViewId"                --- View id.
-	.x     "uint16_t"              --- Position x from the left corner of the window.
-	.y     "uint16_t"              --- Position y from the top corner of the window.
+	.x     "int16_t"               --- Position x from the left corner of the window. Can be
+	                               --- negative to place view origin outside of the window.
+	.y     "int16_t"               --- Position y from the top corner of the window. Can be
+	                               --- negative to place view origin outside of the window.
 	.ratio "BackbufferRatio::Enum" --- Width and height will be set in respect to back-buffer size.
 	                               --- See: `BackbufferRatio::Enum`.
 

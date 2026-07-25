@@ -4247,25 +4247,25 @@ public static class bgfx
 	/// </summary>
 	///
 	/// <param name="_id">View id.</param>
-	/// <param name="_x">Position x from the left corner of the window.</param>
-	/// <param name="_y">Position y from the top corner of the window.</param>
+	/// <param name="_x">Position x from the left corner of the window. Can be negative to place view origin outside of the window.</param>
+	/// <param name="_y">Position y from the top corner of the window. Can be negative to place view origin outside of the window.</param>
 	/// <param name="_width">Width of view port region.</param>
 	/// <param name="_height">Height of view port region.</param>
 	///
 	[LinkName("bgfx_set_view_rect")]
-	public static extern void set_view_rect(ViewId _id, uint16 _x, uint16 _y, uint16 _width, uint16 _height);
+	public static extern void set_view_rect(ViewId _id, int16 _x, int16 _y, uint16 _width, uint16 _height);
 	
 	/// <summary>
 	/// Set view rectangle. Draw primitive outside view will be clipped.
 	/// </summary>
 	///
 	/// <param name="_id">View id.</param>
-	/// <param name="_x">Position x from the left corner of the window.</param>
-	/// <param name="_y">Position y from the top corner of the window.</param>
+	/// <param name="_x">Position x from the left corner of the window. Can be negative to place view origin outside of the window.</param>
+	/// <param name="_y">Position y from the top corner of the window. Can be negative to place view origin outside of the window.</param>
 	/// <param name="_ratio">Width and height will be set in respect to back-buffer size. See: `BackbufferRatio::Enum`.</param>
 	///
 	[LinkName("bgfx_set_view_rect_ratio")]
-	public static extern void set_view_rect_ratio(ViewId _id, uint16 _x, uint16 _y, BackbufferRatio _ratio);
+	public static extern void set_view_rect_ratio(ViewId _id, int16 _x, int16 _y, BackbufferRatio _ratio);
 	
 	/// <summary>
 	/// Set view scissor. Draw primitive outside view will be clipped. When

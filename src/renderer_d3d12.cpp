@@ -7983,9 +7983,10 @@ namespace bgfx { namespace d3d12
 
 					viewState.m_rect = renderView.m_rect;
 					const Rect& rect        = renderView.m_rect;
+					const Rect& clippedRect = renderView.m_clippedRect;
 					const Rect& scissorRect = renderView.m_scissor;
 					viewHasScissor  = !scissorRect.isZero();
-					viewScissorRect = viewHasScissor ? scissorRect : rect;
+					viewScissorRect = viewHasScissor ? scissorRect : clippedRect;
 
 					D3D12_VIEWPORT vp;
 					vp.TopLeftX = rect.m_x;
@@ -8008,8 +8009,8 @@ namespace bgfx { namespace d3d12
 
 					if (BGFX_CLEAR_NONE != clr.m_flags)
 					{
-						Rect clearRect = rect;
-						clearRect.setIntersect(rect, viewScissorRect);
+						Rect clearRect;
+						clearRect.setIntersect(clippedRect, viewScissorRect);
 						clearQuad(clearRect, clr, _render->m_colorPalette);
 					}
 

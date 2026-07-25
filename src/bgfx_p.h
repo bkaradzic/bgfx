@@ -515,7 +515,7 @@ namespace bgfx
 		{
 		}
 
-		Rect(uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height)
+		Rect(int16_t _x, int16_t _y, uint16_t _width, uint16_t _height)
 			: m_x(_x)
 			, m_y(_y)
 			, m_width(_width)
@@ -557,7 +557,7 @@ namespace bgfx
 				;
 		}
 
-		void set(uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height)
+		void set(int16_t _x, int16_t _y, uint16_t _width, uint16_t _height)
 		{
 			m_x      = _x;
 			m_y      = _y;
@@ -567,14 +567,14 @@ namespace bgfx
 
 		void setIntersect(const Rect& _a, const Rect& _b)
 		{
-			const uint16_t sx = bx::max<uint16_t>(_a.m_x, _b.m_x);
-			const uint16_t sy = bx::max<uint16_t>(_a.m_y, _b.m_y);
-			const uint16_t ex = bx::min<uint16_t>(_a.m_x + _a.m_width,  _b.m_x + _b.m_width );
-			const uint16_t ey = bx::min<uint16_t>(_a.m_y + _a.m_height, _b.m_y + _b.m_height);
-			m_x      = sx;
-			m_y      = sy;
-			m_width  = (uint16_t)bx::satSub<uint32_t>(ex, sx);
-			m_height = (uint16_t)bx::satSub<uint32_t>(ey, sy);
+			const int32_t sx = bx::max<int32_t>(_a.m_x, _b.m_x);
+			const int32_t sy = bx::max<int32_t>(_a.m_y, _b.m_y);
+			const int32_t ex = bx::min<int32_t>(_a.m_x + _a.m_width,  _b.m_x + _b.m_width );
+			const int32_t ey = bx::min<int32_t>(_a.m_y + _a.m_height, _b.m_y + _b.m_height);
+			m_x      = int16_t(sx);
+			m_y      = int16_t(sy);
+			m_width  = uint16_t(bx::max<int32_t>(ex - sx, 0) );
+			m_height = uint16_t(bx::max<int32_t>(ey - sy, 0) );
 		}
 
 		void intersect(const Rect& _a)
@@ -582,8 +582,8 @@ namespace bgfx
 			setIntersect(*this, _a);
 		}
 
-		uint16_t m_x;
-		uint16_t m_y;
+		int16_t  m_x;
+		int16_t  m_y;
 		uint16_t m_width;
 		uint16_t m_height;
 	};
@@ -1725,8 +1725,8 @@ namespace bgfx
 
 			Rect& rect = m_cache[first];
 
-			rect.m_x = _x;
-			rect.m_y = _y;
+			rect.m_x = bx::narrowCast<int16_t>(_x);
+			rect.m_y = bx::narrowCast<int16_t>(_y);
 			rect.m_width = _width;
 			rect.m_height = _height;
 
@@ -2443,12 +2443,16 @@ namespace bgfx
 			setTransform(NULL, NULL);
 		}
 
-		void setRect(uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height)
+		void setRect(int16_t _x, int16_t _y, uint16_t _width, uint16_t _height)
 		{
-			m_rect.m_x      = uint16_t(bx::max<int16_t>(int16_t(_x), 0) );
-			m_rect.m_y      = uint16_t(bx::max<int16_t>(int16_t(_y), 0) );
+			m_rect.m_x      = _x;
+			m_rect.m_y      = _y;
 			m_rect.m_width  = bx::max<uint16_t>(_width,  1);
 			m_rect.m_height = bx::max<uint16_t>(_height, 1);
+
+			// Frame::sort clips this against the render target. Default to
+			// unclipped, so it's never stale when sort didn't run.
+			m_clippedRect = m_rect;
 		}
 
 		void setScissor(uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height)
@@ -2512,6 +2516,7 @@ namespace bgfx
 
 		Clear   m_clear;
 		Rect    m_rect;
+		Rect    m_clippedRect;
 		Rect    m_scissor;
 		Matrix4 m_view;
 		Matrix4 m_proj;
@@ -5886,8 +5891,8 @@ namespace bgfx
 			cmdbuf.write(_side);
 			cmdbuf.write(_mip);
 			Rect rect;
-			rect.m_x = _x;
-			rect.m_y = _y;
+			rect.m_x = bx::narrowCast<int16_t>(_x);
+			rect.m_y = bx::narrowCast<int16_t>(_y);
 			rect.m_width  = _width;
 			rect.m_height = _height;
 			cmdbuf.write(rect);
@@ -6278,7 +6283,7 @@ namespace bgfx
 			cmdbuf.write(_name);
 		}
 
-		BGFX_API_FUNC(void setViewRect(ViewId _id, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height) )
+		BGFX_API_FUNC(void setViewRect(ViewId _id, int16_t _x, int16_t _y, uint16_t _width, uint16_t _height) )
 		{
 			m_view[_id].setRect(_x, _y, _width, _height);
 		}

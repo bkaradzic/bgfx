@@ -9,7 +9,7 @@ import bindbc.common.types: c_int64, c_uint64, va_list;
 import bindbc.bgfx.config;
 static import bgfx.impl;
 
-enum uint apiVersion = 151;
+enum uint apiVersion = 152;
 
 alias ViewID = ushort;
 
@@ -3347,23 +3347,27 @@ mixin(joinFnBinds((){
 		* Set view rectangle. Draw primitive outside view will be clipped.
 		Params:
 			id = View id.
-			x = Position x from the left corner of the window.
-			y = Position y from the top corner of the window.
+			x = Position x from the left corner of the window. Can be
+		negative to place view origin outside of the window.
+			y = Position y from the top corner of the window. Can be
+		negative to place view origin outside of the window.
 			width = Width of view port region.
 			height = Height of view port region.
 		*/
-		{q{void}, q{setViewRect}, q{ViewID id, ushort x, ushort y, ushort width, ushort height}, ext: `C++, "bgfx"`},
+		{q{void}, q{setViewRect}, q{ViewID id, short x, short y, ushort width, ushort height}, ext: `C++, "bgfx"`},
 		
 		/**
 		* Set view rectangle. Draw primitive outside view will be clipped.
 		Params:
 			id = View id.
-			x = Position x from the left corner of the window.
-			y = Position y from the top corner of the window.
+			x = Position x from the left corner of the window. Can be
+		negative to place view origin outside of the window.
+			y = Position y from the top corner of the window. Can be
+		negative to place view origin outside of the window.
 			ratio = Width and height will be set in respect to back-buffer size.
 		See: `BackbufferRatio::Enum`.
 		*/
-		{q{void}, q{setViewRect}, q{ViewID id, ushort x, ushort y, bgfx.impl.BackbufferRatio.Enum ratio}, ext: `C++, "bgfx"`},
+		{q{void}, q{setViewRect}, q{ViewID id, short x, short y, bgfx.impl.BackbufferRatio.Enum ratio}, ext: `C++, "bgfx"`},
 		
 		/**
 		* Set view scissor. Draw primitive outside view will be clipped. When

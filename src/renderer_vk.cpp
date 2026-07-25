@@ -4619,11 +4619,13 @@ VK_IMPORT_DEVICE
 
 		void clearQuad(const Rect& _rect, const Clear& _clear, const float _palette[][4])
 		{
+			const Rect clearRect = _rect;
+
 			VkClearRect rect[1];
-			rect[0].rect.offset.x      = _rect.m_x;
-			rect[0].rect.offset.y      = _rect.m_y;
-			rect[0].rect.extent.width  = _rect.m_width;
-			rect[0].rect.extent.height = _rect.m_height;
+			rect[0].rect.offset.x      = clearRect.m_x;
+			rect[0].rect.offset.y      = clearRect.m_y;
+			rect[0].rect.extent.width  = clearRect.m_width;
+			rect[0].rect.extent.height = clearRect.m_height;
 			rect[0].baseArrayLayer = 0;
 			rect[0].layerCount     = 1;
 
@@ -9719,32 +9721,19 @@ VK_DESTROY
 						VkRenderPass renderPass = fb.getRenderPass(_render->m_view[view].m_clear.m_flags);
 
 						viewState.m_rect = _render->m_view[view].m_rect;
-						Rect rect        = _render->m_view[view].m_rect;
+						const Rect& rect        = _render->m_view[view].m_rect;
+						const Rect& renderArea  = _render->m_view[view].m_clippedRect;
 						Rect scissorRect = _render->m_view[view].m_scissor;
 						viewHasScissor  = !scissorRect.isZero();
-						viewScissorRect = viewHasScissor ? scissorRect : rect;
+						viewScissorRect = viewHasScissor ? scissorRect : renderArea;
 						restoreScissor = false;
-
-						// Clamp the rect to what's valid according to Vulkan.
-						rect.m_width  = bx::min(rect.m_width,  bx::narrowCast<uint16_t>(fb.m_width)  - rect.m_x);
-						rect.m_height = bx::min(rect.m_height, bx::narrowCast<uint16_t>(fb.m_height) - rect.m_y);
-						if (_render->m_view[view].m_rect.m_width  != rect.m_width
-						||  _render->m_view[view].m_rect.m_height != rect.m_height)
-						{
-							BX_TRACE("Clamp render pass from %dx%d to %dx%d"
-								, _render->m_view[view].m_rect.m_width
-								, _render->m_view[view].m_rect.m_height
-								, rect.m_width
-								, rect.m_height
-								);
-						}
 
 						rpbi.framebuffer = fb.m_currentFramebuffer;
 						rpbi.renderPass  = renderPass;
-						rpbi.renderArea.offset.x = rect.m_x;
-						rpbi.renderArea.offset.y = rect.m_y;
-						rpbi.renderArea.extent.width  = rect.m_width;
-						rpbi.renderArea.extent.height = rect.m_height;
+						rpbi.renderArea.offset.x = renderArea.m_x;
+						rpbi.renderArea.offset.y = renderArea.m_y;
+						rpbi.renderArea.extent.width  = renderArea.m_width;
+						rpbi.renderArea.extent.height = renderArea.m_height;
 
 						VkViewport vp;
 						vp.x        =  float(rect.m_x);
@@ -9861,8 +9850,8 @@ VK_DESTROY
 							const Clear& clr = _render->m_view[view].m_clear;
 							if (BGFX_CLEAR_NONE != clr.m_flags)
 							{
-								Rect clearRect = rect;
-								clearRect.setIntersect(rect, viewScissorRect);
+								Rect clearRect;
+								clearRect.setIntersect(renderArea, viewScissorRect);
 								clearQuad(clearRect, clr, _render->m_colorPalette);
 
 							}
