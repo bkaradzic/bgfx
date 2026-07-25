@@ -9,6 +9,7 @@
 #include <bx/allocator.h>
 #include <bx/filepath.h>
 #include <bx/string.h>
+#include <bx/scanner.h>
 #include <bx/readerwriter.h>
 #include <bx/process.h>
 #include <bx/semaphore.h>

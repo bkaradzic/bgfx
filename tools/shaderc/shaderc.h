@@ -72,6 +72,7 @@ namespace bgfx
 #include <bx/commandline.h>
 #include <bx/endian.h>
 #include <bx/string.h>
+#include <bx/scanner.h>
 #include <bx/hash.h>
 #include <bx/file.h>
 #include "../../src/vertexlayout.h"
