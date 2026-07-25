@@ -8,6 +8,7 @@
 #if (BGFX_CONFIG_RENDERER_OPENGLES || BGFX_CONFIG_RENDERER_OPENGL)
 #	include "renderer_gl.h"
 #	include <bx/timer.h>
+#	include <bx/scanner.h>
 #	include "emscripten.h"
 
 namespace bgfx { namespace gl
