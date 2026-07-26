@@ -5654,7 +5654,7 @@ namespace bgfx { namespace d3d12
 			: D3D12_RESOURCE_STATE_GENERIC_READ
 			);
 
-		if (!m_dynamic)
+		if (NULL != _data)
 		{
 			update(commandList, 0, _size, _data);
 		}
