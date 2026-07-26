@@ -7639,18 +7639,34 @@ namespace bgfx { namespace d3d12
 	void RendererContextD3D12::submitBlit(BlitState& _bs, uint16_t _view)
 	{
 		TextureHandle currentSrc = { kInvalidHandle };
-		D3D12_RESOURCE_STATES state = D3D12_RESOURCE_STATES(UINT32_MAX);
+		TextureHandle currentDst = { kInvalidHandle };
+
+		D3D12_RESOURCE_STATES srcState = D3D12_RESOURCE_STATES(UINT32_MAX);
+		D3D12_RESOURCE_STATES dstState = D3D12_RESOURCE_STATES(UINT32_MAX);
 
 		while (_bs.hasItem(_view) )
 		{
 			const BlitItem& blit = _bs.advance();
 
-			      TextureD3D12& src = m_textures[blit.m_src.idx];
-			const TextureD3D12& dst = m_textures[blit.m_dst.idx];
+			TextureD3D12& src = m_textures[blit.m_src.idx];
+			TextureD3D12& dst = m_textures[blit.m_dst.idx];
+
+			const uint16_t dstIdx = blit.m_src.idx != blit.m_dst.idx
+				? blit.m_dst.idx
+				: kInvalidHandle
+				;
+
+			if (currentDst.idx == blit.m_src.idx)
+			{
+				m_textures[currentDst.idx].setState(m_commandList, dstState);
+
+				currentDst.idx = kInvalidHandle;
+				dstState = D3D12_RESOURCE_STATES(UINT32_MAX);
+			}
 
 			if (currentSrc.idx != blit.m_src.idx)
 			{
-				if (D3D12_RESOURCE_STATES(UINT32_MAX) != state)
+				if (D3D12_RESOURCE_STATES(UINT32_MAX) != srcState)
 				{
 					TextureD3D12& prev = m_textures[currentSrc.idx];
 
@@ -7663,7 +7679,7 @@ namespace bgfx { namespace d3d12
 							);
 					}
 
-					prev.setState(m_commandList, state);
+					prev.setState(m_commandList, srcState);
 				}
 
 				currentSrc = blit.m_src.to<TextureHandle>();
@@ -7677,7 +7693,23 @@ namespace bgfx { namespace d3d12
 					);
 				}
 
-				state = src.setState(m_commandList, D3D12_RESOURCE_STATE_COPY_SOURCE);
+				srcState = src.setState(m_commandList, D3D12_RESOURCE_STATE_COPY_SOURCE);
+			}
+
+			if (currentDst.idx != dstIdx)
+			{
+				if (D3D12_RESOURCE_STATES(UINT32_MAX) != dstState)
+				{
+					m_textures[currentDst.idx].setState(m_commandList, dstState);
+					dstState = D3D12_RESOURCE_STATES(UINT32_MAX);
+				}
+
+				currentDst.idx = dstIdx;
+
+				if (kInvalidHandle != dstIdx)
+				{
+					dstState = dst.setState(m_commandList, D3D12_RESOURCE_STATE_COPY_DEST);
+				}
 			}
 
 			if (TextureD3D12::Texture3D == src.m_type)
@@ -7750,8 +7782,14 @@ namespace bgfx { namespace d3d12
 			}
 		}
 
+		if (isValid(currentDst)
+		&&  D3D12_RESOURCE_STATES(UINT32_MAX) != dstState)
+		{
+			m_textures[currentDst.idx].setState(m_commandList, dstState);
+		}
+
 		if (isValid(currentSrc)
-		&&  D3D12_RESOURCE_STATES(UINT32_MAX) != state)
+		&&  D3D12_RESOURCE_STATES(UINT32_MAX) != srcState)
 		{
 			TextureD3D12& src = m_textures[currentSrc.idx];
 
@@ -7764,7 +7802,7 @@ namespace bgfx { namespace d3d12
 					);
 			}
 
-			src.setState(m_commandList, state);
+			src.setState(m_commandList, srcState);
 		}
 	}
 
