@@ -315,6 +315,22 @@ namespace bgfx { namespace d3d12
 	};
 	static_assert(TextureFormat::Count == BX_COUNTOF(s_textureFormat) );
 
+	static DXGI_FORMAT getBackBufferFormat(const Resolution& _resolution)
+	{
+		return 0 != (_resolution.reset & BGFX_RESET_SRGB_BACKBUFFER)
+			? s_textureFormat[_resolution.formatColor].m_fmtSrgb
+			: s_textureFormat[_resolution.formatColor].m_fmt
+			;
+	}
+
+	static DXGI_FORMAT getBackBufferDepthStencilFormat(const Resolution& _resolution)
+	{
+		return bimg::isDepth(bimg::TextureFormat::Enum(_resolution.formatDepthStencil) )
+			? s_textureFormat[_resolution.formatDepthStencil].m_fmtDsv
+			: DXGI_FORMAT_UNKNOWN
+			;
+	}
+
 	static const D3D12_INPUT_ELEMENT_DESC s_attrib[] =
 	{
 		{ "POSITION",     0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
@@ -1463,7 +1479,6 @@ namespace bgfx { namespace d3d12
 						D3D12_MESSAGE_CATEGORY catlist[] =
 						{
 							D3D12_MESSAGE_CATEGORY_STATE_CREATION,
-							D3D12_MESSAGE_CATEGORY_EXECUTION,
 						};
 						filter.DenyList.NumCategories = BX_COUNTOF(catlist);
 						filter.DenyList.pCategoryList = catlist;
@@ -2817,10 +2832,7 @@ namespace bgfx { namespace d3d12
 						) );
 
 					D3D12_RENDER_TARGET_VIEW_DESC rtvDesc;
-					rtvDesc.Format = (m_resolution.reset & BGFX_RESET_SRGB_BACKBUFFER)
-						? s_textureFormat[m_resolution.formatColor].m_fmtSrgb
-						: s_textureFormat[m_resolution.formatColor].m_fmt
-						;
+					rtvDesc.Format = getBackBufferFormat(m_resolution);
 
 					if (1 < getResourceDesc(m_backBufferColor[ii]).DepthOrArraySize)
 					{
@@ -2997,7 +3009,6 @@ namespace bgfx { namespace d3d12
 			|| (m_resolution.reset&maskFlags)   != (_resolution.reset&maskFlags) )
 			{
 				uint32_t flags = _resolution.reset & (~BGFX_RESET_INTERNAL_FORCE);
-
 				bool resize = true
 					&& BX_ENABLED(BX_PLATFORM_WINDOWS || BX_PLATFORM_WINRT)
 					&& (m_resolution.reset&BGFX_RESET_MSAA_MASK) == (_resolution.reset&BGFX_RESET_MSAA_MASK)
@@ -3657,6 +3668,15 @@ namespace bgfx { namespace d3d12
 
 			murmur.add(layout.m_attributes, sizeof(layout.m_attributes) );
 			murmur.add(m_fbh.idx);
+
+			murmur.add(m_scd.sampleDesc);
+
+			if (!isValid(m_fbh) )
+			{
+				murmur.add(getBackBufferFormat(m_resolution) );
+				murmur.add(getBackBufferDepthStencilFormat(m_resolution) );
+			}
+
 			murmur.add(_numInstanceData);
 			const uint32_t hash = murmur.end();
 
@@ -3743,15 +3763,15 @@ namespace bgfx { namespace d3d12
 				else
 				{
 					desc.NumRenderTargets = 1;
-					desc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
+					desc.RTVFormats[0] = frameBuffer.m_swapChainFormat;
 					desc.DSVFormat     = DXGI_FORMAT_UNKNOWN;
 				}
 			}
 			else
 			{
 				desc.NumRenderTargets = 1;
-				desc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
-				desc.DSVFormat     = DXGI_FORMAT_D24_UNORM_S8_UINT;
+				desc.RTVFormats[0] = getBackBufferFormat(m_resolution);
+				desc.DSVFormat     = getBackBufferDepthStencilFormat(m_resolution);
 			}
 
 			desc.SampleDesc = m_scd.sampleDesc;
@@ -5192,7 +5212,9 @@ namespace bgfx { namespace d3d12
 				, vbvs
 				);
 
-			const VertexBufferD3D12& indirect = s_renderD3D12->m_vertexBuffers[_draw.m_indirectBuffer.idx];
+			VertexBufferD3D12& indirect = s_renderD3D12->m_vertexBuffers[_draw.m_indirectBuffer.idx];
+			indirect.setState(_commandList, D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT);
+
 			const uint32_t numDrawIndirect = UINT32_MAX == _draw.m_numIndirect
 				? indirect.m_size/BGFX_CONFIG_DRAW_INDIRECT_STRIDE
 				: _draw.m_numIndirect
@@ -5201,7 +5223,10 @@ namespace bgfx { namespace d3d12
 			uint32_t numOffsetIndirect = 0;
 			if (isValid(_draw.m_numIndirectBuffer) )
 			{
-				numIndirect = s_renderD3D12->m_indexBuffers[_draw.m_numIndirectBuffer.idx].m_ptr;
+				BufferD3D12& numIndirectBuffer = s_renderD3D12->m_indexBuffers[_draw.m_numIndirectBuffer.idx];
+				numIndirectBuffer.setState(_commandList, D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT);
+
+				numIndirect = numIndirectBuffer.m_ptr;
 				numOffsetIndirect = _draw.m_numIndirectIndex * sizeof(uint32_t);
 			}
 
@@ -6785,7 +6810,7 @@ namespace bgfx { namespace d3d12
 			bx::free(g_allocator, temp);
 		}
 
-		D3D12_RANGE writeRange = { 0, numSlices*dstSlicePitch };
+		D3D12_RANGE writeRange = { 0, size_t(totalBytes) };
 		staging->Unmap(0, &writeRange);
 
 		D3D12_TEXTURE_COPY_LOCATION dst = { m_ptr,   D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX, {        } };
@@ -7044,6 +7069,8 @@ namespace bgfx { namespace d3d12
 		BGFX_FATAL(SUCCEEDED(hr), Fatal::UnableToInitialize, "Failed to create swap chain.");
 		m_state = D3D12_RESOURCE_STATE_PRESENT;
 
+		m_swapChainFormat = scd.format;
+
 		DX_CHECK(s_renderD3D12->m_dxgi.m_factory->MakeWindowAssociation(
 			  (HWND)_nwh
 			, 0
@@ -7077,6 +7104,7 @@ namespace bgfx { namespace d3d12
 	{
 		DX_RELEASE(m_swapChain, 0);
 
+		m_swapChainFormat = DXGI_FORMAT_UNKNOWN;
 		m_nwh   = NULL;
 		m_numTh = 0;
 		m_num   = 0;
@@ -8280,7 +8308,8 @@ namespace bgfx { namespace d3d12
 
 					if (isValid(compute.m_indirectBuffer) )
 					{
-						const VertexBufferD3D12& indirect = m_vertexBuffers[compute.m_indirectBuffer.idx];
+						VertexBufferD3D12& indirect = m_vertexBuffers[compute.m_indirectBuffer.idx];
+						indirect.setState(m_commandList, D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT);
 
 						uint32_t numDrawIndirect = UINT32_MAX == compute.m_numIndirect
 							? indirect.m_size/BGFX_CONFIG_DRAW_INDIRECT_STRIDE
