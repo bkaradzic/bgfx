@@ -9,7 +9,7 @@ import bindbc.common.types: c_int64, c_uint64, va_list;
 import bindbc.bgfx.config;
 static import bgfx.impl;
 
-enum uint apiVersion = 152;
+enum uint apiVersion = 153;
 
 alias ViewID = ushort;
 
@@ -756,8 +756,11 @@ enum TextureFormat: bgfx.impl.TextureFormat.Enum{
 	bc2 = bgfx.impl.TextureFormat.Enum.bc2,
 	bc3 = bgfx.impl.TextureFormat.Enum.bc3,
 	bc4 = bgfx.impl.TextureFormat.Enum.bc4,
+	bc4s = bgfx.impl.TextureFormat.Enum.bc4s,
 	bc5 = bgfx.impl.TextureFormat.Enum.bc5,
+	bc5s = bgfx.impl.TextureFormat.Enum.bc5s,
 	bc6h = bgfx.impl.TextureFormat.Enum.bc6h,
+	bc6hu = bgfx.impl.TextureFormat.Enum.bc6hu,
 	bc7 = bgfx.impl.TextureFormat.Enum.bc7,
 	etc1 = bgfx.impl.TextureFormat.Enum.etc1,
 	etc2 = bgfx.impl.TextureFormat.Enum.etc2,
@@ -842,6 +845,7 @@ enum TextureFormat: bgfx.impl.TextureFormat.Enum{
 	bgr5a1 = bgfx.impl.TextureFormat.Enum.bgr5a1,
 	rgb5a1 = bgfx.impl.TextureFormat.Enum.rgb5a1,
 	rgb10a2 = bgfx.impl.TextureFormat.Enum.rgb10a2,
+	rgb10a2u = bgfx.impl.TextureFormat.Enum.rgb10a2u,
 	rg11b10f = bgfx.impl.TextureFormat.Enum.rg11b10f,
 	unknownDepth = bgfx.impl.TextureFormat.Enum.unknownDepth,
 	d16 = bgfx.impl.TextureFormat.Enum.d16,
@@ -851,6 +855,7 @@ enum TextureFormat: bgfx.impl.TextureFormat.Enum{
 	d16f = bgfx.impl.TextureFormat.Enum.d16f,
 	d24f = bgfx.impl.TextureFormat.Enum.d24f,
 	d32f = bgfx.impl.TextureFormat.Enum.d32f,
+	d32fs8 = bgfx.impl.TextureFormat.Enum.d32fs8,
 	d0s8 = bgfx.impl.TextureFormat.Enum.d0s8,
 	count = bgfx.impl.TextureFormat.Enum.count,
 }
