@@ -7992,7 +7992,7 @@ namespace bgfx { namespace gl
 										GL_CHECK(glBindImageTexture(ii
 											, texture.m_id
 											, bind.m_firstMip
-											, texture.isCubeMap() || texture.m_target == GL_TEXTURE_2D_ARRAY || UINT16_MAX != bind.m_numLayers ? GL_TRUE : GL_FALSE
+											, texture.isLayered() || UINT16_MAX != bind.m_numLayers ? GL_TRUE : GL_FALSE
 											, bind.m_firstLayer
 											, s_access[bind.m_access]
 											, s_imageFormat[bind.m_format])
@@ -8506,7 +8506,7 @@ namespace bgfx { namespace gl
 											GL_CHECK(glBindImageTexture(stage
 												, texture.m_id
 												, bind.m_firstMip
-												, texture.isCubeMap() || texture.m_target == GL_TEXTURE_2D_ARRAY || UINT16_MAX != bind.m_numLayers ? GL_TRUE : GL_FALSE
+												, texture.isLayered() || UINT16_MAX != bind.m_numLayers ? GL_TRUE : GL_FALSE
 												, bind.m_firstLayer
 												, s_access[bind.m_access]
 												, s_imageFormat[bind.m_format])

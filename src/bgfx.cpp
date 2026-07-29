@@ -4649,9 +4649,18 @@ namespace bgfx
 		dstHeight = bx::min<uint32_t>(dstHeight, _dstY + _height) - _dstY;
 		dstDepth  = bx::min<uint32_t>(dstDepth,  _dstZ + _depth ) - _dstZ;
 
-		const uint16_t width  = uint16_t(bx::min(srcWidth,  dstWidth ) );
-		const uint16_t height = uint16_t(bx::min(srcHeight, dstHeight) );
+		uint16_t width  = uint16_t(bx::min(srcWidth,  dstWidth ) );
+		uint16_t height = uint16_t(bx::min(srcHeight, dstHeight) );
 		const uint16_t depth  = uint16_t(bx::min(srcDepth,  dstDepth ) );
+
+		if (bimg::isCompressed(bimg::TextureFormat::Enum(src.m_format) ) )
+		{
+			const bimg::ImageBlockInfo& bi = bimg::getBlockInfo(bimg::TextureFormat::Enum(src.m_format) );
+			const uint32_t blockW = bx::max<uint32_t>(1, bi.blockWidth);
+			const uint32_t blockH = bx::max<uint32_t>(1, bi.blockHeight);
+			width  = uint16_t( (uint32_t(width  + blockW - 1) / blockW) * blockW);
+			height = uint16_t( (uint32_t(height + blockH - 1) / blockH) * blockH);
+		}
 
 		BGFX_ENCODER(blit(_id, _dst, _dstMip, _dstX, _dstY, _dstZ, _src, _srcMip, _srcX, _srcY, _srcZ, width, height, depth) );
 	}
