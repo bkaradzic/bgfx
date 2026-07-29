@@ -5886,6 +5886,48 @@ namespace bgfx
 				return;
 			}
 
+			{
+				const bimg::TextureFormat::Enum format = bimg::TextureFormat::Enum(ref.m_format);
+				const bimg::ImageBlockInfo& blockInfo = bimg::getBlockInfo(format);
+
+				uint32_t rectPitch = _width * blockInfo.bitsPerPixel / 8;
+				uint32_t numRows   = _height;
+
+				if (bimg::isCompressed(format) )
+				{
+					const uint32_t blockW = bx::max<uint32_t>(1, blockInfo.blockWidth);
+					const uint32_t blockH = bx::max<uint32_t>(1, blockInfo.blockHeight);
+
+					rectPitch = bx::max<uint32_t>(1, bx::alignUp(_width,  blockW)/blockW) * blockInfo.blockSize;
+					numRows   = bx::max<uint32_t>(1, bx::alignUp(_height, blockH)/blockH);
+				}
+
+				const uint32_t srcPitch  = UINT16_MAX == _pitch ? rectPitch : _pitch;
+				const uint32_t numSlices = bx::max<uint32_t>(1, ref.m_depth > 1 ? _depth : 1);
+				const uint32_t needed    = (numSlices-1)*srcPitch*numRows
+					+ (numRows-1)*srcPitch
+					+ rectPitch
+					;
+
+				if (_mem->size < needed)
+				{
+					BX_WARN(false
+						, "Texture update source memory is too small (%d bytes, needs %d) "
+						  "for a %dx%dx%d %s rect with pitch %d; skipping."
+						, _mem->size
+						, needed
+						, _width
+						, _height
+						, _depth
+						, bimg::getName(format)
+						, srcPitch
+						);
+					release(_mem);
+
+					return;
+				}
+			}
+
 			CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::UpdateTexture);
 			cmdbuf.write(_handle);
 			cmdbuf.write(_side);

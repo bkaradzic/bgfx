@@ -1447,6 +1447,15 @@ namespace bgfx { namespace gl
 				;
 		}
 
+		bool isLayered() const
+		{
+			return 0
+				|| isCubeMap()
+				|| GL_TEXTURE_2D_ARRAY == m_target
+				|| GL_TEXTURE_3D       == m_target
+				;
+		}
+
 		GLuint m_id;
 		GLuint m_rbo;
 		GLenum m_target;
