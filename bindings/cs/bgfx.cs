@@ -1808,14 +1808,29 @@ public static partial class bgfx
 		BC4,
 	
 		/// <summary>
+		/// Block Compression 4. Single 8-bit red channel, signed normalized. 4 BPP.
+		/// </summary>
+		BC4S,
+	
+		/// <summary>
 		/// Block Compression 5. Two 8-bit channels (RG), unsigned normalized. 8 BPP.
 		/// </summary>
 		BC5,
 	
 		/// <summary>
+		/// Block Compression 5. Two 8-bit channels (RG), signed normalized. 8 BPP.
+		/// </summary>
+		BC5S,
+	
+		/// <summary>
 		/// Block Compression 6H. Three 16-bit floating-point channels (RGB), HDR. 8 BPP.
 		/// </summary>
 		BC6H,
+	
+		/// <summary>
+		/// Block Compression 6H. Three 16-bit unsigned floating-point channels (RGB), HDR. 8 BPP.
+		/// </summary>
+		BC6HU,
 	
 		/// <summary>
 		/// RGB 4-7 bits per color channel, 0-8 bits alpha. Block Compression 7. High-quality RGBA, 4-7 bits per color, 0-8 bits alpha. 8 BPP.
@@ -2238,6 +2253,11 @@ public static partial class bgfx
 		RGB10A2,
 	
 		/// <summary>
+		/// Packed 32-bit, 10-bit red, 10-bit green, 10-bit blue, 2-bit alpha, unsigned integer. 32 BPP.
+		/// </summary>
+		RGB10A2U,
+	
+		/// <summary>
 		/// Packed 32-bit, 11-bit red, 11-bit green, 10-bit blue, unsigned floating point. No alpha. 32 BPP.
 		/// </summary>
 		RG11B10F,
@@ -2281,6 +2301,11 @@ public static partial class bgfx
 		/// 32-bit depth, floating point. 32 BPP.
 		/// </summary>
 		D32F,
+	
+		/// <summary>
+		/// 32-bit depth, floating point, with 8-bit stencil (stored as 64-bit). 64 BPP.
+		/// </summary>
+		D32FS8,
 	
 		/// <summary>
 		/// 8-bit stencil only, no depth. 8 BPP.
@@ -2646,7 +2671,7 @@ public static partial class bgfx
 		public byte numGPUs;
 		public fixed uint gpu[4];
 		public Limits limits;
-		public fixed uint formats[100];
+		public fixed uint formats[105];
 		public fixed uint codecs[3];
 	}
 	

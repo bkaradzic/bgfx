@@ -1145,11 +1145,20 @@ enum TextureFormat : uint
 	// Block Compression 4. Single 8-bit red channel, unsigned normalized. 4 BPP.
 	BC4,
 
+	// Block Compression 4. Single 8-bit red channel, signed normalized. 4 BPP.
+	BC4S,
+
 	// Block Compression 5. Two 8-bit channels (RG), unsigned normalized. 8 BPP.
 	BC5,
 
+	// Block Compression 5. Two 8-bit channels (RG), signed normalized. 8 BPP.
+	BC5S,
+
 	// Block Compression 6H. Three 16-bit floating-point channels (RGB), HDR. 8 BPP.
 	BC6H,
+
+	// Block Compression 6H. Three 16-bit unsigned floating-point channels (RGB), HDR. 8 BPP.
+	BC6HU,
 
 	// RGB 4-7 bits per color channel, 0-8 bits alpha. Block Compression 7. High-quality RGBA, 4-7 bits per color, 0-8 bits alpha. 8 BPP.
 	BC7,
@@ -1403,6 +1412,9 @@ enum TextureFormat : uint
 	// Packed 32-bit, 10-bit red, 10-bit green, 10-bit blue, 2-bit alpha, unsigned normalized. 32 BPP.
 	RGB10A2,
 
+	// Packed 32-bit, 10-bit red, 10-bit green, 10-bit blue, 2-bit alpha, unsigned integer. 32 BPP.
+	RGB10A2U,
+
 	// Packed 32-bit, 11-bit red, 11-bit green, 10-bit blue, unsigned floating point. No alpha. 32 BPP.
 	RG11B10F,
 
@@ -1429,6 +1441,9 @@ enum TextureFormat : uint
 
 	// 32-bit depth, floating point. 32 BPP.
 	D32F,
+
+	// 32-bit depth, floating point, with 8-bit stencil (stored as 64-bit). 64 BPP.
+	D32FS8,
 
 	// 8-bit stencil only, no depth. 8 BPP.
 	D0S8,
@@ -1766,7 +1781,7 @@ struct Caps
 	//   - `BGFX_CAPS_FORMAT_TEXTURE_BACKBUFFER` - Texture format can be used as back buffer format.
 	//   - `BGFX_CAPS_FORMAT_TEXTURE_VIDEO_DECODE_DST` - Texture format can be used as video
 	//     decode destination.
-	uint[100] formats;
+	uint[105] formats;
 	// Supported video codec capabilities flags. A non-zero entry means the codec is
 	// supported for hardware decode; bits describe sample depths and chroma
 	// subsamplings:
