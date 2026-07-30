@@ -3176,17 +3176,26 @@ namespace bgfx { namespace d3d12
 			return result;
 		}
 
+		void resolveFrameBuffer(FrameBufferHandle _fbh)
+		{
+			if (isValid(m_fbh)
+			&&  m_fbh.idx != _fbh.idx
+			&&  m_rtMsaa)
+			{
+				FrameBufferD3D12& frameBuffer = m_frameBuffers[m_fbh.idx];
+				frameBuffer.resolve();
+				m_rtMsaa = false;
+			}
+		}
+
 		void setFrameBuffer(FrameBufferHandle _fbh, bool _msaa = true)
 		{
+			resolveFrameBuffer(_fbh);
+
 			if (isValid(m_fbh)
 			&&  m_fbh.idx != _fbh.idx)
 			{
 				FrameBufferD3D12& frameBuffer = m_frameBuffers[m_fbh.idx];
-
-				if (m_rtMsaa)
-				{
-					frameBuffer.resolve();
-				}
 
 				if (NULL == frameBuffer.m_swapChain)
 				{
@@ -8050,6 +8059,10 @@ namespace bgfx { namespace d3d12
 
 					const View& renderView = _render->m_view[view];
 
+					resolveFrameBuffer(renderView.m_fbh);
+					submitUniformCache(ucs, view);
+					submitBlit(bs, view);
+
 					fbh = _render->m_view[view].m_fbh;
 					setFrameBuffer(fbh);
 
@@ -8087,9 +8100,6 @@ namespace bgfx { namespace d3d12
 					}
 
 					prim = s_primInfo[Topology::Count]; // Force primitive type update.
-
-					submitUniformCache(ucs, view);
-					submitBlit(bs, view);
 
 					if (m_variableRateShadingSupport)
 					{
