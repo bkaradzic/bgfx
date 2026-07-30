@@ -189,8 +189,11 @@ VK_IMPORT_DEVICE
 		{ VK_FORMAT_BC2_UNORM_BLOCK,           VK_FORMAT_BC2_UNORM_BLOCK,          VK_FORMAT_UNDEFINED,           VK_FORMAT_BC2_SRGB_BLOCK,           { $_, $_, $_, $_ } }, // BC2
 		{ VK_FORMAT_BC3_UNORM_BLOCK,           VK_FORMAT_BC3_UNORM_BLOCK,          VK_FORMAT_UNDEFINED,           VK_FORMAT_BC3_SRGB_BLOCK,           { $_, $_, $_, $_ } }, // BC3
 		{ VK_FORMAT_BC4_UNORM_BLOCK,           VK_FORMAT_BC4_UNORM_BLOCK,          VK_FORMAT_UNDEFINED,           VK_FORMAT_UNDEFINED,                { $_, $_, $_, $_ } }, // BC4
+		{ VK_FORMAT_BC4_SNORM_BLOCK,           VK_FORMAT_BC4_SNORM_BLOCK,          VK_FORMAT_UNDEFINED,           VK_FORMAT_UNDEFINED,                { $_, $_, $_, $_ } }, // BC4S
 		{ VK_FORMAT_BC5_UNORM_BLOCK,           VK_FORMAT_BC5_UNORM_BLOCK,          VK_FORMAT_UNDEFINED,           VK_FORMAT_UNDEFINED,                { $_, $_, $_, $_ } }, // BC5
+		{ VK_FORMAT_BC5_SNORM_BLOCK,           VK_FORMAT_BC5_SNORM_BLOCK,          VK_FORMAT_UNDEFINED,           VK_FORMAT_UNDEFINED,                { $_, $_, $_, $_ } }, // BC5S
 		{ VK_FORMAT_BC6H_SFLOAT_BLOCK,         VK_FORMAT_BC6H_SFLOAT_BLOCK,        VK_FORMAT_UNDEFINED,           VK_FORMAT_UNDEFINED,                { $_, $_, $_, $_ } }, // BC6H
+		{ VK_FORMAT_BC6H_UFLOAT_BLOCK,         VK_FORMAT_BC6H_UFLOAT_BLOCK,        VK_FORMAT_UNDEFINED,           VK_FORMAT_UNDEFINED,                { $_, $_, $_, $_ } }, // BC6HU
 		{ VK_FORMAT_BC7_UNORM_BLOCK,           VK_FORMAT_BC7_UNORM_BLOCK,          VK_FORMAT_UNDEFINED,           VK_FORMAT_BC7_SRGB_BLOCK,           { $_, $_, $_, $_ } }, // BC7
 		{ VK_FORMAT_UNDEFINED,                 VK_FORMAT_UNDEFINED,                VK_FORMAT_UNDEFINED,           VK_FORMAT_UNDEFINED,                { $_, $_, $_, $_ } }, // ETC1
 		{ VK_FORMAT_ETC2_R8G8B8_UNORM_BLOCK,   VK_FORMAT_UNDEFINED,                VK_FORMAT_UNDEFINED,           VK_FORMAT_ETC2_R8G8B8_SRGB_BLOCK,   { $_, $_, $_, $_ } }, // ETC2
@@ -275,6 +278,7 @@ VK_IMPORT_DEVICE
 		{ VK_FORMAT_A1R5G5B5_UNORM_PACK16,     VK_FORMAT_A1R5G5B5_UNORM_PACK16,    VK_FORMAT_UNDEFINED,           VK_FORMAT_UNDEFINED,                { $_, $_, $_, $_ } }, // BGR5A1
 		{ VK_FORMAT_A1R5G5B5_UNORM_PACK16,     VK_FORMAT_A1R5G5B5_UNORM_PACK16,    VK_FORMAT_UNDEFINED,           VK_FORMAT_UNDEFINED,                { $B, $G, $R, $A } }, // RGB5A1
 		{ VK_FORMAT_A2B10G10R10_UNORM_PACK32,  VK_FORMAT_A2B10G10R10_UNORM_PACK32, VK_FORMAT_UNDEFINED,           VK_FORMAT_UNDEFINED,                { $_, $_, $_, $_ } }, // RGB10A2
+		{ VK_FORMAT_A2B10G10R10_UINT_PACK32,   VK_FORMAT_A2B10G10R10_UINT_PACK32,  VK_FORMAT_UNDEFINED,           VK_FORMAT_UNDEFINED,                { $_, $_, $_, $_ } }, // RGB10A2U
 		{ VK_FORMAT_B10G11R11_UFLOAT_PACK32,   VK_FORMAT_B10G11R11_UFLOAT_PACK32,  VK_FORMAT_UNDEFINED,           VK_FORMAT_UNDEFINED,                { $_, $_, $_, $_ } }, // RG11B10F
 		{ VK_FORMAT_UNDEFINED,                 VK_FORMAT_UNDEFINED,                VK_FORMAT_UNDEFINED,           VK_FORMAT_UNDEFINED,                { $_, $_, $_, $_ } }, // UnknownDepth
 		{ VK_FORMAT_UNDEFINED,                 VK_FORMAT_R16_UNORM,                VK_FORMAT_D16_UNORM,           VK_FORMAT_UNDEFINED,                { $_, $_, $_, $_ } }, // D16
@@ -284,6 +288,7 @@ VK_IMPORT_DEVICE
 		{ VK_FORMAT_UNDEFINED,                 VK_FORMAT_R32_SFLOAT,               VK_FORMAT_D32_SFLOAT,          VK_FORMAT_UNDEFINED,                { $_, $_, $_, $_ } }, // D16F
 		{ VK_FORMAT_UNDEFINED,                 VK_FORMAT_R32_SFLOAT,               VK_FORMAT_D32_SFLOAT,          VK_FORMAT_UNDEFINED,                { $_, $_, $_, $_ } }, // D24F
 		{ VK_FORMAT_UNDEFINED,                 VK_FORMAT_R32_SFLOAT,               VK_FORMAT_D32_SFLOAT,          VK_FORMAT_UNDEFINED,                { $_, $_, $_, $_ } }, // D32F
+		{ VK_FORMAT_UNDEFINED,                 VK_FORMAT_R32_SFLOAT,               VK_FORMAT_D32_SFLOAT_S8_UINT,  VK_FORMAT_UNDEFINED,                { $_, $_, $_, $_ } }, // D32FS8
 		{ VK_FORMAT_UNDEFINED,                 VK_FORMAT_R8_UINT,                  VK_FORMAT_S8_UINT,             VK_FORMAT_UNDEFINED,                { $_, $_, $_, $_ } }, // D0S8
 #undef $_
 #undef $0
@@ -1756,27 +1761,79 @@ VK_IMPORT_INSTANCE
 					}
 				}
 
-				bx::memSet(&m_deviceFeatures, 0, sizeof(m_deviceFeatures) );
-
-				m_deviceFeatures.fullDrawIndexUint32               = supportedFeatures.fullDrawIndexUint32;
-				m_deviceFeatures.imageCubeArray                    = supportedFeatures.imageCubeArray            && (_init.capabilities & BGFX_CAPS_TEXTURE_CUBE_ARRAY);
-				m_deviceFeatures.independentBlend                  = supportedFeatures.independentBlend          && (_init.capabilities & BGFX_CAPS_BLEND_INDEPENDENT);
-				m_deviceFeatures.multiDrawIndirect                 = supportedFeatures.multiDrawIndirect         && (_init.capabilities & BGFX_CAPS_DRAW_INDIRECT);
-				m_deviceFeatures.drawIndirectFirstInstance         = supportedFeatures.drawIndirectFirstInstance && (_init.capabilities & BGFX_CAPS_DRAW_INDIRECT);
-				m_deviceFeatures.depthClamp                        = supportedFeatures.depthClamp;
-				m_deviceFeatures.fillModeNonSolid                  = supportedFeatures.fillModeNonSolid;
-				m_deviceFeatures.largePoints                       = supportedFeatures.largePoints;
-				m_deviceFeatures.samplerAnisotropy                 = supportedFeatures.samplerAnisotropy;
-				m_deviceFeatures.textureCompressionETC2            = supportedFeatures.textureCompressionETC2;
-				m_deviceFeatures.textureCompressionBC              = supportedFeatures.textureCompressionBC;
-				m_deviceFeatures.vertexPipelineStoresAndAtomics    = supportedFeatures.vertexPipelineStoresAndAtomics;
-				m_deviceFeatures.fragmentStoresAndAtomics          = supportedFeatures.fragmentStoresAndAtomics;
-				m_deviceFeatures.shaderImageGatherExtended         = supportedFeatures.shaderImageGatherExtended;
-				m_deviceFeatures.shaderStorageImageExtendedFormats = supportedFeatures.shaderStorageImageExtendedFormats;
-				m_deviceFeatures.shaderClipDistance                = supportedFeatures.shaderClipDistance;
-				m_deviceFeatures.shaderCullDistance                = supportedFeatures.shaderCullDistance;
-				m_deviceFeatures.shaderResourceMinLod              = supportedFeatures.shaderResourceMinLod;
-				m_deviceFeatures.geometryShader                    = supportedFeatures.geometryShader;
+				m_deviceFeatures =
+				{
+					.robustBufferAccess                      = true
+						&& supportedFeatures.robustBufferAccess
+						&& BX_ENABLED(BGFX_CONFIG_RENDERER_VULKAN_ROBUST_BUFFER_ACCESS)
+						,
+					.fullDrawIndexUint32                     = supportedFeatures.fullDrawIndexUint32,
+					.imageCubeArray                          = true
+						&& supportedFeatures.imageCubeArray
+						&& (_init.capabilities & BGFX_CAPS_TEXTURE_CUBE_ARRAY)
+						,
+					.independentBlend                        = true
+						&& supportedFeatures.independentBlend
+						&& (_init.capabilities & BGFX_CAPS_BLEND_INDEPENDENT)
+						,
+					.geometryShader                          = supportedFeatures.geometryShader,
+					.tessellationShader                      = VK_FALSE,
+					.sampleRateShading                       = VK_FALSE,
+					.dualSrcBlend                            = VK_FALSE,
+					.logicOp                                 = VK_FALSE,
+					.multiDrawIndirect                       = true
+						&& supportedFeatures.multiDrawIndirect
+						&& (_init.capabilities & BGFX_CAPS_DRAW_INDIRECT)
+						,
+					.drawIndirectFirstInstance               = true
+						&& supportedFeatures.drawIndirectFirstInstance
+						&& (_init.capabilities & BGFX_CAPS_DRAW_INDIRECT)
+						,
+					.depthClamp                              = supportedFeatures.depthClamp,
+					.depthBiasClamp                          = VK_FALSE,
+					.fillModeNonSolid                        = supportedFeatures.fillModeNonSolid,
+					.depthBounds                             = VK_FALSE,
+					.wideLines                               = VK_FALSE,
+					.largePoints                             = supportedFeatures.largePoints,
+					.alphaToOne                              = VK_FALSE,
+					.multiViewport                           = VK_FALSE,
+					.samplerAnisotropy                       = supportedFeatures.samplerAnisotropy,
+					.textureCompressionETC2                  = supportedFeatures.textureCompressionETC2,
+					.textureCompressionASTC_LDR              = VK_FALSE,
+					.textureCompressionBC                    = supportedFeatures.textureCompressionBC,
+					.occlusionQueryPrecise                   = VK_FALSE,
+					.pipelineStatisticsQuery                 = VK_FALSE,
+					.vertexPipelineStoresAndAtomics          = supportedFeatures.vertexPipelineStoresAndAtomics,
+					.fragmentStoresAndAtomics                = supportedFeatures.fragmentStoresAndAtomics,
+					.shaderTessellationAndGeometryPointSize  = VK_FALSE,
+					.shaderImageGatherExtended               = supportedFeatures.shaderImageGatherExtended,
+					.shaderStorageImageExtendedFormats       = supportedFeatures.shaderStorageImageExtendedFormats,
+					.shaderStorageImageMultisample           = VK_FALSE,
+					.shaderStorageImageReadWithoutFormat     = VK_FALSE,
+					.shaderStorageImageWriteWithoutFormat    = VK_FALSE,
+					.shaderUniformBufferArrayDynamicIndexing = VK_FALSE,
+					.shaderSampledImageArrayDynamicIndexing  = VK_FALSE,
+					.shaderStorageBufferArrayDynamicIndexing = VK_FALSE,
+					.shaderStorageImageArrayDynamicIndexing  = VK_FALSE,
+					.shaderClipDistance                      = supportedFeatures.shaderClipDistance,
+					.shaderCullDistance                      = supportedFeatures.shaderCullDistance,
+					.shaderFloat64                           = VK_FALSE,
+					.shaderInt64                             = VK_FALSE,
+					.shaderInt16                             = VK_FALSE,
+					.shaderResourceResidency                 = VK_FALSE,
+					.shaderResourceMinLod                    = supportedFeatures.shaderResourceMinLod,
+					.sparseBinding                           = VK_FALSE,
+					.sparseResidencyBuffer                   = VK_FALSE,
+					.sparseResidencyImage2D                  = VK_FALSE,
+					.sparseResidencyImage3D                  = VK_FALSE,
+					.sparseResidency2Samples                 = VK_FALSE,
+					.sparseResidency4Samples                 = VK_FALSE,
+					.sparseResidency8Samples                 = VK_FALSE,
+					.sparseResidency16Samples                = VK_FALSE,
+					.sparseResidencyAliased                  = VK_FALSE,
+					.variableMultisampleRate                 = VK_FALSE,
+					.inheritedQueries                        = VK_FALSE,
+				};
 
 				m_lineAASupport = true
 					&& s_extension[Extension::EXT_line_rasterization].m_supported

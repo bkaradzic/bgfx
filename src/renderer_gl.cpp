@@ -243,8 +243,11 @@ namespace bgfx { namespace gl
 		{ GL_COMPRESSED_RGBA_S3TC_DXT3_EXT,            GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT,       GL_COMPRESSED_RGBA_S3TC_DXT3_EXT,            GL_COMPRESSED_RGBA_S3TC_DXT3_EXT,            GL_ZERO,                         false, { $_, $_, $_, $_ } }, // BC2
 		{ GL_COMPRESSED_RGBA_S3TC_DXT5_EXT,            GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT,       GL_COMPRESSED_RGBA_S3TC_DXT5_EXT,            GL_COMPRESSED_RGBA_S3TC_DXT5_EXT,            GL_ZERO,                         false, { $_, $_, $_, $_ } }, // BC3
 		{ GL_COMPRESSED_LUMINANCE_LATC1_EXT,           GL_ZERO,                                      GL_COMPRESSED_LUMINANCE_LATC1_EXT,           GL_COMPRESSED_LUMINANCE_LATC1_EXT,           GL_ZERO,                         false, { $_, $_, $_, $_ } }, // BC4
+		{ GL_COMPRESSED_SIGNED_LUMINANCE_LATC1_EXT,    GL_ZERO,                                      GL_COMPRESSED_SIGNED_LUMINANCE_LATC1_EXT,    GL_COMPRESSED_SIGNED_LUMINANCE_LATC1_EXT,    GL_ZERO,                         false, { $_, $_, $_, $_ } }, // BC4S
 		{ GL_COMPRESSED_LUMINANCE_ALPHA_LATC2_EXT,     GL_ZERO,                                      GL_COMPRESSED_LUMINANCE_ALPHA_LATC2_EXT,     GL_COMPRESSED_LUMINANCE_ALPHA_LATC2_EXT,     GL_ZERO,                         false, { $_, $_, $_, $_ } }, // BC5
+		{ GL_COMPRESSED_SIGNED_LUMINANCE_ALPHA_LATC2_EXT, GL_ZERO,                                   GL_COMPRESSED_SIGNED_LUMINANCE_ALPHA_LATC2_EXT, GL_COMPRESSED_SIGNED_LUMINANCE_ALPHA_LATC2_EXT, GL_ZERO,                         false, { $_, $_, $_, $_ } }, // BC5S
 		{ GL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT_ARB,     GL_ZERO,                                      GL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT_ARB,     GL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT_ARB,     GL_ZERO,                         false, { $_, $_, $_, $_ } }, // BC6H
+		{ GL_COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT_ARB,   GL_ZERO,                                      GL_COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT_ARB,   GL_COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT_ARB,   GL_ZERO,                         false, { $_, $_, $_, $_ } }, // BC6HU
 		{ GL_COMPRESSED_RGBA_BPTC_UNORM_ARB,           GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM_ARB,      GL_COMPRESSED_RGBA_BPTC_UNORM_ARB,           GL_COMPRESSED_RGBA_BPTC_UNORM_ARB,           GL_ZERO,                         false, { $_, $_, $_, $_ } }, // BC7
 		{ GL_ETC1_RGB8_OES,                            GL_ZERO,                                      GL_ETC1_RGB8_OES,                            GL_ETC1_RGB8_OES,                            GL_ZERO,                         false, { $_, $_, $_, $_ } }, // ETC1
 		{ GL_COMPRESSED_RGB8_ETC2,                     GL_COMPRESSED_SRGB8_ETC2,                     GL_COMPRESSED_RGB8_ETC2,                     GL_COMPRESSED_RGB8_ETC2,                     GL_ZERO,                         false, { $_, $_, $_, $_ } }, // ETC2
@@ -329,6 +332,7 @@ namespace bgfx { namespace gl
 		{ GL_RGB5_A1,                                  GL_ZERO,                                      GL_BGRA,                                     GL_BGRA,                                     GL_UNSIGNED_SHORT_1_5_5_5_REV,   false, { $_, $_, $_, $_ } }, // BGR5A1
 		{ GL_RGB5_A1,                                  GL_ZERO,                                      GL_RGBA,                                     GL_RGBA,                                     GL_UNSIGNED_SHORT_1_5_5_5_REV,   false, { $_, $_, $_, $_ } }, // RGB5A1
 		{ GL_RGB10_A2,                                 GL_ZERO,                                      GL_RGBA,                                     GL_RGBA,                                     GL_UNSIGNED_INT_2_10_10_10_REV,  false, { $_, $_, $_, $_ } }, // RGB10A2
+		{ GL_RGB10_A2UI,                               GL_ZERO,                                      GL_RGBA_INTEGER,                             GL_RGBA_INTEGER,                             GL_UNSIGNED_INT_2_10_10_10_REV,  false, { $_, $_, $_, $_ } }, // RGB10A2U
 		{ GL_R11F_G11F_B10F,                           GL_ZERO,                                      GL_RGB,                                      GL_RGB,                                      GL_UNSIGNED_INT_10F_11F_11F_REV, false, { $_, $_, $_, $_ } }, // RG11B10F
 		{ GL_ZERO,                                     GL_ZERO,                                      GL_ZERO,                                     GL_ZERO,                                     GL_ZERO,                         false, { $_, $_, $_, $_ } }, // UnknownDepth
 		{ GL_DEPTH_COMPONENT16,                        GL_ZERO,                                      GL_DEPTH_COMPONENT,                          GL_DEPTH_COMPONENT,                          GL_UNSIGNED_SHORT,               false, { $_, $_, $_, $_ } }, // D16
@@ -338,6 +342,7 @@ namespace bgfx { namespace gl
 		{ GL_DEPTH_COMPONENT32F,                       GL_ZERO,                                      GL_DEPTH_COMPONENT,                          GL_DEPTH_COMPONENT,                          GL_FLOAT,                        false, { $_, $_, $_, $_ } }, // D16F
 		{ GL_DEPTH_COMPONENT32F,                       GL_ZERO,                                      GL_DEPTH_COMPONENT,                          GL_DEPTH_COMPONENT,                          GL_FLOAT,                        false, { $_, $_, $_, $_ } }, // D24F
 		{ GL_DEPTH_COMPONENT32F,                       GL_ZERO,                                      GL_DEPTH_COMPONENT,                          GL_DEPTH_COMPONENT,                          GL_FLOAT,                        false, { $_, $_, $_, $_ } }, // D32F
+		{ GL_DEPTH32F_STENCIL8,                        GL_ZERO,                                      GL_DEPTH_STENCIL,                            GL_DEPTH_STENCIL,                            GL_FLOAT_32_UNSIGNED_INT_24_8_REV, false, { $_, $_, $_, $_ } }, // D32FS8
 		{ GL_STENCIL_INDEX8,                           GL_ZERO,                                      GL_STENCIL_INDEX,                            GL_STENCIL_INDEX,                            GL_UNSIGNED_BYTE,                false, { $_, $_, $_, $_ } }, // D0S8
 #undef $_
 #undef $0
@@ -357,8 +362,11 @@ namespace bgfx { namespace gl
 		GL_ZERO,               // BC2
 		GL_ZERO,               // BC3
 		GL_ZERO,               // BC4
+		GL_ZERO,               // BC4S
 		GL_ZERO,               // BC5
+		GL_ZERO,               // BC5S
 		GL_ZERO,               // BC6H
+		GL_ZERO,               // BC6HU
 		GL_ZERO,               // BC7
 		GL_ZERO,               // ETC1
 		GL_ZERO,               // ETC2
@@ -443,6 +451,7 @@ namespace bgfx { namespace gl
 		GL_RGB5_A1,            // BGR5A1
 		GL_RGB5_A1,            // RGB5A1
 		GL_RGB10_A2,           // RGB10A2
+		GL_RGB10_A2UI,         // RGB10A2U
 		GL_R11F_G11F_B10F,     // RG11B10F
 		GL_ZERO,               // UnknownDepth
 		GL_DEPTH_COMPONENT16,  // D16
@@ -456,6 +465,7 @@ namespace bgfx { namespace gl
 		GL_DEPTH_COMPONENT32F, // D16F
 		GL_DEPTH_COMPONENT32F, // D24F
 		GL_DEPTH_COMPONENT32F, // D32F
+		GL_DEPTH32F_STENCIL8,  // D32FS8
 		GL_STENCIL_INDEX8,     // D0S8
 	};
 	static_assert(TextureFormat::Count == BX_COUNTOF(s_rboFormat) );
@@ -466,8 +476,11 @@ namespace bgfx { namespace gl
 		GL_ZERO,           // BC2
 		GL_ZERO,           // BC3
 		GL_ZERO,           // BC4
+		GL_ZERO,           // BC4S
 		GL_ZERO,           // BC5
+		GL_ZERO,           // BC5S
 		GL_ZERO,           // BC6H
+		GL_ZERO,           // BC6HU
 		GL_ZERO,           // BC7
 		GL_ZERO,           // ETC1
 		GL_ZERO,           // ETC2
@@ -552,6 +565,7 @@ namespace bgfx { namespace gl
 		GL_RGB5_A1,        // BGR5A1
 		GL_RGB5_A1,        // RGB5A1
 		GL_RGB10_A2,       // RGB10A2
+		GL_RGB10_A2UI,     // RGB10A2U
 		GL_R11F_G11F_B10F, // RG11B10F
 		GL_ZERO,           // UnknownDepth
 		GL_ZERO,           // D16
@@ -561,6 +575,7 @@ namespace bgfx { namespace gl
 		GL_ZERO,           // D16F
 		GL_ZERO,           // D24F
 		GL_ZERO,           // D32F
+		GL_ZERO,           // D32FS8
 		GL_ZERO,           // D0S8
 	};
 	static_assert(TextureFormat::Count == BX_COUNTOF(s_imageFormat) );
@@ -7992,7 +8007,7 @@ namespace bgfx { namespace gl
 										GL_CHECK(glBindImageTexture(ii
 											, texture.m_id
 											, bind.m_firstMip
-											, texture.isCubeMap() || texture.m_target == GL_TEXTURE_2D_ARRAY || UINT16_MAX != bind.m_numLayers ? GL_TRUE : GL_FALSE
+											, texture.isLayered() || UINT16_MAX != bind.m_numLayers ? GL_TRUE : GL_FALSE
 											, bind.m_firstLayer
 											, s_access[bind.m_access]
 											, s_imageFormat[bind.m_format])
@@ -8506,7 +8521,7 @@ namespace bgfx { namespace gl
 											GL_CHECK(glBindImageTexture(stage
 												, texture.m_id
 												, bind.m_firstMip
-												, texture.isCubeMap() || texture.m_target == GL_TEXTURE_2D_ARRAY || UINT16_MAX != bind.m_numLayers ? GL_TRUE : GL_FALSE
+												, texture.isLayered() || UINT16_MAX != bind.m_numLayers ? GL_TRUE : GL_FALSE
 												, bind.m_firstLayer
 												, s_access[bind.m_access]
 												, s_imageFormat[bind.m_format])

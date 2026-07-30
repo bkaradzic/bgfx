@@ -210,8 +210,11 @@ namespace bgfx { namespace d3d12
 		{ DXGI_FORMAT_BC2_UNORM,          DXGI_FORMAT_BC2_UNORM,             DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_BC2_UNORM_SRGB,       D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING                }, // BC2
 		{ DXGI_FORMAT_BC3_UNORM,          DXGI_FORMAT_BC3_UNORM,             DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_BC3_UNORM_SRGB,       D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING                }, // BC3
 		{ DXGI_FORMAT_BC4_UNORM,          DXGI_FORMAT_BC4_UNORM,             DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_UNKNOWN,              D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING                }, // BC4
+		{ DXGI_FORMAT_BC4_SNORM,          DXGI_FORMAT_BC4_SNORM,             DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_UNKNOWN,              D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING                }, // BC4S
 		{ DXGI_FORMAT_BC5_UNORM,          DXGI_FORMAT_BC5_UNORM,             DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_UNKNOWN,              D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING                }, // BC5
+		{ DXGI_FORMAT_BC5_SNORM,          DXGI_FORMAT_BC5_SNORM,             DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_UNKNOWN,              D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING                }, // BC5S
 		{ DXGI_FORMAT_BC6H_SF16,          DXGI_FORMAT_BC6H_SF16,             DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_UNKNOWN,              D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING                }, // BC6H
+		{ DXGI_FORMAT_BC6H_UF16,          DXGI_FORMAT_BC6H_UF16,             DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_UNKNOWN,              D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING                }, // BC6HU
 		{ DXGI_FORMAT_BC7_UNORM,          DXGI_FORMAT_BC7_UNORM,             DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_BC7_UNORM_SRGB,       D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING                }, // BC7
 		{ DXGI_FORMAT_UNKNOWN,            DXGI_FORMAT_UNKNOWN,               DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_UNKNOWN,              D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING                }, // ETC1
 		{ DXGI_FORMAT_UNKNOWN,            DXGI_FORMAT_UNKNOWN,               DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_UNKNOWN,              D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING                }, // ETC2
@@ -296,6 +299,7 @@ namespace bgfx { namespace d3d12
 		{ DXGI_FORMAT_B5G5R5A1_UNORM,     DXGI_FORMAT_B5G5R5A1_UNORM,        DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_UNKNOWN,              D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING                }, // BGR5A1
 		{ DXGI_FORMAT_B5G5R5A1_UNORM,     DXGI_FORMAT_B5G5R5A1_UNORM,        DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_UNKNOWN,              D3D12_ENCODE_SHADER_4_COMPONENT_MAPPING($B, $G, $R, $A) }, // RGB5A1
 		{ DXGI_FORMAT_R10G10B10A2_UNORM,  DXGI_FORMAT_R10G10B10A2_UNORM,     DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_UNKNOWN,              D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING                }, // RGB10A2
+		{ DXGI_FORMAT_R10G10B10A2_UINT,   DXGI_FORMAT_R10G10B10A2_UINT,      DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_UNKNOWN,              D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING                }, // RGB10A2U
 		{ DXGI_FORMAT_R11G11B10_FLOAT,    DXGI_FORMAT_R11G11B10_FLOAT,       DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_UNKNOWN,              D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING                }, // RG11B10F
 		{ DXGI_FORMAT_UNKNOWN,            DXGI_FORMAT_UNKNOWN,               DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_UNKNOWN,              D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING                }, // UnknownDepth
 		{ DXGI_FORMAT_R16_TYPELESS,       DXGI_FORMAT_R16_UNORM,             DXGI_FORMAT_D16_UNORM,         DXGI_FORMAT_UNKNOWN,              D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING                }, // D16
@@ -305,6 +309,7 @@ namespace bgfx { namespace d3d12
 		{ DXGI_FORMAT_R32_TYPELESS,       DXGI_FORMAT_R32_FLOAT,             DXGI_FORMAT_D32_FLOAT,         DXGI_FORMAT_UNKNOWN,              D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING                }, // D16F
 		{ DXGI_FORMAT_R32_TYPELESS,       DXGI_FORMAT_R32_FLOAT,             DXGI_FORMAT_D32_FLOAT,         DXGI_FORMAT_UNKNOWN,              D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING                }, // D24F
 		{ DXGI_FORMAT_R32_TYPELESS,       DXGI_FORMAT_R32_FLOAT,             DXGI_FORMAT_D32_FLOAT,         DXGI_FORMAT_UNKNOWN,              D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING                }, // D32F
+		{ DXGI_FORMAT_R32G8X24_TYPELESS,  DXGI_FORMAT_R32_FLOAT_X8X24_TYPELESS, DXGI_FORMAT_D32_FLOAT_S8X24_UINT, DXGI_FORMAT_UNKNOWN,        D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING                }, // D32FS8
 		{ DXGI_FORMAT_R24G8_TYPELESS,     DXGI_FORMAT_R24_UNORM_X8_TYPELESS, DXGI_FORMAT_D24_UNORM_S8_UINT, DXGI_FORMAT_UNKNOWN,              D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING                }, // D0S8
 #undef $0
 #undef $1
@@ -6089,8 +6094,9 @@ namespace bgfx { namespace d3d12
 
 			const bool compressed = bimg::isCompressed(bimg::TextureFormat::Enum(m_textureFormat) );
 			const bool isVideoDecodeDst = 0 != (m_flags & BGFX_TEXTURE_INTERNAL_VIDEO_DECODE_DST);
-			const bool swizzle    = TextureFormat::BGRA8 == m_textureFormat
-				&& (0 != (m_flags&BGFX_TEXTURE_COMPUTE_WRITE) || isVideoDecodeDst)
+			const bool swizzle = TextureFormat::BGRA8 == m_textureFormat
+				&& ( (0 != (m_flags&BGFX_TEXTURE_COMPUTE_WRITE) && 0 == (g_caps.formats[TextureFormat::BGRA8] & BGFX_CAPS_FORMAT_TEXTURE_IMAGE_WRITE) )
+				  || isVideoDecodeDst)
 				;
 
 			const bool writeOnly      = 0 != (m_flags & BGFX_TEXTURE_RT_WRITE_ONLY);
@@ -7161,8 +7167,8 @@ namespace bgfx { namespace d3d12
 					if (0 == m_width)
 					{
 						D3D12_RESOURCE_DESC desc = getResourceDesc(texture.m_ptr);
-						m_width  = uint32_t(desc.Width);
-						m_height = uint32_t(desc.Height);
+						m_width  = bx::max<uint32_t>(1, uint32_t(desc.Width)  >> at.mip);
+						m_height = bx::max<uint32_t>(1, uint32_t(desc.Height) >> at.mip);
 					}
 
 					const uint32_t msaaQuality = bx::satSub<uint32_t>(uint32_t( (texture.m_flags & BGFX_TEXTURE_RT_MSAA_MASK) >> BGFX_TEXTURE_RT_MSAA_SHIFT ), 1u);

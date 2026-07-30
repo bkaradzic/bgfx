@@ -244,106 +244,111 @@ namespace bgfx { namespace wgpu
 #define $G WGPUComponentSwizzle_G
 #define $B WGPUComponentSwizzle_B
 #define $A WGPUComponentSwizzle_A
-		{ WGPUTextureFormat_BC1RGBAUnorm,        WGPUTextureFormat_BC1RGBAUnormSrgb,    WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // BC1
-		{ WGPUTextureFormat_BC2RGBAUnorm,        WGPUTextureFormat_BC2RGBAUnormSrgb,    WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // BC2
-		{ WGPUTextureFormat_BC3RGBAUnorm,        WGPUTextureFormat_BC3RGBAUnormSrgb,    WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // BC3
-		{ WGPUTextureFormat_BC4RUnorm,           WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // BC4
-		{ WGPUTextureFormat_BC5RGUnorm,          WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // BC5
-		{ WGPUTextureFormat_BC6HRGBFloat,        WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // BC6H
-		{ WGPUTextureFormat_BC7RGBAUnorm,        WGPUTextureFormat_BC7RGBAUnormSrgb,    WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // BC7
-		{ WGPUTextureFormat_Undefined,           WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // ETC1
-		{ WGPUTextureFormat_ETC2RGB8Unorm,       WGPUTextureFormat_ETC2RGB8UnormSrgb,   WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // ETC2
-		{ WGPUTextureFormat_ETC2RGBA8Unorm,      WGPUTextureFormat_ETC2RGBA8UnormSrgb,  WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // ETC2A
-		{ WGPUTextureFormat_ETC2RGB8A1Unorm,     WGPUTextureFormat_ETC2RGB8A1UnormSrgb, WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // ETC2A1
-		{ WGPUTextureFormat_EACR11Unorm,         WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // EACR11
-		{ WGPUTextureFormat_EACR11Snorm,         WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // EACR11S
-		{ WGPUTextureFormat_EACRG11Unorm,        WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // EACRG11
-		{ WGPUTextureFormat_EACRG11Snorm,        WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // EACRG11S
-		{ WGPUTextureFormat_Undefined,           WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // PTC12
-		{ WGPUTextureFormat_Undefined,           WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // PTC14
-		{ WGPUTextureFormat_Undefined,           WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // PTC12A
-		{ WGPUTextureFormat_Undefined,           WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // PTC14A
-		{ WGPUTextureFormat_Undefined,           WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // PTC22
-		{ WGPUTextureFormat_Undefined,           WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // PTC24
-		{ WGPUTextureFormat_Undefined,           WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // ATC
-		{ WGPUTextureFormat_Undefined,           WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // ATCE
-		{ WGPUTextureFormat_Undefined,           WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // ATCI
-		{ WGPUTextureFormat_ASTC4x4Unorm,        WGPUTextureFormat_ASTC4x4UnormSrgb,    WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // ASTC4x4
-		{ WGPUTextureFormat_ASTC5x4Unorm,        WGPUTextureFormat_ASTC5x4UnormSrgb,    WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // ASTC5x4
-		{ WGPUTextureFormat_ASTC5x5Unorm,        WGPUTextureFormat_ASTC5x5UnormSrgb,    WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // ASTC5x5
-		{ WGPUTextureFormat_ASTC6x5Unorm,        WGPUTextureFormat_ASTC6x5UnormSrgb,    WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // ASTC6x5
-		{ WGPUTextureFormat_ASTC6x6Unorm,        WGPUTextureFormat_ASTC6x6UnormSrgb,    WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // ASTC6x6
-		{ WGPUTextureFormat_ASTC8x5Unorm,        WGPUTextureFormat_ASTC8x5UnormSrgb,    WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // ASTC8x5
-		{ WGPUTextureFormat_ASTC8x6Unorm,        WGPUTextureFormat_ASTC8x6UnormSrgb,    WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // ASTC8x6
-		{ WGPUTextureFormat_ASTC8x8Unorm,        WGPUTextureFormat_ASTC8x8UnormSrgb,    WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // ASTC8x8
-		{ WGPUTextureFormat_ASTC10x5Unorm,       WGPUTextureFormat_ASTC10x5UnormSrgb,   WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // ASTC10x5
-		{ WGPUTextureFormat_ASTC10x6Unorm,       WGPUTextureFormat_ASTC10x6UnormSrgb,   WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // ASTC10x6
-		{ WGPUTextureFormat_ASTC10x8Unorm,       WGPUTextureFormat_ASTC10x8UnormSrgb,   WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // ASTC10x8
-		{ WGPUTextureFormat_ASTC10x10Unorm,      WGPUTextureFormat_ASTC10x10UnormSrgb,  WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // ASTC10x10
-		{ WGPUTextureFormat_ASTC12x10Unorm,      WGPUTextureFormat_ASTC12x10UnormSrgb,  WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // ASTC12x10
-		{ WGPUTextureFormat_ASTC12x12Unorm,      WGPUTextureFormat_ASTC12x12UnormSrgb,  WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // ASTC12x12
-		{ WGPUTextureFormat_Undefined,           WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Undefined,         false, { $_, $_, $_, $_ } }, // Unknown
-		{ WGPUTextureFormat_Undefined,           WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // R1
-		{ WGPUTextureFormat_R8Unorm,             WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $0, $0, $0, $R } }, // A8
-		{ WGPUTextureFormat_R8Unorm,             WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // R8
-		{ WGPUTextureFormat_R8Sint,              WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // R8I
-		{ WGPUTextureFormat_R8Uint,              WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // R8U
-		{ WGPUTextureFormat_R8Snorm,             WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // R8S
-		{ WGPUTextureFormat_R16Unorm,            WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // R16
-		{ WGPUTextureFormat_R16Sint,             WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // R16I
-		{ WGPUTextureFormat_R16Uint,             WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // R16U
-		{ WGPUTextureFormat_R16Float,            WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // R16F
-		{ WGPUTextureFormat_R16Snorm,            WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // R16S
-		{ WGPUTextureFormat_R32Sint,             WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // R32I
-		{ WGPUTextureFormat_R32Uint,             WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // R32U
-		{ WGPUTextureFormat_R32Float,            WGPUTextureFormat_Undefined,           WGPUTextureSampleType_UnfilterableFloat, false, { $_, $_, $_, $_ } }, // R32F
-		{ WGPUTextureFormat_RG8Unorm,            WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // RG8
-		{ WGPUTextureFormat_RG8Sint,             WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // RG8I
-		{ WGPUTextureFormat_RG8Uint,             WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // RG8U
-		{ WGPUTextureFormat_RG8Snorm,            WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // RG8S
-		{ WGPUTextureFormat_RG16Unorm,           WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // RG16
-		{ WGPUTextureFormat_RG16Sint,            WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // RG16I
-		{ WGPUTextureFormat_RG16Uint,            WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // RG16U
-		{ WGPUTextureFormat_RG16Float,           WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // RG16F
-		{ WGPUTextureFormat_RG16Snorm,           WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // RG16S
-		{ WGPUTextureFormat_RG32Sint,            WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // RG32I
-		{ WGPUTextureFormat_RG32Uint,            WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // RG32U
-		{ WGPUTextureFormat_RG32Float,           WGPUTextureFormat_Undefined,           WGPUTextureSampleType_UnfilterableFloat, false, { $_, $_, $_, $_ } }, // RG32F
-		{ WGPUTextureFormat_Undefined,           WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // RGB8
-		{ WGPUTextureFormat_Undefined,           WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // RGB8I
-		{ WGPUTextureFormat_Undefined,           WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // RGB8U
-		{ WGPUTextureFormat_Undefined,           WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // RGB8S
-		{ WGPUTextureFormat_RGB9E5Ufloat,        WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // RGB9E5F
-		{ WGPUTextureFormat_BGRA8Unorm,          WGPUTextureFormat_BGRA8UnormSrgb,      WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // BGRA8
-		{ WGPUTextureFormat_RGBA8Unorm,          WGPUTextureFormat_RGBA8UnormSrgb,      WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // RGBA8
-		{ WGPUTextureFormat_RGBA8Sint,           WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // RGBA8I
-		{ WGPUTextureFormat_RGBA8Uint,           WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // RGBA8U
-		{ WGPUTextureFormat_RGBA8Snorm,          WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // RGBA8S
-		{ WGPUTextureFormat_RGBA16Unorm,         WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // RGBA16
-		{ WGPUTextureFormat_RGBA16Sint,          WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // RGBA16I
-		{ WGPUTextureFormat_RGBA16Uint,          WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // RGBA16U
-		{ WGPUTextureFormat_RGBA16Float,         WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // RGBA16F
-		{ WGPUTextureFormat_RGBA16Snorm,         WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // RGBA16S
-		{ WGPUTextureFormat_RGBA32Sint,          WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // RGBA32I
-		{ WGPUTextureFormat_RGBA32Uint,          WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // RGBA32U
-		{ WGPUTextureFormat_RGBA32Float,         WGPUTextureFormat_Undefined,           WGPUTextureSampleType_UnfilterableFloat, false, { $_, $_, $_, $_ } }, // RGBA32F
-		{ WGPUTextureFormat_Undefined,           WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // B5G6R5
-		{ WGPUTextureFormat_Undefined,           WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // R5G6B5
-		{ WGPUTextureFormat_Undefined,           WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // BGRA4
-		{ WGPUTextureFormat_Undefined,           WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // RGBA4
-		{ WGPUTextureFormat_Undefined,           WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // BGR5A1
-		{ WGPUTextureFormat_Undefined,           WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // RGB5A1
-		{ WGPUTextureFormat_RGB10A2Unorm,        WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // RGB10A2
-		{ WGPUTextureFormat_RG11B10Ufloat,       WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // RG11B10F
-		{ WGPUTextureFormat_Undefined,           WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Undefined,         false, { $_, $_, $_, $_ } }, // UnknownDepth
-		{ WGPUTextureFormat_Depth16Unorm,        WGPUTextureFormat_Undefined,           WGPUTextureSampleType_UnfilterableFloat, false, { $_, $_, $_, $_ } }, // D16
-		{ WGPUTextureFormat_Depth24Plus,         WGPUTextureFormat_Undefined,           WGPUTextureSampleType_UnfilterableFloat, false, { $_, $_, $_, $_ } }, // D24
-		{ WGPUTextureFormat_Depth24PlusStencil8, WGPUTextureFormat_Undefined,           WGPUTextureSampleType_UnfilterableFloat, false, { $_, $_, $_, $_ } }, // D24S8
-		{ WGPUTextureFormat_Depth32Float,        WGPUTextureFormat_Undefined,           WGPUTextureSampleType_UnfilterableFloat, false, { $_, $_, $_, $_ } }, // D32
-		{ WGPUTextureFormat_Depth32Float,        WGPUTextureFormat_Undefined,           WGPUTextureSampleType_UnfilterableFloat, false, { $_, $_, $_, $_ } }, // D16F
-		{ WGPUTextureFormat_Depth24Plus,         WGPUTextureFormat_Undefined,           WGPUTextureSampleType_UnfilterableFloat, false, { $_, $_, $_, $_ } }, // D24F
-		{ WGPUTextureFormat_Depth32Float,        WGPUTextureFormat_Undefined,           WGPUTextureSampleType_UnfilterableFloat, false, { $_, $_, $_, $_ } }, // D32F
-		{ WGPUTextureFormat_Stencil8,            WGPUTextureFormat_Undefined,           WGPUTextureSampleType_UnfilterableFloat, false, { $_, $_, $_, $_ } }, // D0S8
+		{ WGPUTextureFormat_BC1RGBAUnorm,         WGPUTextureFormat_BC1RGBAUnormSrgb,    WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // BC1
+		{ WGPUTextureFormat_BC2RGBAUnorm,         WGPUTextureFormat_BC2RGBAUnormSrgb,    WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // BC2
+		{ WGPUTextureFormat_BC3RGBAUnorm,         WGPUTextureFormat_BC3RGBAUnormSrgb,    WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // BC3
+		{ WGPUTextureFormat_BC4RUnorm,            WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // BC4
+		{ WGPUTextureFormat_BC4RSnorm,            WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // BC4S
+		{ WGPUTextureFormat_BC5RGUnorm,           WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // BC5
+		{ WGPUTextureFormat_BC5RGSnorm,           WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // BC5S
+		{ WGPUTextureFormat_BC6HRGBFloat,         WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // BC6H
+		{ WGPUTextureFormat_BC6HRGBUfloat,        WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // BC6HU
+		{ WGPUTextureFormat_BC7RGBAUnorm,         WGPUTextureFormat_BC7RGBAUnormSrgb,    WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // BC7
+		{ WGPUTextureFormat_Undefined,            WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // ETC1
+		{ WGPUTextureFormat_ETC2RGB8Unorm,        WGPUTextureFormat_ETC2RGB8UnormSrgb,   WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // ETC2
+		{ WGPUTextureFormat_ETC2RGBA8Unorm,       WGPUTextureFormat_ETC2RGBA8UnormSrgb,  WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // ETC2A
+		{ WGPUTextureFormat_ETC2RGB8A1Unorm,      WGPUTextureFormat_ETC2RGB8A1UnormSrgb, WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // ETC2A1
+		{ WGPUTextureFormat_EACR11Unorm,          WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // EACR11
+		{ WGPUTextureFormat_EACR11Snorm,          WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // EACR11S
+		{ WGPUTextureFormat_EACRG11Unorm,         WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // EACRG11
+		{ WGPUTextureFormat_EACRG11Snorm,         WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // EACRG11S
+		{ WGPUTextureFormat_Undefined,            WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // PTC12
+		{ WGPUTextureFormat_Undefined,            WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // PTC14
+		{ WGPUTextureFormat_Undefined,            WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // PTC12A
+		{ WGPUTextureFormat_Undefined,            WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // PTC14A
+		{ WGPUTextureFormat_Undefined,            WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // PTC22
+		{ WGPUTextureFormat_Undefined,            WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // PTC24
+		{ WGPUTextureFormat_Undefined,            WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // ATC
+		{ WGPUTextureFormat_Undefined,            WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // ATCE
+		{ WGPUTextureFormat_Undefined,            WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // ATCI
+		{ WGPUTextureFormat_ASTC4x4Unorm,         WGPUTextureFormat_ASTC4x4UnormSrgb,    WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // ASTC4x4
+		{ WGPUTextureFormat_ASTC5x4Unorm,         WGPUTextureFormat_ASTC5x4UnormSrgb,    WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // ASTC5x4
+		{ WGPUTextureFormat_ASTC5x5Unorm,         WGPUTextureFormat_ASTC5x5UnormSrgb,    WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // ASTC5x5
+		{ WGPUTextureFormat_ASTC6x5Unorm,         WGPUTextureFormat_ASTC6x5UnormSrgb,    WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // ASTC6x5
+		{ WGPUTextureFormat_ASTC6x6Unorm,         WGPUTextureFormat_ASTC6x6UnormSrgb,    WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // ASTC6x6
+		{ WGPUTextureFormat_ASTC8x5Unorm,         WGPUTextureFormat_ASTC8x5UnormSrgb,    WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // ASTC8x5
+		{ WGPUTextureFormat_ASTC8x6Unorm,         WGPUTextureFormat_ASTC8x6UnormSrgb,    WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // ASTC8x6
+		{ WGPUTextureFormat_ASTC8x8Unorm,         WGPUTextureFormat_ASTC8x8UnormSrgb,    WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // ASTC8x8
+		{ WGPUTextureFormat_ASTC10x5Unorm,        WGPUTextureFormat_ASTC10x5UnormSrgb,   WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // ASTC10x5
+		{ WGPUTextureFormat_ASTC10x6Unorm,        WGPUTextureFormat_ASTC10x6UnormSrgb,   WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // ASTC10x6
+		{ WGPUTextureFormat_ASTC10x8Unorm,        WGPUTextureFormat_ASTC10x8UnormSrgb,   WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // ASTC10x8
+		{ WGPUTextureFormat_ASTC10x10Unorm,       WGPUTextureFormat_ASTC10x10UnormSrgb,  WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // ASTC10x10
+		{ WGPUTextureFormat_ASTC12x10Unorm,       WGPUTextureFormat_ASTC12x10UnormSrgb,  WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // ASTC12x10
+		{ WGPUTextureFormat_ASTC12x12Unorm,       WGPUTextureFormat_ASTC12x12UnormSrgb,  WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // ASTC12x12
+		{ WGPUTextureFormat_Undefined,            WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Undefined,         false, { $_, $_, $_, $_ } }, // Unknown
+		{ WGPUTextureFormat_Undefined,            WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // R1
+		{ WGPUTextureFormat_R8Unorm,              WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $0, $0, $0, $R } }, // A8
+		{ WGPUTextureFormat_R8Unorm,              WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // R8
+		{ WGPUTextureFormat_R8Sint,               WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // R8I
+		{ WGPUTextureFormat_R8Uint,               WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // R8U
+		{ WGPUTextureFormat_R8Snorm,              WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // R8S
+		{ WGPUTextureFormat_R16Unorm,             WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // R16
+		{ WGPUTextureFormat_R16Sint,              WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // R16I
+		{ WGPUTextureFormat_R16Uint,              WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // R16U
+		{ WGPUTextureFormat_R16Float,             WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // R16F
+		{ WGPUTextureFormat_R16Snorm,             WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // R16S
+		{ WGPUTextureFormat_R32Sint,              WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // R32I
+		{ WGPUTextureFormat_R32Uint,              WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // R32U
+		{ WGPUTextureFormat_R32Float,             WGPUTextureFormat_Undefined,           WGPUTextureSampleType_UnfilterableFloat, false, { $_, $_, $_, $_ } }, // R32F
+		{ WGPUTextureFormat_RG8Unorm,             WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // RG8
+		{ WGPUTextureFormat_RG8Sint,              WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // RG8I
+		{ WGPUTextureFormat_RG8Uint,              WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // RG8U
+		{ WGPUTextureFormat_RG8Snorm,             WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // RG8S
+		{ WGPUTextureFormat_RG16Unorm,            WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // RG16
+		{ WGPUTextureFormat_RG16Sint,             WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // RG16I
+		{ WGPUTextureFormat_RG16Uint,             WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // RG16U
+		{ WGPUTextureFormat_RG16Float,            WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // RG16F
+		{ WGPUTextureFormat_RG16Snorm,            WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // RG16S
+		{ WGPUTextureFormat_RG32Sint,             WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // RG32I
+		{ WGPUTextureFormat_RG32Uint,             WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // RG32U
+		{ WGPUTextureFormat_RG32Float,            WGPUTextureFormat_Undefined,           WGPUTextureSampleType_UnfilterableFloat, false, { $_, $_, $_, $_ } }, // RG32F
+		{ WGPUTextureFormat_Undefined,            WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // RGB8
+		{ WGPUTextureFormat_Undefined,            WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // RGB8I
+		{ WGPUTextureFormat_Undefined,            WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // RGB8U
+		{ WGPUTextureFormat_Undefined,            WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // RGB8S
+		{ WGPUTextureFormat_RGB9E5Ufloat,         WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // RGB9E5F
+		{ WGPUTextureFormat_BGRA8Unorm,           WGPUTextureFormat_BGRA8UnormSrgb,      WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // BGRA8
+		{ WGPUTextureFormat_RGBA8Unorm,           WGPUTextureFormat_RGBA8UnormSrgb,      WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // RGBA8
+		{ WGPUTextureFormat_RGBA8Sint,            WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // RGBA8I
+		{ WGPUTextureFormat_RGBA8Uint,            WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // RGBA8U
+		{ WGPUTextureFormat_RGBA8Snorm,           WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // RGBA8S
+		{ WGPUTextureFormat_RGBA16Unorm,          WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // RGBA16
+		{ WGPUTextureFormat_RGBA16Sint,           WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // RGBA16I
+		{ WGPUTextureFormat_RGBA16Uint,           WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // RGBA16U
+		{ WGPUTextureFormat_RGBA16Float,          WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // RGBA16F
+		{ WGPUTextureFormat_RGBA16Snorm,          WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // RGBA16S
+		{ WGPUTextureFormat_RGBA32Sint,           WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // RGBA32I
+		{ WGPUTextureFormat_RGBA32Uint,           WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // RGBA32U
+		{ WGPUTextureFormat_RGBA32Float,          WGPUTextureFormat_Undefined,           WGPUTextureSampleType_UnfilterableFloat, false, { $_, $_, $_, $_ } }, // RGBA32F
+		{ WGPUTextureFormat_Undefined,            WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // B5G6R5
+		{ WGPUTextureFormat_Undefined,            WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // R5G6B5
+		{ WGPUTextureFormat_Undefined,            WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // BGRA4
+		{ WGPUTextureFormat_Undefined,            WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // RGBA4
+		{ WGPUTextureFormat_Undefined,            WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // BGR5A1
+		{ WGPUTextureFormat_Undefined,            WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // RGB5A1
+		{ WGPUTextureFormat_RGB10A2Unorm,         WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // RGB10A2
+		{ WGPUTextureFormat_RGB10A2Uint,          WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Uint,              false, { $_, $_, $_, $_ } }, // RGB10A2U
+		{ WGPUTextureFormat_RG11B10Ufloat,        WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Float,             true,  { $_, $_, $_, $_ } }, // RG11B10F
+		{ WGPUTextureFormat_Undefined,            WGPUTextureFormat_Undefined,           WGPUTextureSampleType_Undefined,         false, { $_, $_, $_, $_ } }, // UnknownDepth
+		{ WGPUTextureFormat_Depth16Unorm,         WGPUTextureFormat_Undefined,           WGPUTextureSampleType_UnfilterableFloat, false, { $_, $_, $_, $_ } }, // D16
+		{ WGPUTextureFormat_Depth24Plus,          WGPUTextureFormat_Undefined,           WGPUTextureSampleType_UnfilterableFloat, false, { $_, $_, $_, $_ } }, // D24
+		{ WGPUTextureFormat_Depth24PlusStencil8,  WGPUTextureFormat_Undefined,           WGPUTextureSampleType_UnfilterableFloat, false, { $_, $_, $_, $_ } }, // D24S8
+		{ WGPUTextureFormat_Depth32Float,         WGPUTextureFormat_Undefined,           WGPUTextureSampleType_UnfilterableFloat, false, { $_, $_, $_, $_ } }, // D32
+		{ WGPUTextureFormat_Depth32Float,         WGPUTextureFormat_Undefined,           WGPUTextureSampleType_UnfilterableFloat, false, { $_, $_, $_, $_ } }, // D16F
+		{ WGPUTextureFormat_Depth24Plus,          WGPUTextureFormat_Undefined,           WGPUTextureSampleType_UnfilterableFloat, false, { $_, $_, $_, $_ } }, // D24F
+		{ WGPUTextureFormat_Depth32Float,         WGPUTextureFormat_Undefined,           WGPUTextureSampleType_UnfilterableFloat, false, { $_, $_, $_, $_ } }, // D32F
+		{ WGPUTextureFormat_Depth32FloatStencil8, WGPUTextureFormat_Undefined,           WGPUTextureSampleType_UnfilterableFloat, false, { $_, $_, $_, $_ } }, // D32FS8
+		{ WGPUTextureFormat_Stencil8,             WGPUTextureFormat_Undefined,           WGPUTextureSampleType_UnfilterableFloat, false, { $_, $_, $_, $_ } }, // D0S8
 #undef $_
 #undef $0
 #undef $1
@@ -540,6 +545,7 @@ namespace bgfx { namespace wgpu
 			m_astc          = isFeatureSupported(WGPUFeatureName_TextureCompressionASTC);
 			m_bcSliced3D    = isFeatureSupported(WGPUFeatureName_TextureCompressionBCSliced3D);
 			m_astcSliced3D  = isFeatureSupported(WGPUFeatureName_TextureCompressionASTCSliced3D);
+			m_d32fs8        = isFeatureSupported(WGPUFeatureName_Depth32FloatStencil8);
 		}
 
 		uint32_t getCaps(TextureFormat::Enum _fmt) const
@@ -563,8 +569,11 @@ namespace bgfx { namespace wgpu
 			case TextureFormat::BC2:
 			case TextureFormat::BC3:
 			case TextureFormat::BC4:
+			case TextureFormat::BC4S:
 			case TextureFormat::BC5:
+			case TextureFormat::BC5S:
 			case TextureFormat::BC6H:
+			case TextureFormat::BC6HU:
 			case TextureFormat::BC7:        framebuffer = false;      multisample = false;         storage = false;            supported  = m_bc;
 				supports3D = m_bcSliced3D;
 				break;
@@ -634,6 +643,7 @@ namespace bgfx { namespace wgpu
 			case TextureFormat::RGBA32U:   framebuffer = true;          multisample = m_core;        storage = true;           supported = true; break;
 			case TextureFormat::RGBA32F:   framebuffer = true;          multisample = m_core;        storage = true;           supported = true; break;
 			case TextureFormat::RGB10A2:   framebuffer = true;          multisample = true;          storage = m_tier1;        supported = true; break;
+			case TextureFormat::RGB10A2U:  framebuffer = true;          multisample = m_core;        storage = m_tier1;        supported = true; break;
 			case TextureFormat::RG11B10F:  framebuffer = m_rg11b10Rend; multisample = m_rg11b10Rend; storage = m_tier1;        supported = true; break;
 			case TextureFormat::RGB9E5F:   framebuffer = false;         multisample = false;         storage = false;          supported = true; break;
 			case TextureFormat::D16:
@@ -644,6 +654,7 @@ namespace bgfx { namespace wgpu
 			case TextureFormat::D24F:
 			case TextureFormat::D32F:
 			case TextureFormat::D0S8:      framebuffer = true;          multisample = true;          storage = false;          supported  = true; break;
+			case TextureFormat::D32FS8:    framebuffer = true;          multisample = true;          storage = false;          supported  = m_d32fs8; break;
 
 			default:
 				break;
@@ -713,6 +724,7 @@ namespace bgfx { namespace wgpu
 		bool m_astc;
 		bool m_bcSliced3D;
 		bool m_astcSliced3D;
+		bool m_d32fs8;
 	};
 
 #	if USE_WEBGPU_DYNAMIC_LIB
@@ -4288,7 +4300,8 @@ WGPU_IMPORT
 
 		if (bimg::isCompressed(bimg::TextureFormat::Enum(m_textureFormat) ) )
 		{
-			rectPitch = (_rect.m_width / blockInfo.blockWidth) * blockInfo.blockSize;
+			const uint32_t alignedWidth = bx::max<uint32_t>(blockInfo.blockWidth, bx::alignUp(_rect.m_width, blockInfo.blockWidth) );
+			rectPitch = (alignedWidth / blockInfo.blockWidth) * blockInfo.blockSize;
 		}
 
 		uint32_t bytesPerRow = UINT16_MAX == _pitch ? rectPitch : _pitch;

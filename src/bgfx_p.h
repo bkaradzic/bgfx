@@ -313,7 +313,7 @@ namespace bgfx
 	typedef uint32_t RenderItemCount;
 #endif // BGFX_CONFIG_MAX_DRAW_CALLS < (64<<10)
 
-	static constexpr uint32_t kDrawCallBlock = 1024;
+	static constexpr uint32_t kDrawCallBlock = BGFX_CONFIG_DRAW_CALL_BLOCK;
 
 	inline uint32_t alignDrawCalls(uint32_t _num)
 	{
@@ -1616,7 +1616,7 @@ namespace bgfx
 
 		static uint32_t capacityFor(uint32_t _used)
 		{
-			return bx::min<uint32_t>(BGFX_CONFIG_MAX_MATRIX_CACHE, uint32_t(bx::alignUp(_used, kDrawCallBlock) )+1);
+			return bx::min<uint32_t>(BGFX_CONFIG_MAX_MATRIX_CACHE, uint32_t(bx::alignUp(_used-1, kDrawCallBlock) )+1);
 		}
 
 		void reset()
@@ -1658,14 +1658,14 @@ namespace bgfx
 		uint32_t reserve(uint16_t* _num)
 		{
 			uint32_t num = *_num;
-			uint32_t first = bx::atomicFetchAndAddsat<uint32_t>(&m_num, num, m_max - 1);
+			uint32_t first = bx::atomicFetchAndAddsat<uint32_t>(&m_num, num, m_max);
 
-			if (first+num >= m_max)
+			if (first+num > m_max)
 			{
 				m_overflowed = true;
 			}
 
-			num   = bx::min(num, m_max-1-first);
+			num   = bx::min(num, m_max-first);
 			*_num = bx::narrowCast<uint16_t>(num);
 
 			return first;
@@ -5884,6 +5884,48 @@ namespace bgfx
 				BX_WARN(false, "Can't update immutable texture.");
 				release(_mem);
 				return;
+			}
+
+			{
+				const bimg::TextureFormat::Enum format = bimg::TextureFormat::Enum(ref.m_format);
+				const bimg::ImageBlockInfo& blockInfo = bimg::getBlockInfo(format);
+
+				uint32_t rectPitch = _width * blockInfo.bitsPerPixel / 8;
+				uint32_t numRows   = _height;
+
+				if (bimg::isCompressed(format) )
+				{
+					const uint32_t blockW = bx::max<uint32_t>(1, blockInfo.blockWidth);
+					const uint32_t blockH = bx::max<uint32_t>(1, blockInfo.blockHeight);
+
+					rectPitch = bx::max<uint32_t>(1, bx::alignUp(_width,  blockW)/blockW) * blockInfo.blockSize;
+					numRows   = bx::max<uint32_t>(1, bx::alignUp(_height, blockH)/blockH);
+				}
+
+				const uint32_t srcPitch  = UINT16_MAX == _pitch ? rectPitch : _pitch;
+				const uint32_t numSlices = bx::max<uint32_t>(1, ref.m_depth > 1 ? _depth : 1);
+				const uint32_t needed    = (numSlices-1)*srcPitch*numRows
+					+ (numRows-1)*srcPitch
+					+ rectPitch
+					;
+
+				if (_mem->size < needed)
+				{
+					BX_WARN(false
+						, "Texture update source memory is too small (%d bytes, needs %d) "
+						  "for a %dx%dx%d %s rect with pitch %d; skipping."
+						, _mem->size
+						, needed
+						, _width
+						, _height
+						, _depth
+						, bimg::getName(format)
+						, srcPitch
+						);
+					release(_mem);
+
+					return;
+				}
 			}
 
 			CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::UpdateTexture);

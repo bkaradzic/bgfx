@@ -139,7 +139,7 @@
 #define IMAGE3D_WO( _name, _format, _reg)                                      \
 	WRITEONLY FORMAT(_format) RWTexture3D<COMP_ ## _format> _name : REGISTER(u, _reg);
 
-#define UIMAGE3D_WO(_name, _format, _reg) IMAGE3D_RW(_name, _format, _reg)
+#define UIMAGE3D_WO(_name, _format, _reg) IMAGE3D_WO(_name, _format, _reg)
 
 #define IMAGE3D_RW( _name, _format, _reg)                            \
 	FORMAT(_format) RWTexture3D<COMP_ ## _format> _name : REGISTER(u, _reg);  \
