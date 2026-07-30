@@ -271,6 +271,11 @@
 #	define BGFX_CONFIG_MAX_DRAW_CALLS ( (64<<10)-1)
 #endif // BGFX_CONFIG_MAX_DRAW_CALLS
 
+/// Maximum number of draw calls per block. Default is 1024.
+#ifndef BGFX_CONFIG_DRAW_CALL_BLOCK
+#	define BGFX_CONFIG_DRAW_CALL_BLOCK 1024
+#endif // BGFX_CONFIG_DRAW_CALL_BLOCK
+
 /// Maximum number of blit items per frame. Default is 1024.
 #ifndef BGFX_CONFIG_MAX_BLIT_ITEMS
 #	define BGFX_CONFIG_MAX_BLIT_ITEMS (1<<10)
