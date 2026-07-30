@@ -11,9 +11,11 @@ $input v_normal, v_wpos
 #include <bgfx_shader.sh>
 #include "atmosphere.sh"
 #include "sky2_common.sh"
+#include "hextile.sh"
 
 #define TERRAIN_TILE        0.5 // in km
 #define TERRAIN_ROCK_SLOPE  0.1
+#define TERRAIN_DETILE_ROT  0.5
 
 #define TERRAIN_SHADOW_BIAS 0.0015
 
@@ -41,6 +43,30 @@ vec3 tr_lut(float r, float mu) {
 vec3 ms_lut(float r, float mu_sun) {
 	vec2 uv = vec2(mu_sun * 0.5 + 0.5, (r - ATMO_BOTTOM_RADIUS) / (ATMO_TOP_RADIUS - ATMO_BOTTOM_RADIUS));
 	return texture2DLod(s_atmo_multiscatter, uv, 0.0).rgb;
+}
+
+void hexTerrainFetch(vec2 uv, float rotStrength, out vec3 grass, out vec3 rock) {
+	vec2 dSTdx = dFdx(uv);
+	vec2 dSTdy = dFdy(uv);
+
+	vec2 uv1, uv2, uv3;
+	mat2 rot1, rot2, rot3;
+	vec3 bary;
+	hextile_setup(uv, rotStrength, uv1, uv2, uv3, rot1, rot2, rot3, bary);
+
+	grass = hextile_blend(
+		  texture2DGrad(s_grass, uv1, mul(dSTdx, rot1), mul(dSTdy, rot1) ).xyz
+		, texture2DGrad(s_grass, uv2, mul(dSTdx, rot2), mul(dSTdy, rot2) ).xyz
+		, texture2DGrad(s_grass, uv3, mul(dSTdx, rot3), mul(dSTdy, rot3) ).xyz
+		, bary
+		);
+
+	rock = hextile_blend(
+		  texture2DGrad(s_rock, uv1, mul(dSTdx, rot1), mul(dSTdy, rot1) ).xyz
+		, texture2DGrad(s_rock, uv2, mul(dSTdx, rot2), mul(dSTdy, rot2) ).xyz
+		, texture2DGrad(s_rock, uv3, mul(dSTdx, rot3), mul(dSTdy, rot3) ).xyz
+		, bary
+		);
 }
 
 // 3x3 PCF
@@ -78,13 +104,13 @@ void main() {
 
 	vec3 pw = v_wpos * TERRAIN_TILE;
 
-	vec3 grass = texture2D(s_grass, pw.zy).xyz * tw.x
-	           + texture2D(s_grass, pw.xz).xyz * tw.y
-	           + texture2D(s_grass, pw.xy).xyz * tw.z;
+	vec3 grassX, rockX, grassY, rockY, grassZ, rockZ;
+	hexTerrainFetch(pw.zy, TERRAIN_DETILE_ROT, grassX, rockX);
+	hexTerrainFetch(pw.xz, TERRAIN_DETILE_ROT, grassY, rockY);
+	hexTerrainFetch(pw.xy, TERRAIN_DETILE_ROT, grassZ, rockZ);
 
-	vec3 rock  = texture2D(s_rock, pw.zy).xyz * tw.x
-	           + texture2D(s_rock, pw.xz).xyz * tw.y
-	           + texture2D(s_rock, pw.xy).xyz * tw.z;
+	vec3 grass = grassX * tw.x + grassY * tw.y + grassZ * tw.z;
+	vec3 rock  = rockX  * tw.x + rockY  * tw.y + rockZ  * tw.z;
 
 	// srgb -> linear
 	grass = pow(grass, vec3_splat(2.2));
