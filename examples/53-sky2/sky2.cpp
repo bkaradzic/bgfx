@@ -1,7 +1,7 @@
 /*
- * Copyright 2026 Mateusz Kozdrowicki. All rights reserved.
- * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
- */
+* Copyright 2026 Mateusz Kozdrowicki. All rights reserved.
+* License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
+*/
 
 #include "common.h"
 #include "bgfx_utils.h"
@@ -63,10 +63,6 @@ class ExampleSky2 : public entry::AppI
 public:
 	ExampleSky2(const char* _name, const char* _description, const char* _url)
 		: entry::AppI(_name, _description, _url)
-		, m_terrain_vbh(BGFX_INVALID_HANDLE)
-		, m_terrain_ibh(BGFX_INVALID_HANDLE)
-		, m_gridW(0)
-		, m_gridH(0)
 	{
 	}
 
@@ -91,6 +87,14 @@ public:
 		bgfx::init(init);
 
 		bgfx::setDebug(m_debug);
+
+		const bgfx::Caps* caps = bgfx::getCaps();
+		m_computeSupported = !!(caps->supported & BGFX_CAPS_COMPUTE);
+
+		if (!m_computeSupported)
+		{
+			return;
+		}
 
 		PosNormalVertex::init();
 
@@ -159,6 +163,9 @@ public:
 		cameraSetHorizontalAngle(bx::kPi - bx::kPi / 20.0f);
 		cameraSetVerticalAngle(-bx::kPi / 12.0f);
 
+		bgfx::setViewClear(kViewShadow, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0xffffffff, 1.0f, 0);
+		bgfx::setViewClear(kViewSky, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0x000000ff, 1.0f, 0);
+
 		m_frameTime.reset();
 
 		imguiCreate();
@@ -166,6 +173,13 @@ public:
 
 	virtual int shutdown() override
 	{
+		if (!m_computeSupported)
+		{
+			bgfx::shutdown();
+
+			return 0;
+		}
+
 		cameraDestroy();
 		imguiDestroy();
 
@@ -247,42 +261,50 @@ public:
 		bgfx::setUniform(u_atmoGround,   ground);
 	}
 
+	void drawComputeUnsupported()
+	{
+		bgfx::setViewClear(kViewSky, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0x000000ff, 1.0f, 0);
+		bgfx::setViewRect(kViewSky, 0, 0, uint16_t(m_width), uint16_t(m_height) );
+		bgfx::touch(kViewSky);
+
+		bgfx::dbgTextClear();
+		bgfx::dbgTextPrintf(0, 0, 0x04, " Compute is not supported.");
+	}
+
 	void drawPanel()
 	{
 		ImGui::SetNextWindowPos(ImVec2(m_width - 340.0f, 10.0f), ImGuiCond_FirstUseEver);
 		ImGui::SetNextWindowSize(ImVec2(330.0f, 480.0f), ImGuiCond_FirstUseEver);
 		ImGui::Begin("Settings");
 
-		ImGui::TextUnformatted("Sun");
-		ImGui::SliderFloat("Elevation", &m_sunElevationDeg, -5.0f, 89.0f);
+		ImGui::SeparatorText("Sun");
+		ImGui::SliderFloat("Elevation", &m_sunElevationDeg, -10.0f, 89.0f);
 		ImGui::SliderFloat("Azimuth",   &m_sunAzimuthDeg, -180.0f, 180.0f);
 		ImGui::SliderFloat("Intensity", &m_sunIntensity, 0.0f, 30.0f);
 		ImGui::Checkbox("Shadow mapping", &m_shadowsEnabled);
-		ImGui::Separator();
 
-		ImGui::TextUnformatted("Rayleigh");
+		ImGui::SeparatorText("Rayleigh");
 		ImGui::ColorEdit3("Ray color", m_rayleighColor);
 		ImGui::SliderFloat("Ray scale",  &m_rayleighScale, 0.0f, 0.1f, "%.5f");
 		ImGui::SliderFloat("Ray height", &m_rayleighScaleHeight, 0.5f, 20.0f);
-		ImGui::Separator();
 
-		ImGui::TextUnformatted("Mie");
+		ImGui::SeparatorText("Mie");
 		ImGui::SliderFloat("Mie scatter", &m_mieScatter, 0.0f, 0.02f, "%.5f");
 		ImGui::SliderFloat("Mie absorb",  &m_mieAbsorption, 0.0f, 0.02f, "%.5f");
 		ImGui::SliderFloat("Mie height",  &m_mieScaleHeight, 0.2f, 8.0f);
 		ImGui::SliderFloat("Mie g",       &m_miePhaseG, 0.0f, 0.99f);
-		ImGui::Separator();
 
-		ImGui::TextUnformatted("Ozone / Planet");
+		ImGui::SeparatorText("Ozone");
 		ImGui::ColorEdit3("Ozone color", m_ozoneColor);
 		ImGui::SliderFloat("Ozone scale",  &m_ozoneScale, 0.0f, 0.01f, "%.5f");
+
+		ImGui::SeparatorText("Planet");
 		ImGui::SliderFloat("Radius",       &m_planetRadius, 1000.0f, 12000.0f);
 		ImGui::SliderFloat("Atmos height", &m_atmosHeight, 10.0f, 200.0f);
 		ImGui::ColorEdit3("Ground",        m_groundAlbedo);
 		ImGui::SliderFloat("Multiscatter", &m_multiscatter, 0.0f, 5.0f);
-		ImGui::Separator();
 
-		ImGui::TextUnformatted("Aerial perspective");
+		ImGui::SeparatorText("Aerial perspective");
 		ImGui::SliderFloat("Inscatter", &m_aerialPerspectiveInscatter, 0.0f, 8.0f);
 		ImGui::SliderFloat("Density",   &m_aerialPerspectiveDensity, 0.0f, 8.0f);
 		ImGui::SliderFloat("Ambient",   &m_aerialPerspectiveambientStrength, 0.0f, 4.0f);
@@ -294,6 +316,15 @@ public:
 	{
 		if (!entry::processEvents(m_width, m_height, m_debug, m_reset, &m_mouseState) )
 		{
+			if (!m_computeSupported)
+			{
+				drawComputeUnsupported();
+
+				bgfx::frame();
+
+				return true;
+			}
+
 			imguiBeginFrame(m_mouseState.m_mx
 				,  m_mouseState.m_my
 				, (m_mouseState.m_buttons[entry::MouseButton::Left  ] ? IMGUI_MBUT_LEFT   : 0)
@@ -418,7 +449,6 @@ public:
 
 				bgfx::setViewFrameBuffer(kViewShadow, m_shadowFb);
 				bgfx::setViewRect(kViewShadow, 0, 0, kShadowMapSize, kShadowMapSize);
-				bgfx::setViewClear(kViewShadow, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0xffffffff, 1.0f, 0);
 
 				bgfx::setUniform(u_lightViewProj, lightViewProj);
 				bgfx::setUniform(u_lightMtx,      m_lightMtx);
@@ -429,7 +459,6 @@ public:
 			}
 
 			// --- Sky pass ---
-			bgfx::setViewClear(kViewSky, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0x000000ff, 1.0f, 0);
 			bgfx::setViewRect(kViewSky, 0, 0, uint16_t(m_width), uint16_t(m_height) );
 
 			setAtmosphereUniforms();
@@ -581,9 +610,6 @@ public:
 
 		m_terrain_vbh = bgfx::createVertexBuffer(vbMem, PosNormalVertex::ms_layout);
 		m_terrain_ibh = bgfx::createIndexBuffer(ibMem, BGFX_BUFFER_INDEX32);
-
-		m_gridW = w;
-		m_gridH = h;
 	}
 
 	void buildQuad() {
@@ -657,8 +683,7 @@ public:
 
 	FrameTime m_frameTime;
 
-	uint32_t m_gridW;
-	uint32_t m_gridH;
+	bool m_computeSupported = true;
 
 	float m_sunElevationDeg = 11.0f;
 	float m_sunAzimuthDeg   = 155.0f;
