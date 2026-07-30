@@ -12,7 +12,7 @@ namespace
 {
 
 constexpr float kWorldSize = 100.0f; // (km)
-constexpr float kAmplitude = 18.0f; // (km)
+constexpr float kAmplitude = 18.0f;  // (km)
 
 struct PosNormalVertex
 {
@@ -43,9 +43,10 @@ class ExampleSky2 : public entry::AppI
 public:
 	ExampleSky2(const char* _name, const char* _description, const char* _url)
 		: entry::AppI(_name, _description, _url)
-		, m_terrain_vbh		(BGFX_INVALID_HANDLE)
-		, m_terrain_ibh		(BGFX_INVALID_HANDLE)
-		, m_terrainProgram	(BGFX_INVALID_HANDLE)
+		, m_terrain_vbh(BGFX_INVALID_HANDLE)
+		, m_terrain_ibh(BGFX_INVALID_HANDLE)
+		, m_gridW(0)
+		, m_gridH(0)
 	{
 	}
 
@@ -73,9 +74,17 @@ public:
 
 		PosNormalVertex::init();
 
-		m_terrainProgram = loadProgram("vs_terrain", "fs_terrain");
+		m_terrainProgram = loadProgram("vs_sky2", "fs_sky2");
+
+		s_grass = bgfx::createUniform("s_grass", bgfx::UniformType::Sampler);
+		s_rock  = bgfx::createUniform("s_rock",  bgfx::UniformType::Sampler);
+
+		// BC1 with mip chains
+		m_grassTex = loadTexture("textures/terrain_grass_1k_diff.dds");
+		m_rockTex  = loadTexture("textures/terrain_rock_1k_diff.dds");
 
 		buildTerrain();
+		buildQuad();
 
 		cameraCreate();
 		cameraSetPosition({ -3.0f, 16.0f, 42.0f });
@@ -89,10 +98,20 @@ public:
 
 	virtual int shutdown() override
 	{
+		cameraDestroy();
 		imguiDestroy();
 
 		bgfx::destroy(m_terrain_vbh);
 		bgfx::destroy(m_terrain_ibh);
+
+		bgfx::destroy(m_quad_vbh);
+		bgfx::destroy(m_terrainProgram);
+
+		bgfx::destroy(m_grassTex);
+		bgfx::destroy(m_rockTex);
+
+		bgfx::destroy(s_grass);
+		bgfx::destroy(s_rock);
 
 		bgfx::shutdown();
 
@@ -134,6 +153,9 @@ public:
 			bgfx::setViewClear(kViewTerrain, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0x000000ff, 1.0f, 0);
 			bgfx::setViewRect(kViewTerrain, 0, 0, uint16_t(m_width), uint16_t(m_height) );
 			bgfx::setViewTransform(kViewTerrain, view, proj);
+
+			bgfx::setTexture(0, s_grass, m_grassTex);
+			bgfx::setTexture(1, s_rock,  m_rockTex);
 
 			bgfx::setVertexBuffer(0, m_terrain_vbh);
 			bgfx::setIndexBuffer(m_terrain_ibh);
@@ -238,16 +260,48 @@ public:
 
 		m_terrain_vbh = bgfx::createVertexBuffer(vbMem, PosNormalVertex::ms_layout);
 		m_terrain_ibh = bgfx::createIndexBuffer(ibMem, BGFX_BUFFER_INDEX32);
+
+		m_gridW = w;
+		m_gridH = h;
+	}
+
+	void buildQuad() {
+		const bgfx::Memory* mem = bgfx::alloc(6 * sizeof(float) );
+
+		float* pos = (float*)mem->data;
+
+		pos[0] = -1.0f; pos[1] = -1.0f;
+		pos[2] =  3.0f; pos[3] = -1.0f;
+		pos[4] = -1.0f; pos[5] =  3.0f;
+
+		bgfx::VertexLayout layout;
+
+		layout
+			.begin()
+			.add(bgfx::Attrib::Position, 2, bgfx::AttribType::Float)
+			.end();
+
+		m_quad_vbh = bgfx::createVertexBuffer(mem, layout);
 	}
 
 	entry::MouseState m_mouseState;
 
+	bgfx::VertexBufferHandle m_quad_vbh;
 	bgfx::VertexBufferHandle m_terrain_vbh;
 	bgfx::IndexBufferHandle  m_terrain_ibh;
 
 	bgfx::ProgramHandle m_terrainProgram;
 
+	bgfx::TextureHandle m_grassTex;
+	bgfx::TextureHandle m_rockTex;
+
+	bgfx::UniformHandle s_grass;
+	bgfx::UniformHandle s_rock;
+
 	FrameTime m_frameTime;
+
+	uint32_t m_gridW;
+	uint32_t m_gridH;
 
 	uint32_t m_width;
 	uint32_t m_height;
