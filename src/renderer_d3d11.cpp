@@ -2764,7 +2764,7 @@ namespace bgfx { namespace d3d11
 			}
 		}
 
-		void setFrameBuffer(FrameBufferHandle _fbh, bool _msaa = true, bool _needPresent = true)
+		void resolveFrameBuffer(FrameBufferHandle _fbh)
 		{
 			if (isValid(m_fbh)
 			&&  m_fbh.idx != _fbh.idx
@@ -2772,7 +2772,13 @@ namespace bgfx { namespace d3d11
 			{
 				FrameBufferD3D11& frameBuffer = m_frameBuffers[m_fbh.idx];
 				frameBuffer.resolve();
+				m_rtMsaa = false;
 			}
+		}
+
+		void setFrameBuffer(FrameBufferHandle _fbh, bool _msaa = true, bool _needPresent = true)
+		{
+			resolveFrameBuffer(_fbh);
 
 			if (!isValid(_fbh) )
 			{
@@ -6223,6 +6229,10 @@ namespace bgfx { namespace d3d11
 
 					profiler.begin(view);
 
+					resolveFrameBuffer(_render->m_view[view].m_fbh);
+					submitUniformCache(ucs, view);
+					submitBlit(bs, view);
+
 					if (_render->m_view[view].m_fbh.idx != fbh.idx)
 					{
 						fbh = _render->m_view[view].m_fbh;
@@ -6251,9 +6261,6 @@ namespace bgfx { namespace d3d11
 						clearQuad(_clearQuad, clippedRect, clr, _render->m_colorPalette);
 						prim = s_primInfo[Topology::Count]; // Force primitive type update after clear quad.
 					}
-
-					submitUniformCache(ucs, view);
-					submitBlit(bs, view);
 				}
 
 				if (isCompute)

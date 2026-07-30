@@ -3978,13 +3978,26 @@ namespace bgfx { namespace gl
 				);
 		}
 
+		void resolveFrameBuffer(FrameBufferHandle _fbh)
+		{
+			if (isValid(m_fbh)
+			&&  m_fbh.idx != _fbh.idx
+			&&  m_rtMsaa)
+			{
+				FrameBufferGL& frameBuffer = m_frameBuffers[m_fbh.idx];
+				frameBuffer.resolve();
+				m_rtMsaa = false;
+			}
+		}
+
 		uint32_t setFrameBuffer(FrameBufferHandle _fbh, uint32_t _height, uint16_t _discard = BGFX_CLEAR_NONE, bool _msaa = true)
 		{
+			resolveFrameBuffer(_fbh);
+
 			if (isValid(m_fbh)
 			&&  m_fbh.idx != _fbh.idx)
 			{
 				FrameBufferGL& frameBuffer = m_frameBuffers[m_fbh.idx];
-				frameBuffer.resolve();
 
 				if (BGFX_CLEAR_NONE != m_fbDiscard)
 				{
@@ -7925,6 +7938,10 @@ namespace bgfx { namespace gl
 
 					BGFX_GL_PROFILER_END();
 
+					resolveFrameBuffer(_render->m_view[view].m_fbh);
+					submitUniformCache(ucs, view);
+					submitBlit(bs, view);
+
 					if (_render->m_view[view].m_fbh.idx != fbh.idx)
 					{
 						fbh = _render->m_view[view].m_fbh;
@@ -7963,9 +7980,6 @@ namespace bgfx { namespace gl
 					GL_CHECK(glDepthFunc(GL_LESS) );
 					GL_CHECK(glEnable(GL_CULL_FACE) );
 					GL_CHECK(glDisable(GL_BLEND) );
-
-					submitUniformCache(ucs, view);
-					submitBlit(bs, view);
 				}
 
 				if (isCompute)
