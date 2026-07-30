@@ -12,7 +12,7 @@ namespace
 {
 
 constexpr float kWorldSize = 96.0f; // (km)
-constexpr float kAmplitude = 16.0f;  // (km)
+constexpr float kAmplitude = 16.0f; // (km)
 
 constexpr float kSunColor[3] = { 1.0f, 0.975f, 0.94f };
 
@@ -26,6 +26,8 @@ constexpr uint16_t kMultiscatterSz = 32;
 
 constexpr uint16_t kSkyviewW = 192;
 constexpr uint16_t kSkyviewH = 108;
+
+constexpr uint16_t kShadowMapSize = 2048;
 
 struct PosNormalVertex
 {
@@ -51,8 +53,9 @@ enum : bgfx::ViewId
 	kViewTransmittance = 0,
 	kViewMultiscatter  = 1,
 	kViewSkyview       = 2,
-	kViewSky           = 3,
-	kViewTerrain       = 4,
+	kViewShadow        = 3,
+	kViewSky           = 4,
+	kViewTerrain       = 5,
 };
 
 class ExampleSky2 : public entry::AppI
@@ -93,6 +96,7 @@ public:
 
 		m_terrainProgram = loadProgram("vs_sky2", "fs_sky2");
 		m_skyProgram     = loadProgram("vs_sky2_bg", "fs_sky2_bg");
+		m_shadowProgram  = loadProgram("vs_sky2_shadow", "fs_sky2_shadow");
 
 		m_csTransmittance = bgfx::createProgram(loadShader("cs_atmo_transmittance"), true);
 		m_csMultiscatter  = bgfx::createProgram(loadShader("cs_atmo_multiscatter"),  true);
@@ -114,9 +118,14 @@ public:
 		u_cameraPos    = bgfx::createUniform("u_cameraPos",      bgfx::UniformType::Vec4);
 		u_aerialParams = bgfx::createUniform("u_aerialParams",   bgfx::UniformType::Vec4);
 
+		u_shadowParams  = bgfx::createUniform("u_shadowParams",  bgfx::UniformType::Vec4);
+		u_lightViewProj = bgfx::createUniform("u_lightViewProj", bgfx::UniformType::Mat4);
+		u_lightMtx      = bgfx::createUniform("u_lightMtx",      bgfx::UniformType::Mat4);
+
 		s_atmoTransmittance = bgfx::createUniform("s_atmo_transmittance", bgfx::UniformType::Sampler);
 		s_atmoMultiscatter  = bgfx::createUniform("s_atmo_multiscatter",  bgfx::UniformType::Sampler);
 		s_skyView           = bgfx::createUniform("s_sky_view",           bgfx::UniformType::Sampler);
+		s_shadowMap         = bgfx::createUniform("s_shadowMap",          bgfx::UniformType::Sampler);
 
 		const uint64_t lutFlags = BGFX_TEXTURE_COMPUTE_WRITE | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP;
 		m_transmittanceLut = bgfx::createTexture2D(kTransmittanceW, kTransmittanceH, false, 1, bgfx::TextureFormat::RGBA16F, lutFlags);
@@ -124,12 +133,23 @@ public:
 
 		m_skyviewLut = bgfx::createTexture2D(kSkyviewW, kSkyviewH, false, 1, bgfx::TextureFormat::RGBA16F, BGFX_TEXTURE_COMPUTE_WRITE | BGFX_SAMPLER_V_CLAMP);
 
+		m_shadowColor = bgfx::createTexture2D(kShadowMapSize, kShadowMapSize, false, 1, bgfx::TextureFormat::R32F, BGFX_TEXTURE_RT
+			| BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MAG_POINT | BGFX_SAMPLER_MIP_POINT
+			| BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP);
+
+		m_shadowDepth = bgfx::createTexture2D(kShadowMapSize, kShadowMapSize, false, 1, bgfx::TextureFormat::D16, BGFX_TEXTURE_RT_WRITE_ONLY);
+
+		bgfx::TextureHandle shadowAttachments[2] = { m_shadowColor, m_shadowDepth };
+		m_shadowFb = bgfx::createFrameBuffer(2, shadowAttachments, false);
+
 		s_grass = bgfx::createUniform("s_grass", bgfx::UniformType::Sampler);
 		s_rock  = bgfx::createUniform("s_rock",  bgfx::UniformType::Sampler);
 
 		// BC1 with mip chains
 		m_grassTx = loadTexture("textures/terrain_grass_1k_diff.dds");
 		m_rockTx  = loadTexture("textures/terrain_rock_1k_diff.dds");
+
+		bx::mtxIdentity(m_lightMtx);
 
 		buildTerrain();
 		buildQuad();
@@ -155,6 +175,7 @@ public:
 		bgfx::destroy(m_quad_vbh);
 		bgfx::destroy(m_terrainProgram);
 		bgfx::destroy(m_skyProgram);
+		bgfx::destroy(m_shadowProgram);
 		bgfx::destroy(m_csTransmittance);
 		bgfx::destroy(m_csMultiscatter);
 		bgfx::destroy(m_csSkyview);
@@ -162,6 +183,10 @@ public:
 		bgfx::destroy(m_transmittanceLut);
 		bgfx::destroy(m_multiscatterLut);
 		bgfx::destroy(m_skyviewLut);
+
+		bgfx::destroy(m_shadowFb);
+		bgfx::destroy(m_shadowColor);
+		bgfx::destroy(m_shadowDepth);
 
 		bgfx::destroy(m_grassTx);
 		bgfx::destroy(m_rockTx);
@@ -179,10 +204,14 @@ public:
 		bgfx::destroy(u_invViewProj);
 		bgfx::destroy(u_cameraPos);
 		bgfx::destroy(u_aerialParams);
+		bgfx::destroy(u_shadowParams);
+		bgfx::destroy(u_lightViewProj);
+		bgfx::destroy(u_lightMtx);
 
 		bgfx::destroy(s_atmoTransmittance);
 		bgfx::destroy(s_atmoMultiscatter);
 		bgfx::destroy(s_skyView);
+		bgfx::destroy(s_shadowMap);
 		bgfx::destroy(s_grass);
 		bgfx::destroy(s_rock);
 
@@ -228,6 +257,7 @@ public:
 		ImGui::SliderFloat("Elevation", &m_sunElevationDeg, -5.0f, 89.0f);
 		ImGui::SliderFloat("Azimuth",   &m_sunAzimuthDeg, -180.0f, 180.0f);
 		ImGui::SliderFloat("Intensity", &m_sunIntensity, 0.0f, 30.0f);
+		ImGui::Checkbox("Shadow mapping", &m_shadowsEnabled);
 		ImGui::Separator();
 
 		ImGui::TextUnformatted("Rayleigh");
@@ -339,6 +369,65 @@ public:
 
 			const float skyParams[4] = { viewRadius, kSunDiscCos, kSunDiscScale, 0.0f };
 
+			// ortho half extent
+			const float shadowExtent = 0.8f * kWorldSize;
+			const float shadowTexel  = 2.0f * shadowExtent / float(kShadowMapSize);
+			const float shadowParams[4] =
+			{
+				1.0f / float(kShadowMapSize),
+				shadowTexel,
+				m_shadowsEnabled ? 1.0f : 0.0f,
+				0.0f,
+			};
+
+			// --- Shadow map ---
+			if (m_shadowsEnabled)
+			{
+				const bx::Vec3 lightDir  = bx::normalize(bx::Vec3{ sunDir[0], sunDir[1], sunDir[2] });
+				const bx::Vec3 center    = { 0.0f, kAmplitude * 0.35f, 0.0f };
+				const float    lightDist = kWorldSize * 1.2f;
+				const bx::Vec3 lightEye  = bx::mad(lightDir, -lightDist, center);
+				const bx::Vec3 up = (bx::abs(lightDir.y) > 0.99f)
+					? bx::Vec3{ 0.0f, 0.0f, 1.0f }
+					: bx::Vec3{ 0.0f, 1.0f, 0.0f };
+
+				float lightView[16];
+				bx::mtxLookAt(lightView, lightEye, center, up);
+
+				float lightProj[16];
+				bx::mtxOrtho(lightProj, -shadowExtent, shadowExtent, -shadowExtent, shadowExtent, 0.1f, 2.0f*lightDist + 2.0f*kAmplitude, 0.0f, bgfx::getCaps()->homogeneousDepth);
+
+				float lightViewProj[16];
+				bx::mtxMul(lightViewProj, lightView, lightProj);
+
+				// bias matrix
+				const bool  originBottomLeft = bgfx::getCaps()->originBottomLeft;
+				const bool  homogeneousDepth = bgfx::getCaps()->homogeneousDepth;
+				const float sy = originBottomLeft ?  0.5f : -0.5f;
+				const float sz = homogeneousDepth ?  0.5f :  1.0f;
+				const float tz = homogeneousDepth ?  0.5f :  0.0f;
+				const float mtxCrop[16] =
+				{
+					0.5f, 0.0f, 0.0f, 0.0f,
+					0.0f, sy,   0.0f, 0.0f,
+					0.0f, 0.0f, sz,   0.0f,
+					0.5f, 0.5f, tz,   1.0f,
+				};
+
+				bx::mtxMul(m_lightMtx, lightViewProj, mtxCrop);
+
+				bgfx::setViewFrameBuffer(kViewShadow, m_shadowFb);
+				bgfx::setViewRect(kViewShadow, 0, 0, kShadowMapSize, kShadowMapSize);
+				bgfx::setViewClear(kViewShadow, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0xffffffff, 1.0f, 0);
+
+				bgfx::setUniform(u_lightViewProj, lightViewProj);
+				bgfx::setUniform(u_lightMtx,      m_lightMtx);
+				bgfx::setVertexBuffer(0, m_terrain_vbh);
+				bgfx::setIndexBuffer(m_terrain_ibh);
+				bgfx::setState(BGFX_STATE_WRITE_R | BGFX_STATE_WRITE_Z | BGFX_STATE_DEPTH_TEST_LESS);
+				bgfx::submit(kViewShadow, m_shadowProgram);
+			}
+
 			// --- Sky pass ---
 			bgfx::setViewClear(kViewSky, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0x000000ff, 1.0f, 0);
 			bgfx::setViewRect(kViewSky, 0, 0, uint16_t(m_width), uint16_t(m_height) );
@@ -367,12 +456,15 @@ public:
 			bgfx::setUniform(u_cameraPos,    camPos4);
 			bgfx::setUniform(u_skyParams,    skyParams);
 			bgfx::setUniform(u_aerialParams, aerial);
+			bgfx::setUniform(u_shadowParams, shadowParams);
+			bgfx::setUniform(u_lightMtx,     m_lightMtx);
 
 			bgfx::setTexture(0, s_atmoTransmittance, m_transmittanceLut);
 			bgfx::setTexture(1, s_atmoMultiscatter,  m_multiscatterLut);
 			bgfx::setTexture(2, s_skyView,           m_skyviewLut);
 			bgfx::setTexture(3, s_grass,             m_grassTx);
 			bgfx::setTexture(4, s_rock,              m_rockTx);
+			bgfx::setTexture(5, s_shadowMap,         m_shadowColor);
 
 			bgfx::setVertexBuffer(0, m_terrain_vbh);
 			bgfx::setIndexBuffer(m_terrain_ibh);
@@ -521,6 +613,7 @@ public:
 
 	bgfx::ProgramHandle m_terrainProgram;
 	bgfx::ProgramHandle m_skyProgram;
+	bgfx::ProgramHandle m_shadowProgram;
 	bgfx::ProgramHandle m_csTransmittance;
 	bgfx::ProgramHandle m_csMultiscatter;
 	bgfx::ProgramHandle m_csSkyview;
@@ -531,6 +624,10 @@ public:
 
 	bgfx::TextureHandle m_grassTx;
 	bgfx::TextureHandle m_rockTx;
+
+	bgfx::TextureHandle     m_shadowColor;
+	bgfx::TextureHandle     m_shadowDepth;
+	bgfx::FrameBufferHandle m_shadowFb;
 
 	bgfx::UniformHandle u_atmoRayleigh;
 	bgfx::UniformHandle u_atmoMie;
@@ -545,12 +642,18 @@ public:
 	bgfx::UniformHandle u_invViewProj;
 	bgfx::UniformHandle u_cameraPos;
 	bgfx::UniformHandle u_aerialParams;
+	bgfx::UniformHandle u_shadowParams;
+	bgfx::UniformHandle u_lightViewProj;
+	bgfx::UniformHandle u_lightMtx;
 
 	bgfx::UniformHandle s_atmoTransmittance;
 	bgfx::UniformHandle s_atmoMultiscatter;
 	bgfx::UniformHandle s_skyView;
+	bgfx::UniformHandle s_shadowMap;
 	bgfx::UniformHandle s_grass;
 	bgfx::UniformHandle s_rock;
+
+	float m_lightMtx[16];
 
 	FrameTime m_frameTime;
 
@@ -560,6 +663,7 @@ public:
 	float m_sunElevationDeg = 11.0f;
 	float m_sunAzimuthDeg   = 155.0f;
 	float m_sunIntensity    = 10.0f;
+	bool  m_shadowsEnabled  = true;
 
 	float m_rayleighColor[3]    = { 0.1753f, 0.4096f, 1.0f }; // * scale = earth
 	float m_rayleighScale       = 0.0331f;

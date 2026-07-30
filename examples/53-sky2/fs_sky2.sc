@@ -15,17 +15,22 @@ $input v_normal, v_wpos
 #define TERRAIN_TILE        0.5 // in km
 #define TERRAIN_ROCK_SLOPE  0.1
 
+#define TERRAIN_SHADOW_BIAS 0.0015
+
 SAMPLER2D(s_atmo_transmittance, 0);
 SAMPLER2D(s_atmo_multiscatter,  1);
 SAMPLER2D(s_sky_view,           2);
 SAMPLER2D(s_grass,              3);
 SAMPLER2D(s_rock,               4);
+SAMPLER2D(s_shadowMap,          5);
 
 uniform vec4 u_sunDirection;
 uniform vec4 u_sunRadiance;
 uniform vec4 u_cameraPos;     // (km)
 uniform vec4 u_skyParams;     // x: view radius (km)
 uniform vec4 u_aerialParams;  // x: in-scatter, y: density, z: ambient
+uniform vec4 u_shadowParams;  // x: uv texel, y: world texel (km), z: enabled
+uniform mat4 u_lightMtx;
 
 #define AERIAL_STEPS 16
 
@@ -36,6 +41,32 @@ vec3 tr_lut(float r, float mu) {
 vec3 ms_lut(float r, float mu_sun) {
 	vec2 uv = vec2(mu_sun * 0.5 + 0.5, (r - ATMO_BOTTOM_RADIUS) / (ATMO_TOP_RADIUS - ATMO_BOTTOM_RADIUS));
 	return texture2DLod(s_atmo_multiscatter, uv, 0.0).rgb;
+}
+
+// 3x3 PCF
+float sun_shadow(vec3 wpos, vec3 N, float ndotl) {
+	if (u_shadowParams.z < 0.5)
+		return 1.0;
+
+	float nOffset = u_shadowParams.y * (2.0 + 6.0 * (1.0 - ndotl) );
+	vec4  sc = mul(u_lightMtx, vec4(wpos + N * nOffset, 1.0) );
+	vec3  c  = sc.xyz / sc.w;
+
+	if (c.x < 0.0 || c.x > 1.0 || c.y < 0.0 || c.y > 1.0 || c.z > 1.0)
+		return 1.0;
+
+	float bias  = TERRAIN_SHADOW_BIAS * (1.0 + 3.0 * (1.0 - ndotl) );
+	float texel = u_shadowParams.x;
+
+	float sum = 0.0;
+	for (int dy = -1; dy <= 1; dy++) {
+		for (int dx = -1; dx <= 1; dx++) {
+			float stored = texture2D(s_shadowMap, c.xy + vec2(float(dx), float(dy)) * texel).r;
+			sum += (c.z - bias > stored) ? 0.0 : 1.0;
+		}
+	}
+
+	return sum / 9.0;
 }
 
 void main() {
@@ -72,7 +103,8 @@ void main() {
 	// direct sun Lambert BRDF
 	vec3  sun_t  = tr_lut(surf_r, mu_sun);
 	float ndotl  = max(dot(N, to_sun), 0.0);
-	vec3  direct = albedo * (1.0 / ATMO_PI) * u_sunRadiance.rgb * sun_t * ndotl;
+	float shadow = sun_shadow(v_wpos, N, ndotl);
+	vec3  direct = albedo * (1.0 / ATMO_PI) * u_sunRadiance.rgb * sun_t * ndotl * shadow;
 
 	float lut_r = u_skyParams.x;
 	vec3  sky_avg = texture2DLod(s_sky_view, atmosphere_skyview_uv(lut_r, 1.00, 0.0), 0.0).rgb
