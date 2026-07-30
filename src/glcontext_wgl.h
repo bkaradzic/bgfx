@@ -65,6 +65,7 @@ typedef void (APIENTRYP PFNGLSTENCILOPPROC) (GLenum fail, GLenum zfail, GLenum z
 			, m_opengl32dll(NULL)
 			, m_context(NULL)
 			, m_hdc(NULL)
+			, m_dummyHwnd(NULL)
 			, m_msaaContext(false)
 			, m_swapInterval(0)
 		{
@@ -93,12 +94,10 @@ typedef void (APIENTRYP PFNGLSTENCILOPPROC) (GLenum fail, GLenum zfail, GLenum z
 		SwapChainGL* m_current;
 		void* m_opengl32dll;
 		HGLRC m_context;
-		HDC m_hdc;
-		// true when MSAA is handled by the context instead of using MSAA FBO
+		HDC  m_hdc;
+		HWND m_dummyHwnd;
 		bool m_msaaContext;
-		// Desired wglSwapIntervalEXT value, cached so it can be re-applied whenever a swap
-		// chain's context becomes current (wglSwapIntervalEXT is per-context on Windows).
-		int m_swapInterval;
+		int  m_swapInterval;
 	};
 } /* namespace gl */ } // namespace bgfx
 
