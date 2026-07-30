@@ -98,14 +98,6 @@ public:
 
 		PosNormalVertex::init();
 
-		m_terrainProgram = loadProgram("vs_sky2", "fs_sky2");
-		m_skyProgram     = loadProgram("vs_sky2_bg", "fs_sky2_bg");
-		m_shadowProgram  = loadProgram("vs_sky2_shadow", "fs_sky2_shadow");
-
-		m_csTransmittance = bgfx::createProgram(loadShader("cs_atmo_transmittance"), true);
-		m_csMultiscatter  = bgfx::createProgram(loadShader("cs_atmo_multiscatter"),  true);
-		m_csSkyview       = bgfx::createProgram(loadShader("cs_atmo_skyview"),       true);
-
 		u_atmoRayleigh = bgfx::createUniform("u_atmoRayleigh", bgfx::UniformType::Vec4);
 		u_atmoMie      = bgfx::createUniform("u_atmoMie",      bgfx::UniformType::Vec4);
 		u_atmoOzone    = bgfx::createUniform("u_atmoOzone",    bgfx::UniformType::Vec4);
@@ -131,6 +123,17 @@ public:
 		s_skyView           = bgfx::createUniform("s_sky_view",           bgfx::UniformType::Sampler);
 		s_shadowMap         = bgfx::createUniform("s_shadowMap",          bgfx::UniformType::Sampler);
 
+		s_grass = bgfx::createUniform("s_grass", bgfx::UniformType::Sampler);
+		s_rock  = bgfx::createUniform("s_rock",  bgfx::UniformType::Sampler);
+
+		m_terrainProgram = loadProgram("vs_sky2", "fs_sky2");
+		m_skyProgram     = loadProgram("vs_sky2_bg", "fs_sky2_bg");
+		m_shadowProgram  = loadProgram("vs_sky2_shadow", "fs_sky2_shadow");
+
+		m_csTransmittance = bgfx::createProgram(loadShader("cs_atmo_transmittance"), true);
+		m_csMultiscatter  = bgfx::createProgram(loadShader("cs_atmo_multiscatter"),  true);
+		m_csSkyview       = bgfx::createProgram(loadShader("cs_atmo_skyview"),       true);
+
 		const uint64_t lutFlags = BGFX_TEXTURE_COMPUTE_WRITE | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP;
 		m_transmittanceLut = bgfx::createTexture2D(kTransmittanceW, kTransmittanceH, false, 1, bgfx::TextureFormat::RGBA16F, lutFlags);
 		m_multiscatterLut  = bgfx::createTexture2D(kMultiscatterSz, kMultiscatterSz, false, 1, bgfx::TextureFormat::RGBA16F, lutFlags);
@@ -145,9 +148,6 @@ public:
 
 		bgfx::TextureHandle shadowAttachments[2] = { m_shadowColor, m_shadowDepth };
 		m_shadowFb = bgfx::createFrameBuffer(2, shadowAttachments, false);
-
-		s_grass = bgfx::createUniform("s_grass", bgfx::UniformType::Sampler);
-		s_rock  = bgfx::createUniform("s_rock",  bgfx::UniformType::Sampler);
 
 		// BC1 with mip chains
 		m_grassTx = loadTexture("textures/terrain_grass_1k_diff.dds");
