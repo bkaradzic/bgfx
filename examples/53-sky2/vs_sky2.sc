@@ -2,9 +2,9 @@ $input a_position, a_normal
 $output v_normal, v_wpos
 
 /*
- * Copyright 2026 Mateusz Kozdrowicki. All rights reserved.
- * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
- */
+* Copyright 2026 Mateusz Kozdrowicki. All rights reserved.
+* License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
+*/
 
 #include <bgfx_shader.sh>
 

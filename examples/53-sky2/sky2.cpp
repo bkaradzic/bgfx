@@ -14,6 +14,19 @@ namespace
 constexpr float kWorldSize = 100.0f; // (km)
 constexpr float kAmplitude = 18.0f;  // (km)
 
+constexpr float kSunColor[3] = { 1.0f, 0.975f, 0.94f };
+
+constexpr float kSunDiscCos   = 0.9999f;
+constexpr float kSunDiscScale = 60.0f;
+
+constexpr uint16_t kTransmittanceW = 256;
+constexpr uint16_t kTransmittanceH = 64;
+
+constexpr uint16_t kMultiscatterSz = 32;
+
+constexpr uint16_t kSkyviewW = 192;
+constexpr uint16_t kSkyviewH = 108;
+
 struct PosNormalVertex
 {
 	float m_x, m_y, m_z;
@@ -35,7 +48,11 @@ bgfx::VertexLayout PosNormalVertex::ms_layout;
 
 enum : bgfx::ViewId
 {
-	kViewTerrain = 0,
+	kViewTransmittance = 0,
+	kViewMultiscatter  = 1,
+	kViewSkyview       = 2,
+	kViewSky           = 3,
+	kViewTerrain       = 4,
 };
 
 class ExampleSky2 : public entry::AppI
@@ -75,13 +92,42 @@ public:
 		PosNormalVertex::init();
 
 		m_terrainProgram = loadProgram("vs_sky2", "fs_sky2");
+		m_skyProgram     = loadProgram("vs_sky2_bg", "fs_sky2_bg");
+
+		m_csTransmittance = bgfx::createProgram(loadShader("cs_atmo_transmittance"), true);
+		m_csMultiscatter  = bgfx::createProgram(loadShader("cs_atmo_multiscatter"),  true);
+		m_csSkyview       = bgfx::createProgram(loadShader("cs_atmo_skyview"),       true);
+
+		u_atmoRayleigh = bgfx::createUniform("u_atmoRayleigh", bgfx::UniformType::Vec4);
+		u_atmoMie      = bgfx::createUniform("u_atmoMie",      bgfx::UniformType::Vec4);
+		u_atmoOzone    = bgfx::createUniform("u_atmoOzone",    bgfx::UniformType::Vec4);
+		u_atmoPlanet   = bgfx::createUniform("u_atmoPlanet",   bgfx::UniformType::Vec4);
+		u_atmoGround   = bgfx::createUniform("u_atmoGround",   bgfx::UniformType::Vec4);
+
+		u_atmoParams   = bgfx::createUniform("u_atmo_params",  bgfx::UniformType::Vec4);
+		u_atmoParams2  = bgfx::createUniform("u_atmo_params2", bgfx::UniformType::Vec4);
+
+		u_skyParams    = bgfx::createUniform("u_skyParams",      bgfx::UniformType::Vec4);
+		u_sunDirection = bgfx::createUniform("u_sunDirection",   bgfx::UniformType::Vec4);
+		u_sunRadiance  = bgfx::createUniform("u_sunRadiance",    bgfx::UniformType::Vec4);
+		u_invViewProj  = bgfx::createUniform("u_skyInvViewProj", bgfx::UniformType::Mat4);
+
+		s_atmoTransmittance = bgfx::createUniform("s_atmo_transmittance", bgfx::UniformType::Sampler);
+		s_atmoMultiscatter  = bgfx::createUniform("s_atmo_multiscatter",  bgfx::UniformType::Sampler);
+		s_skyView           = bgfx::createUniform("s_sky_view",           bgfx::UniformType::Sampler);
+
+		const uint64_t lutFlags = BGFX_TEXTURE_COMPUTE_WRITE | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP;
+		m_transmittanceLut = bgfx::createTexture2D(kTransmittanceW, kTransmittanceH, false, 1, bgfx::TextureFormat::RGBA16F, lutFlags);
+		m_multiscatterLut  = bgfx::createTexture2D(kMultiscatterSz, kMultiscatterSz, false, 1, bgfx::TextureFormat::RGBA16F, lutFlags);
+
+		m_skyviewLut = bgfx::createTexture2D(kSkyviewW, kSkyviewH, false, 1, bgfx::TextureFormat::RGBA16F, BGFX_TEXTURE_COMPUTE_WRITE | BGFX_SAMPLER_V_CLAMP);
 
 		s_grass = bgfx::createUniform("s_grass", bgfx::UniformType::Sampler);
 		s_rock  = bgfx::createUniform("s_rock",  bgfx::UniformType::Sampler);
 
 		// BC1 with mip chains
-		m_grassTex = loadTexture("textures/terrain_grass_1k_diff.dds");
-		m_rockTex  = loadTexture("textures/terrain_rock_1k_diff.dds");
+		m_grassTx = loadTexture("textures/terrain_grass_1k_diff.dds");
+		m_rockTx  = loadTexture("textures/terrain_rock_1k_diff.dds");
 
 		buildTerrain();
 		buildQuad();
@@ -106,16 +152,102 @@ public:
 
 		bgfx::destroy(m_quad_vbh);
 		bgfx::destroy(m_terrainProgram);
+		bgfx::destroy(m_skyProgram);
+		bgfx::destroy(m_csTransmittance);
+		bgfx::destroy(m_csMultiscatter);
+		bgfx::destroy(m_csSkyview);
 
-		bgfx::destroy(m_grassTex);
-		bgfx::destroy(m_rockTex);
+		bgfx::destroy(m_transmittanceLut);
+		bgfx::destroy(m_multiscatterLut);
+		bgfx::destroy(m_skyviewLut);
 
+		bgfx::destroy(m_grassTx);
+		bgfx::destroy(m_rockTx);
+
+		bgfx::destroy(u_atmoRayleigh);
+		bgfx::destroy(u_atmoMie);
+		bgfx::destroy(u_atmoOzone);
+		bgfx::destroy(u_atmoPlanet);
+		bgfx::destroy(u_atmoGround);
+		bgfx::destroy(u_atmoParams);
+		bgfx::destroy(u_atmoParams2);
+		bgfx::destroy(u_skyParams);
+		bgfx::destroy(u_sunDirection);
+		bgfx::destroy(u_sunRadiance);
+		bgfx::destroy(u_invViewProj);
+
+		bgfx::destroy(s_atmoTransmittance);
+		bgfx::destroy(s_atmoMultiscatter);
+		bgfx::destroy(s_skyView);
 		bgfx::destroy(s_grass);
 		bgfx::destroy(s_rock);
 
 		bgfx::shutdown();
 
 		return 0;
+	}
+
+	void setAtmosphereUniforms()
+	{
+		const float rayleigh[4] =
+		{
+			m_rayleighColor[0] * m_rayleighScale,
+			m_rayleighColor[1] * m_rayleighScale,
+			m_rayleighColor[2] * m_rayleighScale,
+			m_rayleighScaleHeight,
+		};
+		const float mie[4] = { m_mieScatter, m_mieScatter + m_mieAbsorption, m_mieScaleHeight, m_miePhaseG };
+		const float ozone[4] =
+		{
+			m_ozoneColor[0] * m_ozoneScale,
+			m_ozoneColor[1] * m_ozoneScale,
+			m_ozoneColor[2] * m_ozoneScale,
+			m_multiscatter,
+		};
+		const float planet[4] = { m_planetRadius, m_planetRadius + m_atmosHeight, m_ozoneCenter, m_ozoneHalf };
+		const float ground[4] = { m_groundAlbedo[0], m_groundAlbedo[1], m_groundAlbedo[2], 0.0f };
+
+		bgfx::setUniform(u_atmoRayleigh, rayleigh);
+		bgfx::setUniform(u_atmoMie,      mie);
+		bgfx::setUniform(u_atmoOzone,    ozone);
+		bgfx::setUniform(u_atmoPlanet,   planet);
+		bgfx::setUniform(u_atmoGround,   ground);
+	}
+
+	void drawPanel()
+	{
+		ImGui::SetNextWindowPos(ImVec2(m_width - 340.0f, 10.0f), ImGuiCond_FirstUseEver);
+		ImGui::SetNextWindowSize(ImVec2(330.0f, 480.0f), ImGuiCond_FirstUseEver);
+		ImGui::Begin("Settings");
+
+		ImGui::TextUnformatted("Sun");
+		ImGui::SliderFloat("Elevation", &m_sunElevationDeg, -5.0f, 89.0f);
+		ImGui::SliderFloat("Azimuth",   &m_sunAzimuthDeg, -180.0f, 180.0f);
+		ImGui::SliderFloat("Intensity", &m_sunIntensity, 0.0f, 30.0f);
+		ImGui::Separator();
+
+		ImGui::TextUnformatted("Rayleigh");
+		ImGui::ColorEdit3("Ray color", m_rayleighColor);
+		ImGui::SliderFloat("Ray scale",  &m_rayleighScale, 0.0f, 0.1f, "%.5f");
+		ImGui::SliderFloat("Ray height", &m_rayleighScaleHeight, 0.5f, 20.0f);
+		ImGui::Separator();
+
+		ImGui::TextUnformatted("Mie");
+		ImGui::SliderFloat("Mie scatter", &m_mieScatter, 0.0f, 0.02f, "%.5f");
+		ImGui::SliderFloat("Mie absorb",  &m_mieAbsorption, 0.0f, 0.02f, "%.5f");
+		ImGui::SliderFloat("Mie height",  &m_mieScaleHeight, 0.2f, 8.0f);
+		ImGui::SliderFloat("Mie g",       &m_miePhaseG, 0.0f, 0.99f);
+		ImGui::Separator();
+
+		ImGui::TextUnformatted("Ozone / Planet");
+		ImGui::ColorEdit3("Ozone color", m_ozoneColor);
+		ImGui::SliderFloat("Ozone scale",  &m_ozoneScale, 0.0f, 0.01f, "%.5f");
+		ImGui::SliderFloat("Radius",       &m_planetRadius, 1000.0f, 12000.0f);
+		ImGui::SliderFloat("Atmos height", &m_atmosHeight, 10.0f, 200.0f);
+		ImGui::ColorEdit3("Ground",        m_groundAlbedo);
+		ImGui::SliderFloat("Multiscatter", &m_multiscatter, 0.0f, 5.0f);
+
+		ImGui::End();
 	}
 
 	bool update() override
@@ -133,6 +265,7 @@ public:
 				);
 
 			showExampleDialog(this);
+			drawPanel();
 
 			imguiEndFrame();
 
@@ -140,6 +273,47 @@ public:
 			const float deltaTime = bx::toSeconds<float>(m_frameTime.getDeltaTime());
 
 			cameraUpdate(deltaTime, m_mouseState, ImGui::MouseOverArea());
+
+			const float elevation = bx::toRad(m_sunElevationDeg);
+			const float azimuth   = bx::toRad(m_sunAzimuthDeg);
+			const bx::Vec3 toSun =
+			{
+				bx::cos(elevation) * bx::sin(azimuth),
+				bx::sin(elevation),
+				bx::cos(elevation) * bx::cos(azimuth),
+			};
+			const float sunDir[4]    = { -toSun.x, -toSun.y, -toSun.z, 0.0f };
+			const float sunCosZenith = toSun.y;
+
+			const bx::Vec3 camPos     = cameraGetPosition();
+			const float    viewRadius = m_planetRadius + bx::max(camPos.y, 0.001f);
+
+			const float sunRadiance[4] =
+			{
+				kSunColor[0] * m_sunIntensity,
+				kSunColor[1] * m_sunIntensity,
+				kSunColor[2] * m_sunIntensity,
+				0.0f,
+			};
+
+			// --- LUT compute ---
+			setAtmosphereUniforms();
+			bgfx::setImage(0, m_transmittanceLut, 0, bgfx::Access::Write, bgfx::TextureFormat::RGBA16F);
+			bgfx::dispatch(kViewTransmittance, m_csTransmittance, kTransmittanceW/8, kTransmittanceH/8, 1);
+
+			setAtmosphereUniforms();
+			bgfx::setTexture(0, s_atmoTransmittance, m_transmittanceLut);
+			bgfx::setImage(1, m_multiscatterLut, 0, bgfx::Access::Write, bgfx::TextureFormat::RGBA16F);
+			bgfx::dispatch(kViewMultiscatter, m_csMultiscatter, kMultiscatterSz/8, kMultiscatterSz/8, 1);
+
+			const float atmoParams2[4] = { sunCosZenith, viewRadius, float(kSkyviewW), float(kSkyviewH) };
+			setAtmosphereUniforms();
+			bgfx::setUniform(u_atmoParams,  sunRadiance);
+			bgfx::setUniform(u_atmoParams2, atmoParams2);
+			bgfx::setTexture(0, s_atmoTransmittance, m_transmittanceLut);
+			bgfx::setTexture(2, s_atmoMultiscatter,  m_multiscatterLut);
+			bgfx::setImage(1, m_skyviewLut, 0, bgfx::Access::Write, bgfx::TextureFormat::RGBA16F);
+			bgfx::dispatch(kViewSkyview, m_csSkyview, (kSkyviewW + 7)/8, (kSkyviewH + 7)/8, 1);
 
 			float view[16];
 			cameraGetViewMtx(view);
@@ -150,12 +324,32 @@ public:
 			float viewProj[16];
 			bx::mtxMul(viewProj, view, proj);
 
-			bgfx::setViewClear(kViewTerrain, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0x000000ff, 1.0f, 0);
+			float invViewProj[16];
+			bx::mtxInverse(invViewProj, viewProj);
+
+			const float skyParams[4] = { viewRadius, kSunDiscCos, kSunDiscScale, 0.0f };
+
+			// --- Sky pass ---
+			bgfx::setViewClear(kViewSky, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0x000000ff, 1.0f, 0);
+			bgfx::setViewRect(kViewSky, 0, 0, uint16_t(m_width), uint16_t(m_height) );
+
+			setAtmosphereUniforms();
+			bgfx::setUniform(u_invViewProj,  invViewProj);
+			bgfx::setUniform(u_skyParams,    skyParams);
+			bgfx::setUniform(u_sunDirection, sunDir);
+			bgfx::setUniform(u_sunRadiance,  sunRadiance);
+			bgfx::setTexture(0, s_skyView,           m_skyviewLut);
+			bgfx::setTexture(1, s_atmoTransmittance, m_transmittanceLut);
+			bgfx::setVertexBuffer(0, m_quad_vbh);
+			bgfx::setState(BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A);
+			bgfx::submit(kViewSky, m_skyProgram);
+
+			// --- Terrain pass ---
 			bgfx::setViewRect(kViewTerrain, 0, 0, uint16_t(m_width), uint16_t(m_height) );
 			bgfx::setViewTransform(kViewTerrain, view, proj);
 
-			bgfx::setTexture(0, s_grass, m_grassTex);
-			bgfx::setTexture(1, s_rock,  m_rockTex);
+			bgfx::setTexture(0, s_grass, m_grassTx);
+			bgfx::setTexture(1, s_rock,  m_rockTx);
 
 			bgfx::setVertexBuffer(0, m_terrain_vbh);
 			bgfx::setIndexBuffer(m_terrain_ibh);
@@ -291,10 +485,33 @@ public:
 	bgfx::IndexBufferHandle  m_terrain_ibh;
 
 	bgfx::ProgramHandle m_terrainProgram;
+	bgfx::ProgramHandle m_skyProgram;
+	bgfx::ProgramHandle m_csTransmittance;
+	bgfx::ProgramHandle m_csMultiscatter;
+	bgfx::ProgramHandle m_csSkyview;
 
-	bgfx::TextureHandle m_grassTex;
-	bgfx::TextureHandle m_rockTex;
+	bgfx::TextureHandle m_transmittanceLut;
+	bgfx::TextureHandle m_multiscatterLut;
+	bgfx::TextureHandle m_skyviewLut;
 
+	bgfx::TextureHandle m_grassTx;
+	bgfx::TextureHandle m_rockTx;
+
+	bgfx::UniformHandle u_atmoRayleigh;
+	bgfx::UniformHandle u_atmoMie;
+	bgfx::UniformHandle u_atmoOzone;
+	bgfx::UniformHandle u_atmoPlanet;
+	bgfx::UniformHandle u_atmoGround;
+	bgfx::UniformHandle u_atmoParams;
+	bgfx::UniformHandle u_atmoParams2;
+	bgfx::UniformHandle u_skyParams;
+	bgfx::UniformHandle u_sunDirection;
+	bgfx::UniformHandle u_sunRadiance;
+	bgfx::UniformHandle u_invViewProj;
+
+	bgfx::UniformHandle s_atmoTransmittance;
+	bgfx::UniformHandle s_atmoMultiscatter;
+	bgfx::UniformHandle s_skyView;
 	bgfx::UniformHandle s_grass;
 	bgfx::UniformHandle s_rock;
 
@@ -302,6 +519,29 @@ public:
 
 	uint32_t m_gridW;
 	uint32_t m_gridH;
+
+	float m_sunElevationDeg = 11.0f;
+	float m_sunAzimuthDeg   = 155.0f;
+	float m_sunIntensity    = 10.0f;
+
+	float m_rayleighColor[3]    = { 0.1753f, 0.4096f, 1.0f }; // * scale = earth
+	float m_rayleighScale       = 0.0331f;
+	float m_rayleighScaleHeight = 8.0f;
+
+	float m_mieScatter     = 0.003996f;
+	float m_mieAbsorption  = 0.000444f;
+	float m_mieScaleHeight = 1.2f;
+	float m_miePhaseG      = 0.8f;
+
+	float m_ozoneColor[3] = { 0.3456f, 1.0f, 0.0452f }; // * scale = earth
+	float m_ozoneScale    = 0.001881f;
+	float m_multiscatter  = 1.0f;
+
+	float m_planetRadius = 6360.0f;
+	float m_atmosHeight  = 100.0f;
+	float m_ozoneCenter  = 25.0f;
+	float m_ozoneHalf    = 15.0f;
+	float m_groundAlbedo[3] = { 0.3f, 0.3f, 0.3f };
 
 	uint32_t m_width;
 	uint32_t m_height;
