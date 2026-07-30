@@ -1761,27 +1761,79 @@ VK_IMPORT_INSTANCE
 					}
 				}
 
-				bx::memSet(&m_deviceFeatures, 0, sizeof(m_deviceFeatures) );
-
-				m_deviceFeatures.fullDrawIndexUint32               = supportedFeatures.fullDrawIndexUint32;
-				m_deviceFeatures.imageCubeArray                    = supportedFeatures.imageCubeArray            && (_init.capabilities & BGFX_CAPS_TEXTURE_CUBE_ARRAY);
-				m_deviceFeatures.independentBlend                  = supportedFeatures.independentBlend          && (_init.capabilities & BGFX_CAPS_BLEND_INDEPENDENT);
-				m_deviceFeatures.multiDrawIndirect                 = supportedFeatures.multiDrawIndirect         && (_init.capabilities & BGFX_CAPS_DRAW_INDIRECT);
-				m_deviceFeatures.drawIndirectFirstInstance         = supportedFeatures.drawIndirectFirstInstance && (_init.capabilities & BGFX_CAPS_DRAW_INDIRECT);
-				m_deviceFeatures.depthClamp                        = supportedFeatures.depthClamp;
-				m_deviceFeatures.fillModeNonSolid                  = supportedFeatures.fillModeNonSolid;
-				m_deviceFeatures.largePoints                       = supportedFeatures.largePoints;
-				m_deviceFeatures.samplerAnisotropy                 = supportedFeatures.samplerAnisotropy;
-				m_deviceFeatures.textureCompressionETC2            = supportedFeatures.textureCompressionETC2;
-				m_deviceFeatures.textureCompressionBC              = supportedFeatures.textureCompressionBC;
-				m_deviceFeatures.vertexPipelineStoresAndAtomics    = supportedFeatures.vertexPipelineStoresAndAtomics;
-				m_deviceFeatures.fragmentStoresAndAtomics          = supportedFeatures.fragmentStoresAndAtomics;
-				m_deviceFeatures.shaderImageGatherExtended         = supportedFeatures.shaderImageGatherExtended;
-				m_deviceFeatures.shaderStorageImageExtendedFormats = supportedFeatures.shaderStorageImageExtendedFormats;
-				m_deviceFeatures.shaderClipDistance                = supportedFeatures.shaderClipDistance;
-				m_deviceFeatures.shaderCullDistance                = supportedFeatures.shaderCullDistance;
-				m_deviceFeatures.shaderResourceMinLod              = supportedFeatures.shaderResourceMinLod;
-				m_deviceFeatures.geometryShader                    = supportedFeatures.geometryShader;
+				m_deviceFeatures =
+				{
+					.robustBufferAccess                      = true
+						&& supportedFeatures.robustBufferAccess
+						&& BX_ENABLED(BGFX_CONFIG_RENDERER_VULKAN_ROBUST_BUFFER_ACCESS)
+						,
+					.fullDrawIndexUint32                     = supportedFeatures.fullDrawIndexUint32,
+					.imageCubeArray                          = true
+						&& supportedFeatures.imageCubeArray
+						&& (_init.capabilities & BGFX_CAPS_TEXTURE_CUBE_ARRAY)
+						,
+					.independentBlend                        = true
+						&& supportedFeatures.independentBlend
+						&& (_init.capabilities & BGFX_CAPS_BLEND_INDEPENDENT)
+						,
+					.geometryShader                          = supportedFeatures.geometryShader,
+					.tessellationShader                      = VK_FALSE,
+					.sampleRateShading                       = VK_FALSE,
+					.dualSrcBlend                            = VK_FALSE,
+					.logicOp                                 = VK_FALSE,
+					.multiDrawIndirect                       = true
+						&& supportedFeatures.multiDrawIndirect
+						&& (_init.capabilities & BGFX_CAPS_DRAW_INDIRECT)
+						,
+					.drawIndirectFirstInstance               = true
+						&& supportedFeatures.drawIndirectFirstInstance
+						&& (_init.capabilities & BGFX_CAPS_DRAW_INDIRECT)
+						,
+					.depthClamp                              = supportedFeatures.depthClamp,
+					.depthBiasClamp                          = VK_FALSE,
+					.fillModeNonSolid                        = supportedFeatures.fillModeNonSolid,
+					.depthBounds                             = VK_FALSE,
+					.wideLines                               = VK_FALSE,
+					.largePoints                             = supportedFeatures.largePoints,
+					.alphaToOne                              = VK_FALSE,
+					.multiViewport                           = VK_FALSE,
+					.samplerAnisotropy                       = supportedFeatures.samplerAnisotropy,
+					.textureCompressionETC2                  = supportedFeatures.textureCompressionETC2,
+					.textureCompressionASTC_LDR              = VK_FALSE,
+					.textureCompressionBC                    = supportedFeatures.textureCompressionBC,
+					.occlusionQueryPrecise                   = VK_FALSE,
+					.pipelineStatisticsQuery                 = VK_FALSE,
+					.vertexPipelineStoresAndAtomics          = supportedFeatures.vertexPipelineStoresAndAtomics,
+					.fragmentStoresAndAtomics                = supportedFeatures.fragmentStoresAndAtomics,
+					.shaderTessellationAndGeometryPointSize  = VK_FALSE,
+					.shaderImageGatherExtended               = supportedFeatures.shaderImageGatherExtended,
+					.shaderStorageImageExtendedFormats       = supportedFeatures.shaderStorageImageExtendedFormats,
+					.shaderStorageImageMultisample           = VK_FALSE,
+					.shaderStorageImageReadWithoutFormat     = VK_FALSE,
+					.shaderStorageImageWriteWithoutFormat    = VK_FALSE,
+					.shaderUniformBufferArrayDynamicIndexing = VK_FALSE,
+					.shaderSampledImageArrayDynamicIndexing  = VK_FALSE,
+					.shaderStorageBufferArrayDynamicIndexing = VK_FALSE,
+					.shaderStorageImageArrayDynamicIndexing  = VK_FALSE,
+					.shaderClipDistance                      = supportedFeatures.shaderClipDistance,
+					.shaderCullDistance                      = supportedFeatures.shaderCullDistance,
+					.shaderFloat64                           = VK_FALSE,
+					.shaderInt64                             = VK_FALSE,
+					.shaderInt16                             = VK_FALSE,
+					.shaderResourceResidency                 = VK_FALSE,
+					.shaderResourceMinLod                    = supportedFeatures.shaderResourceMinLod,
+					.sparseBinding                           = VK_FALSE,
+					.sparseResidencyBuffer                   = VK_FALSE,
+					.sparseResidencyImage2D                  = VK_FALSE,
+					.sparseResidencyImage3D                  = VK_FALSE,
+					.sparseResidency2Samples                 = VK_FALSE,
+					.sparseResidency4Samples                 = VK_FALSE,
+					.sparseResidency8Samples                 = VK_FALSE,
+					.sparseResidency16Samples                = VK_FALSE,
+					.sparseResidencyAliased                  = VK_FALSE,
+					.variableMultisampleRate                 = VK_FALSE,
+					.inheritedQueries                        = VK_FALSE,
+				};
 
 				m_lineAASupport = true
 					&& s_extension[Extension::EXT_line_rasterization].m_supported

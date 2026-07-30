@@ -222,6 +222,13 @@
 #	define BGFX_CONFIG_RENDERER_VULKAN_DESCRIPTOR_SETS_PER_POOL 1024
 #endif // BGFX_CONFIG_RENDERER_VULKAN_DESCRIPTOR_SETS_PER_POOL
 
+/// Enable Vulkan robustBufferAccess. Without it, an out of bounds buffer access
+/// from a shader is undefined behavior, and in practice faults the device. But it's generally
+/// slower than not having it set.
+#ifndef BGFX_CONFIG_RENDERER_VULKAN_ROBUST_BUFFER_ACCESS
+#	define BGFX_CONFIG_RENDERER_VULKAN_ROBUST_BUFFER_ACCESS 0
+#endif // BGFX_CONFIG_RENDERER_VULKAN_ROBUST_BUFFER_ACCESS
+
 /// Enable use of tinystl instead of std containers for internal data
 /// structures. Default is 1 (enabled). Reduces binary size and avoids
 /// std library dependency.
