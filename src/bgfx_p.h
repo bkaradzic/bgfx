@@ -313,7 +313,7 @@ namespace bgfx
 	typedef uint32_t RenderItemCount;
 #endif // BGFX_CONFIG_MAX_DRAW_CALLS < (64<<10)
 
-	static constexpr uint32_t kDrawCallBlock = 1024;
+	static constexpr uint32_t kDrawCallBlock = BGFX_CONFIG_DRAW_CALL_BLOCK;
 
 	inline uint32_t alignDrawCalls(uint32_t _num)
 	{
@@ -1616,7 +1616,7 @@ namespace bgfx
 
 		static uint32_t capacityFor(uint32_t _used)
 		{
-			return bx::min<uint32_t>(BGFX_CONFIG_MAX_MATRIX_CACHE, uint32_t(bx::alignUp(_used, kDrawCallBlock) )+1);
+			return bx::min<uint32_t>(BGFX_CONFIG_MAX_MATRIX_CACHE, uint32_t(bx::alignUp(_used-1, kDrawCallBlock) )+1);
 		}
 
 		void reset()
@@ -1658,14 +1658,14 @@ namespace bgfx
 		uint32_t reserve(uint16_t* _num)
 		{
 			uint32_t num = *_num;
-			uint32_t first = bx::atomicFetchAndAddsat<uint32_t>(&m_num, num, m_max - 1);
+			uint32_t first = bx::atomicFetchAndAddsat<uint32_t>(&m_num, num, m_max);
 
-			if (first+num >= m_max)
+			if (first+num > m_max)
 			{
 				m_overflowed = true;
 			}
 
-			num   = bx::min(num, m_max-1-first);
+			num   = bx::min(num, m_max-first);
 			*_num = bx::narrowCast<uint16_t>(num);
 
 			return first;
