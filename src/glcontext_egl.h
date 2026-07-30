@@ -42,10 +42,12 @@ namespace bgfx { namespace gl
 			, m_context(NULL)
 			, m_display(NULL)
 			, m_surface(NULL)
-#if BX_PLATFORM_LINUX
+#if BX_PLATFORM_WINDOWS
+			, m_hdc(NULL)
+#elif BX_PLATFORM_LINUX
 			, m_waylandEglDll(NULL)
 			, m_eglWindow(NULL)
-#endif
+#endif // BX_PLATFORM_*
 			, m_msaaContext(false)
 			, m_swapInterval(0)
 		{
@@ -75,16 +77,15 @@ namespace bgfx { namespace gl
 		EGLDisplay m_display;
 		EGLSurface m_surface;
 
-#if BX_PLATFORM_LINUX
+#if BX_PLATFORM_WINDOWS
+		HDC m_hdc;
+#elif BX_PLATFORM_LINUX
 		void*  m_waylandEglDll;
 		struct wl_egl_window *m_eglWindow;
-#endif
+#endif // BX_PLATFORM_*
 
-		// true when MSAA is handled by the context instead of using MSAA FBO
 		bool m_msaaContext;
-		// Desired eglSwapInterval value, cached so it can be re-applied whenever a swap
-		// chain's surface becomes current (eglSwapInterval is per-surface).
-		int m_swapInterval;
+		int  m_swapInterval;
 	};
 } /* namespace gl */ } // namespace bgfx
 
