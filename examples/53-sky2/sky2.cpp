@@ -11,8 +11,8 @@
 namespace
 {
 
-constexpr float kWorldSize = 100.0f; // (km)
-constexpr float kAmplitude = 18.0f;  // (km)
+constexpr float kWorldSize = 96.0f; // (km)
+constexpr float kAmplitude = 16.0f;  // (km)
 
 constexpr float kSunColor[3] = { 1.0f, 0.975f, 0.94f };
 
@@ -111,6 +111,8 @@ public:
 		u_sunDirection = bgfx::createUniform("u_sunDirection",   bgfx::UniformType::Vec4);
 		u_sunRadiance  = bgfx::createUniform("u_sunRadiance",    bgfx::UniformType::Vec4);
 		u_invViewProj  = bgfx::createUniform("u_skyInvViewProj", bgfx::UniformType::Mat4);
+		u_cameraPos    = bgfx::createUniform("u_cameraPos",      bgfx::UniformType::Vec4);
+		u_aerialParams = bgfx::createUniform("u_aerialParams",   bgfx::UniformType::Vec4);
 
 		s_atmoTransmittance = bgfx::createUniform("s_atmo_transmittance", bgfx::UniformType::Sampler);
 		s_atmoMultiscatter  = bgfx::createUniform("s_atmo_multiscatter",  bgfx::UniformType::Sampler);
@@ -175,6 +177,8 @@ public:
 		bgfx::destroy(u_sunDirection);
 		bgfx::destroy(u_sunRadiance);
 		bgfx::destroy(u_invViewProj);
+		bgfx::destroy(u_cameraPos);
+		bgfx::destroy(u_aerialParams);
 
 		bgfx::destroy(s_atmoTransmittance);
 		bgfx::destroy(s_atmoMultiscatter);
@@ -246,6 +250,12 @@ public:
 		ImGui::SliderFloat("Atmos height", &m_atmosHeight, 10.0f, 200.0f);
 		ImGui::ColorEdit3("Ground",        m_groundAlbedo);
 		ImGui::SliderFloat("Multiscatter", &m_multiscatter, 0.0f, 5.0f);
+		ImGui::Separator();
+
+		ImGui::TextUnformatted("Aerial perspective");
+		ImGui::SliderFloat("Inscatter", &m_aerialPerspectiveInscatter, 0.0f, 8.0f);
+		ImGui::SliderFloat("Density",   &m_aerialPerspectiveDensity, 0.0f, 8.0f);
+		ImGui::SliderFloat("Ambient",   &m_aerialPerspectiveambientStrength, 0.0f, 4.0f);
 
 		ImGui::End();
 	}
@@ -348,8 +358,21 @@ public:
 			bgfx::setViewRect(kViewTerrain, 0, 0, uint16_t(m_width), uint16_t(m_height) );
 			bgfx::setViewTransform(kViewTerrain, view, proj);
 
-			bgfx::setTexture(0, s_grass, m_grassTx);
-			bgfx::setTexture(1, s_rock,  m_rockTx);
+			const float camPos4[4] = { camPos.x, camPos.y, camPos.z, 0.0f };
+			const float aerial[4]  = { m_aerialPerspectiveInscatter, m_aerialPerspectiveDensity, m_aerialPerspectiveambientStrength, 0.0f };
+
+			setAtmosphereUniforms();
+			bgfx::setUniform(u_sunDirection, sunDir);
+			bgfx::setUniform(u_sunRadiance,  sunRadiance);
+			bgfx::setUniform(u_cameraPos,    camPos4);
+			bgfx::setUniform(u_skyParams,    skyParams);
+			bgfx::setUniform(u_aerialParams, aerial);
+
+			bgfx::setTexture(0, s_atmoTransmittance, m_transmittanceLut);
+			bgfx::setTexture(1, s_atmoMultiscatter,  m_multiscatterLut);
+			bgfx::setTexture(2, s_skyView,           m_skyviewLut);
+			bgfx::setTexture(3, s_grass,             m_grassTx);
+			bgfx::setTexture(4, s_rock,              m_rockTx);
 
 			bgfx::setVertexBuffer(0, m_terrain_vbh);
 			bgfx::setIndexBuffer(m_terrain_ibh);
@@ -378,7 +401,19 @@ public:
 		const uint32_t h = image->m_height;
 		const float* src = (const float*)image->m_data;
 
-		const float range = 1.0f; // heightmap must be exactly 0.0 - 1.0
+		float hmin = src[0];
+		float hmax = src[0];
+		for (uint32_t ii = 0, num = w * h; ii < num; ++ii)
+		{
+			hmin = bx::min(hmin, src[ii]);
+			hmax = bx::max(hmax, src[ii]);
+		}
+
+		float range = hmax - hmin;
+		if (range < 1e-6f)
+		{
+			range = 1.0f;
+		}
 
 		const float cellSize = kWorldSize / float(w - 1);
 		const float originX  = -0.5f * kWorldSize;
@@ -508,6 +543,8 @@ public:
 	bgfx::UniformHandle u_sunDirection;
 	bgfx::UniformHandle u_sunRadiance;
 	bgfx::UniformHandle u_invViewProj;
+	bgfx::UniformHandle u_cameraPos;
+	bgfx::UniformHandle u_aerialParams;
 
 	bgfx::UniformHandle s_atmoTransmittance;
 	bgfx::UniformHandle s_atmoMultiscatter;
@@ -542,6 +579,10 @@ public:
 	float m_ozoneCenter  = 25.0f;
 	float m_ozoneHalf    = 15.0f;
 	float m_groundAlbedo[3] = { 0.3f, 0.3f, 0.3f };
+
+	float m_aerialPerspectiveInscatter		 = 1.0f;
+	float m_aerialPerspectiveDensity		 = 1.0f;
+	float m_aerialPerspectiveambientStrength = 1.0f;
 
 	uint32_t m_width;
 	uint32_t m_height;
