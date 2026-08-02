@@ -2070,23 +2070,6 @@ VK_IMPORT_INSTANCE
 			}
 			else
 			{
-				uint32_t numEnabledLayers = 0;
-				const char* enabledLayer[Layer::Count];
-
-				BX_TRACE("Enabled device layers:");
-
-				for (uint32_t ii = 0; ii < Layer::Count; ++ii)
-				{
-					const Layer& layer = s_layer[ii];
-
-					if (layer.m_device.m_supported
-					&&  layer.m_device.m_initialize)
-					{
-						enabledLayer[numEnabledLayers++] = layer.m_name;
-						BX_TRACE("\t%s", layer.m_name);
-					}
-				}
-
 				uint32_t numEnabledExtensions = 0;
 				const char* enabledExtension[Extension::Count + 3];
 
@@ -2145,17 +2128,19 @@ VK_IMPORT_INSTANCE
 					numQueueCreateInfos = 2;
 				}
 
-				VkDeviceCreateInfo dci;
-				dci.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-				dci.pNext = nextFeatures;
-				dci.flags = 0;
-				dci.queueCreateInfoCount = numQueueCreateInfos;
-				dci.pQueueCreateInfos    = dcqi;
-				dci.enabledLayerCount    = numEnabledLayers;
-				dci.ppEnabledLayerNames  = enabledLayer;
-				dci.enabledExtensionCount   = numEnabledExtensions;
-				dci.ppEnabledExtensionNames = enabledExtension;
-				dci.pEnabledFeatures        = &m_deviceFeatures;
+				VkDeviceCreateInfo dci =
+				{
+					.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
+					.pNext = nextFeatures,
+					.flags = 0,
+					.queueCreateInfoCount = numQueueCreateInfos,
+					.pQueueCreateInfos    = dcqi,
+					.enabledLayerCount    = 0,
+					.ppEnabledLayerNames  = NULL,
+					.enabledExtensionCount   = numEnabledExtensions,
+					.ppEnabledExtensionNames = enabledExtension,
+					.pEnabledFeatures        = &m_deviceFeatures,
+				};
 
 				result = vkCreateDevice(
 					  m_physicalDevice
@@ -2468,6 +2453,7 @@ VK_IMPORT_DEVICE
 			preReset();
 
 			m_pipelineStateCache.invalidate();
+			m_pipelineLayoutCache.invalidate();
 			m_descriptorSetLayoutCache.invalidate();
 			m_renderPassCache.invalidate();
 			m_samplerCache.invalidate();
@@ -2508,9 +2494,9 @@ VK_IMPORT_DEVICE
 
 			m_backBuffer.destroy();
 
-			m_memoryLru.evictAll();
-
 			m_cmd.shutdown();
+
+			m_memoryLru.evictAll();
 
 			vkDestroy(m_pipelineCache);
 
@@ -5063,6 +5049,7 @@ VK_IMPORT_DEVICE
 
 		StateCacheT<VkPipeline> m_pipelineStateCache;
 		StateCacheT<VkDescriptorSetLayout> m_descriptorSetLayoutCache;
+		StateCacheT<VkPipelineLayout> m_pipelineLayoutCache;
 		StateCacheT<VkRenderPass> m_renderPassCache;
 		StateCacheT<VkSampler> m_samplerCache;
 		StateCacheT<uint32_t> m_samplerBorderColorCache;
@@ -5215,13 +5202,13 @@ VK_DESTROY
 
 	void MemoryLruVK::recycle(DeviceMemoryAllocationVK& _alloc)
 	{
-		if (MAX_ENTRIES == lru.getNumHandles() )
+		if (kMaxEntries == lru.getNumHandles() )
 		{
 			// Evict LRU
 			uint16_t handle = lru.getBack();
 			DeviceMemoryAllocationVK& alloc = entries[handle];
 			totalSizeCached -= alloc.size;
-			release(alloc.mem);
+			vkDestroy(alloc.mem);
 
 			// Touch slot and overwrite
 			lru.touch(handle);
@@ -5241,7 +5228,7 @@ VK_DESTROY
 			uint16_t handle = lru.getBack();
 			DeviceMemoryAllocationVK& alloc = entries[handle];
 			totalSizeCached -= alloc.size;
-			release(alloc.mem);
+			vkDestroy(alloc.mem);
 			lru.free(handle);
 		}
 	}
@@ -5253,7 +5240,7 @@ VK_DESTROY
 		uint16_t slot;
 
 		{
-			int16_t  bestIdx   = MAX_ENTRIES;
+			int16_t  bestIdx   = kMaxEntries;
 			uint32_t bestWaste = 0xffff'ffff;
 
 			slot = lru.getFront();
@@ -5292,7 +5279,7 @@ VK_DESTROY
 			slot = bestIdx;
 		}
 
-		if (MAX_ENTRIES != slot)
+		if (kMaxEntries != slot)
 		{
 			*_alloc = entries[slot];
 			lru.free(slot);
@@ -5310,7 +5297,7 @@ VK_DESTROY
 
 		while (slot != UINT16_MAX)
 		{
-			release(entries[slot].mem);
+			vkDestroy(entries[slot].mem);
 			slot = lru.getNext(slot);
 		}
 
@@ -6045,24 +6032,23 @@ VK_DESTROY
 			}
 		}
 
-		// create exact pipeline layout
 		m_descriptorSetLayout = VK_NULL_HANDLE;
 
 		uint32_t numBindings = m_vsh->m_numBindings + (m_fsh ? m_fsh->m_numBindings : 0);
+
+		bx::HashMurmur2A murmur;
+		murmur.begin();
+		murmur.add(m_vsh->m_bindings, sizeof(VkDescriptorSetLayoutBinding) * m_vsh->m_numBindings);
+
+		if (NULL != m_fsh)
+		{
+			murmur.add(m_fsh->m_bindings, sizeof(VkDescriptorSetLayoutBinding) * m_fsh->m_numBindings);
+		}
+
+		const uint32_t descriptorSetLayoutHash = murmur.end();
+
 		if (0 < numBindings)
 		{
-			// generate descriptor set layout hash
-			bx::HashMurmur2A murmur;
-			murmur.begin();
-			murmur.add(m_vsh->m_bindings, sizeof(VkDescriptorSetLayoutBinding) * m_vsh->m_numBindings);
-
-			if (NULL != m_fsh)
-			{
-				murmur.add(m_fsh->m_bindings, sizeof(VkDescriptorSetLayoutBinding) * m_fsh->m_numBindings);
-			}
-
-			uint32_t descriptorSetLayoutHash = murmur.end();
-
 			m_descriptorSetLayout = s_renderVK->m_descriptorSetLayoutCache.find(descriptorSetLayoutHash);
 
 			if (VK_NULL_HANDLE == m_descriptorSetLayout)
@@ -6125,26 +6111,33 @@ VK_DESTROY
 			}
 		}
 
-		VkPipelineLayoutCreateInfo plci;
-		plci.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-		plci.pNext = NULL;
-		plci.flags = 0;
-		plci.pushConstantRangeCount = 0;
-		plci.pPushConstantRanges = NULL;
-		plci.setLayoutCount = (m_descriptorSetLayout == VK_NULL_HANDLE ? 0 : 1);
-		plci.pSetLayouts = &m_descriptorSetLayout;
+		m_pipelineLayout = s_renderVK->m_pipelineLayoutCache.find(descriptorSetLayoutHash);
 
-		VK_CHECK(vkCreatePipelineLayout(
-			  s_renderVK->m_device
-			, &plci
-			, s_renderVK->m_allocatorCb
-			, &m_pipelineLayout
-			) );
+		if (VK_NULL_HANDLE == m_pipelineLayout)
+		{
+			VkPipelineLayoutCreateInfo plci;
+			plci.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+			plci.pNext = NULL;
+			plci.flags = 0;
+			plci.pushConstantRangeCount = 0;
+			plci.pPushConstantRanges = NULL;
+			plci.setLayoutCount = (m_descriptorSetLayout == VK_NULL_HANDLE ? 0 : 1);
+			plci.pSetLayouts = &m_descriptorSetLayout;
+
+			VK_CHECK(vkCreatePipelineLayout(
+				  s_renderVK->m_device
+				, &plci
+				, s_renderVK->m_allocatorCb
+				, &m_pipelineLayout
+				) );
+
+			s_renderVK->m_pipelineLayoutCache.add(descriptorSetLayoutHash, m_pipelineLayout);
+		}
 	}
 
 	void ProgramVK::destroy()
 	{
-		s_renderVK->release(m_pipelineLayout);
+		m_pipelineLayout = VK_NULL_HANDLE;
 		m_numPredefined = 0;
 		m_vsh = NULL;
 		m_fsh = NULL;
@@ -9477,8 +9470,22 @@ VK_DESTROY
 			copyInfo.dstOffset.x = blit.m_dstX;
 			copyInfo.dstOffset.y = blit.m_dstY;
 			copyInfo.dstOffset.z = 0;
-			copyInfo.extent.width  = blit.m_width;
-			copyInfo.extent.height = blit.m_height;
+
+			const uint32_t srcMipWidth  = bx::max<uint32_t>(1, src.m_width  >> blit.m_srcMip);
+			const uint32_t srcMipHeight = bx::max<uint32_t>(1, src.m_height >> blit.m_srcMip);
+			const uint32_t dstMipWidth  = bx::max<uint32_t>(1, dst.m_width  >> blit.m_dstMip);
+			const uint32_t dstMipHeight = bx::max<uint32_t>(1, dst.m_height >> blit.m_dstMip);
+
+			copyInfo.extent.width = bx::min<uint32_t>(
+				  blit.m_width
+				, srcMipWidth - blit.m_srcX
+				, dstMipWidth - blit.m_dstX
+				);
+			copyInfo.extent.height = bx::min<uint32_t>(
+				  blit.m_height
+				, srcMipHeight - blit.m_srcY
+				, dstMipHeight - blit.m_dstY
+				);
 			copyInfo.extent.depth  = 1;
 
 			const uint32_t depth = bx::max<uint32_t>(1, blit.m_depth);
@@ -9778,8 +9785,18 @@ VK_DESTROY
 						VkRenderPass renderPass = fb.getRenderPass(_render->m_view[view].m_clear.m_flags);
 
 						viewState.m_rect = _render->m_view[view].m_rect;
-						const Rect& rect        = _render->m_view[view].m_rect;
-						const Rect& renderArea  = _render->m_view[view].m_clippedRect;
+						const Rect& rect = _render->m_view[view].m_rect;
+
+						const Rect framebufferRect(
+							  0
+							, 0
+							, bx::narrowCast<uint16_t>(fb.m_width)
+							, bx::narrowCast<uint16_t>(fb.m_height)
+							);
+
+						Rect renderArea;
+						renderArea.setIntersect(_render->m_view[view].m_clippedRect, framebufferRect);
+
 						Rect scissorRect = _render->m_view[view].m_scissor;
 						viewHasScissor  = !scissorRect.isZero();
 						viewScissorRect = viewHasScissor ? scissorRect : renderArea;

@@ -395,9 +395,9 @@ VK_DESTROY_FUNC(DescriptorSet);
 		{
 		}
 
-		static constexpr uint16_t MAX_ENTRIES = 1 << 10;
-		DeviceMemoryAllocationVK entries[MAX_ENTRIES];
-		bx::HandleAllocLruT<MAX_ENTRIES> lru;
+		static constexpr uint16_t kMaxEntries = 1 << 10;
+		DeviceMemoryAllocationVK entries[kMaxEntries];
+		bx::HandleAllocLruT<kMaxEntries> lru;
 		uint64_t totalSizeCached;
 
 		void recycle(DeviceMemoryAllocationVK &_alloc);
@@ -405,10 +405,6 @@ VK_DESTROY_FUNC(DescriptorSet);
 		void evictAll();
 	};
 
-	/** A Buffer used for moving data from main memory to GPU memory.
-	 * This can either be an independently allocated memory region, or a sub-region
-	 * of the scratch staging buffer for the frame-in-flight.
-	 */
 	struct StagingBufferVK
 	{
 		VkBuffer m_buffer;
@@ -416,7 +412,7 @@ VK_DESTROY_FUNC(DescriptorSet);
 
 		uint8_t* m_data;
 		uint32_t m_size;
-		uint32_t m_offset; // Offset into the bound buffer (not the device memory!)
+		uint32_t m_offset;
 		bool     m_isFromScratch;
 	};
 
