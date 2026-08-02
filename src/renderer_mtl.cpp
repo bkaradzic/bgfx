@@ -5375,9 +5375,32 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 					if (!isCompute)
 					{
-						const Rect& clippedRect = _render->m_view[view].m_clippedRect;
-						const Rect& scissorRect = _render->m_view[view].m_scissor;
-						viewHasScissor = !scissorRect.isZero();
+						const FrameBufferHandle viewFbh = _render->m_view[view].m_fbh;
+
+						uint32_t width  = m_resolution.width;
+						uint32_t height = m_resolution.height;
+
+						if (isValid(viewFbh) )
+						{
+							const FrameBufferMtl& frameBuffer = m_frameBuffers[viewFbh.idx];
+							width  = frameBuffer.m_width;
+							height = frameBuffer.m_height;
+						}
+
+						const Rect framebufferRect(
+							  0
+							, 0
+							, bx::narrowCast<uint16_t>(width)
+							, bx::narrowCast<uint16_t>(height)
+							);
+
+						Rect clippedRect;
+						clippedRect.setIntersect(_render->m_view[view].m_clippedRect, framebufferRect);
+
+						Rect scissorRect;
+						scissorRect.setIntersect(_render->m_view[view].m_scissor, framebufferRect);
+
+						viewHasScissor = !_render->m_view[view].m_scissor.isZero();
 						viewScissorRect = viewHasScissor ? scissorRect : clippedRect;
 						Clear& clr = _render->m_view[view].m_clear;
 
@@ -5393,16 +5416,6 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 							renderPassDescriptor->setVisibilityResultBuffer(m_occlusionQuery.m_buffer);
 
 							fbh = _render->m_view[view].m_fbh;
-
-							uint32_t width  = m_resolution.width;
-							uint32_t height = m_resolution.height;
-
-							if (isValid(fbh) )
-							{
-								FrameBufferMtl& frameBuffer = m_frameBuffers[fbh.idx];
-								width  = frameBuffer.m_width;
-								height = frameBuffer.m_height;
-							}
 
 							clearWithRenderPass = true
 								&& 0      == viewRect.m_x
