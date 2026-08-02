@@ -5962,11 +5962,15 @@ m_resolution.formatColor = TextureFormat::BGRA8;
 						;
 
 					viewState.m_rect = _render->m_view[view].m_rect;
-					const Rect& viewRect    = _render->m_view[view].m_rect;
-					const Rect& clippedRect = _render->m_view[view].m_clippedRect;
-					Rect scissorRect = _render->m_view[view].m_scissor;
 
 					const Rect fbRect(0, 0, bx::narrowCast<uint16_t>(fb.m_width), bx::narrowCast<uint16_t>(fb.m_height) );
+
+					const Rect& viewRect = _render->m_view[view].m_rect;
+
+					Rect clippedRect;
+					clippedRect.setIntersect(_render->m_view[view].m_clippedRect, fbRect);
+
+					Rect scissorRect = _render->m_view[view].m_scissor;
 					scissorRect.intersect(fbRect);
 
 					viewHasScissor   = !scissorRect.isZero();
