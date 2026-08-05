@@ -515,8 +515,13 @@ GL_IMPORT______(true, PFNGLFRAMEBUFFERTEXTURE2DMULTISAMPLEIMGPROC, glFramebuffer
 #if !BGFX_CONFIG_RENDERER_OPENGL
 GL_IMPORT______(true,  PFNGLPOINTSIZEPROC,                         glPointSize);
 GL_IMPORT______(true,  PFNGLPOLYGONMODEPROC,                       glPolygonMode);
+#	if BGFX_USE_GL_DYNAMIC_LIB
 GL_IMPORT_ANGLE(true,  PFNGLBLITFRAMEBUFFERPROC,                   glBlitFramebuffer);
 GL_IMPORT_ANGLE(true,  PFNGLRENDERBUFFERSTORAGEMULTISAMPLEPROC,    glRenderbufferStorageMultisample);
+#	else
+GL_IMPORT______(true,  PFNGLBLITFRAMEBUFFERPROC,                   glBlitFramebuffer);
+GL_IMPORT______(true,  PFNGLRENDERBUFFERSTORAGEMULTISAMPLEPROC,    glRenderbufferStorageMultisample);
+#	endif // BGFX_USE_GL_DYNAMIC_LIB
 
 GL_IMPORT_EXT__(true , PFNGLCOPYIMAGESUBDATAPROC,                  glCopyImageSubData);
 
