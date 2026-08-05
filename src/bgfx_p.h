@@ -2982,6 +2982,7 @@ namespace bgfx
 		}
 
 		ViewId m_viewRemap[BGFX_CONFIG_MAX_VIEWS];
+		ViewId m_viewOrder[BGFX_CONFIG_MAX_VIEWS+1]; //!< Inverse of m_viewRemap.
 		float m_colorPalette[BGFX_CONFIG_MAX_COLOR_PALETTE][4];
 
 		View m_view[BGFX_CONFIG_MAX_VIEWS];

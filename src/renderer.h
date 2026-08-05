@@ -22,7 +22,7 @@ namespace bgfx
 		bool hasItem(uint16_t _view) const
 		{
 			return m_item < m_frame->m_numBlitItems
-				&& m_key.m_view <= _view
+				&& m_key.m_view <= m_frame->m_viewOrder[_view]
 				;
 		}
 
@@ -60,7 +60,7 @@ namespace bgfx
 		bool hasItem(uint16_t _view) const
 		{
 			return m_item < m_frame->m_uniformCacheFrame.m_numItems
-				&& m_key.m_view <= _view
+				&& m_key.m_view <= m_frame->m_viewOrder[_view]
 				;
 		}
 

@@ -1689,10 +1689,9 @@ namespace bgfx
 	{
 		BGFX_PROFILER_SCOPE("bgfx/Sort", kColorSubmit);
 
-		ViewId viewRemap[BGFX_CONFIG_MAX_VIEWS];
 		for (uint32_t ii = 0; ii < BGFX_CONFIG_MAX_VIEWS; ++ii)
 		{
-			viewRemap[m_viewRemap[ii] ] = ViewId(ii);
+			m_viewOrder[m_viewRemap[ii] ] = ViewId(ii);
 
 			View& view = m_view[ii];
 			Rect rect(0, 0, uint16_t(m_resolution.width), uint16_t(m_resolution.height) );
@@ -1725,9 +1724,11 @@ namespace bgfx
 			}
 		}
 
+		m_viewOrder[BGFX_CONFIG_MAX_VIEWS] = UINT16_MAX;
+
 		for (uint32_t ii = 0, num = m_numRenderItems; ii < num; ++ii)
 		{
-			m_sortKeys[ii] = SortKey::remapView(m_sortKeys[ii], viewRemap);
+			m_sortKeys[ii] = SortKey::remapView(m_sortKeys[ii], m_viewOrder);
 		}
 
 		s_ctx->reserveTemp(bx::max(
@@ -1741,12 +1742,12 @@ namespace bgfx
 
 		for (uint32_t ii = 0, num = m_numBlitItems; ii < num; ++ii)
 		{
-			m_blitKeys[ii] = BlitKey::remapView(m_blitKeys[ii], viewRemap);
+			m_blitKeys[ii] = BlitKey::remapView(m_blitKeys[ii], m_viewOrder);
 		}
 
 		bx::radixSort(m_blitKeys, (uint32_t*)s_ctx->m_tempKeys, m_numBlitItems);
 
-		m_uniformCacheFrame.sort(viewRemap, s_ctx->m_tempKeys);
+		m_uniformCacheFrame.sort(m_viewOrder, s_ctx->m_tempKeys);
 
 		dedupBind();
 	}
