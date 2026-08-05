@@ -768,6 +768,7 @@ VK_DESTROY_FUNC(DescriptorSet);
 		SwapChainVK()
 			: m_nwh(NULL)
 			, m_swapChain(VK_NULL_HANDLE)
+			, m_needPresent(false)
 			, m_lastImageRenderedSemaphore(VK_NULL_HANDLE)
 			, m_lastImageAcquiredSemaphore(VK_NULL_HANDLE)
 			, m_backBufferDepthStencilImageView(VK_NULL_HANDLE)
@@ -857,6 +858,7 @@ VK_DESTROY_FUNC(DescriptorSet);
 			, m_nwh(NULL)
 			, m_needPresent(false)
 			, m_framebuffer(VK_NULL_HANDLE)
+			, m_currentFramebuffer(VK_NULL_HANDLE)
 		{
 		}
 

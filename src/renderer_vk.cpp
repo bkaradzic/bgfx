@@ -9051,7 +9051,7 @@ VK_DESTROY
 	bool FrameBufferVK::isRenderable() const
 	{
 		return false
-			|| (NULL == m_nwh)
+			|| (NULL == m_nwh && m_currentFramebuffer != VK_NULL_HANDLE)
 			|| m_swapChain.m_needPresent
 			;
 	}
