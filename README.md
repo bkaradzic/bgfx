@@ -719,6 +719,15 @@ target="_blank"><img src="https://img.youtube.com/vi/t8XoT-HtUGo/hqdefault.jpg"
 alt="Video"
 width="640" height="480" border="0" /></a>
 
+## Harbi2
+
+https://harbi2.com - Harbi2 is a native cross-platform MMORPG for Windows,
+macOS, iOS, and Android. Its modern client uses bgfx to preserve the design and
+visual identity of the original Harbi2 while bringing the game to desktop and
+mobile platforms.
+
+![Harbi2 screenshot](https://h2mb.b-cdn.net/image.webp)
+
 [License (BSD 2-clause)](https://bkaradzic.github.io/bgfx/license.html)
 -----------------------------------------------------------------------
 
