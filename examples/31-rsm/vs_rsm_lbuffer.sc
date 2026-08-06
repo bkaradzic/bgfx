@@ -26,9 +26,7 @@ void main()
 	float deviceDepth = texture2DLod(s_shadowMap, texCoord, 0).x;
 	float depth       = toClipSpaceDepth(deviceDepth);
 	vec3 clip = vec3(texCoord * 2.0 - 1.0, depth);
-#if !BGFX_SHADER_LANGUAGE_GLSL
-	clip.y = -clip.y;
-#endif // !BGFX_SHADER_LANGUAGE_GLSL
+	clip.y = toClipSpaceY(clip.y);
 	vec3 wPos = clipToWorld(u_invMvpShadow, clip);
 	wPos.y -= 0.001;  // Would be much better to perturb in normal direction, but I didn't do that.
 

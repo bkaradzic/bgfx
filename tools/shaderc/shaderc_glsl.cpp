@@ -202,6 +202,11 @@ namespace bgfx { namespace glsl
 					Uniform un;
 					un.type = nameToUniformTypeEnum(uniformType);
 
+					if (0 == bx::strCmp(name, "bgfx_ndc") )
+					{
+						un.type = UniformType::Count;
+					}
+
 					if (UniformType::Count != un.type)
 					{
 						un.name.assign(name.getPtr(), name.getTerm());

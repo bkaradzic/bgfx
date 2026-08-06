@@ -857,6 +857,10 @@ uniform vec4 u_alphaRef4;
 #define u_alphaRef u_alphaRef4.x
 uniform mat4 u_model[BGFX_CONFIG_MAX_BONES];
 
+#if BGFX_SHADER_LANGUAGE_GLSL
+uniform vec4 bgfx_ndc;
+#endif // BGFX_SHADER_LANGUAGE_GLSL
+
 #endif // __cplusplus
 
 #endif // BGFX_SHADER_H_HEADER_GUARD

@@ -3017,12 +3017,7 @@ namespace bgfx { namespace gl
 						);
 				}
 
-//				if (s_extension[Extension::ARB_clip_control].m_supported)
-//				{
-//					GL_CHECK(glClipControl(GL_LOWER_LEFT, GL_ZERO_TO_ONE) );
-//					g_caps.originBottomLeft = true;
-//				}
-//				else
+				if (!BX_ENABLED(BGFX_CONFIG_GL_NORMALIZE_NDC_CONVENTIONS) )
 				{
 					g_caps.homogeneousDepth = true;
 					g_caps.originBottomLeft = true;
@@ -3804,11 +3799,26 @@ namespace bgfx { namespace gl
 			float proj[16];
 			bx::mtxOrtho(proj, 0.0f, (float)width, (float)height, 0.0f, 0.0f, 1000.0f, 0.0f, g_caps.homogeneousDepth);
 
-			setUniformMatrix4fv(program.m_predefined[0].m_loc
-				, 1
-				, GL_FALSE
-				, proj
-				);
+			const float indirectArgBase[4] = { 0.0f, 0.0f, 0.0f, (float)height };
+
+			for (uint32_t ii = 0; ii < program.m_numPredefined; ++ii)
+			{
+				const PredefinedUniform& predefined = program.m_predefined[ii];
+
+				switch (predefined.m_type)
+				{
+				case PredefinedUniform::ModelViewProj:
+					setUniformMatrix4fv(predefined.m_loc, 1, GL_FALSE, proj);
+					break;
+
+				case PredefinedUniform::IndirectArgBase:
+					setUniform4fv(predefined.m_loc, 1, indirectArgBase);
+					break;
+
+				default:
+					break;
+				}
+			}
 
 			GL_CHECK(glActiveTexture(GL_TEXTURE0) );
 			GL_CHECK(glBindTexture(GL_TEXTURE_2D, m_textures[_blitter.m_texture.idx].m_id) );
@@ -4640,6 +4650,15 @@ namespace bgfx { namespace gl
 				numMrt = bx::max(1, fb.m_num);
 			}
 
+			const bool flipRectY = !(BX_ENABLED(BGFX_CONFIG_GL_NORMALIZE_NDC_CONVENTIONS)
+				&& isValid(fbh)
+				&& NULL == m_frameBuffers[fbh.idx].m_swapChain
+				);
+			const uint32_t rectY = flipRectY
+				? _height-_rect.m_height-_rect.m_y
+				: _rect.m_y
+				;
+
 			if (1 == numMrt)
 			{
 				GLuint flags = 0;
@@ -4685,7 +4704,7 @@ namespace bgfx { namespace gl
 				if (0 != flags)
 				{
 					GL_CHECK(glEnable(GL_SCISSOR_TEST) );
-					GL_CHECK(glScissor(_rect.m_x, _height-_rect.m_height-_rect.m_y, _rect.m_width, _rect.m_height) );
+					GL_CHECK(glScissor(_rect.m_x, rectY, _rect.m_width, _rect.m_height) );
 					GL_CHECK(glClear(flags) );
 					GL_CHECK(glDisable(GL_SCISSOR_TEST) );
 				}
@@ -4753,6 +4772,19 @@ namespace bgfx { namespace gl
 					if (NULL != infoClearDepth)
 					{
 						m_clearQuadDepth = infoClearDepth->m_handle;
+					}
+				}
+
+				const float indirectArgBase[4] = { 0.0f, 0.0f, 0.0f, (float)_height };
+
+				for (uint32_t ii = 0; ii < program.m_numPredefined; ++ii)
+				{
+					const PredefinedUniform& predefined = program.m_predefined[ii];
+
+					if (PredefinedUniform::IndirectArgBase == predefined.m_type)
+					{
+						setUniform4fv(predefined.m_loc, 1, indirectArgBase);
+						break;
 					}
 				}
 
@@ -5430,6 +5462,10 @@ namespace bgfx { namespace gl
 			default:
 				break;
 			}
+
+			BX_ASSERT(0 != bx::strCmp(name, "bgfx_ndc")
+				, "bgfx_ndc was not substituted, it would read as zero."
+				);
 
 			PredefinedUniform::Enum predefined = nameToPredefinedUniformEnum(name);
 			if (PredefinedUniform::Count != predefined)
@@ -6482,6 +6518,155 @@ namespace bgfx { namespace gl
 		bx::memCopy(_str, _insert, len);
 	}
 
+	static bx::StringView patchNdcConstant(
+		  const bx::StringView& _code
+		, char* _temp
+		, int32_t _tempLen
+		)
+	{
+		for (bx::LineReader reader(_code); !reader.isDone(); )
+		{
+			const bx::StringView line = reader.next();
+			const bx::StringView trim = bx::strLTrimSpace(line);
+
+			if (0 != bx::strCmp(trim, "uniform", 7)
+			||  bx::findIdentifierMatch(line, "bgfx_ndc").isEmpty() )
+			{
+				continue;
+			}
+
+			const bx::StringView semi = bx::strFind(line, ';');
+			if (semi.isEmpty() )
+			{
+				BX_ASSERT(false, "bgfx_ndc declaration is not terminated on one line.");
+				break;
+			}
+
+			const bx::StringView keep(trim.getPtr()+7, semi.getPtr() );
+
+			const float ndc[4] =
+			{
+				g_caps.homogeneousDepth  ?  2.0f :  1.0f,
+				g_caps.homogeneousDepth  ?  1.0f :  0.0f,
+				g_caps.originBottomLeft  ?  1.0f : -1.0f,
+				g_caps.homogeneousDepth  ?  0.5f :  1.0f,
+			};
+
+			bx::ErrorAssert err;
+			bx::StaticMemoryBlockWriter writer(_temp, _tempLen);
+
+			bx::write(&writer, _code.getPtr(), int32_t(trim.getPtr() - _code.getPtr() ), &err);
+			bx::write(&writer, "const", &err);
+			bx::write(&writer, keep.getPtr(), keep.getLength(), &err);
+			bx::write(&writer, &err
+				, "=vec4(%f, %f, %f, %f)"
+				, ndc[0]
+				, ndc[1]
+				, ndc[2]
+				, ndc[3]
+				);
+			bx::write(&writer, semi.getPtr(), int32_t(_code.getTerm() - semi.getPtr() ), &err);
+			bx::write(&writer, '\0', &err);
+
+			return bx::StringView(_temp);
+		}
+
+		return _code;
+	}
+
+#if BGFX_CONFIG_GL_NORMALIZE_NDC_CONVENTIONS
+	static bx::StringView patchNdcConventions(
+		  const bx::StringView& _code
+		, GLenum _type
+		, char* _temp
+		, int32_t _tempLen
+		)
+	{
+		bx::StringView prologue(_code);
+		prologue.set(_code.getPtr(), _code.getPtr() );
+
+		for (bx::LineReader reader(_code); !reader.isDone(); )
+		{
+			const bx::StringView line = reader.next();
+			const bx::StringView trim = bx::strLTrimSpace(line);
+
+			if (!trim.isEmpty()
+			&&  0 != bx::strCmp(trim, "//",         2)
+			&&  0 != bx::strCmp(trim, "#version",   8)
+			&&  0 != bx::strCmp(trim, "#extension", 10)
+			&&  0 != bx::strCmp(trim, "precision",  9) )
+			{
+				break;
+			}
+
+			prologue.set(_code.getPtr(), line.getTerm() );
+		}
+
+		const char* split = prologue.getTerm();
+		if (split < _code.getPtr()
+		||  split > _code.getTerm() )
+		{
+			split = _code.getPtr();
+		}
+
+		bx::ErrorAssert err;
+		bx::StaticMemoryBlockWriter writer(_temp, _tempLen);
+
+		bx::write(&writer, _code.getPtr(), int32_t(split - _code.getPtr() ), &err);
+		bx::write(&writer, "\n", &err);
+
+		if (bx::findIdentifierMatch(_code, "bgfx_indirectArgBase").isEmpty() )
+		{
+			bx::write(&writer, "uniform vec4 bgfx_indirectArgBase;\n", &err);
+		}
+
+		if (GL_VERTEX_SHADER == _type)
+		{
+			bx::write(&writer, "#define main bgfx_ndcMain\n", &err);
+			bx::write(&writer, split, int32_t(_code.getTerm() - split), &err);
+			bx::write(&writer
+				, "\n#undef main\n"
+				  "void main()\n"
+				  "{\n"
+				  "\tbgfx_ndcMain();\n"
+				  "\tif (0.0 != bgfx_indirectArgBase.w)\n"
+				  "\t{\n"
+				  "\t\tgl_Position.z = gl_Position.z*2.0 - gl_Position.w;\n"
+				  "\t\tgl_Position.y = 0.0 > bgfx_indirectArgBase.w ? -gl_Position.y : gl_Position.y;\n"
+				  "\t}\n"
+				  "}\n"
+				, &err
+				);
+		}
+		else
+		{
+			bx::write(&writer
+				, "#define bgfx_ndcFragCoord vec4(gl_FragCoord.x"
+				  ", 0.0 < bgfx_indirectArgBase.w ? bgfx_indirectArgBase.w - gl_FragCoord.y : gl_FragCoord.y"
+				  ", gl_FragCoord.z, gl_FragCoord.w)\n"
+				, &err
+				);
+
+			bx::StringView body(split, _code.getTerm() );
+			for (bx::StringView found = bx::findIdentifierMatch(body, "gl_FragCoord")
+				; !found.isEmpty()
+				; found = bx::findIdentifierMatch(body, "gl_FragCoord")
+				)
+			{
+				bx::write(&writer, body.getPtr(), int32_t(found.getPtr() - body.getPtr() ), &err);
+				bx::write(&writer, "bgfx_ndcFragCoord", &err);
+				body.set(found.getTerm(), _code.getTerm() );
+			}
+
+			bx::write(&writer, body.getPtr(), body.getLength(), &err);
+		}
+
+		bx::write(&writer, '\0', &err);
+
+		return bx::StringView(_temp);
+	}
+#endif // BGFX_CONFIG_GL_NORMALIZE_NDC_CONVENTIONS
+
 	void ShaderGL::create(const Memory* _mem)
 	{
 		bx::MemoryReader reader(_mem->data, _mem->size);
@@ -7148,6 +7333,21 @@ namespace bgfx { namespace gl
 			}
 
 			{
+				const int32_t constTempLen = code.getLength() + 128;
+				char* constTemp = (char*)BX_STACK_ALLOC(constTempLen);
+				code = patchNdcConstant(code, constTemp, constTempLen);
+
+#if BGFX_CONFIG_GL_NORMALIZE_NDC_CONVENTIONS
+				char* ndcTemp = NULL;
+				if (GL_VERTEX_SHADER   == m_type
+				||  GL_FRAGMENT_SHADER == m_type)
+				{
+					const int32_t ndcTempLen = code.getLength() + (4<<10);
+					ndcTemp = (char*)BX_STACK_ALLOC(ndcTempLen);
+					code = patchNdcConventions(code, m_type, ndcTemp, ndcTempLen);
+				}
+#endif // BGFX_CONFIG_GL_NORMALIZE_NDC_CONVENTIONS
+
 				const GLchar* str = (const GLchar*)code.getPtr();
 				int32_t len = code.getLength();
 				GL_CHECK(glShaderSource(m_id, 1, &str, &len) );
@@ -7920,6 +8120,8 @@ namespace bgfx { namespace gl
 		Rect viewScissorRect;
 		viewScissorRect.clear();
 		uint16_t discardFlags = BGFX_CLEAR_NONE;
+		uint64_t ndcFrontCcw = 0;
+		bool ndcFlipRectY = true;
 
 		const bool blendIndependentSupported = s_extension[Extension::ARB_draw_buffers_blend].m_supported;
 		const bool computeSupported = false
@@ -7998,6 +8200,20 @@ namespace bgfx { namespace gl
 					profiler.begin(view);
 
 					viewState.m_rect = _render->m_view[view].m_rect;
+
+					const bool offscreenFb = isValid(fbh)
+						&& NULL == m_frameBuffers[fbh.idx].m_swapChain
+						;
+					viewState.m_ndcFixup = offscreenFb
+						? -float(resolutionHeight)
+						:  float(resolutionHeight)
+						;
+					ndcFrontCcw = offscreenFb && BX_ENABLED(BGFX_CONFIG_GL_NORMALIZE_NDC_CONVENTIONS)
+						? BGFX_STATE_FRONT_CCW
+						: 0
+						;
+					ndcFlipRectY = !(offscreenFb && BX_ENABLED(BGFX_CONFIG_GL_NORMALIZE_NDC_CONVENTIONS) );
+
 					const Rect& clippedRect = _render->m_view[view].m_clippedRect;
 
 					const Rect& scissorRect = _render->m_view[view].m_scissor;
@@ -8005,7 +8221,9 @@ namespace bgfx { namespace gl
 					viewScissorRect = viewHasScissor ? scissorRect : clippedRect;
 
 					GL_CHECK(glViewport(viewState.m_rect.m_x
-						, resolutionHeight-viewState.m_rect.m_height-viewState.m_rect.m_y
+						, ndcFlipRectY
+							? resolutionHeight-viewState.m_rect.m_height-viewState.m_rect.m_y
+							: viewState.m_rect.m_y
 						, viewState.m_rect.m_width
 						, viewState.m_rect.m_height
 						) );
@@ -8180,8 +8398,8 @@ namespace bgfx { namespace gl
 					}
 				}
 
-				const uint64_t newFlags = draw.m_stateFlags;
-				uint64_t changedFlags = currentState.m_stateFlags ^ draw.m_stateFlags;
+				const uint64_t newFlags = draw.m_stateFlags ^ ndcFrontCcw;
+				uint64_t changedFlags = currentState.m_stateFlags ^ newFlags;
 				currentState.m_stateFlags = newFlags;
 
 				const uint64_t newStencil = draw.m_stencil;
@@ -8211,7 +8429,9 @@ namespace bgfx { namespace gl
 						{
 							GL_CHECK(glEnable(GL_SCISSOR_TEST) );
 							GL_CHECK(glScissor(viewScissorRect.m_x
-								, resolutionHeight-viewScissorRect.m_height-viewScissorRect.m_y
+								, ndcFlipRectY
+									? resolutionHeight-viewScissorRect.m_height-viewScissorRect.m_y
+									: viewScissorRect.m_y
 								, viewScissorRect.m_width
 								, viewScissorRect.m_height
 								) );
@@ -8228,7 +8448,9 @@ namespace bgfx { namespace gl
 
 						GL_CHECK(glEnable(GL_SCISSOR_TEST) );
 						GL_CHECK(glScissor(scissorRect.m_x
-							, resolutionHeight-scissorRect.m_height-scissorRect.m_y
+							, ndcFlipRectY
+								? resolutionHeight-scissorRect.m_height-scissorRect.m_y
+								: scissorRect.m_y
 							, scissorRect.m_width
 							, scissorRect.m_height
 							) );
