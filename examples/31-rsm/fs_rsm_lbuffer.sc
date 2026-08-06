@@ -25,9 +25,7 @@ void main()
 	float depth       = toClipSpaceDepth(deviceDepth);
 
 	vec3 clip = vec3(texCoord * 2.0 - 1.0, depth);
-#if !BGFX_SHADER_LANGUAGE_GLSL
-	clip.y = -clip.y;
-#endif // !BGFX_SHADER_LANGUAGE_GLSL
+	clip.y = toClipSpaceY(clip.y);
 	vec3 wpos = clipToWorld(u_invMvp, clip);
 
 	// Get normal from its map, and decompress

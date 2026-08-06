@@ -98,6 +98,7 @@ namespace bgfx
 		void reset(Frame* _frame)
 		{
 			m_alphaRef = 0.0f;
+			m_ndcFixup = 1.0f;
 			m_invViewCached = UINT16_MAX;
 			m_invProjCached = UINT16_MAX;
 			m_invViewProjCached = UINT16_MAX;
@@ -318,7 +319,13 @@ namespace bgfx
 
 				case PredefinedUniform::IndirectArgBase:
 					{
-						const float base[4] = { bx::bitsToFloat(_draw.m_startIndex), 0.0f, 0.0f, 0.0f };
+						const float base[4] =
+						{
+							bx::bitsToFloat(_draw.m_startIndex),
+							0.0f,
+							0.0f,
+							m_ndcFixup,
+						};
 						_renderer->setShaderUniform4f(flags
 							, predefined.m_loc
 							, base
@@ -342,6 +349,8 @@ namespace bgfx
 		Matrix4  m_invProj;
 		Matrix4  m_invViewProj;
 		float    m_alphaRef;
+		float    m_ndcFixup;
+
 		uint16_t m_invViewCached;
 		uint16_t m_invProjCached;
 		uint16_t m_invViewProjCached;

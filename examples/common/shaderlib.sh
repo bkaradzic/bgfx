@@ -419,9 +419,27 @@ mat3 cofactor(mat4 _m)
 float toClipSpaceDepth(float _depthTextureZ)
 {
 #if BGFX_SHADER_LANGUAGE_GLSL
-	return _depthTextureZ * 2.0 - 1.0;
+	return _depthTextureZ * bgfx_ndc.x - bgfx_ndc.y;
 #else
 	return _depthTextureZ;
+#endif // BGFX_SHADER_LANGUAGE_GLSL
+}
+
+float toDepthTextureZ(float _clipSpaceZ)
+{
+#if BGFX_SHADER_LANGUAGE_GLSL
+	return (_clipSpaceZ + bgfx_ndc.y) * bgfx_ndc.w;
+#else
+	return _clipSpaceZ;
+#endif // BGFX_SHADER_LANGUAGE_GLSL
+}
+
+float toClipSpaceY(float _y)
+{
+#if BGFX_SHADER_LANGUAGE_GLSL
+	return _y * bgfx_ndc.z;
+#else
+	return -_y;
 #endif // BGFX_SHADER_LANGUAGE_GLSL
 }
 
