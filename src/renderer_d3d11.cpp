@@ -7223,6 +7223,11 @@ namespace bgfx { namespace d3d11
 			DX_RELEASE(backBufferColor, 0);
 		}
 
+		if (_render->m_flush)
+		{
+			m_deviceCtx->Flush();
+		}
+
 		dumpInfoQueue();
 	}
 } /* namespace d3d11 */ } // namespace bgfx
