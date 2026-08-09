@@ -914,6 +914,35 @@ void parseGltf(char* _data, uint32_t _size, Mesh* _mesh, bool _hasBc, const bx::
 	}
 }
 
+static const bx::CommandLineOption s_options[] =
+{
+	{ 'h',  "help",        0, NULL,          "Display this help and exit."                                 },
+	{ 'v',  "version",     0, NULL,          "Output version information and exit."                        },
+	{ 'f',  NULL,          1, "<file path>", "Input's file path.\n"
+	                                         "Input and output may also be passed positionally, without\n"
+	                                         "-f/-o."                                                      },
+	{ 'o',  NULL,          1, "<file path>", "Output's file path."                                         },
+	{ 's',  "scale",       1, "<num>",       "Scale factor."                                               },
+	{ '\0', "ccw",         0, NULL,          "Front face is counter-clockwise winding order."              },
+	{ '\0', "flipv",       0, NULL,          "Flip texture coordinate V."                                  },
+	{ '\0', "obb",         1, "<num>",       "Number of steps for calculating oriented bounding box.\n"
+	                                         "Defaults to 17.\n"
+	                                         "Less steps = less precise OBB.\n"
+	                                         "More steps = slower calculation."                            },
+	{ '\0', "packnormal",  1, "<num>",       "Normal packing.\n"
+	                                         "0 - unpacked 12 bytes. (default)\n"
+	                                         "1 - packed 4 bytes."                                         },
+	{ '\0', "packuv",      1, "<num>",       "Texture coordinate packing.\n"
+	                                         "0 - unpacked 8 bytes. (default)\n"
+	                                         "1 - packed 4 bytes."                                         },
+	{ '\0', "tangent",     0, NULL,          "Calculate tangent vectors. (packing mode is the same as normal)" },
+	{ '\0', "barycentric", 0, NULL,          "Adds barycentric vertex attribute. (Packed in bgfx::Attrib::Color1)" },
+	{ 'c',  "compress",    0, NULL,          "Compress indices."                                           },
+	{ '\0', "lh-up+y",     0, NULL,          "Coordinate system, Left-Handed +Y is up. (default)"          },
+	{ '\0', "lh-up+z",     0, NULL,          "Coordinate system, Left-Handed +Z is up."                    },
+	{ '\0', "rh-up+y",     0, NULL,          "Coordinate system, Right-Handed +Y is up."                   },
+	{ '\0', "rh-up+z",     0, NULL,          "Coordinate system, Right-Handed +Z is up."                   },
+};
 
 void help(const char* _error = NULL)
 {
@@ -933,6 +962,7 @@ void help(const char* _error = NULL)
 
 	bx::printf(
 		  "Usage: geometryc -f <in> -o <out>\n"
+		  "       geometryc <in> <out>\n"
 
 		  "\n"
 		  "Supported input file types:\n"
@@ -941,28 +971,12 @@ void help(const char* _error = NULL)
 
 		  "\n"
 		  "Options:\n"
-		  "  -h, --help               Display this help and exit.\n"
-		  "  -v, --version            Output version information and exit.\n"
-		  "  -f <file path>           Input's file path.\n"
-		  "  -o <file path>           Output's file path.\n"
-		  "  -s, --scale <num>        Scale factor.\n"
-		  "      --ccw                Front face is counter-clockwise winding order.\n"
-		  "      --flipv              Flip texture coordinate V.\n"
-		  "      --obb <num>          Number of steps for calculating oriented bounding box.\n"
-		  "           Defaults to 17.\n"
-		  "           Less steps = less precise OBB.\n"
-		  "           More steps = slower calculation.\n"
-		  "      --packnormal <num>   Normal packing.\n"
-		  "           0 - unpacked 12 bytes. (default)\n"
-		  "           1 - packed 4 bytes.\n"
-		  "      --packuv <num>       Texture coordinate packing.\n"
-		  "           0 - unpacked 8 bytes. (default)\n"
-		  "           1 - packed 4 bytes.\n"
-		  "      --tangent            Calculate tangent vectors. (packing mode is the same as normal)\n"
-		  "      --barycentric        Adds barycentric vertex attribute. (Packed in bgfx::Attrib::Color1)\n"
-		  "  -c, --compress           Compress indices.\n"
-		  "      --[l/r]h-up+[y/z]	  Coordinate system. Defaults to '--lh-up+y' — Left-Handed +Y is up.\n"
+		);
 
+	bx::Error err;
+	bx::write(bx::getStdOut(), s_options, BX_COUNTOF(s_options), &err);
+
+	bx::printf(
 		  "\n"
 		  "For additional information, see https://github.com/bkaradzic/bgfx\n"
 		);
@@ -970,7 +984,7 @@ void help(const char* _error = NULL)
 
 int main(int _argc, const char* _argv[])
 {
-	bx::CommandLine cmdLine(_argc, _argv);
+	bx::CommandLine cmdLine(_argc, _argv, s_options, BX_COUNTOF(s_options) );
 
 	if (cmdLine.hasArg('v', "version") )
 	{
@@ -989,7 +1003,19 @@ int main(int _argc, const char* _argv[])
 		return bx::kExitFailure;
 	}
 
+	const char* unknown = cmdLine.findUnknownOption();
+	if (NULL != unknown)
+	{
+		char error[256];
+		bx::snprintf(error, BX_COUNTOF(error), "Unknown option '%s'.", unknown);
+		help(error);
+		return bx::kExitFailure;
+	}
+
+	int32_t positional = 1;
+
 	const char* filePath = cmdLine.findOption('f');
+	filePath = NULL != filePath ? filePath : cmdLine.getPositional(positional++);
 	if (NULL == filePath)
 	{
 		help("Input file name must be specified.");
@@ -997,6 +1023,7 @@ int main(int _argc, const char* _argv[])
 	}
 
 	const char* outFilePath = cmdLine.findOption('o');
+	outFilePath = NULL != outFilePath ? outFilePath : cmdLine.getPositional(positional++);
 	if (NULL == outFilePath)
 	{
 		help("Output file name must be specified.");

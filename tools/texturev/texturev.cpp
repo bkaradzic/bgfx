@@ -1360,6 +1360,13 @@ void associate()
 #endif // BX_PLATFORM_WINDOWS
 }
 
+static const bx::CommandLineOption s_options[] =
+{
+	{ 'h',  "help",      0, NULL, "Help."                                     },
+	{ 'v',  "version",   0, NULL, "Version information only."                 },
+	{ '\0', "associate", 0, NULL, "Associate file extensions with texturev."  },
+};
+
 void help(const char* _error = NULL)
 {
 	if (NULL != _error)
@@ -1390,24 +1397,20 @@ void help(const char* _error = NULL)
 	bx::printf(
 		  "\n"
 		  "Options:\n"
-		  "  -h, --help               Help.\n"
-		  "  -v, --version            Version information only.\n"
-		  "      --associate          Associate file extensions with texturev.\n"
-		  "\n"
-		  "      --gl                 Force OpenGL renderer.\n"
-		  "      --vk                 Force Vulkan renderer.\n"
-		  "      --noop               Force no-op renderer.\n"
-		  "      --d3d11              Force Direct3D 11 renderer.\n"
-		  "      --d3d12              Force Direct3D 12 renderer.\n"
-		  "      --mtl                Force Metal renderer (macOS only).\n"
-		  "\n"
-		  "      --amd                Prefer AMD GPU.\n"
-		  "      --apple              Prefer Apple GPU.\n"
-		  "      --arm                Prefer ARM GPU.\n"
-		  "      --intel              Prefer Intel GPU.\n"
-		  "      --nvidia             Prefer NVIDIA GPU.\n"
-		  "      --microsoft          Prefer Microsoft GPU.\n"
-		  "      --sw                 Prefer software rasterizer.\n"
+		);
+
+	bx::Error err;
+	bx::write(bx::getStdOut(), s_options, BX_COUNTOF(s_options), &err);
+
+	bx::printf("\n");
+
+	bx::write(bx::getStdOut(), Args::s_rendererOptions, BX_COUNTOF(Args::s_rendererOptions), &err);
+
+	bx::printf("\n");
+
+	bx::write(bx::getStdOut(), Args::s_vendorOptions, BX_COUNTOF(Args::s_vendorOptions), &err);
+
+	bx::printf(
 		  "\n"
 		  "For additional information, see https://github.com/bkaradzic/bgfx\n"
 		);
@@ -1417,7 +1420,7 @@ int _main_(int _argc, char** _argv)
 {
 	initSupportedExt();
 
-	bx::CommandLine cmdLine(_argc, _argv);
+	bx::CommandLine cmdLine(_argc, _argv, s_options, BX_COUNTOF(s_options) );
 
 	if (cmdLine.hasArg('v', "version") )
 	{
@@ -1598,19 +1601,8 @@ int _main_(int _argc, char** _argv)
 			;
 	};
 
-	// Accept the file path as the first non-flag positional argument so
-	// renderer / vendor switches can appear in any order on the command
-	// line (e.g. `texturev clip.mp4 --vk --intel` or
-	// `texturev --vk --intel clip.mp4` both work).
-	const char* filePath = "";
-	for (int32_t ii = 1; ii < _argc; ++ii)
-	{
-		if (_argv[ii][0] != '-')
-		{
-			filePath = _argv[ii];
-			break;
-		}
-	}
+	const char* filePath = cmdLine.getPositional(1);
+	filePath = NULL == filePath ? "" : filePath;
 
 	view.updateFileList(filePath);
 
