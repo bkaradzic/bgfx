@@ -182,34 +182,43 @@ Options
 
 Options:
 
-  -h, --help                Display this help and exit.
-  -v, --version             Output version information and exit.
-  -f <file path>            Input's file path.
-  -i <include path>         Include path. (for multiple paths use -i multiple times)
-  -o <file path>            Output's file path.
-  --bin2c <array name>      Generate C header file. If array name is not specified base file name will be used as name.
-  --depends                 Generate makefile style depends file.
-  --platform <platform>     Target platform.
-  -p, --profile <profile>   Shader model.
-                            Defaults to GLSL.
-  --preprocess              Only pre-process.
-  --define <defines>        Add defines to preprocessor. (semicolon separated)
-  --raw                     Do not process shader. No preprocessor, and no glsl-optimizer. (GLSL only)
-  --type <type>             Shader type.
-                            Can be 'vertex', 'fragment, or 'compute'.
-  --varyingdef <file path>  A varying.def.sc's file path.
-  --verbose                 Be verbose.
+  -h, --help                     Display this help and exit.
+  -v, --version                  Output version information and exit.
+  -f <file path>                 Input's file path.
+  -i <include path>              Include path. (for multiple paths use -i multiple times)
+  -o <file path>                 Output's file path.
+      --stdout                   Output to console.
+      --bin2c [array name]       Generate C header file. If array name is not specified base file name
+                                 will be used as name.
+      --depends                  Generate makefile style depends file.
+      --platform <platform>      Target platform.
+                                   android
+                                   asm.js
+                                   ios
+                                   linux
+                                   orbis
+                                   osx
+                                   windows
+  -p, --profile <profile>        Shader model. Defaults to GLSL. See shader profiles below.
+      --preprocess               Only pre-process.
+      --keepcomments             Do not discard comments.
+      --define <defines>         Add defines to preprocessor. (Semicolon-separated)
+      --raw                      Do not process shader. No preprocessor, and no glsl-optimizer. (GLSL only)
+      --type <type>              Shader type. Can be 'vertex', 'fragment, or 'compute'.
+      --varyingdef <file path>   varying.def.sc's file path.
+      --verbose                  Be verbose.
+      --debug                    Debug information. (Vulkan, DirectX and Metal only)
+      --disasm                   Disassemble compiled shader. (DirectX only)
+  -O <level>                     Set optimization level. Can be 0 to 3. (DirectX only)
+      --Werror                   Treat warnings as errors. (DirectX only)
+      --avoid-flow-control       Avoid flow control instructions. (DirectX only)
+      --no-preshader             Do not generate preshader. (DirectX only)
+      --partial-precision        Use partial precision. (DirectX only)
+      --prefer-flow-control      Prefer flow control instructions. (DirectX only)
+      --backwards-compatibility  Enable backwards compatibility. (DirectX only)
+      --keep-intermediate        Keep intermediate compilation results. (DirectX only)
 
-(Vulkan, DirectX and Metal):
-
-  --debug                   Debug information.
-
-(DirectX only):
-
-  --disasm                  Disassemble a compiled shader.
-  -O <level>                Set optimization level.
-                            Can be 0–3.
-  --Werror                  Treat warnings as errors.
+Shader profiles are listed by ``shaderc --help``.
 
 Building shaders
 ~~~~~~~~~~~~~~~~
@@ -227,24 +236,33 @@ Convert PNG, TGA, DDS, KTX, and PVR textures into bgfx-supported texture formats
 Usage::
 
   texturec -f <in> -o <out> [-t <texture format>]
+  texturec <in> <out> [-t <texture format>]
 
 Supported file formats:
 
-  ====== ================ ============================
+  ====== ================ ==============================
   Format In/Out           Description
-  ====== ================ ============================
+  ====== ================ ==============================
+  .avif  (input)          AV1 Image File Format.
   .bmp   (input)          Windows Bitmap.
   .dds   (input, output)  Direct Draw Surface.
   .exr   (input, output)  OpenEXR.
   .gif   (input)          Graphics Interchange Format.
-  .jpg   (input)          JPEG Interchange Format.
   .hdr   (input, output)  Radiance RGBE.
+  .jpg   (input)          JPEG Interchange Format.
   .ktx   (input, output)  Khronos Texture.
+  .ktx2  (input, output)  Khronos Texture 2.
+  .pgm   (input)          Portable Gray Map.
   .png   (input, output)  Portable Network Graphics.
+  .ppm   (input)          Portable Pixel Map.
   .psd   (input)          Photoshop Document.
   .pvr   (input)          PowerVR.
   .tga   (input)          Truevision TGA.
-  ====== ================ ============================
+  .webp  (input)          WebP.
+  ====== ================ ==============================
+
+Which formats can be read depends on the image parsers compiled into ``bimg``.
+``texturec --help`` lists the ones this build actually supports.
 
 Options:
 
@@ -252,37 +270,30 @@ Options:
   -h, --help               Help.
   -v, --version            Version information only.
   -f <file path>           Input file path.
+                           Input and output may also be passed positionally, without
+                           -f/-o.
   -o <file path>           Output file path.
   -t <format>              Output format type (BC1/2/3/4/5, ETC1, PVR14, etc.).
   -q <quality>             Encoding quality (default, fastest, highest).
   -m, --mips               Generate mip-maps.
       --mipskip <N>        Skip <N> number of mips.
   -n, --normalmap          Input texture is normal map. (Implies --linear)
-
       --equirect           Input texture is equirectangular projection of cubemap.
-
       --strip              Input texture is horizontal or vertical strip of cubemap.
-
       --sdf                Compute SDF texture.
-
       --ref <alpha>        Alpha reference value.
-
       --iqa                Image Quality Assessment
-
       --pma                Premultiply alpha into RGB channel.
-
-      --linear             Input and output texture is linear color space (gamma correction won't be applied).
-
+      --linear             Input and output texture is linear color space (gamma
+                           correction won't be applied).
       --max <max size>     Maximum width/height (image will be scaled down and
                            aspect ratio will be preserved)
-
-      --radiance <model>   Radiance cubemap filter. (Lighting model: Phong, PhongBrdf, Blinn, BlinnBrdf, GGX)
-
+      --radiance <model>   Radiance cubemap filter. (Lighting model: Phong, PhongBrdf,
+                           Blinn, BlinnBrdf, GGX)
       --as <extension>     Save as.
-
       --formats            List all supported formats.
-
-      --validate           **DEBUG** Validate that output image produced matches after loading.
+      --validate           *DEBUG* Validate that output image produced matches after
+                           loading.
 
 Texture Viewer (texturev)
 -------------------------

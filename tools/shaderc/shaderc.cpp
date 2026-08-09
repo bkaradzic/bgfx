@@ -1167,6 +1167,46 @@ namespace bgfx
 		return bx::strFind(_filePath, fp.getBaseName() );
 	}
 
+	static const bx::CommandLineOption s_options[] =
+	{
+		{ 'h',  "help",                    0, NULL,             "Display this help and exit."                                                     },
+		{ 'v',  "version",                 0, NULL,             "Output version information and exit."                                            },
+		{ 'f',  NULL,                      1, "<file path>",    "Input's file path."                                                              },
+		{ 'i',  NULL,                      1, "<include path>", "Include path. (for multiple paths use -i multiple times)"                        },
+		{ 'o',  NULL,                      1, "<file path>",    "Output's file path."                                                             },
+		{ '\0', "stdout",                  0, NULL,             "Output to console."                                                              },
+		{ '\0', "bin2c", bx::kCommandLineOptionalParam, "[array name]",
+		                                                        "Generate C header file. If array name is not specified base file name\n"
+		                                                        "will be used as name."                                                           },
+		{ '\0', "depends",                 0, NULL,             "Generate makefile style depends file."                                           },
+		{ '\0', "platform",                1, "<platform>",     "Target platform.\n"
+		                                                        "  android\n"
+		                                                        "  asm.js\n"
+		                                                        "  ios\n"
+		                                                        "  linux\n"
+		                                                        "  orbis\n"
+		                                                        "  osx\n"
+		                                                        "  windows"                                                                       },
+		{ 'p',  "profile",                 1, "<profile>",      "Shader model. Defaults to GLSL. See shader profiles below."                      },
+		{ '\0', "preprocess",              0, NULL,             "Only pre-process."                                                               },
+		{ '\0', "keepcomments",            0, NULL,             "Do not discard comments."                                                        },
+		{ '\0', "define",                  1, "<defines>",      "Add defines to preprocessor. (Semicolon-separated)"                              },
+		{ '\0', "raw",                     0, NULL,             "Do not process shader. No preprocessor, and no glsl-optimizer. (GLSL only)"      },
+		{ '\0', "type",                    1, "<type>",         "Shader type. Can be 'vertex', 'fragment, or 'compute'."                          },
+		{ '\0', "varyingdef",              1, "<file path>",    "varying.def.sc's file path."                                                     },
+		{ '\0', "verbose",                 0, NULL,             "Be verbose."                                                                     },
+		{ '\0', "debug",                   0, NULL,             "Debug information. (Vulkan, DirectX and Metal only)"                             },
+		{ '\0', "disasm",                  0, NULL,             "Disassemble compiled shader. (DirectX only)"                                     },
+		{ 'O',  NULL,                      1, "<level>",        "Set optimization level. Can be 0 to 3. (DirectX only)"                           },
+		{ '\0', "Werror",                  0, NULL,             "Treat warnings as errors. (DirectX only)"                                        },
+		{ '\0', "avoid-flow-control",      0, NULL,             "Avoid flow control instructions. (DirectX only)"                                 },
+		{ '\0', "no-preshader",            0, NULL,             "Do not generate preshader. (DirectX only)"                                       },
+		{ '\0', "partial-precision",       0, NULL,             "Use partial precision. (DirectX only)"                                           },
+		{ '\0', "prefer-flow-control",     0, NULL,             "Prefer flow control instructions. (DirectX only)"                                },
+		{ '\0', "backwards-compatibility", 0, NULL,             "Enable backwards compatibility. (DirectX only)"                                  },
+		{ '\0', "keep-intermediate",       0, NULL,             "Keep intermediate compilation results. (DirectX only)"                           },
+	};
+
 	void help(const char* _error = NULL)
 	{
 		if (NULL != _error)
@@ -1185,26 +1225,17 @@ namespace bgfx
 
 		bx::printf(
 			  "Usage: shaderc -f <in> -o <out> --type <v/f/c> --platform <platform>\n"
-
+			  "       shaderc <in> <out> --type <v/f/c> --platform <platform>\n"
 			  "\n"
 			  "Options:\n"
-			  "  -h, --help                    Display this help and exit.\n"
-			  "  -v, --version                 Output version information and exit.\n"
-			  "  -f <file path>                Input's file path.\n"
-			  "  -i <include path>             Include path. (for multiple paths use -i multiple times)\n"
-			  "  -o <file path>                Output's file path.\n"
-			  "      --stdout                  Output to console.\n"
-			  "      --bin2c [array name]      Generate C header file. If array name is not specified base file name will be used as name.\n"
-			  "      --depends                 Generate makefile style depends file.\n"
-			  "      --platform <platform>     Target platform.\n"
-			  "           android\n"
-			  "           asm.js\n"
-			  "           ios\n"
-			  "           linux\n"
-			  "           orbis\n"
-			  "           osx\n"
-			  "           windows\n"
-			  "      -p, --profile <profile>   Shader model. Defaults to GLSL.\n"
+			);
+
+		bx::Error err;
+		bx::write(bx::getStdOut(), s_options, BX_COUNTOF(s_options), &err);
+
+		bx::printf(
+			  "\n"
+			  "Shader profiles:\n"
 			);
 
 		{
@@ -1227,28 +1258,6 @@ namespace bgfx
 		}
 
 		bx::printf(
-			  "      --preprocess              Only pre-process.\n"
-			  "      --keepcomments            Do not discard comments.\n"
-			  "      --define <defines>        Add defines to preprocessor. (Semicolon-separated)\n"
-			  "      --raw                     Do not process shader. No preprocessor, and no glsl-optimizer. (GLSL only)\n"
-			  "      --type <type>             Shader type. Can be 'vertex', 'fragment, or 'compute'.\n"
-			  "      --varyingdef <file path>  varying.def.sc's file path.\n"
-			  "      --verbose                 Be verbose.\n"
-
-			  "\n"
-			  "(Vulkan, DirectX and Metal):\n"
-
-			  "\n"
-			  "      --debug                   Debug information.\n"
-
-			  "\n"
-			  "(DirectX only):\n"
-
-			  "\n"
-			  "      --disasm                  Disassemble compiled shader.\n"
-			  "  -O <level>                    Set optimization level. Can be 0 to 3.\n"
-			  "      --Werror                  Treat warnings as errors.\n"
-
 			  "\n"
 			  "For additional information, see https://github.com/bkaradzic/bgfx\n"
 			);
@@ -2870,7 +2879,7 @@ namespace bgfx
 
 	int compileShader(int _argc, const char* _argv[])
 	{
-		bx::CommandLine cmdLine(_argc, _argv);
+		bx::CommandLine cmdLine(_argc, _argv, s_options, BX_COUNTOF(s_options) );
 
 		if (cmdLine.hasArg('v', "version") )
 		{
@@ -2889,9 +2898,22 @@ namespace bgfx
 			return bx::kExitFailure;
 		}
 
+		const char* unknown = cmdLine.findUnknownOption();
+		if (NULL != unknown)
+		{
+			char error[256];
+			bx::snprintf(error, BX_COUNTOF(error), "Unknown option '%s'.", unknown);
+			help(error);
+			return bx::kExitFailure;
+		}
+
 		g_verbose = cmdLine.hasArg("verbose");
 
+		int32_t positional = 1;
+
 		const char* filePath = cmdLine.findOption('f');
+		filePath = NULL != filePath ? filePath : cmdLine.getPositional(positional++);
+
 		if (NULL == filePath)
 		{
 			help("Shader file name must be specified.");
@@ -2900,6 +2922,13 @@ namespace bgfx
 
 		bool consoleOut = cmdLine.hasArg("stdout");
 		const char* outFilePath = cmdLine.findOption('o');
+
+		if (NULL == outFilePath
+		&&  !consoleOut)
+		{
+			outFilePath = cmdLine.getPositional(positional++);
+		}
+
 		if (NULL == outFilePath
 		&&  !consoleOut)
 		{

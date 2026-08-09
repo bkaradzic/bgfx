@@ -657,6 +657,12 @@ void keyBindingHelp(const char* _bindings, const char* _description)
 	ImGui::Text("%s", _description);
 }
 
+static const bx::CommandLineOption s_options[] =
+{
+	{ 'h', "help",    0, NULL, "Help."                     },
+	{ 'v', "version", 0, NULL, "Version information only." },
+};
+
 void help(const char* _error = NULL)
 {
 	if (NULL != _error)
@@ -687,8 +693,12 @@ void help(const char* _error = NULL)
 	bx::printf(
 		  "\n"
 		  "Options:\n"
-		  "  -h, --help               Help.\n"
-		  "  -v, --version            Version information only.\n"
+		);
+
+	bx::Error err;
+	bx::write(bx::getStdOut(), s_options, BX_COUNTOF(s_options), &err);
+
+	bx::printf(
 		  "\n"
 		  "For additional information, see https://github.com/bkaradzic/bgfx\n"
 		);
@@ -696,7 +706,7 @@ void help(const char* _error = NULL)
 
 int _main_(int _argc, char** _argv)
 {
-	bx::CommandLine cmdLine(_argc, _argv);
+	bx::CommandLine cmdLine(_argc, _argv, s_options, BX_COUNTOF(s_options) );
 
 	if (cmdLine.hasArg('v', "version") )
 	{
@@ -775,7 +785,8 @@ int _main_(int _argc, char** _argv)
 			;
 	};
 
-	const char* filePath = _argc < 2 ? "" : _argv[1];
+	const char* filePath = cmdLine.getPositional(1);
+	filePath = NULL == filePath ? "" : filePath;
 
 	std::string path = filePath;
 	{
