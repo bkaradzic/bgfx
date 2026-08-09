@@ -8288,6 +8288,10 @@ namespace bgfx { namespace gl
 											, s_imageFormat[bind.m_format])
 											);
 										barrier |= GL_SHADER_IMAGE_ACCESS_BARRIER_BIT;
+										if (Access::Read != Access::Enum(bind.m_access) )
+										{
+											barrier |= GL_TEXTURE_FETCH_BARRIER_BIT;
+										}
 									}
 									break;
 
@@ -8296,6 +8300,13 @@ namespace bgfx { namespace gl
 										const IndexBufferGL& buffer = m_indexBuffers[bind.m_idx];
 										GL_CHECK(glBindBufferBase(GL_SHADER_STORAGE_BUFFER, ii, buffer.m_id) );
 										barrier |= GL_SHADER_STORAGE_BARRIER_BIT;
+										if (Access::Read != Access::Enum(bind.m_access) )
+										{
+											barrier |= GL_COMMAND_BARRIER_BIT
+												| GL_ELEMENT_ARRAY_BARRIER_BIT
+												| GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT
+												;
+										}
 									}
 									break;
 
@@ -8304,6 +8315,13 @@ namespace bgfx { namespace gl
 										const VertexBufferGL& buffer = m_vertexBuffers[bind.m_idx];
 										GL_CHECK(glBindBufferBase(GL_SHADER_STORAGE_BUFFER, ii, buffer.m_id) );
 										barrier |= GL_SHADER_STORAGE_BARRIER_BIT;
+										if (Access::Read != Access::Enum(bind.m_access) )
+										{
+											barrier |= GL_COMMAND_BARRIER_BIT
+												| GL_ELEMENT_ARRAY_BARRIER_BIT
+												| GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT
+												;
+										}
 									}
 									break;
 								}
