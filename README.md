@@ -17,11 +17,11 @@
 </p>
 
 <p align="center">
- <a href="https://www.star-history.com/bkaradzic/bgfx">
+ <a href="https://star-history.dera.page/#bkaradzic/bgfx">
   <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/badge?repo=bkaradzic/bgfx&theme=dark" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/badge?repo=bkaradzic/bgfx" />
-   <img alt="Star History Rank" src="https://api.star-history.com/badge?repo=bkaradzic/bgfx" />
+   <source media="(prefers-color-scheme: dark)" srcset="https://star-history.dera.page/svg?repos=bkaradzic%2Fbgfx&type=date&theme=dark" />
+   <source media="(prefers-color-scheme: light)" srcset="https://star-history.dera.page/svg?repos=bkaradzic%2Fbgfx&type=date" />
+   <img alt="Star History Rank" src="https://star-history.dera.page/svg?repos=bkaradzic%2Fbgfx&type=date" />
   </picture>
  </a>
 </p>
