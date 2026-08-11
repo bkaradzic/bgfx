@@ -2292,8 +2292,10 @@ namespace bgfx { namespace gl
 			, m_maxMsaa(0)
 			, m_vao(0)
 			, m_blitSupported(false)
+			, m_blitFboSupported(false)
 			, m_textureViewSupported(false)
 			, m_readBackSupported(BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) )
+			, m_readBackFboSupported(false)
 			, m_vaoSupport(false)
 			, m_samplerObjectSupport(false)
 			, m_shadowSamplersSupport(false)
@@ -2957,12 +2959,15 @@ namespace bgfx { namespace gl
 					m_textureViewSupported = NULL != glTextureView;
 				}
 
-				g_caps.supported |= m_blitSupported
+				m_blitFboSupported     = !m_blitSupported && BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES);
+				m_readBackFboSupported = !m_readBackSupported;
+
+				g_caps.supported |= m_blitSupported || m_blitFboSupported
 					? BGFX_CAPS_TEXTURE_BLIT
 					: 0
 					;
 
-				g_caps.supported |= m_readBackSupported
+				g_caps.supported |= m_readBackSupported || m_readBackFboSupported
 					? BGFX_CAPS_TEXTURE_READ_BACK
 					: 0
 					;
@@ -3558,6 +3563,67 @@ namespace bgfx { namespace gl
 					}
 
 					GL_CHECK(glBindTexture(texture.m_target, 0) );
+				}
+			}
+			else if (m_readBackFboSupported)
+			{
+				const TextureGL& texture = m_textures[_handle.idx];
+
+				if (!bimg::isCompressed(bimg::TextureFormat::Enum(texture.m_textureFormat) ) )
+				{
+					const uint32_t mipWidth  = bx::max<uint32_t>(1, texture.m_width  >> _mip);
+					const uint32_t mipHeight = bx::max<uint32_t>(1, texture.m_height >> _mip);
+
+					Attachment at[1];
+					at[0].init(_handle, Access::Read, _layer, 1, _mip);
+
+					FrameBufferGL frameBuffer;
+					frameBuffer.create(BX_COUNTOF(at), at);
+
+					GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, frameBuffer.m_fbo[0]) );
+
+					if (texture.m_numLayers > 1)
+					{
+						GL_CHECK(glFramebufferTextureLayer(
+							  GL_FRAMEBUFFER
+							, GL_COLOR_ATTACHMENT0
+							, texture.m_id
+							, at[0].mip
+							, _layer
+							) );
+					}
+					else
+					{
+						GL_CHECK(glFramebufferTexture2D(
+							  GL_FRAMEBUFFER
+							, GL_COLOR_ATTACHMENT0
+							, GL_TEXTURE_2D
+							, texture.m_id
+							, at[0].mip
+							) );
+					}
+
+					if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) || m_gles3)
+					{
+						GL_CHECK(glReadBuffer(GL_COLOR_ATTACHMENT0) );
+					}
+
+					if (GL_FRAMEBUFFER_COMPLETE == glCheckFramebufferStatus(GL_FRAMEBUFFER) )
+					{
+						GL_CHECK(glReadPixels(
+							  0
+							, 0
+							, mipWidth
+							, mipHeight
+							, m_readPixelsFmt
+							, GL_UNSIGNED_BYTE
+							, _data
+							) );
+					}
+
+					frameBuffer.destroy();
+
+					GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, m_currentFbo) );
 				}
 			}
 		}
@@ -4954,8 +5020,10 @@ namespace bgfx { namespace gl
 		GLuint m_vao;
 		uint16_t m_maxLabelLen;
 		bool m_blitSupported;
+		bool m_blitFboSupported;
 		bool m_textureViewSupported;
 		bool m_readBackSupported;
+		bool m_readBackFboSupported;
 		bool m_vaoSupport;
 		bool m_samplerObjectSupport;
 		bool m_shadowSamplersSupport;
@@ -8018,6 +8086,52 @@ namespace bgfx { namespace gl
 					, height
 					, bx::max<int32_t>(bi.m_depth, 1)
 					) );
+			}
+		}
+		else if (m_blitFboSupported)
+		{
+			while (_bs.hasItem(_view) )
+			{
+				const BlitItem& bi = _bs.advance();
+
+				const TextureGL& src = m_textures[bi.m_src.idx];
+				const TextureGL& dst = m_textures[bi.m_dst.idx];
+
+				BX_ASSERT(0 == bi.m_srcZ && 0 == bi.m_dstZ && 1 >= bi.m_depth
+					, "Blitting 3D regions is not supported"
+					);
+
+				GLuint fbo;
+				GL_CHECK(glGenFramebuffers(1, &fbo) );
+
+				GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, fbo) );
+
+				GL_CHECK(glFramebufferTexture2D(GL_FRAMEBUFFER
+					, GL_COLOR_ATTACHMENT0
+					, GL_TEXTURE_2D
+					, src.m_id
+					, bi.m_srcMip
+					) );
+
+				GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+				BX_ASSERT(GL_FRAMEBUFFER_COMPLETE == status, "glCheckFramebufferStatus failed 0x%08x", status);
+				BX_UNUSED(status);
+
+				GL_CHECK(glActiveTexture(GL_TEXTURE0) );
+				GL_CHECK(glBindTexture(GL_TEXTURE_2D, dst.m_id) );
+
+				GL_CHECK(glCopyTexSubImage2D(GL_TEXTURE_2D
+					, bi.m_dstMip
+					, bi.m_dstX
+					, bi.m_dstY
+					, bi.m_srcX
+					, bi.m_srcY
+					, bi.m_width
+					, bi.m_height
+					) );
+
+				GL_CHECK(glDeleteFramebuffers(1, &fbo) );
+				GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, m_currentFbo) );
 			}
 		}
 	}
