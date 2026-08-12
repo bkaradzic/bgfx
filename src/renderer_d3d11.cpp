@@ -4503,11 +4503,13 @@ namespace bgfx { namespace d3d11
 		}
 	}
 
-	static ID3D11Texture2D* zeroInitTile(DXGI_FORMAT _fmt, uint32_t _tileDim, uint32_t _blockW, uint32_t _blockH, uint32_t _blockSize)
+	static ID3D11Resource* zeroInitTile(DXGI_FORMAT _fmt, uint32_t _tileDim, uint32_t _blockW, uint32_t _blockH, uint32_t _blockSize, bool _volume)
 	{
-		if (IUnknown** cached = s_renderD3D11->m_zeroInitTileCache.find(uint64_t(_fmt) ) )
+		const uint64_t key = uint64_t(_fmt) | (_volume ? UINT64_C(0x100000000) : 0);
+
+		if (IUnknown** cached = s_renderD3D11->m_zeroInitTileCache.find(key) )
 		{
-			return static_cast<ID3D11Texture2D*>(*cached);
+			return static_cast<ID3D11Resource*>(*cached);
 		}
 
 		const uint32_t rowPitch = (_tileDim / _blockW) * _blockSize;
@@ -4515,24 +4517,47 @@ namespace bgfx { namespace d3d11
 		uint8_t zeros[kTextureZeroInitBudget] = {};
 		BX_ASSERT(rowPitch * numRows <= sizeof(zeros), "Zero-init tile exceeds budget.");
 
-		D3D11_TEXTURE2D_DESC desc;
-		bx::memSet(&desc, 0, sizeof(desc) );
-		desc.Width          = _tileDim;
-		desc.Height         = _tileDim;
-		desc.MipLevels      = 1;
-		desc.ArraySize      = 1;
-		desc.Format         = _fmt;
-		desc.SampleDesc.Count = 1;
-		desc.Usage          = D3D11_USAGE_DEFAULT;
-		desc.BindFlags      = D3D11_BIND_SHADER_RESOURCE;
-		D3D11_SUBRESOURCE_DATA srd = { zeros, rowPitch, 0 };
+		D3D11_SUBRESOURCE_DATA srd = { zeros, rowPitch, rowPitch * numRows };
 
-		ID3D11Texture2D* tile = NULL;
-		s_renderD3D11->m_device->CreateTexture2D(&desc, &srd, &tile);
+		ID3D11Resource* tile = NULL;
+
+		if (_volume)
+		{
+			D3D11_TEXTURE3D_DESC desc;
+			bx::memSet(&desc, 0, sizeof(desc) );
+			desc.Width     = _tileDim;
+			desc.Height    = _tileDim;
+			desc.Depth     = 1;
+			desc.MipLevels = 1;
+			desc.Format    = _fmt;
+			desc.Usage     = D3D11_USAGE_DEFAULT;
+			desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+
+			ID3D11Texture3D* volumeTile = NULL;
+			s_renderD3D11->m_device->CreateTexture3D(&desc, &srd, &volumeTile);
+			tile = volumeTile;
+		}
+		else
+		{
+			D3D11_TEXTURE2D_DESC desc;
+			bx::memSet(&desc, 0, sizeof(desc) );
+			desc.Width          = _tileDim;
+			desc.Height         = _tileDim;
+			desc.MipLevels      = 1;
+			desc.ArraySize      = 1;
+			desc.Format         = _fmt;
+			desc.SampleDesc.Count = 1;
+			desc.Usage          = D3D11_USAGE_DEFAULT;
+			desc.BindFlags      = D3D11_BIND_SHADER_RESOURCE;
+
+			ID3D11Texture2D* planeTile = NULL;
+			s_renderD3D11->m_device->CreateTexture2D(&desc, &srd, &planeTile);
+			tile = planeTile;
+		}
 
 		if (NULL != tile)
 		{
-			s_renderD3D11->m_zeroInitTileCache.add(uint64_t(_fmt), tile, 0);
+			s_renderD3D11->m_zeroInitTileCache.add(key, tile, 0);
 		}
 
 		return tile;
@@ -4600,7 +4625,7 @@ namespace bgfx { namespace d3d11
 		const uint32_t blockSize = bi.blockSize;
 		const uint32_t tileDim   = textureZeroInitTileDim(bimg::getBitsPerPixel(tf) );
 
-		ID3D11Texture2D* tile = zeroInitTile(fmt, tileDim, blockW, blockH, blockSize);
+		ID3D11Resource* tile = zeroInitTile(fmt, tileDim, blockW, blockH, blockSize, is3D);
 		if (NULL == tile)
 		{
 			return;
@@ -4673,7 +4698,7 @@ namespace bgfx { namespace d3d11
 			{
 				m_type  = TextureCube;
 			}
-			else if (imageContainer.m_depth > 1)
+			else if (isVolume(imageContainer) )
 			{
 				m_type = Texture3D;
 			}

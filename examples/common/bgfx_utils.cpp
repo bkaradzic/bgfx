@@ -224,7 +224,7 @@ bgfx::TextureHandle loadTexture(bx::FileReaderI* _reader, const bx::FilePath& _f
 					, mem
 					);
 			}
-			else if (1 < imageContainer->m_depth)
+			else if (bimg::isVolume(*imageContainer) )
 			{
 				handle = bgfx::createTexture3D(
 					  uint16_t(imageContainer->m_width)
