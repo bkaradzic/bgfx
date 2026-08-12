@@ -1487,6 +1487,15 @@ namespace bgfx { namespace d3d12
 						};
 						filter.DenyList.NumCategories = BX_COUNTOF(catlist);
 						filter.DenyList.pCategoryList = catlist;
+
+						D3D12_MESSAGE_ID idlist[] =
+						{
+							D3D12_MESSAGE_ID_CLEARRENDERTARGETVIEW_MISMATCHINGCLEARVALUE,
+							D3D12_MESSAGE_ID_CLEARDEPTHSTENCILVIEW_MISMATCHINGCLEARVALUE,
+						};
+						filter.DenyList.NumIDs  = BX_COUNTOF(idlist);
+						filter.DenyList.pIDList = idlist;
+
 						m_infoQueue->PushStorageFilter(&filter);
 					}
 				}
