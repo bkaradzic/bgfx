@@ -5,7 +5,6 @@
 
 group "tools/shaderc"
 
-local FCPP_DIR       = path.join(BGFX_DIR, "3rdparty/fcpp")
 local GLSLANG        = path.join(BGFX_DIR, "3rdparty/glslang")
 local SPIRV_CROSS    = path.join(BGFX_DIR, "3rdparty/spirv-cross")
 local SPIRV_HEADERS  = path.join(BGFX_DIR, "3rdparty/spirv-headers")
@@ -407,46 +406,6 @@ project "glslang"
 
 	configuration {}
 
-project "fcpp"
-	kind "StaticLib"
-
-	defines { -- fcpp
-		"NINCLUDE=64",
-		"NWORK=65536",
-		"NBUFF=65536",
-		"OLD_PREPROCESSOR=0",
---		"MSG_PREFIX=\"Preprocessor: \"",
-	}
-
-	files {
-		path.join(FCPP_DIR, "**.h"),
-		path.join(FCPP_DIR, "cpp1.c"),
-		path.join(FCPP_DIR, "cpp2.c"),
-		path.join(FCPP_DIR, "cpp3.c"),
-		path.join(FCPP_DIR, "cpp4.c"),
-		path.join(FCPP_DIR, "cpp5.c"),
-		path.join(FCPP_DIR, "cpp6.c"),
-		path.join(FCPP_DIR, "cpp6.c"),
-	}
-
-	configuration { "vs*" }
-
-		buildoptions {
-			"/wd4055", -- warning C4055: 'type cast': from data pointer 'void *' to function pointer 'void (__cdecl *)(char *,void *)'
-			"/wd4244", -- warning C4244: '=': conversion from 'const flex_int32_t' to 'YY_CHAR', possible loss of data
-			"/wd4701", -- warning C4701: potentially uninitialized local variable 'lower' used
-			"/wd4706", -- warning C4706: assignment within conditional expression
-		}
-
-	configuration { "not vs*" }
-		buildoptions {
-			"-Wno-implicit-fallthrough",
-			"-Wno-incompatible-pointer-types",
-			"-Wno-parentheses-equality",
-		}
-
-	configuration {}
-
 project "shaderc"
 	kind "ConsoleApp"
 
@@ -456,7 +415,7 @@ project "shaderc"
 
 		path.join(BGFX_DIR, "3rdparty/directx-headers/include/directx"),
 
-		FCPP_DIR,
+		path.join(BX_DIR, "3rdparty"),
 
 		path.join(BGFX_DIR, "3rdparty/glslang/glslang/Public"),
 		path.join(BGFX_DIR, "3rdparty/glslang/glslang/Include"),
@@ -471,7 +430,6 @@ project "shaderc"
 	}
 
 	links {
-		"fcpp",
 		"glslang",
 		"spirv-opt",
 		"spirv-cross",

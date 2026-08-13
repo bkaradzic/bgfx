@@ -145,7 +145,6 @@ namespace bgfx
 		bool disasm;
 		bool raw;
 		bool preprocessOnly;
-		bool keepComments;
 		bool depends;
 
 		bool debugInformation;
