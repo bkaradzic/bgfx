@@ -3694,13 +3694,13 @@ namespace bgfx { namespace d3d11
 
 			const Rect fbRect(0, 0, bx::narrowCast<uint16_t>(width), bx::narrowCast<uint16_t>(height) );
 
-			const bool discreteClear = true
+			const bool needsQuadClear = true
 				&& isValid(m_fbh)
-				&& !m_frameBuffers[m_fbh.idx].m_needsQuadClear
+				&& m_frameBuffers[m_fbh.idx].m_needsQuadClear
 				;
 
 			if (_rect.isEqual(fbRect)
-			&&  discreteClear)
+			&& !needsQuadClear)
 			{
 				clear(_clear, _palette);
 			}
