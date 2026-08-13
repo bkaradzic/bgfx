@@ -2605,14 +2605,28 @@ WGPU_IMPORT
 				case ShaderBinding::Type::Sampler:
 					{
 						TextureWGPU& texture = m_textures[bind.m_idx];
+
+						const uint32_t resolvedFlags = 0 == (BGFX_SAMPLER_INTERNAL_DEFAULT & bind.m_samplerFlags)
+							? bind.m_samplerFlags
+							: texture.m_flags
+							;
+
 						WGPUTextureSampleType sampleType = WGPUTextureSampleType_Depth != shaderBind.sampleType
 							? s_textureFormat[texture.m_textureFormat].m_samplerType
 							: shaderBind.sampleType
 							;
 
+						if (0 != (resolvedFlags & BGFX_SAMPLER_SAMPLE_STENCIL) )
+						{
+							// Stencil aspect is viewed as Stencil8, which is an unsigned integer format.
+							sampleType = WGPUTextureSampleType_Uint;
+						}
+
 						WGPUSamplerBindingType samplerBindingType = WGPUSamplerBindingType_Filtering;
 						switch (sampleType)
 						{
+						case WGPUTextureSampleType_Uint:
+						case WGPUTextureSampleType_Sint:
 						case WGPUTextureSampleType_UnfilterableFloat: samplerBindingType = WGPUSamplerBindingType_NonFiltering; break;
 						case WGPUTextureSampleType_Depth:             samplerBindingType = WGPUSamplerBindingType_Comparison;   break;
 						default: break;
@@ -3146,6 +3160,14 @@ WGPU_IMPORT
 						{
 							const TextureWGPU& texture = m_textures[bind.m_idx];
 
+							const uint32_t resolvedFlags = 0 == (BGFX_SAMPLER_INTERNAL_DEFAULT & bind.m_samplerFlags)
+								? bind.m_samplerFlags
+								: texture.m_flags
+								;
+							const bool sampleStencil = Binding::Texture == bind.m_type
+								&& 0 != (resolvedFlags & BGFX_SAMPLER_SAMPLE_STENCIL)
+								;
+
 							bindGroupEntry[entryCount++] =
 							{
 								.nextInChain = NULL,
@@ -3155,8 +3177,8 @@ WGPU_IMPORT
 								.size        = 0,
 								.sampler     = NULL,
 								.textureView = _isCompute
-									? texture.getTextureView(bind.m_firstMip, bind.m_numMips, Binding::Image == bind.m_type, 0, UINT16_MAX, Binding::Image == bind.m_type && UINT16_MAX != bind.m_numLayers)
-									: texture.getTextureView(bind.m_firstMip, bind.m_numMips, false, bind.m_firstLayer, bind.m_numLayers)
+									? texture.getTextureView(bind.m_firstMip, bind.m_numMips, Binding::Image == bind.m_type, 0, UINT16_MAX, Binding::Image == bind.m_type && UINT16_MAX != bind.m_numLayers, sampleStencil)
+									: texture.getTextureView(bind.m_firstMip, bind.m_numMips, false, bind.m_firstLayer, bind.m_numLayers, false, sampleStencil)
 									,
 							};
 
@@ -4403,7 +4425,7 @@ WGPU_IMPORT
 		return sampler;
 	}
 
-	WGPUTextureView TextureWGPU::getTextureView(uint8_t _baseMipLevel, uint8_t _mipLevelCount, bool _storage, uint16_t _baseArrayLayer, uint16_t _arrayLayerCount, bool _force2DArray) const
+	WGPUTextureView TextureWGPU::getTextureView(uint8_t _baseMipLevel, uint8_t _mipLevelCount, bool _storage, uint16_t _baseArrayLayer, uint16_t _arrayLayerCount, bool _force2DArray, bool _stencil) const
 	{
 		bx::HashMurmur3 murmur;
 		murmur.begin();
@@ -4414,6 +4436,7 @@ WGPU_IMPORT
 		murmur.add(_baseArrayLayer);
 		murmur.add(_arrayLayerCount);
 		murmur.add(_force2DArray);
+		murmur.add(_stencil);
 		const uint32_t hash = murmur.end();
 
 		WGPUTextureView textureView = s_renderWGPU->m_textureViewStateCache.find(hash);
@@ -4443,13 +4466,19 @@ WGPU_IMPORT
 			{
 				.nextInChain     = NULL,
 				.label           = WGPU_STRING_VIEW_INIT,
-				.format          = s_textureFormat[m_textureFormat].m_fmt,
+				.format          = _stencil
+					? WGPUTextureFormat_Stencil8
+					: s_textureFormat[m_textureFormat].m_fmt
+					,
 				.dimension       = tvd,
 				.baseMipLevel    = _baseMipLevel,
 				.mipLevelCount   = UINT8_MAX == _mipLevelCount ? WGPU_MIP_LEVEL_COUNT_UNDEFINED : _mipLevelCount,
 				.baseArrayLayer  = _baseArrayLayer,
 				.arrayLayerCount = arrayLayerCount,
-				.aspect          = WGPUTextureAspect_All,
+				.aspect          = _stencil
+					? WGPUTextureAspect_StencilOnly
+					: WGPUTextureAspect_All
+					,
 				.usage           = 0
 					| WGPUTextureUsage_TextureBinding
 					| (_storage ? WGPUTextureUsage_StorageBinding : 0)

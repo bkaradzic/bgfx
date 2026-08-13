@@ -297,6 +297,10 @@ typedef uint64_t GLuint64;
 #	define GL_STENCIL_INDEX 0x1901
 #endif // GL_STENCIL_INDEX
 
+#ifndef GL_DEPTH_STENCIL_TEXTURE_MODE
+#	define GL_DEPTH_STENCIL_TEXTURE_MODE 0x90EA
+#endif // GL_DEPTH_STENCIL_TEXTURE_MODE
+
 #ifndef GL_RED
 #	define GL_RED 0x1903
 #endif // GL_RED
@@ -870,6 +874,26 @@ typedef uint64_t GLuint64;
 #	define GL_SAMPLER_2D_ARRAY_SHADOW 0x8DC4
 #endif // GL_SAMPLER_2D_ARRAY_SHADOW
 
+#ifndef GL_SAMPLER_CUBE_SHADOW
+#	define GL_SAMPLER_CUBE_SHADOW 0x8DC5
+#endif // GL_SAMPLER_CUBE_SHADOW
+
+#ifndef GL_SAMPLER_CUBE_MAP_ARRAY
+#	define GL_SAMPLER_CUBE_MAP_ARRAY 0x900C
+#endif // GL_SAMPLER_CUBE_MAP_ARRAY
+
+#ifndef GL_SAMPLER_CUBE_MAP_ARRAY_SHADOW
+#	define GL_SAMPLER_CUBE_MAP_ARRAY_SHADOW 0x900D
+#endif // GL_SAMPLER_CUBE_MAP_ARRAY_SHADOW
+
+#ifndef GL_INT_SAMPLER_CUBE_MAP_ARRAY
+#	define GL_INT_SAMPLER_CUBE_MAP_ARRAY 0x900E
+#endif // GL_INT_SAMPLER_CUBE_MAP_ARRAY
+
+#ifndef GL_UNSIGNED_INT_SAMPLER_CUBE_MAP_ARRAY
+#	define GL_UNSIGNED_INT_SAMPLER_CUBE_MAP_ARRAY 0x900F
+#endif // GL_UNSIGNED_INT_SAMPLER_CUBE_MAP_ARRAY
+
 #ifndef GL_TEXTURE_MAX_LEVEL
 #	define GL_TEXTURE_MAX_LEVEL 0x813D
 #endif // GL_TEXTURE_MAX_LEVEL
@@ -965,6 +989,18 @@ typedef uint64_t GLuint64;
 #ifndef GL_UNSIGNED_INT_IMAGE_CUBE
 #	define GL_UNSIGNED_INT_IMAGE_CUBE 0x9066
 #endif // GL_UNSIGNED_INT_IMAGE_CUBE
+
+#ifndef GL_IMAGE_CUBE_MAP_ARRAY
+#	define GL_IMAGE_CUBE_MAP_ARRAY 0x9054
+#endif // GL_IMAGE_CUBE_MAP_ARRAY
+
+#ifndef GL_INT_IMAGE_CUBE_MAP_ARRAY
+#	define GL_INT_IMAGE_CUBE_MAP_ARRAY 0x905F
+#endif // GL_INT_IMAGE_CUBE_MAP_ARRAY
+
+#ifndef GL_UNSIGNED_INT_IMAGE_CUBE_MAP_ARRAY
+#	define GL_UNSIGNED_INT_IMAGE_CUBE_MAP_ARRAY 0x906A
+#endif // GL_UNSIGNED_INT_IMAGE_CUBE_MAP_ARRAY
 
 #ifndef GL_PROGRAM_INPUT
 #	define GL_PROGRAM_INPUT 0x92E3
@@ -1452,7 +1488,8 @@ namespace bgfx { namespace gl
 		void clear(uint8_t _mip, uint8_t _numMips, uint16_t _layer, uint16_t _numLayers);
 		void setSamplerState(uint32_t _flags, const float _rgba[4]);
 		void commit(uint32_t _stage, uint32_t _flags, const float _palette[][4], uint8_t _firstMip, uint8_t _numMips, uint16_t _firstLayer, uint16_t _numLayers);
-		GLuint getViewId(uint8_t _firstMip, uint8_t _numMips, uint16_t _firstLayer, uint16_t _numLayers);
+		GLenum getViewTarget(uint16_t _numLayers, bool _layered = false) const;
+		GLuint getViewId(uint8_t _firstMip, uint8_t _numMips, uint16_t _firstLayer, uint16_t _numLayers, GLenum* _target = NULL, bool _layered = false);
 		void resolve(uint8_t _resolve) const;
 
 		bool isCubeMap() const
@@ -1488,6 +1525,9 @@ namespace bgfx { namespace gl
 		uint8_t m_requestedFormat;
 		uint8_t m_textureFormat;
 		bool m_immutableStorage;
+		int32_t m_baseLevel = 0;
+		int32_t m_maxLevel  = -1;
+		bool    m_depthStencilTexturing = false;
 	};
 
 	struct ShaderGL

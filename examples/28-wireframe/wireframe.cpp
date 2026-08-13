@@ -566,7 +566,7 @@ public:
 
 ENTRY_IMPLEMENT_MAIN(
 	  ExampleWireframe
-	, "28-wirefame"
+	, "28-wireframe"
 	, "Drawing wireframe mesh."
 	, "https://bkaradzic.github.io/bgfx/examples.html#wireframe"
 	);

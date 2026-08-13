@@ -464,7 +464,7 @@ namespace bgfx { namespace mtl
 			);
 
 		MTL::Texture* getTextureMipLevel(uint8_t _mip, bool _array = false);
-		MTL::Texture* getTextureView(uint16_t _firstLayer, uint16_t _numLayers, uint8_t _firstMip, uint8_t _numMips);
+		MTL::Texture* getTextureView(uint16_t _firstLayer, uint16_t _numLayers, uint8_t _firstMip, uint8_t _numMips, bool _stencil = false);
 
 		MTL::Texture* m_ptr;
 		MTL::Texture* m_ptrMsaa;
