@@ -3694,7 +3694,30 @@ namespace bgfx { namespace d3d12
 
 			murmur.add(m_scd.sampleDesc);
 
-			if (!isValid(m_fbh) )
+			if (isValid(m_fbh) )
+			{
+				const FrameBufferD3D12& frameBuffer = m_frameBuffers[m_fbh.idx];
+
+				if (NULL == frameBuffer.m_swapChain)
+				{
+					murmur.add(frameBuffer.m_num);
+
+					for (uint8_t ii = 0, num = frameBuffer.m_num; ii < num; ++ii)
+					{
+						murmur.add(m_textures[frameBuffer.m_texture[ii].idx].m_srvd.Format);
+					}
+
+					murmur.add(isValid(frameBuffer.m_depth)
+						? s_textureFormat[m_textures[frameBuffer.m_depth.idx].m_textureFormat].m_fmtDsv
+						: DXGI_FORMAT_UNKNOWN
+						);
+				}
+				else
+				{
+					murmur.add(frameBuffer.m_swapChainFormat);
+				}
+			}
+			else
 			{
 				murmur.add(getBackBufferFormat(m_resolution) );
 				murmur.add(getBackBufferDepthStencilFormat(m_resolution) );
@@ -4389,7 +4412,7 @@ namespace bgfx { namespace d3d12
 		alloc(_gpuHandle, cpuHandle);
 	}
 
-	void ScratchBufferD3D12::allocSrv(D3D12_GPU_DESCRIPTOR_HANDLE& _gpuHandle, TextureD3D12& _texture, uint16_t _firstLayer, uint16_t _numLayers, uint8_t _firstMip, uint8_t _numMips)
+	void ScratchBufferD3D12::allocSrv(D3D12_GPU_DESCRIPTOR_HANDLE& _gpuHandle, TextureD3D12& _texture, uint16_t _firstLayer, uint16_t _numLayers, uint8_t _firstMip, uint8_t _numMips, bool _stencil)
 	{
 		ID3D12Device* device = s_renderD3D12->m_device;
 
@@ -4404,7 +4427,8 @@ namespace bgfx { namespace d3d12
 
 		D3D12_SHADER_RESOURCE_VIEW_DESC tmpSrvd;
 		D3D12_SHADER_RESOURCE_VIEW_DESC* srvd = &_texture.m_srvd;
-		if (!fullRange)
+		if (!fullRange
+		||  _stencil)
 		{
 			bx::memCopy(&tmpSrvd, srvd, sizeof(tmpSrvd) );
 			srvd = &tmpSrvd;
@@ -4453,6 +4477,29 @@ namespace bgfx { namespace d3d12
 				srvd->Texture3D.ResourceMinLODClamp = 0;
 				break;
 			}
+
+			if (_stencil)
+			{
+				srvd->Format = DXGI_FORMAT_R32G8X24_TYPELESS == s_textureFormat[_texture.m_textureFormat].m_fmt
+					? DXGI_FORMAT_X32_TYPELESS_G8X24_UINT
+					: DXGI_FORMAT_X24_TYPELESS_G8_UINT
+					;
+				srvd->Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+
+				switch (srvd->ViewDimension)
+				{
+				case D3D12_SRV_DIMENSION_TEXTURE2D:
+					srvd->Texture2D.PlaneSlice = 1;
+					break;
+
+				case D3D12_SRV_DIMENSION_TEXTURE2DARRAY:
+					srvd->Texture2DArray.PlaneSlice = 1;
+					break;
+
+				default:
+					break;
+				}
+			}
 		}
 
 		ID3D12Resource* resource = NULL != _texture.m_singleMsaa ? _texture.m_singleMsaa : _texture.m_ptr;
@@ -4464,6 +4511,7 @@ namespace bgfx { namespace d3d12
 		}
 
 		if (fullRange
+		&&  !_stencil
 		&&  NULL == _texture.m_singleMsaa)
 		{
 			if (0 == _texture.m_srvHandle.ptr)
@@ -4492,7 +4540,7 @@ namespace bgfx { namespace d3d12
 		const bool arrayed    = UINT16_MAX != _numLayers;
 		const bool forceArray = arrayed && D3D12_UAV_DIMENSION_TEXTURE2D == uavd->ViewDimension;
 
-		if (0 != _mip || forceArray)
+		if (0 != _mip || arrayed)
 		{
 			bx::memCopy(&tmpUavd, uavd, sizeof(tmpUavd) );
 			uavd = &tmpUavd;
@@ -4517,6 +4565,12 @@ namespace bgfx { namespace d3d12
 				case D3D12_UAV_DIMENSION_TEXTURE2DARRAY:
 					uavd->Texture2DArray.MipSlice   = _mip;
 					uavd->Texture2DArray.PlaneSlice = 0;
+
+					if (arrayed)
+					{
+						uavd->Texture2DArray.FirstArraySlice = _firstLayer;
+						uavd->Texture2DArray.ArraySize       = bx::max<uint32_t>(_numLayers, 1);
+					}
 					break;
 
 				case D3D12_UAV_DIMENSION_TEXTURE3D:
@@ -8231,13 +8285,15 @@ namespace bgfx { namespace d3d12
 										case Binding::Texture:
 											{
 												TextureD3D12& texture = m_textures[bind.m_idx];
-												texture.setState(m_commandList, D3D12_RESOURCE_STATE_GENERIC_READ);
-												scratchBuffer.allocSrv(srvHandle[stage], texture, bind.m_firstLayer, bind.m_numLayers, bind.m_firstMip, bind.m_numMips);
-												samplerFlags[stage] = (0 == (BGFX_SAMPLER_INTERNAL_DEFAULT & bind.m_samplerFlags)
+												const uint32_t resolvedFlags = 0 == (BGFX_SAMPLER_INTERNAL_DEFAULT & bind.m_samplerFlags)
 													? bind.m_samplerFlags
-													: texture.m_flags
-													) & (BGFX_SAMPLER_BITS_MASK | BGFX_SAMPLER_BORDER_COLOR_MASK | BGFX_SAMPLER_COMPARE_MASK)
+													: uint32_t(texture.m_flags)
 													;
+												texture.setState(m_commandList, D3D12_RESOURCE_STATE_GENERIC_READ);
+												scratchBuffer.allocSrv(srvHandle[stage], texture, bind.m_firstLayer, bind.m_numLayers, bind.m_firstMip, bind.m_numMips
+													, 0 != (resolvedFlags & BGFX_SAMPLER_SAMPLE_STENCIL)
+													);
+												samplerFlags[stage] = resolvedFlags & (BGFX_SAMPLER_BITS_MASK | BGFX_SAMPLER_BORDER_COLOR_MASK | BGFX_SAMPLER_COMPARE_MASK);
 
 												++numSet;
 											}
@@ -8563,13 +8619,15 @@ namespace bgfx { namespace d3d12
 										case Binding::Texture:
 											{
 												TextureD3D12& texture = m_textures[bind.m_idx];
-												texture.setState(m_commandList, D3D12_RESOURCE_STATE_GENERIC_READ);
-												scratchBuffer.allocSrv(srvHandle[stage], texture, bind.m_firstLayer, bind.m_numLayers, bind.m_firstMip, bind.m_numMips);
-												samplerFlags[stage] = (0 == (BGFX_SAMPLER_INTERNAL_DEFAULT & bind.m_samplerFlags)
+												const uint32_t resolvedFlags = 0 == (BGFX_SAMPLER_INTERNAL_DEFAULT & bind.m_samplerFlags)
 													? bind.m_samplerFlags
-													: texture.m_flags
-													) & (BGFX_SAMPLER_BITS_MASK | BGFX_SAMPLER_BORDER_COLOR_MASK | BGFX_SAMPLER_COMPARE_MASK)
+													: uint32_t(texture.m_flags)
 													;
+												texture.setState(m_commandList, D3D12_RESOURCE_STATE_GENERIC_READ);
+												scratchBuffer.allocSrv(srvHandle[stage], texture, bind.m_firstLayer, bind.m_numLayers, bind.m_firstMip, bind.m_numMips
+													, 0 != (resolvedFlags & BGFX_SAMPLER_SAMPLE_STENCIL)
+													);
+												samplerFlags[stage] = resolvedFlags & (BGFX_SAMPLER_BITS_MASK | BGFX_SAMPLER_BORDER_COLOR_MASK | BGFX_SAMPLER_COMPARE_MASK);
 
 												++numSet;
 											}

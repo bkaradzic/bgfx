@@ -336,6 +336,7 @@ namespace bgfx { namespace d3d11
 			, m_numTh(0)
 			, m_numUav(0)
 			, m_needPresent(false)
+			, m_needsQuadClear(false)
 		{
 			bx::memSet(m_rtv, 0, sizeof(m_rtv) );
 			bx::memSet(m_uav, 0, sizeof(m_uav) );
@@ -367,6 +368,7 @@ namespace bgfx { namespace d3d11
 		uint8_t m_numTh;
 		uint8_t m_numUav;
 		bool m_needPresent;
+		bool m_needsQuadClear;
 	};
 
 	struct TimerQueryD3D11

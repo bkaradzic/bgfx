@@ -636,6 +636,7 @@ namespace bgfx { namespace gl
 			ARB_shader_storage_buffer_object,
 			ARB_shader_texture_lod,
 			ARB_shader_viewport_layer_array,
+			ARB_stencil_texturing,
 			ARB_texture_compression_bptc,
 			ARB_texture_compression_rgtc,
 			ARB_texture_cube_map_array,
@@ -857,6 +858,7 @@ namespace bgfx { namespace gl
 		{ "ARB_shader_storage_buffer_object",         BGFX_CONFIG_RENDERER_OPENGL >= 43, true  },
 		{ "ARB_shader_texture_lod",                   BGFX_CONFIG_RENDERER_OPENGL >= 30, true  },
 		{ "ARB_shader_viewport_layer_array",          false,                             true  },
+		{ "ARB_stencil_texturing",                    BGFX_CONFIG_RENDERER_OPENGL >= 43, true  },
 		{ "ARB_texture_compression_bptc",             BGFX_CONFIG_RENDERER_OPENGL >= 44, true  },
 		{ "ARB_texture_compression_rgtc",             BGFX_CONFIG_RENDERER_OPENGL >= 30, true  },
 		{ "ARB_texture_cube_map_array",               BGFX_CONFIG_RENDERER_OPENGL >= 40, true  },
@@ -2294,6 +2296,7 @@ namespace bgfx { namespace gl
 			, m_blitSupported(false)
 			, m_blitFboSupported(false)
 			, m_textureViewSupported(false)
+			, m_depthStencilTexturingSupported(false)
 			, m_readBackSupported(BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) )
 			, m_readBackFboSupported(false)
 			, m_vaoSupport(false)
@@ -2958,6 +2961,12 @@ namespace bgfx { namespace gl
 				{
 					m_textureViewSupported = NULL != glTextureView;
 				}
+
+				m_depthStencilTexturingSupported = false
+					|| s_extension[Extension::ARB_stencil_texturing].m_supported
+					|| BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL   >= 43)
+					|| BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES >= 31)
+					;
 
 				m_blitFboSupported     = !m_blitSupported && BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES);
 				m_readBackFboSupported = !m_readBackSupported;
@@ -5022,6 +5031,7 @@ namespace bgfx { namespace gl
 		bool m_blitSupported;
 		bool m_blitFboSupported;
 		bool m_textureViewSupported;
+		bool m_depthStencilTexturingSupported;
 		bool m_readBackSupported;
 		bool m_readBackFboSupported;
 		bool m_vaoSupport;
@@ -5144,6 +5154,13 @@ namespace bgfx { namespace gl
 			GLSL_TYPE(GL_INT_SAMPLER_CUBE);
 			GLSL_TYPE(GL_UNSIGNED_INT_SAMPLER_CUBE);
 
+			GLSL_TYPE(GL_SAMPLER_CUBE_SHADOW);
+			GLSL_TYPE(GL_SAMPLER_CUBE_MAP_ARRAY_SHADOW);
+
+			GLSL_TYPE(GL_SAMPLER_CUBE_MAP_ARRAY);
+			GLSL_TYPE(GL_INT_SAMPLER_CUBE_MAP_ARRAY);
+			GLSL_TYPE(GL_UNSIGNED_INT_SAMPLER_CUBE_MAP_ARRAY);
+
 			GLSL_TYPE(GL_IMAGE_1D);
 			GLSL_TYPE(GL_INT_IMAGE_1D);
 			GLSL_TYPE(GL_UNSIGNED_INT_IMAGE_1D);
@@ -5160,6 +5177,10 @@ namespace bgfx { namespace gl
 			GLSL_TYPE(GL_IMAGE_CUBE);
 			GLSL_TYPE(GL_INT_IMAGE_CUBE);
 			GLSL_TYPE(GL_UNSIGNED_INT_IMAGE_CUBE);
+
+			GLSL_TYPE(GL_IMAGE_CUBE_MAP_ARRAY);
+			GLSL_TYPE(GL_INT_IMAGE_CUBE_MAP_ARRAY);
+			GLSL_TYPE(GL_UNSIGNED_INT_IMAGE_CUBE_MAP_ARRAY);
 		}
 
 #undef GLSL_TYPE
@@ -5242,6 +5263,13 @@ namespace bgfx { namespace gl
 		case GL_INT_SAMPLER_CUBE:
 		case GL_UNSIGNED_INT_SAMPLER_CUBE:
 
+		case GL_SAMPLER_CUBE_SHADOW:
+		case GL_SAMPLER_CUBE_MAP_ARRAY_SHADOW:
+
+		case GL_SAMPLER_CUBE_MAP_ARRAY:
+		case GL_INT_SAMPLER_CUBE_MAP_ARRAY:
+		case GL_UNSIGNED_INT_SAMPLER_CUBE_MAP_ARRAY:
+
 		case GL_IMAGE_1D:
 		case GL_INT_IMAGE_1D:
 		case GL_UNSIGNED_INT_IMAGE_1D:
@@ -5258,6 +5286,10 @@ namespace bgfx { namespace gl
 		case GL_IMAGE_CUBE:
 		case GL_INT_IMAGE_CUBE:
 		case GL_UNSIGNED_INT_IMAGE_CUBE:
+
+		case GL_IMAGE_CUBE_MAP_ARRAY:
+		case GL_INT_IMAGE_CUBE_MAP_ARRAY:
+		case GL_UNSIGNED_INT_IMAGE_CUBE_MAP_ARRAY:
 			return UniformType::Sampler;
 		};
 
@@ -5497,6 +5529,13 @@ namespace bgfx { namespace gl
 			case GL_INT_SAMPLER_CUBE:
 			case GL_UNSIGNED_INT_SAMPLER_CUBE:
 
+			case GL_SAMPLER_CUBE_SHADOW:
+			case GL_SAMPLER_CUBE_MAP_ARRAY_SHADOW:
+
+			case GL_SAMPLER_CUBE_MAP_ARRAY:
+			case GL_INT_SAMPLER_CUBE_MAP_ARRAY:
+			case GL_UNSIGNED_INT_SAMPLER_CUBE_MAP_ARRAY:
+
 			case GL_IMAGE_1D:
 			case GL_INT_IMAGE_1D:
 			case GL_UNSIGNED_INT_IMAGE_1D:
@@ -5512,6 +5551,10 @@ namespace bgfx { namespace gl
 			case GL_IMAGE_CUBE:
 			case GL_INT_IMAGE_CUBE:
 			case GL_UNSIGNED_INT_IMAGE_CUBE:
+
+			case GL_IMAGE_CUBE_MAP_ARRAY:
+			case GL_INT_IMAGE_CUBE_MAP_ARRAY:
+			case GL_UNSIGNED_INT_IMAGE_CUBE_MAP_ARRAY:
 				if (m_numSamplers < BX_COUNTOF(m_sampler) )
 				{
 					BX_TRACE("Sampler #%d at location %d.", m_numSamplers, loc);
@@ -5777,6 +5820,8 @@ namespace bgfx { namespace gl
 		m_height  = _height;
 		m_depth   = _depth;
 		m_currentSamplerHash = UINT32_MAX;
+		m_baseLevel = 0;
+		m_maxLevel  = -1;
 
 		const bool writeOnly    = 0 != (m_flags&BGFX_TEXTURE_RT_WRITE_ONLY);
 		const bool computeWrite = 0 != (m_flags&BGFX_TEXTURE_COMPUTE_WRITE );
@@ -5850,7 +5895,7 @@ namespace bgfx { namespace gl
 					, internalFmt
 					, m_width
 					, m_height
-					, _depth
+					, GL_TEXTURE_CUBE_MAP_ARRAY == _target ? _depth*6 : _depth
 					) );
 				m_immutableStorage = true;
 			}
@@ -6269,9 +6314,16 @@ namespace bgfx { namespace gl
 		GL_CHECK(glBindTexture(m_target, m_id) );
 		GL_CHECK(glPixelStorei(GL_UNPACK_ALIGNMENT, 1) );
 
-		GLenum target = isCubeMap()
-			? GL_TEXTURE_CUBE_MAP_POSITIVE_X
+		const bool cubeArray = GL_TEXTURE_CUBE_MAP_ARRAY == m_target;
+
+		GLenum target = isCubeMap() && !cubeArray
+			? GLenum(GL_TEXTURE_CUBE_MAP_POSITIVE_X + _side)
 			: m_target
+			;
+
+		const uint16_t zOffset = cubeArray
+			? uint16_t(_z*6 + _side)
+			: _z
 			;
 
 		const bool swizzle = true
@@ -6333,11 +6385,11 @@ namespace bgfx { namespace gl
 				? s_textureFormat[m_textureFormat].m_internalFmtSrgb
 				: s_textureFormat[m_textureFormat].m_internalFmt
 				;
-			GL_CHECK(compressedTexSubImage(target+_side
+			GL_CHECK(compressedTexSubImage(target
 				, _mip
 				, rect.m_x
 				, rect.m_y
-				, _z
+				, zOffset
 				, rect.m_width
 				, rect.m_height
 				, _depth
@@ -6365,11 +6417,11 @@ namespace bgfx { namespace gl
 				data = temp;
 			}
 
-			GL_CHECK(texSubImage(target+_side
+			GL_CHECK(texSubImage(target
 				, _mip
 				, rect.m_x
 				, rect.m_y
-				, _z
+				, zOffset
 				, rect.m_width
 				, rect.m_height
 				, _depth
@@ -6440,6 +6492,7 @@ namespace bgfx { namespace gl
 			&& (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) || s_renderGL->m_gles3 || s_extension[Extension::APPLE_texture_max_level].m_supported) )
 			{
 				GL_CHECK(glTexParameteri(targetMsaa, GL_TEXTURE_MAX_LEVEL, numMips-1) );
+				m_maxLevel = -1;
 			}
 
 			if (target == GL_TEXTURE_3D)
@@ -6489,13 +6542,48 @@ namespace bgfx { namespace gl
 		}
 	}
 
-	GLuint TextureGL::getViewId(uint8_t _firstMip, uint8_t _numMips, uint16_t _firstLayer, uint16_t _numLayers)
+	GLenum TextureGL::getViewTarget(uint16_t _numLayers, bool _layered) const
 	{
-		const uint8_t  firstMip   = bx::min<uint8_t>(_firstMip, uint8_t(m_numMips - 1) );
-		const uint8_t  numMips    = bx::min<uint8_t>(_numMips, uint8_t(m_numMips - firstMip) );
-		const uint16_t numLayers0 = uint16_t(bx::max<uint32_t>(m_numLayers, 1) );
-		const uint16_t firstLayer = bx::min<uint16_t>(_firstLayer, uint16_t(numLayers0 - 1) );
-		const uint16_t numLayers  = bx::min<uint16_t>(_numLayers, uint16_t(numLayers0 - firstLayer) );
+		switch (m_target)
+		{
+		case GL_TEXTURE_2D_ARRAY:
+		case GL_TEXTURE_CUBE_MAP:
+		case GL_TEXTURE_CUBE_MAP_ARRAY:
+			if (_layered)
+			{
+				return GL_TEXTURE_2D_ARRAY;
+			}
+
+			if (1 == _numLayers)
+			{
+				return GL_TEXTURE_2D;
+			}
+
+			if (!isCubeMap() )
+			{
+				return GL_TEXTURE_2D_ARRAY;
+			}
+
+			return 6 == _numLayers
+				? GL_TEXTURE_CUBE_MAP
+				: GL_TEXTURE_CUBE_MAP_ARRAY
+				;
+
+		default:
+			break;
+		}
+
+		return m_target;
+	}
+
+	GLuint TextureGL::getViewId(uint8_t _firstMip, uint8_t _numMips, uint16_t _firstLayer, uint16_t _numLayers, GLenum* _target, bool _layered)
+	{
+		const uint16_t facesPerLayer = isCubeMap() ? 6 : 1;
+		const uint8_t  firstMip      = bx::min<uint8_t>(_firstMip, uint8_t(m_numMips - 1) );
+		const uint8_t  numMips       = bx::min<uint8_t>(_numMips, uint8_t(m_numMips - firstMip) );
+		const uint16_t numLayers0    = uint16_t(bx::max<uint32_t>(m_numLayers, 1) * facesPerLayer);
+		const uint16_t firstLayer    = bx::min<uint16_t>(_firstLayer, uint16_t(numLayers0 - 1) );
+		const uint16_t numLayers     = bx::min<uint16_t>(_numLayers, uint16_t(numLayers0 - firstLayer) );
 
 		const bool fullRange = 0 == firstMip
 			&& numMips   >= m_numMips
@@ -6503,19 +6591,38 @@ namespace bgfx { namespace gl
 			&& numLayers >= numLayers0
 			;
 
+		const GLenum target = getViewTarget(numLayers, _layered);
+
+		const bool cubeAligned = GL_TEXTURE_2D == target
+			|| GL_TEXTURE_2D_ARRAY == target
+			|| (0 == firstLayer%facesPerLayer && 0 == numLayers%facesPerLayer)
+			;
+
 		if (fullRange
 		|| !s_renderGL->m_textureViewSupported
 		|| !m_immutableStorage
 		||  GL_ZERO == m_internalFmt
+		|| !cubeAligned
 		||  NULL == glTextureView)
 		{
+			if (NULL != _target)
+			{
+				*_target = m_target;
+			}
+
 			return m_id;
+		}
+
+		if (NULL != _target)
+		{
+			*_target = target;
 		}
 
 		const uint16_t parent = uint16_t(this - s_renderGL->m_textures);
 
 		const uint64_t key = 0
 			| (uint64_t(parent)     << 48)
+			| (uint64_t(_layered)   << 47)
 			| (uint64_t(firstMip)   << 40)
 			| (uint64_t(numMips)    << 32)
 			| (uint64_t(firstLayer) << 16)
@@ -6531,7 +6638,7 @@ namespace bgfx { namespace gl
 		GL_CHECK(glGenTextures(1, &viewId) );
 		s_renderGL->m_textureViewStateCache.add(key, TextureViewGL{viewId}, parent);
 		GL_CHECK(glTextureView(viewId
-			, m_target
+			, target
 			, m_id
 			, m_internalFmt
 			, firstMip
@@ -6551,10 +6658,28 @@ namespace bgfx { namespace gl
 			;
 		const uint32_t index = (flags & BGFX_SAMPLER_BORDER_COLOR_MASK) >> BGFX_SAMPLER_BORDER_COLOR_SHIFT;
 
-		const GLuint id = getViewId(_firstMip, _numMips, _firstLayer, _numLayers);
+		GLenum target = m_target;
+		const GLuint id = getViewId(_firstMip, _numMips, _firstLayer, _numLayers, &target);
 
 		GL_CHECK(glActiveTexture(GL_TEXTURE0+_stage) );
-		GL_CHECK(glBindTexture(m_target, id) );
+		GL_CHECK(glBindTexture(target, id) );
+
+		m_depthStencilTexturing |= 0 != (flags & BGFX_SAMPLER_SAMPLE_STENCIL);
+
+		if (m_depthStencilTexturing)
+		{
+			BX_WARN(s_renderGL->m_depthStencilTexturingSupported
+				, "BGFX_SAMPLER_SAMPLE_STENCIL requires OpenGL 4.3, OpenGL ES 3.1 or GL_ARB_stencil_texturing; sampling depth instead."
+				);
+
+			if (s_renderGL->m_depthStencilTexturingSupported)
+			{
+				GL_CHECK(glTexParameteri(target, GL_DEPTH_STENCIL_TEXTURE_MODE, 0 != (flags & BGFX_SAMPLER_SAMPLE_STENCIL)
+					? GL_STENCIL_INDEX
+					: GL_DEPTH_COMPONENT
+					) );
+			}
+		}
 
 		if (s_renderGL->m_samplerObjectSupport)
 		{
@@ -6563,6 +6688,26 @@ namespace bgfx { namespace gl
 		else
 		{
 			setSamplerState(flags, _palette[index]);
+		}
+
+		if (id == m_id
+		&&  1 < m_numMips
+		&&  GL_TEXTURE_2D_MULTISAMPLE != m_target
+		&& (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL >= 30) || s_renderGL->m_gles3) )
+		{
+			const uint8_t firstMip = bx::min<uint8_t>(_firstMip, uint8_t(m_numMips - 1) );
+			const uint8_t numMips  = bx::min<uint8_t>(_numMips, uint8_t(m_numMips - firstMip) );
+			const int32_t baseLevel = int32_t(firstMip);
+			const int32_t maxLevel  = int32_t(firstMip + numMips - 1);
+
+			if (m_baseLevel != baseLevel
+			||  m_maxLevel  != maxLevel)
+			{
+				GL_CHECK(glTexParameteri(m_target, GL_TEXTURE_BASE_LEVEL, baseLevel) );
+				GL_CHECK(glTexParameteri(m_target, GL_TEXTURE_MAX_LEVEL,  maxLevel) );
+				m_baseLevel = baseLevel;
+				m_maxLevel  = maxLevel;
+			}
 		}
 	}
 
@@ -7557,8 +7702,10 @@ namespace bgfx { namespace gl
 					}
 					else
 					{
-						if (1 < texture.m_numLayers
-						&&  !texture.isCubeMap() )
+						const bool cubeArray = GL_TEXTURE_CUBE_MAP_ARRAY == texture.m_target;
+
+						if ( (1 < texture.m_numLayers && !texture.isCubeMap() )
+						||   cubeArray)
 						{
 							if (1 < at.numLayers)
 							{
@@ -8392,12 +8539,31 @@ namespace bgfx { namespace gl
 
 								case Binding::Image:
 									{
-										const TextureGL& texture = m_textures[bind.m_idx];
+										TextureGL& texture = m_textures[bind.m_idx];
+
+										GLuint    id      = texture.m_id;
+										GLint     level   = bind.m_firstMip;
+										GLint     layer   = bind.m_firstLayer;
+										GLboolean layered = texture.isLayered() || UINT16_MAX != bind.m_numLayers ? GL_TRUE : GL_FALSE;
+
+										if (UINT16_MAX != bind.m_numLayers
+										&&  texture.isLayered() )
+										{
+											const GLuint viewId = texture.getViewId(bind.m_firstMip, 1, bind.m_firstLayer, bind.m_numLayers, NULL, true);
+
+											if (viewId != texture.m_id)
+											{
+												id    = viewId;
+												level = 0;
+												layer = 0;
+											}
+										}
+
 										GL_CHECK(glBindImageTexture(ii
-											, texture.m_id
-											, bind.m_firstMip
-											, texture.isLayered() || UINT16_MAX != bind.m_numLayers ? GL_TRUE : GL_FALSE
-											, bind.m_firstLayer
+											, id
+											, level
+											, layered
+											, layer
 											, s_access[bind.m_access]
 											, s_imageFormat[bind.m_format])
 											);
@@ -8920,6 +9086,10 @@ namespace bgfx { namespace gl
 							if (current.m_idx          != bind.m_idx
 							||  current.m_type         != bind.m_type
 							||  current.m_samplerFlags != bind.m_samplerFlags
+							||  current.m_firstLayer   != bind.m_firstLayer
+							||  current.m_numLayers    != bind.m_numLayers
+							||  current.m_firstMip     != bind.m_firstMip
+							||  current.m_numMips      != bind.m_numMips
 							||  programChanged)
 							{
 								if (kInvalidHandle != bind.m_idx)
@@ -8928,12 +9098,31 @@ namespace bgfx { namespace gl
 									{
 									case Binding::Image:
 										{
-											const TextureGL& texture = m_textures[bind.m_idx];
+											TextureGL& texture = m_textures[bind.m_idx];
+
+											GLuint    id      = texture.m_id;
+											GLint     level   = bind.m_firstMip;
+											GLint     layer   = bind.m_firstLayer;
+											GLboolean layered = texture.isLayered() || UINT16_MAX != bind.m_numLayers ? GL_TRUE : GL_FALSE;
+
+											if (UINT16_MAX != bind.m_numLayers
+											&&  texture.isLayered() )
+											{
+												const GLuint viewId = texture.getViewId(bind.m_firstMip, 1, bind.m_firstLayer, bind.m_numLayers, NULL, true);
+
+												if (viewId != texture.m_id)
+												{
+													id    = viewId;
+													level = 0;
+													layer = 0;
+												}
+											}
+
 											GL_CHECK(glBindImageTexture(stage
-												, texture.m_id
-												, bind.m_firstMip
-												, texture.isLayered() || UINT16_MAX != bind.m_numLayers ? GL_TRUE : GL_FALSE
-												, bind.m_firstLayer
+												, id
+												, level
+												, layered
+												, layer
 												, s_access[bind.m_access]
 												, s_imageFormat[bind.m_format])
 												);

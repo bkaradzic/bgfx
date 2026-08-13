@@ -4364,6 +4364,9 @@ VK_IMPORT_DEVICE
 								, bind.m_firstMip
 								, bind.m_numMips
 								, type
+								, false
+								, bind.m_firstLayer
+								, bind.m_numLayers
 								);
 							wds[wdsCount].pImageInfo = &imageInfo[imageCount];
 							++imageCount;
