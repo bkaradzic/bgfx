@@ -618,6 +618,8 @@ namespace bgfx
 		}
 	};
 
+	using bimg::isVolume;
+
 	void setGraphicsDebuggerPresent(bool _present);
 	bool isGraphicsDebuggerPresent();
 	void release(const Memory* _mem);

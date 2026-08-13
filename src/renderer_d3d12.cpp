@@ -6094,7 +6094,7 @@ namespace bgfx { namespace d3d12
 			{
 				m_type = TextureCube;
 			}
-			else if (imageContainer.m_depth > 1)
+			else if (isVolume(imageContainer) )
 			{
 				m_type = Texture3D;
 			}

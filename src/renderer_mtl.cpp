@@ -3800,7 +3800,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 				desc->setTextureType(MTL::TextureTypeCube);
 				m_type = TextureCube;
 			}
-			else if (1 < imageContainer.m_depth)
+			else if (isVolume(imageContainer) )
 			{
 				desc->setTextureType(MTL::TextureType3D);
 				m_type = Texture3D;

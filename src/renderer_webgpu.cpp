@@ -4007,7 +4007,7 @@ WGPU_IMPORT
 					;
 				depthOrArrayLayers = 6;
 			}
-			else if (imageContainer.m_depth > 1)
+			else if (isVolume(imageContainer) )
 			{
 				m_type = Texture3D;
 				m_viewDimension = WGPUTextureViewDimension_3D;

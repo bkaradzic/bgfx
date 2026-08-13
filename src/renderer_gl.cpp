@@ -6004,7 +6004,7 @@ namespace bgfx { namespace gl
 			{
 				target = GL_TEXTURE_CUBE_MAP;
 			}
-			else if (imageContainer.m_depth > 1)
+			else if (isVolume(imageContainer) )
 			{
 				target = GL_TEXTURE_3D;
 			}
@@ -6065,7 +6065,7 @@ namespace bgfx { namespace gl
 				;
 
 			BX_TRACE("Texture%-4s %3d: %s %s(requested: %s), layers %d, %dx%dx%d%s."
-				, imageContainer.m_cubeMap ? "Cube" : (1 < imageContainer.m_depth ? "3D" : "2D")
+				, imageContainer.m_cubeMap ? "Cube" : (isVolume(imageContainer) ? "3D" : "2D")
 				, this - s_renderGL->m_textures
 				, getName( (TextureFormat::Enum)m_textureFormat)
 				, srgb ? "+sRGB " : ""
@@ -6073,7 +6073,7 @@ namespace bgfx { namespace gl
 				, ti.numLayers
 				, ti.width
 				, ti.height
-				, imageContainer.m_cubeMap ? 6 : (1 < imageContainer.m_depth ? imageContainer.m_depth : 0)
+				, imageContainer.m_cubeMap ? 6 : (isVolume(imageContainer) ? imageContainer.m_depth : 0)
 				, 0 != (m_flags&BGFX_TEXTURE_RT_MASK) ? " (render target)" : ""
 				);
 
@@ -6107,7 +6107,7 @@ namespace bgfx { namespace gl
 				{
 					width  = bx::max(1, width);
 					height = bx::max(1, height);
-					depth  = 1 < imageContainer.m_depth
+					depth  = isVolume(imageContainer)
 						? bx::max(1, depth)
 						: side
 						;
