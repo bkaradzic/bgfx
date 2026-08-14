@@ -445,9 +445,9 @@ namespace bgfx
 						switch (num)
 						{
 						default: [[fallthrough]];
-						case 3:                packed |= uint32_t(*_input++ * 511.0f + 512.0f); [[fallthrough]];
-						case 2: packed <<= 10; packed |= uint32_t(*_input++ * 511.0f + 512.0f); [[fallthrough]];
-						case 1: packed <<= 10; packed |= uint32_t(*_input++ * 511.0f + 512.0f);
+						case 3: packed |= (uint32_t(_input[2] * 511.0f + 512.0f) & 0x3ff)<<20; [[fallthrough]];
+						case 2: packed |= (uint32_t(_input[1] * 511.0f + 512.0f) & 0x3ff)<<10; [[fallthrough]];
+						case 1: packed |= (uint32_t(_input[0] * 511.0f + 512.0f) & 0x3ff);
 						}
 					}
 					else
@@ -455,9 +455,9 @@ namespace bgfx
 						switch (num)
 						{
 						default: [[fallthrough]];
-						case 3:                packed |= uint32_t(*_input++ * 1023.0f); [[fallthrough]];
-						case 2: packed <<= 10; packed |= uint32_t(*_input++ * 1023.0f); [[fallthrough]];
-						case 1: packed <<= 10; packed |= uint32_t(*_input++ * 1023.0f);
+						case 3: packed |= (uint32_t(_input[2] * 1023.0f) & 0x3ff)<<20; [[fallthrough]];
+						case 2: packed |= (uint32_t(_input[1] * 1023.0f) & 0x3ff)<<10; [[fallthrough]];
+						case 1: packed |= (uint32_t(_input[0] * 1023.0f) & 0x3ff);
 						}
 					}
 				}
@@ -466,9 +466,9 @@ namespace bgfx
 					switch (num)
 					{
 					default: [[fallthrough]];
-					case 3:                packed |= uint32_t(*_input++); [[fallthrough]];
-					case 2: packed <<= 10; packed |= uint32_t(*_input++); [[fallthrough]];
-					case 1: packed <<= 10; packed |= uint32_t(*_input++);
+					case 3: packed |= (uint32_t(_input[2]) & 0x3ff)<<20; [[fallthrough]];
+					case 2: packed |= (uint32_t(_input[1]) & 0x3ff)<<10; [[fallthrough]];
+					case 1: packed |= (uint32_t(_input[0]) & 0x3ff);
 					}
 				}
 				*(uint32_t*)data = packed;
