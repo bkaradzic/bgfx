@@ -2149,18 +2149,21 @@ WGPU_IMPORT
 		{
 			BX_UNUSED(_clearQuad, _rect, _clear, _palette);
 
-			uint64_t state = BGFX_STATE_PT_TRISTRIP;
-			state |= _clear.m_flags & BGFX_CLEAR_COLOR ? BGFX_STATE_WRITE_RGB|BGFX_STATE_WRITE_A         : 0;
-			state |= _clear.m_flags & BGFX_CLEAR_DEPTH ? BGFX_STATE_DEPTH_TEST_ALWAYS|BGFX_STATE_WRITE_Z : 0;
+			const uint64_t state = 0
+				| BGFX_STATE_PT_TRISTRIP
+				| (_clear.m_flags & BGFX_CLEAR_COLOR ? BGFX_STATE_WRITE_RGB|BGFX_STATE_WRITE_A         : 0)
+				| (_clear.m_flags & BGFX_CLEAR_DEPTH ? BGFX_STATE_DEPTH_TEST_ALWAYS|BGFX_STATE_WRITE_Z : 0)
+				;
 
-			uint64_t stencil = 0;
-			stencil |= _clear.m_flags & BGFX_CLEAR_STENCIL ? 0
-				| BGFX_STENCIL_TEST_ALWAYS
-				| BGFX_STENCIL_FUNC_REF(_clear.m_stencil)
-				| BGFX_STENCIL_FUNC_RMASK(0xff)
-				| BGFX_STENCIL_OP_FAIL_S_REPLACE
-				| BGFX_STENCIL_OP_FAIL_Z_REPLACE
-				| BGFX_STENCIL_OP_PASS_Z_REPLACE
+			const uint64_t stencil = _clear.m_flags & BGFX_CLEAR_STENCIL
+				? packStencil(0
+					| BGFX_STENCIL_TEST_ALWAYS
+					| BGFX_STENCIL_FUNC_REF(_clear.m_stencil)
+					| BGFX_STENCIL_FUNC_RMASK(0xff)
+					| BGFX_STENCIL_OP_FAIL_S_REPLACE
+					| BGFX_STENCIL_OP_FAIL_Z_REPLACE
+					| BGFX_STENCIL_OP_PASS_Z_REPLACE
+					, BGFX_STENCIL_NONE)
 				: 0
 				;
 
@@ -2608,7 +2611,7 @@ WGPU_IMPORT
 
 						const uint32_t resolvedFlags = 0 == (BGFX_SAMPLER_INTERNAL_DEFAULT & bind.m_samplerFlags)
 							? bind.m_samplerFlags
-							: texture.m_flags
+							: uint32_t(texture.m_flags)
 							;
 
 						WGPUTextureSampleType sampleType = WGPUTextureSampleType_Depth != shaderBind.sampleType
@@ -3162,7 +3165,7 @@ WGPU_IMPORT
 
 							const uint32_t resolvedFlags = 0 == (BGFX_SAMPLER_INTERNAL_DEFAULT & bind.m_samplerFlags)
 								? bind.m_samplerFlags
-								: texture.m_flags
+								: uint32_t(texture.m_flags)
 								;
 							const bool sampleStencil = Binding::Texture == bind.m_type
 								&& 0 != (resolvedFlags & BGFX_SAMPLER_SAMPLE_STENCIL)
