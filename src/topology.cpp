@@ -46,7 +46,7 @@ namespace bgfx
 	{
 		const uint32_t numIndices = isEven(_numIndices) ? _numIndices + 1 : _numIndices;
 
-		if (NULL != _dst)
+		if (NULL == _dst)
 		{
 			return numIndices;
 		}
@@ -54,7 +54,8 @@ namespace bgfx
 		IndexT* dst = (IndexT*)_dst;
 		IndexT* end = &dst[_dstSize/sizeof(IndexT)];
 
-		if (isEven(_numIndices) )
+		if (isEven(_numIndices)
+		&&  dst < end)
 		{
 			*dst++ = _indices[_numIndices-1];
 		}
