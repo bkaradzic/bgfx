@@ -3900,6 +3900,7 @@ namespace bgfx { namespace d3d12
 
 		bool isVisible(Frame* _render, OcclusionQueryHandle _handle, bool _visible)
 		{
+			m_occlusionQuery.resolve(_render);
 			return _visible == (0 != _render->m_occlusion[_handle.idx]);
 		}
 
@@ -7703,7 +7704,8 @@ namespace bgfx { namespace d3d12
 
 	void OcclusionQueryD3D12::end(ID3D12GraphicsCommandList* _commandList)
 	{
-		OcclusionQueryHandle handle = m_handle[m_control.m_current];
+		const uint32_t idx = m_control.m_current;
+		OcclusionQueryHandle handle = m_handle[idx];
 		_commandList->EndQuery(m_queryHeap
 			, D3D12_QUERY_TYPE_BINARY_OCCLUSION
 			, handle.idx
@@ -7715,7 +7717,29 @@ namespace bgfx { namespace d3d12
 			, m_readback
 			, handle.idx * sizeof(uint64_t)
 			);
+		m_fence[idx] = s_renderD3D12->m_cmd.m_currentFence - 1;
 		m_control.commit(1);
+	}
+
+	void OcclusionQueryD3D12::resolve(Frame* _render)
+	{
+		while (0 != m_control.getNumUsed() )
+		{
+			const uint32_t idx = m_control.m_read;
+
+			if (m_fence[idx] > s_renderD3D12->m_cmd.m_completedFence)
+			{
+				break;
+			}
+
+			OcclusionQueryHandle handle = m_handle[idx];
+			if (isValid(handle) )
+			{
+				_render->m_occlusion[handle.idx] = int32_t(m_result[handle.idx]);
+			}
+
+			m_control.consume(1);
+		}
 	}
 
 	void OcclusionQueryD3D12::invalidate(OcclusionQueryHandle _handle)
@@ -8069,6 +8093,8 @@ namespace bgfx { namespace d3d12
 				, D3D12_RESOURCE_STATE_RENDER_TARGET
 				);
 		}
+
+		m_occlusionQuery.resolve(_render);
 
 		if (0 == (_render->m_debug&BGFX_DEBUG_IFH) )
 		{
