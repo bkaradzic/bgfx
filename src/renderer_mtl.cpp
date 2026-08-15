@@ -2784,6 +2784,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 				murmur.add(frameBuffer.m_pixelFormatHash);
 			}
 
+			murmur.add(_program.idx);
 			murmur.add(program.m_vsh->m_hash);
 			if (NULL != program.m_fsh)
 			{
