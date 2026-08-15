@@ -428,11 +428,6 @@ namespace bgfx { namespace mtl
 			, m_depth(0)
 			, m_numMips(0)
 		{
-			for (uint32_t ii = 0; ii < BX_COUNTOF(m_ptrMips); ++ii)
-			{
-				m_ptrMips[ii]      = NULL;
-				m_ptrMipsArray[ii] = NULL;
-			}
 		}
 
 		void create(const Memory* _mem, uint64_t _flags, uint8_t _skip, uint64_t _external);
@@ -463,14 +458,12 @@ namespace bgfx { namespace mtl
 			, uint8_t _numMips = UINT8_MAX
 			);
 
-		MTL::Texture* getTextureMipLevel(uint8_t _mip, bool _array = false);
+		MTL::Texture* getTextureImage(uint8_t _mip, uint16_t _firstLayer = 0, uint16_t _numLayers = UINT16_MAX);
 		MTL::Texture* getTextureView(uint16_t _firstLayer, uint16_t _numLayers, uint8_t _firstMip, uint8_t _numMips, bool _stencil = false);
 
 		MTL::Texture* m_ptr;
 		MTL::Texture* m_ptrMsaa;
 		MTL::Texture* m_ptrStencil; // for emulating packed depth/stencil formats - only for iOS8...
-		MTL::Texture* m_ptrMips[14];
-		MTL::Texture* m_ptrMipsArray[14];
 		stl::unordered_map<uint64_t, MTL::Texture*> m_ptrViews;
 		MTL::SamplerState* m_sampler;
 		VideoDecoderMtl*   m_videoDecoder;
