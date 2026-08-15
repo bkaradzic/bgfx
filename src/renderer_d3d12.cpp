@@ -1737,6 +1737,9 @@ namespace bgfx { namespace d3d12
 					| BGFX_CAPS_ALPHA_TO_COVERAGE
 					| BGFX_CAPS_BLEND_INDEPENDENT
 					| BGFX_CAPS_COMPUTE
+					| ( (D3D12_CONSERVATIVE_RASTERIZATION_TIER_NOT_SUPPORTED != m_options.ConservativeRasterizationTier)
+						? BGFX_CAPS_CONSERVATIVE_RASTER
+						: 0)
 					| BGFX_CAPS_DRAW_INDIRECT
 					| BGFX_CAPS_DRAW_INDIRECT_COUNT
 					| BGFX_CAPS_FRAGMENT_DEPTH
@@ -3711,6 +3714,11 @@ namespace bgfx { namespace d3d12
 						? s_textureFormat[m_textures[frameBuffer.m_depth.idx].m_textureFormat].m_fmtDsv
 						: DXGI_FORMAT_UNKNOWN
 						);
+
+					murmur.add(0 < frameBuffer.m_num
+						? m_textures[frameBuffer.m_texture[0].idx].m_flags & BGFX_TEXTURE_RT_MSAA_MASK
+						: UINT64_C(0)
+						);
 				}
 				else
 				{
@@ -3821,6 +3829,20 @@ namespace bgfx { namespace d3d12
 			}
 
 			desc.SampleDesc = m_scd.sampleDesc;
+
+			if (isValid(m_fbh) )
+			{
+				const FrameBufferD3D12& frameBuffer = m_frameBuffers[m_fbh.idx];
+
+				if (NULL == frameBuffer.m_swapChain
+				&&  0 < frameBuffer.m_num)
+				{
+					const uint64_t flags = m_textures[frameBuffer.m_texture[0].idx].m_flags;
+					const uint32_t msaaQuality = bx::satSub<uint32_t>(uint32_t( (flags & BGFX_TEXTURE_RT_MSAA_MASK) >> BGFX_TEXTURE_RT_MSAA_SHIFT), 1u);
+
+					desc.SampleDesc = s_msaa[msaaQuality];
+				}
+			}
 
 			uint32_t length = g_callback->cacheReadSize(hash);
 			const bool cached = length > 0;
