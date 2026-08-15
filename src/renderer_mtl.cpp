@@ -227,7 +227,7 @@ namespace bgfx { namespace mtl
 		MTL::SamplerAddressModeRepeat,
 		MTL::SamplerAddressModeMirrorRepeat,
 		MTL::SamplerAddressModeClampToEdge,
-		MTL::SamplerAddressModeClampToZero,
+		MTL::SamplerAddressModeClampToBorderColor,
 	};
 
 	static const MTL::SamplerMinMagFilter s_textureFilterMinMag[] =
@@ -378,6 +378,16 @@ BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG("-Wunguarded-availability-new");
 	static_assert(TextureFormat::Count == BX_COUNTOF(s_textureFormat) );
 
 BX_PRAGMA_DIAGNOSTIC_POP();
+
+	static bool isIdentitySwizzle(const MTL::TextureSwizzleChannels& _mapping)
+	{
+		return true
+			&& MTL::TextureSwizzleRed   == _mapping.red
+			&& MTL::TextureSwizzleGreen == _mapping.green
+			&& MTL::TextureSwizzleBlue  == _mapping.blue
+			&& MTL::TextureSwizzleAlpha == _mapping.alpha
+			;
+	}
 
 	// Reference(s):
 	//
@@ -619,6 +629,12 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				return BGFX_CAPS_FORMAT_TEXTURE_NONE;
 			}
 
+			if (!isIdentitySwizzle(tfi.mapping) )
+			{
+				framebuffer = false;
+				multisample = false;
+			}
+
 			uint32_t caps = 0
 				| BGFX_CAPS_FORMAT_TEXTURE_2D
 				| BGFX_CAPS_FORMAT_TEXTURE_CUBE
@@ -858,6 +874,8 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			, m_captureSize(0)
 			, m_variableRateShadingSupported(false)
 			, m_supportsDepthClipMode(false)
+			, m_borderColorSupport(false)
+			, m_colorPalette(NULL)
 			, m_depthClamp(false)
 			, m_screenshotBlitRenderPipelineState(NULL)
 			, m_commandBuffer(NULL)
@@ -964,8 +982,14 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 			m_variableRateShadingSupported = false; //m_device.supportsVariableRasterizationRate();
 
-			m_supportsDepthClipMode = m_device->supportsFamily(MTL::GPUFamilyMac2)
+			m_supportsDepthClipMode = false
+				|| m_device->supportsFamily(MTL::GPUFamilyMac2)
 				|| m_device->supportsFamily(MTL::GPUFamilyApple4);
+
+			m_borderColorSupport = false
+				|| m_device->supportsFamily(MTL::GPUFamilyMac2)
+				|| m_device->supportsFamily(MTL::GPUFamilyApple7)
+				;
 
 			g_caps.numGPUs = 1;
 			g_caps.gpu[0].vendorId = g_caps.vendorId;
@@ -2333,6 +2357,12 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 						_renderPassDescriptor->stencilAttachment()->setTexture(swapChain->m_backBufferStencil);
 					}
 				}
+				else
+				{
+					_renderPassDescriptor->setRenderTargetWidth( bx::max<uint32_t>(1, m_resolution.width) );
+					_renderPassDescriptor->setRenderTargetHeight(bx::max<uint32_t>(1, m_resolution.height) );
+					_renderPassDescriptor->setDefaultRasterSampleCount(1);
+				}
 			}
 			else
 			{
@@ -3142,24 +3172,90 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			return program.m_computePS;
 		}
 
+		MTL::SamplerAddressMode getAddressMode(uint32_t _mode) const
+		{
+			return MTL::SamplerAddressModeClampToBorderColor == s_textureAddress[_mode] && !m_borderColorSupport
+				? MTL::SamplerAddressModeClampToZero
+				: s_textureAddress[_mode]
+				;
+		}
+
+		MTL::SamplerBorderColor getBorderColor(uint32_t _index) const
+		{
+			if (NULL == m_colorPalette)
+			{
+				return MTL::SamplerBorderColorOpaqueBlack;
+			}
+
+			static const float s_borderColor[][4] =
+			{
+				{ 0.0f, 0.0f, 0.0f, 0.0f },
+				{ 0.0f, 0.0f, 0.0f, 1.0f },
+				{ 1.0f, 1.0f, 1.0f, 1.0f },
+			};
+
+			const float* rgba = m_colorPalette[_index];
+
+			MTL::SamplerBorderColor result = MTL::SamplerBorderColorOpaqueBlack;
+			float nearest = bx::kFloatLargest;
+
+			for (uint32_t ii = 0; ii < BX_COUNTOF(s_borderColor); ++ii)
+			{
+				float distSq = 0.0f;
+				for (uint32_t jj = 0; jj < 4; ++jj)
+				{
+					const float diff = rgba[jj] - s_borderColor[ii][jj];
+					distSq += diff*diff;
+				}
+
+				if (distSq < nearest)
+				{
+					nearest = distSq;
+					result  = MTL::SamplerBorderColor(ii);
+				}
+			}
+
+			return result;
+		}
+
 		MTL::SamplerState* getSamplerState(uint32_t _flags)
 		{
+			const uint32_t index = bx::min<uint32_t>(
+				  BGFX_CONFIG_MAX_COLOR_PALETTE-1
+				, (_flags & BGFX_SAMPLER_BORDER_COLOR_MASK) >> BGFX_SAMPLER_BORDER_COLOR_SHIFT
+				);
+
 			_flags &= BGFX_SAMPLER_BITS_MASK;
+
+			const bool needBorderColor = false
+				|| BGFX_SAMPLER_U_BORDER == (_flags & BGFX_SAMPLER_U_MASK)
+				|| BGFX_SAMPLER_V_BORDER == (_flags & BGFX_SAMPLER_V_MASK)
+				|| BGFX_SAMPLER_W_BORDER == (_flags & BGFX_SAMPLER_W_MASK)
+				;
+
+			const MTL::SamplerBorderColor borderColor = needBorderColor
+				? getBorderColor(index)
+				: MTL::SamplerBorderColorTransparentBlack
+				;
+
+			_flags |= uint32_t(borderColor) << BGFX_SAMPLER_BORDER_COLOR_SHIFT;
+
 			MTL::SamplerState* sampler = m_samplerStateCache.find(_flags);
 
 			if (NULL == sampler)
 			{
 				MTL::SamplerDescriptor* desc = m_samplerDescriptor;
 
-				desc->setSAddressMode(  s_textureAddress[(_flags & BGFX_SAMPLER_U_MASK  ) >> BGFX_SAMPLER_U_SHIFT  ]);
-				desc->setTAddressMode(  s_textureAddress[(_flags & BGFX_SAMPLER_V_MASK  ) >> BGFX_SAMPLER_V_SHIFT  ]);
-				desc->setRAddressMode(  s_textureAddress[(_flags & BGFX_SAMPLER_W_MASK  ) >> BGFX_SAMPLER_W_SHIFT  ]);
+				desc->setSAddressMode( getAddressMode( (_flags & BGFX_SAMPLER_U_MASK  ) >> BGFX_SAMPLER_U_SHIFT  ) );
+				desc->setTAddressMode( getAddressMode( (_flags & BGFX_SAMPLER_V_MASK  ) >> BGFX_SAMPLER_V_SHIFT  ) );
+				desc->setRAddressMode( getAddressMode( (_flags & BGFX_SAMPLER_W_MASK  ) >> BGFX_SAMPLER_W_SHIFT  ) );
 				desc->setMinFilter(s_textureFilterMinMag[(_flags & BGFX_SAMPLER_MIN_MASK) >> BGFX_SAMPLER_MIN_SHIFT]);
 				desc->setMagFilter(s_textureFilterMinMag[(_flags & BGFX_SAMPLER_MAG_MASK) >> BGFX_SAMPLER_MAG_SHIFT]);
 				desc->setMipFilter(   s_textureFilterMip[(_flags & BGFX_SAMPLER_MIP_MASK) >> BGFX_SAMPLER_MIP_SHIFT]);
 				desc->setLodMinClamp(0);
 				desc->setLodMaxClamp(FLT_MAX);
 				desc->setNormalizedCoordinates(TRUE);
+				desc->setBorderColor(borderColor);
 				desc->setMaxAnisotropy(true
 					&& NULL != m_mainFrameBuffer.m_swapChain
 					&& (0 != (_flags & (BGFX_SAMPLER_MIN_ANISOTROPIC|BGFX_SAMPLER_MAG_ANISOTROPIC) ) )
@@ -3373,6 +3469,9 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 		bool m_variableRateShadingSupported;
 		bool m_supportsDepthClipMode;
+		bool m_borderColorSupport;
+
+		const float (*m_colorPalette)[4];
 		bool m_depthClamp;
 
 		MTL::RenderPipelineDescriptor* m_renderPipelineDescriptor;
@@ -5222,11 +5321,12 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 	{
 		m_cmd.finish(false);
 
+		m_colorPalette = _render->m_colorPalette;
+
 		if (NULL == m_commandBuffer)
 		{
 			m_commandBuffer = m_cmd.alloc();
 		}
-
 
 		if (_render->m_capture)
 		{
