@@ -2118,6 +2118,28 @@ namespace bgfx { namespace gl
 	}
 #endif
 
+	static GLenum attachmentFor(TextureFormat::Enum _format)
+	{
+		if (!bimg::isDepth(bimg::TextureFormat::Enum(_format) ) )
+		{
+			return GL_COLOR_ATTACHMENT0;
+		}
+
+		const bimg::ImageBlockInfo& info = bimg::getBlockInfo(bimg::TextureFormat::Enum(_format) );
+
+		if (0 == info.depthBits)
+		{
+			return GL_STENCIL_ATTACHMENT;
+		}
+
+		if (0 == info.stencilBits)
+		{
+			return GL_DEPTH_ATTACHMENT;
+		}
+
+		return GL_DEPTH_STENCIL_ATTACHMENT;
+	}
+
 	static bool isFramebufferFormatValid(
 		  TextureFormat::Enum _format
 		, bool _srgb = false
@@ -2153,10 +2175,38 @@ namespace bgfx { namespace gl
 				, _dim
 				, _dim
 				);
+
+			GLenum err = getGlError();
+
+			if (0 == err)
+			{
+				GLuint fbo;
+				glGenFramebuffers(1, &fbo);
+				glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+
+				glFramebufferRenderbuffer(GL_FRAMEBUFFER
+					, attachmentFor(_format)
+					, GL_RENDERBUFFER
+					, rbo
+					);
+
+				err = getGlError();
+
+				if (0 == err
+				&&  GL_FRAMEBUFFER_COMPLETE != glCheckFramebufferStatus(GL_FRAMEBUFFER) )
+				{
+					err = GL_INVALID_OPERATION;
+				}
+
+				glBindFramebuffer(GL_FRAMEBUFFER, 0);
+				glDeleteFramebuffers(1, &fbo);
+
+				getGlError();
+			}
+
 			glBindRenderbuffer(GL_RENDERBUFFER, 0);
 			glDeleteRenderbuffers(1, &rbo);
 
-			GLenum err = getGlError();
 			return 0 == err;
 		}
 
@@ -2170,27 +2220,7 @@ namespace bgfx { namespace gl
 
 		GLenum err = initTestTexture(_format, _srgb, false, false, _dim);
 
-		GLenum attachment;
-		if (bimg::isDepth(bimg::TextureFormat::Enum(_format) ) )
-		{
-			const bimg::ImageBlockInfo& info = bimg::getBlockInfo(bimg::TextureFormat::Enum(_format) );
-			if (0 == info.depthBits)
-			{
-				attachment = GL_STENCIL_ATTACHMENT;
-			}
-			else if (0 == info.stencilBits)
-			{
-				attachment = GL_DEPTH_ATTACHMENT;
-			}
-			else
-			{
-				attachment = GL_DEPTH_STENCIL_ATTACHMENT;
-			}
-		}
-		else
-		{
-			attachment = GL_COLOR_ATTACHMENT0;
-		}
+		const GLenum attachment = attachmentFor(_format);
 
 		glFramebufferTexture2D(GL_FRAMEBUFFER
 				, attachment
@@ -2803,17 +2833,23 @@ namespace bgfx { namespace gl
 					const TextureFormat::Enum fmt = TextureFormat::Enum(ii);
 
 					uint32_t supported = BGFX_CAPS_FORMAT_TEXTURE_NONE;
+
+					const bool volume = true
+						&& !bimg::isDepth(bimg::TextureFormat::Enum(fmt) )
+						&& !bimg::isCompressed(bimg::TextureFormat::Enum(fmt) )
+						;
+
 					supported |= s_textureFormat[ii].m_supported
 						? BGFX_CAPS_FORMAT_TEXTURE_2D
-						| BGFX_CAPS_FORMAT_TEXTURE_3D
 						| BGFX_CAPS_FORMAT_TEXTURE_CUBE
+						| (volume ? BGFX_CAPS_FORMAT_TEXTURE_3D : BGFX_CAPS_FORMAT_TEXTURE_NONE)
 						: BGFX_CAPS_FORMAT_TEXTURE_NONE
 						;
 
 					supported |= isTextureFormatValid(fmt, true)
 						? BGFX_CAPS_FORMAT_TEXTURE_2D_SRGB
-						| BGFX_CAPS_FORMAT_TEXTURE_3D_SRGB
 						| BGFX_CAPS_FORMAT_TEXTURE_CUBE_SRGB
+						| (volume ? BGFX_CAPS_FORMAT_TEXTURE_3D_SRGB : BGFX_CAPS_FORMAT_TEXTURE_NONE)
 						: BGFX_CAPS_FORMAT_TEXTURE_NONE
 						;
 
@@ -2843,7 +2879,7 @@ namespace bgfx { namespace gl
 
 					if (NULL != glGetInternalformativ)
 					{
-						GLint maxSamples;
+						GLint maxSamples = 0;
 						glGetInternalformativ(GL_RENDERBUFFER
 							, s_textureFormat[ii].m_internalFmt
 							, GL_SAMPLES
@@ -2856,6 +2892,7 @@ namespace bgfx { namespace gl
 							: BGFX_CAPS_FORMAT_TEXTURE_NONE
 							;
 
+						maxSamples = 0;
 						glGetInternalformativ(GL_TEXTURE_2D_MULTISAMPLE
 							, s_textureFormat[ii].m_internalFmt
 							, GL_SAMPLES
@@ -3751,6 +3788,13 @@ namespace bgfx { namespace gl
 				height = frameBuffer.m_height;
 			}
 
+			if (0 == width
+			||  0 == height)
+			{
+				BX_TRACE("Unable to capture screenshot %s.", _filePath);
+				return;
+			}
+
 			m_glctx.makeCurrent(swapChain);
 
 			uint32_t length = width*height*4;
@@ -3809,7 +3853,7 @@ namespace bgfx { namespace gl
 
 		virtual void setName(Handle _handle, const char* _name, uint16_t _len) override
 		{
-			uint16_t len = bx::min(_len, m_maxLabelLen);
+			const uint16_t len = bx::min<uint16_t>(_len, 0 < m_maxLabelLen ? m_maxLabelLen - 1 : 0);
 
 			switch (_handle.type)
 			{
