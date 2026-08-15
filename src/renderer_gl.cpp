@@ -104,15 +104,15 @@ namespace bgfx { namespace gl
 
 	static const GLenum s_attribType[] =
 	{
-		GL_BYTE,                     // Int8
-		GL_UNSIGNED_BYTE,            // Uint8
-		GL_UNSIGNED_INT_10_10_10_2,  // Uint10
-		GL_SHORT,                    // Int16
-		GL_UNSIGNED_SHORT,           // Uint16
-		GL_HALF_FLOAT,               // Half
-		GL_FLOAT,                    // Float
-		GL_INT,                      // Int32
-		GL_UNSIGNED_INT,             // Uint32
+		GL_BYTE,                        // Int8
+		GL_UNSIGNED_BYTE,               // Uint8
+		GL_UNSIGNED_INT_2_10_10_10_REV, // Uint10
+		GL_SHORT,                       // Int16
+		GL_UNSIGNED_SHORT,              // Uint16
+		GL_HALF_FLOAT,                  // Half
+		GL_FLOAT,                       // Float
+		GL_INT,                         // Int32
+		GL_UNSIGNED_INT,                // Uint32
 	};
 	static_assert(AttribType::Count == BX_COUNTOF(s_attribType) );
 
@@ -5756,6 +5756,11 @@ namespace bgfx { namespace gl
 			bool normalized;
 			bool asInt;
 			_layout.decode(attr, num, type, normalized, asInt);
+
+			if (AttribType::Uint10 == type)
+			{
+				num = 4; // always 4 components on GL
+			}
 
 			if (-1 != loc)
 			{
