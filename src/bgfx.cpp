@@ -5037,6 +5037,14 @@ namespace bgfx
 	{
 		BX_ERROR_SCOPE(_err, "Frame buffer validation");
 
+		BGFX_ERROR_CHECK(true
+			&& 0 < _num
+			, _err
+			, BGFX_ERROR_FRAME_BUFFER_VALIDATION
+			, "Invalid number of attachments."
+			, "Frame buffer must have at least one attachment."
+			);
+
 		uint8_t color = 0;
 		uint8_t depth = 0;
 
