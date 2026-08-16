@@ -50,66 +50,19 @@
 	BX_MACRO_BLOCK_END
 
 #if BGFX_CONFIG_RENDERER_OPENGL
-#	if BGFX_CONFIG_RENDERER_OPENGL >= 31
-#		include <gl/glcorearb.h>
-#	else
-#		if BX_PLATFORM_LINUX
-#			define GL_PROTOTYPES
-#			define GL_GLEXT_LEGACY
-#			include <GL/gl.h>
-#			undef GL_PROTOTYPES
-#		elif BX_PLATFORM_WINDOWS
-#			ifndef WIN32_LEAN_AND_MEAN
-#				define WIN32_LEAN_AND_MEAN
-#			endif // WIN32_LEAN_AND_MEAN
-#			include <windows.h>
-#			include <GL/gl.h>
-#		else
-#			include <GL/gl.h>
-#		endif // BX_PLATFORM_
-
-#		include <gl/glext.h>
-#	endif // BGFX_CONFIG_RENDERER_OPENGL >= 31
+#	include <gl/glcorearb.h>
 
 #elif BGFX_CONFIG_RENDERER_OPENGLES
 typedef double GLdouble;
-#	if BGFX_CONFIG_RENDERER_OPENGLES < 30
-#		include <GLES2/gl2platform.h>
-#		include <GLES2/gl2.h>
-#		include <GLES2/gl2ext.h>
-typedef int64_t  GLint64;
-typedef uint64_t GLuint64;
-#		define GL_PROGRAM_BINARY_LENGTH GL_PROGRAM_BINARY_LENGTH_OES
-#		define GL_NUM_PROGRAM_BINARY_FORMATS GL_NUM_PROGRAM_BINARY_FORMATS_OES
-#		define GL_HALF_FLOAT GL_HALF_FLOAT_OES
-#		define GL_RGBA8 GL_RGBA8_OES
-#		define GL_UNSIGNED_INT_2_10_10_10_REV GL_UNSIGNED_INT_2_10_10_10_REV_EXT
-#		ifndef GL_TEXTURE_3D
-#			define GL_TEXTURE_3D GL_TEXTURE_3D_OES
-#		endif // GL_TEXTURE_3D
-#		define GL_SAMPLER_3D GL_SAMPLER_3D_OES
-#		define GL_TEXTURE_WRAP_R GL_TEXTURE_WRAP_R_OES
-#		ifndef GL_MIN
-#			define GL_MIN GL_MIN_EXT
-#		endif // GL_MIN
-#		ifndef GL_MAX
-#			define GL_MAX GL_MAX_EXT
-#		endif // GL_MAX
-#		define GL_DEPTH_COMPONENT24 GL_DEPTH_COMPONENT24_OES
-#		define GL_DEPTH24_STENCIL8 GL_DEPTH24_STENCIL8_OES
-#		define GL_DEPTH_COMPONENT32 GL_DEPTH_COMPONENT32_OES
-#		define GL_UNSIGNED_INT_24_8 GL_UNSIGNED_INT_24_8_OES
-#	elif BGFX_CONFIG_RENDERER_OPENGLES >= 30
-#		include <GLES3/gl3platform.h>
-#		if BGFX_CONFIG_RENDERER_OPENGLES >= 32
-#			include <GLES3/gl32.h>
-#		elif BGFX_CONFIG_RENDERER_OPENGLES >= 31
-#			include <GLES3/gl31.h>
-#		else
-#			include <GLES3/gl3.h>
-#		endif // BGFX_CONFIG_RENDERER_OPENGLES
-#		include <GLES2/gl2ext.h>
-#	endif // BGFX_CONFIG_RENDERER_
+#	include <GLES3/gl3platform.h>
+#	if BGFX_CONFIG_RENDERER_OPENGLES >= 32
+#		include <GLES3/gl32.h>
+#	elif BGFX_CONFIG_RENDERER_OPENGLES >= 31
+#		include <GLES3/gl31.h>
+#	else
+#		include <GLES3/gl3.h>
+#	endif // BGFX_CONFIG_RENDERER_OPENGLES
+#	include <GLES2/gl2ext.h>
 
 #endif // BGFX_CONFIG_RENDERER_OPENGL
 

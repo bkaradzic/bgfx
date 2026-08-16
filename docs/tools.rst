@@ -203,7 +203,7 @@ Options:
       --preprocess               Only pre-process.
       --keepcomments             Do not discard comments.
       --define <defines>         Add defines to preprocessor. (Semicolon-separated)
-      --raw                      Do not process shader. No preprocessor, and no glsl-optimizer. (GLSL only)
+      --raw                      Do not process shader. No preprocessor. (GLSL only)
       --type <type>              Shader type. Can be 'vertex', 'fragment, or 'compute'.
       --varyingdef <file path>   varying.def.sc's file path.
       --verbose                  Be verbose.

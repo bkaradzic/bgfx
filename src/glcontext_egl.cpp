@@ -419,7 +419,7 @@ WL_EGL_IMPORT
 				attrs[numAttrs++] = EGL_RENDERABLE_TYPE;
 				attrs[numAttrs++] = !!BGFX_CONFIG_RENDERER_OPENGL
 					? EGL_OPENGL_BIT
-					: (glVersion >= 30) ? EGL_OPENGL_ES3_BIT_KHR : EGL_OPENGL_ES2_BIT
+					: EGL_OPENGL_ES3_BIT_KHR
 					;
 
 				attrs[numAttrs++] = EGL_SURFACE_TYPE;

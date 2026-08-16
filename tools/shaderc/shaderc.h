@@ -60,14 +60,6 @@ namespace bgfx
 #	endif
 #endif
 
-#ifndef SHADERC_CONFIG_HAS_GLSL_OPTIMIZER
-#	if __has_include("glsl_optimizer.h")
-#		define SHADERC_CONFIG_HAS_GLSL_OPTIMIZER 1
-#	else
-#		define SHADERC_CONFIG_HAS_GLSL_OPTIMIZER 0
-#	endif
-#endif
-
 #include <bx/debug.h>
 #include <bx/commandline.h>
 #include <bx/endian.h>

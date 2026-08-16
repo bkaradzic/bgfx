@@ -30,9 +30,9 @@ all: $(BIN)
 
 define shader-embedded
 	@echo [$(<)]
-	 $(SILENT) $(SHADERC) --type $(1) --platform linux   -p 120        -f $(<) -o "$(SHADER_TMP)" --bin2c $(basename $(<))_glsl
+	 $(SILENT) $(SHADERC) --type $(1) --platform linux   -p 430        -f $(<) -o "$(SHADER_TMP)" --bin2c $(basename $(<))_glsl
 	 @cat "$(SHADER_TMP)" > $(@)
-	-$(SILENT) $(SHADERC) --type $(1) --platform android -p 100_es     -f $(<) -o "$(SHADER_TMP)" --bin2c $(basename $(<))_essl
+	-$(SILENT) $(SHADERC) --type $(1) --platform android -p 300_es     -f $(<) -o "$(SHADER_TMP)" --bin2c $(basename $(<))_essl
 	-@cat "$(SHADER_TMP)" >> $(@)
 	-$(SILENT) $(SHADERC) --type $(1) --platform linux   -p spirv      -f $(<) -o "$(SHADER_TMP)" --bin2c $(basename $(<))_spv
 	-@cat "$(SHADER_TMP)" >> $(@)

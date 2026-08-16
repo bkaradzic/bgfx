@@ -87,8 +87,8 @@ typedef enum bgfx_renderer_type
     BGFX_RENDERER_TYPE_GNM,                   /** ( 4) GNM                            */
     BGFX_RENDERER_TYPE_METAL,                 /** ( 5) Metal                          */
     BGFX_RENDERER_TYPE_NVN,                   /** ( 6) NVN                            */
-    BGFX_RENDERER_TYPE_OPENGLES,              /** ( 7) OpenGL ES 2.0+                 */
-    BGFX_RENDERER_TYPE_OPENGL,                /** ( 8) OpenGL 2.1+                    */
+    BGFX_RENDERER_TYPE_OPENGLES,              /** ( 7) OpenGL ES 3.0+                 */
+    BGFX_RENDERER_TYPE_OPENGL,                /** ( 8) OpenGL 4.3+                    */
     BGFX_RENDERER_TYPE_VULKAN,                /** ( 9) Vulkan                         */
     BGFX_RENDERER_TYPE_WEBGPU,                /** (10) WebGPU                         */
 
