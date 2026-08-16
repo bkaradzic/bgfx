@@ -38,7 +38,7 @@ namespace bgfx
 
 		const Frame* m_frame;
 		BlitKey  m_key;
-		uint16_t m_item;
+		uint32_t m_item;
 	};
 
 	struct UniformCacheItem

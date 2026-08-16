@@ -2932,6 +2932,7 @@ VK_IMPORT_DEVICE
 			m_cmd.recycleMemory(_alloc);
 		}
 
+		void submitBlitBatch(BlitState& _bs, uint16_t _view);
 		void submitBlit(BlitState& _bs, uint16_t _view);
 
 		void submitUniformCache(UniformCacheState& _ucs, uint16_t _view);
@@ -9427,31 +9428,36 @@ VK_DESTROY
 		BX_ASSERT(false, "Removing external texture failed!");
 	}
 
-	void RendererContextVK::submitBlit(BlitState& _bs, uint16_t _view)
+	void RendererContextVK::submitBlitBatch(BlitState& _bs, uint16_t _view)
 	{
-		BGFX_PROFILER_SCOPE("RendererContextVK::submitBlit", kColorFrame);
+		constexpr uint32_t kMaxItems = 128;
+		VkImageLayout srcLayouts[kMaxItems];
+		VkImageLayout dstLayouts[kMaxItems];
 
-		VkImageLayout srcLayouts[BGFX_CONFIG_MAX_BLIT_ITEMS];
-		VkImageLayout dstLayouts[BGFX_CONFIG_MAX_BLIT_ITEMS];
+		uint32_t numItems = 0;
 
 		BlitState bs0 = _bs;
 
-		while (bs0.hasItem(_view) )
+		while (bs0.hasItem(_view)
+		&&     numItems < kMaxItems)
 		{
-			uint16_t item = bs0.m_item;
+			const uint32_t item = numItems++;
 
 			const BlitItem& blit = bs0.advance();
 
 			TextureVK& src = m_textures[blit.m_src.idx];
 			TextureVK& dst = m_textures[blit.m_dst.idx];
 
-			srcLayouts[item] = VK_NULL_HANDLE != src.m_singleMsaaImage ? src.m_currentSingleMsaaImageLayout : src.m_currentImageLayout;
+			srcLayouts[item] = VK_NULL_HANDLE != src.m_singleMsaaImage
+				? src.m_currentSingleMsaaImageLayout
+				: src.m_currentImageLayout
+				;
 			dstLayouts[item] = dst.m_currentImageLayout;
 		}
 
 		bs0 = _bs;
 
-		while (bs0.hasItem(_view) )
+		for (uint32_t item = 0; item < numItems; ++item)
 		{
 			const BlitItem& blit = bs0.advance();
 
@@ -9550,10 +9556,8 @@ VK_DESTROY
 				);
 		}
 
-		while (_bs.hasItem(_view) )
+		for (uint32_t item = 0; item < numItems; ++item)
 		{
-			uint16_t item = _bs.m_item;
-
 			const BlitItem& blit = _bs.advance();
 
 			TextureVK& src = m_textures[blit.m_src.idx];
@@ -9561,6 +9565,16 @@ VK_DESTROY
 
 			src.setState(m_commandBuffer, srcLayouts[item], VK_NULL_HANDLE != src.m_singleMsaaImage);
 			dst.setState(m_commandBuffer, dstLayouts[item]);
+		}
+	}
+
+	void RendererContextVK::submitBlit(BlitState& _bs, uint16_t _view)
+	{
+		BGFX_PROFILER_SCOPE("RendererContextVK::submitBlit", kColorFrame);
+
+		while (_bs.hasItem(_view) )
+		{
+			submitBlitBatch(_bs, _view);
 		}
 	}
 

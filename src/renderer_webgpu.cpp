@@ -1943,7 +1943,7 @@ WGPU_IMPORT
 				bx::free(g_allocator, m_uniforms[_handle.idx]);
 			}
 
-			uint32_t size = g_uniformTypeSize[_type]*_num;
+			const uint32_t size = bx::alignUp(g_uniformTypeSize[_type]*_num, 16);
 			void* data = bx::alloc(g_allocator, size);
 			bx::memSet(data, 0, size);
 			m_uniforms[_handle.idx] = data;

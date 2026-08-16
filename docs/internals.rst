@@ -171,6 +171,10 @@ Resource limits
 
 ``BGFX_CONFIG_MAX_DRAW_CALLS`` - Maximum number of draw/compute calls per frame. Default is 65535 (64K - 1).
 
+``BGFX_CONFIG_DYNAMIC_FRAME_STORAGE`` - Enable dynamic per frame storage. When enabled, storage for render items, binds, blit items and scissor rectangles is allocated in blocks, on first touch, and grows during the frame instead of dropping submissions; ``Init::Limits::numDrawCalls`` is then what is reserved up front rather than a hard limit, and ``Caps::Limits::maxDrawCalls`` always reports ``BGFX_CONFIG_MAX_DRAW_CALLS``. When disabled, all of it is allocated once, up front, at exactly the requested size, indexing has no indirection, and ``Init::Limits::numDrawCalls`` is a hard limit that submissions are dropped past. Default is 1. Disabling trades memory for a small amount of submission throughput; see ``Stats::numDrawCallsPeak`` to size ``numDrawCalls``.
+
+``BGFX_CONFIG_DRAW_CALL_BLOCK`` - Granularity dynamic per frame storage grows by, in items, and the multiple ``Init::Limits::numDrawCalls`` is rounded up to. Must be a power of two. Default is 64.
+
 ``BGFX_CONFIG_MAX_BLIT_ITEMS`` - Maximum number of blit items per frame. Default is 1024.
 
 ``BGFX_CONFIG_MAX_VIEWS`` - Maximum number of views. Default is 256. Must be a power of 2.
@@ -224,11 +228,11 @@ Buffer sizes
 
 ``BGFX_CONFIG_MIN_RESOURCE_COMMAND_BUFFER_SIZE`` - Minimum initial size of the resource command buffer (pre/post render commands for resource creation and updates). Default is 64 KB. The buffer grows as needed.
 
-``BGFX_CONFIG_MIN_UNIFORM_BUFFER_SIZE`` - Minimum initial size in bytes of the per-encoder uniform buffer. Default is 1 MB. This buffer will resize on demand.
+``BGFX_CONFIG_MIN_UNIFORM_BUFFER_SIZE`` - Minimum initial size in bytes of the per-encoder uniform buffer. Default is 128 KB. This buffer will resize on demand. Must be larger than ``BGFX_CONFIG_UNIFORM_BUFFER_RESIZE_THRESHOLD_SIZE``, otherwise the buffer resizes on first use.
 
-``BGFX_CONFIG_UNIFORM_BUFFER_RESIZE_THRESHOLD_SIZE`` - Maximum amount of unused uniform buffer space (in bytes) before the buffer is shrunk. Default is 64 KB.
+``BGFX_CONFIG_UNIFORM_BUFFER_RESIZE_THRESHOLD_SIZE`` - Head room in bytes kept in the uniform buffer; it grows once less than this is left, and shrinking keeps this much above the peak. Must be at least as large as the largest single uniform record (4 + 1023*sizeof(Mat4) = 65476 bytes). Default is 64 KB.
 
-``BGFX_CONFIG_UNIFORM_BUFFER_RESIZE_INCREMENT_SIZE`` - Increment size for uniform buffer resize. Default is 1 MB.
+``BGFX_CONFIG_UNIFORM_BUFFER_RESIZE_INCREMENT_SIZE`` - Increment size for uniform buffer resize. Default is 64 KB.
 
 ``BGFX_CONFIG_CACHED_DEVICE_MEMORY_ALLOCATIONS_SIZE`` - Amount of allowed memory allocations left on device to use for recycling during later allocations. This can be beneficial in case the driver is slow allocating memory on the device. Default is 128 MB. Currently only used by the Vulkan backend.
 
