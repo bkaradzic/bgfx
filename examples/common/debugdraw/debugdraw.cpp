@@ -1132,9 +1132,9 @@ struct DebugDrawEncoderImpl
 
 		bgfx::Transform transform;
 		stack.mtx  = m_encoder->allocTransform(&transform, _num);
-		stack.num  = _num;
+		stack.num  = transform.num;
 		stack.data = transform.data;
-		bx::memCopy(transform.data, _mtx, _num*64);
+		bx::memCopy(transform.data, _mtx, transform.num*64);
 	}
 
 	void setTranslate(float _x, float _y, float _z)

@@ -1515,6 +1515,13 @@ namespace bgfx
 			m_occlusionQuerySet.insert(_occlusionQuery.idx);
 		}
 
+		BX_ASSERT(m_draw.m_startMatrix + m_draw.m_numMatrices <= m_frame->m_frameCache.m_matrixCache.m_max+1
+			, "Draw names %d matrices from %d, but the matrix cache only holds %d."
+			, m_draw.m_numMatrices
+			, m_draw.m_startMatrix
+			, m_frame->m_frameCache.m_matrixCache.m_max+1
+			);
+
 		if (m_discard)
 		{
 			discard(_flags);
@@ -1654,12 +1661,14 @@ namespace bgfx
 
 	void EncoderImpl::blit(ViewId _id, TextureHandle _dst, uint8_t _dstMip, uint16_t _dstX, uint16_t _dstY, uint16_t _dstZ, TextureHandle _src, uint8_t _srcMip, uint16_t _srcX, uint16_t _srcY, uint16_t _srcZ, uint16_t _width, uint16_t _height, uint16_t _depth)
 	{
-		BX_WARN(m_frame->m_numBlitItems < BGFX_CONFIG_MAX_BLIT_ITEMS
-			, "Exceed number of available blit items per frame. BGFX_CONFIG_MAX_BLIT_ITEMS is %d. Skipping blit."
+		const uint32_t blitItemIdx = bx::atomicFetchAndAddsat<uint32_t>(&m_frame->m_numBlitItems, 1, BGFX_CONFIG_MAX_BLIT_ITEMS);
+
+		BX_WARN(blitItemIdx < BGFX_CONFIG_MAX_BLIT_ITEMS
+			, "Exceeded number of available blit items per frame. BGFX_CONFIG_MAX_BLIT_ITEMS is %d. Skipping blit."
 			, BGFX_CONFIG_MAX_BLIT_ITEMS
 			);
-		const uint32_t blitItemIdx = bx::atomicFetchAndAddsat<uint32_t>(&m_frame->m_numBlitItems, 1, BGFX_CONFIG_MAX_BLIT_ITEMS);
-		if (BGFX_CONFIG_MAX_BLIT_ITEMS-1 <= blitItemIdx)
+
+		if (blitItemIdx >= BGFX_CONFIG_MAX_BLIT_ITEMS)
 		{
 			return;
 		}
@@ -1678,11 +1687,7 @@ namespace bgfx
 		bi.m_dstMip = _dstMip;
 		bi.m_src    = _src;
 		bi.m_dst    = _dst;
-
-		BlitKey key;
-		key.m_view = _id;
-		key.m_item = bx::narrowCast<uint16_t>(blitItemIdx);
-		m_frame->m_blitKeys[blitItemIdx] = key.encode();
+		bi.m_view   = _id;
 	}
 
 	void Frame::sort()
@@ -1740,9 +1745,14 @@ namespace bgfx
 
 		bx::radixSort(m_sortKeys, s_ctx->m_tempKeys, m_sortValues, s_ctx->m_tempValues, m_numRenderItems);
 
+		reserveBlitKeys(m_numBlitItems);
+
 		for (uint32_t ii = 0, num = m_numBlitItems; ii < num; ++ii)
 		{
-			m_blitKeys[ii] = BlitKey::remapView(m_blitKeys[ii], m_viewOrder);
+			BlitKey key;
+			key.m_view = m_viewOrder[m_blitItem[ii].m_view];
+			key.m_item = bx::narrowCast<uint16_t>(ii);
+			m_blitKeys[ii] = key.encode();
 		}
 
 		bx::radixSort(m_blitKeys, (uint32_t*)s_ctx->m_tempKeys, m_numBlitItems);
@@ -2339,10 +2349,10 @@ namespace bgfx
 		m_frameTimeLast = bx::getHPCounter();
 		m_flipAfterRender = !!(m_init.resolution.reset & BGFX_RESET_FLIP_AFTER_RENDER);
 
-		m_submit->create(_init.limits.minResourceCbSize, _init.limits.numDrawCalls, _init.limits.numDrawCallPeakFrames);
+		m_submit->create(_init.limits.minResourceCbSize, _init.limits.numDrawCalls, g_caps.limits.maxDrawCalls, _init.limits.numDrawCallPeakFrames);
 
 #if BGFX_CONFIG_MULTITHREADED
-		m_render->create(_init.limits.minResourceCbSize, _init.limits.numDrawCalls, _init.limits.numDrawCallPeakFrames);
+		m_render->create(_init.limits.minResourceCbSize, _init.limits.numDrawCalls, g_caps.limits.maxDrawCalls, _init.limits.numDrawCallPeakFrames);
 
 		if (s_renderFrameCalled)
 		{
@@ -4013,8 +4023,11 @@ namespace bgfx
 
 	Init::Limits::Limits()
 		: maxEncoders(BGFX_CONFIG_DEFAULT_MAX_ENCODERS)
-		, numDrawCalls(BGFX_CONFIG_MAX_DRAW_CALLS)
-		, numDrawCallPeakFrames(0)
+		, numDrawCalls(BX_ENABLED(BGFX_CONFIG_DYNAMIC_FRAME_STORAGE)
+				? BGFX_CONFIG_DRAW_CALL_BLOCK
+				: BGFX_CONFIG_MAX_DRAW_CALLS
+				)
+		, numDrawCallPeakFrames(60)
 		, minResourceCbSize(BGFX_CONFIG_MIN_RESOURCE_COMMAND_BUFFER_SIZE)
 		, maxTransientVbSize(BGFX_CONFIG_MAX_TRANSIENT_VERTEX_BUFFER_SIZE)
 		, maxTransientIbSize(BGFX_CONFIG_MAX_TRANSIENT_INDEX_BUFFER_SIZE)
@@ -4093,9 +4106,9 @@ namespace bgfx
 		}
 
 		bx::memSet(&g_caps, 0, sizeof(g_caps) );
-		g_caps.limits.maxDrawCalls = 0 == init.limits.numDrawCallPeakFrames
-			? init.limits.numDrawCalls
-			: BGFX_CONFIG_MAX_DRAW_CALLS
+		g_caps.limits.maxDrawCalls = BX_ENABLED(BGFX_CONFIG_DYNAMIC_FRAME_STORAGE)
+			? BGFX_CONFIG_MAX_DRAW_CALLS
+			: init.limits.numDrawCalls
 			;
 		g_caps.limits.maxBlits                = BGFX_CONFIG_MAX_BLIT_ITEMS;
 		g_caps.limits.maxTextureSize          = 0;
@@ -5907,6 +5920,7 @@ namespace bgfx
 		BGFX_CHECK_HANDLE("clearTexture", s_ctx->m_textureHandle, _handle);
 
 		const TextureRef& ref = s_ctx->m_textureRef[_handle.idx];
+		BX_UNUSED(ref);
 
 		BX_ASSERT(!ref.isDepth()
 			, "Texture (handle %d, '%S') has a depth/stencil format and can't be cleared; use a view depth clear instead."

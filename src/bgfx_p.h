@@ -314,6 +314,8 @@ namespace bgfx
 #endif // BGFX_CONFIG_MAX_DRAW_CALLS < (64<<10)
 
 	static constexpr uint32_t kDrawCallBlock = BGFX_CONFIG_DRAW_CALL_BLOCK;
+	static constexpr uint32_t kBlitBlock     = 64;
+	static constexpr uint32_t kRectBlock     = 64;
 
 	inline uint32_t alignDrawCalls(uint32_t _num)
 	{
@@ -1526,6 +1528,10 @@ namespace bgfx
 			^ kItemMask
 			), "BlitKey: Key mask shouldn't overlap!");
 
+		static_assert(BGFX_CONFIG_MAX_BLIT_ITEMS <= kItemMask+1
+			, "BGFX_CONFIG_MAX_BLIT_ITEMS doesn't fit in the BlitKey item field."
+			);
+
 		KeyT encode()
 		{
 			const KeyT view = (KeyT(m_view) << kViewShift) & kViewMask;
@@ -1577,29 +1583,207 @@ namespace bgfx
 		}
 	};
 
+	template<typename Ty, uint32_t BlockT>
+	class FrameArenaT
+	{
+	public:
+		static_assert(0 == (BlockT & (BlockT-1) ), "BGFX_CONFIG_DRAW_CALL_BLOCK must be power of two.");
+
+		~FrameArenaT()
+		{
+			destroy();
+		}
+
+#if BGFX_CONFIG_DYNAMIC_FRAME_STORAGE
+		FrameArenaT()
+			: m_block(NULL)
+			, m_reserved(NULL)
+			, m_numBlocks(0)
+			, m_numReservedBlocks(0)
+		{
+		}
+
+		void create(uint32_t _numReserved, uint32_t _numMax)
+		{
+			destroy();
+
+			m_numBlocks         = numBlocks(_numMax);
+			m_numReservedBlocks = bx::min(numBlocks(_numReserved), m_numBlocks);
+
+			m_block = (Ty**)bx::alloc(g_allocator, sizeof(Ty*)*m_numBlocks);
+			bx::memSet(m_block, 0, sizeof(Ty*)*m_numBlocks);
+
+			if (0 < m_numReservedBlocks)
+			{
+				const uint32_t size = sizeof(Ty)*BlockT*m_numReservedBlocks;
+
+				m_reserved = (Ty*)bx::alloc(g_allocator, size, BX_ALIGNOF(Ty) );
+				bx::memSet(m_reserved, 0, size);
+
+				for (uint32_t ii = 0; ii < m_numReservedBlocks; ++ii)
+				{
+					m_block[ii] = m_reserved + ii*BlockT;
+				}
+			}
+		}
+
+		void destroy()
+		{
+			shrink(0);
+
+			if (NULL != m_reserved)
+			{
+				bx::free(g_allocator, m_reserved, BX_ALIGNOF(Ty) );
+				m_reserved = NULL;
+			}
+
+			bx::free(g_allocator, m_block);
+			m_block             = NULL;
+			m_numBlocks         = 0;
+			m_numReservedBlocks = 0;
+		}
+
+		BX_FORCE_INLINE Ty& operator[](uint32_t _idx)
+		{
+			const uint32_t blockIdx = _idx/BlockT;
+
+			Ty* block = load(blockIdx);
+
+			if (NULL == block)
+			{
+				block = allocBlock(blockIdx);
+			}
+
+			return block[_idx%BlockT];
+		}
+
+		BX_FORCE_INLINE const Ty& operator[](uint32_t _idx) const
+		{
+			return load(_idx/BlockT)[_idx%BlockT];
+		}
+
+		void shrink(uint32_t _numItems)
+		{
+			for (uint32_t ii = bx::max(m_numReservedBlocks, numBlocks(_numItems) ); ii < m_numBlocks; ++ii)
+			{
+				if (NULL != m_block[ii])
+				{
+					bx::free(g_allocator, m_block[ii], BX_ALIGNOF(Ty) );
+					m_block[ii] = NULL;
+				}
+			}
+		}
+
+	private:
+		static BX_FORCE_INLINE uint32_t numBlocks(uint32_t _numItems)
+		{
+			return (_numItems + BlockT - 1)/BlockT;
+		}
+
+		BX_FORCE_INLINE Ty* load(uint32_t _blockIdx) const
+		{
+			return *(Ty* volatile*)&m_block[_blockIdx];
+		}
+
+		BX_NO_INLINE Ty* allocBlock(uint32_t _blockIdx)
+		{
+			bx::MutexScope lock(m_lock);
+
+			Ty* block = m_block[_blockIdx];
+
+			if (NULL == block)
+			{
+				constexpr uint32_t size = sizeof(Ty)*BlockT;
+
+				block = (Ty*)bx::alloc(g_allocator, size, BX_ALIGNOF(Ty) );
+				bx::memSet(block, 0, size);
+
+				bx::atomicExchangePtr( (void**)&m_block[_blockIdx], block);
+			}
+
+			return block;
+		}
+
+		Ty**      m_block;
+		Ty*       m_reserved;
+		uint32_t  m_numBlocks;
+		uint32_t  m_numReservedBlocks;
+		bx::Mutex m_lock;
+#else
+		FrameArenaT()
+			: m_data(NULL)
+		{
+		}
+
+		void create(uint32_t /*_numReserved*/, uint32_t _numMax)
+		{
+			destroy();
+
+			const uint32_t size = sizeof(Ty)*_numMax;
+
+			m_data = (Ty*)bx::alloc(g_allocator, size, BX_ALIGNOF(Ty) );
+			bx::memSet(m_data, 0, size);
+		}
+
+		void destroy()
+		{
+			if (NULL != m_data)
+			{
+				bx::free(g_allocator, m_data, BX_ALIGNOF(Ty) );
+				m_data = NULL;
+			}
+		}
+
+		BX_FORCE_INLINE Ty& operator[](uint32_t _idx)
+		{
+			return m_data[_idx];
+		}
+
+		BX_FORCE_INLINE const Ty& operator[](uint32_t _idx) const
+		{
+			return m_data[_idx];
+		}
+
+		void shrink(uint32_t /*_numItems*/)
+		{
+		}
+
+	private:
+		Ty* m_data;
+#endif // BGFX_CONFIG_DYNAMIC_FRAME_STORAGE
+	};
+
 	struct MatrixCache
 	{
 		MatrixCache()
 			: m_cache(NULL)
 			, m_num(1)
 			, m_max(0)
+			, m_capacity(0)
 			, m_peak(0)
 			, m_observe(0)
 			, m_numPeakFrames(0)
-			, m_overflowed(false)
+			, m_overflowedBy(0)
 		{
 		}
 
-		void create(uint32_t _max, uint32_t _numPeakFrames)
+		void create(uint32_t _numReserved, uint32_t _numMax, uint32_t _numPeakFrames)
 		{
-			m_max   = bx::min<uint32_t>(_max, BGFX_CONFIG_MAX_MATRIX_CACHE);
-			m_cache = (Matrix4*)bx::alloc(g_allocator, sizeof(Matrix4)*m_max);
-			m_cache[0].setIdentity();
+			m_capacity = bx::min<uint32_t>(_numMax, BGFX_CONFIG_MAX_MATRIX_CACHE);
+
+			if (!BX_ENABLED(BGFX_CONFIG_DYNAMIC_FRAME_STORAGE) )
+			{
+				_numReserved   = m_capacity;
+				_numPeakFrames = 0;
+			}
+
+			m_max = bx::min(_numReserved, m_capacity);
+			alloc();
 			m_num   = 1;
 			m_peak   = 0;
 			m_observe = 0;
 			m_numPeakFrames = _numPeakFrames;
-			m_overflowed = false;
+			m_overflowedBy  = 0;
 		}
 
 		void destroy()
@@ -1611,50 +1795,46 @@ namespace bgfx
 		void resize(uint32_t _max)
 		{
 			bx::free(g_allocator, m_cache);
-			m_max   = _max;
-			m_cache = (Matrix4*)bx::alloc(g_allocator, sizeof(Matrix4)*m_max);
-			m_cache[0].setIdentity();
+			m_max = _max;
+			alloc();
 		}
 
-		static uint32_t capacityFor(uint32_t _used)
+		uint32_t capacityFor(uint32_t _used) const
 		{
-			return bx::min<uint32_t>(BGFX_CONFIG_MAX_MATRIX_CACHE, uint32_t(bx::alignUp(_used-1, kDrawCallBlock) )+1);
+			return bx::min<uint32_t>(m_capacity, uint32_t(bx::alignUp(_used-1, kDrawCallBlock) )+1);
 		}
 
 		void reset()
 		{
 			const uint32_t used = m_num;
 
-			if (0 != m_numPeakFrames)
+			if (0 != m_overflowedBy
+			&&  m_max < m_capacity)
 			{
-				if (m_overflowed
-				&&  m_max < BGFX_CONFIG_MAX_MATRIX_CACHE)
+				resize(bx::min(m_capacity, capacityFor(m_max + m_overflowedBy) ) );
+				m_peak    = 0;
+				m_observe = 0;
+			}
+			else if (0 != m_numPeakFrames)
+			{
+				m_peak = bx::max(m_peak, used);
+
+				if (++m_observe >= m_numPeakFrames)
 				{
-					resize(bx::min<uint32_t>(BGFX_CONFIG_MAX_MATRIX_CACHE, m_max*2) );
+					const uint32_t want = bx::max<uint32_t>(kDrawCallBlock+1, capacityFor(m_peak) );
+
+					if (want < m_max)
+					{
+						resize(want);
+					}
+
 					m_peak     = 0;
 					m_observe = 0;
 				}
-				else
-				{
-					m_peak = bx::max(m_peak, used);
-
-					if (++m_observe >= m_numPeakFrames)
-					{
-						const uint32_t want = bx::max<uint32_t>(kDrawCallBlock+1, capacityFor(m_peak) );
-
-						if (want < m_max)
-						{
-							resize(want);
-						}
-
-						m_peak     = 0;
-						m_observe = 0;
-					}
-				}
 			}
 
-			m_overflowed = false;
-			m_num = 1;
+			m_overflowedBy = 0;
+			m_num          = 1;
 		}
 
 		uint32_t reserve(uint16_t* _num)
@@ -1664,7 +1844,7 @@ namespace bgfx
 
 			if (first+num > m_max)
 			{
-				m_overflowed = true;
+				bx::atomicFetchAndAddsat<uint32_t>(&m_overflowedBy, num, m_capacity);
 			}
 
 			num   = bx::min(num, m_max-first);
@@ -1673,21 +1853,23 @@ namespace bgfx
 			return first;
 		}
 
-		uint32_t add(const void* _mtx, uint16_t _num)
+		uint32_t add(const void* _mtx, uint16_t* _num)
 		{
 			if (NULL != _mtx)
 			{
-				uint32_t first = reserve(&_num);
-				bx::memCopy(&m_cache[first], _mtx, sizeof(Matrix4)*_num);
+				uint32_t first = reserve(_num);
+				bx::memCopy(&m_cache[first], _mtx, sizeof(Matrix4)*(*_num) );
 				return first;
 			}
+
+			*_num = 1;
 
 			return 0;
 		}
 
 		float* toPtr(uint32_t _cacheIdx)
 		{
-			BX_ASSERT(_cacheIdx < m_max, "Matrix cache out of bounds index %d (max: %d)"
+			BX_ASSERT(_cacheIdx <= m_max, "Matrix cache out of bounds index %d (max: %d)"
 				, _cacheIdx
 				, m_max
 				);
@@ -1699,20 +1881,44 @@ namespace bgfx
 			return uint32_t( (const Matrix4*)_ptr - m_cache);
 		}
 
+		void alloc()
+		{
+			m_cache = (Matrix4*)bx::alloc(g_allocator, sizeof(Matrix4)*(m_max + 1) );
+			m_cache[0].setIdentity();
+			m_cache[m_max].setIdentity();
+		}
+
 		Matrix4* m_cache;
 		uint32_t m_num;
 		uint32_t m_max;
+		uint32_t m_capacity;
 		uint32_t m_peak;
 		uint32_t m_observe;
 		uint32_t m_numPeakFrames;
-		bool     m_overflowed;
+		uint32_t m_overflowedBy;
 	};
 
 	struct RectCache
 	{
+		static_assert(BGFX_CONFIG_MAX_RECT_CACHE <= UINT16_MAX
+			, "BGFX_CONFIG_MAX_RECT_CACHE must leave UINT16_MAX free."
+			);
+
 		RectCache()
 			: m_num(0)
+			, m_max(0)
 		{
+		}
+
+		void create(uint32_t _numMax)
+		{
+			m_max = _numMax;
+			m_cache.create(0, _numMax);
+		}
+
+		void destroy()
+		{
+			m_cache.destroy();
 		}
 
 		void reset()
@@ -1720,23 +1926,38 @@ namespace bgfx
 			m_num = 0;
 		}
 
+		void shrink(uint32_t _numItems)
+		{
+			m_cache.shrink(bx::min(m_max, _numItems) );
+		}
+
 		uint32_t add(uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height)
 		{
-			const uint32_t first = bx::atomicFetchAndAddsat<uint32_t>(&m_num, 1, BGFX_CONFIG_MAX_RECT_CACHE-1);
-			BX_ASSERT(first+1 < BGFX_CONFIG_MAX_RECT_CACHE, "Rect cache overflow. %d (max: %d)", first, BGFX_CONFIG_MAX_RECT_CACHE);
+			const uint32_t first = bx::atomicFetchAndAddsat<uint32_t>(&m_num, 1, m_max);
+
+			BX_WARN(first < m_max
+				, "Exceeded number of available scissor rectangles per frame. BGFX_CONFIG_MAX_RECT_CACHE is %d."
+				, BGFX_CONFIG_MAX_RECT_CACHE
+				);
+
+			if (first >= m_max)
+			{
+				return UINT16_MAX;
+			}
 
 			Rect& rect = m_cache[first];
 
 			rect.m_x = bx::narrowCast<int16_t>(_x);
 			rect.m_y = bx::narrowCast<int16_t>(_y);
-			rect.m_width = _width;
+			rect.m_width  = _width;
 			rect.m_height = _height;
 
 			return first;
 		}
 
-		Rect     m_cache[BGFX_CONFIG_MAX_RECT_CACHE];
-		uint32_t m_num;
+		FrameArenaT<Rect, kRectBlock> m_cache;
+		uint32_t                      m_num;
+		uint32_t                      m_max;
 	};
 
 	static constexpr uint8_t  kConstantOpcodeTypeShift = 27;
@@ -1762,6 +1983,15 @@ namespace bgfx
 	class UniformBuffer
 	{
 	public:
+		static_assert(BGFX_CONFIG_UNIFORM_BUFFER_RESIZE_THRESHOLD_SIZE
+			>= sizeof(uint32_t) + (kConstantOpcodeNumMask>>kConstantOpcodeNumShift)*sizeof(float)*16
+			, "BGFX_CONFIG_UNIFORM_BUFFER_RESIZE_THRESHOLD_SIZE is too small!"
+			);
+
+		static_assert(BGFX_CONFIG_MIN_UNIFORM_BUFFER_SIZE > BGFX_CONFIG_UNIFORM_BUFFER_RESIZE_THRESHOLD_SIZE
+			, "BGFX_CONFIG_MIN_UNIFORM_BUFFER_SIZE must be larger than BGFX_CONFIG_UNIFORM_BUFFER_RESIZE_THRESHOLD_SIZE!"
+			);
+
 		static UniformBuffer* create(uint32_t _size)
 		{
 			const uint32_t structSize = sizeof(UniformBuffer)-sizeof(UniformBuffer::m_buffer);
@@ -1785,14 +2015,28 @@ namespace bgfx
 			UniformBuffer* uniformBuffer = *_uniformBuffer;
 			if (kThreshold >= uniformBuffer->m_size - uniformBuffer->m_pos)
 			{
-				const uint32_t structSize = sizeof(UniformBuffer)-sizeof(UniformBuffer::m_buffer);
-				uint32_t size = bx::alignUp(uniformBuffer->m_size + kIncrement, 16);
-				void*    data = bx::realloc(g_allocator, uniformBuffer, size+structSize);
-				uniformBuffer = reinterpret_cast<UniformBuffer*>(data);
-				uniformBuffer->m_size = size;
-
-				*_uniformBuffer = uniformBuffer;
+				const uint32_t size = uniformBuffer->m_size
+					+ bx::max(kIncrement, uniformBuffer->m_size/2)
+					;
+				resize(_uniformBuffer, size);
 			}
+		}
+
+		static void shrink(UniformBuffer** _uniformBuffer, uint32_t _minSize)
+		{
+			static constexpr uint32_t kThreshold = BGFX_CONFIG_UNIFORM_BUFFER_RESIZE_THRESHOLD_SIZE;
+			static constexpr uint32_t kIncrement = BGFX_CONFIG_UNIFORM_BUFFER_RESIZE_INCREMENT_SIZE;
+
+			UniformBuffer* uniformBuffer = *_uniformBuffer;
+
+			const uint32_t keep = bx::alignUp(bx::max(_minSize, uniformBuffer->m_hwm + kThreshold), 16);
+
+			if (keep + kIncrement <= uniformBuffer->m_size)
+			{
+				resize(_uniformBuffer, keep);
+			}
+
+			(*_uniformBuffer)->m_hwm = 0;
 		}
 
 		static uint32_t encodeOpcode(uint8_t _type, uint16_t _loc, uint16_t _num, uint16_t _copy)
@@ -1866,6 +2110,7 @@ namespace bgfx
 		void finish()
 		{
 			write(UniformType::End);
+			m_hwm = bx::max(m_hwm, m_pos);
 			m_pos = 0;
 		}
 
@@ -1874,9 +2119,23 @@ namespace bgfx
 		void writeMarker(const bx::StringView& _name);
 
 	private:
+		static void resize(UniformBuffer** _uniformBuffer, uint32_t _size)
+		{
+			const uint32_t structSize = sizeof(UniformBuffer)-sizeof(UniformBuffer::m_buffer);
+
+			const uint32_t size = bx::alignUp(_size, 16);
+			void*          data = bx::realloc(g_allocator, *_uniformBuffer, size+structSize);
+
+			UniformBuffer* uniformBuffer = reinterpret_cast<UniformBuffer*>(data);
+			uniformBuffer->m_size = size;
+
+			*_uniformBuffer = uniformBuffer;
+		}
+
 		UniformBuffer(uint32_t _size)
 			: m_size(_size)
 			, m_pos(0)
+			, m_hwm(0)
 		{
 			finish();
 		}
@@ -1887,6 +2146,7 @@ namespace bgfx
 
 		uint32_t m_size;
 		uint32_t m_pos;
+		uint32_t m_hwm;
 		char     m_buffer[256<<20];
 	};
 
@@ -2246,6 +2506,7 @@ namespace bgfx
 		uint8_t  m_dstMip;
 		Handle m_src;
 		Handle m_dst;
+		ViewId m_view;
 	};
 
 	struct IndexBuffer
@@ -2566,6 +2827,13 @@ namespace bgfx
 				, m_offset
 				, kMaxOffset
 				);
+			BX_ASSERT(true
+				&& 0 == (m_size   & 0xf)
+				&& 0 == (m_offset & 0xf)
+				, "UniformCacheKey size and offset must be 16 byte aligned (size %d, offset %d)!"
+				, m_size
+				, m_offset
+				);
 			BX_UNUSED(kMaxSize, kMaxOffset);
 
 			const KeyT view   = (KeyT(m_view)      << kViewShift)   & kViewMask;
@@ -2621,8 +2889,9 @@ namespace bgfx
 			, m_keysCapacity(kMinKeysCapacity)
 			, m_dataCapacity(kMinDataCapacity)
 		{
-			m_keys = (UniformCacheKey::KeyT*)bx::alloc(g_allocator, m_keysCapacity*sizeof(uint64_t) );
+			m_keys = (UniformCacheKey::KeyT*)bx::alloc(g_allocator, (m_keysCapacity+1)*sizeof(uint64_t) );
 			m_data = (uint8_t*)bx::alloc(g_allocator, m_dataCapacity);
+			m_keys[0] = 0;
 		}
 
 		~UniformCacheFrame()
@@ -2638,7 +2907,7 @@ namespace bgfx
 
 				if (newKeysCapacity != m_keysCapacity)
 				{
-					m_keys = (UniformCacheKey::KeyT*)bx::realloc(g_allocator, m_keys, newKeysCapacity * sizeof(uint64_t));
+					m_keys = (UniformCacheKey::KeyT*)bx::realloc(g_allocator, m_keys, (newKeysCapacity+1) * sizeof(uint64_t));
 					m_keysCapacity = newKeysCapacity;
 				}
 			}
@@ -2673,14 +2942,16 @@ namespace bgfx
 
 	struct FrameCache
 	{
-		void create(uint32_t _maxMatrices, uint32_t _numHwmFrames)
+		void create(uint32_t _numReservedMatrices, uint32_t _numMaxMatrices, uint32_t _numHwmFrames)
 		{
-			m_matrixCache.create(_maxMatrices, _numHwmFrames);
+			m_matrixCache.create(_numReservedMatrices, _numMaxMatrices, _numHwmFrames);
+			m_rectCache.create(BGFX_CONFIG_MAX_RECT_CACHE);
 		}
 
 		void destroy()
 		{
 			m_matrixCache.destroy();
+			m_rectCache.destroy();
 		}
 
 		void reset()
@@ -2716,11 +2987,13 @@ namespace bgfx
 		Frame()
 			: m_sortKeys(NULL)
 			, m_sortValues(NULL)
-			, m_renderItem(NULL)
-			, m_renderBind(NULL)
+			, m_blitKeys(NULL)
+			, m_blitKeysCapacity(0)
 			, m_maxDrawCalls(0)
 			, m_numRenderItemsRequested(0)
 			, m_peak(0)
+			, m_peakBlit(0)
+			, m_peakRect(0)
 			, m_observe(0)
 			, m_numPeakFrames(0)
 			, m_waitSubmit(0)
@@ -2743,33 +3016,54 @@ namespace bgfx
 			freeArrays();
 		}
 
-		void allocArrays(uint32_t _maxDrawCalls)
+		void allocArrays(uint32_t _numReservedDrawCalls, uint32_t _maxDrawCalls)
 		{
 			freeArrays();
 
 			m_maxDrawCalls = _maxDrawCalls;
 
-			const uint32_t num = m_maxDrawCalls + 1;
+			const uint32_t reserved = bx::min(_numReservedDrawCalls, _maxDrawCalls) + 1;
+			const uint32_t num      = m_maxDrawCalls + 1;
+
 			m_sortKeys   = (uint64_t*       )bx::alloc(g_allocator, sizeof(uint64_t       )*num);
 			m_sortValues = (RenderItemCount*)bx::alloc(g_allocator, sizeof(RenderItemCount)*num);
-			m_renderItem = (RenderItem*     )bx::alloc(g_allocator, sizeof(RenderItem     )*num, BX_ALIGNOF(RenderItem) );
-			m_renderBind = (RenderBind*     )bx::alloc(g_allocator, sizeof(RenderBind     )*num, BX_ALIGNOF(RenderBind) );
 
-			bx::memSet(m_renderBind, 0, sizeof(RenderBind)*num);
+			m_renderItem.create(reserved, num);
+			m_renderBind.create(reserved, num);
+
+			m_blitItem.create(0, BGFX_CONFIG_MAX_BLIT_ITEMS);
+			reserveBlitKeys(0);
 
 			setSentinel();
+		}
+
+		void reserveBlitKeys(uint32_t _num)
+		{
+			const uint32_t capacity = bx::alignUp(_num+1, 64);
+
+			if (m_blitKeysCapacity < capacity)
+			{
+				bx::free(g_allocator, m_blitKeys);
+				m_blitKeys = (uint32_t*)bx::alloc(g_allocator, sizeof(uint32_t)*capacity);
+				m_blitKeysCapacity = capacity;
+			}
+
+			m_blitKeys[_num] = 0;
 		}
 
 		void freeArrays()
 		{
 			bx::free(g_allocator, m_sortKeys);
 			bx::free(g_allocator, m_sortValues);
-			bx::free(g_allocator, m_renderItem, BX_ALIGNOF(RenderItem) );
-			bx::free(g_allocator, m_renderBind, BX_ALIGNOF(RenderBind) );
+			bx::free(g_allocator, m_blitKeys);
 			m_sortKeys   = NULL;
 			m_sortValues = NULL;
-			m_renderItem = NULL;
-			m_renderBind = NULL;
+			m_blitKeys   = NULL;
+			m_blitKeysCapacity = 0;
+
+			m_renderItem.destroy();
+			m_renderBind.destroy();
+			m_blitItem.destroy();
 		}
 
 		void setSentinel()
@@ -2788,56 +3082,48 @@ namespace bgfx
 				return;
 			}
 
-			const uint32_t requested = m_numRenderItemsRequested;
+			m_peak     = bx::max(m_peak, m_numRenderItemsRequested, m_numRenderBinds);
+			m_peakBlit = bx::max(m_peakBlit, m_numBlitItems);
+			m_peakRect = bx::max(m_peakRect, m_frameCache.m_rectCache.m_num);
 
-			if (requested >= m_maxDrawCalls
-			&&  m_maxDrawCalls < BGFX_CONFIG_MAX_DRAW_CALLS)
+			if (++m_observe >= m_numPeakFrames)
 			{
-				const uint32_t want = alignDrawCalls(requested+1);
-				if (want > m_maxDrawCalls)
+				const uint32_t keep = bx::min<uint32_t>(m_maxDrawCalls + 1, m_peak + 1 + kDrawCallBlock);
+
+				m_renderItem.shrink(keep);
+				m_renderBind.shrink(keep);
+				m_blitItem.shrink(m_peakBlit + 1 + kBlitBlock);
+				m_frameCache.m_rectCache.shrink(m_peakRect + 1 + kRectBlock);
+
+				for (uint32_t ii = 0, num = g_caps.limits.maxEncoders; ii < num; ++ii)
 				{
-					allocArrays(want);
+					if (NULL != m_uniformBuffer[ii])
+					{
+						UniformBuffer::shrink(&m_uniformBuffer[ii], g_caps.limits.minUniformBufferSize);
+					}
 				}
 
 				m_peak     = 0;
-				m_observe = 0;
-			}
-			else
-			{
-				m_peak = bx::max(m_peak, requested);
-
-				if (++m_observe >= m_numPeakFrames)
-				{
-					const uint32_t want = bx::max(kDrawCallBlock, alignDrawCalls(m_peak+1) );
-					if (want < m_maxDrawCalls)
-					{
-						allocArrays(want);
-					}
-
-					m_peak     = 0;
-					m_observe = 0;
-				}
+				m_peakBlit = 0;
+				m_peakRect = 0;
+				m_observe  = 0;
 			}
 		}
 
-		void create(uint32_t _minResourceCbSize, uint32_t _maxDrawCalls, uint32_t _numHwmFrames)
+		void create(uint32_t _minResourceCbSize, uint32_t _numReservedDrawCalls, uint32_t _maxDrawCalls, uint32_t _numHwmFrames)
 		{
 			m_cmdPre.init(_minResourceCbSize);
 			m_cmdPost.init(_minResourceCbSize);
 
 			m_numPeakFrames = _numHwmFrames;
-			allocArrays(_maxDrawCalls);
-			m_frameCache.create(_maxDrawCalls + 1, _numHwmFrames);
+			allocArrays(_numReservedDrawCalls, _maxDrawCalls);
+			m_frameCache.create(_numReservedDrawCalls + 1, _maxDrawCalls + 1, _numHwmFrames);
 
 			{
 				const uint32_t num = g_caps.limits.maxEncoders;
 
 				m_uniformBuffer = (UniformBuffer**)bx::alloc(g_allocator, sizeof(UniformBuffer*)*num);
-
-				for (uint32_t ii = 0; ii < num; ++ii)
-				{
-					m_uniformBuffer[ii] = UniformBuffer::create(g_caps.limits.minUniformBufferSize);
-				}
+				bx::memSet(m_uniformBuffer, 0, sizeof(UniformBuffer*)*num);
 			}
 
 			reset();
@@ -2849,11 +3135,26 @@ namespace bgfx
 		{
 			for (uint32_t ii = 0, num = g_caps.limits.maxEncoders; ii < num; ++ii)
 			{
-				UniformBuffer::destroy(m_uniformBuffer[ii]);
+				if (NULL != m_uniformBuffer[ii])
+				{
+					UniformBuffer::destroy(m_uniformBuffer[ii]);
+				}
 			}
 
 			bx::free(g_allocator, m_uniformBuffer);
 			bx::deleteObject(g_allocator, m_textVideoMem);
+		}
+
+		UniformBuffer* getUniformBuffer(uint8_t _idx)
+		{
+			UniformBuffer*& uniformBuffer = m_uniformBuffer[_idx];
+
+			if (NULL == uniformBuffer)
+			{
+				uniformBuffer = UniformBuffer::create(g_caps.limits.minUniformBufferSize);
+			}
+
+			return uniformBuffer;
 		}
 
 		void reset()
@@ -2991,18 +3292,21 @@ namespace bgfx
 
 		int32_t m_occlusion[BGFX_CONFIG_MAX_OCCLUSION_QUERIES];
 
+		FrameArenaT<RenderItem, kDrawCallBlock> m_renderItem;
+		FrameArenaT<RenderBind, kDrawCallBlock> m_renderBind;
+		FrameArenaT<BlitItem,   kBlitBlock>     m_blitItem;
+
 		uint64_t*        m_sortKeys;
 		RenderItemCount* m_sortValues;
-		RenderItem*      m_renderItem;
-		RenderBind*      m_renderBind;
+		uint32_t*        m_blitKeys;
+		uint32_t         m_blitKeysCapacity;
 		uint32_t         m_maxDrawCalls;
 		uint32_t         m_numRenderItemsRequested;
 		uint32_t         m_peak;
+		uint32_t         m_peakBlit;
+		uint32_t         m_peakRect;
 		uint32_t         m_observe;
 		uint32_t         m_numPeakFrames;
-
-		uint32_t m_blitKeys[BGFX_CONFIG_MAX_BLIT_ITEMS+1];
-		BlitItem m_blitItem[BGFX_CONFIG_MAX_BLIT_ITEMS+1];
 
 		UniformCacheFrame m_uniformCacheFrame;
 
@@ -3135,7 +3439,7 @@ namespace bgfx
 			m_uniformBegin = 0;
 			m_uniformEnd   = 0;
 
-			UniformBuffer* uniformBuffer = m_frame->m_uniformBuffer[m_uniformIdx];
+			UniformBuffer* uniformBuffer = m_frame->getUniformBuffer(m_uniformIdx);
 			uniformBuffer->reset();
 
 			m_numSubmitted = 0;
@@ -3310,8 +3614,9 @@ namespace bgfx
 
 		uint32_t setTransform(const void* _mtx, uint16_t _num)
 		{
-			m_draw.m_startMatrix = m_frame->m_frameCache.m_matrixCache.add(_mtx, _num);
-			m_draw.m_numMatrices = _num;
+			m_draw.m_startMatrix = m_frame->m_frameCache.m_matrixCache.add(_mtx, &_num);
+
+			m_draw.m_numMatrices = bx::max<uint16_t>(_num, 1);
 
 			return m_draw.m_startMatrix;
 		}
@@ -3327,12 +3632,18 @@ namespace bgfx
 
 		void setTransform(uint32_t _cache, uint16_t _num)
 		{
-			BX_ASSERT(_cache < BGFX_CONFIG_MAX_MATRIX_CACHE, "Matrix cache out of bounds index %d (max: %d)"
+			const MatrixCache& matrixCache = m_frame->m_frameCache.m_matrixCache;
+
+			BX_ASSERT(_cache <= matrixCache.m_max, "Matrix cache out of bounds index %d (max: %d)"
 				, _cache
-				, BGFX_CONFIG_MAX_MATRIX_CACHE
+				, matrixCache.m_max
 				);
-			m_draw.m_startMatrix = _cache;
-			m_draw.m_numMatrices = uint16_t(bx::min<uint32_t>(_cache+_num, BGFX_CONFIG_MAX_MATRIX_CACHE-1) - _cache);
+
+			const uint32_t first = bx::min(_cache, matrixCache.m_max);
+			const uint32_t last  = bx::min(first + bx::max<uint32_t>(_num, 1), matrixCache.m_max+1);
+
+			m_draw.m_startMatrix = first;
+			m_draw.m_numMatrices = bx::narrowCast<uint16_t>(last - first);
 		}
 
 		void setIndexBuffer(IndexBufferHandle _handle, const IndexBuffer& _ib, uint32_t _firstIndex, uint32_t _numIndices)
@@ -3993,6 +4304,14 @@ namespace bgfx
 			const uint32_t typeSize = g_uniformTypeSize[_type];
 			const uint32_t dataSize = _num * typeSize;
 
+			const uint32_t allocSize = bx::alignUp(dataSize, 16);
+
+			BX_ASSERT(allocSize <= UINT16_MAX-15
+				, "Uniform is too large for the uniform cache (%d bytes, max %d)!"
+				, allocSize
+				, UINT16_MAX-15
+				);
+
 			bx::HashMurmur3 murmur;
 			murmur.begin();
 			murmur.add(_type);
@@ -4039,17 +4358,26 @@ namespace bgfx
 			}
 			else
 			{
-				const uint64_t offset = m_uniformStoreAlloc.alloc(dataSize);
-				BX_ASSERT(NonLocalAllocator::kInvalidBlock != offset, "UniformCache: Failed to allocate data!");
+				const uint64_t offset = m_uniformStoreAlloc.alloc(allocSize);
+
+				if (NonLocalAllocator::kInvalidBlock == offset)
+				{
+					BX_ASSERT(false, "UniformCache: Failed to allocate data (%d bytes)!", allocSize);
+
+					m_uniformKeyHashMap.erase(m_uniformKeyHashMap.find(_uniformKey) );
+
+					return;
+				}
 
 				m_uniformEntryMap.insert(stl::make_pair(hash, UniformCacheEntry
 					{
 						.offset   = bx::narrowCast<uint32_t>(offset),
-						.size     = bx::narrowCast<uint16_t>(dataSize),
+						.size     = bx::narrowCast<uint16_t>(allocSize),
 						.refCount = 1
 					}) );
 
 				bx::memCopy(&m_data[offset], _value, dataSize);
+				bx::memSet(&m_data[offset + dataSize], 0, allocSize - dataSize);
 			}
 		}
 
@@ -4100,6 +4428,7 @@ namespace bgfx
 			}
 
 			_outUniformCacheFrame.m_numItems = num;
+			_outUniformCacheFrame.m_keys[num] = 0;
 		}
 
 		void invalidate(ViewId _viewId)
