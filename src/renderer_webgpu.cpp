@@ -4015,6 +4015,7 @@ WGPU_IMPORT
 			m_height    = ti.height;
 			m_depth     = ti.depth;
 			m_numLayers = ti.numLayers;
+			m_numSides  = ti.numLayers * (imageContainer.m_cubeMap ? 6 : 1);
 			m_requestedFormat  = uint8_t(imageContainer.m_format);
 			m_textureFormat    = uint8_t(getViableTextureFormat(imageContainer) );
 			const bool convert = m_textureFormat != m_requestedFormat;
@@ -4030,7 +4031,7 @@ WGPU_IMPORT
 					? WGPUTextureViewDimension_CubeArray
 					: WGPUTextureViewDimension_Cube
 					;
-				depthOrArrayLayers = 6;
+				depthOrArrayLayers = m_numSides;
 			}
 			else if (isVolume(imageContainer) )
 			{
@@ -4051,7 +4052,6 @@ WGPU_IMPORT
 			}
 
 			m_numMips = ti.numMips;
-			const uint16_t numSides = ti.numLayers * (imageContainer.m_cubeMap ? 6 : 1);
 
 			const bool compressed = bimg::isCompressed(bimg::TextureFormat::Enum(m_textureFormat) );
 			const bool swizzle    = TextureFormat::BGRA8 == m_textureFormat && 0 != (m_flags&BGFX_TEXTURE_COMPUTE_WRITE);
@@ -4136,7 +4136,7 @@ WGPU_IMPORT
 
 			uint8_t* temp = convert ? (uint8_t*)bx::alloc(g_allocator, m_width*m_height*bpp/8) : NULL;
 
-			for (uint16_t side = 0; side < numSides; ++side)
+			for (uint16_t side = 0; side < m_numSides; ++side)
 			{
 				copyTextureDst.origin.z = side;
 
