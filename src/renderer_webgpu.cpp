@@ -5198,21 +5198,29 @@ m_resolution.formatColor = TextureFormat::BGRA8;
 
 	void TimerQueryWGPU::init()
 	{
-		WGPUDevice device = s_renderWGPU->m_device;
+		for (uint32_t ii = 0; ii < BX_COUNTOF(m_result); ++ii)
+		{
+			m_result[ii].reset();
+		}
 
-		static constexpr uint32_t kCount = BX_COUNTOF(m_query);
+		m_supported = isFeatureSupported(WGPUFeatureName_TimestampQuery);
+
+		if (!m_supported)
+		{
+			return;
+		}
+
+		WGPUDevice device = s_renderWGPU->m_device;
 
 		WGPUQuerySetDescriptor querySetDesc =
 		{
 			.nextInChain = NULL,
 			.label       = toWGPUStringView("TimerQuery"),
 			.type        = WGPUQueryType_Timestamp,
-			.count       = kCount,
+			.count       = kNumTimestamps,
 		};
 
 		m_querySet = WGPU_CHECK(wgpuDeviceCreateQuerySet(device, &querySetDesc) );
-
-		static constexpr uint64_t kTimestampBufferSize = kCount * sizeof(uint64_t);
 
 		WGPUBufferDescriptor resolveBufferDesc =
 		{
@@ -5222,7 +5230,7 @@ m_resolution.formatColor = TextureFormat::BGRA8;
 				| WGPUBufferUsage_CopySrc
 				| WGPUBufferUsage_QueryResolve
 				,
-			.size = kTimestampBufferSize,
+			.size = kBufferSize,
 			.mappedAtCreation = false,
 		};
 
@@ -5236,7 +5244,7 @@ m_resolution.formatColor = TextureFormat::BGRA8;
 				| WGPUBufferUsage_MapRead
 				| WGPUBufferUsage_CopyDst
 				,
-			.size = kTimestampBufferSize,
+			.size = kBufferSize,
 			.mappedAtCreation = false,
 		};
 
@@ -5250,42 +5258,158 @@ m_resolution.formatColor = TextureFormat::BGRA8;
 		wgpuDestroy(m_readback);
 	}
 
+	void TimerQueryWGPU::writeTimestamp(uint32_t _index)
+	{
+		const WGPUPassTimestampWrites timestampWrites =
+		{
+			.nextInChain               = NULL,
+			.querySet                  = m_querySet,
+			.beginningOfPassWriteIndex = _index,
+			.endOfPassWriteIndex       = WGPU_QUERY_SET_INDEX_UNDEFINED,
+		};
+
+		const WGPUComputePassDescriptor computePassDesc =
+		{
+			.nextInChain     = NULL,
+			.label           = toWGPUStringView("TimerQuery"),
+			.timestampWrites = &timestampWrites,
+		};
+
+		WGPUComputePassEncoder computePassEncoder = WGPU_CHECK(wgpuCommandEncoderBeginComputePass(s_renderWGPU->m_cmd.m_commandEncoder, &computePassDesc) );
+		WGPU_CHECK(wgpuComputePassEncoderEnd(computePassEncoder) );
+		wgpuRelease(computePassEncoder);
+	}
+
 	uint32_t TimerQueryWGPU::begin(uint32_t _resultIdx, uint32_t _frameNum)
 	{
-		const uint32_t reserved = m_control.reserve(1);
-
-		if (1 == reserved)
+		if (!m_supported)
 		{
-			Result& result = m_result[_resultIdx];
-			++result.m_pending;
-
-			const uint32_t idx = m_control.m_current;
-			Query& query = m_query[idx];
-			query.m_resultIdx = _resultIdx;
-			query.m_ready     = false;
-			query.m_frameNum  = _frameNum;
-
-			const uint32_t offset = idx * 2 + 0;
-			WGPU_CHECK(wgpuCommandEncoderWriteTimestamp(s_renderWGPU->m_cmd.m_commandEncoder, m_querySet, offset) );
-
-			return idx;
+			return UINT32_MAX;
 		}
 
-		return UINT32_MAX;
+		while (0 == m_control.reserve(1) )
+		{
+			m_control.consume(1);
+		}
+
+		Result& result = m_result[_resultIdx];
+		++result.m_pending;
+
+		const uint32_t idx = m_control.m_current;
+		Query& query = m_query[idx];
+		query.m_resultIdx = _resultIdx;
+		query.m_ready     = false;
+		query.m_frameNum  = _frameNum;
+
+		writeTimestamp(idx*2 + 0);
+
+		m_control.commit(1);
+
+		return idx;
 	}
 
 	void TimerQueryWGPU::end(uint32_t _idx)
 	{
-		m_control.commit(1);
-
 		Query& query = m_query[_idx];
 		query.m_ready = true;
-		query.m_fence = s_renderWGPU->m_cmd.m_counter;
 
-		const uint32_t offset = _idx * 2 + 1;
-		WGPU_CHECK(wgpuCommandEncoderWriteTimestamp(s_renderWGPU->m_cmd.m_commandEncoder, m_querySet, offset) );
+		writeTimestamp(_idx*2 + 1);
+	}
 
-		m_control.consume(1);
+	void TimerQueryWGPU::resolve(uint32_t _frameNum)
+	{
+		if (!m_supported
+		||  m_mapPending)
+		{
+			return;
+		}
+
+		WGPUCommandEncoder commandEncoder = s_renderWGPU->m_cmd.m_commandEncoder;
+
+		WGPU_CHECK(wgpuCommandEncoderResolveQuerySet(
+			  commandEncoder
+			, m_querySet
+			, 0
+			, kNumTimestamps
+			, m_resolve
+			, 0
+			) );
+
+		WGPU_CHECK(wgpuCommandEncoderCopyBufferToBuffer(
+			  commandEncoder
+			, m_resolve
+			, 0
+			, m_readback
+			, 0
+			, kBufferSize
+			) );
+
+		m_resolvedFrameNum = _frameNum;
+		m_resolved         = true;
+	}
+
+	static void readTimestampResultsCb(WGPUMapAsyncStatus _status, WGPUStringView _message, void* _userdata1, void* _userdata2)
+	{
+		BX_UNUSED(_status, _message, _userdata2);
+		TimerQueryWGPU& timerQuery = *(TimerQueryWGPU*)_userdata1;
+		timerQuery.consumeResults();
+	}
+
+	void TimerQueryWGPU::readResultsAsync()
+	{
+		if (!m_resolved
+		||  m_mapPending)
+		{
+			return;
+		}
+
+		m_resolved   = false;
+		m_mapPending = true;
+
+		WGPU_CHECK(wgpuBufferMapAsync(
+			  m_readback
+			, WGPUMapMode_Read
+			, 0
+			, kBufferSize
+			, {
+				.nextInChain = NULL,
+				.mode        = WGPUCallbackMode_AllowProcessEvents,
+				.callback    = readTimestampResultsCb,
+				.userdata1   = this,
+				.userdata2   = NULL,
+			}) );
+	}
+
+	void TimerQueryWGPU::consumeResults()
+	{
+		const uint64_t* timestamp = (const uint64_t*)wgpuBufferGetConstMappedRange(m_readback, 0, kBufferSize);
+
+		if (NULL != timestamp)
+		{
+			while (0 < m_control.getNumUsed() )
+			{
+				const uint32_t idx = m_control.m_read;
+				Query& query = m_query[idx];
+
+				if (!query.m_ready
+				||  query.m_frameNum > m_resolvedFrameNum)
+				{
+					break;
+				}
+
+				m_control.consume(1);
+
+				Result& result = m_result[query.m_resultIdx];
+				--result.m_pending;
+				result.m_frameNum = query.m_frameNum;
+				result.m_begin    = timestamp[idx*2 + 0];
+				result.m_end      = timestamp[idx*2 + 1];
+			}
+
+			WGPU_CHECK(wgpuBufferUnmap(m_readback) );
+		}
+
+		m_mapPending = false;
 	}
 
 	void OcclusionQueryWGPU::init()
@@ -5759,6 +5883,7 @@ m_resolution.formatColor = TextureFormat::BGRA8;
 	{
 		m_mipGen = &_mipGen;
 		m_occlusionQuery.readResultsAsync(_render);
+		m_gpuTimer.readResultsAsync();
 		WGPU_CHECK(wgpuInstanceProcessEvents(s_renderWGPU->m_instance) );
 
 		if (updateResolution(_render->m_resolution) )
@@ -6791,7 +6916,6 @@ m_resolution.formatColor = TextureFormat::BGRA8;
 		static uint32_t maxGpuLatency = 0;
 		static double   maxGpuElapsed = 0.0f;
 		double elapsedGpuMs = 0.0;
-		BX_UNUSED(elapsedGpuMs);
 
 		static int64_t presentMin = m_presentElapsed;
 		static int64_t presentMax = m_presentElapsed;
@@ -6801,19 +6925,32 @@ m_resolution.formatColor = TextureFormat::BGRA8;
 		if (UINT32_MAX != frameQueryIdx)
 		{
 			m_gpuTimer.end(frameQueryIdx);
+
+			const TimerQueryWGPU::Result& result = m_gpuTimer.m_result[BGFX_CONFIG_MAX_VIEWS];
+			double toGpuMs = 1000.0 / double(m_gpuTimer.m_frequency);
+			elapsedGpuMs   = (result.m_end - result.m_begin) * toGpuMs;
+			maxGpuElapsed  = elapsedGpuMs > maxGpuElapsed ? elapsedGpuMs : maxGpuElapsed;
+
+			maxGpuLatency = bx::max<int32_t>(maxGpuLatency, result.m_pending-1);
 		}
 
+		maxGpuLatency = bx::max<int32_t>(maxGpuLatency, m_gpuTimer.m_control.getNumUsed()-1);
+
+		m_gpuTimer.resolve(_render->m_frameNum);
+
 		const int64_t timerFreq = bx::getHPFrequency();
+
+		const TimerQueryWGPU::Result& result = m_gpuTimer.m_result[BGFX_CONFIG_MAX_VIEWS];
 
 		Stats& perfStats = _render->m_perfStats;
 		perfStats.cpuTimeBegin  = timeBegin;
 		perfStats.cpuTimeEnd    = timeBegin;
 		perfStats.cpuTimerFreq  = timerFreq;
 
-		perfStats.gpuTimeBegin  = 0;
-		perfStats.gpuTimeEnd    = 0;
-		perfStats.gpuTimerFreq  = 1000000000;
-		perfStats.gpuFrameNum   = 0;
+		perfStats.gpuTimeBegin  = result.m_begin;
+		perfStats.gpuTimeEnd    = result.m_end;
+		perfStats.gpuTimerFreq  = m_gpuTimer.m_frequency;
+		perfStats.gpuFrameNum   = result.m_frameNum;
 
 		perfStats.numDraw       = statsKeyType[0];
 		perfStats.numCompute    = statsKeyType[1];

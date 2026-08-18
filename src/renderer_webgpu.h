@@ -92,7 +92,7 @@
 		WGPU_IMPORT_FUNC(false, CommandEncoderResolveQuerySet);                     \
 		WGPU_IMPORT_FUNC(false, CommandEncoderSetLabel);                            \
 		WGPU_IGNORE_____(false, CommandEncoderWriteBuffer);                         \
-		WGPU_IMPORT_FUNC(false, CommandEncoderWriteTimestamp);                      \
+		WGPU_IGNORE_____(false, CommandEncoderWriteTimestamp);                      \
 		WGPU_IGNORE_____(false, CommandEncoderAddRef);                              \
 		WGPU_IMPORT_FUNC(false, CommandEncoderRelease);                             \
 		/* */                                                                       \
@@ -105,7 +105,7 @@
 		WGPU_IMPORT_FUNC(false, ComputePassEncoderSetBindGroup);                    \
 		WGPU_IMPORT_FUNC(false, ComputePassEncoderSetLabel);                        \
 		WGPU_IMPORT_FUNC(false, ComputePassEncoderSetPipeline);                     \
-		WGPU_IMPORT_FUNC(false, ComputePassEncoderWriteTimestamp);                  \
+		WGPU_IGNORE_____(false, ComputePassEncoderWriteTimestamp);                  \
 		WGPU_IGNORE_____(false, ComputePassEncoderAddRef);                          \
 		WGPU_IMPORT_FUNC(false, ComputePassEncoderRelease);                         \
 		/* */                                                                       \
@@ -238,7 +238,7 @@
 		WGPU_IMPORT_FUNC(false, RenderPassEncoderSetStencilReference);              \
 		WGPU_IMPORT_FUNC(false, RenderPassEncoderSetVertexBuffer);                  \
 		WGPU_IMPORT_FUNC(false, RenderPassEncoderSetViewport);                      \
-		WGPU_IMPORT_FUNC(false, RenderPassEncoderWriteTimestamp);                   \
+		WGPU_IGNORE_____(false, RenderPassEncoderWriteTimestamp);                   \
 		WGPU_IGNORE_____(false, RenderPassEncoderAddRef);                           \
 		WGPU_IMPORT_FUNC(false, RenderPassEncoderRelease);                          \
 		/* */                                                                       \
@@ -775,7 +775,15 @@ namespace wgpu {
 	struct TimerQueryWGPU
 	{
 		TimerQueryWGPU()
-			: m_control(BX_COUNTOF(m_result) )
+			: m_frequency(UINT64_C(1000000000) )
+			, m_querySet(NULL)
+			, m_resolve(NULL)
+			, m_readback(NULL)
+			, m_control(BX_COUNTOF(m_result) )
+			, m_resolvedFrameNum(0)
+			, m_supported(false)
+			, m_resolved(false)
+			, m_mapPending(false)
 		{
 		}
 
@@ -783,12 +791,16 @@ namespace wgpu {
 		void shutdown();
 		uint32_t begin(uint32_t _resultIdx, uint32_t _frameNum);
 		void end(uint32_t _idx);
+		void resolve(uint32_t _frameNum);
+		void readResultsAsync();
+		void consumeResults();
+
+		void writeTimestamp(uint32_t _index);
 
 		struct Query
 		{
 			uint32_t m_resultIdx;
 			uint32_t m_frameNum;
-			uint64_t m_fence;
 			bool     m_ready;
 		};
 
@@ -808,16 +820,25 @@ namespace wgpu {
 			uint32_t m_frameNum;
 		};
 
+		static constexpr uint32_t kNumTimestamps = (BGFX_CONFIG_MAX_VIEWS+1)*2;
+		static constexpr uint64_t kBufferSize    = kNumTimestamps * sizeof(uint64_t);
+
 		uint64_t m_frequency;
 
 		Result m_result[BGFX_CONFIG_MAX_VIEWS+1];
-		Query m_query[BGFX_CONFIG_MAX_VIEWS*4];
+		Query m_query[BGFX_CONFIG_MAX_VIEWS+1];
 
 		WGPUQuerySet m_querySet;
 		WGPUBuffer m_resolve;
 		WGPUBuffer m_readback;
 
 		bx::RingBufferControl m_control;
+
+		uint32_t m_resolvedFrameNum;
+
+		bool m_supported;
+		bool m_resolved;
+		bool m_mapPending;
 	};
 
 	struct OcclusionQueryWGPU
