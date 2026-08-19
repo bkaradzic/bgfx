@@ -137,9 +137,9 @@ There are also many platform-specific options.
   ::
 
       # Unix:
-      export BGFX_CONFIG=RENDERER_OPENGL_MIN_VERSION=40
+      export BGFX_CONFIG=RENDERER_OPENGL_MIN_VERSION=46
       # Windows:
-      set BGFX_CONFIG=RENDERER_OPENGL_MIN_VERSION=40
+      set BGFX_CONFIG=RENDERER_OPENGL_MIN_VERSION=46
 
       ../bx/tools/bin/<platform>/genie <... your options ...>
 

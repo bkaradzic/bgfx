@@ -1561,12 +1561,12 @@ public static class bgfx
 		Nvn,
 	
 		/// <summary>
-		/// OpenGL ES 2.0+
+		/// OpenGL ES 3.0+
 		/// </summary>
 		OpenGLES,
 	
 		/// <summary>
-		/// OpenGL 2.1+
+		/// OpenGL 4.3+
 		/// </summary>
 		OpenGL,
 	

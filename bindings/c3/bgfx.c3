@@ -987,10 +987,10 @@ enum RendererType : uint
 	// NVN
 	NVN,
 
-	// OpenGL ES 2.0+
+	// OpenGL ES 3.0+
 	OPENGLES,
 
-	// OpenGL 2.1+
+	// OpenGL 4.3+
 	OPENGL,
 
 	// Vulkan

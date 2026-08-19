@@ -21,12 +21,9 @@ Supported rendering backends
 -  Direct3D 12
 -  GNM (only for licensed PS4 developers, search DevNet forums for source)
 -  Metal
--  OpenGL 2.1
--  OpenGL 3.1+
--  OpenGL ES 2
--  OpenGL ES 3.1
+-  OpenGL 4.3+
+-  OpenGL ES 3.0+
 -  Vulkan
--  WebGL 1.0
 -  WebGL 2.0
 -  WebGPU (Dawn Native only)
 

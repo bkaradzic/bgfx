@@ -24,9 +24,9 @@ SHADER_TMP = $(TEMP)/tmp
 
 vs_%.bin.h : vs_%.sc
 	@echo [$(<)]
-	 $(SILENT) $(SHADERC) $(VS_FLAGS) --platform linux   -p 120         -f $(<) -o "$(SHADER_TMP)" --bin2c $(basename $(<))_glsl
+	 $(SILENT) $(SHADERC) $(VS_FLAGS) --platform linux   -p 430         -f $(<) -o "$(SHADER_TMP)" --bin2c $(basename $(<))_glsl
 	@cat "$(SHADER_TMP)" > $(@)
-	-$(SILENT) $(SHADERC) $(VS_FLAGS) --platform android -p 100_es      -f $(<) -o "$(SHADER_TMP)" --bin2c $(basename $(<))_essl
+	-$(SILENT) $(SHADERC) $(VS_FLAGS) --platform android -p 300_es      -f $(<) -o "$(SHADER_TMP)" --bin2c $(basename $(<))_essl
 	-@cat "$(SHADER_TMP)" >> $(@)
 	-$(SILENT) $(SHADERC) $(VS_FLAGS) --platform linux   -p spirv       -f $(<) -o "$(SHADER_TMP)" --bin2c $(basename $(<))_spv
 	-@cat "$(SHADER_TMP)" >> $(@)
@@ -43,9 +43,9 @@ vs_%.bin.h : vs_%.sc
 
 fs_%.bin.h : fs_%.sc
 	@echo [$(<)]
-	 $(SILENT) $(SHADERC) $(FS_FLAGS) --platform linux   -p 120         -f $(<) -o "$(SHADER_TMP)" --bin2c $(basename $(<))_glsl
+	 $(SILENT) $(SHADERC) $(FS_FLAGS) --platform linux   -p 430         -f $(<) -o "$(SHADER_TMP)" --bin2c $(basename $(<))_glsl
 	@cat "$(SHADER_TMP)" > $(@)
-	-$(SILENT) $(SHADERC) $(FS_FLAGS) --platform android -p 100_es      -f $(<) -o "$(SHADER_TMP)" --bin2c $(basename $(<))_essl
+	-$(SILENT) $(SHADERC) $(FS_FLAGS) --platform android -p 300_es      -f $(<) -o "$(SHADER_TMP)" --bin2c $(basename $(<))_essl
 	-@cat "$(SHADER_TMP)" >> $(@)
 	-$(SILENT) $(SHADERC) $(FS_FLAGS) --platform linux   -p spirv       -f $(<) -o "$(SHADER_TMP)" --bin2c $(basename $(<))_spv
 	-@cat "$(SHADER_TMP)" >> $(@)
@@ -64,7 +64,7 @@ cs_%.bin.h : cs_%.sc
 	@echo [$(<)]
 	 $(SILENT) $(SHADERC) $(CS_FLAGS) --platform linux   -p 430         -f $(<) -o "$(SHADER_TMP)" --bin2c $(basename $(<))_glsl
 	@cat "$(SHADER_TMP)" > $(@)
-	-$(SILENT) $(SHADERC) $(CS_FLAGS) --platform android                -f $(<) -o "$(SHADER_TMP)" --bin2c $(basename $(<))_essl
+	-$(SILENT) $(SHADERC) $(CS_FLAGS) --platform android -p 310_es      -f $(<) -o "$(SHADER_TMP)" --bin2c $(basename $(<))_essl
 	-@cat "$(SHADER_TMP)" >> $(@)
 	-$(SILENT) $(SHADERC) $(CS_FLAGS) --platform linux   -p spirv       -f $(<) -o "$(SHADER_TMP)" --bin2c $(basename $(<))_spv
 	-@cat "$(SHADER_TMP)" >> $(@)

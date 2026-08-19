@@ -115,13 +115,13 @@ The maximum size of transient buffers can be configured via ``Limits.maxTransien
 Customization
 -------------
 
-By default each platform has sane default values. For example on Windows the default renderer is Direct3D 12, on Linux it is Vulkan, and on macOS it's Metal. On Windows, almost all rendering backends are available. For OpenGL ES on desktop you can find more information at: `OpenGL ES 2.0 and EGL on desktop <http://www.g-truc.net/post-0457.html>`__
+By default each platform has sane default values. For example on Windows the default renderer is Direct3D 12, on Linux it is Vulkan, and on macOS it's Metal. On Windows, almost all rendering backends are available. For OpenGL ES on desktop you can find more information at: `OpenGL ES and EGL on desktop <http://www.g-truc.net/post-0457.html>`__
 
 If you're targeting specific mobile hardware, you can find GLES support in their official SDKs: `Adreno SDK <http://developer.qualcomm.com/mobile-development/mobile-technologies/gaming-graphics-optimization-adreno/tools-and-resources>`__, `Mali SDK <http://www.malideveloper.com/>`__, `PowerVR SDK <http://www.imgtec.com/powervr/insider/sdkdownloads/>`__.
 
 All configuration settings are located inside `src/config.h <https://github.com/bkaradzic/bgfx/blob/master/src/config.h>`__.
 
-Every ``BGFX_CONFIG_*`` setting can be changed by passing defines through compiler switches. For example setting preprocessor define ``BGFX_CONFIG_RENDERER_OPENGL=1`` will change the backend renderer to OpenGL 2.1 on Windows. Since rendering APIs are platform specific, this obviously won't work nor make sense in all cases.
+Every ``BGFX_CONFIG_*`` setting can be changed by passing defines through compiler switches. For example setting preprocessor define ``BGFX_CONFIG_RENDERER_OPENGL=1`` will change the backend renderer to OpenGL 4.3 on Windows. Since rendering APIs are platform specific, this obviously won't work nor make sense in all cases.
 
 Options
 ~~~~~~~
@@ -152,9 +152,9 @@ Renderer backends
 
 ``BGFX_CONFIG_RENDERER_NVN`` - Enable NVN renderer backend (Nintendo Switch). Default is auto-detected per platform.
 
-``BGFX_CONFIG_RENDERER_OPENGL`` - Enable OpenGL renderer backend. Set to the minimum GL version (e.g. 21 for OpenGL 2.1, 33 for 3.3, 44 for 4.4). Default is auto-detected per platform; minimum is 21 if enabled.
+``BGFX_CONFIG_RENDERER_OPENGL`` - Enable OpenGL renderer backend. Set to the minimum GL version (e.g. 43 for OpenGL 4.3, 45 for 4.5, 46 for 4.6). Default is auto-detected per platform; minimum is 43 if enabled.
 
-``BGFX_CONFIG_RENDERER_OPENGLES`` - Enable OpenGL ES renderer backend. Set to the minimum GLES version (e.g. 20 for ES 2.0, 30 for ES 3.0). Default is auto-detected per platform; minimum is 20 if enabled. Cannot be combined with ``BGFX_CONFIG_RENDERER_OPENGL``.
+``BGFX_CONFIG_RENDERER_OPENGLES`` - Enable OpenGL ES renderer backend. Set to the minimum GLES version (e.g. 30 for ES 3.0, 31 for ES 3.1). Default is auto-detected per platform; minimum is 30 if enabled. Cannot be combined with ``BGFX_CONFIG_RENDERER_OPENGL``.
 
 ``BGFX_CONFIG_RENDERER_VULKAN`` - Enable Vulkan renderer backend. Default is 1 on Android/Linux/Windows/macOS/NX.
 

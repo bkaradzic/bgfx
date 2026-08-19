@@ -60,12 +60,12 @@ project ("geometryv")
 		linkoptions {
 			"/ignore:4199", -- LNK4199: /DELAYLOAD:*.dll ignored; no imports found from *.dll
 		}
-		links { -- this is needed only for testing with GLES2/3 on Windows with VS2008
+		links { -- this is needed only for testing with GLES on Windows with VS2008
 			"DelayImp",
 		}
 
 	configuration { "vs201*" }
-		linkoptions { -- this is needed only for testing with GLES2/3 on Windows with VS201x
+		linkoptions { -- this is needed only for testing with GLES on Windows with VS201x
 			"/DELAYLOAD:\"libEGL.dll\"",
 			"/DELAYLOAD:\"libGLESv2.dll\"",
 		}

@@ -360,6 +360,14 @@ namespace
 			m_modelTexture = bgfx::createTexture2D(1,1, false, 1, bgfx::TextureFormat::RGBA8, 0,  mem);
 
 			m_recreateFrameBuffers = false;
+
+			// OpenGL ES 3.1 doesn't require r8, rg8, and r16f image formats to
+			// be supported, so fall back to formats that are always available.
+			const bool essl = bgfx::RendererType::OpenGLES == bgfx::getRendererType();
+			m_aoFormat    = essl ? bgfx::TextureFormat::RGBA8 : bgfx::TextureFormat::R8;
+			m_ssaoFormat  = essl ? bgfx::TextureFormat::RGBA8 : bgfx::TextureFormat::RG8;
+			m_depthFormat = essl ? bgfx::TextureFormat::R32F  : bgfx::TextureFormat::R16F;
+
 			createFramebuffers();
 
 			m_loadCounter = bgfx::createDynamicIndexBuffer(1, BGFX_BUFFER_COMPUTE_READ_WRITE | BGFX_BUFFER_INDEX32);
@@ -513,7 +521,7 @@ namespace
 					{
 						for (int32_t j = 0; j < 2; ++j)
 						{
-							bgfx::setImage((uint8_t)(j + 1), m_halfDepths[j == 0 ? 0 : 3], 0, bgfx::Access::Write, bgfx::TextureFormat::R16F);
+							bgfx::setImage((uint8_t)(j + 1), m_halfDepths[j == 0 ? 0 : 3], 0, bgfx::Access::Write, m_depthFormat);
 						}
 
 						bgfx::dispatch(view, m_settings.m_generateNormals ? m_prepareDepthsAndNormalsHalfProgram : m_prepareDepthsHalfProgram, (m_halfSize[0] + 7) / 8, (m_halfSize[1] + 7) / 8);
@@ -522,7 +530,7 @@ namespace
 					{
 						for(int32_t j = 0; j < 4; ++j)
 						{
-							bgfx::setImage((uint8_t)(j+1), m_halfDepths[j], 0, bgfx::Access::Write, bgfx::TextureFormat::R16F);
+							bgfx::setImage((uint8_t)(j+1), m_halfDepths[j], 0, bgfx::Access::Write, m_depthFormat);
 						}
 
 						bgfx::dispatch(view, m_settings.m_generateNormals ? m_prepareDepthsAndNormalsProgram : m_prepareDepthsProgram, (m_halfSize[0] + 7) / 8, (m_halfSize[1] + 7) / 8);
@@ -543,8 +551,8 @@ namespace
 
 						for (uint8_t j = 0; j < 4; ++j)
 						{
-							bgfx::setImage(j, m_halfDepths[j], i-1, bgfx::Access::Read, bgfx::TextureFormat::R16F);
-							bgfx::setImage(j + 4, m_halfDepths[j], i, bgfx::Access::Write, bgfx::TextureFormat::R16F);
+							bgfx::setImage(j, m_halfDepths[j], i-1, bgfx::Access::Read, m_depthFormat);
+							bgfx::setImage(j + 4, m_halfDepths[j], i, bgfx::Access::Write, m_depthFormat);
 						}
 
 						m_uniforms.submit();
@@ -610,7 +618,7 @@ namespace
 
 						// Generate
 						{
-							bgfx::setImage(6, blurPasses == 0 ? m_finalResults : pPingRT, 0, bgfx::Access::Write, bgfx::TextureFormat::RG8);
+							bgfx::setImage(6, blurPasses == 0 ? m_finalResults : pPingRT, 0, bgfx::Access::Write, m_ssaoFormat);
 
 							bgfx::setUniform(u_rect, halfResRect);
 
@@ -625,7 +633,7 @@ namespace
 							{
 								bgfx::setBuffer(3, m_loadCounter, bgfx::Access::Read);
 								bgfx::setTexture(4, s_importanceMap, m_importanceMap, SAMPLER_LINEAR_CLAMP);
-								bgfx::setImage(5, m_finalResults, 0, bgfx::Access::Read, bgfx::TextureFormat::RG8);
+								bgfx::setImage(5, m_finalResults, 0, bgfx::Access::Read, m_ssaoFormat);
 							}
 
 							bgfx::ProgramHandle programs[5] = { m_generateQ0Program, m_generateQ1Program , m_generateQ2Program , m_generateQ3Program , m_generateQ3BaseProgram };
@@ -651,7 +659,7 @@ namespace
 
 								bgfx::setUniform(u_rect, halfResRect);
 
-								bgfx::setImage(0, i == (blurPasses - 1) ? m_finalResults : pPongRT, 0, bgfx::Access::Write, bgfx::TextureFormat::RG8);
+								bgfx::setImage(0, i == (blurPasses - 1) ? m_finalResults : pPongRT, 0, bgfx::Access::Write, m_ssaoFormat);
 								bgfx::setTexture(1, s_blurInput, pPingRT, m_settings.m_qualityLevel > 0 ? SAMPLER_POINT_MIRROR : SAMPLER_LINEAR_CLAMP);
 
 								if (m_settings.m_qualityLevel > 0)
@@ -681,12 +689,12 @@ namespace
 					if (ssaoPass == 0 && m_settings.m_qualityLevel == 3)
 					{	// Generate importance map
 						m_uniforms.submit();
-						bgfx::setImage(0, m_importanceMap, 0, bgfx::Access::Write, bgfx::TextureFormat::R8);
+						bgfx::setImage(0, m_importanceMap, 0, bgfx::Access::Write, m_aoFormat);
 						bgfx::setTexture(1, s_finalSSAO, m_finalResults, SAMPLER_POINT_CLAMP);
 						bgfx::dispatch(view, m_generateImportanceMapProgram, (m_quarterSize[0] + 7) / 8, (m_quarterSize[1] + 7) / 8);
 
 						m_uniforms.submit();
-						bgfx::setImage(0, m_importanceMapPong, 0, bgfx::Access::Write, bgfx::TextureFormat::R8);
+						bgfx::setImage(0, m_importanceMapPong, 0, bgfx::Access::Write, m_aoFormat);
 						bgfx::setTexture(1, s_importanceMap, m_importanceMap);
 						bgfx::dispatch(view, m_postprocessImportanceMapAProgram, (m_quarterSize[0] + 7) / 8, (m_quarterSize[1] + 7) / 8);
 
@@ -694,7 +702,7 @@ namespace
 						bgfx::dispatch(view, m_loadCounterClearProgram, 1,1);
 
 						m_uniforms.submit();
-						bgfx::setImage(0, m_importanceMap, 0, bgfx::Access::Write, bgfx::TextureFormat::R8);
+						bgfx::setImage(0, m_importanceMap, 0, bgfx::Access::Write, m_aoFormat);
 						bgfx::setTexture(1, s_importanceMap, m_importanceMapPong);
 						bgfx::setBuffer(2, m_loadCounter, bgfx::Access::ReadWrite);
 						bgfx::dispatch(view, m_postprocessImportanceMapBProgram, (m_quarterSize[0]+7) / 8, (m_quarterSize[1]+7) / 8);
@@ -705,7 +713,7 @@ namespace
 				// Apply
 				{
 					// select 4 deinterleaved AO textures (texture array)
-					bgfx::setImage(0, m_aoMap, 0, bgfx::Access::Write, bgfx::TextureFormat::R8);
+					bgfx::setImage(0, m_aoMap, 0, bgfx::Access::Write, m_aoFormat);
 					bgfx::setTexture(1, s_finalSSAO, m_finalResults);
 
 					m_uniforms.submit();
@@ -928,20 +936,20 @@ namespace
 
 			for (int32_t i = 0; i < 4; i++)
 			{
-				m_halfDepths[i] = bgfx::createTexture2D(uint16_t(m_halfSize[0]), uint16_t(m_halfSize[1]), true, 1, bgfx::TextureFormat::R16F, BGFX_TEXTURE_COMPUTE_WRITE | SAMPLER_POINT_CLAMP);
+				m_halfDepths[i] = bgfx::createTexture2D(uint16_t(m_halfSize[0]), uint16_t(m_halfSize[1]), true, 1, m_depthFormat, BGFX_TEXTURE_COMPUTE_WRITE | SAMPLER_POINT_CLAMP);
 			}
 
-			m_pingPongHalfResultA = bgfx::createTexture2D(uint16_t(m_halfSize[0]), uint16_t(m_halfSize[1]), false, 2, bgfx::TextureFormat::RG8, BGFX_TEXTURE_COMPUTE_WRITE);
-			m_pingPongHalfResultB = bgfx::createTexture2D(uint16_t(m_halfSize[0]), uint16_t(m_halfSize[1]), false, 2, bgfx::TextureFormat::RG8, BGFX_TEXTURE_COMPUTE_WRITE);
+			m_pingPongHalfResultA = bgfx::createTexture2D(uint16_t(m_halfSize[0]), uint16_t(m_halfSize[1]), false, 2, m_ssaoFormat, BGFX_TEXTURE_COMPUTE_WRITE);
+			m_pingPongHalfResultB = bgfx::createTexture2D(uint16_t(m_halfSize[0]), uint16_t(m_halfSize[1]), false, 2, m_ssaoFormat, BGFX_TEXTURE_COMPUTE_WRITE);
 
-			m_finalResults = bgfx::createTexture2D(uint16_t(m_halfSize[0]), uint16_t(m_halfSize[1]),  false, 4, bgfx::TextureFormat::RG8, BGFX_TEXTURE_COMPUTE_WRITE | SAMPLER_LINEAR_CLAMP);
+			m_finalResults = bgfx::createTexture2D(uint16_t(m_halfSize[0]), uint16_t(m_halfSize[1]),  false, 4, m_ssaoFormat, BGFX_TEXTURE_COMPUTE_WRITE | SAMPLER_LINEAR_CLAMP);
 
 			m_normals = bgfx::createTexture2D(uint16_t(m_size[0]), uint16_t(m_size[1]),  false, 1, bgfx::TextureFormat::RGBA8, BGFX_TEXTURE_COMPUTE_WRITE);
 
-			m_importanceMap     = bgfx::createTexture2D(uint16_t(m_quarterSize[0]), uint16_t(m_quarterSize[1]), false, 1, bgfx::TextureFormat::R8, BGFX_TEXTURE_COMPUTE_WRITE | SAMPLER_LINEAR_CLAMP);
-			m_importanceMapPong = bgfx::createTexture2D(uint16_t(m_quarterSize[0]), uint16_t(m_quarterSize[1]), false, 1, bgfx::TextureFormat::R8, BGFX_TEXTURE_COMPUTE_WRITE | SAMPLER_LINEAR_CLAMP);
+			m_importanceMap     = bgfx::createTexture2D(uint16_t(m_quarterSize[0]), uint16_t(m_quarterSize[1]), false, 1, m_aoFormat, BGFX_TEXTURE_COMPUTE_WRITE | SAMPLER_LINEAR_CLAMP);
+			m_importanceMapPong = bgfx::createTexture2D(uint16_t(m_quarterSize[0]), uint16_t(m_quarterSize[1]), false, 1, m_aoFormat, BGFX_TEXTURE_COMPUTE_WRITE | SAMPLER_LINEAR_CLAMP);
 
-			m_aoMap = bgfx::createTexture2D(uint16_t(m_size[0]), uint16_t(m_size[1]), false, 1, bgfx::TextureFormat::R8, BGFX_TEXTURE_COMPUTE_WRITE | SAMPLER_POINT_CLAMP);
+			m_aoMap = bgfx::createTexture2D(uint16_t(m_size[0]), uint16_t(m_size[1]), false, 1, m_aoFormat, BGFX_TEXTURE_COMPUTE_WRITE | SAMPLER_POINT_CLAMP);
 		}
 
 		void destroyFramebuffers()
@@ -1148,6 +1156,11 @@ namespace
 		bgfx::TextureHandle m_finalResults;
 		bgfx::TextureHandle m_aoMap;
 		bgfx::TextureHandle m_normals;
+
+		// Must match ASSAO_*_FORMAT in uniforms.sh.
+		bgfx::TextureFormat::Enum m_aoFormat;
+		bgfx::TextureFormat::Enum m_ssaoFormat;
+		bgfx::TextureFormat::Enum m_depthFormat;
 
 		// Only needed for quality level 3 (adaptive quality)
 		bgfx::TextureHandle m_importanceMap;

@@ -216,19 +216,11 @@ namespace bgfx { namespace gl
 	};
 
 // In desktop OpenGL 4+ and OpenGL ES 3.0+, specific GL formats GL_x_INTEGER are used for integer textures.
-// For older desktop OpenGL contexts, GL names without _INTEGER suffix were used.
-// See http://docs.gl/gl4/glTexImage2D, http://docs.gl/gl3/glTexImage2D, http://docs.gl/es3/glTexImage2D
-#if BGFX_CONFIG_RENDERER_OPENGL >= 40 || BGFX_CONFIG_RENDERER_OPENGLES
-#	define RED_INTEGER  GL_RED_INTEGER
-#	define RG_INTEGER   GL_RG_INTEGER
-#	define RGB_INTEGER  GL_RGB_INTEGER
-#	define RGBA_INTEGER GL_RGBA_INTEGER
-#else
-#	define RED_INTEGER  GL_RED
-#	define RG_INTEGER   GL_RG
-#	define RGB_INTEGER  GL_RGB
-#	define RGBA_INTEGER GL_RGBA
-#endif
+// See http://docs.gl/gl4/glTexImage2D, http://docs.gl/es3/glTexImage2D
+#define RED_INTEGER  GL_RED_INTEGER
+#define RG_INTEGER   GL_RG_INTEGER
+#define RGB_INTEGER  GL_RGB_INTEGER
+#define RGBA_INTEGER GL_RGBA_INTEGER
 
 	static TextureFormatInfo s_textureFormat[] =
 	{
@@ -888,31 +880,31 @@ namespace bgfx { namespace gl
 		{ "EXT_blend_color",                          BGFX_CONFIG_RENDERER_OPENGL >= 31, true  },
 		{ "EXT_blend_minmax",                         BGFX_CONFIG_RENDERER_OPENGL >= 14, true  },
 		{ "EXT_blend_subtract",                       BGFX_CONFIG_RENDERER_OPENGL >= 14, true  },
-		{ "EXT_color_buffer_half_float",              false,                             true  }, // GLES2 extension.
-		{ "EXT_color_buffer_float",                   false,                             true  }, // GLES2 extension.
-		{ "EXT_copy_image",                           false,                             true  }, // GLES2 extension.
-		{ "EXT_compressed_ETC1_RGB8_sub_texture",     false,                             true  }, // GLES2 extension.
+		{ "EXT_color_buffer_half_float",              false,                             true  }, // GLES extension.
+		{ "EXT_color_buffer_float",                   false,                             true  }, // GLES extension.
+		{ "EXT_copy_image",                           false,                             true  }, // GLES extension.
+		{ "EXT_compressed_ETC1_RGB8_sub_texture",     false,                             true  }, // GLES extension.
 		{ "EXT_debug_label",                          false,                             true  },
 		{ "EXT_debug_marker",                         false,                             true  },
 		{ "EXT_debug_tool",                           false,                             true  }, // RenderDoc extension.
-		{ "EXT_discard_framebuffer",                  false,                             true  }, // GLES2 extension.
-		{ "EXT_disjoint_timer_query",                 false,                             true  }, // GLES2 extension.
-		{ "EXT_draw_buffers",                         false,                             true  }, // GLES2 extension.
-		{ "EXT_draw_instanced",                       false,                             true  }, // GLES2 extension.
-		{ "EXT_instanced_arrays",                     false,                             true  }, // GLES2 extension.
-		{ "EXT_frag_depth",                           false,                             true  }, // GLES2 extension.
+		{ "EXT_discard_framebuffer",                  false,                             true  }, // GLES extension.
+		{ "EXT_disjoint_timer_query",                 false,                             true  }, // GLES extension.
+		{ "EXT_draw_buffers",                         false,                             true  }, // GLES extension.
+		{ "EXT_draw_instanced",                       false,                             true  }, // GLES extension.
+		{ "EXT_instanced_arrays",                     false,                             true  }, // GLES extension.
+		{ "EXT_frag_depth",                           false,                             true  }, // GLES extension.
 		{ "EXT_framebuffer_blit",                     BGFX_CONFIG_RENDERER_OPENGL >= 30, true  },
 		{ "EXT_framebuffer_object",                   BGFX_CONFIG_RENDERER_OPENGL >= 30, true  },
 		{ "EXT_framebuffer_sRGB",                     BGFX_CONFIG_RENDERER_OPENGL >= 30, true  },
 		{ "EXT_gpu_shader4",                          BGFX_CONFIG_RENDERER_OPENGL >= 31, true  },
 		{ "EXT_multi_draw_indirect",                  false,                             true  }, // GLES3.1 extension.
-		{ "EXT_occlusion_query_boolean",              false,                             true  }, // GLES2 extension.
+		{ "EXT_occlusion_query_boolean",              false,                             true  }, // GLES extension.
 		{ "EXT_packed_float",                         BGFX_CONFIG_RENDERER_OPENGL >= 33, true  },
 		{ "EXT_read_format_bgra",                     false,                             true  },
 		{ "EXT_shader_image_load_store",              false,                             true  },
-		{ "EXT_shader_texture_lod",                   false,                             true  }, // GLES2 extension.
+		{ "EXT_shader_texture_lod",                   false,                             true  }, // GLES extension.
 		{ "EXT_shadow_samplers",                      false,                             true  },
-		{ "EXT_sRGB_write_control",                   false,                             true  }, // GLES2 extension.
+		{ "EXT_sRGB_write_control",                   false,                             true  }, // GLES extension.
 		{ "EXT_texture_array",                        BGFX_CONFIG_RENDERER_OPENGL >= 30, true  },
 		{ "EXT_texture_compression_dxt1",             false,                             true  },
 		{ "EXT_texture_compression_latc",             false,                             true  },
@@ -921,7 +913,7 @@ namespace bgfx { namespace gl
 		{ "EXT_texture_cube_map_array",               false,                             true  }, // GLES3.1 extension.
 		{ "EXT_texture_filter_anisotropic",           false,                             true  },
 		{ "EXT_texture_format_BGRA8888",              false,                             true  },
-		{ "EXT_texture_rg",                           false,                             true  }, // GLES2 extension.
+		{ "EXT_texture_rg",                           false,                             true  }, // GLES extension.
 		{ "EXT_texture_shared_exponent",              false,                             true  },
 		{ "EXT_texture_snorm",                        BGFX_CONFIG_RENDERER_OPENGL >= 30, true  },
 		{ "EXT_texture_sRGB",                         false,                             true  },
@@ -931,8 +923,8 @@ namespace bgfx { namespace gl
 		{ "EXT_texture_type_2_10_10_10_REV",          false,                             true  },
 		{ "EXT_timer_query",                          BGFX_CONFIG_RENDERER_OPENGL >= 33, true  },
 		{ "EXT_unpack_subimage",                      false,                             true  },
-		{ "EXT_sRGB",                                 false,                             true  }, // GLES2 extension.
-		{ "EXT_multisampled_render_to_texture",       false,                             true  }, // GLES2 extension.
+		{ "EXT_sRGB",                                 false,                             true  }, // GLES extension.
+		{ "EXT_multisampled_render_to_texture",       false,                             true  }, // GLES extension.
 
 		{ "GOOGLE_depth_texture",                     false,                             true  },
 
@@ -953,11 +945,11 @@ namespace bgfx { namespace gl
 
 		{ "NV_conservative_raster",                   false,                             true  },
 		{ "NV_copy_image",                            false,                             true  },
-		{ "NV_draw_buffers",                          false,                             true  }, // GLES2 extension.
-		{ "NV_draw_instanced",                        false,                             true  }, // GLES2 extension.
-		{ "NV_instanced_arrays",                      false,                             true  }, // GLES2 extension.
+		{ "NV_draw_buffers",                          false,                             true  }, // GLES extension.
+		{ "NV_draw_instanced",                        false,                             true  }, // GLES extension.
+		{ "NV_instanced_arrays",                      false,                             true  }, // GLES extension.
 		{ "NV_occlusion_query",                       false,                             true  },
-		{ "NV_texture_border_clamp",                  false,                             true  }, // GLES2 extension.
+		{ "NV_texture_border_clamp",                  false,                             true  }, // GLES extension.
 		{ "NVX_gpu_memory_info",                      false,                             true  },
 
 		{ "OES_copy_image",                           false,                             true  },
@@ -999,151 +991,6 @@ namespace bgfx { namespace gl
 		{ "WEBKIT_WEBGL_depth_texture",               false,                             true  },
 	};
 	static_assert(Extension::Count == BX_COUNTOF(s_extension) );
-
-	static const char* s_ARB_shader_texture_lod[] =
-	{
-		"texture2DLod",
-		"texture2DArrayLod", // BK - interacts with ARB_texture_array.
-		"texture2DProjLod",
-		"texture2DGrad",
-		"texture2DProjGrad",
-		"texture3DLod",
-		"texture3DProjLod",
-		"texture3DGrad",
-		"texture3DProjGrad",
-		"textureCubeLod",
-		"textureCubeGrad",
-		"shadow2DLod",
-		"shadow2DProjLod",
-		NULL
-		// "texture1DLod",
-		// "texture1DProjLod",
-		// "shadow1DLod",
-		// "shadow1DProjLod",
-	};
-
-	static const char* s_EXT_shader_texture_lod[] =
-	{
-		"texture2DLod",
-		"texture2DProjLod",
-		"textureCubeLod",
-		"texture2DGrad",
-		"texture2DProjGrad",
-		"textureCubeGrad",
-		NULL
-	};
-
-	static const char* s_ARB_shader_viewport_layer_array[] =
-	{
-		"gl_ViewportIndex",
-		"gl_Layer",
-		NULL
-	};
-
-	static const char* s_EXT_shadow_samplers[] =
-	{
-		"shadow2D",
-		"shadow2DProj",
-		NULL
-	};
-
-	static const char* s_OES_standard_derivatives[] =
-	{
-		"dFdx",
-		"dFdy",
-		"fwidth",
-		NULL
-	};
-
-	static const char* s_uisamplers[] =
-	{
-		"isampler2D",
-		"usampler2D",
-		"isampler3D",
-		"usampler3D",
-		"isamplerCube",
-		"usamplerCube",
-		NULL
-	};
-
-	static const char* s_uint[] =
-	{
-		"uint",
-		"uvec2",
-		"uvec3",
-		"uvec4",
-		NULL
-	};
-
-	static const char* s_texelFetch[] =
-	{
-		"texture",
-		"textureLod",
-		"textureGrad",
-		"textureProj",
-		"textureProjLod",
-		"texelFetch",
-		"texelFetchOffset",
-		NULL
-	};
-
-	static const char* s_texture3D[] =
-	{
-		"sampler3D",
-		"sampler3DArray",
-		NULL
-	};
-
-	static const char* s_textureArray[] =
-	{
-		"sampler2DArray",
-		"sampler2DMSArray",
-		"samplerCubeArray",
-		"sampler2DArrayShadow",
-		NULL
-	};
-
-	static const char* s_ARB_texture_multisample[] =
-	{
-		"sampler2DMS",
-		"isampler2DMS",
-		"usampler2DMS",
-		NULL
-	};
-
-	static const char* s_EXT_gpu_shader4[] =
-	{
-		"gl_VertexID",
-		"gl_InstanceID",
-		"uint",
-		NULL
-	};
-
-	static const char* s_ARB_gpu_shader5[] =
-	{
-		"bitfieldReverse",
-		"floatBitsToInt",
-		"floatBitsToUint",
-		"intBitsToFloat",
-		"uintBitsToFloat",
-		NULL
-	};
-
-	static const char* s_ARB_shading_language_packing[] =
-	{
-		"packHalf2x16",
-		"unpackHalf2x16",
-		NULL
-	};
-
-	static const char* s_intepolationQualifier[] =
-	{
-		"flat",
-		"smooth",
-		"noperspective",
-		"centroid",
-		NULL
-	};
 
 	static void GL_APIENTRY stubVertexAttribDivisor(GLuint /*_index*/, GLuint /*_divisor*/)
 	{
@@ -1743,11 +1590,6 @@ namespace bgfx { namespace gl
 		// console; instead examine the supported texture formats from the spec.
 		EMSCRIPTEN_WEBGL_CONTEXT_HANDLE ctx = emscripten_webgl_get_current_context();
 
-		EmscriptenWebGLContextAttributes attrs;
-		EMSCRIPTEN_CHECK(emscripten_webgl_get_context_attributes(ctx, &attrs) );
-
-		const int glesVersion = attrs.majorVersion + 1;
-
 		switch(_format)
 		{
 			case TextureFormat::A8:
@@ -1758,11 +1600,10 @@ namespace bgfx { namespace gl
 			case TextureFormat::RGBA4:
 			case TextureFormat::BGR5A1:
 			case TextureFormat::RGB5A1:
-				// GLES2 formats without sRGB.
 				return !_srgb;
 
 			case TextureFormat::D16:
-				// GLES2 formats without sRGB, depth textures do not support mipmaps.
+				// Depth textures do not support mipmaps.
 				return !_srgb
 					&& !_mipAutogen
 					;
@@ -1774,10 +1615,7 @@ namespace bgfx { namespace gl
 			case TextureFormat::RG32F:
 			case TextureFormat::RGB10A2:
 			case TextureFormat::RG11B10F:
-				// GLES3 formats without sRGB
-				return !_srgb
-					&& glesVersion >= 3
-					;
+				return !_srgb;
 
 			case TextureFormat::R8I:
 			case TextureFormat::R8U:
@@ -1805,41 +1643,33 @@ namespace bgfx { namespace gl
 			case TextureFormat::RGB8S:
 			case TextureFormat::RGBA8S:
 			case TextureFormat::RGB9E5F:
-				// GLES3 formats without sRGB that are not texture filterable or color renderable.
-				return !_srgb && glesVersion >= 3
+				// Not texture filterable or color renderable.
+				return !_srgb
 					&& !_mipAutogen
 					;
 
 			case TextureFormat::D24:
 			case TextureFormat::D24S8:
 			case TextureFormat::D32:
-				// GLES3 formats without sRGB, depth textures do not support mipmaps.
-				return !_srgb && !_mipAutogen
-					&& (glesVersion >= 3 || emscripten_webgl_enable_extension(ctx, "WEBGL_depth_texture") )
+				// Depth textures do not support mipmaps.
+				return !_srgb
+					&& !_mipAutogen
 					;
 
 			case TextureFormat::D16F:
 			case TextureFormat::D24F:
-				// GLES3 depth formats without sRGB, depth textures do not support mipmaps.
+				// Depth textures do not support mipmaps.
 				return !_srgb
 					&& !_mipAutogen
-					&& glesVersion >= 3
 					;
 
 			case TextureFormat::RGBA16F:
 			case TextureFormat::RGBA32F:
-				// GLES3 formats without sRGB
-				return !_srgb
-					&& (glesVersion >= 3 || emscripten_webgl_enable_extension(ctx, "OES_texture_half_float") )
-					;
+				return !_srgb;
 
 			case TextureFormat::RGB8:
 			case TextureFormat::RGBA8:
-				// sRGB formats
-				return !_srgb
-					|| glesVersion >= 3
-					|| emscripten_webgl_enable_extension(ctx, "EXT_sRGB")
-					;
+				return true;
 
 			case TextureFormat::BC1:
 			case TextureFormat::BC2:
@@ -1999,14 +1829,8 @@ namespace bgfx { namespace gl
 		// Avoid creating test textures for WebGL, that causes error noise in the browser console; instead examine the supported texture formats from the spec.
 		EMSCRIPTEN_WEBGL_CONTEXT_HANDLE ctx = emscripten_webgl_get_current_context();
 
-		EmscriptenWebGLContextAttributes attrs;
-		EMSCRIPTEN_CHECK(emscripten_webgl_get_context_attributes(ctx, &attrs) );
-
-		const int glesVersion = attrs.majorVersion + 1;
-
 		switch(_format)
 		{
-			// GLES2 textures
 			case TextureFormat::B5G6R5:
 			case TextureFormat::R5G6B5:
 			case TextureFormat::BGRA4:
@@ -2016,20 +1840,17 @@ namespace bgfx { namespace gl
 			case TextureFormat::D16:
 				return !_srgb;
 
-			// GLES2 renderbuffers not a texture in GLES3
+			// Renderbuffer only.
 			case TextureFormat::D0S8:
 				return !_srgb
 					&& _writeOnly
 					;
 
-			// GLES2 textures that are not renderbuffers
 			case TextureFormat::RGB8:
 			case TextureFormat::RGBA8:
-				return !_srgb
-					&& (!_writeOnly || glesVersion >= 3)
-					;
+				return !_srgb;
 
-			// GLES3 EXT_color_buffer_float renderbuffer formats
+			// EXT_color_buffer_float renderbuffer formats
 			case TextureFormat::R16F:
 			case TextureFormat::RG16F:
 			case TextureFormat::R32F:
@@ -2040,9 +1861,8 @@ namespace bgfx { namespace gl
 					return emscripten_webgl_enable_extension(ctx, "EXT_color_buffer_float");
 				}
 
-				return !_srgb && glesVersion >= 3;
+				return !_srgb;
 
-			// GLES2 float extension:
 			case TextureFormat::RGBA16F:
 				if (_writeOnly && emscripten_webgl_enable_extension(ctx, "EXT_color_buffer_half_float") )
 				{
@@ -2056,26 +1876,17 @@ namespace bgfx { namespace gl
 					return emscripten_webgl_enable_extension(ctx, "EXT_color_buffer_float") || emscripten_webgl_enable_extension(ctx, "WEBGL_color_buffer_float");
 				}
 
-				// GLES3 formats without sRGB
-				return !_srgb
-					&& (glesVersion >= 3 || emscripten_webgl_enable_extension(ctx, "OES_texture_half_float") )
-					;
+				return !_srgb;
 
 			case TextureFormat::D24:
 			case TextureFormat::D24S8:
-				// GLES3 formats without sRGB, depth textures do not support mipmaps.
-				return !_srgb
-					&& (glesVersion >= 3 || (!_writeOnly && emscripten_webgl_enable_extension(ctx, "WEBGL_depth_texture") ) )
-					;
+				return !_srgb;
 
 			case TextureFormat::D32:
-				// GLES3 formats without sRGB, depth textures do not support mipmaps.
 				return !_srgb
 					&& !_writeOnly
-					&& (glesVersion >= 3 || emscripten_webgl_enable_extension(ctx, "WEBGL_depth_texture") )
 					;
 
-			// GLES3 textures
 			case TextureFormat::R8:
 			case TextureFormat::RG8:
 			case TextureFormat::R8I:
@@ -2100,14 +1911,11 @@ namespace bgfx { namespace gl
 			case TextureFormat::D16F:
 			case TextureFormat::D24F:
 			case TextureFormat::D32F:
-				return !_srgb
-					&& glesVersion >= 3
-					;
+				return !_srgb;
 
 			case TextureFormat::BGRA8:
 				return !_srgb
 					&& _writeOnly
-					&& glesVersion >= 3
 					;
 
 			default:
@@ -2331,12 +2139,10 @@ namespace bgfx { namespace gl
 			, m_readBackFboSupported(false)
 			, m_vaoSupport(false)
 			, m_samplerObjectSupport(false)
-			, m_shadowSamplersSupport(false)
 			, m_srgbWriteControlSupport(BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) )
 			, m_borderColorSupport(BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) )
 			, m_programBinarySupport(false)
 			, m_textureSwizzleSupport(false)
-			, m_depthTextureSupport(false)
 			, m_timerQuerySupport(false)
 			, m_occlusionQuerySupport(false)
 			, m_atocSupport(false)
@@ -2387,32 +2193,6 @@ namespace bgfx { namespace gl
 			m_version     = getGLString(GL_VERSION);
 			m_glslVersion = getGLString(GL_SHADING_LANGUAGE_VERSION);
 
-			{
-				if (BX_ENABLED(BX_PLATFORM_EMSCRIPTEN) )
-				{
-					int32_t majorGlVersion = 0;
-					int32_t minorGlVersion = 0;
-					const char* version = m_version;
-
-					while (*version && !bx::isNumeric(*version) )
-					{
-						++version;
-					}
-
-					bx::fromString(&majorGlVersion, version);
-					bx::fromString(&minorGlVersion, version + 2);
-					int32_t glVersion = majorGlVersion*10 + minorGlVersion;
-
-					BX_TRACE("WebGL context version %d (%d.%d).", glVersion, majorGlVersion, minorGlVersion);
-
-					m_gles3 = glVersion >= 30;
-				}
-				else
-				{
-					m_gles3 = BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES >= 30);
-				}
-			}
-
 			for (uint32_t ii = 0; ii < BX_COUNTOF(s_vendorIds); ++ii)
 			{
 				const VendorId& vendorId = s_vendorIds[ii];
@@ -2458,15 +2238,9 @@ namespace bgfx { namespace gl
 			{
 #define GL_GET(_pname, _min) BX_TRACE("  " #_pname " %d (min: %d)", glGet(_pname), _min)
 				BX_TRACE("Defaults:");
-#if BGFX_CONFIG_RENDERER_OPENGL >= 41 || BGFX_CONFIG_RENDERER_OPENGLES
 				GL_GET(GL_MAX_FRAGMENT_UNIFORM_VECTORS, 16);
 				GL_GET(GL_MAX_VERTEX_UNIFORM_VECTORS, 128);
 				GL_GET(GL_MAX_VARYING_VECTORS, 8);
-#else
-				GL_GET(GL_MAX_FRAGMENT_UNIFORM_COMPONENTS, 16 * 4);
-				GL_GET(GL_MAX_VERTEX_UNIFORM_COMPONENTS, 128 * 4);
-				GL_GET(GL_MAX_VARYING_FLOATS, 8 * 4);
-#endif // BGFX_CONFIG_RENDERER_OPENGL >= 41 || BGFX_CONFIG_RENDERER_OPENGLES
 				GL_GET(GL_MAX_VERTEX_ATTRIBS, 8);
 				GL_GET(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, 8);
 				GL_GET(GL_MAX_CUBE_MAP_TEXTURE_SIZE, 16);
@@ -2621,7 +2395,7 @@ namespace bgfx { namespace gl
 					;
 				s_textureFormat[TextureFormat::ETC1].m_supported |= etc1Supported;
 
-				bool etc2Supported = !!(BGFX_CONFIG_RENDERER_OPENGLES >= 30)
+				bool etc2Supported = !!(BGFX_CONFIG_RENDERER_OPENGLES)
 					|| s_extension[Extension::ARB_ES3_compatibility].m_supported
 					;
 				s_textureFormat[TextureFormat::ETC2  ].m_supported |= etc2Supported;
@@ -2652,55 +2426,9 @@ namespace bgfx { namespace gl
 
 				if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES) )
 				{
-					if (m_gles3)
-					{
-						setTextureFormat(TextureFormat::R16F,    GL_R16F,    GL_RED,  0x140B /* == GL_HALF_FLOAT, but bgfx overwrites it globally with GL_HALF_FLOAT_OES */);
-						setTextureFormat(TextureFormat::RG16F,   GL_RG16F,   GL_RG,   0x140B /* == GL_HALF_FLOAT, but bgfx overwrites it globally with GL_HALF_FLOAT_OES */);
-						setTextureFormat(TextureFormat::RGBA16F, GL_RGBA16F, GL_RGBA, 0x140B /* == GL_HALF_FLOAT, but bgfx overwrites it globally with GL_HALF_FLOAT_OES */);
-					}
-					else
-					{
-						setTextureFormat(TextureFormat::RGBA16F, GL_RGBA, GL_RGBA, GL_HALF_FLOAT); // Note: this is actually GL_HALF_FLOAT_OES and not GL_HALF_FLOAT if compiling for GLES target.
-						setTextureFormat(TextureFormat::RGBA32F, GL_RGBA, GL_RGBA, GL_FLOAT);
-						// internalFormat and format must match:
-						// https://www.khronos.org/opengles/sdk/docs/man/xhtml/glTexImage2D.xml
-						setTextureFormat(TextureFormat::RGBA8,  GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE);
-						setTextureFormat(TextureFormat::B5G6R5, GL_RGB,  GL_RGB,  GL_UNSIGNED_SHORT_5_6_5_REV);
-						setTextureFormat(TextureFormat::R5G6B5, GL_RGB,  GL_RGB,  GL_UNSIGNED_SHORT_5_6_5_REV);
-						setTextureFormat(TextureFormat::BGRA4,  GL_BGRA, GL_BGRA, GL_UNSIGNED_SHORT_4_4_4_4_REV);
-						setTextureFormat(TextureFormat::RGBA4,  GL_RGBA, GL_RGBA, GL_UNSIGNED_SHORT_4_4_4_4_REV);
-						setTextureFormat(TextureFormat::BGR5A1, GL_BGRA, GL_BGRA, GL_UNSIGNED_SHORT_1_5_5_5_REV);
-						setTextureFormat(TextureFormat::RGB5A1, GL_RGBA, GL_RGBA, GL_UNSIGNED_SHORT_1_5_5_5_REV);
-
-						if (s_extension[Extension::EXT_sRGB].m_supported)
-						{
-							setTextureFormatSrgb(TextureFormat::RGBA8, GL_SRGB_ALPHA_EXT, GL_SRGB_ALPHA_EXT);
-							setTextureFormatSrgb(TextureFormat::RGB8, GL_SRGB_EXT, GL_SRGB_EXT);
-						}
-
-						if (s_extension[Extension::EXT_texture_swizzle].m_supported)
-						{
-							s_textureFormat[TextureFormat::R5G6B5].m_mapping[0] = GL_BLUE;
-							s_textureFormat[TextureFormat::R5G6B5].m_mapping[2] = GL_RED;
-						}
-
-						if (s_extension[Extension::OES_texture_half_float].m_supported
-						||  s_extension[Extension::OES_texture_float     ].m_supported)
-						{
-							// https://www.khronos.org/registry/gles/extensions/OES/OES_texture_float.txt
-							// When half/float is available via extensions texture will be marked as
-							// incomplete if it uses anything other than nearest filter.
-							const bool linear16F = s_extension[Extension::OES_texture_half_float_linear].m_supported;
-							const bool linear32F = s_extension[Extension::OES_texture_float_linear     ].m_supported;
-
-							s_textureFilter[TextureFormat::R16F]    = linear16F;
-							s_textureFilter[TextureFormat::RG16F]   = linear16F;
-							s_textureFilter[TextureFormat::RGBA16F] = linear16F;
-							s_textureFilter[TextureFormat::R32F]    = linear32F;
-							s_textureFilter[TextureFormat::RG32F]   = linear32F;
-							s_textureFilter[TextureFormat::RGBA32F] = linear32F;
-						}
-					}
+					setTextureFormat(TextureFormat::R16F,    GL_R16F,    GL_RED,  0x140B /* == GL_HALF_FLOAT, but bgfx overwrites it globally with GL_HALF_FLOAT_OES */);
+					setTextureFormat(TextureFormat::RG16F,   GL_RG16F,   GL_RG,   0x140B /* == GL_HALF_FLOAT, but bgfx overwrites it globally with GL_HALF_FLOAT_OES */);
+					setTextureFormat(TextureFormat::RGBA16F, GL_RGBA16F, GL_RGBA, 0x140B /* == GL_HALF_FLOAT, but bgfx overwrites it globally with GL_HALF_FLOAT_OES */);
 
 					if (BX_ENABLED(BX_PLATFORM_EMSCRIPTEN)
 						&& (s_extension[Extension::WEBGL_depth_texture].m_supported
@@ -2714,17 +2442,14 @@ namespace bgfx { namespace gl
 					}
 
 					// OpenGL ES 3.0 depth formats.
-					if (m_gles3)
-					{
-						setTextureFormat(TextureFormat::D16,   GL_DEPTH_COMPONENT16,  GL_DEPTH_COMPONENT, GL_UNSIGNED_SHORT);
-						setTextureFormat(TextureFormat::D24,   GL_DEPTH_COMPONENT24,  GL_DEPTH_COMPONENT, GL_UNSIGNED_INT);
-						setTextureFormat(TextureFormat::D32,   GL_DEPTH_COMPONENT24,  GL_DEPTH_COMPONENT, GL_UNSIGNED_INT);
-						setTextureFormat(TextureFormat::D24S8, GL_DEPTH24_STENCIL8,   GL_DEPTH_STENCIL,   GL_UNSIGNED_INT_24_8);
-						setTextureFormat(TextureFormat::D16F,  GL_DEPTH_COMPONENT32F, GL_DEPTH_COMPONENT, GL_FLOAT); // GLES 3.0 does not have D16F, overshoot to D32F
-						setTextureFormat(TextureFormat::D24F,  GL_DEPTH_COMPONENT32F, GL_DEPTH_COMPONENT, GL_FLOAT); // GLES 3.0 does not have D24F, overshoot to D32F
-						setTextureFormat(TextureFormat::D32F,  GL_DEPTH_COMPONENT32F, GL_DEPTH_COMPONENT, GL_FLOAT);
-						setTextureFormat(TextureFormat::D0S8,  GL_STENCIL_INDEX8, GL_STENCIL_INDEX, GL_UNSIGNED_BYTE); // Only works as renderbuffer, not as texture
-					}
+					setTextureFormat(TextureFormat::D16,   GL_DEPTH_COMPONENT16,  GL_DEPTH_COMPONENT, GL_UNSIGNED_SHORT);
+					setTextureFormat(TextureFormat::D24,   GL_DEPTH_COMPONENT24,  GL_DEPTH_COMPONENT, GL_UNSIGNED_INT);
+					setTextureFormat(TextureFormat::D32,   GL_DEPTH_COMPONENT24,  GL_DEPTH_COMPONENT, GL_UNSIGNED_INT);
+					setTextureFormat(TextureFormat::D24S8, GL_DEPTH24_STENCIL8,   GL_DEPTH_STENCIL,   GL_UNSIGNED_INT_24_8);
+					setTextureFormat(TextureFormat::D16F,  GL_DEPTH_COMPONENT32F, GL_DEPTH_COMPONENT, GL_FLOAT); // GLES 3.0 does not have D16F, overshoot to D32F
+					setTextureFormat(TextureFormat::D24F,  GL_DEPTH_COMPONENT32F, GL_DEPTH_COMPONENT, GL_FLOAT); // GLES 3.0 does not have D24F, overshoot to D32F
+					setTextureFormat(TextureFormat::D32F,  GL_DEPTH_COMPONENT32F, GL_DEPTH_COMPONENT, GL_FLOAT);
+					setTextureFormat(TextureFormat::D0S8,  GL_STENCIL_INDEX8, GL_STENCIL_INDEX, GL_UNSIGNED_BYTE); // Only works as renderbuffer, not as texture
 				}
 				else
 				{
@@ -2733,7 +2458,7 @@ namespace bgfx { namespace gl
 				}
 
 				if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL)
-				||  m_gles3)
+				||  BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES))
 				{
 					setTextureFormat(TextureFormat::R8I,     GL_R8I,      GL_RED_INTEGER,  GL_BYTE);
 					setTextureFormat(TextureFormat::R8U,     GL_R8UI,     GL_RED_INTEGER,  GL_UNSIGNED_BYTE);
@@ -2789,20 +2514,6 @@ namespace bgfx { namespace gl
 					setTextureFormat(TextureFormat::RGB5A1, GL_RGBA, GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1);
 					setTextureFormat(TextureFormat::B5G6R5, GL_RGB,  GL_RGB,  GL_UNSIGNED_SHORT_5_6_5);
 					setTextureFormat(TextureFormat::R5G6B5, GL_RGB,  GL_RGB,  GL_UNSIGNED_SHORT_5_6_5);
-
-					if (!m_gles3)
-					{
-						// OpenGL ES 2.0 uses unsized internal formats.
-						s_textureFormat[TextureFormat::RGB8].m_internalFmt = GL_RGB;
-
-						// OpenGL ES 2.0 does not have R8 texture format, only L8. Open GL ES 2.0 extension https://www.khronos.org/registry/OpenGL/extensions/EXT/EXT_texture_rg.txt
-						// adds support for R8 to GLES 2.0 core contexts. For those use L8 instead.
-						if (!s_extension[Extension::EXT_texture_rg].m_supported)
-						{
-							s_textureFormat[TextureFormat::R8].m_internalFmt = GL_LUMINANCE;
-							s_textureFormat[TextureFormat::R8].m_fmt         = GL_LUMINANCE;
-						}
-					}
 				}
 
 				for (uint32_t ii = 0; ii < TextureFormat::Count; ++ii)
@@ -2911,32 +2622,16 @@ namespace bgfx { namespace gl
 
 				g_caps.formats[TextureFormat::BGRA8] |= BGFX_CAPS_FORMAT_TEXTURE_BACKBUFFER;
 
-				g_caps.supported |= !!(BGFX_CONFIG_RENDERER_OPENGL || m_gles3)
-					|| s_extension[Extension::OES_texture_3D].m_supported
-					? BGFX_CAPS_TEXTURE_3D
-					: 0
-					;
-				g_caps.supported |= !!(BGFX_CONFIG_RENDERER_OPENGL || m_gles3)
-					|| s_extension[Extension::EXT_shadow_samplers].m_supported
-					? BGFX_CAPS_TEXTURE_COMPARE_ALL
-					: 0
-					;
-				g_caps.supported |= !!(BGFX_CONFIG_RENDERER_OPENGL || m_gles3)
-					|| s_extension[Extension::OES_vertex_half_float].m_supported
-					? BGFX_CAPS_VERTEX_ATTRIB_HALF
-					: 0
-					;
+				g_caps.supported |= BGFX_CAPS_TEXTURE_3D;
+				g_caps.supported |= BGFX_CAPS_TEXTURE_COMPARE_ALL;
+				g_caps.supported |= BGFX_CAPS_VERTEX_ATTRIB_HALF;
 				g_caps.supported |= false
 					|| s_extension[Extension::ARB_vertex_type_2_10_10_10_rev].m_supported
 					|| s_extension[Extension::OES_vertex_type_10_10_10_2].m_supported
 					? BGFX_CAPS_VERTEX_ATTRIB_UINT10
 					: 0
 					;
-				g_caps.supported |= !!(BGFX_CONFIG_RENDERER_OPENGL || m_gles3)
-					|| s_extension[Extension::EXT_frag_depth].m_supported
-					? BGFX_CAPS_FRAGMENT_DEPTH
-					: 0
-					;
+				g_caps.supported |= BGFX_CAPS_FRAGMENT_DEPTH;
 				g_caps.supported |= s_extension[Extension::ARB_draw_buffers_blend].m_supported
 					? BGFX_CAPS_BLEND_INDEPENDENT
 					: 0
@@ -2945,17 +2640,17 @@ namespace bgfx { namespace gl
 					? BGFX_CAPS_FRAGMENT_ORDERING
 					: 0
 					;
-				g_caps.supported |= !!(BGFX_CONFIG_RENDERER_OPENGL || m_gles3)
-					|| s_extension[Extension::OES_element_index_uint].m_supported
-					? BGFX_CAPS_INDEX32
-					: 0
-					;
+				g_caps.supported |= BGFX_CAPS_INDEX32;
 
 				const bool drawIndirectSupported = false
 					|| s_extension[Extension::AMD_multi_draw_indirect].m_supported
 					|| s_extension[Extension::ARB_draw_indirect      ].m_supported
 					|| s_extension[Extension::ARB_multi_draw_indirect].m_supported
 					|| s_extension[Extension::EXT_multi_draw_indirect].m_supported
+					|| (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES >= 31) // Core since ES 3.1.
+						&& NULL != glDrawArraysIndirect
+						&& NULL != glDrawElementsIndirect
+						)
 					;
 
 				if (drawIndirectSupported)
@@ -3001,7 +2696,7 @@ namespace bgfx { namespace gl
 
 				m_depthStencilTexturingSupported = false
 					|| s_extension[Extension::ARB_stencil_texturing].m_supported
-					|| BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL   >= 43)
+					|| BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL)
 					|| BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES >= 31)
 					;
 
@@ -3023,21 +2718,21 @@ namespace bgfx { namespace gl
 				g_caps.supported |= false
 					|| s_extension[Extension::EXT_texture_array].m_supported
 					|| s_extension[Extension::EXT_gpu_shader4].m_supported
-					|| (m_gles3 && !BX_ENABLED(BX_PLATFORM_EMSCRIPTEN) )
+					|| (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES) && !BX_ENABLED(BX_PLATFORM_EMSCRIPTEN) )
 					? BGFX_CAPS_TEXTURE_2D_ARRAY
 					: 0
 					;
 
 				g_caps.supported |= false
 					|| s_extension[Extension::EXT_gpu_shader4].m_supported
-					|| (m_gles3 && !BX_ENABLED(BX_PLATFORM_EMSCRIPTEN) )
+					|| (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES) && !BX_ENABLED(BX_PLATFORM_EMSCRIPTEN) )
 					? BGFX_CAPS_VERTEX_ID
 					: 0
 					;
 
 				g_caps.supported |= false
-					|| BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL >= 32)
-					|| (m_gles3 && !BX_ENABLED(BX_PLATFORM_EMSCRIPTEN) && BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES >= 32) )
+					|| BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL)
+					|| (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES) && !BX_ENABLED(BX_PLATFORM_EMSCRIPTEN) && BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES >= 32) )
 					? BGFX_CAPS_PRIMITIVE_ID
 					: 0
 					;
@@ -3050,14 +2745,14 @@ namespace bgfx { namespace gl
 					;
 
 				g_caps.limits.maxTextureSize     = uint32_t(glGet(GL_MAX_TEXTURE_SIZE) );
-				g_caps.limits.maxTextureLayers   = BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL >= 30) || BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES >= 30) || s_extension[Extension::EXT_texture_array].m_supported ? uint16_t(bx::max(glGet(GL_MAX_ARRAY_TEXTURE_LAYERS), 1) ) : 1;
+				g_caps.limits.maxTextureLayers   = uint16_t(bx::max(glGet(GL_MAX_ARRAY_TEXTURE_LAYERS), 1) );
 				g_caps.limits.maxComputeBindings = computeSupport ? BGFX_MAX_COMPUTE_BINDINGS : 0;
 				g_caps.limits.maxVertexStreams   = BGFX_CONFIG_MAX_VERTEX_STREAMS;
 				g_caps.limits.maxVertexAttributes = uint32_t(glGet(GL_MAX_VERTEX_ATTRIBS) );
 				g_caps.limits.maxInstanceData    = bx::min<uint32_t>(g_caps.limits.maxInstanceData, g_caps.limits.maxVertexAttributes);
 
 				if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL)
-				||  m_gles3
+				||  BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES)
 				||  s_extension[Extension::EXT_draw_buffers  ].m_supported
 				||  s_extension[Extension::WEBGL_draw_buffers].m_supported)
 				{
@@ -3075,7 +2770,7 @@ namespace bgfx { namespace gl
 				}
 
 				m_vaoSupport = !BX_ENABLED(BX_PLATFORM_EMSCRIPTEN)
-					&& (m_gles3
+					&& (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES)
 						|| s_extension[Extension::ARB_vertex_array_object].m_supported
 						|| s_extension[Extension::OES_vertex_array_object].m_supported
 						);
@@ -3087,18 +2782,14 @@ namespace bgfx { namespace gl
 				}
 
 				m_samplerObjectSupport = false
-					|| m_gles3
+					|| BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES)
 					|| s_extension[Extension::ARB_sampler_objects].m_supported
-					;
-
-				m_shadowSamplersSupport = !!(BGFX_CONFIG_RENDERER_OPENGL || m_gles3)
-					|| s_extension[Extension::EXT_shadow_samplers].m_supported
 					;
 
 				GLint numFormats = 0;
 				GL_CHECK(glGetIntegerv(GL_NUM_PROGRAM_BINARY_FORMATS, &numFormats) );
 				m_programBinarySupport = !BX_ENABLED(BX_PLATFORM_EMSCRIPTEN)
-					&& (m_gles3
+					&& (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES)
 						|| s_extension[Extension::ARB_get_program_binary].m_supported
 						|| s_extension[Extension::OES_get_program_binary].m_supported
 						|| s_extension[Extension::IMG_shader_binary     ].m_supported
@@ -3107,16 +2798,6 @@ namespace bgfx { namespace gl
 				m_textureSwizzleSupport = false
 					|| s_extension[Extension::ARB_texture_swizzle].m_supported
 					|| s_extension[Extension::EXT_texture_swizzle].m_supported
-					;
-
-				m_depthTextureSupport = !!(BGFX_CONFIG_RENDERER_OPENGL || m_gles3)
-					|| s_extension[Extension::ANGLE_depth_texture       ].m_supported
-					|| s_extension[Extension::CHROMIUM_depth_texture    ].m_supported
-					|| s_extension[Extension::GOOGLE_depth_texture      ].m_supported
-					|| s_extension[Extension::OES_depth_texture         ].m_supported
-					|| s_extension[Extension::MOZ_WEBGL_depth_texture   ].m_supported
-					|| s_extension[Extension::WEBGL_depth_texture       ].m_supported
-					|| s_extension[Extension::WEBKIT_WEBGL_depth_texture].m_supported
 					;
 
 				m_timerQuerySupport = false
@@ -3133,6 +2814,7 @@ namespace bgfx { namespace gl
 					;
 
 				m_occlusionQuerySupport = false
+					|| BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES) // Core since ES 3.0.
 					|| s_extension[Extension::ARB_occlusion_query        ].m_supported
 					|| s_extension[Extension::ARB_occlusion_query2       ].m_supported
 					|| s_extension[Extension::EXT_occlusion_query_boolean].m_supported
@@ -3144,11 +2826,14 @@ namespace bgfx { namespace gl
 					&& NULL != glDeleteQueries
 					&& NULL != glBeginQuery
 					&& NULL != glEndQuery
+					&& NULL != glGetQueryObjectuiv
 					;
 
 				m_atocSupport = s_extension[Extension::ARB_multisample].m_supported;
 				m_conservativeRasterSupport = s_extension[Extension::NV_conservative_raster].m_supported;
 
+				// Note: ES 3.1 has image load/store in core, but read-write
+				// images are limited to r32f, r32i, and r32ui formats.
 				m_imageLoadStoreSupport = false
 					|| s_extension[Extension::ARB_shader_image_load_store].m_supported
 					|| s_extension[Extension::EXT_shader_image_load_store].m_supported
@@ -3158,7 +2843,7 @@ namespace bgfx { namespace gl
 					| (m_atocSupport               ? BGFX_CAPS_ALPHA_TO_COVERAGE      : 0)
 					| (m_conservativeRasterSupport ? BGFX_CAPS_CONSERVATIVE_RASTER    : 0)
 					| (m_occlusionQuerySupport     ? BGFX_CAPS_OCCLUSION_QUERY        : 0)
-					| (m_depthTextureSupport       ? BGFX_CAPS_TEXTURE_COMPARE_LEQUAL : 0)
+					| BGFX_CAPS_TEXTURE_COMPARE_LEQUAL
 					| (computeSupport              ? BGFX_CAPS_COMPUTE                : 0)
 					| (m_imageLoadStoreSupport     ? BGFX_CAPS_IMAGE_RW               : 0)
 					;
@@ -3181,20 +2866,13 @@ namespace bgfx { namespace gl
 					GL_CHECK(glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &m_maxAnisotropyDefault) );
 				}
 
-				if (m_gles3
+				if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES)
 				||  s_extension[Extension::ARB_texture_multisample].m_supported
 				||  s_extension[Extension::ANGLE_framebuffer_multisample].m_supported
 				||  s_extension[Extension::EXT_multisampled_render_to_texture].m_supported)
 				{
 					GL_CHECK(glGetIntegerv(GL_MAX_SAMPLES, &m_maxMsaa) );
 				}
-
-#if BGFX_CONFIG_RENDERER_OPENGLES && (BGFX_CONFIG_RENDERER_OPENGLES < 30)
-				if (!m_maxMsaa  && s_extension[Extension::IMG_multisampled_render_to_texture].m_supported)
-				{
-					GL_CHECK(glGetIntegerv(GL_MAX_SAMPLES_IMG, &m_maxMsaa) );
-				}
-#endif // BGFX_CONFIG_RENDERER_OPENGLES < 30
 
 				if (s_extension[Extension::OES_read_format].m_supported
 				&& (s_extension[Extension::IMG_read_format].m_supported	|| s_extension[Extension::EXT_read_format_bgra].m_supported) )
@@ -3206,7 +2884,7 @@ namespace bgfx { namespace gl
 					m_readPixelsFmt = GL_RGBA;
 				}
 
-				if (m_gles3)
+				if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES))
 				{
 					g_caps.supported |= BGFX_CAPS_INSTANCING;
 				}
@@ -3305,7 +2983,7 @@ namespace bgfx { namespace gl
 					glInsertEventMarker = stubInsertEventMarker;
 				}
 
-				m_maxLabelLen = BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES >= 32) || BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL >= 43) || s_extension[Extension::KHR_debug].m_supported ? uint16_t(glGet(GL_MAX_LABEL_LENGTH) ) : 0;
+				m_maxLabelLen = BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES >= 32) || BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) || s_extension[Extension::KHR_debug].m_supported ? uint16_t(glGet(GL_MAX_LABEL_LENGTH) ) : 0;
 
 				setGraphicsDebuggerPresent(false
 					|| s_extension[Extension::EXT_debug_tool].m_supported
@@ -3649,10 +3327,7 @@ namespace bgfx { namespace gl
 							) );
 					}
 
-					if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) || m_gles3)
-					{
-						GL_CHECK(glReadBuffer(GL_COLOR_ATTACHMENT0) );
-					}
+					GL_CHECK(glReadBuffer(GL_COLOR_ATTACHMENT0) );
 
 					if (GL_FRAMEBUFFER_COMPLETE == glCheckFramebufferStatus(GL_FRAMEBUFFER) )
 					{
@@ -4166,15 +3841,12 @@ namespace bgfx { namespace gl
 					: GL_RGBA8
 					;
 
-				GLenum attachment = BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) || m_gles3
-					? GL_DEPTH_STENCIL_ATTACHMENT
-					: GL_DEPTH_ATTACHMENT
-					;
+				GLenum attachment = GL_DEPTH_STENCIL_ATTACHMENT;
 
 				GL_CHECK(glGenFramebuffers(1, &m_msaaBackBufferFbo) );
 				GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, m_msaaBackBufferFbo) );
 
-				if (m_gles3)
+				if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES))
 				{
 					GL_CHECK(glGenTextures(BX_COUNTOF(m_msaaBackBufferTextures), m_msaaBackBufferTextures) );
 					GL_CHECK(glBindTexture(GL_TEXTURE_2D, m_msaaBackBufferTextures[0]) );
@@ -4340,7 +4012,7 @@ namespace bgfx { namespace gl
 				GL_CHECK(glDeleteFramebuffers(1, &m_msaaBackBufferFbo) );
 				m_msaaBackBufferFbo = 0;
 
-				if (m_gles3)
+				if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES))
 				{
 					if (0 != m_msaaBackBufferTextures[0])
 					{
@@ -4378,12 +4050,12 @@ namespace bgfx { namespace gl
 
 				const uint32_t width  = m_resolution.width;
 				const uint32_t height = m_resolution.height;
-				const GLenum filter = BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) || !m_gles3
+				const GLenum filter = BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL)
 					? GL_NEAREST
 					: GL_LINEAR
 					;
 
-				if (m_gles3)
+				if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES))
 				{
 					GL_CHECK(glUseProgram(m_msaaBlitProgram) );
 					GL_CHECK(glActiveTexture(GL_TEXTURE0) );
@@ -4524,19 +4196,15 @@ namespace bgfx { namespace gl
 						GL_CHECK(glSamplerParameterf(sampler, GL_TEXTURE_MAX_ANISOTROPY_EXT, m_maxAnisotropy) );
 					}
 
-					if (m_gles3
-					||  m_shadowSamplersSupport)
+					const uint32_t cmpFunc = (_flags&BGFX_SAMPLER_COMPARE_MASK)>>BGFX_SAMPLER_COMPARE_SHIFT;
+					if (0 == cmpFunc)
 					{
-						const uint32_t cmpFunc = (_flags&BGFX_SAMPLER_COMPARE_MASK)>>BGFX_SAMPLER_COMPARE_SHIFT;
-						if (0 == cmpFunc)
-						{
-							GL_CHECK(glSamplerParameteri(sampler, GL_TEXTURE_COMPARE_MODE, GL_NONE) );
-						}
-						else
-						{
-							GL_CHECK(glSamplerParameteri(sampler, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE) );
-							GL_CHECK(glSamplerParameteri(sampler, GL_TEXTURE_COMPARE_FUNC, s_cmpFunc[cmpFunc]) );
-						}
+						GL_CHECK(glSamplerParameteri(sampler, GL_TEXTURE_COMPARE_MODE, GL_NONE) );
+					}
+					else
+					{
+						GL_CHECK(glSamplerParameteri(sampler, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE) );
+						GL_CHECK(glSamplerParameteri(sampler, GL_TEXTURE_COMPARE_FUNC, s_cmpFunc[cmpFunc]) );
 					}
 
 					m_samplerStateCache.add(hash, SamplerGL{sampler});
@@ -5080,12 +4748,10 @@ namespace bgfx { namespace gl
 		bool m_readBackFboSupported;
 		bool m_vaoSupport;
 		bool m_samplerObjectSupport;
-		bool m_shadowSamplersSupport;
 		bool m_srgbWriteControlSupport;
 		bool m_borderColorSupport;
 		bool m_programBinarySupport;
 		bool m_textureSwizzleSupport;
-		bool m_depthTextureSupport;
 		bool m_timerQuerySupport;
 		bool m_occlusionQuerySupport;
 		bool m_atocSupport;
@@ -5114,7 +4780,6 @@ namespace bgfx { namespace gl
 		const char* m_renderer;
 		const char* m_version;
 		const char* m_glslVersion;
-		bool m_gles3;
 
 		Workaround m_workaround;
 
@@ -5423,9 +5088,9 @@ namespace bgfx { namespace gl
 		GLint activeUniforms = 0;
 		GLint activeBuffers  = 0;
 
-#if BGFX_CONFIG_RENDERER_OPENGL >= 31
+#if BGFX_CONFIG_RENDERER_OPENGL
 		GL_CHECK(glBindFragDataLocation(m_id, 0, "bgfx_FragColor") );
-#endif // BGFX_CONFIG_RENDERER_OPENGL >= 31
+#endif // BGFX_CONFIG_RENDERER_OPENGL
 
 		GLint max0, max1;
 
@@ -5770,8 +5435,7 @@ namespace bgfx { namespace gl
 					GL_CHECK(glVertexAttribDivisor(loc, 0) );
 
 					uint32_t baseVertex = _baseVertex*_layout.m_stride + _layout.m_offset[attr];
-					if ( (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL >= 30) || s_renderGL->m_gles3)
-					&&  !isFloat(type)
+					if (!isFloat(type)
 					&&  !normalized)
 					{
 						GL_CHECK(glVertexAttribIPointer(loc
@@ -6007,7 +5671,7 @@ namespace bgfx { namespace gl
 						, _height
 						) );
 				}
-				else if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) || s_renderGL->m_gles3)
+				else
 				{
 					GL_CHECK(glRenderbufferStorageMultisample(GL_RENDERBUFFER
 						, msaaQuality
@@ -6494,7 +6158,7 @@ namespace bgfx { namespace gl
 
 	void TextureGL::setSamplerState(uint32_t _flags, const float _rgba[4])
 	{
-		if (!s_renderGL->m_gles3
+		if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL)
 		&&  !s_textureFilter[m_textureFormat])
 		{
 			// Force point sampling when texture format doesn't support linear sampling.
@@ -6537,8 +6201,7 @@ namespace bgfx { namespace gl
 			GL_CHECK(glTexParameteri(target, GL_TEXTURE_WRAP_S, s_textureAddress[(flags&BGFX_SAMPLER_U_MASK)>>BGFX_SAMPLER_U_SHIFT]) );
 			GL_CHECK(glTexParameteri(target, GL_TEXTURE_WRAP_T, s_textureAddress[(flags&BGFX_SAMPLER_V_MASK)>>BGFX_SAMPLER_V_SHIFT]) );
 
-			if (1 < numMips
-			&& (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) || s_renderGL->m_gles3 || s_extension[Extension::APPLE_texture_max_level].m_supported) )
+			if (1 < numMips)
 			{
 				GL_CHECK(glTexParameteri(targetMsaa, GL_TEXTURE_MAX_LEVEL, numMips-1) );
 				m_maxLevel = -1;
@@ -6572,19 +6235,15 @@ namespace bgfx { namespace gl
 				GL_CHECK(glTexParameterf(target, GL_TEXTURE_MAX_ANISOTROPY_EXT, s_renderGL->m_maxAnisotropy) );
 			}
 
-			if (s_renderGL->m_gles3
-			||  s_renderGL->m_shadowSamplersSupport)
+			const uint32_t cmpFunc = (flags&BGFX_SAMPLER_COMPARE_MASK)>>BGFX_SAMPLER_COMPARE_SHIFT;
+			if (0 == cmpFunc)
 			{
-				const uint32_t cmpFunc = (flags&BGFX_SAMPLER_COMPARE_MASK)>>BGFX_SAMPLER_COMPARE_SHIFT;
-				if (0 == cmpFunc)
-				{
-					GL_CHECK(glTexParameteri(target, GL_TEXTURE_COMPARE_MODE, GL_NONE) );
-				}
-				else
-				{
-					GL_CHECK(glTexParameteri(target, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE) );
-					GL_CHECK(glTexParameteri(target, GL_TEXTURE_COMPARE_FUNC, s_cmpFunc[cmpFunc]) );
-				}
+				GL_CHECK(glTexParameteri(target, GL_TEXTURE_COMPARE_MODE, GL_NONE) );
+			}
+			else
+			{
+				GL_CHECK(glTexParameteri(target, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE) );
+				GL_CHECK(glTexParameteri(target, GL_TEXTURE_COMPARE_FUNC, s_cmpFunc[cmpFunc]) );
 			}
 
 			m_currentSamplerHash = hash;
@@ -6741,8 +6400,7 @@ namespace bgfx { namespace gl
 
 		if (id == m_id
 		&&  1 < m_numMips
-		&&  GL_TEXTURE_2D_MULTISAMPLE != m_target
-		&& (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL >= 30) || s_renderGL->m_gles3) )
+		&&  GL_TEXTURE_2D_MULTISAMPLE != m_target)
 		{
 			const uint8_t firstMip = bx::min<uint8_t>(_firstMip, uint8_t(m_numMips - 1) );
 			const uint8_t numMips  = bx::min<uint8_t>(_numMips, uint8_t(m_numMips - firstMip) );
@@ -6771,13 +6429,6 @@ namespace bgfx { namespace gl
 			GL_CHECK(glGenerateMipmap(m_target) );
 			GL_CHECK(glBindTexture(m_target, 0) );
 		}
-	}
-
-	void strins(char* _str, const char* _insert)
-	{
-		size_t len = bx::strLen(_insert);
-		bx::memMove(&_str[len], _str, bx::strLen(_str)+1);
-		bx::memCopy(_str, _insert, len);
 	}
 
 	static bx::StringView patchNdcConstant(
@@ -7018,580 +6669,35 @@ namespace bgfx { namespace gl
 
 		if (0 != m_id)
 		{
-			if (GL_COMPUTE_SHADER != m_type
-			&&  0 != bx::strCmp(code, "#version", 8) ) // #2000
+			// Shaders are compiled without the #version directive, so that the
+			// same shader binary can be used with both GLSL, and ESSL. Shaders
+			// compiled with --raw keep whatever the author wrote. See #2000.
+			if (0 != bx::strCmp(code, "#version", 8) )
 			{
-				int32_t tempLen = code.getLength() + (4<<10);
+				const int32_t tempLen = code.getLength() + (4<<10);
 				char* temp = (char*)BX_STACK_ALLOC(tempLen);
 				bx::StaticMemoryBlockWriter writer(temp, tempLen);
 
-				if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES)
-				&&  !s_renderGL->m_gles3)
+				if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES) )
 				{
-					bx::write(&writer
-						, "#define centroid\n"
-						  "#define flat\n"
-						  "#define noperspective\n"
-						  "#define smooth\n"
-						, &err
-						);
-
-					bool usesDerivatives = s_extension[Extension::OES_standard_derivatives].m_supported
-						&& !bx::findIdentifierMatch(code, s_OES_standard_derivatives).isEmpty()
+					// Images, and storage buffers, require ESSL 3.10. Binding
+					// qualifier is not necessarily first in layout list, for
+					// example `layout(location = 0, binding = 2, rgba8)`.
+					const bool needsEssl310 = GL_COMPUTE_SHADER == m_type
+						|| !bx::strFind(code, "binding = ").isEmpty()
 						;
 
-					const bool usesFragData         = !bx::findIdentifierMatch(code, "gl_FragData").isEmpty();
-					const bool usesFragDepth        = !bx::findIdentifierMatch(code, "gl_FragDepth").isEmpty();
-					const bool usesShadowSamplers   = !bx::findIdentifierMatch(code, s_EXT_shadow_samplers).isEmpty();
-					const bool usesTextureLod       = !bx::findIdentifierMatch(code, s_EXT_shader_texture_lod).isEmpty();
-					const bool usesFragmentOrdering = !bx::findIdentifierMatch(code, "beginFragmentShaderOrdering").isEmpty();
-
-					const bool usesTexture3D = true
-						&& s_extension[Extension::OES_texture_3D].m_supported
-						&& !bx::findIdentifierMatch(code, s_texture3D).isEmpty()
-						;
-
-					if (usesDerivatives)
-					{
-						bx::write(&writer, "#extension GL_OES_standard_derivatives : enable\n", &err);
-					}
-
-					if (usesFragData)
-					{
-						BX_WARN(s_extension[Extension::EXT_draw_buffers  ].m_supported
-							||  s_extension[Extension::WEBGL_draw_buffers].m_supported
-							, "EXT_draw_buffers is used but not supported by GLES2 driver."
-							);
-						bx::write(&writer, "#extension GL_EXT_draw_buffers : enable\n", &err);
-					}
-
-					bool insertFragDepth = false;
-					if (usesFragDepth)
-					{
-						BX_WARN(s_extension[Extension::EXT_frag_depth].m_supported, "EXT_frag_depth is used but not supported by GLES2 driver.");
-						if (s_extension[Extension::EXT_frag_depth].m_supported)
-						{
-							bx::write(&writer
-								, "#extension GL_EXT_frag_depth : enable\n"
-								  "#define bgfx_FragDepth gl_FragDepthEXT\n"
-								, &err
-								);
-
-							char str[128];
-							bx::snprintf(str, BX_COUNTOF(str), "%s float gl_FragDepthEXT;\n"
-								, s_extension[Extension::OES_fragment_precision_high].m_supported ? "highp" : "mediump"
-								);
-							bx::write(&writer, str, &err);
-						}
-						else
-						{
-							insertFragDepth = true;
-						}
-					}
-
-					if (usesShadowSamplers)
-					{
-						if (s_renderGL->m_shadowSamplersSupport)
-						{
-							bx::write(&writer
-								, "#extension GL_EXT_shadow_samplers : enable\n"
-								  "#define shadow2D shadow2DEXT\n"
-								  "#define shadow2DProj shadow2DProjEXT\n"
-								, &err
-								);
-						}
-						else
-						{
-							bx::write(&writer
-								, "#define sampler2DShadow sampler2D\n"
-								  "#define shadow2D(_sampler, _coord) step(_coord.z, texture2D(_sampler, _coord.xy).x)\n"
-								  "#define shadow2DProj(_sampler, _coord) step(_coord.z/_coord.w, texture2DProj(_sampler, _coord).x)\n"
-								, &err
-								);
-						}
-					}
-
-					if (usesTexture3D)
-					{
-						bx::write(&writer, "#extension GL_OES_texture_3D : enable\n", &err);
-					}
-
-					if (usesTextureLod)
-					{
-						BX_WARN(s_extension[Extension::ARB_shader_texture_lod].m_supported
-							|| s_extension[Extension::EXT_shader_texture_lod].m_supported
-							, "(ARB|EXT)_shader_texture_lod is used but not supported by GLES2 driver."
-							);
-
-						if (s_extension[Extension::ARB_shader_texture_lod].m_supported)
-						{
-							bx::write(&writer
-								, "#extension GL_ARB_shader_texture_lod : enable\n"
-								  "#define texture2DLod      texture2DLodARB\n"
-								  "#define texture2DProjLod  texture2DProjLodARB\n"
-								  "#define textureCubeLod    textureCubeLodARB\n"
-								  "#define texture2DGrad     texture2DGradARB\n"
-								  "#define texture2DProjGrad texture2DProjGradARB\n"
-								  "#define textureCubeGrad   textureCubeGradARB\n"
-								, &err
-								);
-						}
-						else
-						{
-							if (s_extension[Extension::EXT_shader_texture_lod].m_supported)
-							{
-								bx::write(&writer
-									, "#extension GL_EXT_shader_texture_lod : enable\n"
-									  "#define texture2DLod     texture2DLodEXT\n"
-									  "#define texture2DProjLod texture2DProjLodEXT\n"
-									  "#define textureCubeLod   textureCubeLodEXT\n"
-									, &err
-									);
-							}
-							else
-							{
-								bx::write(&writer
-									, "#define texture2DLod(_sampler, _coord, _level) texture2D(_sampler, _coord)\n"
-									  "#define texture2DProjLod(_sampler, _coord, _level) texture2DProj(_sampler, _coord)\n"
-									  "#define textureCubeLod(_sampler, _coord, _level) textureCube(_sampler, _coord)\n"
-									, &err
-									);
-							}
-						}
-					}
-
-					if (usesFragmentOrdering)
-					{
-						if (s_extension[Extension::INTEL_fragment_shader_ordering].m_supported)
-						{
-							bx::write(&writer, "#extension GL_INTEL_fragment_shader_ordering : enable\n", &err);
-						}
-						else
-						{
-							bx::write(&writer, "#define beginFragmentShaderOrdering()\n", &err);
-						}
-					}
-
-					bx::write(&writer, &err, "precision %s float;\n"
-						, m_type == GL_FRAGMENT_SHADER ? "mediump" : "highp"
-						);
-
-					bx::write(&writer, code, &err);
-					bx::write(&writer, '\0', &err);
-
-					if (insertFragDepth)
-					{
-						bx::StringView shader(temp);
-						bx::StringView entry = bx::strFind(shader, "void main ()");
-						if (!entry.isEmpty() )
-						{
-							entry.set(entry.getTerm(), shader.getTerm() );
-							bx::StringView brace = bx::strFind(entry, "{");
-							if (!brace.isEmpty() )
-							{
-								bx::StringView block = bx::strFindBlock(bx::StringView(brace.getPtr(), shader.getTerm() ), '{', '}');
-								if (!block.isEmpty() )
-								{
-									strins(const_cast<char*>(brace.getPtr()+1), "\n  float bgfx_FragDepth = 0.0;\n");
-								}
-							}
-						}
-					}
-
-					// Replace all instances of gl_FragDepth with bgfx_FragDepth.
-					for (bx::StringView fragDepth = bx::findIdentifierMatch(temp, "gl_FragDepth")
-						; !fragDepth.isEmpty()
-						; fragDepth = bx::findIdentifierMatch(fragDepth.getPtr(), "gl_FragDepth")
-						)
-					{
-						char* insert = const_cast<char*>(fragDepth.getPtr() );
-						strins(insert, "bg");
-						bx::memCopy(insert + 2, "fx", 2);
-					}
-				}
-				else if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL)
-					 &&  BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL <= 21) )
-				{
-					const bool usesTextureLod = true
-						&& s_extension[Extension::ARB_shader_texture_lod].m_supported
-						&& !bx::findIdentifierMatch(code, s_ARB_shader_texture_lod).isEmpty()
-						;
-
-					const bool usesVertexID = true
-						&& !s_extension[Extension::EXT_gpu_shader4].m_supported
-						&& !bx::findIdentifierMatch(code, "gl_VertexID").isEmpty()
-						;
-
-					const bool usesInstanceID = true
-						&& !s_extension[Extension::EXT_gpu_shader4].m_supported
-						&& !bx::findIdentifierMatch(code, "gl_InstanceID").isEmpty()
-						;
-
-					const bool usesGpuShader4 = true
-						&& s_extension[Extension::EXT_gpu_shader4].m_supported
-						&& !bx::findIdentifierMatch(code, s_EXT_gpu_shader4).isEmpty()
-						;
-
-					// GpuShader5 extension is not supported on the fragment shader!
-					const bool usesGpuShader5 = true
-						&& m_type != GL_FRAGMENT_SHADER
-						&& !bx::findIdentifierMatch(code, s_ARB_gpu_shader5).isEmpty()
-						;
-
-					const bool usesViewportLayerArray = true
-						&& s_extension[Extension::ARB_shader_viewport_layer_array].m_supported
-						&& !bx::findIdentifierMatch(code, s_ARB_shader_viewport_layer_array).isEmpty()
-						;
-
-					const bool usesIUsamplers   = !bx::findIdentifierMatch(code, s_uisamplers).isEmpty();
-					const bool usesUint         = !bx::findIdentifierMatch(code, s_uint).isEmpty();
-					const bool usesTexelFetch   = !bx::findIdentifierMatch(code, s_texelFetch).isEmpty();
-					const bool usesTextureArray = !bx::findIdentifierMatch(code, s_textureArray).isEmpty();
-					const bool usesTexture3D    = !bx::findIdentifierMatch(code, s_texture3D).isEmpty();
-					const bool usesTextureMS    = !bx::findIdentifierMatch(code, s_ARB_texture_multisample).isEmpty();
-					const bool usesPacking      = !bx::findIdentifierMatch(code, s_ARB_shading_language_packing).isEmpty();
-					const bool usesInterpQ      = !bx::findIdentifierMatch(code, s_intepolationQualifier).isEmpty();
-
-					uint32_t version = false
-						|| usesTextureArray
-						|| usesTexture3D
-						|| usesIUsamplers
-						|| usesVertexID
-						|| usesUint
-						|| usesTexelFetch
-					    || usesGpuShader4
-						|| usesGpuShader5
-						|| usesInterpQ
-						? 130
-						: 120
-						;
-
-					version = 0 == bx::strCmp(code, "#version 430", 12) ? 430 : version;
-
-					bx::write(&writer, &err, "#version %d\n", version);
-
-					if (430 > version && usesTextureLod)
-					{
-						if (m_type == GL_FRAGMENT_SHADER)
-						{
-							bx::write(&writer
-								, "#extension GL_ARB_shader_texture_lod : enable\n"
-								  "#define texture2DGrad     texture2DGradARB\n"
-								  "#define texture2DProjGrad texture2DProjGradARB\n"
-								  "#define textureCubeGrad   textureCubeGradARB\n"
-								, &err
-								);
-						}
-					}
-
-					if (usesInstanceID)
-					{
-						bx::write(&writer, "#extension GL_ARB_draw_instanced : enable\n", &err);
-					}
-
-					if (usesGpuShader4)
-					{
-						bx::write(&writer, "#extension GL_EXT_gpu_shader4 : enable\n", &err);
-					}
-
-					if (usesGpuShader5)
-					{
-						bx::write(&writer, "#extension GL_ARB_gpu_shader5 : enable\n", &err);
-					}
-
-					if (usesViewportLayerArray)
-					{
-						bx::write(&writer, "#extension GL_ARB_shader_viewport_layer_array : enable\n", &err);
-					}
-
-					if (usesPacking)
-					{
-						bx::write(&writer, "#extension GL_ARB_shading_language_packing : enable\n", &err);
-					}
-
-					if (usesTextureMS)
-					{
-						bx::write(&writer, "#extension GL_ARB_texture_multisample : enable\n", &err);
-					}
-
-					if (usesTextureArray)
-					{
-						bx::write(&writer, "#extension GL_EXT_texture_array : enable\n", &err);
-						bx::write(&writer, "#define texture2DArrayLodEXT texture2DArrayLod\n", &err);
-						bx::write(&writer, "#define textureArray texture\n", &err);
-					}
-
-					if (usesTexture3D)
-					{
-						bx::write(&writer, "#define texture3DEXT texture3D\n", &err);
-						bx::write(&writer, "#define texture3DLodEXT texture3DLod\n", &err);
-					}
-
-					if (130 <= version)
-					{
-						if (430 > version)
-						{
-							if (m_type == GL_FRAGMENT_SHADER)
-							{
-								bx::write(&writer, "#define varying in\n", &err);
-							}
-							else
-							{
-								bx::write(&writer, "#define attribute in\n", &err);
-								bx::write(&writer, "#define varying out\n", &err);
-							}
-						}
-
-						uint32_t fragData = 0;
-
-						if (!bx::findIdentifierMatch(code, "gl_FragData").isEmpty() )
-						{
-							for (uint32_t ii = 0, num = g_caps.limits.maxFBAttachments; ii < num; ++ii)
-							{
-								char tmpFragData[16];
-								bx::snprintf(tmpFragData, BX_COUNTOF(tmpFragData), "gl_FragData[%d]", ii);
-								fragData = bx::max(fragData, bx::strFind(code, tmpFragData).isEmpty() ? 0 : ii+1);
-							}
-
-							BGFX_FATAL(0 != fragData, Fatal::InvalidShader, "Unable to find and patch gl_FragData!");
-						}
-
-						if (0 != fragData)
-						{
-							bx::write(&writer, &err, "out vec4 bgfx_FragData[%d];\n", fragData);
-							bx::write(&writer, "#define gl_FragData bgfx_FragData\n", &err);
-						}
-						else if (!bx::findIdentifierMatch(code, "gl_FragColor").isEmpty() )
-						{
-							bx::write(&writer
-								, "out vec4 bgfx_FragColor;\n"
-								  "#define gl_FragColor bgfx_FragColor\n"
-								, &err
-								);
-						}
-					}
-					else
-					{
-						if (m_type == GL_FRAGMENT_SHADER)
-						{
-							bx::write(&writer, "#define in varying\n", &err);
-						}
-						else
-						{
-							bx::write(&writer
-								, "#define in attribute\n"
-								  "#define out varying\n"
-								, &err
-								);
-						}
-					}
-
-					bx::write(&writer
-						, "#define lowp\n"
-						  "#define mediump\n"
-						  "#define highp\n"
-						, &err
-						);
-
-					if (!usesInterpQ)
-					{
-						bx::write(&writer
-							,
-							  "#define centroid\n"
-							  "#define flat\n"
-							  "#define noperspective\n"
-							  "#define smooth\n"
-							, &err
-							);
-					}
-
-					if (version == 430)
-					{
-						int32_t verLen = bx::strLen("#version 430\n");
-						bx::write(&writer, code.getPtr()+verLen, code.getLength()-verLen, &err);
-					}
-					else
-					{
-						bx::write(&writer, code, &err);
-					}
-
-					bx::write(&writer, '\0', &err);
-				}
-				else if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL   >= 31)
-					 ||  s_renderGL->m_gles3)
-				{
-					if (s_renderGL->m_gles3)
-					{
-						bx::write(&writer, &err
-							, "#version 300 es\n"
-							  "precision %s float;\n"
-							, m_type == GL_FRAGMENT_SHADER ? "mediump" : "highp"
-							);
-					}
-					else
-					{
-						bx::write(&writer, "#version 140\n", &err);
-					}
-
-					bx::write(&writer
-						, "#define texture2DLod    textureLod\n"
-						  "#define texture3DLod    textureLod\n"
-						  "#define textureCubeLod  textureLod\n"
-						  "#define texture2DGrad   textureGrad\n"
-						  "#define texture3DGrad   textureGrad\n"
-						  "#define textureCubeGrad textureGrad\n"
-						, &err
-						);
-
-					if (m_type == GL_FRAGMENT_SHADER)
-					{
-						bx::write(&writer
-							, "#define varying        in\n"
-							  "#define texture2D      texture\n"
-							  "#define texture2DArray texture\n"
-							  "#define texture2DProj  textureProj\n"
-							, &err
-							);
-
-						if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) )
-						{
-							bx::write(&writer
-								, "#define shadow2D(_sampler, _coord) vec2(textureProj(_sampler, vec4(_coord, 1.0) ) )\n"
-								  "#define shadow2DProj(_sampler, _coord) vec2(textureProj(_sampler, _coord) )\n"
-								, &err
-								);
-						}
-						else
-						{
-							bx::write(&writer
-								, "#define shadow2D(_sampler, _coord) (textureProj(_sampler, vec4(_coord, 1.0) ) )\n"
-								  "#define shadow2DProj(_sampler, _coord) (textureProj(_sampler, _coord) )\n"
-								, &err
-								);
-						}
-
-						bx::write(&writer
-							, "#define texture3D   texture\n"
-							  "#define textureCube texture\n"
-							, &err
-							);
-
-						uint32_t fragData = 0;
-
-						bool patchedFragData = s_renderGL->m_gles3 && !bx::findIdentifierMatch(code, "bgfx_FragData").isEmpty();
-
-						if (!patchedFragData && !bx::findIdentifierMatch(code, "gl_FragData").isEmpty() )
-						{
-							for (uint32_t ii = 0, num = g_caps.limits.maxFBAttachments; ii < num; ++ii)
-							{
-								char tmpFragData[16];
-								bx::snprintf(tmpFragData, BX_COUNTOF(tmpFragData), "gl_FragData[%d]", ii);
-								fragData = bx::max(fragData, bx::strFind(code, tmpFragData).isEmpty() ? 0 : ii+1);
-							}
-
-							BGFX_FATAL(0 != fragData, Fatal::InvalidShader, "Unable to find and patch gl_FragData!");
-						}
-
-						if (!bx::findIdentifierMatch(code, "beginFragmentShaderOrdering").isEmpty() )
-						{
-							if (s_extension[Extension::INTEL_fragment_shader_ordering].m_supported)
-							{
-								bx::write(&writer, "#extension GL_INTEL_fragment_shader_ordering : enable\n", &err);
-							}
-							else
-							{
-								bx::write(&writer, "#define beginFragmentShaderOrdering()\n", &err);
-							}
-						}
-
-						if (!bx::findIdentifierMatch(code, s_ARB_texture_multisample).isEmpty() )
-						{
-							bx::write(&writer, "#extension GL_ARB_texture_multisample : enable\n", &err);
-						}
-
-						if (0 != fragData)
-						{
-							if (!patchedFragData)
-							{
-								bx::write(&writer, &err, "out vec4 bgfx_FragData[%d];\n", fragData);
-								bx::write(&writer, "#define gl_FragData bgfx_FragData\n", &err);
-							}
-						}
-						else if (!patchedFragData)
-						{
-							if (bx::findIdentifierMatch(code, "bgfx_FragColor").isEmpty() )
-							{
-								bx::write(&writer
-									, "out vec4 bgfx_FragColor;\n"
-									  "#define gl_FragColor bgfx_FragColor\n"
-									, &err
-									);
-							}
-						}
-					}
-					else
-					{
-						bx::write(&writer
-							, "#define attribute in\n"
-							  "#define varying   out\n"
-							, &err
-							);
-					}
-
-					if (!s_renderGL->m_gles3)
-					{
-						bx::write(&writer
-							, "#define lowp\n"
-							  "#define mediump\n"
-							  "#define highp\n"
-							, &err
-							);
-					}
-
-					bx::write(&writer, code.getPtr(), code.getLength(), &err);
-					bx::write(&writer, '\0', &err);
-				}
-
-				code.set(temp);
-			}
-			else if (GL_COMPUTE_SHADER == m_type)
-			{
-				int32_t codeLen = (int32_t)bx::strLen(code);
-				int32_t tempLen = codeLen + (4<<10);
-				char* temp = (char*)BX_STACK_ALLOC(tempLen);
-				bx::StaticMemoryBlockWriter writer(temp, tempLen);
-
-				int32_t verLen = 0;
-				if (s_renderGL->m_gles3)
-				{
-					const char* str = "#version 310 es\n";
-					verLen = bx::strLen(str);
-					bx::write(&writer, &err, str);
+					bx::write(&writer, &err, "#version %d es\n", needsEssl310 ? 310 : 300);
 				}
 				else
 				{
-					const char* str = "#version 430\n";
-					verLen = bx::strLen(str);
-					bx::write(&writer, &err, str);
+					bx::write(&writer, &err, "#version %d\n", BGFX_CONFIG_RENDERER_OPENGL*10);
 				}
 
-				bx::write(&writer
-					, "#define texture2DLod             textureLod\n"
-					  "#define texture2DLodOffset       textureLodOffset\n"
-					  "#define texture2DArrayLod        textureLod\n"
-					  "#define texture2DArrayLodOffset  textureLodOffset\n"
-					  "#define texture3DLod             textureLod\n"
-					  "#define textureCubeLod           textureLod\n"
-					  "#define texture2DGrad            textureGrad\n"
-					  "#define texture3DGrad            textureGrad\n"
-					  "#define textureCubeGrad          textureGrad\n"
-					, &err
-					);
-
-				bx::write(&writer, code.getPtr()+verLen, codeLen-verLen, &err);
+				bx::write(&writer, code.getPtr(), code.getLength(), &err);
 				bx::write(&writer, '\0', &err);
 
-				code = temp;
+				code.set(temp);
 			}
 
 			{
@@ -7726,28 +6832,11 @@ namespace bgfx { namespace gl
 
 					if (0 != texture.m_rbo)
 					{
-						if (!(BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL >= 30) || s_renderGL->m_gles3)
-							&& GL_DEPTH_STENCIL_ATTACHMENT == attachment)
-						{
-							GL_CHECK(glFramebufferRenderbuffer(GL_FRAMEBUFFER
-								, GL_DEPTH_ATTACHMENT
-								, GL_RENDERBUFFER
-								, texture.m_rbo
-								) );
-							GL_CHECK(glFramebufferRenderbuffer(GL_FRAMEBUFFER
-								, GL_STENCIL_ATTACHMENT
-								, GL_RENDERBUFFER
-								, texture.m_rbo
-								) );
-						}
-						else
-						{
-							GL_CHECK(glFramebufferRenderbuffer(GL_FRAMEBUFFER
-								, attachment
-								, GL_RENDERBUFFER
-								, texture.m_rbo
-								) );
-						}
+						GL_CHECK(glFramebufferRenderbuffer(GL_FRAMEBUFFER
+							, attachment
+							, GL_RENDERBUFFER
+							, texture.m_rbo
+							) );
 					}
 					else
 					{
@@ -7813,11 +6902,8 @@ namespace bgfx { namespace gl
 				GL_CHECK(glDrawBuffers(colorIdx, buffers) );
 			}
 
-			if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) || s_renderGL->m_gles3)
-			{
-				// Disable read buffer to avoid GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER.
-				GL_CHECK(glReadBuffer(GL_NONE) );
-			}
+			// Disable read buffer to avoid GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER.
+			GL_CHECK(glReadBuffer(GL_NONE) );
 
 			frameBufferValidate();
 
@@ -7990,10 +7076,7 @@ namespace bgfx { namespace gl
 
 			GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, m_fbo[0]) );
 
-			if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) || s_renderGL->m_gles3)
-			{
-				GL_CHECK(glReadBuffer(GL_NONE) );
-			}
+			GL_CHECK(glReadBuffer(GL_NONE) );
 
 			GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, s_renderGL->m_msaaBackBufferFbo) );
 		}
@@ -8029,7 +7112,7 @@ namespace bgfx { namespace gl
 		uint32_t dsFlags = _flags & (BGFX_CLEAR_DISCARD_DEPTH|BGFX_CLEAR_DISCARD_STENCIL);
 		if (BGFX_CLEAR_NONE != dsFlags)
 		{
-			if (!BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES)
+			if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL)
 			&&  (BGFX_CLEAR_DISCARD_DEPTH|BGFX_CLEAR_DISCARD_STENCIL) == dsFlags)
 			{
 				buffers[idx++] = GL_DEPTH_STENCIL_ATTACHMENT;
@@ -8047,6 +7130,12 @@ namespace bgfx { namespace gl
 		GL_CHECK(glInvalidateFramebuffer(GL_FRAMEBUFFER, idx, buffers) );
 	}
 
+	// OpenGL ES only supports boolean occlusion queries.
+	static constexpr GLenum s_occlusionQueryTarget = BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES)
+		? GL_ANY_SAMPLES_PASSED
+		: GL_SAMPLES_PASSED
+		;
+
 	void OcclusionQueryGL::create()
 	{
 		for (uint32_t ii = 0; ii < BX_COUNTOF(m_query); ++ii)
@@ -8055,7 +7144,6 @@ namespace bgfx { namespace gl
 			GL_CHECK(glGenQueries(1, &query.m_id) );
 		}
 	}
-
 	void OcclusionQueryGL::destroy()
 	{
 		for (uint32_t ii = 0; ii < BX_COUNTOF(m_query); ++ii)
@@ -8073,13 +7161,13 @@ namespace bgfx { namespace gl
 		}
 
 		Query& query = m_query[m_control.m_current];
-		GL_CHECK(glBeginQuery(GL_SAMPLES_PASSED, query.m_id) );
+		GL_CHECK(glBeginQuery(s_occlusionQueryTarget, query.m_id) );
 		query.m_handle = _handle;
 	}
 
 	void OcclusionQueryGL::end()
 	{
-		GL_CHECK(glEndQuery(GL_SAMPLES_PASSED) );
+		GL_CHECK(glEndQuery(s_occlusionQueryTarget) );
 		m_control.commit(1);
 	}
 
@@ -8091,11 +7179,11 @@ namespace bgfx { namespace gl
 
 			if (isValid(query.m_handle) )
 			{
-				int32_t result;
+				GLuint result;
 
 				if (!_wait)
 				{
-					GL_CHECK(glGetQueryObjectiv(query.m_id, GL_QUERY_RESULT_AVAILABLE, &result) );
+					GL_CHECK(glGetQueryObjectuiv(query.m_id, GL_QUERY_RESULT_AVAILABLE, &result) );
 
 					if (!result)
 					{
@@ -8103,7 +7191,7 @@ namespace bgfx { namespace gl
 					}
 				}
 
-				GL_CHECK(glGetQueryObjectiv(query.m_id, GL_QUERY_RESULT, &result) );
+				GL_CHECK(glGetQueryObjectuiv(query.m_id, GL_QUERY_RESULT, &result) );
 				_render->m_occlusion[query.m_handle.idx] = int32_t(result);
 			}
 

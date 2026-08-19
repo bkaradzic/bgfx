@@ -5,7 +5,6 @@
 
 group "tools/shaderc"
 
-local GLSL_OPTIMIZER = path.join(BGFX_DIR, "3rdparty/glsl-optimizer")
 local FCPP_DIR       = path.join(BGFX_DIR, "3rdparty/fcpp")
 local GLSLANG        = path.join(BGFX_DIR, "3rdparty/glslang")
 local SPIRV_CROSS    = path.join(BGFX_DIR, "3rdparty/spirv-cross")
@@ -408,261 +407,6 @@ project "glslang"
 
 	configuration {}
 
-project "glsl-optimizer"
-	kind "StaticLib"
-
-	includedirs {
-		path.join(GLSL_OPTIMIZER, "src"),
-		path.join(GLSL_OPTIMIZER, "include"),
-		path.join(GLSL_OPTIMIZER, "src/mesa"),
-		path.join(GLSL_OPTIMIZER, "src/mapi"),
-		path.join(GLSL_OPTIMIZER, "src/glsl"),
-	}
-
-	files {
-		path.join(GLSL_OPTIMIZER, "src/glsl/glcpp/glcpp.h"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/glcpp/glcpp-lex.c"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/glcpp/glcpp-parse.c"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/glcpp/glcpp-parse.h"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/glcpp/pp.c"),
-
-		path.join(GLSL_OPTIMIZER, "src/glsl/ast.h"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/ast_array_index.cpp"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/ast_expr.cpp"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/ast_function.cpp"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/ast_to_hir.cpp"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/ast_type.cpp"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/builtin_functions.cpp"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/builtin_type_macros.h"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/builtin_types.cpp"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/builtin_variables.cpp"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/glsl_lexer.cpp"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/glsl_optimizer.cpp"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/glsl_optimizer.h"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/glsl_parser.cpp"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/glsl_parser.h"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/glsl_parser_extras.cpp"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/glsl_parser_extras.h"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/glsl_symbol_table.cpp"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/glsl_symbol_table.h"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/glsl_types.cpp"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/glsl_types.h"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/hir_field_selection.cpp"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/ir.cpp"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/ir.h"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/ir_basic_block.cpp"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/ir_basic_block.h"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/ir_builder.cpp"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/ir_builder.h"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/ir_clone.cpp"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/ir_constant_expression.cpp"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/ir_equals.cpp"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/ir_expression_flattening.cpp"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/ir_expression_flattening.h"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/ir_function.cpp"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/ir_function_can_inline.cpp"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/ir_function_detect_recursion.cpp"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/ir_function_inlining.h"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/ir_hierarchical_visitor.cpp"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/ir_hierarchical_visitor.h"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/ir_hv_accept.cpp"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/ir_import_prototypes.cpp"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/ir_optimization.h"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/ir_print_glsl_visitor.cpp"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/ir_print_glsl_visitor.h"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/ir_print_metal_visitor.cpp"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/ir_print_metal_visitor.h"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/ir_print_visitor.cpp"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/ir_print_visitor.h"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/ir_rvalue_visitor.cpp"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/ir_rvalue_visitor.h"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/ir_stats.cpp"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/ir_stats.h"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/ir_uniform.h"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/ir_unused_structs.cpp"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/ir_unused_structs.h"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/ir_validate.cpp"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/ir_variable_refcount.cpp"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/ir_variable_refcount.h"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/ir_visitor.h"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/link_atomics.cpp"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/link_functions.cpp"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/link_interface_blocks.cpp"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/link_uniform_block_active_visitor.cpp"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/link_uniform_block_active_visitor.h"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/link_uniform_blocks.cpp"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/link_uniform_initializers.cpp"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/link_uniforms.cpp"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/link_varyings.cpp"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/link_varyings.h"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/linker.cpp"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/linker.h"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/list.h"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/loop_analysis.cpp"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/loop_analysis.h"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/loop_controls.cpp"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/loop_unroll.cpp"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/lower_clip_distance.cpp"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/lower_discard.cpp"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/lower_discard_flow.cpp"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/lower_if_to_cond_assign.cpp"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/lower_instructions.cpp"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/lower_jumps.cpp"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/lower_mat_op_to_vec.cpp"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/lower_named_interface_blocks.cpp"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/lower_noise.cpp"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/lower_offset_array.cpp"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/lower_output_reads.cpp"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/lower_packed_varyings.cpp"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/lower_packing_builtins.cpp"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/lower_ubo_reference.cpp"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/lower_variable_index_to_cond_assign.cpp"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/lower_vec_index_to_cond_assign.cpp"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/lower_vec_index_to_swizzle.cpp"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/lower_vector.cpp"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/lower_vector_insert.cpp"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/lower_vertex_id.cpp"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/opt_algebraic.cpp"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/opt_array_splitting.cpp"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/opt_constant_folding.cpp"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/opt_constant_propagation.cpp"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/opt_constant_variable.cpp"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/opt_copy_propagation.cpp"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/opt_copy_propagation_elements.cpp"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/opt_cse.cpp"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/opt_dead_builtin_variables.cpp"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/opt_dead_builtin_varyings.cpp"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/opt_dead_code.cpp"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/opt_dead_code_local.cpp"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/opt_dead_functions.cpp"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/opt_flatten_nested_if_blocks.cpp"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/opt_flip_matrices.cpp"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/opt_function_inlining.cpp"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/opt_if_simplification.cpp"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/opt_minmax.cpp"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/opt_noop_swizzle.cpp"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/opt_rebalance_tree.cpp"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/opt_redundant_jumps.cpp"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/opt_structure_splitting.cpp"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/opt_swizzle_swizzle.cpp"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/opt_tree_grafting.cpp"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/opt_vectorize.cpp"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/program.h"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/s_expression.cpp"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/s_expression.h"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/standalone_scaffolding.cpp"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/standalone_scaffolding.h"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/strtod.c"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/strtod.h"),
-
-		path.join(GLSL_OPTIMIZER, "src/mesa/main/compiler.h"),
-		path.join(GLSL_OPTIMIZER, "src/mesa/main/config.h"),
-		path.join(GLSL_OPTIMIZER, "src/mesa/main/context.h"),
-		path.join(GLSL_OPTIMIZER, "src/mesa/main/core.h"),
-		path.join(GLSL_OPTIMIZER, "src/mesa/main/dd.h"),
-		path.join(GLSL_OPTIMIZER, "src/mesa/main/errors.h"),
-		path.join(GLSL_OPTIMIZER, "src/mesa/main/glheader.h"),
-		path.join(GLSL_OPTIMIZER, "src/mesa/main/glminimal.h"),
-		path.join(GLSL_OPTIMIZER, "src/mesa/main/imports.c"),
-		path.join(GLSL_OPTIMIZER, "src/mesa/main/imports.h"),
-		path.join(GLSL_OPTIMIZER, "src/mesa/main/macros.h"),
-		path.join(GLSL_OPTIMIZER, "src/mesa/main/mtypes.h"),
-		path.join(GLSL_OPTIMIZER, "src/mesa/main/simple_list.h"),
-
-		path.join(GLSL_OPTIMIZER, "src/mesa/program/hash_table.h"),
-		path.join(GLSL_OPTIMIZER, "src/mesa/program/prog_hash_table.c"),
-		path.join(GLSL_OPTIMIZER, "src/mesa/program/prog_instruction.h"),
-		path.join(GLSL_OPTIMIZER, "src/mesa/program/prog_parameter.h"),
-		path.join(GLSL_OPTIMIZER, "src/mesa/program/prog_statevars.h"),
-		path.join(GLSL_OPTIMIZER, "src/mesa/program/symbol_table.c"),
-		path.join(GLSL_OPTIMIZER, "src/mesa/program/symbol_table.h"),
-
-		path.join(GLSL_OPTIMIZER, "src/util/hash_table.c"),
-		path.join(GLSL_OPTIMIZER, "src/util/hash_table.h"),
-		path.join(GLSL_OPTIMIZER, "src/util/macros.h"),
-		path.join(GLSL_OPTIMIZER, "src/util/ralloc.c"),
-		path.join(GLSL_OPTIMIZER, "src/util/ralloc.h"),
-	}
-
-	removefiles {
-		path.join(GLSL_OPTIMIZER, "src/glsl/glcpp/glcpp.c"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/glcpp/tests/**"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/glcpp/**.l"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/glcpp/**.y"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/ir_set_program_inouts.cpp"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/main.cpp"),
-		path.join(GLSL_OPTIMIZER, "src/glsl/builtin_stubs.cpp"),
-	}
-
-	removeflags {
-		"FloatFast",	-- clang 17 has issues errors originating in glsl-optimizer when float optimizations are enabled
-	}
-
-	configuration { "Release" }
-		flags {
-			"Optimize",
-		}
-
-		removeflags {
-			-- GCC 4.9 -O2 + -fno-strict-aliasing don't work together...
-			"OptimizeSpeed",
-		}
-
-	configuration { "vs*" }
-		includedirs {
-			path.join(GLSL_OPTIMIZER, "src/glsl/msvc"),
-		}
-
-		defines { -- glsl-optimizer
-			"__STDC__",
-			"__STDC_VERSION__=199901L",
-			"strdup=_strdup",
-			"alloca=_alloca",
-			"isascii=__isascii",
-		}
-
-		buildoptions {
-			"/wd4100", -- error C4100: '' : unreferenced formal parameter
-			"/wd4127", -- warning C4127: conditional expression is constant
-			"/wd4132", -- warning C4132: 'deleted_key_value': const object should be initialized
-			"/wd4189", -- warning C4189: 'interface_type': local variable is initialized but not referenced
-			"/wd4204", -- warning C4204: nonstandard extension used: non-constant aggregate initializer
-			"/wd4244", -- warning C4244: '=': conversion from 'const flex_int32_t' to 'YY_CHAR', possible loss of data
-			"/wd4389", -- warning C4389: '!=': signed/unsigned mismatch
-			"/wd4245", -- warning C4245: 'return': conversion from 'int' to 'unsigned int', signed/unsigned mismatch
-			"/wd4701", -- warning C4701: potentially uninitialized local variable 'lower' used
-			"/wd4702", -- warning C4702: unreachable code
-			"/wd4706", -- warning C4706: assignment within conditional expression
-			"/wd4996", -- warning C4996: 'strdup': The POSIX name for this item is deprecated. Instead, use the ISO C++ conformant name: _strdup.
-		}
-
-	configuration { "mingw* or linux* or osx*" }
-		buildoptions {
-			"-fno-strict-aliasing", -- glsl-optimizer has bugs if strict aliasing is used.
-
-			"-Wno-implicit-fallthrough",
-			"-Wno-parentheses",
-			"-Wno-sign-compare",
-			"-Wno-unused-function",
-			"-Wno-unused-parameter",
-		}
-
-		removebuildoptions {
-			"-Wshadow", -- glsl-optimizer is full of -Wshadow warnings ignore it.
-		}
-
-	configuration { "osx*" }
-		buildoptions {
-			"-Wno-deprecated-register",
-		}
-
-	configuration { "mingw* or linux-gcc-*" }
-		buildoptions {
-			"-Wno-misleading-indentation",
-		}
-
-	configuration {}
-
 project "fcpp"
 	kind "StaticLib"
 
@@ -718,9 +462,6 @@ project "shaderc"
 		path.join(BGFX_DIR, "3rdparty/glslang/glslang/Include"),
 		path.join(BGFX_DIR, "3rdparty/glslang"),
 
-		path.join(GLSL_OPTIMIZER, "include"),
-		path.join(GLSL_OPTIMIZER, "src/glsl"),
-
 		SPIRV_CROSS,
 
 		path.join(SPIRV_TOOLS, "include"),
@@ -732,7 +473,6 @@ project "shaderc"
 	links {
 		"fcpp",
 		"glslang",
-		"glsl-optimizer",
 		"spirv-opt",
 		"spirv-cross",
 		"tint-api",
@@ -755,11 +495,6 @@ project "shaderc"
 	configuration { "osx*" }
 		links {
 			"Cocoa.framework",
-		}
-
-	configuration { "vs*" }
-		includedirs {
-			path.join(GLSL_OPTIMIZER, "include/c99"),
 		}
 
 	configuration { "vs20* or mingw*" }

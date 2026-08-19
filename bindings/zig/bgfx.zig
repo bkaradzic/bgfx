@@ -950,10 +950,10 @@ pub const RendererType = enum(c_int) {
     /// NVN
     Nvn,
 
-    /// OpenGL ES 2.0+
+    /// OpenGL ES 3.0+
     OpenGLES,
 
-    /// OpenGL 2.1+
+    /// OpenGL 4.3+
     OpenGL,
 
     /// Vulkan

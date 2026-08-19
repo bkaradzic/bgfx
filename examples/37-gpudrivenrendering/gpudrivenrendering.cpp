@@ -1044,13 +1044,19 @@ public:
 			// Get renderer capabilities info.
 			const bgfx::Caps* caps = bgfx::getCaps();
 
-			// Check if instancing is supported.
-			if (0 == (BGFX_CAPS_INSTANCING & caps->supported) )
+			// Check if instancing, compute and draw indirect are supported.
+			const uint64_t requiredCaps = 0
+				| BGFX_CAPS_INSTANCING
+				| BGFX_CAPS_COMPUTE
+				| BGFX_CAPS_DRAW_INDIRECT
+				;
+
+			if (requiredCaps != (requiredCaps & caps->supported) )
 			{
-				// When instancing is not supported by GPU, implement alternative
-				// code path that doesn't use instancing.
+				// When instancing, compute or draw indirect is not supported by GPU,
+				// implement alternative code path that doesn't use them.
 				bool blink = uint32_t(time*3.0f)&1;
-				bgfx::dbgTextPrintf(0, 0, blink ? 0x1f : 0x01, " Instancing is not supported by GPU. ");
+				bgfx::dbgTextPrintf(0, 0, blink ? 0x1f : 0x01, " Instancing, compute and draw indirect are not supported by GPU. ");
 			}
 			else
 			{

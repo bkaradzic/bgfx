@@ -66,8 +66,8 @@ namespace bgfx
 			Gnm,        //!< GNM
 			Metal,      //!< Metal
 			Nvn,        //!< NVN
-			OpenGLES,   //!< OpenGL ES 2.0+
-			OpenGL,     //!< OpenGL 2.1+
+			OpenGLES,   //!< OpenGL ES 3.0+
+			OpenGL,     //!< OpenGL 4.3+
 			Vulkan,     //!< Vulkan
 			WebGPU,     //!< WebGPU
 

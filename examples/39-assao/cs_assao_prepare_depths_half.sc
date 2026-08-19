@@ -7,8 +7,8 @@
 #include "uniforms.sh"
 
 SAMPLER2D(s_depthSource, 0);
-IMAGE2D_WO(s_target0, r16f, 1);
-IMAGE2D_WO(s_target1, r16f, 2);
+IMAGE2D_WO(s_target0, ASSAO_DEPTH_FORMAT, 1);
+IMAGE2D_WO(s_target1, ASSAO_DEPTH_FORMAT, 2);
 
 float ScreenSpaceToViewSpaceDepth( float screenDepth )
 {

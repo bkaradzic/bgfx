@@ -126,7 +126,10 @@ static bgfx::ShaderHandle loadShader(bx::FileReaderI* _reader, const bx::StringV
 	filePath.join(fileName);
 
 	bgfx::ShaderHandle handle = bgfx::createShader(loadMem(_reader, filePath.getCPtr() ) );
-	bgfx::setName(handle, _name.getPtr(), _name.getLength() );
+	if (bgfx::isValid(handle) )
+	{
+		bgfx::setName(handle, _name.getPtr(), _name.getLength() );
+	}
 
 	return handle;
 }

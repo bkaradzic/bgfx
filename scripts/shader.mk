@@ -66,14 +66,14 @@ CS_FLAGS=--platform windows -p s_5_0 -O 1
 SHADER_PATH=shaders/dxbc
 else
 ifeq ($(TARGET), $(filter $(TARGET), 2 3))
-VS_FLAGS=--platform android -p 100_es
-FS_FLAGS=--platform android -p 100_es
-CS_FLAGS=--platform android -p 300_es
+VS_FLAGS=--platform android -p 300_es
+FS_FLAGS=--platform android -p 300_es
+CS_FLAGS=--platform android -p 310_es
 SHADER_PATH=shaders/essl
 else
 ifeq ($(TARGET), 4)
-VS_FLAGS=--platform linux -p 120
-FS_FLAGS=--platform linux -p 120
+VS_FLAGS=--platform linux -p 430
+FS_FLAGS=--platform linux -p 430
 CS_FLAGS=--platform linux -p 430
 SHADER_PATH=shaders/glsl
 else

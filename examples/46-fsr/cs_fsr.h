@@ -23,10 +23,27 @@ uniform vec4 u_params[3];
 #define A_HLSL 1
 #endif // BGFX_SHADER_LANGUAGE_GLSL
 
-#if SAMPLE_SLOW_FALLBACK
+#ifndef SAMPLE_SLOW_FALLBACK
+#	define SAMPLE_SLOW_FALLBACK 0
+#endif // SAMPLE_SLOW_FALLBACK
+
+// glslang's GLSL front-end doesn't implement fp16 overloads of the builtin
+// functions FSR needs, thus 16-bit math is unavailable there. The 16-bit
+// output format is kept, only the math is done at full precision.
+#if BGFX_SHADER_LANGUAGE_GLSL
+#	define SAMPLE_HALF_MATH 0
+#else
+#	define SAMPLE_HALF_MATH (1-SAMPLE_SLOW_FALLBACK)
+#endif // BGFX_SHADER_LANGUAGE_GLSL
+
+#if !SAMPLE_HALF_MATH
 #	include "ffx_a.h"
 	SAMPLER2D(InputTexture, 0);
-	IMAGE2D_WO(OutputTexture, rgba32f, 1);
+#	if SAMPLE_SLOW_FALLBACK
+		IMAGE2D_WO(OutputTexture, rgba32f, 1);
+#	else
+		IMAGE2D_WO(OutputTexture, rgba16f, 1);
+#	endif
 #	if SAMPLE_EASU
 		#define FSR_EASU_F 1
 		AF4 FsrEasuRF(AF2 p) { AF4 res = textureGather(InputTexture, p, 0); return res; }
@@ -66,7 +83,7 @@ void CurrFilter(AU2 pos, AU4 Const0, AU4 Const1, AU4 Const2, AU4 Const3, AU4 Sam
 #endif
 
 #if SAMPLE_EASU
-#	if SAMPLE_SLOW_FALLBACK
+#	if !SAMPLE_HALF_MATH
 		AF3 c;
 		FsrEasuF(c, pos, Const0, Const1, Const2, Const3);
 		if( Sample.x == 1 )
@@ -82,7 +99,7 @@ void CurrFilter(AU2 pos, AU4 Const0, AU4 Const1, AU4 Const2, AU4 Const3, AU4 Sam
 #endif
 
 #if SAMPLE_RCAS
-#	if SAMPLE_SLOW_FALLBACK
+#	if !SAMPLE_HALF_MATH
 		AF3 c;
 		FsrRcasF(c.r, c.g, c.b, pos, Const0);
 		if( Sample.x == 1 )
