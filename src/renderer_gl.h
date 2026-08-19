@@ -1544,7 +1544,7 @@ namespace bgfx { namespace gl
 		void init();
 
 		void bindAttributesBegin();
-		void bindAttributes(const VertexLayout& _layout, uint32_t _baseVertex = 0);
+		void bindAttributes(const VertexLayout& _layout, uint32_t _baseVertex = 0, bool _lastStream = true);
 		void bindInstanceData(uint32_t _stride, uint32_t _baseVertex = 0) const;
 		void bindAttributesEnd();
 		void unbindInstanceData() const;
