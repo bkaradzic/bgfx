@@ -73,6 +73,44 @@ namespace bgfx { namespace gl
 	};
 	static_assert(Attrib::Count == BX_COUNTOF(s_attribName) );
 
+	struct AttribDefault
+	{
+		uint8_t          m_num;
+		AttribType::Enum m_type;
+		bool             m_normalized;
+	};
+
+	static const AttribDefault s_attribDefault[] =
+	{
+		{ 3, AttribType::Float, false }, // Position
+		{ 3, AttribType::Float, false }, // Normal
+		{ 3, AttribType::Float, false }, // Tangent
+		{ 3, AttribType::Float, false }, // Bitangent
+		{ 4, AttribType::Uint8, false }, // Color0
+		{ 4, AttribType::Uint8, false }, // Color1
+		{ 4, AttribType::Uint8, false }, // Color2
+		{ 4, AttribType::Uint8, false }, // Color3
+		{ 4, AttribType::Uint8, false }, // Indices
+		{ 3, AttribType::Float, false }, // Weight
+		{ 2, AttribType::Float, false }, // TexCoord0
+		{ 2, AttribType::Float, false }, // TexCoord1
+		{ 2, AttribType::Float, false }, // TexCoord2
+		{ 2, AttribType::Float, false }, // TexCoord3
+		{ 2, AttribType::Float, false }, // TexCoord4
+		{ 2, AttribType::Float, false }, // TexCoord5
+		{ 2, AttribType::Float, false }, // TexCoord6
+		{ 2, AttribType::Float, false }, // TexCoord7
+		{ 2, AttribType::Float, false }, // TexCoord8
+		{ 2, AttribType::Float, false }, // TexCoord9
+		{ 2, AttribType::Float, false }, // TexCoord10
+		{ 2, AttribType::Float, false }, // TexCoord11
+		{ 2, AttribType::Float, false }, // TexCoord12
+		{ 2, AttribType::Float, false }, // TexCoord13
+		{ 2, AttribType::Float, false }, // TexCoord14
+		{ 2, AttribType::Float, false }, // TexCoord15
+	};
+	static_assert(Attrib::Count == BX_COUNTOF(s_attribDefault) );
+
 	static const char* s_instanceDataName[] =
 	{
 		"i_data0",
@@ -5409,56 +5447,73 @@ namespace bgfx { namespace gl
 		bx::memCopy(m_unboundUsedAttrib, m_used, sizeof(m_unboundUsedAttrib) );
 	}
 
-	void ProgramGL::bindAttributes(const VertexLayout& _layout, uint32_t _baseVertex)
+	void ProgramGL::bindAttributes(const VertexLayout& _layout, uint32_t _baseVertex, bool _lastStream)
 	{
 		for (uint32_t ii = 0, iiEnd = m_usedCount; ii < iiEnd; ++ii)
 		{
 			Attrib::Enum attr = Attrib::Enum(m_used[ii]);
 			GLint loc = m_attributes[attr];
 
+			if (-1 == loc)
+			{
+				continue;
+			}
+
 			uint8_t num;
 			AttribType::Enum type;
 			bool normalized;
 			bool asInt;
-			_layout.decode(attr, num, type, normalized, asInt);
+			uint32_t baseVertex;
+
+			if (UINT16_MAX != _layout.m_attributes[attr])
+			{
+				_layout.decode(attr, num, type, normalized, asInt);
+				baseVertex = _baseVertex*_layout.m_stride + _layout.m_offset[attr];
+			}
+			else if (_lastStream
+				 &&  Attrib::Count != m_unboundUsedAttrib[ii])
+			{
+				const AttribDefault& ad = s_attribDefault[attr];
+				num        = ad.m_num;
+				type       = ad.m_type;
+				normalized = ad.m_normalized;
+				baseVertex = _baseVertex*_layout.m_stride;
+			}
+			else
+			{
+				continue;
+			}
 
 			if (AttribType::Uint10 == type)
 			{
 				num = 4; // always 4 components on GL
 			}
 
-			if (-1 != loc)
+			lazyEnableVertexAttribArray(loc);
+			GL_CHECK(glVertexAttribDivisor(loc, 0) );
+
+			if (!isFloat(type)
+			&&  !normalized)
 			{
-				if (UINT16_MAX != _layout.m_attributes[attr])
-				{
-					lazyEnableVertexAttribArray(loc);
-					GL_CHECK(glVertexAttribDivisor(loc, 0) );
-
-					uint32_t baseVertex = _baseVertex*_layout.m_stride + _layout.m_offset[attr];
-					if (!isFloat(type)
-					&&  !normalized)
-					{
-						GL_CHECK(glVertexAttribIPointer(loc
-							, num
-							, s_attribType[type]
-							, _layout.m_stride
-							, (void*)(uintptr_t)baseVertex)
-							);
-					}
-					else
-					{
-						GL_CHECK(glVertexAttribPointer(loc
-							, num
-							, s_attribType[type]
-							, normalized
-							, _layout.m_stride
-							, (void*)(uintptr_t)baseVertex)
-							);
-					}
-
-					m_unboundUsedAttrib[ii] = Attrib::Count;
-				}
+				GL_CHECK(glVertexAttribIPointer(loc
+					, num
+					, s_attribType[type]
+					, _layout.m_stride
+					, (void*)(uintptr_t)baseVertex)
+					);
 			}
+			else
+			{
+				GL_CHECK(glVertexAttribPointer(loc
+					, num
+					, s_attribType[type]
+					, normalized
+					, _layout.m_stride
+					, (void*)(uintptr_t)baseVertex)
+					);
+			}
+
+			m_unboundUsedAttrib[ii] = Attrib::Count;
 		}
 	}
 
@@ -8377,6 +8432,8 @@ namespace bgfx { namespace gl
 
 								if (UINT32_MAX != draw.m_streamMask)
 								{
+									const uint8_t lastStream = uint8_t(31 - bx::countLeadingZeros<uint32_t>(draw.m_streamMask) );
+
 									for (BitMaskToIndexIteratorT it(draw.m_streamMask); !it.isDone(); it.next() )
 									{
 										const uint8_t idx = it.idx;
@@ -8386,7 +8443,7 @@ namespace bgfx { namespace gl
 											? draw.m_stream[idx].m_layoutHandle.idx
 											: vb.m_layoutHandle.idx;
 										GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, vb.m_id) );
-										program.bindAttributes(m_vertexLayouts[decl], draw.m_stream[idx].m_startVertex);
+										program.bindAttributes(m_vertexLayouts[decl], draw.m_stream[idx].m_startVertex, idx == lastStream);
 									}
 								}
 
