@@ -13,7 +13,7 @@
 #if BGFX_SHADER_LANGUAGE_METAL \
  || BGFX_SHADER_LANGUAGE_SPIRV \
  || BGFX_SHADER_LANGUAGE_WGSL
-#	define FORMAT(_format) [[spv::format_ ## _format]]
+#	define FORMAT(_format) [[__CONCAT(spv::format_, _format)]]
 #	define WRITEONLY [[spv::nonreadable]]
 #else
 #	define FORMAT(_format)
@@ -101,48 +101,48 @@
 #endif // BGFX_SHADER_LANGUAGE_HLSL
 #define COMP_rgba32f  float4
 
-#define IMAGE2D_RO( _name, _format, _reg)                                       \
-	FORMAT(_format) Texture2D<COMP_ ## _format> _name : REGISTER(t, _reg);      \
+#define IMAGE2D_RO( _name, _format, _reg) \
+	FORMAT(_format) Texture2D<__CONCAT(COMP_, _format)> _name : REGISTER(t, _reg);
 
 #define UIMAGE2D_RO(_name, _format, _reg) IMAGE2D_RO(_name, _format, _reg)
 
-#define IMAGE2D_WO( _name, _format, _reg)                                                 \
-	WRITEONLY FORMAT(_format) RWTexture2D<COMP_ ## _format> _name : REGISTER(u, _reg);  \
+#define IMAGE2D_WO( _name, _format, _reg) \
+	WRITEONLY FORMAT(_format) RWTexture2D<__CONCAT(COMP_, _format)> _name : REGISTER(u, _reg);
 
 #define UIMAGE2D_WO(_name, _format, _reg) IMAGE2D_WO(_name, _format, _reg)
 
-#define IMAGE2D_RW( _name, _format, _reg)                            \
-	FORMAT(_format) RWTexture2D<COMP_ ## _format> _name : REGISTER(u, _reg);  \
+#define IMAGE2D_RW( _name, _format, _reg) \
+	FORMAT(_format) RWTexture2D<__CONCAT(COMP_, _format)> _name : REGISTER(u, _reg);
 
 #define UIMAGE2D_RW(_name, _format, _reg) IMAGE2D_RW(_name, _format, _reg)
 
-#define IMAGE2D_ARRAY_RO(_name, _format, _reg)                                     \
-	FORMAT(_format) Texture2DArray<COMP_ ## _format> _name : REGISTER(t, _reg);    \
+#define IMAGE2D_ARRAY_RO(_name, _format, _reg) \
+	FORMAT(_format) Texture2DArray<__CONCAT(COMP_, _format)> _name : REGISTER(t, _reg);
 
 #define UIMAGE2D_ARRAY_RO(_name, _format, _reg) IMAGE2D_ARRAY_RO(_name, _format, _reg)
 
-#define IMAGE2D_ARRAY_WO( _name, _format, _reg)                                       \
-	WRITEONLY FORMAT(_format) RWTexture2DArray<COMP_ ## _format> _name : REGISTER(u, _reg);    \
+#define IMAGE2D_ARRAY_WO( _name, _format, _reg) \
+	WRITEONLY FORMAT(_format) RWTexture2DArray<__CONCAT(COMP_, _format)> _name : REGISTER(u, _reg);
 
 #define UIMAGE2D_ARRAY_WO(_name, _format, _reg) IMAGE2D_ARRAY_WO(_name, _format, _reg)
 
-#define IMAGE2D_ARRAY_RW(_name, _format, _reg)                              \
-	FORMAT(_format) RWTexture2DArray<COMP_ ## _format> _name : REGISTER(u, _reg);    \
+#define IMAGE2D_ARRAY_RW(_name, _format, _reg) \
+	FORMAT(_format) RWTexture2DArray<__CONCAT(COMP_, _format)> _name : REGISTER(u, _reg);
 
 #define UIMAGE2D_ARRAY_RW(_name, _format, _reg) IMAGE2D_ARRAY_RW(_name, _format, _reg)
 
-#define IMAGE3D_RO( _name, _format, _reg)                                     \
-	FORMAT(_format) Texture3D<COMP_ ## _format> _name : REGISTER(t, _reg);
+#define IMAGE3D_RO( _name, _format, _reg) \
+	FORMAT(_format) Texture3D<__CONCAT(COMP_, _format)> _name : REGISTER(t, _reg);
 
 #define UIMAGE3D_RO(_name, _format, _reg) IMAGE3D_RO(_name, _format, _reg)
 
-#define IMAGE3D_WO( _name, _format, _reg)                                      \
-	WRITEONLY FORMAT(_format) RWTexture3D<COMP_ ## _format> _name : REGISTER(u, _reg);
+#define IMAGE3D_WO( _name, _format, _reg) \
+	WRITEONLY FORMAT(_format) RWTexture3D<__CONCAT(COMP_, _format)> _name : REGISTER(u, _reg);
 
 #define UIMAGE3D_WO(_name, _format, _reg) IMAGE3D_WO(_name, _format, _reg)
 
-#define IMAGE3D_RW( _name, _format, _reg)                            \
-	FORMAT(_format) RWTexture3D<COMP_ ## _format> _name : REGISTER(u, _reg);  \
+#define IMAGE3D_RW( _name, _format, _reg) \
+	FORMAT(_format) RWTexture3D<__CONCAT(COMP_, _format)> _name : REGISTER(u, _reg);
 
 #define UIMAGE3D_RW(_name, _format, _reg) IMAGE3D_RW(_name, _format, _reg)
 
