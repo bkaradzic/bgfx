@@ -12,6 +12,9 @@
 
 #ifndef __cplusplus
 
+#define __CONCAT(_x, _y)    __CONCAT_XX(_x, _y)
+#define __CONCAT_XX(_x, _y) _x ## _y
+
 #if BGFX_SHADER_LANGUAGE_GLSL
 #	define BRANCH
 #	define LOOP
