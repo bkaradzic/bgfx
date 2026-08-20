@@ -9479,75 +9479,108 @@ VK_DESTROY
 
 			const uint16_t srcSamples = VK_NULL_HANDLE != src.m_singleMsaaImage ? 1 : src.m_sampler.Count;
 			const uint16_t dstSamples = dst.m_sampler.Count;
-			BX_UNUSED(srcSamples, dstSamples);
+
+			const bool resolve = true
+				&& 1 <  srcSamples
+				&& 1 == dstSamples
+				&& VK_IMAGE_ASPECT_COLOR_BIT == src.m_aspectFlags
+				&& VK_IMAGE_ASPECT_COLOR_BIT == dst.m_aspectFlags
+				;
 
 			BX_ASSERT(
-				  srcSamples == dstSamples
+				  srcSamples == dstSamples || resolve
 				, "Mismatching texture sample count (%d != %d)."
 				, srcSamples
 				, dstSamples
 				);
 
-			VkImageCopy copyInfo;
-			copyInfo.srcSubresource.aspectMask     = src.m_aspectFlags;
-			copyInfo.srcSubresource.mipLevel       = blit.m_srcMip;
-			copyInfo.srcSubresource.baseArrayLayer = 0;
-			copyInfo.srcSubresource.layerCount     = 1;
-			copyInfo.srcOffset.x = blit.m_srcX;
-			copyInfo.srcOffset.y = blit.m_srcY;
-			copyInfo.srcOffset.z = 0;
-			copyInfo.dstSubresource.aspectMask     = dst.m_aspectFlags;
-			copyInfo.dstSubresource.mipLevel       = blit.m_dstMip;
-			copyInfo.dstSubresource.baseArrayLayer = 0;
-			copyInfo.dstSubresource.layerCount     = 1;
-			copyInfo.dstOffset.x = blit.m_dstX;
-			copyInfo.dstOffset.y = blit.m_dstY;
-			copyInfo.dstOffset.z = 0;
-
 			const uint32_t srcMipWidth  = bx::max<uint32_t>(1, src.m_width  >> blit.m_srcMip);
 			const uint32_t srcMipHeight = bx::max<uint32_t>(1, src.m_height >> blit.m_srcMip);
 			const uint32_t dstMipWidth  = bx::max<uint32_t>(1, dst.m_width  >> blit.m_dstMip);
 			const uint32_t dstMipHeight = bx::max<uint32_t>(1, dst.m_height >> blit.m_dstMip);
+			const uint32_t depth        = bx::max<uint32_t>(1, blit.m_depth);
 
-			copyInfo.extent.width = bx::min<uint32_t>(
-				  blit.m_width
-				, srcMipWidth - blit.m_srcX
-				, dstMipWidth - blit.m_dstX
-				);
-			copyInfo.extent.height = bx::min<uint32_t>(
-				  blit.m_height
-				, srcMipHeight - blit.m_srcY
-				, dstMipHeight - blit.m_dstY
-				);
-			copyInfo.extent.depth  = 1;
+			const bool is3D = VK_IMAGE_VIEW_TYPE_3D == src.m_type;
 
-			const uint32_t depth = bx::max<uint32_t>(1, blit.m_depth);
+			BX_ASSERT(!is3D || VK_IMAGE_VIEW_TYPE_3D == dst.m_type, "Can't blit between 2D and 3D image.");
 
-			if (VK_IMAGE_VIEW_TYPE_3D == src.m_type)
+			const VkImageCopy copyInfo =
 			{
-				BX_ASSERT(VK_IMAGE_VIEW_TYPE_3D == dst.m_type, "Can't blit between 2D and 3D image.");
+				.srcSubresource =
+				{
+					.aspectMask     = src.m_aspectFlags,
+					.mipLevel       = blit.m_srcMip,
+					.baseArrayLayer = is3D ? 0u : uint32_t(blit.m_srcZ),
+					.layerCount     = is3D ? 1u : depth,
+				},
+				.srcOffset =
+				{
+					.x = blit.m_srcX,
+					.y = blit.m_srcY,
+					.z = is3D ? blit.m_srcZ : 0,
+				},
+				.dstSubresource =
+				{
+					.aspectMask     = dst.m_aspectFlags,
+					.mipLevel       = blit.m_dstMip,
+					.baseArrayLayer = is3D ? 0u : uint32_t(blit.m_dstZ),
+					.layerCount     = is3D ? 1u : depth,
+				},
+				.dstOffset =
+				{
+					.x = blit.m_dstX,
+					.y = blit.m_dstY,
+					.z = is3D ? blit.m_dstZ : 0,
+				},
+				.extent =
+				{
+					.width = bx::min<uint32_t>(
+						  blit.m_width
+						, srcMipWidth - blit.m_srcX
+						, dstMipWidth - blit.m_dstX
+						),
+					.height = bx::min<uint32_t>(
+						  blit.m_height
+						, srcMipHeight - blit.m_srcY
+						, dstMipHeight - blit.m_dstY
+						),
+					.depth = is3D ? depth : 1,
+				},
+			};
 
-				copyInfo.srcOffset.z  = blit.m_srcZ;
-				copyInfo.dstOffset.z  = blit.m_dstZ;
-				copyInfo.extent.depth = depth;
+			if (resolve)
+			{
+				const VkImageResolve resolveInfo =
+				{
+					.srcSubresource = copyInfo.srcSubresource,
+					.srcOffset      = copyInfo.srcOffset,
+					.dstSubresource = copyInfo.dstSubresource,
+					.dstOffset      = copyInfo.dstOffset,
+					.extent         = copyInfo.extent,
+				};
+
+				vkCmdResolveImage(
+					  m_commandBuffer
+					, src.m_textureImage
+					, src.m_currentImageLayout
+					, dst.m_textureImage
+					, dst.m_currentImageLayout
+					, 1
+					, &resolveInfo
+					);
 			}
 			else
 			{
-				copyInfo.srcSubresource.baseArrayLayer = blit.m_srcZ;
-				copyInfo.dstSubresource.baseArrayLayer = blit.m_dstZ;
-				copyInfo.srcSubresource.layerCount = depth;
-				copyInfo.dstSubresource.layerCount = depth;
+				vkCmdCopyImage(
+					  m_commandBuffer
+					, VK_NULL_HANDLE != src.m_singleMsaaImage ? src.m_singleMsaaImage : src.m_textureImage
+					, VK_NULL_HANDLE != src.m_singleMsaaImage ? src.m_currentSingleMsaaImageLayout : src.m_currentImageLayout
+					, dst.m_textureImage
+					, dst.m_currentImageLayout
+					, 1
+					, &copyInfo
+					);
 			}
-
-			vkCmdCopyImage(
-				  m_commandBuffer
-				, VK_NULL_HANDLE != src.m_singleMsaaImage ? src.m_singleMsaaImage : src.m_textureImage
-				, VK_NULL_HANDLE != src.m_singleMsaaImage ? src.m_currentSingleMsaaImageLayout : src.m_currentImageLayout
-				, dst.m_textureImage
-				, dst.m_currentImageLayout
-				, 1
-				, &copyInfo
-				);
 
 			setMemoryBarrier(
 				  m_commandBuffer

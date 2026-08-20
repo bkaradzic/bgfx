@@ -7277,6 +7277,62 @@ namespace bgfx { namespace gl
 			;
 	}
 
+	static bool blitMsaaResolve2D(
+		  const BlitItem& _bi
+		, const TextureGL& _src
+		, const TextureGL& _dst
+		, uint32_t _width
+		, uint32_t _height
+		, GLuint _currentFbo
+		)
+	{
+		if (GL_TEXTURE_2D_MULTISAMPLE != _src.m_target
+		||  GL_TEXTURE_2D             != _dst.m_target
+		||  1 < _bi.m_depth
+		||  NULL == glBlitFramebuffer)
+		{
+			return false;
+		}
+
+		GLuint fbo[2];
+		GL_CHECK(glGenFramebuffers(BX_COUNTOF(fbo), fbo) );
+
+		GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, fbo[0]) );
+		GL_CHECK(glFramebufferTexture2D(GL_READ_FRAMEBUFFER
+			, GL_COLOR_ATTACHMENT0
+			, _src.m_target
+			, _src.m_id
+			, 0
+			) );
+
+		GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fbo[1]) );
+		GL_CHECK(glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER
+			, GL_COLOR_ATTACHMENT0
+			, _dst.m_target
+			, _dst.m_id
+			, _bi.m_dstMip
+			) );
+
+		GL_CHECK(glDisable(GL_SCISSOR_TEST) );
+		GL_CHECK(glBlitFramebuffer(
+			  _bi.m_srcX
+			, _bi.m_srcY
+			, _bi.m_srcX + _width
+			, _bi.m_srcY + _height
+			, _bi.m_dstX
+			, _bi.m_dstY
+			, _bi.m_dstX + _width
+			, _bi.m_dstY + _height
+			, GL_COLOR_BUFFER_BIT
+			, GL_NEAREST
+			) );
+
+		GL_CHECK(glDeleteFramebuffers(BX_COUNTOF(fbo), fbo) );
+		GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, _currentFbo) );
+
+		return true;
+	}
+
 	static bool blitCompressed2D(
 		  const BlitItem& _bi
 		, const TextureGL& _src
@@ -7409,7 +7465,13 @@ namespace bgfx { namespace gl
 					}
 				}
 
-				GL_CHECK(glCopyImageSubData(src.m_id
+				if (blitMsaaResolve2D(bi, src, dst, width, height, m_currentFbo) )
+				{
+					continue;
+				}
+
+				GL_CHECK(glCopyImageSubData(
+					  src.m_id
 					, src.m_target
 					, bi.m_srcMip
 					, bi.m_srcX
