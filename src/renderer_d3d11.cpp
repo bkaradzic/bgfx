@@ -5421,6 +5421,15 @@ namespace bgfx { namespace d3d11
 		return handle;
 	}
 
+	bool TextureD3D11::isMsaaSurface() const
+	{
+		const uint32_t msaaQuality = bx::satSub<uint32_t>(uint32_t( (m_flags&BGFX_TEXTURE_RT_MSAA_MASK) >> BGFX_TEXTURE_RT_MSAA_SHIFT), 1u);
+		return true
+			&& 1 < s_msaa[msaaQuality].Count
+			&& 0 != (m_flags & BGFX_TEXTURE_MSAA_SAMPLE)
+			;
+	}
+
 	DXGI_FORMAT TextureD3D11::getSrvFormat() const
 	{
 		if (bimg::isDepth(bimg::TextureFormat::Enum(m_textureFormat) ) )
@@ -6070,17 +6079,96 @@ namespace bgfx { namespace d3d11
 			const TextureD3D11& src = m_textures[blit.m_src.idx];
 			const TextureD3D11& dst = m_textures[blit.m_dst.idx];
 
+			if ( src.isMsaaSurface()
+			&&  !dst.isMsaaSurface()
+			&&  TextureD3D11::Texture3D != src.m_type)
+			{
+				const DXGI_FORMAT resolveFormat = bimg::isDepth(bimg::TextureFormat::Enum(src.m_textureFormat) )
+					? s_textureFormat[src.m_textureFormat].m_fmt
+					: src.getSrvFormat()
+					;
+
+				const uint32_t srcSubresource = blit.m_srcZ*src.m_numMips + blit.m_srcMip;
+				const uint32_t dstSubresource = blit.m_dstZ*dst.m_numMips + blit.m_dstMip;
+
+				if (0 != (dst.m_flags & BGFX_TEXTURE_READ_BACK) )
+				{
+					const D3D11_TEXTURE2D_DESC desc =
+					{
+						.Width          = bx::max<uint32_t>(1, src.m_width  >> blit.m_srcMip),
+						.Height         = bx::max<uint32_t>(1, src.m_height >> blit.m_srcMip),
+						.MipLevels      = 1,
+						.ArraySize      = 1,
+						.Format         = resolveFormat,
+						.SampleDesc     = { .Count = 1, .Quality = 0 },
+						.Usage          = D3D11_USAGE_DEFAULT,
+						.BindFlags      = D3D11_BIND_SHADER_RESOURCE,
+						.CPUAccessFlags = 0,
+						.MiscFlags      = 0,
+					};
+
+					ID3D11Texture2D* scratch;
+					DX_CHECK(m_device->CreateTexture2D(&desc, NULL, &scratch) );
+
+					deviceCtx->ResolveSubresource(
+						  scratch
+						, 0
+						, src.m_ptr
+						, srcSubresource
+						, resolveFormat
+						);
+
+					const D3D11_BOX box =
+					{
+						.left   = blit.m_srcX,
+						.top    = blit.m_srcY,
+						.front  = 0,
+						.right  = uint32_t(blit.m_srcX) + blit.m_width,
+						.bottom = uint32_t(blit.m_srcY) + blit.m_height,
+						.back   = 1,
+					};
+
+					deviceCtx->CopySubresourceRegion(
+						  dst.m_ptr
+						, dstSubresource
+						, blit.m_dstX
+						, blit.m_dstY
+						, 0
+						, scratch
+						, 0
+						, &box
+						);
+
+					DX_RELEASE(scratch, 0);
+				}
+				else
+				{
+					deviceCtx->ResolveSubresource(
+						  dst.m_ptr
+						, dstSubresource
+						, src.m_ptr
+						, srcSubresource
+						, resolveFormat
+						);
+				}
+
+				continue;
+			}
+
 			if (TextureD3D11::Texture3D == src.m_type)
 			{
-				D3D11_BOX box;
-				box.left   = blit.m_srcX;
-				box.top    = blit.m_srcY;
-				box.front  = blit.m_srcZ;
-				box.right  = blit.m_srcX + blit.m_width;
-				box.bottom = blit.m_srcY + blit.m_height;
-				box.back   = blit.m_srcZ + bx::max<int32_t>(1, blit.m_depth);
+				const D3D11_BOX box =
+				{
+					.left   = blit.m_srcX,
+					.top    = blit.m_srcY,
+					.front  = blit.m_srcZ,
+					.right  = uint32_t(blit.m_srcX) + blit.m_width,
+					.bottom = uint32_t(blit.m_srcY) + blit.m_height,
+					.back   = uint32_t(blit.m_srcZ) + bx::max<uint32_t>(1, blit.m_depth),
+				};
 
-				deviceCtx->CopySubresourceRegion(dst.m_ptr
+				deviceCtx->CopySubresourceRegion(
+					  dst.m_ptr
 					, blit.m_dstMip
 					, blit.m_dstX
 					, blit.m_dstY
@@ -6092,24 +6180,27 @@ namespace bgfx { namespace d3d11
 			}
 			else
 			{
-				bool depthStencil = bimg::isDepth(bimg::TextureFormat::Enum(src.m_textureFormat) );
+				const bool depthStencil = bimg::isDepth(bimg::TextureFormat::Enum(src.m_textureFormat) );
 				BX_ASSERT(!depthStencil
 					||  (blit.m_width == bx::max(1, src.m_width >> blit.m_srcMip) && blit.m_height == bx::max(1, src.m_height >> blit.m_srcMip))
 					, "When blitting depthstencil surface, source resolution must match destination."
 					);
 
-				D3D11_BOX box;
-				box.left   = blit.m_srcX;
-				box.top    = blit.m_srcY;
-				box.front  = 0;
-				box.right  = blit.m_srcX + blit.m_width;
-				box.bottom = blit.m_srcY + blit.m_height;
-				box.back   = 1;
+				const D3D11_BOX box =
+				{
+					.left   = blit.m_srcX,
+					.top    = blit.m_srcY,
+					.front  = 0,
+					.right  = uint32_t(blit.m_srcX) + blit.m_width,
+					.bottom = uint32_t(blit.m_srcY) + blit.m_height,
+					.back   = 1,
+				};
 
 				const uint32_t srcZ = blit.m_srcZ;
 				const uint32_t dstZ = blit.m_dstZ;
 
-				deviceCtx->CopySubresourceRegion(dst.m_ptr
+				deviceCtx->CopySubresourceRegion(
+					  dst.m_ptr
 					, dstZ*dst.m_numMips+blit.m_dstMip
 					, blit.m_dstX
 					, blit.m_dstY

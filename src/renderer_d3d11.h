@@ -293,6 +293,7 @@ namespace bgfx { namespace d3d11
 		void resolve(uint8_t _resolve, uint32_t _layer, uint32_t _numLayers, uint32_t _mip) const;
 		TextureHandle getHandle() const;
 		DXGI_FORMAT getSrvFormat() const;
+		bool isMsaaSurface() const;
 
 		union
 		{
