@@ -39,7 +39,6 @@ directory.
  - cgltf (`MIT <https://github.com/bkaradzic/bgfx/blob/master/3rdparty/cgltf/LICENSE>`__)
  - Dear ImGui (`MIT <https://github.com/bkaradzic/bgfx/blob/master/3rdparty/dear-imgui/LICENSE.txt>`__)
  - Blendish (`MIT <https://github.com/bkaradzic/bgfx/blob/67b2f1e2bfcf6015db6d8b5c2d6fcfd5cee7e167/examples/20-nanovg/blendish.h#L2-L22>`__)
- - fcpp (`BSD <https://github.com/bkaradzic/bgfx/blob/master/3rdparty/fcpp/COPYING>`__)
  - glslang (`Apache 2.0 <https://github.com/bkaradzic/bgfx/blob/master/3rdparty/glslang/LICENSE.txt>`__)
  - IconFontCppHeaders (`MIT <https://github.com/bkaradzic/bgfx/blob/master/3rdparty/iconfontheaders/LICENSE>`__)
  - meshoptimizer (`MIT <https://github.com/bkaradzic/bgfx/blob/master/3rdparty/meshoptimizer/LICENSE.md>`__)

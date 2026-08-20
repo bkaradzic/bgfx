@@ -4,14 +4,14 @@
  */
 
 #include "shaderc.h"
+#include "pp.h"
 #include <bx/commandline.h>
 #include <bx/filepath.h>
+#include <bx/file.h>
 
-#define MAX_TAGS 256
-extern "C"
-{
-#include <fpp.h>
-} // extern "C"
+#include <tinystl/allocator.h>
+#include <tinystl/vector.h>
+namespace stl = tinystl;
 
 #define BGFX_SHADER_BIN_VERSION 11
 #define BGFX_CHUNK_MAGIC_CSH BX_MAKEFOURCC('C', 'S', 'H', BGFX_SHADER_BIN_VERSION)
@@ -271,7 +271,6 @@ namespace bgfx
 		, disasm(false)
 		, raw(false)
 		, preprocessOnly(false)
-		, keepComments(false)
 		, depends(false)
 		, debugInformation(false)
 		, avoidFlowControl(false)
@@ -297,7 +296,6 @@ namespace bgfx
 			"\t  disasm: %s\n"
 			"\t  raw: %s\n"
 			"\t  preprocessOnly: %s\n"
-			"\t  keepComments: %s\n"
 			"\t  depends: %s\n"
 			"\t  debugInformation: %s\n"
 			"\t  avoidFlowControl: %s\n"
@@ -318,7 +316,6 @@ namespace bgfx
 			, disasm ? "true" : "false"
 			, raw ? "true" : "false"
 			, preprocessOnly ? "true" : "false"
-			, keepComments ? "true" : "false"
 			, depends ? "true" : "false"
 			, debugInformation ? "true" : "false"
 			, avoidFlowControl ? "true" : "false"
@@ -620,97 +617,6 @@ namespace bgfx
 		strReplace(_str, "\r",   "\n");
 	}
 
-	/// Find substring in string. Only match substrings that appear outside C/C++ style comment blocks.
-	const char* strFindUncommented(const char* _str, int32_t _strMax, const char* _find, int32_t _findMax)
-	{
-		int32_t i = 0;
-		bool inBlock = false; // inside C style comment.
-		bool inLine  = false; // inside C++ style comment.
-
-		while (i < _strMax)
-		{
-			if (!inBlock && !inLine)
-			{
-				// Look for comment blocks.
-				if (i + 1 < _strMax && '/' == _str[i] && '/' == _str[i + 1])
-				{
-					inLine = true;
-					i += 2;
-					continue;
-				}
-
-				if (i + 1 < _strMax && '/' == _str[i] && '*' == _str[i + 1])
-				{
-					inBlock = true;
-					i += 2;
-					continue;
-				}
-
-				// Outside comment block.
-				if (i + _findMax > _strMax)
-				{
-					return NULL;
-				}
-				else
-				{
-					if (0 == bx::strCmp(_str + i, _find, _findMax) )
-					{
-						return _str + i;
-					}
-				}
-
-				++i;
-			}
-			else if (inBlock)
-			{
-				if (i + 1 < _strMax && '*' == _str[i] && '/' == _str[i + 1])
-				{
-					inBlock = false;
-					i += 2;
-				}
-				else
-				{
-					++i;
-				}
-			}
-			else if (inLine)
-			{
-				if ('\n' == _str[i])
-				{
-					inLine = false;
-				}
-
-				++i;
-			}
-			else
-			{
-				++i;
-			}
-		}
-
-		return NULL;
-	}
-
-	bx::StringView strFindUncommented(bool _keepcomments, const bx::StringView &_str, const bx::StringView& _find, int32_t _num = INT32_MAX)
-	{
-		if (!_keepcomments) return bx::strFind(_str, _find, _num);
-
-		int32_t len = bx::min(_find.getLength(), _num);
-
-		const char* ptr = strFindUncommented(
-			  _str.getPtr()
-			, _str.getLength()
-			, _find.getPtr()
-			, len
-			);
-
-		if (NULL == ptr)
-		{
-			return bx::StringView(_str.getTerm(), _str.getTerm() );
-		}
-
-		return bx::StringView(ptr, len);
-	}
 
 	void printCode(const char* _code, int32_t _line, int32_t _start, int32_t _end, int32_t _column)
 	{
@@ -753,55 +659,13 @@ namespace bgfx
 		}
 	}
 
-	struct Preprocessor
+	struct Preprocessor : public shaderc::PreprocessorCallbackI
 	{
 		Preprocessor(const char* _filePath, bool _essl, bx::WriterI* _messageWriter)
-			: m_tagptr(m_tags)
-			, m_scratchPos(0)
-			, m_fgetsPos(0)
+			: m_filePath(_filePath)
 			, m_messageWriter(_messageWriter)
-			, m_keepCommentsTag(NULL)
+			, m_hadError(false)
 		{
-			m_tagptr->tag = FPPTAG_USERDATA;
-			m_tagptr->data = this;
-			m_tagptr++;
-
-			m_tagptr->tag = FPPTAG_DEPENDS;
-			m_tagptr->data = (void*)fppDepends;
-			m_tagptr++;
-
-			m_tagptr->tag = FPPTAG_INPUT;
-			m_tagptr->data = (void*)fppInput;
-			m_tagptr++;
-
-			m_tagptr->tag = FPPTAG_OUTPUT;
-			m_tagptr->data = (void*)fppOutput;
-			m_tagptr++;
-
-			m_tagptr->tag = FPPTAG_ERROR;
-			m_tagptr->data = (void*)fppError;
-			m_tagptr++;
-
-			m_tagptr->tag = FPPTAG_SHOWVERSION;
-			m_tagptr->data = (void*)0;
-			m_tagptr++;
-
-			m_tagptr->tag = FPPTAG_LINE;
-			m_tagptr->data = (void*)0;
-			m_tagptr++;
-
-			m_tagptr->tag = FPPTAG_RIGHTCONCAT;
-			m_tagptr->data = (void*)1;
-			m_tagptr++;
-
-			m_tagptr->tag = FPPTAG_INPUT_NAME;
-			m_tagptr->data = scratch(_filePath);
-			m_tagptr++;
-
-			m_tagptr->tag = FPPTAG_KEEPCOMMENTS;
-			m_tagptr->data = (void*)0;
-			m_keepCommentsTag = m_tagptr++;
-
 			if (!_essl)
 			{
 				m_default = "#define lowp\n#define mediump\n#define highp\n";
@@ -812,9 +676,7 @@ namespace bgfx
 		{
 			if (0 != bx::strLen(_define) )
 			{
-				m_tagptr->tag = FPPTAG_DEFINE;
-				m_tagptr->data = scratch(_define);
-				m_tagptr++;
+				m_defines.push_back(_define);
 			}
 		}
 
@@ -844,23 +706,25 @@ namespace bgfx
 
 		void addInclude(const char* _includeDir)
 		{
-			char* start = scratch(_includeDir);
+			bx::StringView dirs(_includeDir);
 
-			for (bx::StringView split = bx::strFind(start, ';')
-				; !split.isEmpty()
-				; split = bx::strFind(start, ';')
-				)
+			for (;;)
 			{
-				*const_cast<char*>(split.getPtr() ) = '\0';
-				m_tagptr->tag = FPPTAG_INCLUDE_DIR;
-				m_tagptr->data = start;
-				m_tagptr++;
-				start = const_cast<char*>(split.getPtr() ) + 1;
-			}
+				const bx::StringView split = bx::strFind(dirs, ';');
+				const bx::StringView dir(dirs.getPtr(), split.isEmpty() ? dirs.getTerm() : split.getPtr() );
 
-			m_tagptr->tag = FPPTAG_INCLUDE_DIR;
-			m_tagptr->data = start;
-			m_tagptr++;
+				if (!dir.isEmpty() )
+				{
+					m_includeDirs.push_back(bx::FilePath(dir) );
+				}
+
+				if (split.isEmpty() )
+				{
+					break;
+				}
+
+				dirs = bx::StringView(split.getPtr()+1, dirs.getTerm() );
+			}
 		}
 
 		void addDependency(const char* _fileName)
@@ -869,102 +733,179 @@ namespace bgfx
 			m_depends += _fileName;
 		}
 
-		void setKeepComments(bool keep)
-		{
-			m_keepCommentsTag->data = (void*)keep;
-		}
-
 		bool run(const char* _input)
 		{
-			m_fgetsPos = 0;
-
 			m_preprocessed.clear();
-			m_input = m_default;
-			m_input += "\n\n";
+			m_hadError = false;
 
-			int32_t len = bx::strLen(_input)+1;
+			std::string input = m_default;
+			input += "\n\n";
+
+			const int32_t len = bx::strLen(_input)+1;
 			char* temp = new char[len];
-			bx::StringView normalized = bx::normalizeEolLf(temp, len, _input);
-			std::string str;
-			str.assign(normalized.getPtr(), normalized.getTerm() );
-			m_input += str;
+			const bx::StringView normalized = bx::normalizeEolLf(temp, len, _input);
+			input.append(normalized.getPtr(), normalized.getTerm() );
 			delete [] temp;
 
-			fppTag* tagptr = m_tagptr;
+			bx::DefaultAllocator allocator;
+			shaderc::Preprocessor pp(*this, &allocator);
 
-			tagptr->tag = FPPTAG_END;
-			tagptr->data = 0;
-			tagptr++;
+			for (uint32_t ii = 0, num = uint32_t(m_defines.size() ); ii < num; ++ii)
+			{
+				pp.define(bx::StringView(m_defines[ii].c_str() ) );
+			}
 
-			int result = fppPreProcess(m_tags);
+			bx::MemoryBlock mb(&allocator);
+			bx::MemoryWriter writer(&mb);
+			bx::Error err;
 
-			return 0 == result;
+			const bool ok = pp.preprocess(
+				  m_filePath
+				, bx::StringView(input.c_str(), int32_t(input.size() ) )
+				, &writer
+				, &err
+				);
+
+			const uint32_t size = uint32_t(bx::seek(&writer) );
+
+			if (0 < size)
+			{
+				m_preprocessed.append( (const char*)mb.more(0), size);
+			}
+
+			return ok && !m_hadError;
 		}
 
-		char* fgets(char* _buffer, int _size)
+		bool include(const bx::StringView& _name, bool _isSystem, const bx::StringView& _from, bx::WriterI* _writer, bx::FilePath& _outPath, bx::Error* _err) override
 		{
-			int ii = 0;
-			for (char ch = m_input[m_fgetsPos]; m_fgetsPos < m_input.size() && ii < _size-1; ch = m_input[++m_fgetsPos])
+			if (!_isSystem
+			&&  !_from.isEmpty() )
 			{
-				_buffer[ii++] = ch;
+				const bx::FilePath from(_from);
+				const bx::StringView dir = from.getPath();
 
-				if (ch == '\n' || ii == _size)
+				if (!dir.isEmpty() )
 				{
-					_buffer[ii] = '\0';
-					m_fgetsPos++;
-					return _buffer;
+					bx::FilePath path(dir);
+					path.join(_name);
+
+					if (readFile(path, _writer, _err) )
+					{
+						_outPath = path;
+						return true;
+					}
 				}
 			}
 
-			return NULL;
+			for (uint32_t ii = 0, num = uint32_t(m_includeDirs.size() ); ii < num; ++ii)
+			{
+				bx::FilePath path(m_includeDirs[ii]);
+				path.join(_name);
+
+				if (readFile(path, _writer, _err) )
+				{
+					_outPath = path;
+					return true;
+				}
+			}
+
+			if (!_isSystem)
+			{
+				const bx::FilePath direct(_name);
+
+				if (readFile(direct, _writer, _err) )
+				{
+					_outPath = direct;
+					return true;
+				}
+			}
+
+			return false;
 		}
 
-		static void fppDepends(char* _fileName, void* _userData)
+		void depend(const bx::StringView& _path) override
 		{
-			Preprocessor* thisClass = (Preprocessor*)_userData;
-			thisClass->addDependency(_fileName);
+			if (bx::isEqual(_path, m_filePath) )
+			{
+				return;
+			}
+
+			const std::string path(_path.getPtr(), _path.getTerm() );
+			addDependency(path.c_str() );
 		}
 
-		static char* fppInput(char* _buffer, int _size, void* _userData)
+		void message(bool _isError, const shaderc::SourceLocation& _location, const bx::StringView& _message) override
 		{
-			Preprocessor* thisClass = (Preprocessor*)_userData;
-			return thisClass->fgets(_buffer, _size);
+			m_hadError = m_hadError || _isError;
+
+			char temp[2048];
+			bx::snprintf(temp, BX_COUNTOF(temp), "%.*s(%d): %s: %.*s\n"
+				, _location.file.getLength(), _location.file.getPtr()
+				, _location.line
+				, _isError ? "error" : "warning"
+				, _message.getLength(), _message.getPtr()
+				);
+
+			bx::Error err;
+			bx::write(m_messageWriter, temp, bx::strLen(temp), &err);
 		}
 
-		static void fppOutput(int _ch, void* _userData)
+		static bool readFile(const bx::FilePath& _filePath, bx::WriterI* _writer, bx::Error* _err)
 		{
-			Preprocessor* thisClass = (Preprocessor*)_userData;
-			thisClass->m_preprocessed += char(_ch);
+			bx::FileReader reader;
+			bx::Error err;
+
+			if (!bx::open(&reader, _filePath, &err) )
+			{
+				return false;
+			}
+
+			bx::DefaultAllocator allocator;
+			bx::MemoryBlock mb(&allocator);
+			bx::MemoryWriter mw(&mb);
+
+			int64_t remaining = bx::getSize(&reader);
+
+			while (0 < remaining
+			&&     err.isOk() )
+			{
+				char temp[4096];
+				const int32_t num = bx::read(&reader, temp, int32_t(bx::min<int64_t>(remaining, sizeof(temp) ) ), &err);
+
+				if (0 >= num)
+				{
+					break;
+				}
+
+				bx::write(&mw, temp, num, &err);
+				remaining -= num;
+			}
+
+			bx::close(&reader);
+
+			if (!err.isOk() )
+			{
+				return false;
+			}
+
+			const uint32_t size = uint32_t(bx::seek(&mw) );
+
+			if (0 < size)
+			{
+				bx::write(_writer, mb.more(0), size, _err);
+			}
+
+			return _err->isOk();
 		}
 
-		static void fppError(void* _userData, char* _format, va_list _vargs)
-		{
-			bx::ErrorAssert err;
-			Preprocessor* thisClass = (Preprocessor*)_userData;
-			bx::write(thisClass->m_messageWriter, _format, _vargs, &err);
-		}
-
-		char* scratch(const char* _str)
-		{
-			char* result = &m_scratch[m_scratchPos];
-			bx::strCopy(result, uint32_t(sizeof(m_scratch)-m_scratchPos), _str);
-			m_scratchPos += (uint32_t)bx::strLen(_str)+1;
-
-			return result;
-		}
-
-		fppTag m_tags[MAX_TAGS];
-		fppTag* m_tagptr;
-
+		bx::FilePath m_filePath;
 		std::string m_depends;
 		std::string m_default;
-		std::string m_input;
 		std::string m_preprocessed;
-		char m_scratch[16<<10];
-		uint32_t m_scratchPos;
-		uint32_t m_fgetsPos;
+		stl::vector<std::string> m_defines;
+		stl::vector<bx::FilePath> m_includeDirs;
 		bx::WriterI* m_messageWriter;
-		fppTag* m_keepCommentsTag;
+		bool m_hadError;
 	};
 
 	typedef std::vector<std::string> InOut;
@@ -1561,7 +1502,6 @@ namespace bgfx
 
 			if (!raw)
 			{
-				preprocessor.setKeepComments(_options.keepComments);
 				bool ok = preprocessor.run(data);
 				delete [] data;
 
@@ -1693,7 +1633,7 @@ namespace bgfx
 		}
 		else if ('c' == _options.shaderType) // Compute
 		{
-			bx::StringView entry = strFindUncommented(_options.keepComments, input, "void main()");
+			bx::StringView entry = bx::strFind(input, "void main()");
 			if (entry.isEmpty() )
 			{
 				bx::write(_messageWriter, &messageErr, "Shader entry point 'void main()' is not found.\n");
@@ -1735,10 +1675,10 @@ namespace bgfx
 
 					uint32_t arg = 0;
 
-					const bool hasLocalInvocationID    = !strFindUncommented(_options.keepComments, input, "gl_LocalInvocationID").isEmpty();
-					const bool hasLocalInvocationIndex = !strFindUncommented(_options.keepComments, input, "gl_LocalInvocationIndex").isEmpty();
-					const bool hasGlobalInvocationID   = !strFindUncommented(_options.keepComments, input, "gl_GlobalInvocationID").isEmpty();
-					const bool hasWorkGroupID          = !strFindUncommented(_options.keepComments, input, "gl_WorkGroupID").isEmpty();
+					const bool hasLocalInvocationID    = !bx::strFind(input, "gl_LocalInvocationID").isEmpty();
+					const bool hasLocalInvocationIndex = !bx::strFind(input, "gl_LocalInvocationIndex").isEmpty();
+					const bool hasGlobalInvocationID   = !bx::strFind(input, "gl_GlobalInvocationID").isEmpty();
+					const bool hasWorkGroupID          = !bx::strFind(input, "gl_WorkGroupID").isEmpty();
 
 					if (hasLocalInvocationID)
 					{
@@ -1867,7 +1807,7 @@ namespace bgfx
 		else // Vertex/Fragment
 		{
 			bx::StringView shader(input);
-			bx::StringView entry = strFindUncommented(_options.keepComments, shader, "void main()");
+			bx::StringView entry = bx::strFind(shader, "void main()");
 			if (entry.isEmpty() )
 			{
 				bx::write(_messageWriter, &messageErr, "Shader entry point 'void main()' is not found.\n");
@@ -1958,17 +1898,17 @@ namespace bgfx
 
 					if ('f' == _options.shaderType)
 					{
-						bx::StringView insert = strFindUncommented(_options.keepComments, bx::StringView(entry.getPtr(), shader.getTerm() ), "{");
+						bx::StringView insert = bx::strFind(bx::StringView(entry.getPtr(), shader.getTerm() ), "{");
 						if (!insert.isEmpty() )
 						{
 							insert = strInsert(const_cast<char*>(insert.getPtr()+1), "\nvec4 bgfx_VoidFrag = vec4_splat(0.0);\n");
 						}
 
-						const bool hasFragColor   = !strFindUncommented(_options.keepComments, input, "gl_FragColor").isEmpty();
-						const bool hasFragCoord   = !strFindUncommented(_options.keepComments, input, "gl_FragCoord").isEmpty() || profile->id >= 400;
-						const bool hasFragDepth   = !strFindUncommented(_options.keepComments, input, "gl_FragDepth").isEmpty();
-						const bool hasFrontFacing = !strFindUncommented(_options.keepComments, input, "gl_FrontFacing").isEmpty();
-						const bool hasPrimitiveId = !strFindUncommented(_options.keepComments, input, "gl_PrimitiveID").isEmpty() && BGFX_CAPS_PRIMITIVE_ID;
+						const bool hasFragColor   = !bx::strFind(input, "gl_FragColor").isEmpty();
+						const bool hasFragCoord   = !bx::strFind(input, "gl_FragCoord").isEmpty() || profile->id >= 400;
+						const bool hasFragDepth   = !bx::strFind(input, "gl_FragDepth").isEmpty();
+						const bool hasFrontFacing = !bx::strFind(input, "gl_FrontFacing").isEmpty();
+						const bool hasPrimitiveId = !bx::strFind(input, "gl_PrimitiveID").isEmpty() && BGFX_CAPS_PRIMITIVE_ID;
 
 						if (!hasPrimitiveId)
 						{
@@ -1981,7 +1921,7 @@ namespace bgfx
 						{
 							char temp[32];
 							bx::snprintf(temp, BX_COUNTOF(temp), "gl_FragData[%d]", ii);
-							hasFragData[ii] = !strFindUncommented(_options.keepComments, input, temp).isEmpty();
+							hasFragData[ii] = !bx::strFind(input, temp).isEmpty();
 							numFragData += hasFragData[ii];
 						}
 
@@ -2106,12 +2046,12 @@ namespace bgfx
 					}
 					else if ('v' == _options.shaderType)
 					{
-						const bool hasVertexId   = !strFindUncommented(_options.keepComments, input, "gl_VertexID").isEmpty();
-						const bool hasInstanceId = !strFindUncommented(_options.keepComments, input, "gl_InstanceID").isEmpty();
-						const bool hasViewportId = !strFindUncommented(_options.keepComments, input, "gl_ViewportIndex").isEmpty();
-						const bool hasLayerId    = !strFindUncommented(_options.keepComments, input, "gl_Layer").isEmpty();
+						const bool hasVertexId   = !bx::strFind(input, "gl_VertexID").isEmpty();
+						const bool hasInstanceId = !bx::strFind(input, "gl_InstanceID").isEmpty();
+						const bool hasViewportId = !bx::strFind(input, "gl_ViewportIndex").isEmpty();
+						const bool hasLayerId    = !bx::strFind(input, "gl_Layer").isEmpty();
 
-						bx::StringView brace = strFindUncommented(_options.keepComments, bx::StringView(entry.getPtr(), shader.getTerm() ), "{");
+						bx::StringView brace = bx::strFind(bx::StringView(entry.getPtr(), shader.getTerm() ), "{");
 						if (!brace.isEmpty() )
 						{
 							bx::StringView block = bx::strFindBlock(bx::StringView(brace.getPtr(), shader.getTerm() ), '{', '}');
@@ -2620,12 +2560,10 @@ namespace bgfx
 
 		options.depends = cmdLine.hasArg("depends");
 		options.preprocessOnly = cmdLine.hasArg("preprocess");
-		options.keepComments = cmdLine.hasArg("keepcomments");
 		const char* includeDir = cmdLine.findOption('i');
 
 		BX_TRACE("depends: %d", options.depends);
 		BX_TRACE("preprocessOnly: %d", options.preprocessOnly);
-		BX_TRACE("keepComments: %d", options.keepComments);
 		BX_TRACE("includeDir: %s", includeDir);
 
 		for (int ii = 1; NULL != includeDir; ++ii)
