@@ -258,19 +258,22 @@ local function comment_lines(out, comments, indent)
 	end
 end
 
-local function gen_enums(out)
-	for _, typ in ipairs(idl.types) do
-		if typ.enum then
-			comment_lines(out, typ.comments)
+local function gen_enums(out, comments)
+ 	for _, typ in ipairs(idl.types) do
+ 		if typ.enum then
+			if comments then
+				comment_lines(out, typ.comments)
+			end
 			append(out, "class " .. python_type_name(typ) .. "(enum.IntEnum):")
 
 			for index, item in ipairs(typ.enum) do
-				comment_lines(out, item.comment, "\t")
-				append(out, string.format("\t%s = %d", py_ident(item.name), index - 1))
-			end
-
+				if comments then
+					comment_lines(out, item.comment, "\t")
+				end
+ 				append(out, string.format("\t%s = %d", py_ident(item.name), index - 1))
+ 			end
 			append(out, string.format("\tCount = %d", #typ.enum), "")
-		end
+ 		end
 	end
 end
 
@@ -296,22 +299,25 @@ local function flag_value(item, lookup)
 	return value
 end
 
-local function emit_flag_class(out, name, items)
-	append(out, "class " .. py_ident(name) .. "(enum.IntFlag):")
+local function emit_flag_class(out, name, items, comments)
+ 	append(out, "class " .. py_ident(name) .. "(enum.IntFlag):")
 
-	if #items == 0 then
-		append(out, "\tpass", "")
-		return
-	end
+ 	if #items == 0 then
+ 		append(out, "\tpass", "")
+ 		return
+ 	end
 
-	for _, item in ipairs(items) do
-		comment_lines(out, item.comment, "\t")
-		append(out, string.format("\t%s = 0x%x", py_ident(item.name), item.value))
-	end
-	append(out, "")
-end
+ 	for _, item in ipairs(items) do
+		if comments then
+			comment_lines(out, item.comment, "\t")
+		end
+ 		append(out, string.format("\t%s = 0x%x", py_ident(item.name), item.value))
+ 	end
 
-local function gen_flags(out)
+ 	append(out, "")
+ end
+
+local function gen_flags(out, comments)
 	local combined = {}
 	local standalone = {}
 
@@ -402,15 +408,15 @@ local function gen_flags(out)
 	end
 
 	for _, name in ipairs({ "State", "Stencil", "Buffer", "Texture", "Sampler", "Reset" }) do
-		emit_flag_class(out, name .. "Flags", combined[name].items)
-	end
+		emit_flag_class(out, name .. "Flags", combined[name].items, comments)
+ 	end
 
-	for _, flag in ipairs(standalone) do
-		emit_flag_class(out, flag.name, flag.items)
-	end
+ 	for _, flag in ipairs(standalone) do
+		emit_flag_class(out, flag.name, flag.items, comments)
+ 	end
 end
 
-local function gen_struct_declarations(out)
+local function gen_struct_declarations(out, comments)
 	for _, typ in ipairs(idl.types) do
 		if typ.handle then
 			append(out,
@@ -422,12 +428,14 @@ local function gen_struct_declarations(out)
 				"\t\treturn self.idx != 0xffff",
 				""
 			)
-		elseif typ.struct then
-			comment_lines(out, typ.comments)
-			append(out, "class " .. python_type_name(typ) .. "(ctypes.Structure):", "\tpass", "")
-		end
-	end
-end
+ 		elseif typ.struct then
+			if comments then
+				comment_lines(out, typ.comments)
+			end
+ 			append(out, "class " .. python_type_name(typ) .. "(ctypes.Structure):", "\tpass", "")
+ 		end
+ 	end
+ end
 
 local function gen_funcptrs(out)
 	for _, typ in ipairs(idl.types) do
@@ -483,17 +491,24 @@ local function gen_stub_structs(out)
 				"\tdef valid(self) -> bool: ...",
 				""
 			)
+
 		elseif typ.struct then
 			comment_lines(out, typ.comments)
 			append(out, "class " .. python_type_name(typ) .. "(ctypes.Structure):")
+
 			if #typ.struct == 0 then
 				append(out, "\tpass")
 			else
 				for _, member in ipairs(typ.struct) do
 					comment_lines(out, member.comment, "\t")
-					append(out, "\t" .. py_ident(member.name) .. ": " .. convert_stub_field(member))
+					append(
+						out,
+						"\t" .. py_ident(member.name) .. ": "
+							.. convert_stub_field(member)
+					)
 				end
 			end
+
 			append(out, "")
 		end
 	end
@@ -622,9 +637,9 @@ function gen.gen()
 		"",
 	}
 
-	gen_enums(out)
-	gen_flags(out)
-	gen_struct_declarations(out)
+	gen_enums(out, false)
+	gen_flags(out, false)
+	gen_struct_declarations(out, false)
 	gen_funcptrs(out)
 	gen_struct_fields(out)
 	gen_functions(out)
@@ -655,8 +670,8 @@ function gen.gen_pyi()
 		"",
 	}
 
-	gen_enums(out)
-	gen_flags(out)
+	gen_enums(out, true)
+	gen_flags(out, true)
 	gen_stub_structs(out)
 	gen_stub_funcptrs(out)
 	gen_stub_functions(out)
