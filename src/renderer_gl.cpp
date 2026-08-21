@@ -270,111 +270,111 @@ namespace bgfx { namespace gl
 #define $G GL_GREEN
 #define $B GL_BLUE
 #define $A GL_ALPHA
-		{ GL_COMPRESSED_RGBA_S3TC_DXT1_EXT,            GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT,       GL_COMPRESSED_RGBA_S3TC_DXT1_EXT,            GL_COMPRESSED_RGBA_S3TC_DXT1_EXT,            GL_ZERO,                         false, { $_, $_, $_, $_ } }, // BC1
-		{ GL_COMPRESSED_RGBA_S3TC_DXT3_EXT,            GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT,       GL_COMPRESSED_RGBA_S3TC_DXT3_EXT,            GL_COMPRESSED_RGBA_S3TC_DXT3_EXT,            GL_ZERO,                         false, { $_, $_, $_, $_ } }, // BC2
-		{ GL_COMPRESSED_RGBA_S3TC_DXT5_EXT,            GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT,       GL_COMPRESSED_RGBA_S3TC_DXT5_EXT,            GL_COMPRESSED_RGBA_S3TC_DXT5_EXT,            GL_ZERO,                         false, { $_, $_, $_, $_ } }, // BC3
-		{ GL_COMPRESSED_LUMINANCE_LATC1_EXT,           GL_ZERO,                                      GL_COMPRESSED_LUMINANCE_LATC1_EXT,           GL_COMPRESSED_LUMINANCE_LATC1_EXT,           GL_ZERO,                         false, { $_, $_, $_, $_ } }, // BC4
-		{ GL_COMPRESSED_SIGNED_LUMINANCE_LATC1_EXT,    GL_ZERO,                                      GL_COMPRESSED_SIGNED_LUMINANCE_LATC1_EXT,    GL_COMPRESSED_SIGNED_LUMINANCE_LATC1_EXT,    GL_ZERO,                         false, { $_, $_, $_, $_ } }, // BC4S
-		{ GL_COMPRESSED_LUMINANCE_ALPHA_LATC2_EXT,     GL_ZERO,                                      GL_COMPRESSED_LUMINANCE_ALPHA_LATC2_EXT,     GL_COMPRESSED_LUMINANCE_ALPHA_LATC2_EXT,     GL_ZERO,                         false, { $_, $_, $_, $_ } }, // BC5
-		{ GL_COMPRESSED_SIGNED_LUMINANCE_ALPHA_LATC2_EXT, GL_ZERO,                                   GL_COMPRESSED_SIGNED_LUMINANCE_ALPHA_LATC2_EXT, GL_COMPRESSED_SIGNED_LUMINANCE_ALPHA_LATC2_EXT, GL_ZERO,                         false, { $_, $_, $_, $_ } }, // BC5S
-		{ GL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT_ARB,     GL_ZERO,                                      GL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT_ARB,     GL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT_ARB,     GL_ZERO,                         false, { $_, $_, $_, $_ } }, // BC6H
-		{ GL_COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT_ARB,   GL_ZERO,                                      GL_COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT_ARB,   GL_COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT_ARB,   GL_ZERO,                         false, { $_, $_, $_, $_ } }, // BC6HU
-		{ GL_COMPRESSED_RGBA_BPTC_UNORM_ARB,           GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM_ARB,      GL_COMPRESSED_RGBA_BPTC_UNORM_ARB,           GL_COMPRESSED_RGBA_BPTC_UNORM_ARB,           GL_ZERO,                         false, { $_, $_, $_, $_ } }, // BC7
-		{ GL_ETC1_RGB8_OES,                            GL_ZERO,                                      GL_ETC1_RGB8_OES,                            GL_ETC1_RGB8_OES,                            GL_ZERO,                         false, { $_, $_, $_, $_ } }, // ETC1
-		{ GL_COMPRESSED_RGB8_ETC2,                     GL_COMPRESSED_SRGB8_ETC2,                     GL_COMPRESSED_RGB8_ETC2,                     GL_COMPRESSED_RGB8_ETC2,                     GL_ZERO,                         false, { $_, $_, $_, $_ } }, // ETC2
-		{ GL_COMPRESSED_RGBA8_ETC2_EAC,                GL_COMPRESSED_SRGB8_ALPHA8_ETC2_EAC,          GL_COMPRESSED_RGBA8_ETC2_EAC,                GL_COMPRESSED_RGBA8_ETC2_EAC,                GL_ZERO,                         false, { $_, $_, $_, $_ } }, // ETC2A
-		{ GL_COMPRESSED_RGB8_PUNCHTHROUGH_ALPHA1_ETC2, GL_COMPRESSED_SRGB8_PUNCHTHROUGH_ALPHA1_ETC2, GL_COMPRESSED_RGB8_PUNCHTHROUGH_ALPHA1_ETC2, GL_COMPRESSED_RGB8_PUNCHTHROUGH_ALPHA1_ETC2, GL_ZERO,                         false, { $_, $_, $_, $_ } }, // ETC2A1
-		{ GL_COMPRESSED_R11_EAC,                       GL_ZERO,                                      GL_COMPRESSED_R11_EAC,                       GL_COMPRESSED_R11_EAC,                       GL_ZERO,                         false, { $_, $_, $_, $_ } }, // EACR11 UNORM
-		{ GL_COMPRESSED_SIGNED_R11_EAC,                GL_ZERO,                                      GL_COMPRESSED_SIGNED_R11_EAC,                GL_COMPRESSED_SIGNED_R11_EAC,                GL_ZERO,                         false, { $_, $_, $_, $_ } }, // EACR11 SNORM
-		{ GL_COMPRESSED_RG11_EAC,                      GL_ZERO,                                      GL_COMPRESSED_RG11_EAC,                      GL_COMPRESSED_RG11_EAC,                      GL_ZERO,                         false, { $_, $_, $_, $_ } }, // EACRG11 UNORM
-		{ GL_COMPRESSED_SIGNED_RG11_EAC,               GL_ZERO,                                      GL_COMPRESSED_SIGNED_RG11_EAC,               GL_COMPRESSED_SIGNED_RG11_EAC,               GL_ZERO,                         false, { $_, $_, $_, $_ } }, // EACRG11 SNORM
-		{ GL_COMPRESSED_RGB_PVRTC_2BPPV1_IMG,          GL_COMPRESSED_SRGB_PVRTC_2BPPV1_EXT,          GL_COMPRESSED_RGB_PVRTC_2BPPV1_IMG,          GL_COMPRESSED_RGB_PVRTC_2BPPV1_IMG,          GL_ZERO,                         false, { $_, $_, $_, $_ } }, // PTC12
-		{ GL_COMPRESSED_RGB_PVRTC_4BPPV1_IMG,          GL_COMPRESSED_SRGB_PVRTC_4BPPV1_EXT,          GL_COMPRESSED_RGB_PVRTC_4BPPV1_IMG,          GL_COMPRESSED_RGB_PVRTC_4BPPV1_IMG,          GL_ZERO,                         false, { $_, $_, $_, $_ } }, // PTC14
-		{ GL_COMPRESSED_RGBA_PVRTC_2BPPV1_IMG,         GL_COMPRESSED_SRGB_ALPHA_PVRTC_2BPPV1_EXT,    GL_COMPRESSED_RGBA_PVRTC_2BPPV1_IMG,         GL_COMPRESSED_RGBA_PVRTC_2BPPV1_IMG,         GL_ZERO,                         false, { $_, $_, $_, $_ } }, // PTC12A
-		{ GL_COMPRESSED_RGBA_PVRTC_4BPPV1_IMG,         GL_COMPRESSED_SRGB_ALPHA_PVRTC_4BPPV1_EXT,    GL_COMPRESSED_RGBA_PVRTC_4BPPV1_IMG,         GL_COMPRESSED_RGBA_PVRTC_4BPPV1_IMG,         GL_ZERO,                         false, { $_, $_, $_, $_ } }, // PTC14A
-		{ GL_COMPRESSED_RGBA_PVRTC_2BPPV2_IMG,         GL_ZERO,                                      GL_COMPRESSED_RGBA_PVRTC_2BPPV2_IMG,         GL_COMPRESSED_RGBA_PVRTC_2BPPV2_IMG,         GL_ZERO,                         false, { $_, $_, $_, $_ } }, // PTC22
-		{ GL_COMPRESSED_RGBA_PVRTC_4BPPV2_IMG,         GL_ZERO,                                      GL_COMPRESSED_RGBA_PVRTC_4BPPV2_IMG,         GL_COMPRESSED_RGBA_PVRTC_4BPPV2_IMG,         GL_ZERO,                         false, { $_, $_, $_, $_ } }, // PTC24
-		{ GL_ATC_RGB_AMD,                              GL_ZERO,                                      GL_ATC_RGB_AMD,                              GL_ATC_RGB_AMD,                              GL_ZERO,                         false, { $_, $_, $_, $_ } }, // ATC
-		{ GL_ATC_RGBA_EXPLICIT_ALPHA_AMD,              GL_ZERO,                                      GL_ATC_RGBA_EXPLICIT_ALPHA_AMD,              GL_ATC_RGBA_EXPLICIT_ALPHA_AMD,              GL_ZERO,                         false, { $_, $_, $_, $_ } }, // ATCE
-		{ GL_ATC_RGBA_INTERPOLATED_ALPHA_AMD,          GL_ZERO,                                      GL_ATC_RGBA_INTERPOLATED_ALPHA_AMD,          GL_ATC_RGBA_INTERPOLATED_ALPHA_AMD,          GL_ZERO,                         false, { $_, $_, $_, $_ } }, // ATCI
-		{ GL_COMPRESSED_RGBA_ASTC_4x4_KHR,             GL_COMPRESSED_SRGB8_ASTC_4x4_KHR,             GL_COMPRESSED_RGBA_ASTC_4x4_KHR,             GL_COMPRESSED_RGBA_ASTC_4x4_KHR,             GL_ZERO,                         false, { $_, $_, $_, $_ } }, // ASTC4x4
-		{ GL_COMPRESSED_RGBA_ASTC_5x4_KHR,             GL_COMPRESSED_SRGB8_ASTC_5x4_KHR,             GL_COMPRESSED_RGBA_ASTC_5x4_KHR,             GL_COMPRESSED_RGBA_ASTC_5x4_KHR,             GL_ZERO,                         false, { $_, $_, $_, $_ } }, // ASTC5x4
-		{ GL_COMPRESSED_RGBA_ASTC_5x5_KHR,             GL_COMPRESSED_SRGB8_ASTC_5x5_KHR,             GL_COMPRESSED_RGBA_ASTC_5x5_KHR,             GL_COMPRESSED_RGBA_ASTC_5x5_KHR,             GL_ZERO,                         false, { $_, $_, $_, $_ } }, // ASTC5x5
-		{ GL_COMPRESSED_RGBA_ASTC_6x5_KHR,             GL_COMPRESSED_SRGB8_ASTC_6x5_KHR,             GL_COMPRESSED_RGBA_ASTC_6x5_KHR,             GL_COMPRESSED_RGBA_ASTC_6x5_KHR,             GL_ZERO,                         false, { $_, $_, $_, $_ } }, // ASTC6x5
-		{ GL_COMPRESSED_RGBA_ASTC_6x6_KHR,             GL_COMPRESSED_SRGB8_ASTC_6x6_KHR,             GL_COMPRESSED_RGBA_ASTC_6x6_KHR,             GL_COMPRESSED_RGBA_ASTC_6x6_KHR,             GL_ZERO,                         false, { $_, $_, $_, $_ } }, // ASTC6x6
-		{ GL_COMPRESSED_RGBA_ASTC_8x5_KHR,             GL_COMPRESSED_SRGB8_ASTC_8x5_KHR,             GL_COMPRESSED_RGBA_ASTC_8x5_KHR,             GL_COMPRESSED_RGBA_ASTC_8x5_KHR,             GL_ZERO,                         false, { $_, $_, $_, $_ } }, // ASTC8x5
-		{ GL_COMPRESSED_RGBA_ASTC_8x6_KHR,             GL_COMPRESSED_SRGB8_ASTC_8x6_KHR,             GL_COMPRESSED_RGBA_ASTC_8x6_KHR,             GL_COMPRESSED_RGBA_ASTC_8x6_KHR,             GL_ZERO,                         false, { $_, $_, $_, $_ } }, // ASTC8x6
-		{ GL_COMPRESSED_RGBA_ASTC_8x8_KHR,             GL_COMPRESSED_SRGB8_ASTC_8x8_KHR,             GL_COMPRESSED_RGBA_ASTC_8x8_KHR,             GL_COMPRESSED_RGBA_ASTC_8x8_KHR,             GL_ZERO,                         false, { $_, $_, $_, $_ } }, // ASTC8x8
-		{ GL_COMPRESSED_RGBA_ASTC_10x5_KHR,            GL_COMPRESSED_SRGB8_ASTC_10x5_KHR,            GL_COMPRESSED_RGBA_ASTC_10x5_KHR,            GL_COMPRESSED_RGBA_ASTC_10x5_KHR,            GL_ZERO,                         false, { $_, $_, $_, $_ } }, // ASTC10x5
-		{ GL_COMPRESSED_RGBA_ASTC_10x6_KHR,            GL_COMPRESSED_SRGB8_ASTC_10x6_KHR,            GL_COMPRESSED_RGBA_ASTC_10x6_KHR,            GL_COMPRESSED_RGBA_ASTC_10x6_KHR,            GL_ZERO,                         false, { $_, $_, $_, $_ } }, // ASTC10x6
-		{ GL_COMPRESSED_RGBA_ASTC_10x8_KHR,            GL_COMPRESSED_SRGB8_ASTC_10x8_KHR,            GL_COMPRESSED_RGBA_ASTC_10x8_KHR,            GL_COMPRESSED_RGBA_ASTC_10x8_KHR,            GL_ZERO,                         false, { $_, $_, $_, $_ } }, // ASTC10x8
-		{ GL_COMPRESSED_RGBA_ASTC_10x10_KHR,           GL_COMPRESSED_SRGB8_ASTC_10x10_KHR,           GL_COMPRESSED_RGBA_ASTC_10x10_KHR,           GL_COMPRESSED_RGBA_ASTC_10x10_KHR,           GL_ZERO,                         false, { $_, $_, $_, $_ } }, // ASTC10x10
-		{ GL_COMPRESSED_RGBA_ASTC_12x10_KHR,           GL_COMPRESSED_SRGB8_ASTC_12x10_KHR,           GL_COMPRESSED_RGBA_ASTC_12x10_KHR,           GL_COMPRESSED_RGBA_ASTC_12x10_KHR,           GL_ZERO,                         false, { $_, $_, $_, $_ } }, // ASTC12x10
-		{ GL_COMPRESSED_RGBA_ASTC_12x12_KHR,           GL_COMPRESSED_SRGB8_ASTC_12x12_KHR,           GL_COMPRESSED_RGBA_ASTC_12x12_KHR,           GL_COMPRESSED_RGBA_ASTC_12x12_KHR,           GL_ZERO,                         false, { $_, $_, $_, $_ } }, // ASTC12x12
-		{ GL_ZERO,                                     GL_ZERO,                                      GL_ZERO,                                     GL_ZERO,                                     GL_ZERO,                         false, { $_, $_, $_, $_ } }, // Unknown
-		{ GL_ZERO,                                     GL_ZERO,                                      GL_ZERO,                                     GL_ZERO,                                     GL_ZERO,                         false, { $_, $_, $_, $_ } }, // R1
-		{ GL_ALPHA,                                    GL_ZERO,                                      GL_ALPHA,                                    GL_ALPHA,                                    GL_UNSIGNED_BYTE,                false, { $_, $_, $_, $_ } }, // A8
-		{ GL_R8,                                       GL_ZERO,                                      GL_RED,                                      GL_RED,                                      GL_UNSIGNED_BYTE,                false, { $_, $_, $_, $_ } }, // R8
-		{ GL_R8I,                                      GL_ZERO,                                      RED_INTEGER,                                 GL_RED_INTEGER,                              GL_BYTE,                         false, { $_, $_, $_, $_ } }, // R8I
-		{ GL_R8UI,                                     GL_ZERO,                                      RED_INTEGER,                                 GL_RED_INTEGER,                              GL_UNSIGNED_BYTE,                false, { $_, $_, $_, $_ } }, // R8U
-		{ GL_R8_SNORM,                                 GL_ZERO,                                      GL_RED,                                      GL_RED,                                      GL_BYTE,                         false, { $_, $_, $_, $_ } }, // R8S
-		{ GL_R16,                                      GL_ZERO,                                      GL_RED,                                      GL_RED,                                      GL_UNSIGNED_SHORT,               false, { $_, $_, $_, $_ } }, // R16
-		{ GL_R16I,                                     GL_ZERO,                                      RED_INTEGER,                                 GL_RED_INTEGER,                              GL_SHORT,                        false, { $_, $_, $_, $_ } }, // R16I
-		{ GL_R16UI,                                    GL_ZERO,                                      RED_INTEGER,                                 GL_RED_INTEGER,                              GL_UNSIGNED_SHORT,               false, { $_, $_, $_, $_ } }, // R16U
-		{ GL_R16F,                                     GL_ZERO,                                      GL_RED,                                      GL_RED,                                      GL_HALF_FLOAT,                   false, { $_, $_, $_, $_ } }, // R16F
-		{ GL_R16_SNORM,                                GL_ZERO,                                      GL_RED,                                      GL_RED,                                      GL_SHORT,                        false, { $_, $_, $_, $_ } }, // R16S
-		{ GL_R32I,                                     GL_ZERO,                                      RED_INTEGER,                                 GL_RED_INTEGER,                              GL_INT,                          false, { $_, $_, $_, $_ } }, // R32I
-		{ GL_R32UI,                                    GL_ZERO,                                      RED_INTEGER,                                 GL_RED_INTEGER,                              GL_UNSIGNED_INT,                 false, { $_, $_, $_, $_ } }, // R32U
-		{ GL_R32F,                                     GL_ZERO,                                      GL_RED,                                      GL_RED,                                      GL_FLOAT,                        false, { $_, $_, $_, $_ } }, // R32F
-		{ GL_RG8,                                      GL_ZERO,                                      GL_RG,                                       GL_RG,                                       GL_UNSIGNED_BYTE,                false, { $_, $_, $_, $_ } }, // RG8
-		{ GL_RG8I,                                     GL_ZERO,                                      RG_INTEGER,                                  GL_RG_INTEGER,                               GL_BYTE,                         false, { $_, $_, $_, $_ } }, // RG8I
-		{ GL_RG8UI,                                    GL_ZERO,                                      RG_INTEGER,                                  GL_RG_INTEGER,                               GL_UNSIGNED_BYTE,                false, { $_, $_, $_, $_ } }, // RG8U
-		{ GL_RG8_SNORM,                                GL_ZERO,                                      GL_RG,                                       GL_RG,                                       GL_BYTE,                         false, { $_, $_, $_, $_ } }, // RG8S
-		{ GL_RG16,                                     GL_ZERO,                                      GL_RG,                                       GL_RG,                                       GL_UNSIGNED_SHORT,               false, { $_, $_, $_, $_ } }, // RG16
-		{ GL_RG16I,                                    GL_ZERO,                                      RG_INTEGER,                                  GL_RG_INTEGER,                               GL_SHORT,                        false, { $_, $_, $_, $_ } }, // RG16I
-		{ GL_RG16UI,                                   GL_ZERO,                                      RG_INTEGER,                                  GL_RG_INTEGER,                               GL_UNSIGNED_SHORT,               false, { $_, $_, $_, $_ } }, // RG16U
-		{ GL_RG16F,                                    GL_ZERO,                                      GL_RG,                                       GL_RG,                                       GL_HALF_FLOAT,                   false, { $_, $_, $_, $_ } }, // RG16F
-		{ GL_RG16_SNORM,                               GL_ZERO,                                      GL_RG,                                       GL_RG,                                       GL_SHORT,                        false, { $_, $_, $_, $_ } }, // RG16S
-		{ GL_RG32I,                                    GL_ZERO,                                      RG_INTEGER,                                  GL_RG_INTEGER,                               GL_INT,                          false, { $_, $_, $_, $_ } }, // RG32I
-		{ GL_RG32UI,                                   GL_ZERO,                                      RG_INTEGER,                                  GL_RG_INTEGER,                               GL_UNSIGNED_INT,                 false, { $_, $_, $_, $_ } }, // RG32U
-		{ GL_RG32F,                                    GL_ZERO,                                      GL_RG,                                       GL_RG,                                       GL_FLOAT,                        false, { $_, $_, $_, $_ } }, // RG32F
-		{ GL_RGB8,                                     GL_SRGB8,                                     GL_RGB,                                      GL_RGB,                                      GL_UNSIGNED_BYTE,                false, { $_, $_, $_, $_ } }, // RGB8
-		{ GL_RGB8I,                                    GL_ZERO,                                      RGB_INTEGER,                                 GL_RGB_INTEGER,                              GL_BYTE,                         false, { $_, $_, $_, $_ } }, // RGB8I
-		{ GL_RGB8UI,                                   GL_ZERO,                                      RGB_INTEGER,                                 GL_RGB_INTEGER,                              GL_UNSIGNED_BYTE,                false, { $_, $_, $_, $_ } }, // RGB8U
-		{ GL_RGB8_SNORM,                               GL_ZERO,                                      GL_RGB,                                      GL_RGB,                                      GL_BYTE,                         false, { $_, $_, $_, $_ } }, // RGB8S
-		{ GL_RGB9_E5,                                  GL_ZERO,                                      GL_RGB,                                      GL_RGB,                                      GL_UNSIGNED_INT_5_9_9_9_REV,     false, { $_, $_, $_, $_ } }, // RGB9E5F
-		{ GL_RGBA8,                                    GL_SRGB8_ALPHA8,                              GL_BGRA,                                     GL_BGRA,                                     GL_UNSIGNED_BYTE,                false, { $_, $_, $_, $_ } }, // BGRA8
-		{ GL_RGBA8,                                    GL_SRGB8_ALPHA8,                              GL_RGBA,                                     GL_RGBA,                                     GL_UNSIGNED_BYTE,                false, { $_, $_, $_, $_ } }, // RGBA8
-		{ GL_RGBA8I,                                   GL_ZERO,                                      RGBA_INTEGER,                                GL_RGBA_INTEGER,                             GL_BYTE,                         false, { $_, $_, $_, $_ } }, // RGBA8I
-		{ GL_RGBA8UI,                                  GL_ZERO,                                      RGBA_INTEGER,                                GL_RGBA_INTEGER,                             GL_UNSIGNED_BYTE,                false, { $_, $_, $_, $_ } }, // RGBA8U
-		{ GL_RGBA8_SNORM,                              GL_ZERO,                                      GL_RGBA,                                     GL_RGBA,                                     GL_BYTE,                         false, { $_, $_, $_, $_ } }, // RGBA8S
-		{ GL_RGBA16,                                   GL_ZERO,                                      GL_RGBA,                                     GL_RGBA,                                     GL_UNSIGNED_SHORT,               false, { $_, $_, $_, $_ } }, // RGBA16
-		{ GL_RGBA16I,                                  GL_ZERO,                                      RGBA_INTEGER,                                GL_RGBA_INTEGER,                             GL_SHORT,                        false, { $_, $_, $_, $_ } }, // RGBA16I
-		{ GL_RGBA16UI,                                 GL_ZERO,                                      RGBA_INTEGER,                                GL_RGBA_INTEGER,                             GL_UNSIGNED_SHORT,               false, { $_, $_, $_, $_ } }, // RGBA16U
-		{ GL_RGBA16F,                                  GL_ZERO,                                      GL_RGBA,                                     GL_RGBA,                                     GL_HALF_FLOAT,                   false, { $_, $_, $_, $_ } }, // RGBA16F
-		{ GL_RGBA16_SNORM,                             GL_ZERO,                                      GL_RGBA,                                     GL_RGBA,                                     GL_SHORT,                        false, { $_, $_, $_, $_ } }, // RGBA16S
-		{ GL_RGBA32I,                                  GL_ZERO,                                      RGBA_INTEGER,                                GL_RGBA_INTEGER,                             GL_INT,                          false, { $_, $_, $_, $_ } }, // RGBA32I
-		{ GL_RGBA32UI,                                 GL_ZERO,                                      RGBA_INTEGER,                                GL_RGBA_INTEGER,                             GL_UNSIGNED_INT,                 false, { $_, $_, $_, $_ } }, // RGBA32U
-		{ GL_RGBA32F,                                  GL_ZERO,                                      GL_RGBA,                                     GL_RGBA,                                     GL_FLOAT,                        false, { $_, $_, $_, $_ } }, // RGBA32F
-		{ GL_RGB565,                                   GL_ZERO,                                      GL_RGB,                                      GL_RGB,                                      GL_UNSIGNED_SHORT_5_6_5,         false, { $_, $_, $_, $_ } }, // B5G6R5
-		{ GL_RGB565,                                   GL_ZERO,                                      GL_RGB,                                      GL_RGB,                                      GL_UNSIGNED_SHORT_5_6_5,         false, { $_, $_, $_, $_ } }, // R5G6B5
-		{ GL_RGBA4,                                    GL_ZERO,                                      GL_BGRA,                                     GL_BGRA,                                     GL_UNSIGNED_SHORT_4_4_4_4_REV,   false, { $_, $_, $_, $_ } }, // BGRA4
-		{ GL_RGBA4,                                    GL_ZERO,                                      GL_RGBA,                                     GL_RGBA,                                     GL_UNSIGNED_SHORT_4_4_4_4_REV,   false, { $_, $_, $_, $_ } }, // RGBA4
-		{ GL_RGB5_A1,                                  GL_ZERO,                                      GL_BGRA,                                     GL_BGRA,                                     GL_UNSIGNED_SHORT_1_5_5_5_REV,   false, { $_, $_, $_, $_ } }, // BGR5A1
-		{ GL_RGB5_A1,                                  GL_ZERO,                                      GL_RGBA,                                     GL_RGBA,                                     GL_UNSIGNED_SHORT_1_5_5_5_REV,   false, { $_, $_, $_, $_ } }, // RGB5A1
-		{ GL_RGB10_A2,                                 GL_ZERO,                                      GL_RGBA,                                     GL_RGBA,                                     GL_UNSIGNED_INT_2_10_10_10_REV,  false, { $_, $_, $_, $_ } }, // RGB10A2
-		{ GL_RGB10_A2UI,                               GL_ZERO,                                      GL_RGBA_INTEGER,                             GL_RGBA_INTEGER,                             GL_UNSIGNED_INT_2_10_10_10_REV,  false, { $_, $_, $_, $_ } }, // RGB10A2U
-		{ GL_R11F_G11F_B10F,                           GL_ZERO,                                      GL_RGB,                                      GL_RGB,                                      GL_UNSIGNED_INT_10F_11F_11F_REV, false, { $_, $_, $_, $_ } }, // RG11B10F
-		{ GL_ZERO,                                     GL_ZERO,                                      GL_ZERO,                                     GL_ZERO,                                     GL_ZERO,                         false, { $_, $_, $_, $_ } }, // UnknownDepth
-		{ GL_DEPTH_COMPONENT16,                        GL_ZERO,                                      GL_DEPTH_COMPONENT,                          GL_DEPTH_COMPONENT,                          GL_UNSIGNED_SHORT,               false, { $_, $_, $_, $_ } }, // D16
-		{ GL_DEPTH_COMPONENT24,                        GL_ZERO,                                      GL_DEPTH_COMPONENT,                          GL_DEPTH_COMPONENT,                          GL_UNSIGNED_INT,                 false, { $_, $_, $_, $_ } }, // D24
-		{ GL_DEPTH24_STENCIL8,                         GL_ZERO,                                      GL_DEPTH_STENCIL,                            GL_DEPTH_STENCIL,                            GL_UNSIGNED_INT_24_8,            false, { $_, $_, $_, $_ } }, // D24S8
-		{ GL_DEPTH_COMPONENT32,                        GL_ZERO,                                      GL_DEPTH_COMPONENT,                          GL_DEPTH_COMPONENT,                          GL_UNSIGNED_INT,                 false, { $_, $_, $_, $_ } }, // D32
-		{ GL_DEPTH_COMPONENT32F,                       GL_ZERO,                                      GL_DEPTH_COMPONENT,                          GL_DEPTH_COMPONENT,                          GL_FLOAT,                        false, { $_, $_, $_, $_ } }, // D16F
-		{ GL_DEPTH_COMPONENT32F,                       GL_ZERO,                                      GL_DEPTH_COMPONENT,                          GL_DEPTH_COMPONENT,                          GL_FLOAT,                        false, { $_, $_, $_, $_ } }, // D24F
-		{ GL_DEPTH_COMPONENT32F,                       GL_ZERO,                                      GL_DEPTH_COMPONENT,                          GL_DEPTH_COMPONENT,                          GL_FLOAT,                        false, { $_, $_, $_, $_ } }, // D32F
-		{ GL_DEPTH32F_STENCIL8,                        GL_ZERO,                                      GL_DEPTH_STENCIL,                            GL_DEPTH_STENCIL,                            GL_FLOAT_32_UNSIGNED_INT_24_8_REV, false, { $_, $_, $_, $_ } }, // D32FS8
-		{ GL_STENCIL_INDEX8,                           GL_ZERO,                                      GL_STENCIL_INDEX,                            GL_STENCIL_INDEX,                            GL_UNSIGNED_BYTE,                false, { $_, $_, $_, $_ } }, // D0S8
+		{ GL_COMPRESSED_RGBA_S3TC_DXT1_EXT,            GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT,       GL_COMPRESSED_RGBA_S3TC_DXT1_EXT,               GL_COMPRESSED_RGBA_S3TC_DXT1_EXT,               GL_ZERO,                           false, { $_, $_, $_, $_ } }, // BC1
+		{ GL_COMPRESSED_RGBA_S3TC_DXT3_EXT,            GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT,       GL_COMPRESSED_RGBA_S3TC_DXT3_EXT,               GL_COMPRESSED_RGBA_S3TC_DXT3_EXT,               GL_ZERO,                           false, { $_, $_, $_, $_ } }, // BC2
+		{ GL_COMPRESSED_RGBA_S3TC_DXT5_EXT,            GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT,       GL_COMPRESSED_RGBA_S3TC_DXT5_EXT,               GL_COMPRESSED_RGBA_S3TC_DXT5_EXT,               GL_ZERO,                           false, { $_, $_, $_, $_ } }, // BC3
+		{ GL_COMPRESSED_LUMINANCE_LATC1_EXT,           GL_ZERO,                                      GL_COMPRESSED_LUMINANCE_LATC1_EXT,              GL_COMPRESSED_LUMINANCE_LATC1_EXT,              GL_ZERO,                           false, { $_, $_, $_, $_ } }, // BC4
+		{ GL_COMPRESSED_SIGNED_LUMINANCE_LATC1_EXT,    GL_ZERO,                                      GL_COMPRESSED_SIGNED_LUMINANCE_LATC1_EXT,       GL_COMPRESSED_SIGNED_LUMINANCE_LATC1_EXT,       GL_ZERO,                           false, { $_, $_, $_, $_ } }, // BC4S
+		{ GL_COMPRESSED_LUMINANCE_ALPHA_LATC2_EXT,     GL_ZERO,                                      GL_COMPRESSED_LUMINANCE_ALPHA_LATC2_EXT,        GL_COMPRESSED_LUMINANCE_ALPHA_LATC2_EXT,        GL_ZERO,                           false, { $_, $_, $_, $_ } }, // BC5
+		{ GL_COMPRESSED_SIGNED_LUMINANCE_ALPHA_LATC2_EXT, GL_ZERO,                                   GL_COMPRESSED_SIGNED_LUMINANCE_ALPHA_LATC2_EXT, GL_COMPRESSED_SIGNED_LUMINANCE_ALPHA_LATC2_EXT, GL_ZERO,                           false, { $_, $_, $_, $_ } }, // BC5S
+		{ GL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT_ARB,     GL_ZERO,                                      GL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT_ARB,        GL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT_ARB,        GL_ZERO,                           false, { $_, $_, $_, $_ } }, // BC6H
+		{ GL_COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT_ARB,   GL_ZERO,                                      GL_COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT_ARB,      GL_COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT_ARB,      GL_ZERO,                           false, { $_, $_, $_, $_ } }, // BC6HU
+		{ GL_COMPRESSED_RGBA_BPTC_UNORM_ARB,           GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM_ARB,      GL_COMPRESSED_RGBA_BPTC_UNORM_ARB,              GL_COMPRESSED_RGBA_BPTC_UNORM_ARB,              GL_ZERO,                           false, { $_, $_, $_, $_ } }, // BC7
+		{ GL_ETC1_RGB8_OES,                            GL_ZERO,                                      GL_ETC1_RGB8_OES,                               GL_ETC1_RGB8_OES,                               GL_ZERO,                           false, { $_, $_, $_, $_ } }, // ETC1
+		{ GL_COMPRESSED_RGB8_ETC2,                     GL_COMPRESSED_SRGB8_ETC2,                     GL_COMPRESSED_RGB8_ETC2,                        GL_COMPRESSED_RGB8_ETC2,                        GL_ZERO,                           false, { $_, $_, $_, $_ } }, // ETC2
+		{ GL_COMPRESSED_RGBA8_ETC2_EAC,                GL_COMPRESSED_SRGB8_ALPHA8_ETC2_EAC,          GL_COMPRESSED_RGBA8_ETC2_EAC,                   GL_COMPRESSED_RGBA8_ETC2_EAC,                   GL_ZERO,                           false, { $_, $_, $_, $_ } }, // ETC2A
+		{ GL_COMPRESSED_RGB8_PUNCHTHROUGH_ALPHA1_ETC2, GL_COMPRESSED_SRGB8_PUNCHTHROUGH_ALPHA1_ETC2, GL_COMPRESSED_RGB8_PUNCHTHROUGH_ALPHA1_ETC2,    GL_COMPRESSED_RGB8_PUNCHTHROUGH_ALPHA1_ETC2,    GL_ZERO,                           false, { $_, $_, $_, $_ } }, // ETC2A1
+		{ GL_COMPRESSED_R11_EAC,                       GL_ZERO,                                      GL_COMPRESSED_R11_EAC,                          GL_COMPRESSED_R11_EAC,                          GL_ZERO,                           false, { $_, $_, $_, $_ } }, // EACR11 UNORM
+		{ GL_COMPRESSED_SIGNED_R11_EAC,                GL_ZERO,                                      GL_COMPRESSED_SIGNED_R11_EAC,                   GL_COMPRESSED_SIGNED_R11_EAC,                   GL_ZERO,                           false, { $_, $_, $_, $_ } }, // EACR11 SNORM
+		{ GL_COMPRESSED_RG11_EAC,                      GL_ZERO,                                      GL_COMPRESSED_RG11_EAC,                         GL_COMPRESSED_RG11_EAC,                         GL_ZERO,                           false, { $_, $_, $_, $_ } }, // EACRG11 UNORM
+		{ GL_COMPRESSED_SIGNED_RG11_EAC,               GL_ZERO,                                      GL_COMPRESSED_SIGNED_RG11_EAC,                  GL_COMPRESSED_SIGNED_RG11_EAC,                  GL_ZERO,                           false, { $_, $_, $_, $_ } }, // EACRG11 SNORM
+		{ GL_COMPRESSED_RGB_PVRTC_2BPPV1_IMG,          GL_COMPRESSED_SRGB_PVRTC_2BPPV1_EXT,          GL_COMPRESSED_RGB_PVRTC_2BPPV1_IMG,             GL_COMPRESSED_RGB_PVRTC_2BPPV1_IMG,             GL_ZERO,                           false, { $_, $_, $_, $_ } }, // PTC12
+		{ GL_COMPRESSED_RGB_PVRTC_4BPPV1_IMG,          GL_COMPRESSED_SRGB_PVRTC_4BPPV1_EXT,          GL_COMPRESSED_RGB_PVRTC_4BPPV1_IMG,             GL_COMPRESSED_RGB_PVRTC_4BPPV1_IMG,             GL_ZERO,                           false, { $_, $_, $_, $_ } }, // PTC14
+		{ GL_COMPRESSED_RGBA_PVRTC_2BPPV1_IMG,         GL_COMPRESSED_SRGB_ALPHA_PVRTC_2BPPV1_EXT,    GL_COMPRESSED_RGBA_PVRTC_2BPPV1_IMG,            GL_COMPRESSED_RGBA_PVRTC_2BPPV1_IMG,            GL_ZERO,                           false, { $_, $_, $_, $_ } }, // PTC12A
+		{ GL_COMPRESSED_RGBA_PVRTC_4BPPV1_IMG,         GL_COMPRESSED_SRGB_ALPHA_PVRTC_4BPPV1_EXT,    GL_COMPRESSED_RGBA_PVRTC_4BPPV1_IMG,            GL_COMPRESSED_RGBA_PVRTC_4BPPV1_IMG,            GL_ZERO,                           false, { $_, $_, $_, $_ } }, // PTC14A
+		{ GL_COMPRESSED_RGBA_PVRTC_2BPPV2_IMG,         GL_ZERO,                                      GL_COMPRESSED_RGBA_PVRTC_2BPPV2_IMG,            GL_COMPRESSED_RGBA_PVRTC_2BPPV2_IMG,            GL_ZERO,                           false, { $_, $_, $_, $_ } }, // PTC22
+		{ GL_COMPRESSED_RGBA_PVRTC_4BPPV2_IMG,         GL_ZERO,                                      GL_COMPRESSED_RGBA_PVRTC_4BPPV2_IMG,            GL_COMPRESSED_RGBA_PVRTC_4BPPV2_IMG,            GL_ZERO,                           false, { $_, $_, $_, $_ } }, // PTC24
+		{ GL_ATC_RGB_AMD,                              GL_ZERO,                                      GL_ATC_RGB_AMD,                                 GL_ATC_RGB_AMD,                                 GL_ZERO,                           false, { $_, $_, $_, $_ } }, // ATC
+		{ GL_ATC_RGBA_EXPLICIT_ALPHA_AMD,              GL_ZERO,                                      GL_ATC_RGBA_EXPLICIT_ALPHA_AMD,                 GL_ATC_RGBA_EXPLICIT_ALPHA_AMD,                 GL_ZERO,                           false, { $_, $_, $_, $_ } }, // ATCE
+		{ GL_ATC_RGBA_INTERPOLATED_ALPHA_AMD,          GL_ZERO,                                      GL_ATC_RGBA_INTERPOLATED_ALPHA_AMD,             GL_ATC_RGBA_INTERPOLATED_ALPHA_AMD,             GL_ZERO,                           false, { $_, $_, $_, $_ } }, // ATCI
+		{ GL_COMPRESSED_RGBA_ASTC_4x4_KHR,             GL_COMPRESSED_SRGB8_ASTC_4x4_KHR,             GL_COMPRESSED_RGBA_ASTC_4x4_KHR,                GL_COMPRESSED_RGBA_ASTC_4x4_KHR,                GL_ZERO,                           false, { $_, $_, $_, $_ } }, // ASTC4x4
+		{ GL_COMPRESSED_RGBA_ASTC_5x4_KHR,             GL_COMPRESSED_SRGB8_ASTC_5x4_KHR,             GL_COMPRESSED_RGBA_ASTC_5x4_KHR,                GL_COMPRESSED_RGBA_ASTC_5x4_KHR,                GL_ZERO,                           false, { $_, $_, $_, $_ } }, // ASTC5x4
+		{ GL_COMPRESSED_RGBA_ASTC_5x5_KHR,             GL_COMPRESSED_SRGB8_ASTC_5x5_KHR,             GL_COMPRESSED_RGBA_ASTC_5x5_KHR,                GL_COMPRESSED_RGBA_ASTC_5x5_KHR,                GL_ZERO,                           false, { $_, $_, $_, $_ } }, // ASTC5x5
+		{ GL_COMPRESSED_RGBA_ASTC_6x5_KHR,             GL_COMPRESSED_SRGB8_ASTC_6x5_KHR,             GL_COMPRESSED_RGBA_ASTC_6x5_KHR,                GL_COMPRESSED_RGBA_ASTC_6x5_KHR,                GL_ZERO,                           false, { $_, $_, $_, $_ } }, // ASTC6x5
+		{ GL_COMPRESSED_RGBA_ASTC_6x6_KHR,             GL_COMPRESSED_SRGB8_ASTC_6x6_KHR,             GL_COMPRESSED_RGBA_ASTC_6x6_KHR,                GL_COMPRESSED_RGBA_ASTC_6x6_KHR,                GL_ZERO,                           false, { $_, $_, $_, $_ } }, // ASTC6x6
+		{ GL_COMPRESSED_RGBA_ASTC_8x5_KHR,             GL_COMPRESSED_SRGB8_ASTC_8x5_KHR,             GL_COMPRESSED_RGBA_ASTC_8x5_KHR,                GL_COMPRESSED_RGBA_ASTC_8x5_KHR,                GL_ZERO,                           false, { $_, $_, $_, $_ } }, // ASTC8x5
+		{ GL_COMPRESSED_RGBA_ASTC_8x6_KHR,             GL_COMPRESSED_SRGB8_ASTC_8x6_KHR,             GL_COMPRESSED_RGBA_ASTC_8x6_KHR,                GL_COMPRESSED_RGBA_ASTC_8x6_KHR,                GL_ZERO,                           false, { $_, $_, $_, $_ } }, // ASTC8x6
+		{ GL_COMPRESSED_RGBA_ASTC_8x8_KHR,             GL_COMPRESSED_SRGB8_ASTC_8x8_KHR,             GL_COMPRESSED_RGBA_ASTC_8x8_KHR,                GL_COMPRESSED_RGBA_ASTC_8x8_KHR,                GL_ZERO,                           false, { $_, $_, $_, $_ } }, // ASTC8x8
+		{ GL_COMPRESSED_RGBA_ASTC_10x5_KHR,            GL_COMPRESSED_SRGB8_ASTC_10x5_KHR,            GL_COMPRESSED_RGBA_ASTC_10x5_KHR,               GL_COMPRESSED_RGBA_ASTC_10x5_KHR,               GL_ZERO,                           false, { $_, $_, $_, $_ } }, // ASTC10x5
+		{ GL_COMPRESSED_RGBA_ASTC_10x6_KHR,            GL_COMPRESSED_SRGB8_ASTC_10x6_KHR,            GL_COMPRESSED_RGBA_ASTC_10x6_KHR,               GL_COMPRESSED_RGBA_ASTC_10x6_KHR,               GL_ZERO,                           false, { $_, $_, $_, $_ } }, // ASTC10x6
+		{ GL_COMPRESSED_RGBA_ASTC_10x8_KHR,            GL_COMPRESSED_SRGB8_ASTC_10x8_KHR,            GL_COMPRESSED_RGBA_ASTC_10x8_KHR,               GL_COMPRESSED_RGBA_ASTC_10x8_KHR,               GL_ZERO,                           false, { $_, $_, $_, $_ } }, // ASTC10x8
+		{ GL_COMPRESSED_RGBA_ASTC_10x10_KHR,           GL_COMPRESSED_SRGB8_ASTC_10x10_KHR,           GL_COMPRESSED_RGBA_ASTC_10x10_KHR,              GL_COMPRESSED_RGBA_ASTC_10x10_KHR,              GL_ZERO,                           false, { $_, $_, $_, $_ } }, // ASTC10x10
+		{ GL_COMPRESSED_RGBA_ASTC_12x10_KHR,           GL_COMPRESSED_SRGB8_ASTC_12x10_KHR,           GL_COMPRESSED_RGBA_ASTC_12x10_KHR,              GL_COMPRESSED_RGBA_ASTC_12x10_KHR,              GL_ZERO,                           false, { $_, $_, $_, $_ } }, // ASTC12x10
+		{ GL_COMPRESSED_RGBA_ASTC_12x12_KHR,           GL_COMPRESSED_SRGB8_ASTC_12x12_KHR,           GL_COMPRESSED_RGBA_ASTC_12x12_KHR,              GL_COMPRESSED_RGBA_ASTC_12x12_KHR,              GL_ZERO,                           false, { $_, $_, $_, $_ } }, // ASTC12x12
+		{ GL_ZERO,                                     GL_ZERO,                                      GL_ZERO,                                        GL_ZERO,                                        GL_ZERO,                           false, { $_, $_, $_, $_ } }, // Unknown
+		{ GL_ZERO,                                     GL_ZERO,                                      GL_ZERO,                                        GL_ZERO,                                        GL_ZERO,                           false, { $_, $_, $_, $_ } }, // R1
+		{ GL_ALPHA,                                    GL_ZERO,                                      GL_ALPHA,                                       GL_ALPHA,                                       GL_UNSIGNED_BYTE,                  false, { $_, $_, $_, $_ } }, // A8
+		{ GL_R8,                                       GL_ZERO,                                      GL_RED,                                         GL_RED,                                         GL_UNSIGNED_BYTE,                  false, { $_, $_, $_, $_ } }, // R8
+		{ GL_R8I,                                      GL_ZERO,                                      RED_INTEGER,                                    GL_RED_INTEGER,                                 GL_BYTE,                           false, { $_, $_, $_, $_ } }, // R8I
+		{ GL_R8UI,                                     GL_ZERO,                                      RED_INTEGER,                                    GL_RED_INTEGER,                                 GL_UNSIGNED_BYTE,                  false, { $_, $_, $_, $_ } }, // R8U
+		{ GL_R8_SNORM,                                 GL_ZERO,                                      GL_RED,                                         GL_RED,                                         GL_BYTE,                           false, { $_, $_, $_, $_ } }, // R8S
+		{ GL_R16,                                      GL_ZERO,                                      GL_RED,                                         GL_RED,                                         GL_UNSIGNED_SHORT,                 false, { $_, $_, $_, $_ } }, // R16
+		{ GL_R16I,                                     GL_ZERO,                                      RED_INTEGER,                                    GL_RED_INTEGER,                                 GL_SHORT,                          false, { $_, $_, $_, $_ } }, // R16I
+		{ GL_R16UI,                                    GL_ZERO,                                      RED_INTEGER,                                    GL_RED_INTEGER,                                 GL_UNSIGNED_SHORT,                 false, { $_, $_, $_, $_ } }, // R16U
+		{ GL_R16F,                                     GL_ZERO,                                      GL_RED,                                         GL_RED,                                         GL_HALF_FLOAT,                     false, { $_, $_, $_, $_ } }, // R16F
+		{ GL_R16_SNORM,                                GL_ZERO,                                      GL_RED,                                         GL_RED,                                         GL_SHORT,                          false, { $_, $_, $_, $_ } }, // R16S
+		{ GL_R32I,                                     GL_ZERO,                                      RED_INTEGER,                                    GL_RED_INTEGER,                                 GL_INT,                            false, { $_, $_, $_, $_ } }, // R32I
+		{ GL_R32UI,                                    GL_ZERO,                                      RED_INTEGER,                                    GL_RED_INTEGER,                                 GL_UNSIGNED_INT,                   false, { $_, $_, $_, $_ } }, // R32U
+		{ GL_R32F,                                     GL_ZERO,                                      GL_RED,                                         GL_RED,                                         GL_FLOAT,                          false, { $_, $_, $_, $_ } }, // R32F
+		{ GL_RG8,                                      GL_ZERO,                                      GL_RG,                                          GL_RG,                                          GL_UNSIGNED_BYTE,                  false, { $_, $_, $_, $_ } }, // RG8
+		{ GL_RG8I,                                     GL_ZERO,                                      RG_INTEGER,                                     GL_RG_INTEGER,                                  GL_BYTE,                           false, { $_, $_, $_, $_ } }, // RG8I
+		{ GL_RG8UI,                                    GL_ZERO,                                      RG_INTEGER,                                     GL_RG_INTEGER,                                  GL_UNSIGNED_BYTE,                  false, { $_, $_, $_, $_ } }, // RG8U
+		{ GL_RG8_SNORM,                                GL_ZERO,                                      GL_RG,                                          GL_RG,                                          GL_BYTE,                           false, { $_, $_, $_, $_ } }, // RG8S
+		{ GL_RG16,                                     GL_ZERO,                                      GL_RG,                                          GL_RG,                                          GL_UNSIGNED_SHORT,                 false, { $_, $_, $_, $_ } }, // RG16
+		{ GL_RG16I,                                    GL_ZERO,                                      RG_INTEGER,                                     GL_RG_INTEGER,                                  GL_SHORT,                          false, { $_, $_, $_, $_ } }, // RG16I
+		{ GL_RG16UI,                                   GL_ZERO,                                      RG_INTEGER,                                     GL_RG_INTEGER,                                  GL_UNSIGNED_SHORT,                 false, { $_, $_, $_, $_ } }, // RG16U
+		{ GL_RG16F,                                    GL_ZERO,                                      GL_RG,                                          GL_RG,                                          GL_HALF_FLOAT,                     false, { $_, $_, $_, $_ } }, // RG16F
+		{ GL_RG16_SNORM,                               GL_ZERO,                                      GL_RG,                                          GL_RG,                                          GL_SHORT,                          false, { $_, $_, $_, $_ } }, // RG16S
+		{ GL_RG32I,                                    GL_ZERO,                                      RG_INTEGER,                                     GL_RG_INTEGER,                                  GL_INT,                            false, { $_, $_, $_, $_ } }, // RG32I
+		{ GL_RG32UI,                                   GL_ZERO,                                      RG_INTEGER,                                     GL_RG_INTEGER,                                  GL_UNSIGNED_INT,                   false, { $_, $_, $_, $_ } }, // RG32U
+		{ GL_RG32F,                                    GL_ZERO,                                      GL_RG,                                          GL_RG,                                          GL_FLOAT,                          false, { $_, $_, $_, $_ } }, // RG32F
+		{ GL_RGB8,                                     GL_SRGB8,                                     GL_RGB,                                         GL_RGB,                                         GL_UNSIGNED_BYTE,                  false, { $_, $_, $_, $_ } }, // RGB8
+		{ GL_RGB8I,                                    GL_ZERO,                                      RGB_INTEGER,                                    GL_RGB_INTEGER,                                 GL_BYTE,                           false, { $_, $_, $_, $_ } }, // RGB8I
+		{ GL_RGB8UI,                                   GL_ZERO,                                      RGB_INTEGER,                                    GL_RGB_INTEGER,                                 GL_UNSIGNED_BYTE,                  false, { $_, $_, $_, $_ } }, // RGB8U
+		{ GL_RGB8_SNORM,                               GL_ZERO,                                      GL_RGB,                                         GL_RGB,                                         GL_BYTE,                           false, { $_, $_, $_, $_ } }, // RGB8S
+		{ GL_RGB9_E5,                                  GL_ZERO,                                      GL_RGB,                                         GL_RGB,                                         GL_UNSIGNED_INT_5_9_9_9_REV,       false, { $_, $_, $_, $_ } }, // RGB9E5F
+		{ GL_RGBA8,                                    GL_SRGB8_ALPHA8,                              GL_BGRA,                                        GL_BGRA,                                        GL_UNSIGNED_BYTE,                  false, { $_, $_, $_, $_ } }, // BGRA8
+		{ GL_RGBA8,                                    GL_SRGB8_ALPHA8,                              GL_RGBA,                                        GL_RGBA,                                        GL_UNSIGNED_BYTE,                  false, { $_, $_, $_, $_ } }, // RGBA8
+		{ GL_RGBA8I,                                   GL_ZERO,                                      RGBA_INTEGER,                                   GL_RGBA_INTEGER,                                GL_BYTE,                           false, { $_, $_, $_, $_ } }, // RGBA8I
+		{ GL_RGBA8UI,                                  GL_ZERO,                                      RGBA_INTEGER,                                   GL_RGBA_INTEGER,                                GL_UNSIGNED_BYTE,                  false, { $_, $_, $_, $_ } }, // RGBA8U
+		{ GL_RGBA8_SNORM,                              GL_ZERO,                                      GL_RGBA,                                        GL_RGBA,                                        GL_BYTE,                           false, { $_, $_, $_, $_ } }, // RGBA8S
+		{ GL_RGBA16,                                   GL_ZERO,                                      GL_RGBA,                                        GL_RGBA,                                        GL_UNSIGNED_SHORT,                 false, { $_, $_, $_, $_ } }, // RGBA16
+		{ GL_RGBA16I,                                  GL_ZERO,                                      RGBA_INTEGER,                                   GL_RGBA_INTEGER,                                GL_SHORT,                          false, { $_, $_, $_, $_ } }, // RGBA16I
+		{ GL_RGBA16UI,                                 GL_ZERO,                                      RGBA_INTEGER,                                   GL_RGBA_INTEGER,                                GL_UNSIGNED_SHORT,                 false, { $_, $_, $_, $_ } }, // RGBA16U
+		{ GL_RGBA16F,                                  GL_ZERO,                                      GL_RGBA,                                        GL_RGBA,                                        GL_HALF_FLOAT,                     false, { $_, $_, $_, $_ } }, // RGBA16F
+		{ GL_RGBA16_SNORM,                             GL_ZERO,                                      GL_RGBA,                                        GL_RGBA,                                        GL_SHORT,                          false, { $_, $_, $_, $_ } }, // RGBA16S
+		{ GL_RGBA32I,                                  GL_ZERO,                                      RGBA_INTEGER,                                   GL_RGBA_INTEGER,                                GL_INT,                            false, { $_, $_, $_, $_ } }, // RGBA32I
+		{ GL_RGBA32UI,                                 GL_ZERO,                                      RGBA_INTEGER,                                   GL_RGBA_INTEGER,                                GL_UNSIGNED_INT,                   false, { $_, $_, $_, $_ } }, // RGBA32U
+		{ GL_RGBA32F,                                  GL_ZERO,                                      GL_RGBA,                                        GL_RGBA,                                        GL_FLOAT,                          false, { $_, $_, $_, $_ } }, // RGBA32F
+		{ GL_RGB565,                                   GL_ZERO,                                      GL_RGB,                                         GL_RGB,                                         GL_UNSIGNED_SHORT_5_6_5,           false, { $_, $_, $_, $_ } }, // B5G6R5
+		{ GL_RGB565,                                   GL_ZERO,                                      GL_RGB,                                         GL_RGB,                                         GL_UNSIGNED_SHORT_5_6_5,           false, { $_, $_, $_, $_ } }, // R5G6B5
+		{ GL_RGBA4,                                    GL_ZERO,                                      GL_BGRA,                                        GL_BGRA,                                        GL_UNSIGNED_SHORT_4_4_4_4_REV,     false, { $_, $_, $_, $_ } }, // BGRA4
+		{ GL_RGBA4,                                    GL_ZERO,                                      GL_RGBA,                                        GL_RGBA,                                        GL_UNSIGNED_SHORT_4_4_4_4_REV,     false, { $_, $_, $_, $_ } }, // RGBA4
+		{ GL_RGB5_A1,                                  GL_ZERO,                                      GL_BGRA,                                        GL_BGRA,                                        GL_UNSIGNED_SHORT_1_5_5_5_REV,     false, { $_, $_, $_, $_ } }, // BGR5A1
+		{ GL_RGB5_A1,                                  GL_ZERO,                                      GL_RGBA,                                        GL_RGBA,                                        GL_UNSIGNED_SHORT_1_5_5_5_REV,     false, { $_, $_, $_, $_ } }, // RGB5A1
+		{ GL_RGB10_A2,                                 GL_ZERO,                                      GL_RGBA,                                        GL_RGBA,                                        GL_UNSIGNED_INT_2_10_10_10_REV,    false, { $_, $_, $_, $_ } }, // RGB10A2
+		{ GL_RGB10_A2UI,                               GL_ZERO,                                      GL_RGBA_INTEGER,                                GL_RGBA_INTEGER,                                GL_UNSIGNED_INT_2_10_10_10_REV,    false, { $_, $_, $_, $_ } }, // RGB10A2U
+		{ GL_R11F_G11F_B10F,                           GL_ZERO,                                      GL_RGB,                                         GL_RGB,                                         GL_UNSIGNED_INT_10F_11F_11F_REV,   false, { $_, $_, $_, $_ } }, // RG11B10F
+		{ GL_ZERO,                                     GL_ZERO,                                      GL_ZERO,                                        GL_ZERO,                                        GL_ZERO,                           false, { $_, $_, $_, $_ } }, // UnknownDepth
+		{ GL_DEPTH_COMPONENT16,                        GL_ZERO,                                      GL_DEPTH_COMPONENT,                             GL_DEPTH_COMPONENT,                             GL_UNSIGNED_SHORT,                 false, { $_, $_, $_, $_ } }, // D16
+		{ GL_DEPTH_COMPONENT24,                        GL_ZERO,                                      GL_DEPTH_COMPONENT,                             GL_DEPTH_COMPONENT,                             GL_UNSIGNED_INT,                   false, { $_, $_, $_, $_ } }, // D24
+		{ GL_DEPTH24_STENCIL8,                         GL_ZERO,                                      GL_DEPTH_STENCIL,                               GL_DEPTH_STENCIL,                               GL_UNSIGNED_INT_24_8,              false, { $_, $_, $_, $_ } }, // D24S8
+		{ GL_DEPTH_COMPONENT32,                        GL_ZERO,                                      GL_DEPTH_COMPONENT,                             GL_DEPTH_COMPONENT,                             GL_UNSIGNED_INT,                   false, { $_, $_, $_, $_ } }, // D32
+		{ GL_DEPTH_COMPONENT32F,                       GL_ZERO,                                      GL_DEPTH_COMPONENT,                             GL_DEPTH_COMPONENT,                             GL_FLOAT,                          false, { $_, $_, $_, $_ } }, // D16F
+		{ GL_DEPTH_COMPONENT32F,                       GL_ZERO,                                      GL_DEPTH_COMPONENT,                             GL_DEPTH_COMPONENT,                             GL_FLOAT,                          false, { $_, $_, $_, $_ } }, // D24F
+		{ GL_DEPTH_COMPONENT32F,                       GL_ZERO,                                      GL_DEPTH_COMPONENT,                             GL_DEPTH_COMPONENT,                             GL_FLOAT,                          false, { $_, $_, $_, $_ } }, // D32F
+		{ GL_DEPTH32F_STENCIL8,                        GL_ZERO,                                      GL_DEPTH_STENCIL,                               GL_DEPTH_STENCIL,                               GL_FLOAT_32_UNSIGNED_INT_24_8_REV, false, { $_, $_, $_, $_ } }, // D32FS8
+		{ GL_STENCIL_INDEX8,                           GL_ZERO,                                      GL_STENCIL_INDEX,                               GL_STENCIL_INDEX,                               GL_UNSIGNED_BYTE,                  false, { $_, $_, $_, $_ } }, // D0S8
 #undef $_
 #undef $0
 #undef $1
@@ -767,6 +767,9 @@ namespace bgfx { namespace gl
 			NV_draw_instanced,
 			NV_instanced_arrays,
 			NV_occlusion_query,
+			NV_read_depth,
+			NV_read_depth_stencil,
+			NV_read_stencil,
 			NV_texture_border_clamp,
 			NVX_gpu_memory_info,
 
@@ -775,6 +778,7 @@ namespace bgfx { namespace gl
 			OES_depth24,
 			OES_depth32,
 			OES_depth_texture,
+			OES_draw_buffers_indexed,
 			OES_element_index_uint,
 			OES_fragment_precision_high,
 			OES_fbo_render_mipmap,
@@ -786,6 +790,7 @@ namespace bgfx { namespace gl
 			OES_standard_derivatives,
 			OES_texture_3D,
 			OES_texture_border_clamp,
+			OES_texture_cube_map_array,
 			OES_texture_float,
 			OES_texture_float_linear,
 			OES_texture_npot,
@@ -839,199 +844,205 @@ namespace bgfx { namespace gl
 	//
 	static Extension s_extension[] =
 	{
-		{ "AMD_conservative_depth",                   false,                             true  },
-		{ "AMD_multi_draw_indirect",                  false,                             true  },
+		{ "AMD_conservative_depth",                   false,                                    true  },
+		{ "AMD_multi_draw_indirect",                  false,                                    true  },
 
-		{ "ANGLE_depth_texture",                      false,                             true  },
-		{ "ANGLE_framebuffer_blit",                   false,                             true  },
-		{ "ANGLE_framebuffer_multisample",            false,                             false },
-		{ "ANGLE_instanced_arrays",                   false,                             true  },
-		{ "ANGLE_texture_compression_dxt1",           false,                             true  },
-		{ "ANGLE_texture_compression_dxt3",           false,                             true  },
-		{ "ANGLE_texture_compression_dxt5",           false,                             true  },
-		{ "ANGLE_timer_query",                        false,                             true  },
-		{ "ANGLE_translated_shader_source",           false,                             true  },
+		{ "ANGLE_depth_texture",                      false,                                    true  },
+		{ "ANGLE_framebuffer_blit",                   false,                                    true  },
+		{ "ANGLE_framebuffer_multisample",            false,                                    false },
+		{ "ANGLE_instanced_arrays",                   false,                                    true  },
+		{ "ANGLE_texture_compression_dxt1",           false,                                    true  },
+		{ "ANGLE_texture_compression_dxt3",           false,                                    true  },
+		{ "ANGLE_texture_compression_dxt5",           false,                                    true  },
+		{ "ANGLE_timer_query",                        false,                                    true  },
+		{ "ANGLE_translated_shader_source",           false,                                    true  },
 
-		{ "APPLE_texture_format_BGRA8888",            false,                             true  },
-		{ "APPLE_texture_max_level",                  false,                             true  },
+		{ "APPLE_texture_format_BGRA8888",            false,                                    true  },
+		{ "APPLE_texture_max_level",                  false,                                    true  },
 
-		{ "ARB_clip_control",                         BGFX_CONFIG_RENDERER_OPENGL >= 43, true  },
-		{ "ARB_compute_shader",                       BGFX_CONFIG_RENDERER_OPENGL >= 43, true  },
-		{ "ARB_conservative_depth",                   BGFX_CONFIG_RENDERER_OPENGL >= 42, true  },
-		{ "ARB_copy_image",                           BGFX_CONFIG_RENDERER_OPENGL >= 42, true  },
-		{ "ARB_debug_label",                          false,                             true  },
-		{ "ARB_debug_output",                         BGFX_CONFIG_RENDERER_OPENGL >= 43, true  },
-		{ "ARB_depth_buffer_float",                   BGFX_CONFIG_RENDERER_OPENGL >= 33, true  },
-		{ "ARB_depth_clamp",                          BGFX_CONFIG_RENDERER_OPENGL >= 32, true  },
-		{ "ARB_draw_buffers_blend",                   BGFX_CONFIG_RENDERER_OPENGL >= 40, true  },
-		{ "ARB_draw_indirect",                        BGFX_CONFIG_RENDERER_OPENGL >= 40, true  },
-		{ "ARB_draw_instanced",                       BGFX_CONFIG_RENDERER_OPENGL >= 33, true  },
-		{ "ARB_ES3_compatibility",                    BGFX_CONFIG_RENDERER_OPENGL >= 43, true  },
-		{ "ARB_framebuffer_object",                   BGFX_CONFIG_RENDERER_OPENGL >= 30, true  },
-		{ "ARB_framebuffer_sRGB",                     BGFX_CONFIG_RENDERER_OPENGL >= 30, true  },
-		{ "ARB_get_program_binary",                   BGFX_CONFIG_RENDERER_OPENGL >= 41, true  },
-		{ "ARB_half_float_pixel",                     BGFX_CONFIG_RENDERER_OPENGL >= 30, true  },
-		{ "ARB_half_float_vertex",                    BGFX_CONFIG_RENDERER_OPENGL >= 30, true  },
-		{ "ARB_indirect_parameters",                  BGFX_CONFIG_RENDERER_OPENGL >= 46, true  },
-		{ "ARB_instanced_arrays",                     BGFX_CONFIG_RENDERER_OPENGL >= 33, true  },
-		{ "ARB_internalformat_query",                 BGFX_CONFIG_RENDERER_OPENGL >= 42, true  },
-		{ "ARB_internalformat_query2",                BGFX_CONFIG_RENDERER_OPENGL >= 43, true  },
-		{ "ARB_invalidate_subdata",                   BGFX_CONFIG_RENDERER_OPENGL >= 43, true  },
-		{ "ARB_map_buffer_range",                     BGFX_CONFIG_RENDERER_OPENGL >= 30, true  },
-		{ "ARB_multi_draw_indirect",                  BGFX_CONFIG_RENDERER_OPENGL >= 43, true  },
-		{ "ARB_multisample",                          false,                             true  },
-		{ "ARB_occlusion_query",                      BGFX_CONFIG_RENDERER_OPENGL >= 33, true  },
-		{ "ARB_occlusion_query2",                     BGFX_CONFIG_RENDERER_OPENGL >= 33, true  },
-		{ "ARB_program_interface_query",              BGFX_CONFIG_RENDERER_OPENGL >= 43, true  },
-		{ "ARB_provoking_vertex",                     BGFX_CONFIG_RENDERER_OPENGL >= 32, true  },
-		{ "ARB_sampler_objects",                      BGFX_CONFIG_RENDERER_OPENGL >= 33, true  },
-		{ "ARB_seamless_cube_map",                    BGFX_CONFIG_RENDERER_OPENGL >= 32, true  },
-		{ "ARB_shader_bit_encoding",                  BGFX_CONFIG_RENDERER_OPENGL >= 33, true  },
-		{ "ARB_shader_image_load_store",              BGFX_CONFIG_RENDERER_OPENGL >= 42, true  },
-		{ "ARB_shader_storage_buffer_object",         BGFX_CONFIG_RENDERER_OPENGL >= 43, true  },
-		{ "ARB_shader_texture_lod",                   BGFX_CONFIG_RENDERER_OPENGL >= 30, true  },
-		{ "ARB_shader_viewport_layer_array",          false,                             true  },
-		{ "ARB_stencil_texturing",                    BGFX_CONFIG_RENDERER_OPENGL >= 43, true  },
-		{ "ARB_texture_compression_bptc",             BGFX_CONFIG_RENDERER_OPENGL >= 44, true  },
-		{ "ARB_texture_compression_rgtc",             BGFX_CONFIG_RENDERER_OPENGL >= 30, true  },
-		{ "ARB_texture_cube_map_array",               BGFX_CONFIG_RENDERER_OPENGL >= 40, true  },
-		{ "ARB_texture_float",                        BGFX_CONFIG_RENDERER_OPENGL >= 30, true  },
-		{ "ARB_texture_multisample",                  BGFX_CONFIG_RENDERER_OPENGL >= 32, true  },
-		{ "ARB_texture_rg",                           BGFX_CONFIG_RENDERER_OPENGL >= 30, true  },
-		{ "ARB_texture_rgb10_a2ui",                   BGFX_CONFIG_RENDERER_OPENGL >= 33, true  },
-		{ "ARB_texture_stencil8",                     false,                             true  },
-		{ "ARB_texture_storage",                      BGFX_CONFIG_RENDERER_OPENGL >= 42, true  },
-		{ "ARB_texture_swizzle",                      BGFX_CONFIG_RENDERER_OPENGL >= 33, true  },
-		{ "ARB_texture_view",                         BGFX_CONFIG_RENDERER_OPENGL >= 43, true  },
-		{ "ARB_timer_query",                          BGFX_CONFIG_RENDERER_OPENGL >= 33, true  },
-		{ "ARB_uniform_buffer_object",                BGFX_CONFIG_RENDERER_OPENGL >= 31, true  },
-		{ "ARB_vertex_array_object",                  BGFX_CONFIG_RENDERER_OPENGL >= 30, true  },
-		{ "ARB_vertex_type_2_10_10_10_rev",           false,                             true  },
+		{ "ARB_clip_control",                         BGFX_CONFIG_RENDERER_OPENGL >= 43,        true  },
+		{ "ARB_compute_shader",                       BGFX_CONFIG_RENDERER_OPENGL >= 43,        true  },
+		{ "ARB_conservative_depth",                   BGFX_CONFIG_RENDERER_OPENGL >= 42,        true  },
+		{ "ARB_copy_image",                           BGFX_CONFIG_RENDERER_OPENGL >= 42,        true  },
+		{ "ARB_debug_label",                          false,                                    true  },
+		{ "ARB_debug_output",                         BGFX_CONFIG_RENDERER_OPENGL >= 43,        true  },
+		{ "ARB_depth_buffer_float",                   BGFX_CONFIG_RENDERER_OPENGL >= 33,        true  },
+		{ "ARB_depth_clamp",                          BGFX_CONFIG_RENDERER_OPENGL >= 32,        true  },
+		{ "ARB_draw_buffers_blend",                   BGFX_CONFIG_RENDERER_OPENGL >= 40,        true  },
+		{ "ARB_draw_indirect",                        BGFX_CONFIG_RENDERER_OPENGL >= 40,        true  },
+		{ "ARB_draw_instanced",                       BGFX_CONFIG_RENDERER_OPENGL >= 33,        true  },
+		{ "ARB_ES3_compatibility",                    BGFX_CONFIG_RENDERER_OPENGL >= 43,        true  },
+		{ "ARB_framebuffer_object",                   BGFX_CONFIG_RENDERER_OPENGL >= 30,        true  },
+		{ "ARB_framebuffer_sRGB",                     BGFX_CONFIG_RENDERER_OPENGL >= 30,        true  },
+		{ "ARB_get_program_binary",                   BGFX_CONFIG_RENDERER_OPENGL >= 41,        true  },
+		{ "ARB_half_float_pixel",                     BGFX_CONFIG_RENDERER_OPENGL >= 30,        true  },
+		{ "ARB_half_float_vertex",                    BGFX_CONFIG_RENDERER_OPENGL >= 30,        true  },
+		{ "ARB_indirect_parameters",                  BGFX_CONFIG_RENDERER_OPENGL >= 46,        true  },
+		{ "ARB_instanced_arrays",                     BGFX_CONFIG_RENDERER_OPENGL >= 33,        true  },
+		{ "ARB_internalformat_query",                 BGFX_CONFIG_RENDERER_OPENGL >= 42,        true  },
+		{ "ARB_internalformat_query2",                BGFX_CONFIG_RENDERER_OPENGL >= 43,        true  },
+		{ "ARB_invalidate_subdata",                   BGFX_CONFIG_RENDERER_OPENGL >= 43,        true  },
+		{ "ARB_map_buffer_range",                     BGFX_CONFIG_RENDERER_OPENGL >= 30,        true  },
+		{ "ARB_multi_draw_indirect",                  BGFX_CONFIG_RENDERER_OPENGL >= 43,        true  },
+		{ "ARB_multisample",                          BGFX_CONFIG_RENDERER_OPENGLES >= 20,      true  },
+		{ "ARB_occlusion_query",                      BGFX_CONFIG_RENDERER_OPENGL >= 33,        true  },
+		{ "ARB_occlusion_query2",                     BGFX_CONFIG_RENDERER_OPENGL >= 33,        true  },
+		{ "ARB_program_interface_query",              BGFX_CONFIG_RENDERER_OPENGL >= 43,        true  },
+		{ "ARB_provoking_vertex",                     BGFX_CONFIG_RENDERER_OPENGL >= 32,        true  },
+		{ "ARB_sampler_objects",                      BGFX_CONFIG_RENDERER_OPENGL >= 33,        true  },
+		{ "ARB_seamless_cube_map",                    BGFX_CONFIG_RENDERER_OPENGL >= 32,        true  },
+		{ "ARB_shader_bit_encoding",                  BGFX_CONFIG_RENDERER_OPENGL >= 33,        true  },
+		{ "ARB_shader_image_load_store",              BGFX_CONFIG_RENDERER_OPENGL >= 42,        true  },
+		{ "ARB_shader_storage_buffer_object",         BGFX_CONFIG_RENDERER_OPENGL >= 43,        true  },
+		{ "ARB_shader_texture_lod",                   BGFX_CONFIG_RENDERER_OPENGL >= 30,        true  },
+		{ "ARB_shader_viewport_layer_array",          false,                                    true  },
+		{ "ARB_stencil_texturing",                    BGFX_CONFIG_RENDERER_OPENGL >= 43,        true  },
+		{ "ARB_texture_compression_bptc",             BGFX_CONFIG_RENDERER_OPENGL >= 44,        true  },
+		{ "ARB_texture_compression_rgtc",             BGFX_CONFIG_RENDERER_OPENGL >= 30,        true  },
+		{ "ARB_texture_cube_map_array",               BGFX_CONFIG_RENDERER_OPENGL >= 40,        true  },
+		{ "ARB_texture_float",                        BGFX_CONFIG_RENDERER_OPENGL >= 30,        true  },
+		{ "ARB_texture_multisample",                  BGFX_CONFIG_RENDERER_OPENGL >= 32,        true  },
+		{ "ARB_texture_rg",                           BGFX_CONFIG_RENDERER_OPENGL >= 30,        true  },
+		{ "ARB_texture_rgb10_a2ui",                   BGFX_CONFIG_RENDERER_OPENGL >= 33,        true  },
+		{ "ARB_texture_stencil8",                     false,                                    true  },
+		{ "ARB_texture_storage",                      BGFX_CONFIG_RENDERER_OPENGL >= 42,        true  },
+		{ "ARB_texture_swizzle",                      BGFX_CONFIG_RENDERER_OPENGL >= 33,        true  },
+		{ "ARB_texture_view",                         BGFX_CONFIG_RENDERER_OPENGL >= 43,        true  },
+		{ "ARB_timer_query",                          BGFX_CONFIG_RENDERER_OPENGL >= 33,        true  },
+		{ "ARB_uniform_buffer_object",                BGFX_CONFIG_RENDERER_OPENGL >= 31,        true  },
+		{ "ARB_vertex_array_object",                  BGFX_CONFIG_RENDERER_OPENGL >= 30,        true  },
+		{ "ARB_vertex_type_2_10_10_10_rev",           false,                                    true  },
 
-		{ "ATI_meminfo",                              false,                             true  },
+		{ "ATI_meminfo",                              false,                                    true  },
 
-		{ "CHROMIUM_color_buffer_float_rgb",          false,                             true  },
-		{ "CHROMIUM_color_buffer_float_rgba",         false,                             true  },
-		{ "CHROMIUM_depth_texture",                   false,                             true  },
-		{ "CHROMIUM_framebuffer_multisample",         false,                             true  },
-		{ "CHROMIUM_texture_compression_dxt3",        false,                             true  },
-		{ "CHROMIUM_texture_compression_dxt5",        false,                             true  },
+		{ "CHROMIUM_color_buffer_float_rgb",          false,                                    true  },
+		{ "CHROMIUM_color_buffer_float_rgba",         false,                                    true  },
+		{ "CHROMIUM_depth_texture",                   false,                                    true  },
+		{ "CHROMIUM_framebuffer_multisample",         false,                                    true  },
+		{ "CHROMIUM_texture_compression_dxt3",        false,                                    true  },
+		{ "CHROMIUM_texture_compression_dxt5",        false,                                    true  },
 
-		{ "EXT_bgra",                                 false,                             true  },
-		{ "EXT_blend_color",                          BGFX_CONFIG_RENDERER_OPENGL >= 31, true  },
-		{ "EXT_blend_minmax",                         BGFX_CONFIG_RENDERER_OPENGL >= 14, true  },
-		{ "EXT_blend_subtract",                       BGFX_CONFIG_RENDERER_OPENGL >= 14, true  },
-		{ "EXT_color_buffer_half_float",              false,                             true  }, // GLES extension.
-		{ "EXT_color_buffer_float",                   false,                             true  }, // GLES extension.
-		{ "EXT_copy_image",                           false,                             true  }, // GLES extension.
-		{ "EXT_compressed_ETC1_RGB8_sub_texture",     false,                             true  }, // GLES extension.
-		{ "EXT_debug_label",                          false,                             true  },
-		{ "EXT_debug_marker",                         false,                             true  },
-		{ "EXT_debug_tool",                           false,                             true  }, // RenderDoc extension.
-		{ "EXT_discard_framebuffer",                  false,                             true  }, // GLES extension.
-		{ "EXT_disjoint_timer_query",                 false,                             true  }, // GLES extension.
-		{ "EXT_draw_buffers",                         false,                             true  }, // GLES extension.
-		{ "EXT_draw_instanced",                       false,                             true  }, // GLES extension.
-		{ "EXT_instanced_arrays",                     false,                             true  }, // GLES extension.
-		{ "EXT_frag_depth",                           false,                             true  }, // GLES extension.
-		{ "EXT_framebuffer_blit",                     BGFX_CONFIG_RENDERER_OPENGL >= 30, true  },
-		{ "EXT_framebuffer_object",                   BGFX_CONFIG_RENDERER_OPENGL >= 30, true  },
-		{ "EXT_framebuffer_sRGB",                     BGFX_CONFIG_RENDERER_OPENGL >= 30, true  },
-		{ "EXT_gpu_shader4",                          BGFX_CONFIG_RENDERER_OPENGL >= 31, true  },
-		{ "EXT_multi_draw_indirect",                  false,                             true  }, // GLES3.1 extension.
-		{ "EXT_occlusion_query_boolean",              false,                             true  }, // GLES extension.
-		{ "EXT_packed_float",                         BGFX_CONFIG_RENDERER_OPENGL >= 33, true  },
-		{ "EXT_read_format_bgra",                     false,                             true  },
-		{ "EXT_shader_image_load_store",              false,                             true  },
-		{ "EXT_shader_texture_lod",                   false,                             true  }, // GLES extension.
-		{ "EXT_shadow_samplers",                      false,                             true  },
-		{ "EXT_sRGB_write_control",                   false,                             true  }, // GLES extension.
-		{ "EXT_texture_array",                        BGFX_CONFIG_RENDERER_OPENGL >= 30, true  },
-		{ "EXT_texture_border_clamp",                 false,                             true  }, // GLES extension.
-		{ "EXT_texture_compression_dxt1",             false,                             true  },
-		{ "EXT_texture_compression_latc",             false,                             true  },
-		{ "EXT_texture_compression_rgtc",             BGFX_CONFIG_RENDERER_OPENGL >= 30, true  },
-		{ "EXT_texture_compression_s3tc",             false,                             true  },
-		{ "EXT_texture_cube_map_array",               false,                             true  }, // GLES3.1 extension.
-		{ "EXT_texture_filter_anisotropic",           false,                             true  },
-		{ "EXT_texture_format_BGRA8888",              false,                             true  },
-		{ "EXT_texture_rg",                           false,                             true  }, // GLES extension.
-		{ "EXT_texture_shared_exponent",              false,                             true  },
-		{ "EXT_texture_snorm",                        BGFX_CONFIG_RENDERER_OPENGL >= 30, true  },
-		{ "EXT_texture_sRGB",                         false,                             true  },
-		{ "EXT_texture_storage",                      false,                             true  },
-		{ "EXT_texture_swizzle",                      false,                             true  },
-		{ "EXT_texture_view",                         false,                             true  },
-		{ "EXT_texture_type_2_10_10_10_REV",          false,                             true  },
-		{ "EXT_timer_query",                          BGFX_CONFIG_RENDERER_OPENGL >= 33, true  },
-		{ "EXT_unpack_subimage",                      false,                             true  },
-		{ "EXT_sRGB",                                 false,                             true  }, // GLES extension.
-		{ "EXT_multisampled_render_to_texture",       false,                             true  }, // GLES extension.
+		{ "EXT_bgra",                                 false,                                    true  },
+		{ "EXT_blend_color",                          BGFX_CONFIG_RENDERER_OPENGL >= 31,        true  },
+		{ "EXT_blend_minmax",                         BGFX_CONFIG_RENDERER_OPENGL >= 14,        true  },
+		{ "EXT_blend_subtract",                       BGFX_CONFIG_RENDERER_OPENGL >= 14,        true  },
+		{ "EXT_color_buffer_half_float",              false,                                    true  }, // GLES extension.
+		{ "EXT_color_buffer_float",                   false,                                    true  }, // GLES extension.
+		{ "EXT_copy_image",                           false,                                    true  }, // GLES extension.
+		{ "EXT_compressed_ETC1_RGB8_sub_texture",     false,                                    true  }, // GLES extension.
+		{ "EXT_debug_label",                          false,                                    true  },
+		{ "EXT_debug_marker",                         false,                                    true  },
+		{ "EXT_debug_tool",                           false,                                    true  }, // RenderDoc extension.
+		{ "EXT_discard_framebuffer",                  false,                                    true  }, // GLES extension.
+		{ "EXT_disjoint_timer_query",                 false,                                    true  }, // GLES extension.
+		{ "EXT_draw_buffers",                         false,                                    true  }, // GLES extension.
+		{ "EXT_draw_instanced",                       false,                                    true  }, // GLES extension.
+		{ "EXT_instanced_arrays",                     false,                                    true  }, // GLES extension.
+		{ "EXT_frag_depth",                           false,                                    true  }, // GLES extension.
+		{ "EXT_framebuffer_blit",                     BGFX_CONFIG_RENDERER_OPENGL >= 30,        true  },
+		{ "EXT_framebuffer_object",                   BGFX_CONFIG_RENDERER_OPENGL >= 30,        true  },
+		{ "EXT_framebuffer_sRGB",                     BGFX_CONFIG_RENDERER_OPENGL >= 30,        true  },
+		{ "EXT_gpu_shader4",                          BGFX_CONFIG_RENDERER_OPENGL >= 31,        true  },
+		{ "EXT_multi_draw_indirect",                  false,                                    true  }, // GLES3.1 extension.
+		{ "EXT_occlusion_query_boolean",              false,                                    true  }, // GLES extension.
+		{ "EXT_packed_float",                         BGFX_CONFIG_RENDERER_OPENGL >= 33,        true  },
+		{ "EXT_read_format_bgra",                     false,                                    true  },
+		{ "EXT_shader_image_load_store",              false,                                    true  },
+		{ "EXT_shader_texture_lod",                   false,                                    true  }, // GLES extension.
+		{ "EXT_shadow_samplers",                      false,                                    true  },
+		{ "EXT_sRGB_write_control",                   false,                                    true  }, // GLES extension.
+		{ "EXT_texture_array",                        BGFX_CONFIG_RENDERER_OPENGL >= 30,        true  },
+		{ "EXT_texture_border_clamp",                 false,                                    true  }, // GLES extension.
+		{ "EXT_texture_compression_dxt1",             false,                                    true  },
+		{ "EXT_texture_compression_latc",             false,                                    true  },
+		{ "EXT_texture_compression_rgtc",             BGFX_CONFIG_RENDERER_OPENGL >= 30,        true  },
+		{ "EXT_texture_compression_s3tc",             false,                                    true  },
+		{ "EXT_texture_cube_map_array",               false,                                    true  }, // GLES3.1 extension.
+		{ "EXT_texture_filter_anisotropic",           false,                                    true  },
+		{ "EXT_texture_format_BGRA8888",              false,                                    true  },
+		{ "EXT_texture_rg",                           false,                                    true  }, // GLES extension.
+		{ "EXT_texture_shared_exponent",              false,                                    true  },
+		{ "EXT_texture_snorm",                        BGFX_CONFIG_RENDERER_OPENGL >= 30,        true  },
+		{ "EXT_texture_sRGB",                         false,                                    true  },
+		{ "EXT_texture_storage",                      false,                                    true  },
+		{ "EXT_texture_swizzle",                      false,                                    true  },
+		{ "EXT_texture_view",                         false,                                    true  },
+		{ "EXT_texture_type_2_10_10_10_REV",          false,                                    true  },
+		{ "EXT_timer_query",                          BGFX_CONFIG_RENDERER_OPENGL >= 33,        true  },
+		{ "EXT_unpack_subimage",                      false,                                    true  },
+		{ "EXT_sRGB",                                 false,                                    true  }, // GLES extension.
+		{ "EXT_multisampled_render_to_texture",       false,                                    true  }, // GLES extension.
 
-		{ "GOOGLE_depth_texture",                     false,                             true  },
+		{ "GOOGLE_depth_texture",                     false,                                    true  },
 
-		{ "IMG_multisampled_render_to_texture",       false,                             true  },
-		{ "IMG_read_format",                          false,                             true  },
-		{ "IMG_shader_binary",                        false,                             true  },
-		{ "IMG_texture_compression_pvrtc",            false,                             true  },
-		{ "IMG_texture_compression_pvrtc2",           false,                             true  },
-		{ "IMG_texture_format_BGRA8888",              false,                             true  },
+		{ "IMG_multisampled_render_to_texture",       false,                                    true  },
+		{ "IMG_read_format",                          false,                                    true  },
+		{ "IMG_shader_binary",                        false,                                    true  },
+		{ "IMG_texture_compression_pvrtc",            false,                                    true  },
+		{ "IMG_texture_compression_pvrtc2",           false,                                    true  },
+		{ "IMG_texture_format_BGRA8888",              false,                                    true  },
 
-		{ "INTEL_fragment_shader_ordering",           false,                             true  },
+		{ "INTEL_fragment_shader_ordering",           false,                                    true  },
 
-		{ "KHR_debug",                                BGFX_CONFIG_RENDERER_OPENGL >= 43, true  },
-		{ "KHR_no_error",                             false,                             true  },
+		{ "KHR_debug",                                BGFX_CONFIG_RENDERER_OPENGL >= 43,        true  },
+		{ "KHR_no_error",                             false,                                    true  },
 
-		{ "MOZ_WEBGL_compressed_texture_s3tc",        false,                             true  },
-		{ "MOZ_WEBGL_depth_texture",                  false,                             true  },
+		{ "MOZ_WEBGL_compressed_texture_s3tc",        false,                                    true  },
+		{ "MOZ_WEBGL_depth_texture",                  false,                                    true  },
 
-		{ "NV_conservative_raster",                   false,                             true  },
-		{ "NV_copy_image",                            false,                             true  },
-		{ "NV_draw_buffers",                          false,                             true  }, // GLES extension.
-		{ "NV_draw_instanced",                        false,                             true  }, // GLES extension.
-		{ "NV_instanced_arrays",                      false,                             true  }, // GLES extension.
-		{ "NV_occlusion_query",                       false,                             true  },
-		{ "NV_texture_border_clamp",                  false,                             true  }, // GLES extension.
-		{ "NVX_gpu_memory_info",                      false,                             true  },
+		{ "NV_conservative_raster",                   false,                                    true  },
+		{ "NV_copy_image",                            false,                                    true  },
+		{ "NV_draw_buffers",                          false,                                    true  }, // GLES extension.
+		{ "NV_draw_instanced",                        false,                                    true  }, // GLES extension.
+		{ "NV_instanced_arrays",                      false,                                    true  }, // GLES extension.
+		{ "NV_occlusion_query",                       false,                                    true  },
+		{ "NV_read_depth",                            false,                                    true  }, // GLES extension.
+		{ "NV_read_depth_stencil",                    false,                                    true  }, // GLES extension.
+		{ "NV_read_stencil",                          false,                                    true  }, // GLES extension.
+		{ "NV_texture_border_clamp",                  false,                                    true  }, // GLES extension.
 
-		{ "OES_copy_image",                           false,                             true  },
-		{ "OES_compressed_ETC1_RGB8_texture",         false,                             true  },
-		{ "OES_depth24",                              false,                             true  },
-		{ "OES_depth32",                              false,                             true  },
-		{ "OES_depth_texture",                        false,                             true  },
-		{ "OES_element_index_uint",                   false,                             true  },
-		{ "OES_fragment_precision_high",              false,                             true  },
-		{ "OES_fbo_render_mipmap",                    false,                             true  },
-		{ "OES_get_program_binary",                   false,                             true  },
-		{ "OES_required_internalformat",              false,                             true  },
-		{ "OES_packed_depth_stencil",                 false,                             true  },
-		{ "OES_read_format",                          false,                             true  },
-		{ "OES_rgb8_rgba8",                           false,                             true  },
-		{ "OES_standard_derivatives",                 false,                             true  },
-		{ "OES_texture_3D",                           false,                             true  },
-		{ "OES_texture_border_clamp",                 false,                             true  }, // GLES extension.
-		{ "OES_texture_float",                        false,                             true  },
-		{ "OES_texture_float_linear",                 false,                             true  },
-		{ "OES_texture_npot",                         false,                             true  },
-		{ "OES_texture_half_float",                   false,                             true  },
-		{ "OES_texture_half_float_linear",            false,                             true  },
-		{ "OES_texture_stencil8",                     false,                             true  },
-		{ "OES_texture_storage_multisample_2d_array", false,                             true  },
-		{ "OES_texture_view",                         false,                             true  },
-		{ "OES_vertex_array_object",                  false,                             true  },
-		{ "OES_vertex_half_float",                    false,                             true  },
-		{ "OES_vertex_type_10_10_10_2",               false,                             true  },
+		{ "NVX_gpu_memory_info",                      false,                                    true  },
 
-		{ "WEBGL_color_buffer_float",                 false,                             true  },
-		{ "WEBGL_compressed_texture_etc1",            false,                             true  },
-		{ "WEBGL_compressed_texture_s3tc",            false,                             true  },
-		{ "WEBGL_compressed_texture_pvrtc",           false,                             true  },
-		{ "WEBGL_depth_texture",                      false,                             true  },
-		{ "WEBGL_draw_buffers",                       false,                             true  },
+		{ "OES_copy_image",                           BGFX_CONFIG_RENDERER_OPENGLES >= 32,      true  },
+		{ "OES_compressed_ETC1_RGB8_texture",         false,                                    true  },
+		{ "OES_depth24",                              false,                                    true  },
+		{ "OES_depth32",                              false,                                    true  },
+		{ "OES_depth_texture",                        false,                                    true  },
+		{ "OES_draw_buffers_indexed",                 BGFX_CONFIG_RENDERER_OPENGLES >= 32,      false },
+		{ "OES_element_index_uint",                   false,                                    true  },
+		{ "OES_fragment_precision_high",              false,                                    true  },
+		{ "OES_fbo_render_mipmap",                    false,                                    true  },
+		{ "OES_get_program_binary",                   false,                                    true  },
+		{ "OES_required_internalformat",              false,                                    true  },
+		{ "OES_packed_depth_stencil",                 false,                                    true  },
+		{ "OES_read_format",                          false,                                    true  },
+		{ "OES_rgb8_rgba8",                           false,                                    true  },
+		{ "OES_standard_derivatives",                 false,                                    true  },
+		{ "OES_texture_3D",                           false,                                    true  },
+		{ "OES_texture_border_clamp",                 BGFX_CONFIG_RENDERER_OPENGLES >= 32,      true  }, // GLES extension.
+		{ "OES_texture_cube_map_array",               BGFX_CONFIG_RENDERER_OPENGLES >= 32,      true  }, // GLES3.1 extension.
+		{ "OES_texture_float",                        false,                                    true  },
+		{ "OES_texture_float_linear",                 false,                                    true  },
+		{ "OES_texture_npot",                         false,                                    true  },
+		{ "OES_texture_half_float",                   false,                                    true  },
+		{ "OES_texture_half_float_linear",            false,                                    true  },
+		{ "OES_texture_stencil8",                     false,                                    true  },
+		{ "OES_texture_storage_multisample_2d_array", false,                                    true  },
+		{ "OES_texture_view",                         false,                                    true  },
+		{ "OES_vertex_array_object",                  false,                                    true  },
+		{ "OES_vertex_half_float",                    false,                                    true  },
+		{ "OES_vertex_type_10_10_10_2",               false,                                    true  },
 
-		{ "WEBKIT_EXT_texture_filter_anisotropic",    false,                             true  },
-		{ "WEBKIT_WEBGL_compressed_texture_s3tc",     false,                             true  },
-		{ "WEBKIT_WEBGL_depth_texture",               false,                             true  },
+		{ "WEBGL_color_buffer_float",                 false,                                    true  },
+		{ "WEBGL_compressed_texture_etc1",            false,                                    true  },
+		{ "WEBGL_compressed_texture_s3tc",            false,                                    true  },
+		{ "WEBGL_compressed_texture_pvrtc",           false,                                    true  },
+		{ "WEBGL_depth_texture",                      false,                                    true  },
+		{ "WEBGL_draw_buffers",                       false,                                    true  },
+
+		{ "WEBKIT_EXT_texture_filter_anisotropic",    false,                                    true  },
+		{ "WEBKIT_WEBGL_compressed_texture_s3tc",     false,                                    true  },
+		{ "WEBKIT_WEBGL_depth_texture",               false,                                    true  },
 	};
 	static_assert(Extension::Count == BX_COUNTOF(s_extension) );
 
@@ -1838,6 +1849,11 @@ namespace bgfx { namespace gl
 			return false;
 		}
 
+		if (s_imageFormat[_format] != s_textureFormat[_format].m_internalFmt)
+		{
+			return false;
+		}
+
 		GLuint id;
 		GL_CHECK(glGenTextures(1, &id) );
 		GL_CHECK(glBindTexture(GL_TEXTURE_2D, id) );
@@ -1992,6 +2008,29 @@ namespace bgfx { namespace gl
 		}
 
 		return GL_DEPTH_STENCIL_ATTACHMENT;
+	}
+
+	static bool isReadPixelsSupported(TextureFormat::Enum _format)
+	{
+		if (!bimg::isDepth(bimg::TextureFormat::Enum(_format) )
+		||  BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) )
+		{
+			return true;
+		}
+
+		const bimg::ImageBlockInfo& info = bimg::getBlockInfo(bimg::TextureFormat::Enum(_format) );
+
+		if (0 == info.depthBits)
+		{
+			return s_extension[Extension::NV_read_stencil].m_supported;
+		}
+
+		if (0 == info.stencilBits)
+		{
+			return s_extension[Extension::NV_read_depth].m_supported;
+		}
+
+		return s_extension[Extension::NV_read_depth_stencil].m_supported;
 	}
 
 	static bool isFramebufferFormatValid(
@@ -2179,6 +2218,7 @@ namespace bgfx { namespace gl
 			, m_vao(0)
 			, m_blitSupported(false)
 			, m_blitFboSupported(false)
+			, m_textureMultisampleSupport(false)
 			, m_textureViewSupported(false)
 			, m_depthStencilTexturingSupported(false)
 			, m_readBackSupported(BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) )
@@ -2589,6 +2629,11 @@ namespace bgfx { namespace gl
 					|| s_extension[Extension::ARB_compute_shader].m_supported
 					;
 
+				if (s_extension[Extension::ARB_texture_multisample].m_supported)
+				{
+					m_textureMultisampleSupport = NULL != glTexImage2DMultisample;
+				}
+
 				for (uint32_t ii = 0; ii < TextureFormat::Count; ++ii)
 				{
 					const TextureFormat::Enum fmt = TextureFormat::Enum(ii);
@@ -2653,7 +2698,7 @@ namespace bgfx { namespace gl
 							: BGFX_CAPS_FORMAT_TEXTURE_NONE
 							;
 
-						if (NULL != glTexImage2DMultisample)
+						if (m_textureMultisampleSupport)
 						{
 							maxSamples = 0;
 							glGetInternalformativ(
@@ -2686,7 +2731,11 @@ namespace bgfx { namespace gl
 					: 0
 					;
 				g_caps.supported |= BGFX_CAPS_FRAGMENT_DEPTH;
-				g_caps.supported |= s_extension[Extension::ARB_draw_buffers_blend].m_supported
+				g_caps.supported |= (false
+					|| s_extension[Extension::ARB_draw_buffers_blend  ].m_supported
+					|| s_extension[Extension::OES_draw_buffers_indexed].m_supported
+					)
+					&& NULL != glBlendFunci
 					? BGFX_CAPS_BLEND_INDEPENDENT
 					: 0
 					;
@@ -2794,6 +2843,7 @@ namespace bgfx { namespace gl
 				g_caps.supported |= false
 					|| s_extension[Extension::ARB_texture_cube_map_array].m_supported
 					|| s_extension[Extension::EXT_texture_cube_map_array].m_supported
+					|| s_extension[Extension::OES_texture_cube_map_array].m_supported
 					? BGFX_CAPS_TEXTURE_CUBE_ARRAY
 					: 0
 					;
@@ -3278,6 +3328,92 @@ namespace bgfx { namespace gl
 			}
 		}
 
+		bool readTextureCompressed(const TextureGL& _texture, void* _data, uint16_t _layer, uint8_t _mip)
+		{
+			if (!m_blitSupported
+			||  NULL == glCopyImageSubData)
+			{
+				return false;
+			}
+
+			const bimg::ImageBlockInfo& info = bimg::getBlockInfo(bimg::TextureFormat::Enum(_texture.m_textureFormat) );
+
+			GLenum internalFmt;
+			GLenum readFmt;
+
+			switch (info.blockSize)
+			{
+			case 8:
+				internalFmt = GL_RG32UI;
+				readFmt     = GL_RG_INTEGER;
+				break;
+
+			case 16:
+				internalFmt = GL_RGBA32UI;
+				readFmt     = GL_RGBA_INTEGER;
+				break;
+
+			default:
+				return false;
+			}
+
+			const uint32_t mipWidth  = bx::max<uint32_t>(1, _texture.m_width  >> _mip);
+			const uint32_t mipHeight = bx::max<uint32_t>(1, _texture.m_height >> _mip);
+
+			const uint32_t blocksW = (mipWidth  + info.blockWidth  - 1)/info.blockWidth;
+			const uint32_t blocksH = (mipHeight + info.blockHeight - 1)/info.blockHeight;
+
+			GLuint id = 0;
+			GL_CHECK(glGenTextures(1, &id) );
+			GL_CHECK(glBindTexture(GL_TEXTURE_2D, id) );
+			GL_CHECK(glTexStorage2D(GL_TEXTURE_2D, 1, internalFmt, blocksW, blocksH) );
+			GL_CHECK(glBindTexture(GL_TEXTURE_2D, 0) );
+
+			glCopyImageSubData(
+				  _texture.m_id
+				, _texture.m_target
+				, _mip
+				, 0
+				, 0
+				, _layer
+				, id
+				, GL_TEXTURE_2D
+				, 0
+				, 0
+				, 0
+				, 0
+				, mipWidth
+				, mipHeight
+				, 1
+				);
+
+			const bool copied = GL_NO_ERROR == getGlError();
+
+			bool result = false;
+
+			if (copied)
+			{
+				GLuint fbo = 0;
+				GL_CHECK(glGenFramebuffers(1, &fbo) );
+				GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, fbo) );
+				GL_CHECK(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, id, 0) );
+				GL_CHECK(glReadBuffer(GL_COLOR_ATTACHMENT0) );
+
+				if (GL_FRAMEBUFFER_COMPLETE == glCheckFramebufferStatus(GL_FRAMEBUFFER) )
+				{
+					GL_CHECK(glReadPixels(0, 0, blocksW, blocksH, readFmt, GL_UNSIGNED_INT, _data) );
+					result = true;
+				}
+
+				GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, m_currentFbo) );
+				GL_CHECK(glDeleteFramebuffers(1, &fbo) );
+			}
+
+			GL_CHECK(glDeleteTextures(1, &id) );
+
+			return result;
+		}
+
 		void readTexture(TextureHandle _handle, void* _data, uint16_t _layer, uint8_t _mip) override
 		{
 			if (m_readBackSupported)
@@ -3367,7 +3503,14 @@ namespace bgfx { namespace gl
 			{
 				const TextureGL& texture = m_textures[_handle.idx];
 
-				if (!bimg::isCompressed(bimg::TextureFormat::Enum(texture.m_textureFormat) ) )
+				const GLenum attachment = attachmentFor(TextureFormat::Enum(texture.m_textureFormat) );
+				const bool   color      = GL_COLOR_ATTACHMENT0 == attachment;
+
+				if (bimg::isCompressed(bimg::TextureFormat::Enum(texture.m_textureFormat) ) )
+				{
+					readTextureCompressed(texture, _data, _layer, _mip);
+				}
+				else if (color || isReadPixelsSupported(TextureFormat::Enum(texture.m_textureFormat) ) )
 				{
 					const uint32_t mipWidth  = bx::max<uint32_t>(1, texture.m_width  >> _mip);
 					const uint32_t mipHeight = bx::max<uint32_t>(1, texture.m_height >> _mip);
@@ -3380,11 +3523,12 @@ namespace bgfx { namespace gl
 
 					GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, frameBuffer.m_fbo[0]) );
 
-					if (texture.m_numLayers > 1)
+					if (texture.m_numLayers > 1
+					||  GL_TEXTURE_3D == texture.m_target)
 					{
 						GL_CHECK(glFramebufferTextureLayer(
 							  GL_FRAMEBUFFER
-							, GL_COLOR_ATTACHMENT0
+							, attachment
 							, texture.m_id
 							, at[0].mip
 							, _layer
@@ -3394,24 +3538,31 @@ namespace bgfx { namespace gl
 					{
 						GL_CHECK(glFramebufferTexture2D(
 							  GL_FRAMEBUFFER
-							, GL_COLOR_ATTACHMENT0
-							, GL_TEXTURE_2D
+							, attachment
+							, texture.isCubeMap()
+								? GL_TEXTURE_CUBE_MAP_POSITIVE_X + _layer
+								: texture.m_target
 							, texture.m_id
 							, at[0].mip
 							) );
 					}
 
-					GL_CHECK(glReadBuffer(GL_COLOR_ATTACHMENT0) );
+					GL_CHECK(glReadBuffer(color ? GL_COLOR_ATTACHMENT0 : GL_NONE) );
 
 					if (GL_FRAMEBUFFER_COMPLETE == glCheckFramebufferStatus(GL_FRAMEBUFFER) )
 					{
+						const bool rgba8 = false
+							|| TextureFormat::RGBA8 == texture.m_textureFormat
+							|| TextureFormat::BGRA8 == texture.m_textureFormat
+							;
+
 						GL_CHECK(glReadPixels(
 							  0
 							, 0
 							, mipWidth
 							, mipHeight
-							, m_readPixelsFmt
-							, GL_UNSIGNED_BYTE
+							, rgba8 ? m_readPixelsFmt  : texture.m_fmt
+							, rgba8 ? GL_UNSIGNED_BYTE : texture.m_type
 							, _data
 							) );
 
@@ -3426,6 +3577,11 @@ namespace bgfx { namespace gl
 								, _data
 								, mipWidth*4
 								);
+						}
+
+						if (TextureFormat::D24S8 == texture.m_textureFormat)
+						{
+							convertD24S8FromGl(_data, mipWidth, mipHeight);
 						}
 					}
 
@@ -4908,6 +5064,7 @@ namespace bgfx { namespace gl
 		uint16_t m_maxLabelLen;
 		bool m_blitSupported;
 		bool m_blitFboSupported;
+		bool m_textureMultisampleSupport;
 		bool m_textureViewSupported;
 		bool m_depthStencilTexturingSupported;
 		bool m_readBackSupported;
@@ -6107,10 +6264,16 @@ namespace bgfx { namespace gl
 						if (compressed
 						&& !convert)
 						{
-							uint32_t size = bx::max<uint32_t>(1, (width  + 3)>>2)
-										  * bx::max<uint32_t>(1, (height + 3)>>2)
-										  * 4*4* bimg::getBitsPerPixel(bimg::TextureFormat::Enum(m_textureFormat) )/8
-										  ;
+							const uint32_t size = uint32_t(bimg::imageGetSize(
+								  NULL
+								, width
+								, height
+								, isVolume(imageContainer) ? depth : 1
+								, false
+								, false
+								, 1
+								, bimg::TextureFormat::Enum(m_textureFormat)
+								) );
 
 							GL_CHECK(compressedTexImage(imageTarget
 								, lod
@@ -7014,9 +7177,11 @@ namespace bgfx { namespace gl
 					else
 					{
 						const bool cubeArray = GL_TEXTURE_CUBE_MAP_ARRAY == texture.m_target;
+						const bool texture3D = GL_TEXTURE_3D             == texture.m_target;
 
 						if ( (1 < texture.m_numLayers && !texture.isCubeMap() )
-						||   cubeArray)
+						||   cubeArray
+						||   texture3D)
 						{
 							if (1 < at.numLayers)
 							{
@@ -7739,7 +7904,7 @@ namespace bgfx { namespace gl
 		uint64_t ndcFrontCcw = 0;
 		bool ndcFlipRectY = true;
 
-		const bool blendIndependentSupported = s_extension[Extension::ARB_draw_buffers_blend].m_supported;
+		const bool blendIndependentSupported = 0 != (g_caps.supported & BGFX_CAPS_BLEND_INDEPENDENT);
 		const bool computeSupported = false
 			|| (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) && s_extension[Extension::ARB_compute_shader].m_supported)
 			||  BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES >= 31)
@@ -8254,15 +8419,15 @@ namespace bgfx { namespace gl
 								: glDisable(GL_LINE_SMOOTH)
 								);
 						}
+					}
 
-						if (m_conservativeRasterSupport
-						&&  BGFX_STATE_CONSERVATIVE_RASTER & changedFlags)
-						{
-							GL_CHECK(BGFX_STATE_CONSERVATIVE_RASTER & newFlags
-								? glEnable(GL_CONSERVATIVE_RASTERIZATION_NV)
-								: glDisable(GL_CONSERVATIVE_RASTERIZATION_NV)
-								);
-						}
+					if (m_conservativeRasterSupport
+					&&  BGFX_STATE_CONSERVATIVE_RASTER & changedFlags)
+					{
+						GL_CHECK(BGFX_STATE_CONSERVATIVE_RASTER & newFlags
+							? glEnable(GL_CONSERVATIVE_RASTERIZATION_NV)
+							: glDisable(GL_CONSERVATIVE_RASTERIZATION_NV)
+							);
 					}
 
 					if ( (BGFX_STATE_WRITE_A|BGFX_STATE_WRITE_RGB) & changedFlags)
@@ -8318,8 +8483,7 @@ namespace bgfx { namespace gl
 
 							const uint32_t numRt = getNumRt();
 
-							if (!BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL)
-							||  1 >= numRt
+							if (1 >= numRt
 							||  !independent)
 							{
 								if (enabled)

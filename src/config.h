@@ -186,6 +186,13 @@
 #	define BGFX_CONFIG_GL_NORMALIZE_NDC_CONVENTIONS 0
 #endif // BGFX_CONFIG_GL_NORMALIZE_NDC_CONVENTIONS
 
+// Create OpenGL ES contexts on Windows with WGL_EXT_create_context_es_profile
+// instead of EGL. Desktop drivers expose OpenGL ES this way, which runs the ES
+// paths on the vendor driver rather than on an ANGLE translation layer.
+#ifndef BGFX_CONFIG_GL_USE_WGL
+#	define BGFX_CONFIG_GL_USE_WGL 0
+#endif // BGFX_CONFIG_GL_USE_WGL
+
 // Enable hardware video decoder.
 #ifndef BGFX_CONFIG_VIDEO
 #	define BGFX_CONFIG_VIDEO 1

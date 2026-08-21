@@ -10,6 +10,14 @@
 
 #include <wgl/wglext.h>
 
+#ifndef APIENTRY
+#	define APIENTRY
+#endif // APIENTRY
+
+#ifndef APIENTRYP
+#	define APIENTRYP APIENTRY *
+#endif // APIENTRYP
+
 namespace bgfx { namespace gl
 {
 typedef PROC (APIENTRYP PFNWGLGETPROCADDRESSPROC) (LPCSTR lpszProc);
