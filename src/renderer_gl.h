@@ -12,14 +12,17 @@
 	|| BX_PLATFORM_NX                                                                       \
 	|| BX_PLATFORM_RPI                                                                      \
 	) )                                                                                     \
-	|| (BGFX_CONFIG_RENDERER_OPENGLES && BX_PLATFORM_WINDOWS)
+	|| (BGFX_CONFIG_RENDERER_OPENGLES && BX_PLATFORM_WINDOWS && !BGFX_CONFIG_GL_USE_WGL)
 
 #define BGFX_USE_HTML5 (BGFX_CONFIG_RENDERER_OPENGLES && (0 \
 	|| BX_PLATFORM_EMSCRIPTEN                               \
 	) )
 
-#define BGFX_USE_WGL (BGFX_CONFIG_RENDERER_OPENGL && (0 \
-	|| BX_PLATFORM_WINDOWS                              \
+#define BGFX_USE_WGL ( (0                                        \
+	||  BGFX_CONFIG_RENDERER_OPENGL                              \
+	|| (BGFX_CONFIG_RENDERER_OPENGLES && BGFX_CONFIG_GL_USE_WGL) \
+	) && (0                                                      \
+	|| BX_PLATFORM_WINDOWS                                       \
 	) )
 
 #define BGFX_USE_GL_DYNAMIC_LIB (0 \
@@ -1653,8 +1656,8 @@ namespace bgfx { namespace gl
 					return false;
 				}
 
-				GLint available;
-				GL_CHECK(glGetQueryObjectiv(query.m_end
+				GLuint available;
+				GL_CHECK(glGetQueryObjectuiv(query.m_end
 					, GL_QUERY_RESULT_AVAILABLE
 					, &available
 					) );
