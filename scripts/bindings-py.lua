@@ -71,14 +71,39 @@ local opaque_types = {
 
 local enum_counts = {}
 
+local stub_primitive_map = {
+	["bool"] = "bool",
+	["char"] = "bytes",
+	["float"] = "float",
+	["int8_t"] = "int",
+	["int16_t"] = "int",
+	["int32_t"] = "int",
+	["int64_t"] = "int",
+	["uint8_t"] = "int",
+	["uint16_t"] = "int",
+	["uint32_t"] = "int",
+	["uint64_t"] = "int",
+	["uintptr_t"] = "int",
+	["bgfx_view_id_t"] = "int",
+	["va_list"] = "Any",
+}
+
+local stub_type_info = {}
+
 for _, typ in ipairs(idl.types) do
 	if typ.enum then
 		ctype_map[typ.cname] = "ctypes.c_int"
 		enum_counts[typ.typename] = #typ.enum
-	elseif typ.handle or typ.struct then
+		stub_type_info[typ.cname] = { kind = "enum", name = python_type_name(typ) }
+	elseif typ.handle then
 		ctype_map[typ.cname] = python_type_name(typ)
+		stub_type_info[typ.cname] = { kind = "handle", name = python_type_name(typ) }
+	elseif typ.struct then
+		ctype_map[typ.cname] = python_type_name(typ)
+		stub_type_info[typ.cname] = { kind = "struct", name = python_type_name(typ) }
 	elseif typ.args and typ.ret then
 		ctype_map[typ.cname] = python_type_name(typ)
+		stub_type_info[typ.cname] = { kind = "funcptr", name = python_type_name(typ) }
 	end
 end
 
@@ -140,6 +165,73 @@ local function convert_ctype(arg, array_as_pointer)
 	end
 
 	return result
+end
+
+local function convert_stub_type(arg, array_as_pointer, context)
+	if arg.ctype == "..." then
+		return "Any"
+	end
+
+	local ctype = normalize_ctype(arg.ctype)
+	local is_const = ctype:match("^const ") ~= nil
+	ctype = ctype:gsub("^const%s+", "")
+
+	local pointer_count = 0
+	while ctype:sub(-1) == "*" do
+		pointer_count = pointer_count + 1
+		ctype = ctype:sub(1, -2)
+	end
+
+	if arg.array and array_as_pointer then
+		pointer_count = pointer_count + 1
+	end
+
+	if ctype == "void" then
+		if pointer_count == 0 then
+			return "None"
+		end
+		return "Any"
+	end
+
+	if ctype == "char" and pointer_count == 1 and is_const then
+		return "Optional[bytes]"
+	end
+
+	local info = stub_type_info[ctype]
+	if pointer_count > 0 then
+		if pointer_count == 1 and info and (info.kind == "struct" or info.kind == "handle") then
+			if context == "arg" then
+				return "Optional[Union[" .. info.name .. ", _Pointer[" .. info.name .. "], ctypes.Array]]"
+			end
+			return "_Pointer[" .. info.name .. "]"
+		end
+		return "Any"
+	end
+
+	if info then
+		if info.kind == "enum" then
+			if context == "arg" then
+				return "Union[" .. info.name .. ", int]"
+			end
+			return "int"
+		elseif info.kind == "funcptr" then
+			return "Any"
+		end
+		return info.name
+	end
+
+	return assert(stub_primitive_map[ctype], "Unsupported Python stub type: " .. arg.ctype)
+end
+
+local function convert_stub_field(member)
+	if member.array then
+		local ctype = normalize_ctype(member.ctype):gsub("^const%s+", "")
+		if ctype == "char" then
+			return "bytes"
+		end
+		return "ctypes.Array"
+	end
+	return convert_stub_type(member, false, "field")
 end
 
 local function array_length(member)
@@ -380,6 +472,42 @@ local function gen_struct_fields(out)
 	end
 end
 
+local function gen_stub_structs(out)
+	for _, typ in ipairs(idl.types) do
+		if typ.handle then
+			append(out,
+				"class " .. python_type_name(typ) .. "(ctypes.Structure):",
+				"\tidx: int",
+				"",
+				"\t@property",
+				"\tdef valid(self) -> bool: ...",
+				""
+			)
+		elseif typ.struct then
+			comment_lines(out, typ.comments)
+			append(out, "class " .. python_type_name(typ) .. "(ctypes.Structure):")
+			if #typ.struct == 0 then
+				append(out, "\tpass")
+			else
+				for _, member in ipairs(typ.struct) do
+					comment_lines(out, member.comment, "\t")
+					append(out, "\t" .. py_ident(member.name) .. ": " .. convert_stub_field(member))
+				end
+			end
+			append(out, "")
+		end
+	end
+end
+
+local function gen_stub_funcptrs(out)
+	for _, typ in ipairs(idl.types) do
+		if typ.args and typ.ret then
+			comment_lines(out, typ.comments)
+			append(out, python_type_name(typ) .. ": Any", "")
+		end
+	end
+end
+
 local function should_emit_function(func)
 	if func.cpponly then
 		return false
@@ -438,6 +566,46 @@ local function gen_functions(out)
 	append(out, "")
 end
 
+local function stub_signature(out, name, args, restype)
+	if #args == 0 then
+		append(out, "def " .. name .. "() -> " .. restype .. ": ...")
+	elseif #args <= 5 then
+		append(out, "def " .. name .. "(" .. table.concat(args, ", ") .. ", /) -> " .. restype .. ": ...")
+	else
+		append(out, "def " .. name .. "(")
+		for _, arg in ipairs(args) do
+			append(out, "\t" .. arg .. ",")
+		end
+		append(out, "\t/,", ") -> " .. restype .. ": ...")
+	end
+end
+
+local function gen_stub_functions(out)
+	append(out,
+		"def load(path: Union[str, bytes]) -> ctypes.CDLL: ...",
+		""
+	)
+
+	for _, func in ipairs(idl.funcs) do
+		if should_emit_function(func) and not func.vararg then
+			local args = {}
+			if func.this ~= nil then
+				args[#args + 1] = "_this: " .. convert_stub_type(func.this_type, true, "arg")
+			end
+
+			for _, arg in ipairs(func.args) do
+				if arg.ctype ~= "..." then
+					args[#args + 1] = py_ident(arg.name) .. ": " .. convert_stub_type(arg, true, "arg")
+				end
+			end
+
+			comment_lines(out, func.comments)
+			stub_signature(out, "bgfx_" .. func.cname, args, convert_stub_type(func.ret, true, "return"))
+			append(out, "")
+		end
+	end
+end
+
 function gen.gen()
 	local out = {
 		"# Copyright 2011-2026 Branimir Karadzic. All rights reserved.",
@@ -460,6 +628,38 @@ function gen.gen()
 	gen_funcptrs(out)
 	gen_struct_fields(out)
 	gen_functions(out)
+
+	return table.concat(out, "\n")
+end
+
+function gen.gen_pyi()
+	local out = {
+		"# Copyright 2011-2026 Branimir Karadzic. All rights reserved.",
+		"# License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE",
+		"",
+		"#",
+		"# AUTO GENERATED! DO NOT EDIT!",
+		"#",
+		"",
+		"import ctypes",
+		"import enum",
+		"from typing import Any, Optional, Protocol, TypeVar, Union",
+		"",
+		"ViewId = ctypes.c_uint16",
+		"",
+		"_T = TypeVar(\"_T\", covariant=True)",
+		"",
+		"class _Pointer(Protocol[_T]):",
+		"\t@property",
+		"\tdef contents(self) -> _T: ...",
+		"",
+	}
+
+	gen_enums(out)
+	gen_flags(out)
+	gen_stub_structs(out)
+	gen_stub_funcptrs(out)
+	gen_stub_functions(out)
 
 	return table.concat(out, "\n")
 end
