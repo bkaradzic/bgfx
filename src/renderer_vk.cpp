@@ -176,7 +176,7 @@ VK_IMPORT_DEVICE
 		VkComponentMapping m_mapping;
 	};
 
-	static const TextureFormatInfo s_textureFormat[] =
+	static TextureFormatInfo s_textureFormat[] =
 	{
 #define $_ VK_COMPONENT_SWIZZLE_IDENTITY
 #define $0 VK_COMPONENT_SWIZZLE_ZERO
@@ -1940,6 +1940,22 @@ VK_IMPORT_INSTANCE
 					}
 				}
 
+				{
+					VkFormatProperties fp;
+					vkGetPhysicalDeviceFormatProperties(m_physicalDevice, VK_FORMAT_D24_UNORM_S8_UINT, &fp);
+
+					s_textureFormat[TextureFormat::D24S8].m_fmtDsv =
+						0 != (fp.optimalTilingFeatures & VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT)
+						? VK_FORMAT_D24_UNORM_S8_UINT
+						: VK_FORMAT_UNDEFINED
+						;
+
+					s_textureFormat[TextureFormat::D24 ].m_fmtDsv = VK_FORMAT_UNDEFINED;
+					s_textureFormat[TextureFormat::D32 ].m_fmtDsv = VK_FORMAT_UNDEFINED;
+					s_textureFormat[TextureFormat::D16F].m_fmtDsv = VK_FORMAT_UNDEFINED;
+					s_textureFormat[TextureFormat::D24F].m_fmtDsv = VK_FORMAT_UNDEFINED;
+				}
+
 				for (uint32_t ii = 0; ii < TextureFormat::Count; ++ii)
 				{
 					uint32_t support = BGFX_CAPS_FORMAT_TEXTURE_NONE;
@@ -2667,9 +2683,7 @@ VK_IMPORT_DEVICE
 		{
 			TextureVK& texture = m_textures[_handle.idx];
 
-			uint32_t height = bx::max(1, texture.m_height >> _mip);
-			uint32_t pitch  = texture.m_readback.pitch(_mip);
-			uint32_t size = height * pitch;
+			const uint32_t size = texture.m_readback.stagingSize(texture.m_aspectFlags, _mip);
 
 			DeviceMemoryAllocationVK stagingMemory;
 			VkBuffer stagingBuffer;
@@ -2686,7 +2700,7 @@ VK_IMPORT_DEVICE
 
 			kick(true);
 
-			texture.m_readback.readback(stagingMemory.mem, stagingMemory.offset, _data, _mip);
+			texture.m_readback.readback(stagingMemory.mem, stagingMemory.offset, _data, texture.m_aspectFlags, _mip);
 
 			vkDestroy(stagingBuffer);
 			recycleMemory(stagingMemory);
@@ -6477,6 +6491,28 @@ VK_DESTROY
 		return numBlocksX * blockInfo.blockSize;
 	}
 
+	static bool isDepthStencilAspect(VkImageAspectFlags _aspect, TextureFormat::Enum _format)
+	{
+		return true
+			&& 0 != (_aspect & VK_IMAGE_ASPECT_DEPTH_BIT)
+			&& 0 != (_aspect & VK_IMAGE_ASPECT_STENCIL_BIT)
+			&& 0 != bimg::getBlockInfo(bimg::TextureFormat::Enum(_format) ).stencilBits
+			;
+	}
+
+	uint32_t ReadbackVK::stagingSize(VkImageAspectFlags _aspect, uint8_t _mip) const
+	{
+		const uint32_t mipHeight = bx::max(1, m_height >> _mip);
+
+		if (isDepthStencilAspect(_aspect, m_format) )
+		{
+			const uint32_t mipWidth = bx::max(1, m_width >> _mip);
+			return mipWidth * mipHeight * (4 /* depth plane */ + 1 /* stencil plane */);
+		}
+
+		return mipHeight * pitch(_mip);
+	}
+
 	void ReadbackVK::copyImageToBuffer(VkCommandBuffer _commandBuffer, VkBuffer _buffer, VkImageLayout _layout, VkImageAspectFlags _aspect, uint16_t _layer, uint8_t _mip) const
 	{
 		BGFX_PROFILER_SCOPE("ReadbackVK::copyImageToBuffer", kColorFrame);
@@ -6500,24 +6536,42 @@ VK_DESTROY
 			, 1
 			);
 
-		VkBufferImageCopy bic;
-		bic.bufferOffset = 0;
-		bic.bufferRowLength   = numBlocksX * blockInfo.blockWidth;
-		bic.bufferImageHeight = numBlocksY * blockInfo.blockHeight;
-		bic.imageSubresource.aspectMask     = _aspect;
-		bic.imageSubresource.mipLevel       = _mip;
-		bic.imageSubresource.baseArrayLayer = _layer;
-		bic.imageSubresource.layerCount     = 1;
-		bic.imageOffset = { 0, 0, 0 };
-		bic.imageExtent = { mipWidth, mipHeight, 1 };
+		VkBufferImageCopy bic[2];
+		bic[0].bufferOffset = 0;
+		bic[0].bufferRowLength   = numBlocksX * blockInfo.blockWidth;
+		bic[0].bufferImageHeight = numBlocksY * blockInfo.blockHeight;
+		bic[0].imageSubresource.aspectMask     = _aspect;
+		bic[0].imageSubresource.mipLevel       = _mip;
+		bic[0].imageSubresource.baseArrayLayer = _layer;
+		bic[0].imageSubresource.layerCount     = 1;
+		bic[0].imageOffset = { 0, 0, 0 };
+		bic[0].imageExtent = { mipWidth, mipHeight, 1 };
+
+		uint32_t numRegions = 1;
+
+		if (isDepthStencilAspect(_aspect, m_format) )
+		{
+			bic[0].imageSubresource.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+
+			bx::memCopy(&bic[1], &bic[0], sizeof(bic[0]) );
+			bic[1].bufferOffset = mipWidth * mipHeight * 4;
+			bic[1].imageSubresource.aspectMask = VK_IMAGE_ASPECT_STENCIL_BIT;
+
+			numRegions = 2;
+		}
+		else if (0 == blockInfo.stencilBits
+		     &&  0 != (_aspect & VK_IMAGE_ASPECT_STENCIL_BIT) )
+		{
+			bic[0].imageSubresource.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+		}
 
 		vkCmdCopyImageToBuffer(
 			  _commandBuffer
 			, m_image
 			, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL
 			, _buffer
-			, 1
-			, &bic
+			, numRegions
+			, bic
 			);
 
 		// Make changes to the buffer visible to the host
@@ -6540,7 +6594,7 @@ VK_DESTROY
 			);
 	}
 
-	void ReadbackVK::readback(VkDeviceMemory _memory, VkDeviceSize _offset, void* _data, uint8_t _mip) const
+	void ReadbackVK::readback(VkDeviceMemory _memory, VkDeviceSize _offset, void* _data, VkImageAspectFlags _aspect, uint8_t _mip) const
 	{
 		BGFX_PROFILER_SCOPE("ReadbackVK::readback", kColorResource);
 
@@ -6559,7 +6613,49 @@ VK_DESTROY
 		VK_CHECK(vkMapMemory(s_renderVK->m_device, _memory, 0, VK_WHOLE_SIZE, 0, (void**)&src) );
 		src += _offset;
 
-		bx::gather(_data, src, rowPitch, rowPitch, numRows);
+		if (isDepthStencilAspect(_aspect, m_format) )
+		{
+			const uint32_t mipWidth = bx::max(1, m_width >> _mip);
+			const uint8_t* depthPlane   = src;
+			const uint8_t* stencilPlane = src + mipWidth * mipHeight * 4;
+			const uint32_t texelSize    = blockInfo.blockSize;
+
+			for (uint32_t yy = 0; yy < mipHeight; ++yy)
+			{
+				const uint8_t* depthRow   = depthPlane   + yy * mipWidth * 4;
+				const uint8_t* stencilRow = stencilPlane + yy * mipWidth;
+				uint8_t*       dstRow     = (uint8_t*)_data + yy * rowPitch;
+
+				for (uint32_t xx = 0; xx < mipWidth; ++xx)
+				{
+					uint8_t* texel = dstRow + xx * texelSize;
+
+					if (4 == texelSize)
+					{
+						uint32_t depth;
+						bx::memCopy(&depth, depthRow + xx * 4, 4);
+
+						texel[0] = uint8_t(depth      );
+						texel[1] = uint8_t(depth >>  8);
+						texel[2] = uint8_t(depth >> 16);
+						texel[3] = stencilRow[xx];
+					}
+					else
+					{
+						bx::memCopy(texel, depthRow + xx * 4, 4);
+
+						texel[4] = stencilRow[xx];
+						texel[5] = 0;
+						texel[6] = 0;
+						texel[7] = 0;
+					}
+				}
+			}
+		}
+		else
+		{
+			bx::gather(_data, src, rowPitch, rowPitch, numRows);
+		}
 
 		vkUnmapMemory(s_renderVK->m_device, _memory);
 	}

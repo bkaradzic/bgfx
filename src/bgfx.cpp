@@ -2209,6 +2209,25 @@ namespace bgfx
 
 		if (convert)
 		{
+			if (bimg::isDepth(bimg::TextureFormat::Enum(_imageContainer.m_format) ) )
+			{
+				const bool stencil = 0 != bimg::getBlockInfo(bimg::TextureFormat::Enum(_imageContainer.m_format) ).stencilBits;
+
+				const TextureFormat::Enum preferred[] =
+				{
+					stencil ? TextureFormat::D32FS8 : TextureFormat::D32F,
+					stencil ? TextureFormat::D24S8  : TextureFormat::D16,
+				};
+
+				for (uint32_t ii = 0; ii < BX_COUNTOF(preferred); ++ii)
+				{
+					if (0 != g_caps.formats[preferred[ii]])
+					{
+						return preferred[ii];
+					}
+				}
+			}
+
 			return TextureFormat::BGRA8;
 		}
 
