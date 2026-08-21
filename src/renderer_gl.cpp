@@ -2563,6 +2563,10 @@ namespace bgfx { namespace gl
 					}
 				}
 
+				s_textureFormat[TextureFormat::D24 ].m_supported = false;
+				s_textureFormat[TextureFormat::D16F].m_supported = false;
+				s_textureFormat[TextureFormat::D24F].m_supported = false;
+
 				if (BX_ENABLED(0) )
 				{
 					// Disable all compressed texture formats. For testing only.
@@ -3247,6 +3251,17 @@ namespace bgfx { namespace gl
 			m_textures[_handle.idx].clear(_mip, _numMips, _layer, _numLayers);
 		}
 
+		static void convertD24S8FromGl(void* _data, uint32_t _width, uint32_t _height)
+		{
+			uint32_t* texels = (uint32_t*)_data;
+
+			for (uint32_t ii = 0, num = _width*_height; ii < num; ++ii)
+			{
+				const uint32_t packed = texels[ii];
+				texels[ii] = (packed >> 8) | (packed << 24);
+			}
+		}
+
 		void readTexture(TextureHandle _handle, void* _data, uint16_t _layer, uint8_t _mip) override
 		{
 			if (m_readBackSupported)
@@ -3254,12 +3269,12 @@ namespace bgfx { namespace gl
 				const TextureGL& texture = m_textures[_handle.idx];
 				const bool compressed    = bimg::isCompressed(bimg::TextureFormat::Enum(texture.m_textureFormat) );
 
+				const uint32_t mipWidth  = bx::max<uint32_t>(1, texture.m_width  >> _mip);
+				const uint32_t mipHeight = bx::max<uint32_t>(1, texture.m_height >> _mip);
+
 				if (texture.m_numLayers > 1
 				&&  NULL != glGetTextureSubImage)
 				{
-					const uint32_t mipWidth  = bx::max<uint32_t>(1, texture.m_width  >> _mip);
-					const uint32_t mipHeight = bx::max<uint32_t>(1, texture.m_height >> _mip);
-
 					bimg::TextureInfo ti;
 					bimg::imageGetSize(
 						  &ti
@@ -3325,6 +3340,11 @@ namespace bgfx { namespace gl
 					}
 
 					GL_CHECK(glBindTexture(texture.m_target, 0) );
+				}
+
+				if (TextureFormat::D24S8 == texture.m_textureFormat)
+				{
+					convertD24S8FromGl(_data, mipWidth, mipHeight);
 				}
 			}
 			else if (m_readBackFboSupported)
@@ -6861,28 +6881,18 @@ namespace bgfx { namespace gl
 						m_height = bx::max(texture.m_height >> at.mip, 1);
 					}
 
-					GLenum attachment = GL_COLOR_ATTACHMENT0 + colorIdx;
-					bimg::TextureFormat::Enum format = bimg::TextureFormat::Enum(texture.m_textureFormat);
-					if (bimg::isDepth(format) )
+					const TextureFormat::Enum format = TextureFormat::Enum(texture.m_textureFormat);
+					GLenum attachment = attachmentFor(format);
+
+					if (GL_COLOR_ATTACHMENT0 == attachment)
 					{
-						const bimg::ImageBlockInfo& info = bimg::getBlockInfo(format);
-						if (0 < info.stencilBits)
+						attachment = GL_COLOR_ATTACHMENT0 + colorIdx;
+
+						if (Access::Write == at.access)
 						{
-							attachment = GL_DEPTH_STENCIL_ATTACHMENT;
+							buffers[colorIdx] = attachment;
+							++colorIdx;
 						}
-						else if (0 == info.depthBits)
-						{
-							attachment = GL_STENCIL_ATTACHMENT;
-						}
-						else
-						{
-							attachment = GL_DEPTH_ATTACHMENT;
-						}
-					}
-					else if (Access::Write == at.access)
-					{
-						buffers[colorIdx] = attachment;
-						++colorIdx;
 					}
 
 					if (0 != texture.m_rbo)
@@ -6978,26 +6988,9 @@ namespace bgfx { namespace gl
 
 						if (0 != texture.m_rbo && 0 != texture.m_id)
 						{
+							GLenum attachment = attachmentFor(TextureFormat::Enum(texture.m_textureFormat) );
 
-							GLenum attachment = GL_INVALID_ENUM;
-							bimg::TextureFormat::Enum format = bimg::TextureFormat::Enum(texture.m_textureFormat);
-							if (bimg::isDepth(format) )
-							{
-								const bimg::ImageBlockInfo& info = bimg::getBlockInfo(format);
-								if (0 < info.stencilBits)
-								{
-									attachment = GL_DEPTH_STENCIL_ATTACHMENT;
-								}
-								else if (0 == info.depthBits)
-								{
-									attachment = GL_STENCIL_ATTACHMENT;
-								}
-								else
-								{
-									attachment = GL_DEPTH_ATTACHMENT;
-								}
-							}
-							else
+							if (GL_COLOR_ATTACHMENT0 == attachment)
 							{
 								attachment = GL_COLOR_ATTACHMENT0 + colorIdx;
 								++colorIdx;

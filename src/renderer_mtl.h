@@ -603,7 +603,9 @@ namespace bgfx { namespace mtl
 	struct TimerQueryMtl
 	{
 		TimerQueryMtl()
-			: m_control(4)
+			: m_frameNum(0)
+			, m_control(4)
+			, m_samplingIdx(0)
 		{
 		}
 
@@ -611,8 +613,17 @@ namespace bgfx { namespace mtl
 		void shutdown();
 		uint32_t begin(uint32_t _resultIdx, uint32_t _frameNum);
 		void end(uint32_t _idx);
-		void addHandlers(MTL::CommandBuffer*& _commandBuffer);
+		void addHandlers(MTL::CommandBuffer*& _commandBuffer, uint32_t _frameNum);
 		bool get();
+
+		bool isViewTimingSupported() const
+		{
+			return NULL != m_sampling[0].m_sampleBuffer;
+		}
+
+		void beginFrame(uint32_t _frameNum);
+		void attach(MTL::RenderPassDescriptor* _renderPassDescriptor);
+		void resolve(uint32_t _samplingIdx);
 
 		struct Result
 		{
@@ -630,13 +641,37 @@ namespace bgfx { namespace mtl
 			uint32_t m_frameNum;
 		};
 
+		struct Query
+		{
+			uint32_t m_resultIdx;
+			uint32_t m_frameNum;
+			uint32_t m_first;
+			uint32_t m_num;
+		};
+
+		struct Sampling
+		{
+			MTL::CounterSampleBuffer* m_sampleBuffer;
+			Query    m_query[BGFX_CONFIG_MAX_VIEWS];
+			uint32_t m_numQueries;
+			uint32_t m_numSamples;
+			uint32_t m_activeQuery;
+			uint64_t m_cpuTimestamp;
+			uint64_t m_gpuTimestamp;
+		};
+
 		uint64_t m_begin;
 		uint64_t m_end;
 		uint64_t m_elapsed;
 		uint64_t m_frequency;
+		uint32_t m_frameNum;
 
 		Result m_result[BGFX_CONFIG_MAX_VIEWS+1];
+		Result m_frameResult[4];
 		bx::RingBufferControl m_control;
+
+		Sampling m_sampling[BGFX_CONFIG_MAX_FRAME_LATENCY];
+		uint32_t m_samplingIdx;
 	};
 
 	struct OcclusionQueryMTL
