@@ -2607,21 +2607,31 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 				if (isValid(frameBuffer.m_depthHandle) )
 				{
 					const TextureMtl& texture = m_textures[frameBuffer.m_depthHandle.idx];
-					_renderPassDescriptor->depthAttachment()->setTexture(texture.m_ptrMsaa
-						? texture.m_ptrMsaa
-						: texture.m_ptr
-						);
-					_renderPassDescriptor->stencilAttachment()->setTexture(texture.m_ptrStencil);
-
-					setAttachment( (MTL::RenderPassAttachmentDescriptor*)_renderPassDescriptor->depthAttachment(), frameBuffer.m_depthAttachment, texture.m_type, NULL != texture.m_ptrMsaa);
-					setAttachment( (MTL::RenderPassAttachmentDescriptor*)_renderPassDescriptor->stencilAttachment(), frameBuffer.m_depthAttachment, texture.m_type, NULL != texture.m_ptrMsaa);
 
 					const MTL::PixelFormat depthFormat = texture.m_ptr->pixelFormat();
+					const bool stencilOnly = MTL::PixelFormatStencil8 == depthFormat;
 
-					if (MTL::PixelFormatDepth24Unorm_Stencil8 == depthFormat
+					MTL::Texture* ptr = NULL != texture.m_ptrMsaa
+						? texture.m_ptrMsaa
+						: texture.m_ptr
+						;
+
+					if (!stencilOnly)
+					{
+						_renderPassDescriptor->depthAttachment()->setTexture(ptr);
+
+						setAttachment( (MTL::RenderPassAttachmentDescriptor*)_renderPassDescriptor->depthAttachment(), frameBuffer.m_depthAttachment, texture.m_type, NULL != texture.m_ptrMsaa);
+					}
+
+					_renderPassDescriptor->stencilAttachment()->setTexture(texture.m_ptrStencil);
+
+					setAttachment( (MTL::RenderPassAttachmentDescriptor*)_renderPassDescriptor->stencilAttachment(), frameBuffer.m_depthAttachment, texture.m_type, NULL != texture.m_ptrMsaa);
+
+					if (stencilOnly
+					||  MTL::PixelFormatDepth24Unorm_Stencil8 == depthFormat
 					||  MTL::PixelFormatDepth32Float_Stencil8 == depthFormat)
 					{
-						_renderPassDescriptor->stencilAttachment()->setTexture(_renderPassDescriptor->depthAttachment()->texture() );
+						_renderPassDescriptor->stencilAttachment()->setTexture(ptr);
 					}
 					else if (NULL != texture.m_ptrStencil)
 					{
@@ -2652,7 +2662,13 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 				return NULL != fb.m_swapChain->m_backBufferDepth;
 			}
 
-			return isValid(fb.m_depthHandle);
+			if (!isValid(fb.m_depthHandle) )
+			{
+				return false;
+			}
+
+			const TextureMtl& depthTexture = m_textures[fb.m_depthHandle.idx];
+			return 0 < bimg::getBlockInfo(bimg::TextureFormat::Enum(depthTexture.m_textureFormat) ).depthBits;
 		}
 
 		bool hasStencil(FrameBufferHandle _fbh)
@@ -3093,19 +3109,25 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 					if (isValid(frameBuffer.m_depthHandle) )
 					{
 						const TextureMtl& depthStencilTexture = m_textures[frameBuffer.m_depthHandle.idx];
-						pd->setDepthAttachmentPixelFormat(depthStencilTexture.m_ptr->pixelFormat() );
+
+						const MTL::PixelFormat depthFormat = depthStencilTexture.m_ptr->pixelFormat();
+						const bool stencilOnly = MTL::PixelFormatStencil8 == depthFormat;
+
+						pd->setDepthAttachmentPixelFormat(stencilOnly
+							? MTL::PixelFormatInvalid
+							: depthFormat
+							);
 						pd->setRasterSampleCount(NULL != depthStencilTexture.m_ptrMsaa
 							? depthStencilTexture.m_ptrMsaa->sampleCount()
 							: 1
 							);
 
-						const MTL::PixelFormat depthFormat = depthStencilTexture.m_ptr->pixelFormat();
-
 						if (NULL != depthStencilTexture.m_ptrStencil)
 						{
 							pd->setStencilAttachmentPixelFormat(depthStencilTexture.m_ptrStencil->pixelFormat() );
 						}
-						else if (MTL::PixelFormatDepth24Unorm_Stencil8 == depthFormat
+						else if (stencilOnly
+							 ||  MTL::PixelFormatDepth24Unorm_Stencil8 == depthFormat
 							 ||  MTL::PixelFormatDepth32Float_Stencil8 == depthFormat)
 						{
 							pd->setStencilAttachmentPixelFormat(depthFormat);
