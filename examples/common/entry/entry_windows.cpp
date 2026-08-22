@@ -380,7 +380,9 @@ namespace entry
 			s_translateKey[VK_NEXT]       = Key::PageDown;
 			s_translateKey[VK_SNAPSHOT]   = Key::Print;
 			s_translateKey[VK_OEM_PLUS]   = Key::Plus;
+			s_translateKey[VK_ADD]        = Key::Plus;
 			s_translateKey[VK_OEM_MINUS]  = Key::Minus;
+			s_translateKey[VK_SUBTRACT]   = Key::Minus;
 			s_translateKey[VK_OEM_4]      = Key::LeftBracket;
 			s_translateKey[VK_OEM_6]      = Key::RightBracket;
 			s_translateKey[VK_OEM_1]      = Key::Semicolon;
@@ -389,6 +391,7 @@ namespace entry
 			s_translateKey[VK_OEM_PERIOD] = Key::Period;
 			s_translateKey[VK_DECIMAL]    = Key::Period;
 			s_translateKey[VK_OEM_2]      = Key::Slash;
+			s_translateKey[VK_DIVIDE]     = Key::Slash;
 			s_translateKey[VK_OEM_5]      = Key::Backslash;
 			s_translateKey[VK_OEM_3]      = Key::Tilde;
 			s_translateKey[VK_F1]         = Key::F1;

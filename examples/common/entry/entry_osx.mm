@@ -279,6 +279,8 @@ namespace entry
 			case NSPageDownFunctionKey:    return Key::PageDown;
 			case NSHomeFunctionKey:        return Key::Home;
 			case NSEndFunctionKey:         return Key::End;
+			case NSInsertFunctionKey:      return Key::Insert;
+			case NSDeleteFunctionKey:      return Key::Delete;
 
 			case NSPrintScreenFunctionKey: return Key::Print;
 			}

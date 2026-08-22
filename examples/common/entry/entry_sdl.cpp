@@ -291,6 +291,7 @@ namespace entry
 			bx::memSet(s_translateKey, 0, sizeof(s_translateKey) );
 			initTranslateKey(SDL_SCANCODE_ESCAPE,       Key::Esc);
 			initTranslateKey(SDL_SCANCODE_RETURN,       Key::Return);
+			initTranslateKey(SDL_SCANCODE_KP_ENTER,     Key::Return);
 			initTranslateKey(SDL_SCANCODE_TAB,          Key::Tab);
 			initTranslateKey(SDL_SCANCODE_BACKSPACE,    Key::Backspace);
 			initTranslateKey(SDL_SCANCODE_SPACE,        Key::Space);
@@ -298,6 +299,8 @@ namespace entry
 			initTranslateKey(SDL_SCANCODE_DOWN,         Key::Down);
 			initTranslateKey(SDL_SCANCODE_LEFT,         Key::Left);
 			initTranslateKey(SDL_SCANCODE_RIGHT,        Key::Right);
+			initTranslateKey(SDL_SCANCODE_INSERT,       Key::Insert);
+			initTranslateKey(SDL_SCANCODE_DELETE,       Key::Delete);
 			initTranslateKey(SDL_SCANCODE_PAGEUP,       Key::PageUp);
 			initTranslateKey(SDL_SCANCODE_PAGEDOWN,     Key::PageDown);
 			initTranslateKey(SDL_SCANCODE_HOME,         Key::Home);
@@ -308,11 +311,17 @@ namespace entry
 			initTranslateKey(SDL_SCANCODE_KP_MINUS,     Key::Minus);
 			initTranslateKey(SDL_SCANCODE_MINUS,        Key::Minus);
 			initTranslateKey(SDL_SCANCODE_GRAVE,        Key::Tilde);
+			initTranslateKey(SDL_SCANCODE_LEFTBRACKET,  Key::LeftBracket);
+			initTranslateKey(SDL_SCANCODE_RIGHTBRACKET, Key::RightBracket);
+			initTranslateKey(SDL_SCANCODE_SEMICOLON,    Key::Semicolon);
+			initTranslateKey(SDL_SCANCODE_APOSTROPHE,   Key::Quote);
 			initTranslateKey(SDL_SCANCODE_KP_COMMA,     Key::Comma);
 			initTranslateKey(SDL_SCANCODE_COMMA,        Key::Comma);
 			initTranslateKey(SDL_SCANCODE_KP_PERIOD,    Key::Period);
 			initTranslateKey(SDL_SCANCODE_PERIOD,       Key::Period);
+			initTranslateKey(SDL_SCANCODE_KP_DIVIDE,    Key::Slash);
 			initTranslateKey(SDL_SCANCODE_SLASH,        Key::Slash);
+			initTranslateKey(SDL_SCANCODE_BACKSLASH,    Key::Backslash);
 			initTranslateKey(SDL_SCANCODE_F1,           Key::F1);
 			initTranslateKey(SDL_SCANCODE_F2,           Key::F2);
 			initTranslateKey(SDL_SCANCODE_F3,           Key::F3);
