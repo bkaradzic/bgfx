@@ -863,16 +863,35 @@ namespace shaderc
 		void pushFrame(const bx::StringView& _name, const bx::StringView& _source, bool _isInclude)
 		{
 			const uint32_t max = _source.getLength() + 16;
-			Token* tokens = m_arena.allocate<Token>(max);
+			Token* tokens = m_arena.allocate<Token>(max + 1 /* space for token if NL at EOF is missing */);
 
 			Lexer lexer(m_arena, _source, tokens, max);
+
+			uint32_t num = lexer.run();
+
+			if (0 < num)
+			{
+				const Token& lastToken = tokens[num-1];
+
+				if (Kind::Newline != lastToken.kind)
+				{
+					tokens[num++] =
+					{
+						.lexeme      = "\n",
+						.location    = lastToken.location,
+						.hide        = NULL,
+						.kind        = Kind::Newline,
+						.spaceBefore = false,
+					};
+				}
+			}
 
 			const Frame frame =
 			{
 				.name         = _name,
 				.presumedName = bx::StringView(),
 				.tokens       = tokens,
-				.num          = lexer.run(),
+				.num          = num,
 				.pos          = 0,
 				.lineDelta    = 0,
 				.isInclude    = _isInclude,
