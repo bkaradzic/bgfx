@@ -39,59 +39,61 @@ namespace entry
 			, m_scroll(0)
 		{
 			bx::memSet(s_translateKey, 0, sizeof(s_translateKey));
-			s_translateKey[27]             = Key::Esc;
-			s_translateKey[uint8_t('\n')]  =
-			s_translateKey[uint8_t('\r')]  = Key::Return;
-			s_translateKey[uint8_t('\t')]  = Key::Tab;
-			s_translateKey[127]            = Key::Backspace;
-			s_translateKey[uint8_t(' ')]   = Key::Space;
-			s_translateKey[38]             = Key::Up;
-			s_translateKey[40]             = Key::Down;
-			s_translateKey[37]             = Key::Left;
-			s_translateKey[39]             = Key::Right;
 
-			s_translateKey[uint8_t('+')]   =
-			s_translateKey[uint8_t('=')]   = Key::Plus;
-			s_translateKey[uint8_t('_')]   =
-			s_translateKey[uint8_t('-')]   = Key::Minus;
+			// Note: Keyboard events carry DOM `KeyboardEvent.keyCode`, which is
+			//   layout independent, and it's not a character code.
+			//
+			// Reference(s):
+			//  - https://web.archive.org/web/20250808182750/https://developer.mozilla.org/en-US/docs/Web/API/UI_Events/Keyboard_event_code_values
+			//
+			s_translateKey[  8] = Key::Backspace;
+			s_translateKey[  9] = Key::Tab;
+			s_translateKey[ 13] = Key::Return;
+			s_translateKey[ 27] = Key::Esc;
+			s_translateKey[ 32] = Key::Space;
+			s_translateKey[ 33] = Key::PageUp;
+			s_translateKey[ 34] = Key::PageDown;
+			s_translateKey[ 35] = Key::End;
+			s_translateKey[ 36] = Key::Home;
+			s_translateKey[ 37] = Key::Left;
+			s_translateKey[ 38] = Key::Up;
+			s_translateKey[ 39] = Key::Right;
+			s_translateKey[ 40] = Key::Down;
+			s_translateKey[ 44] = Key::Print;
+			s_translateKey[ 45] = Key::Insert;
+			s_translateKey[ 46] = Key::Delete;
 
-			s_translateKey[uint8_t(':')]   =
-			s_translateKey[uint8_t(';')]   = Key::Semicolon;
-			s_translateKey[uint8_t('"')]   =
-			s_translateKey[uint8_t('\'')]  = Key::Quote;
+			s_translateKey[107] = Key::Plus;
+			s_translateKey[109] = Key::Minus;
+			s_translateKey[110] = Key::Period;
+			s_translateKey[111] = Key::Slash;
 
-			s_translateKey[uint8_t('{')]   =
-			s_translateKey[uint8_t('[')]   = Key::LeftBracket;
-			s_translateKey[uint8_t('}')]   =
-			s_translateKey[uint8_t(']')]   = Key::RightBracket;
+			s_translateKey[186] = Key::Semicolon;
+			s_translateKey[187] = Key::Plus;
+			s_translateKey[188] = Key::Comma;
+			s_translateKey[189] = Key::Minus;
+			s_translateKey[190] = Key::Period;
+			s_translateKey[191] = Key::Slash;
+			s_translateKey[192] = Key::Tilde;
+			s_translateKey[219] = Key::LeftBracket;
+			s_translateKey[220] = Key::Backslash;
+			s_translateKey[221] = Key::RightBracket;
+			s_translateKey[222] = Key::Quote;
 
-			s_translateKey[uint8_t('<')]   =
-			s_translateKey[uint8_t(',')]   = Key::Comma;
-			s_translateKey[uint8_t('>')]   =
-			s_translateKey[uint8_t('.')]   = Key::Period;
-			s_translateKey[uint8_t('?')]   =
-			s_translateKey[uint8_t('/')]   = Key::Slash;
-			s_translateKey[uint8_t('|')]   =
-			s_translateKey[uint8_t('\\')]  = Key::Backslash;
-
-			s_translateKey[uint8_t('~')]   =
-			s_translateKey[uint8_t('`')]   = Key::Tilde;
-
-			s_translateKey[uint8_t('0')]   = Key::Key0;
-			s_translateKey[uint8_t('1')]   = Key::Key1;
-			s_translateKey[uint8_t('2')]   = Key::Key2;
-			s_translateKey[uint8_t('3')]   = Key::Key3;
-			s_translateKey[uint8_t('4')]   = Key::Key4;
-			s_translateKey[uint8_t('5')]   = Key::Key5;
-			s_translateKey[uint8_t('6')]   = Key::Key6;
-			s_translateKey[uint8_t('7')]   = Key::Key7;
-			s_translateKey[uint8_t('8')]   = Key::Key8;
-			s_translateKey[uint8_t('9')]   = Key::Key9;
-
-			for (char ch = 'a'; ch <= 'z'; ++ch)
+			for (uint8_t ii = 0; ii < 10; ++ii)
 			{
-				s_translateKey[uint8_t(ch)]       =
-				s_translateKey[uint8_t(ch - ' ')] = Key::KeyA + (ch - 'a');
+				s_translateKey[uint8_t('0')+ii] = uint8_t(Key::Key0    + ii);
+				s_translateKey[96+ii]           = uint8_t(Key::NumPad0 + ii);
+			}
+
+			for (uint8_t ii = 0; ii < 26; ++ii)
+			{
+				s_translateKey[uint8_t('A')+ii] = uint8_t(Key::KeyA + ii);
+			}
+
+			for (uint8_t ii = 0; ii < 12; ++ii)
+			{
+				s_translateKey[112+ii] = uint8_t(Key::F1 + ii);
 			}
 		}
 
@@ -238,30 +240,6 @@ namespace entry
 
 		int32_t keyCode = int32_t(_event->keyCode);
 		*_specialKeys = translateModifiers(_event);
-
-		if (_event->charCode == 0)
-		{
-			switch (keyCode)
-			{
-				case 112: return Key::F1;
-				case 113: return Key::F2;
-				case 114: return Key::F3;
-				case 115: return Key::F4;
-				case 116: return Key::F5;
-				case 117: return Key::F6;
-				case 118: return Key::F7;
-				case 119: return Key::F8;
-				case 120: return Key::F9;
-				case 121: return Key::F10;
-				case 122: return Key::F11;
-				case 123: return Key::F12;
-
-				case  37: return Key::Left;
-				case  39: return Key::Right;
-				case  38: return Key::Up;
-				case  40: return Key::Down;
-			}
-		}
 
 		// if this is a unhandled key just return None
 		if (keyCode < 256)
