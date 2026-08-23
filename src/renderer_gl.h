@@ -1465,6 +1465,14 @@ namespace bgfx { namespace gl
 				;
 		}
 
+		bool isMsaaSurface() const
+		{
+			return 0
+				|| GL_TEXTURE_2D_MULTISAMPLE       == m_target
+				|| GL_TEXTURE_2D_MULTISAMPLE_ARRAY == m_target
+				;
+		}
+
 		GLuint m_id;
 		GLuint m_rbo;
 		GLenum m_target;

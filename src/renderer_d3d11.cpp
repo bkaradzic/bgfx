@@ -5442,7 +5442,7 @@ namespace bgfx { namespace d3d11
 			for (uint32_t ii = _layer, end = _layer + _numLayers; ii < end; ++ii)
 			{
 				const UINT resource = _mip + (ii * m_numMips);
-				deviceCtx->ResolveSubresource(m_texture2d, resource, m_rt, resource, resolveFormat);
+				deviceCtx->ResolveSubresource(m_texture2d, resource, m_rt, ii, resolveFormat);
 			}
 		}
 
@@ -6122,6 +6122,15 @@ namespace bgfx { namespace d3d11
 			const TextureD3D11& src = m_textures[blit.m_src.idx];
 			const TextureD3D11& dst = m_textures[blit.m_dst.idx];
 
+			const bool srcReadsMsaaRt = NULL != src.m_rt && dst.isMsaaSurface();
+
+			if (NULL != src.m_rt
+			&&  !srcReadsMsaaRt
+			&&  0 == blit.m_srcMip)
+			{
+				src.resolve(BGFX_RESOLVE_NONE, blit.m_srcZ, 1, 0);
+			}
+
 			if ( src.isMsaaSurface()
 			&&  !dst.isMsaaSurface()
 			&&  TextureD3D11::Texture3D != src.m_type)
@@ -6229,7 +6238,7 @@ namespace bgfx { namespace d3d11
 					, "When blitting depthstencil surface, source resolution must match destination."
 					);
 
-				const bool msaaToMsaa = src.isMsaaSurface() && dst.isMsaaSurface();
+				const bool msaaToMsaa = (src.isMsaaSurface() || srcReadsMsaaRt) && dst.isMsaaSurface();
 				const bool wholeSubResource = depthStencil || msaaToMsaa;
 
 				const D3D11_BOX box =
@@ -6251,7 +6260,7 @@ namespace bgfx { namespace d3d11
 					, wholeSubResource ? 0 : blit.m_dstX
 					, wholeSubResource ? 0 : blit.m_dstY
 					, 0
-					, src.m_ptr
+					, srcReadsMsaaRt ? src.m_rt : src.m_ptr
 					, srcZ*src.m_numMips+blit.m_srcMip
 					, wholeSubResource ? NULL : &box
 					);

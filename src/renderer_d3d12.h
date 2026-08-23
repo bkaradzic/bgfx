@@ -457,6 +457,7 @@ namespace bgfx { namespace d3d12
 		void resolve(ID3D12GraphicsCommandList* _commandList, uint8_t _resolve, uint32_t _layer, uint32_t _numLayers, uint32_t _mip);
 		D3D12_RESOURCE_STATES setState(ID3D12GraphicsCommandList* _commandList, D3D12_RESOURCE_STATES _state);
 		bool isMsaaSurface() const;
+		bool isMultisampled() const;
 
 		D3D12_SHADER_RESOURCE_VIEW_DESC  m_srvd;
 		D3D12_UNORDERED_ACCESS_VIEW_DESC m_uavd;

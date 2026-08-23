@@ -9530,6 +9530,14 @@ VK_DESTROY
 		BX_ASSERT(false, "Removing external texture failed!");
 	}
 
+	static bool blitReadsSingleMsaa(const TextureVK& _src, const TextureVK& _dst)
+	{
+		return true
+			&& VK_NULL_HANDLE != _src.m_singleMsaaImage
+			&& 1 == _dst.m_sampler.Count
+			;
+	}
+
 	void RendererContextVK::submitBlitBatch(BlitState& _bs, uint16_t _view)
 	{
 		constexpr uint32_t kMaxItems = 128;
@@ -9550,7 +9558,13 @@ VK_DESTROY
 			TextureVK& src = m_textures[blit.m_src.idx];
 			TextureVK& dst = m_textures[blit.m_dst.idx];
 
-			srcLayouts[item] = VK_NULL_HANDLE != src.m_singleMsaaImage
+			if (blitReadsSingleMsaa(src, dst)
+			&&  0 == blit.m_srcMip)
+			{
+				src.resolve(m_commandBuffer, BGFX_RESOLVE_NONE, blit.m_srcZ, 1, 0);
+			}
+
+			srcLayouts[item] = blitReadsSingleMsaa(src, dst)
 				? src.m_currentSingleMsaaImageLayout
 				: src.m_currentImageLayout
 				;
@@ -9566,12 +9580,14 @@ VK_DESTROY
 			TextureVK& src = m_textures[blit.m_src.idx];
 			TextureVK& dst = m_textures[blit.m_dst.idx];
 
+			const bool srcSingleMsaa = blitReadsSingleMsaa(src, dst);
+
 			src.setState(
 				  m_commandBuffer
 				, blit.m_src.idx == blit.m_dst.idx
 					? VK_IMAGE_LAYOUT_GENERAL
 					: VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL
-				, VK_NULL_HANDLE != src.m_singleMsaaImage
+				, srcSingleMsaa
 				);
 
 			if (blit.m_src.idx != blit.m_dst.idx)
@@ -9579,7 +9595,7 @@ VK_DESTROY
 				dst.setState(m_commandBuffer, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 			}
 
-			const uint16_t srcSamples = VK_NULL_HANDLE != src.m_singleMsaaImage ? 1 : src.m_sampler.Count;
+			const uint16_t srcSamples = srcSingleMsaa ? 1 : src.m_sampler.Count;
 			const uint16_t dstSamples = dst.m_sampler.Count;
 
 			const bool resolve = true
@@ -9675,8 +9691,8 @@ VK_DESTROY
 			{
 				vkCmdCopyImage(
 					  m_commandBuffer
-					, VK_NULL_HANDLE != src.m_singleMsaaImage ? src.m_singleMsaaImage : src.m_textureImage
-					, VK_NULL_HANDLE != src.m_singleMsaaImage ? src.m_currentSingleMsaaImageLayout : src.m_currentImageLayout
+					, srcSingleMsaa ? src.m_singleMsaaImage : src.m_textureImage
+					, srcSingleMsaa ? src.m_currentSingleMsaaImageLayout : src.m_currentImageLayout
 					, dst.m_textureImage
 					, dst.m_currentImageLayout
 					, 1
@@ -9698,7 +9714,7 @@ VK_DESTROY
 			TextureVK& src = m_textures[blit.m_src.idx];
 			TextureVK& dst = m_textures[blit.m_dst.idx];
 
-			src.setState(m_commandBuffer, srcLayouts[item], VK_NULL_HANDLE != src.m_singleMsaaImage);
+			src.setState(m_commandBuffer, srcLayouts[item], blitReadsSingleMsaa(src, dst) );
 			dst.setState(m_commandBuffer, dstLayouts[item]);
 		}
 	}
