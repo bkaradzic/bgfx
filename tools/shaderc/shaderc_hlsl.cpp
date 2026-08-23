@@ -23,6 +23,8 @@
 #endif // BX_PLATFORM_LINUX || BX_PLATFORM_OSX
 #include <bx/os.h>
 
+#include "../../src/shader.h"
+
 #ifndef D3D_SVF_USED
 #	define D3D_SVF_USED 2
 #endif // D3D_SVF_USED
@@ -313,7 +315,39 @@ namespace bgfx { namespace hlsl
 
 	typedef std::vector<std::string> UniformNameList;
 
-	bool getReflectionDataD3D11(ID3DBlob* _code, bool _vshader, UniformArray& _uniforms, uint8_t& _numAttrs, uint16_t* _attrs, uint16_t& _size, UniformNameList& unusedUniforms, bx::WriterI* _messageWriter)
+	static TextureDimension::Enum d3dSrvDimensionToTextureDimension(D3D_SRV_DIMENSION _dimension)
+	{
+		switch (_dimension)
+		{
+		case D3D_SRV_DIMENSION_TEXTURE1D:
+		case D3D_SRV_DIMENSION_TEXTURE1DARRAY:
+			return TextureDimension::Dimension1D;
+
+		case D3D_SRV_DIMENSION_TEXTURE2D:
+		case D3D_SRV_DIMENSION_TEXTURE2DMS:
+			return TextureDimension::Dimension2D;
+
+		case D3D_SRV_DIMENSION_TEXTURE2DARRAY:
+		case D3D_SRV_DIMENSION_TEXTURE2DMSARRAY:
+			return TextureDimension::Dimension2DArray;
+
+		case D3D_SRV_DIMENSION_TEXTURE3D:
+			return TextureDimension::Dimension3D;
+
+		case D3D_SRV_DIMENSION_TEXTURECUBE:
+			return TextureDimension::DimensionCube;
+
+		case D3D_SRV_DIMENSION_TEXTURECUBEARRAY:
+			return TextureDimension::DimensionCubeArray;
+
+		default:
+			break;
+		}
+
+		return TextureDimension::Count;
+	}
+
+	bool getReflectionDataD3D11(ID3DBlob* _code, bool _vshader, UniformArray& _uniforms, RawBindings& _rawBindings, uint8_t& _numAttrs, uint16_t* _attrs, uint16_t& _size, UniformNameList& unusedUniforms, bx::WriterI* _messageWriter)
 	{
 		bx::Error messageErr;
 
@@ -442,6 +476,28 @@ namespace bgfx { namespace hlsl
 		}
 
 		BX_TRACE("Bound:");
+
+		std::unordered_map<std::string, uint8_t> textureDimension;
+
+		for (uint32_t ii = 0; ii < desc.BoundResources; ++ii)
+		{
+			D3D11_SHADER_INPUT_BIND_DESC bindDesc;
+
+			if (SUCCEEDED(reflect->GetResourceBindingDesc(ii, &bindDesc) )
+			&&  D3D_SIT_TEXTURE == bindDesc.Type)
+			{
+				const bx::StringView end = bx::strFind(bindDesc.Name, "Texture");
+				const TextureDimension::Enum dimension = d3dSrvDimensionToTextureDimension(bindDesc.Dimension);
+
+				if (!end.isEmpty()
+				&&  TextureDimension::Count != dimension)
+				{
+					textureDimension[std::string(bindDesc.Name, end.getPtr() - bindDesc.Name)] =
+						textureDimensionToId(dimension);
+				}
+			}
+		}
+
 		for (uint32_t ii = 0; ii < desc.BoundResources; ++ii)
 		{
 			D3D11_SHADER_INPUT_BIND_DESC bindDesc;
@@ -449,7 +505,15 @@ namespace bgfx { namespace hlsl
 			hr = reflect->GetResourceBindingDesc(ii, &bindDesc);
 			if (SUCCEEDED(hr) )
 			{
-				if (D3D_SIT_SAMPLER == bindDesc.Type)
+				if (D3D_SIT_BYTEADDRESS == bindDesc.Type)
+				{
+					_rawBindings.srv |= UINT32_C(1) << bindDesc.BindPoint;
+				}
+				else if (D3D_SIT_UAV_RWBYTEADDRESS == bindDesc.Type)
+				{
+					_rawBindings.uav |= UINT32_C(1) << bindDesc.BindPoint;
+				}
+				else if (D3D_SIT_SAMPLER == bindDesc.Type)
 				{
 					BX_TRACE("\t%s, %d, %d, %d"
 						, bindDesc.Name
@@ -468,6 +532,14 @@ namespace bgfx { namespace hlsl
 						un.num = 1;
 						un.regIndex = uint16_t(bindDesc.BindPoint);
 						un.regCount = uint16_t(bindDesc.BindCount);
+
+						const auto it = textureDimension.find(un.name);
+
+						if (it != textureDimension.end() )
+						{
+							un.texDimension = it->second;
+						}
+
 						_uniforms.push_back(un);
 					}
 				}
@@ -602,13 +674,14 @@ namespace bgfx { namespace hlsl
 		}
 
 		UniformArray uniforms;
+		RawBindings rawBindings;
 		uint8_t numAttrs = 0;
 		uint16_t attrs[bgfx::Attrib::Count];
 		uint16_t size = 0;
 
 		{
 			UniformNameList unusedUniforms;
-			if (!getReflectionDataD3D11(code, profileAndType[0] == 'v', uniforms, numAttrs, attrs, size, unusedUniforms, _messageWriter) )
+			if (!getReflectionDataD3D11(code, profileAndType[0] == 'v', uniforms, rawBindings, numAttrs, attrs, size, unusedUniforms, _messageWriter) )
 			{
 				bx::write(_messageWriter, &messageErr, "Error: Unable to get D3D11 reflection data.\n");
 				goto error;
@@ -664,6 +737,8 @@ namespace bgfx { namespace hlsl
 		}
 
 		{
+			rawBindings.write(_shaderWriter, &err);
+
 			uint16_t count = (uint16_t)uniforms.size();
 			bx::write(_shaderWriter, count, &err);
 

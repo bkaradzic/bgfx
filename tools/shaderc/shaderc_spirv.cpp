@@ -348,6 +348,8 @@ namespace bgfx { namespace spirv
 
 		bx::ErrorAssert err;
 
+		RawBindings().write(_shaderWriter, &err);
+
 		uint16_t count = uint16_t(uniforms.size());
 		bx::write(_shaderWriter, count, &err);
 

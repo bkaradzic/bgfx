@@ -1,7 +1,7 @@
 -- vim: syntax=lua
 -- bgfx interface
 
-version(155)
+version(156)
 
 typedef "bool"
 typedef "char"
@@ -220,24 +220,6 @@ flag.Debug { bits = 32, section = "Debug Flags" }
 	.Stats     --- Enable statistics display.
 	.Text      --- Enable debug text display.
 	.Profiler  --- Enable profiler. This causes per-view statistics to be collected, available through `bgfx::Stats::ViewStats`. This is unrelated to the profiler functions in `bgfx::CallbackI`.
-	()
-
-flag.BufferComputeFormat { bits = 16, shift = 0, range = 4, base = 1 }
-	._8x1  --- 1 x 8-bit value
-	._8x2  --- 2 x 8-bit values
-	._8x4  --- 4 x 8-bit values
-	._16x1 --- 1 x 16-bit value
-	._16x2 --- 2 x 16-bit values
-	._16x4 --- 4 x 16-bit values
-	._32x1 --- 1 x 32-bit value
-	._32x2 --- 2 x 32-bit values
-	._32x4 --- 4 x 32-bit values
-	()
-
-flag.BufferComputeType { bits = 16, shift = 4, range = 2, base = 1 }
-	.Int   --- Type `int`.
-	.Uint  --- Type `uint`.
-	.Float --- Type `float`.
 	()
 
 flag.Buffer { bits = 16, base = 8 }

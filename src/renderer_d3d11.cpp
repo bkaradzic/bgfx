@@ -3434,7 +3434,7 @@ namespace bgfx { namespace d3d11
 			return uav;
 		}
 
-		ID3D11ShaderResourceView* getCachedSrv(TextureHandle _handle, uint8_t _firstMip, uint8_t _numMips = 1, uint16_t _firstLayer = 0, uint16_t _numLayers = UINT16_MAX, bool _compute = false, bool _stencil = false)
+		ID3D11ShaderResourceView* getCachedSrv(TextureHandle _handle, uint8_t _firstMip, uint8_t _numMips = 1, uint16_t _firstLayer = 0, uint16_t _numLayers = UINT16_MAX, bool _compute = false, bool _stencil = false, bool _asArray = false)
 		{
 			const TextureD3D11& texture = m_textures[_handle.idx];
 
@@ -3447,8 +3447,8 @@ namespace bgfx { namespace d3d11
 			murmur.add(_firstMip);
 			murmur.add(numMips);
 			murmur.add(_firstLayer);
-			murmur.add(numLayers);
-			murmur.add(0);
+			murmur.add(_asArray ? _numLayers : numLayers);
+			murmur.add(_asArray);
 			murmur.add(_compute);
 			murmur.add(_stencil);
 			uint32_t hash = murmur.end();
@@ -3472,7 +3472,7 @@ namespace bgfx { namespace d3d11
 				switch (texture.m_type)
 				{
 				case TextureD3D11::Texture2D:
-					if (1 < texture.m_numLayers)
+					if (1 < numLayers || 0 != _firstLayer)
 					{
 						desc.ViewDimension = msaaSample
 							? D3D11_SRV_DIMENSION_TEXTURE2DMSARRAY
@@ -3495,7 +3495,18 @@ namespace bgfx { namespace d3d11
 					break;
 
 				case TextureD3D11::TextureCube:
-					if (1 < numLayers)
+					if (_asArray)
+					{
+						const uint16_t slices = uint16_t(bx::max<uint32_t>(texture.m_numLayers, 1u) * 6);
+						const uint16_t first  = bx::min<uint16_t>(_firstLayer, uint16_t(slices - 1) );
+						const uint16_t count  = bx::min<uint16_t>(_numLayers, uint16_t(slices - first) );
+						desc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2DARRAY;
+						desc.Texture2DArray.MostDetailedMip = _firstMip;
+						desc.Texture2DArray.MipLevels       = numMips;
+						desc.Texture2DArray.FirstArraySlice = first;
+						desc.Texture2DArray.ArraySize       = count;
+					}
+					else if (1 < numLayers)
 					{
 						desc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURECUBEARRAY;
 						desc.TextureCubeArray.MostDetailedMip  = _firstMip;
@@ -4024,28 +4035,10 @@ namespace bgfx { namespace d3d11
 		s_renderD3D11->m_annotation->SetMarker(_name);
 	}
 
-	struct UavFormat
-	{
-		DXGI_FORMAT format[3];
-		uint32_t    stride;
-	};
-
-	static const UavFormat s_uavFormat[] =
-	{	//  BGFX_BUFFER_COMPUTE_TYPE_INT,  BGFX_BUFFER_COMPUTE_TYPE_UINT,  BGFX_BUFFER_COMPUTE_TYPE_FLOAT
-		{ { DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_UNKNOWN,            DXGI_FORMAT_UNKNOWN            },  0 }, // ignored
-		{ { DXGI_FORMAT_R8_SINT,           DXGI_FORMAT_R8_UINT,            DXGI_FORMAT_UNKNOWN            },  1 }, // BGFX_BUFFER_COMPUTE_FORMAT_8X1
-		{ { DXGI_FORMAT_R8G8_SINT,         DXGI_FORMAT_R8G8_UINT,          DXGI_FORMAT_UNKNOWN            },  2 }, // BGFX_BUFFER_COMPUTE_FORMAT_8X2
-		{ { DXGI_FORMAT_R8G8B8A8_SINT,     DXGI_FORMAT_R8G8B8A8_UINT,      DXGI_FORMAT_UNKNOWN            },  4 }, // BGFX_BUFFER_COMPUTE_FORMAT_8X4
-		{ { DXGI_FORMAT_R16_SINT,          DXGI_FORMAT_R16_UINT,           DXGI_FORMAT_R16_FLOAT          },  2 }, // BGFX_BUFFER_COMPUTE_FORMAT_16X1
-		{ { DXGI_FORMAT_R16G16_SINT,       DXGI_FORMAT_R16G16_UINT,        DXGI_FORMAT_R16G16_FLOAT       },  4 }, // BGFX_BUFFER_COMPUTE_FORMAT_16X2
-		{ { DXGI_FORMAT_R16G16B16A16_SINT, DXGI_FORMAT_R16G16B16A16_UINT,  DXGI_FORMAT_R16G16B16A16_FLOAT },  8 }, // BGFX_BUFFER_COMPUTE_FORMAT_16X4
-		{ { DXGI_FORMAT_R32_SINT,          DXGI_FORMAT_R32_UINT,           DXGI_FORMAT_R32_FLOAT          },  4 }, // BGFX_BUFFER_COMPUTE_FORMAT_32X1
-		{ { DXGI_FORMAT_R32G32_SINT,       DXGI_FORMAT_R32G32_UINT,        DXGI_FORMAT_R32G32_FLOAT       },  8 }, // BGFX_BUFFER_COMPUTE_FORMAT_32X2
-		{ { DXGI_FORMAT_R32G32B32A32_SINT, DXGI_FORMAT_R32G32B32A32_UINT,  DXGI_FORMAT_R32G32B32A32_FLOAT }, 16 }, // BGFX_BUFFER_COMPUTE_FORMAT_32X4
-	};
-
 	void BufferD3D11::create(uint32_t _size, void* _data, uint16_t _flags, uint16_t _stride, bool _vertex)
 	{
+		BX_UNUSED(_stride);
+
 		m_uav   = NULL;
 		m_size  = _size;
 		m_flags = _flags;
@@ -4063,7 +4056,8 @@ namespace bgfx { namespace d3d11
 			| (needSrv ? D3D11_BIND_SHADER_RESOURCE  : 0)
 			;
 		desc.MiscFlags = 0
-			| (drawIndirect ? D3D11_RESOURCE_MISC_DRAWINDIRECT_ARGS : 0)
+			| (drawIndirect            ? D3D11_RESOURCE_MISC_DRAWINDIRECT_ARGS        : 0)
+			| (needUav || needSrv      ? D3D11_RESOURCE_MISC_BUFFER_ALLOW_RAW_VIEWS   : 0)
 			;
 		desc.StructureByteStride = 0;
 
@@ -4075,36 +4069,20 @@ namespace bgfx { namespace d3d11
 			format = DXGI_FORMAT_R32G32B32A32_UINT;
 			stride = 16;
 		}
+		else if (_vertex)
+		{
+			format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+			stride = 16;
+		}
+		else if (0 == (_flags & BGFX_BUFFER_INDEX32) )
+		{
+			format = DXGI_FORMAT_R16_UINT;
+			stride = 2;
+		}
 		else
 		{
-			uint32_t uavFormat = (_flags & BGFX_BUFFER_COMPUTE_FORMAT_MASK) >> BGFX_BUFFER_COMPUTE_FORMAT_SHIFT;
-			if (0 == uavFormat)
-			{
-				if (_vertex)
-				{
-					format = DXGI_FORMAT_R32G32B32A32_FLOAT;
-					stride = 16;
-				}
-				else
-				{
-					if (0 == (_flags & BGFX_BUFFER_INDEX32) )
-					{
-						format = DXGI_FORMAT_R16_UINT;
-						stride = 2;
-					}
-					else
-					{
-						format = DXGI_FORMAT_R32_UINT;
-						stride = 4;
-					}
-				}
-			}
-			else
-			{
-				const uint32_t uavType = bx::satSub<uint32_t>(uint32_t( (_flags & BGFX_BUFFER_COMPUTE_TYPE_MASK) >> BGFX_BUFFER_COMPUTE_TYPE_SHIFT ), 1u);
-				format = s_uavFormat[uavFormat].format[uavType];
-				stride = s_uavFormat[uavFormat].stride;
-			}
+			format = DXGI_FORMAT_R32_UINT;
+			stride = 4;
 		}
 
 		ID3D11Device* device = s_renderD3D11->m_device;
@@ -4118,7 +4096,7 @@ namespace bgfx { namespace d3d11
 		{
 			desc.Usage = D3D11_USAGE_DEFAULT;
 			desc.CPUAccessFlags = 0;
-			desc.StructureByteStride = _stride;
+			desc.StructureByteStride = 0;
 
 			DX_CHECK(device->CreateBuffer(&desc
 				, NULL == _data ? NULL : &srd
@@ -4134,6 +4112,14 @@ namespace bgfx { namespace d3d11
 			DX_CHECK(device->CreateUnorderedAccessView(m_ptr
 				, &uavd
 				, &m_uav
+				) );
+
+			uavd.Format = DXGI_FORMAT_R32_TYPELESS;
+			uavd.Buffer.NumElements = m_size / 4;
+			uavd.Buffer.Flags = D3D11_BUFFER_UAV_FLAG_RAW;
+			DX_CHECK(device->CreateUnorderedAccessView(m_ptr
+				, &uavd
+				, &m_uavRaw
 				) );
 		}
 		else if (m_dynamic)
@@ -4186,6 +4172,16 @@ namespace bgfx { namespace d3d11
 			DX_CHECK(device->CreateShaderResourceView(m_ptr
 				, &srvd
 				, &m_srv
+				) );
+
+			srvd.Format = DXGI_FORMAT_R32_TYPELESS;
+			srvd.ViewDimension = D3D11_SRV_DIMENSION_BUFFEREX;
+			srvd.BufferEx.FirstElement = 0;
+			srvd.BufferEx.NumElements  = m_size / 4;
+			srvd.BufferEx.Flags        = D3D11_BUFFEREX_SRV_FLAG_RAW;
+			DX_CHECK(device->CreateShaderResourceView(m_ptr
+				, &srvd
+				, &m_srvRaw
 				) );
 		}
 	}
@@ -4307,6 +4303,10 @@ namespace bgfx { namespace d3d11
 			bx::read(&reader, hashOut, &err);
 		}
 
+		readRawBindings(&reader, m_rawSrvMask, m_rawUavMask, &err);
+
+		bx::memSet(m_textureDimension, uint8_t(TextureDimension::Count), sizeof(m_textureDimension) );
+
 		uint16_t count;
 		bx::read(&reader, count, &err);
 
@@ -4343,10 +4343,12 @@ namespace bgfx { namespace d3d11
 				uint16_t regCount = 0;
 				bx::read(&reader, regCount, &err);
 
+				uint8_t texComponent = 0;
+				uint8_t texDimension = 0;
 				if (!isShaderVerLess(magic, 8) )
 				{
-					uint16_t texInfo = 0;
-					bx::read(&reader, texInfo, &err);
+					bx::read(&reader, texComponent, &err);
+					bx::read(&reader, texDimension, &err);
 				}
 
 				if (!isShaderVerLess(magic, 10) )
@@ -4354,6 +4356,8 @@ namespace bgfx { namespace d3d11
 					uint16_t texFormat = 0;
 					bx::read(&reader, texFormat, &err);
 				}
+
+				BX_UNUSED(texComponent);
 
 				const char* kind = "invalid";
 
@@ -4385,6 +4389,11 @@ namespace bgfx { namespace d3d11
 				else
 				{
 					kind = "sampler";
+
+					if (regIndex < BX_COUNTOF(m_textureDimension) )
+					{
+						m_textureDimension[regIndex] = uint8_t(idToTextureDimension(texDimension) );
+					}
 				}
 
 				BX_TRACE("\t%s: %s (%s), num %2d, r.index %3d, r.count %2d"
@@ -5351,7 +5360,7 @@ namespace bgfx { namespace d3d11
 		}
 	}
 
-	void TextureD3D11::commit(uint8_t _stage, uint32_t _flags, const float _palette[][4], uint16_t _firstLayer, uint16_t _numLayers, uint8_t _firstMip, uint8_t _numMips)
+	void TextureD3D11::commit(uint8_t _stage, uint32_t _flags, const float _palette[][4], uint16_t _firstLayer, uint16_t _numLayers, uint8_t _firstMip, uint8_t _numMips, TextureDimension::Enum _dimension)
 	{
 		TextureStage& ts = s_renderD3D11->m_textureStage;
 
@@ -5369,7 +5378,25 @@ namespace bgfx { namespace d3d11
 			: uint32_t(m_flags)
 			;
 
-		if (0 != (flags & BGFX_SAMPLER_SAMPLE_STENCIL) )
+		const bool asArray = TextureCube == m_type
+			&& (TextureDimension::Dimension2D      == _dimension
+			||  TextureDimension::Dimension2DArray == _dimension)
+			;
+
+		if (asArray)
+		{
+			ts.m_srv[_stage] = s_renderD3D11->getCachedSrv(
+				  TextureHandle{ uint16_t(this - s_renderD3D11->m_textures) }
+				, _firstMip
+				, numMips
+				, _firstLayer
+				, _numLayers
+				, false
+				, 0 != (flags & BGFX_SAMPLER_SAMPLE_STENCIL)
+				, true
+				);
+		}
+		else if (0 != (flags & BGFX_SAMPLER_SAMPLE_STENCIL) )
 		{
 			ts.m_srv[_stage] = s_renderD3D11->getCachedSrv(
 				  TextureHandle{ uint16_t(this - s_renderD3D11->m_textures) }
@@ -6515,7 +6542,10 @@ namespace bgfx { namespace d3d11
 							case Binding::Texture:
 								{
 									TextureD3D11& texture = m_textures[bind.m_idx];
-									texture.commit(stage, bind.m_samplerFlags, _render->m_colorPalette, bind.m_firstLayer, bind.m_numLayers, bind.m_firstMip, bind.m_numMips);
+									const ProgramD3D11* program = m_currentProgram;
+									texture.commit(stage, bind.m_samplerFlags, _render->m_colorPalette, bind.m_firstLayer, bind.m_numLayers, bind.m_firstMip, bind.m_numMips
+										, NULL != program ? program->getTextureDimension(stage) : TextureDimension::Count
+										);
 								}
 								break;
 
@@ -6526,15 +6556,22 @@ namespace bgfx { namespace d3d11
 										? m_indexBuffers[bind.m_idx]
 										: m_vertexBuffers[bind.m_idx]
 										;
+									const ProgramD3D11* program = m_currentProgram;
 									if (Access::Read != bind.m_access)
 									{
-										uav[stage] = buffer.m_uav;
+										uav[stage] = NULL != program && program->isRawUav(stage)
+											? buffer.m_uavRaw
+											: buffer.m_uav
+											;
 										m_textureStage.m_srv[stage]     = NULL;
 										m_textureStage.m_sampler[stage] = NULL;
 									}
 									else
 									{
-										m_textureStage.m_srv[stage] = buffer.m_srv;
+										m_textureStage.m_srv[stage] = NULL != program && program->isRawSrv(stage)
+											? buffer.m_srvRaw
+											: buffer.m_srv
+											;
 									}
 								}
 								break;
@@ -6852,7 +6889,10 @@ namespace bgfx { namespace d3d11
 								case Binding::Texture:
 									{
 										TextureD3D11& texture = m_textures[bind.m_idx];
-										texture.commit(stage, bind.m_samplerFlags, _render->m_colorPalette, bind.m_firstLayer, bind.m_numLayers, bind.m_firstMip, bind.m_numMips);
+										const ProgramD3D11* program = m_currentProgram;
+										texture.commit(stage, bind.m_samplerFlags, _render->m_colorPalette, bind.m_firstLayer, bind.m_numLayers, bind.m_firstMip, bind.m_numMips
+											, NULL != program ? program->getTextureDimension(stage) : TextureDimension::Count
+											);
 									}
 									break;
 
@@ -6863,16 +6903,23 @@ namespace bgfx { namespace d3d11
 											? m_indexBuffers[bind.m_idx]
 											: m_vertexBuffers[bind.m_idx]
 											;
+										const ProgramD3D11* program = m_currentProgram;
 										if (Access::Read != bind.m_access
 										&&  NULL != buffer.m_uav)
 										{
 											m_textureStage.m_srv[stage]     = NULL;
 											m_textureStage.m_sampler[stage] = NULL;
-											m_textureStage.m_uav[stage]     = buffer.m_uav;
+											m_textureStage.m_uav[stage]     = NULL != program && program->isRawUav(stage)
+												? buffer.m_uavRaw
+												: buffer.m_uav
+												;
 										}
 										else
 										{
-											m_textureStage.m_srv[stage] = buffer.m_srv;
+											m_textureStage.m_srv[stage] = NULL != program && program->isRawSrv(stage)
+												? buffer.m_srvRaw
+												: buffer.m_srv
+												;
 											m_textureStage.m_sampler[stage] = NULL;
 											m_textureStage.m_uav[stage]     = NULL;
 										}
