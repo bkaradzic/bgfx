@@ -128,13 +128,13 @@ namespace bgfx { namespace d3d12
 
 		void  allocEmpty(D3D12_GPU_DESCRIPTOR_HANDLE& _gpuHandle);
 
-		void  allocSrv(D3D12_GPU_DESCRIPTOR_HANDLE& _gpuHandle, struct TextureD3D12& _texture, uint16_t _firstLayer = 0, uint16_t _numLayers = UINT16_MAX, uint8_t _firstMip = 0, uint8_t _numMips = UINT8_MAX, bool _stencil = false);
-		void  allocSrv(D3D12_GPU_DESCRIPTOR_HANDLE& _gpuHandle, struct BufferD3D12& _buffer);
+		void  allocSrv(D3D12_GPU_DESCRIPTOR_HANDLE& _gpuHandle, struct TextureD3D12& _texture, uint16_t _firstLayer = 0, uint16_t _numLayers = UINT16_MAX, uint8_t _firstMip = 0, uint8_t _numMips = UINT8_MAX, bool _stencil = false, TextureDimension::Enum _dimension = TextureDimension::Count);
+		void  allocSrv(D3D12_GPU_DESCRIPTOR_HANDLE& _gpuHandle, struct BufferD3D12& _buffer, bool _raw);
 
 		void  allocUav(D3D12_GPU_DESCRIPTOR_HANDLE& _gpuHandle, struct TextureD3D12& _texture, uint8_t _mip = 0, uint16_t _firstLayer = 0, uint16_t _numLayers = UINT16_MAX);
 		void  allocSrv(D3D12_GPU_DESCRIPTOR_HANDLE& _gpuHandle, ID3D12Resource* _resource, const D3D12_SHADER_RESOURCE_VIEW_DESC& _desc);
 
-		void  allocUav(D3D12_GPU_DESCRIPTOR_HANDLE& _gpuHandle, struct BufferD3D12& _buffer);
+		void  allocUav(D3D12_GPU_DESCRIPTOR_HANDLE& _gpuHandle, struct BufferD3D12& _buffer, bool _raw);
 		void  allocUav(D3D12_GPU_DESCRIPTOR_HANDLE& _gpuHandle, ID3D12Resource* _resource, const D3D12_UNORDERED_ACCESS_VIEW_DESC& _desc);
 
 		void  allocSrvArray(D3D12_GPU_DESCRIPTOR_HANDLE& _gpuHandle, struct TextureD3D12& _texture, uint32_t _numSlices);
@@ -250,6 +250,10 @@ namespace bgfx { namespace d3d12
 
 		D3D12_SHADER_RESOURCE_VIEW_DESC  m_srvd;
 		D3D12_UNORDERED_ACCESS_VIEW_DESC m_uavd;
+
+		D3D12_SHADER_RESOURCE_VIEW_DESC  m_srvdRaw;
+		D3D12_UNORDERED_ACCESS_VIEW_DESC m_uavdRaw;
+
 		ID3D12Resource* m_ptr;
 		D3D12_GPU_VIRTUAL_ADDRESS m_gpuVA;
 		D3D12_RESOURCE_STATES m_state;
@@ -271,12 +275,33 @@ namespace bgfx { namespace d3d12
 			: m_code(NULL)
 			, m_constantBuffer(NULL)
 			, m_hash(0)
+			, m_rawSrvMask(0)
+			, m_rawUavMask(0)
 			, m_numUniforms(0)
 			, m_numPredefined(0)
 		{
+			bx::memSet(m_textureDimension, uint8_t(TextureDimension::Count), sizeof(m_textureDimension) );
 		}
 
 		void create(const Memory* _mem);
+
+		bool isRawSrv(uint8_t _stage) const
+		{
+			return 0 != (m_rawSrvMask & (UINT32_C(1) << _stage) );
+		}
+
+		bool isRawUav(uint8_t _stage) const
+		{
+			return 0 != (m_rawUavMask & (UINT32_C(1) << _stage) );
+		}
+
+		TextureDimension::Enum getTextureDimension(uint8_t _stage) const
+		{
+			return _stage < BX_COUNTOF(m_textureDimension)
+				? TextureDimension::Enum(m_textureDimension[_stage])
+				: TextureDimension::Count
+				;
+		}
 
 		void destroy()
 		{
@@ -303,6 +328,12 @@ namespace bgfx { namespace d3d12
 		uint16_t m_attrMask[Attrib::Count];
 
 		uint32_t m_hash;
+
+		uint32_t m_rawSrvMask;
+		uint32_t m_rawUavMask;
+
+		uint8_t m_textureDimension[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS];
+
 		uint16_t m_numUniforms;
 		uint16_t m_size;
 		uint8_t m_numPredefined;
@@ -313,6 +344,7 @@ namespace bgfx { namespace d3d12
 		ProgramD3D12()
 			: m_vsh(NULL)
 			, m_fsh(NULL)
+			, m_textureDimensionHash(0)
 		{
 		}
 
@@ -330,6 +362,15 @@ namespace bgfx { namespace d3d12
 				bx::memCopy(&m_predefined[m_numPredefined], _fsh->m_predefined, _fsh->m_numPredefined*sizeof(PredefinedUniform));
 				m_numPredefined += _fsh->m_numPredefined;
 			}
+
+			bx::HashMurmur2A murmur;
+			murmur.begin();
+			for (uint8_t stage = 0; stage < BGFX_CONFIG_MAX_TEXTURE_SAMPLERS; ++stage)
+			{
+				const uint8_t dim = uint8_t(getTextureDimension(stage) );
+				murmur.add(dim);
+			}
+			m_textureDimensionHash = murmur.end();
 		}
 
 		void destroy()
@@ -337,12 +378,49 @@ namespace bgfx { namespace d3d12
 			m_numPredefined = 0;
 			m_vsh = NULL;
 			m_fsh = NULL;
+			m_textureDimensionHash = 0;
+		}
+
+		uint32_t getRawSrvMask() const
+		{
+			return (NULL != m_vsh ? m_vsh->m_rawSrvMask : 0)
+				|  (NULL != m_fsh ? m_fsh->m_rawSrvMask : 0)
+				;
+		}
+
+		uint32_t getRawUavMask() const
+		{
+			return (NULL != m_vsh ? m_vsh->m_rawUavMask : 0)
+				|  (NULL != m_fsh ? m_fsh->m_rawUavMask : 0)
+				;
+		}
+
+		TextureDimension::Enum getTextureDimension(uint8_t _stage) const
+		{
+			TextureDimension::Enum dim = NULL != m_fsh
+				? m_fsh->getTextureDimension(_stage)
+				: TextureDimension::Count
+				;
+
+			if (TextureDimension::Count == dim
+			&&  NULL != m_vsh)
+			{
+				dim = m_vsh->getTextureDimension(_stage);
+			}
+
+			return dim;
+		}
+
+		uint32_t getTextureDimensionHash() const
+		{
+			return m_textureDimensionHash;
 		}
 
 		const ShaderD3D12* m_vsh;
 		const ShaderD3D12* m_fsh;
 
 		PredefinedUniform m_predefined[PredefinedUniform::Count * 2];
+		uint32_t m_textureDimensionHash;
 		uint8_t m_numPredefined;
 	};
 
