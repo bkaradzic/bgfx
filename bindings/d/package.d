@@ -9,7 +9,7 @@ import bindbc.common.types: c_int64, c_uint64, va_list;
 import bindbc.bgfx.config;
 static import bgfx.impl;
 
-enum uint apiVersion = 155;
+enum uint apiVersion = 156;
 
 alias ViewID = ushort;
 
@@ -289,30 +289,6 @@ enum Debug: Debug_{
 	stats      = 0x0000_0004, ///Enable statistics display.
 	text       = 0x0000_0008, ///Enable debug text display.
 	profiler   = 0x0000_0010, ///Enable profiler. This causes per-view statistics to be collected, available through `bgfx::Stats::ViewStats`. This is unrelated to the profiler functions in `bgfx::CallbackI`.
-}
-
-alias BufferComputeFormat_ = ushort;
-enum BufferComputeFormat: BufferComputeFormat_{
-	_8x1   = 0x0001, ///1 x 8-bit value
-	_8x2   = 0x0002, ///2 x 8-bit values
-	_8x4   = 0x0003, ///4 x 8-bit values
-	_16x1  = 0x0004, ///1 x 16-bit value
-	_16x2  = 0x0005, ///2 x 16-bit values
-	_16x4  = 0x0006, ///4 x 16-bit values
-	_32x1  = 0x0007, ///1 x 32-bit value
-	_32x2  = 0x0008, ///2 x 32-bit values
-	_32x4  = 0x0009, ///4 x 32-bit values
-	shift  = 0,
-	mask   = 0x000F,
-}
-
-alias BufferComputeType_ = ushort;
-enum BufferComputeType: BufferComputeType_{
-	int_   = 0x0010, ///Type `int`.
-	uint_  = 0x0020, ///Type `uint`.
-	float_ = 0x0030, ///Type `float`.
-	shift  = 4,
-	mask   = 0x0030,
 }
 
 alias Buffer_ = ushort;

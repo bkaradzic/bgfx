@@ -618,69 +618,6 @@ public static partial class bgfx
 	[Flags]
 	public enum BufferFlags : ushort
 	{
-		/// <summary>
-		/// 1 x 8-bit value
-		/// </summary>
-		ComputeFormat8x1       = 0x0001,
-	
-		/// <summary>
-		/// 2 x 8-bit values
-		/// </summary>
-		ComputeFormat8x2       = 0x0002,
-	
-		/// <summary>
-		/// 4 x 8-bit values
-		/// </summary>
-		ComputeFormat8x4       = 0x0003,
-	
-		/// <summary>
-		/// 1 x 16-bit value
-		/// </summary>
-		ComputeFormat16x1      = 0x0004,
-	
-		/// <summary>
-		/// 2 x 16-bit values
-		/// </summary>
-		ComputeFormat16x2      = 0x0005,
-	
-		/// <summary>
-		/// 4 x 16-bit values
-		/// </summary>
-		ComputeFormat16x4      = 0x0006,
-	
-		/// <summary>
-		/// 1 x 32-bit value
-		/// </summary>
-		ComputeFormat32x1      = 0x0007,
-	
-		/// <summary>
-		/// 2 x 32-bit values
-		/// </summary>
-		ComputeFormat32x2      = 0x0008,
-	
-		/// <summary>
-		/// 4 x 32-bit values
-		/// </summary>
-		ComputeFormat32x4      = 0x0009,
-		ComputeFormatShift     = 0,
-		ComputeFormatMask      = 0x000f,
-	
-		/// <summary>
-		/// Type `int`.
-		/// </summary>
-		ComputeTypeInt         = 0x0010,
-	
-		/// <summary>
-		/// Type `uint`.
-		/// </summary>
-		ComputeTypeUint        = 0x0020,
-	
-		/// <summary>
-		/// Type `float`.
-		/// </summary>
-		ComputeTypeFloat       = 0x0030,
-		ComputeTypeShift       = 4,
-		ComputeTypeMask        = 0x0030,
 		None                   = 0x0000,
 	
 		/// <summary>

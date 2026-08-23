@@ -388,45 +388,6 @@ constdef DebugFlags : inline uint
 
 constdef BufferFlags : inline ushort
 {
-	// 1 x 8-bit value
-	COMPUTEFORMAT8X1       = 0x0001,
-
-	// 2 x 8-bit values
-	COMPUTEFORMAT8X2       = 0x0002,
-
-	// 4 x 8-bit values
-	COMPUTEFORMAT8X4       = 0x0003,
-
-	// 1 x 16-bit value
-	COMPUTEFORMAT16X1      = 0x0004,
-
-	// 2 x 16-bit values
-	COMPUTEFORMAT16X2      = 0x0005,
-
-	// 4 x 16-bit values
-	COMPUTEFORMAT16X4      = 0x0006,
-
-	// 1 x 32-bit value
-	COMPUTEFORMAT32X1      = 0x0007,
-
-	// 2 x 32-bit values
-	COMPUTEFORMAT32X2      = 0x0008,
-
-	// 4 x 32-bit values
-	COMPUTEFORMAT32X4      = 0x0009,
-	COMPUTEFORMATSHIFT     = 0,
-	COMPUTEFORMATMASK      = 0x000f,
-
-	// Type `int`.
-	COMPUTETYPEINT         = 0x0010,
-
-	// Type `uint`.
-	COMPUTETYPEUINT        = 0x0020,
-
-	// Type `float`.
-	COMPUTETYPEFLOAT       = 0x0030,
-	COMPUTETYPESHIFT       = 4,
-	COMPUTETYPEMASK        = 0x0030,
 	NONE                   = 0x0000,
 
 	// Buffer will be read by shader.
