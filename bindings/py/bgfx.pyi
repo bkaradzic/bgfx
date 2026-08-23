@@ -1242,6 +1242,12 @@ class CapsLimits(ctypes.Structure):
 	maxTransientIbSize: int
 	# Mimimum uniform buffer size.
 	minUniformBufferSize: int
+	# Row pitch alignment, in bytes, that buffer to texture blit copies
+	# natively. Any other `BufferRegion::rowPitch` is repacked internally.
+	blitRowPitchAlign: int
+	# Offset alignment, in bytes, that buffer to texture blit copies
+	# natively. Any other `BufferRegion::offset` is repacked internally.
+	blitOffsetAlign: int
 
 # Renderer capabilities.
 class Caps(ctypes.Structure):
@@ -1474,6 +1480,60 @@ class InstanceDataBuffer(ctypes.Structure):
 	# Vertex buffer object handle.
 	handle: VertexBufferHandle
 
+# Region of a texture, used as the source or destination of a blit, or as
+# the region handed to `bgfx::read`.
+# 
+# Every field defaults to zero, and zero always means "the natural whole".
+# `{ .handle = tex }` therefore addresses all of mip 0.
+class TextureRegion(ctypes.Structure):
+	# Texture handle.
+	handle: TextureHandle
+	# Mip level.
+	mip: int
+	# X position of the region.
+	x: int
+	# Y position of the region.
+	y: int
+	# If texture is 2D this should be 0. If the texture is a cube map
+	# this is the cube face, for a 2D array it is the layer, and for a
+	# 3D texture it is the Z position.
+	z: int
+	# Width of the region. 0 uses the rest of the mip from `x`.
+	width: int
+	# Height of the region. 0 uses the rest of the mip from `y`.
+	height: int
+	# Depth of the region for a 3D texture, or the number of layers or
+	# cube faces otherwise. 0 uses the rest from `z`.
+	depth: int
+
+# Region of a buffer, used as the source or destination of a blit, or as the
+# region handed to `bgfx::read`.
+# 
+# `rowPitch` and `slicePitch` describe how texture data is laid out in the
+# buffer, and are ignored when the other end of the blit is also a buffer.
+# Both are in bytes, and 0 selects the tightly packed layout: a row pitch of
+# the region width in blocks multiplied by the block size, and a slice pitch
+# of that row pitch multiplied by the region height in blocks.
+# 
+# A pitch the backend cannot copy natively is repacked by bgfx, which costs
+# an extra pass over the data. `Caps::Limits::blitRowPitchAlign` and
+# `blitOffsetAlign` report what the backend copies directly, and
+# `BufferRegion::init` fills in a layout that matches them.
+class BufferRegion(ctypes.Structure):
+	# Buffer handle.
+	handle: BufferHandle
+	# Byte offset into the buffer.
+	offset: int
+	# Number of bytes. Only used when both ends of a blit are
+	# buffers, or by `bgfx::read`. 0 uses the rest of the buffer.
+	size: int
+	# Distance in bytes between the start of two consecutive rows
+	# of blocks. 0 is tightly packed.
+	rowPitch: int
+	# Distance in bytes between the start of two consecutive
+	# slices, layers or cube faces. 0 is tightly packed.
+	slicePitch: int
+
 # Texture info.
 class TextureInfo(ctypes.Structure):
 	# Texture format.
@@ -1642,6 +1702,10 @@ class Stats(ctypes.Structure):
 	numCompute: int
 	# Number of blit calls submitted.
 	numBlit: int
+	# Number of buffer to texture blit calls that had to be repacked,
+	# because `BufferRegion::rowPitch` or `offset` didn't match
+	# `Caps::Limits::blitRowPitchAlign` or `blitOffsetAlign`.
+	numBlitRepack: int
 	# Highest number of draw+compute calls requested in a single
 	# frame so far (peak demand, before any were dropped). Useful
 	# to tune `Init::Limits::numDrawCalls`.
@@ -1791,10 +1855,40 @@ class VertexLayoutHandle(ctypes.Structure):
 	@property
 	def valid(self) -> bool: ...
 
+class BufferHandle(ctypes.Structure):
+	idx: int
+	type: int
+
+	@property
+	def valid(self) -> bool: ...
+
 # Memory release callback.
 ReleaseFn: Any
 
 def load(path: Union[str, bytes]) -> ctypes.CDLL: ...
+
+# Fill in the region of a plain 2D texture. `mip`, `z` and `depth` are left
+# at zero, which addresses mip 0 of the only slice a 2D texture has.
+def bgfx_texture_region_init(
+	_this: Optional[Union[TextureRegion, _Pointer[TextureRegion], ctypes.Array]],
+	_handle: TextureHandle,
+	_x: int,
+	_y: int,
+	_width: int,
+	_height: int,
+	/,
+) -> None: ...
+
+# Fill `rowPitch`, `slicePitch` and `size` with the layout the backend copies
+# fastest for `_texture`, and round `offset` up to `Caps::Limits::blitOffsetAlign`.
+# `handle` is left untouched, so `size` can be used to create the buffer the
+# region will point at.
+def bgfx_buffer_region_init_texture(_this: Optional[Union[BufferRegion, _Pointer[BufferRegion], ctypes.Array]], _texture: Optional[Union[TextureRegion, _Pointer[TextureRegion], ctypes.Array]], /) -> None: ...
+
+# Fill in the region a blit between two buffers copies. `rowPitch` and
+# `slicePitch` are left at zero, since neither end of such a blit is a
+# texture.
+def bgfx_buffer_region_init_buffer(_this: Optional[Union[BufferRegion, _Pointer[BufferRegion], ctypes.Array]], _handle: BufferHandle, _offset: int, _size: int, /) -> None: ...
 
 # Init attachment.
 def bgfx_attachment_init(
@@ -2003,6 +2097,22 @@ def bgfx_dbg_text_image(
 
 # Create static index buffer.
 def bgfx_create_index_buffer(_mem: Optional[Union[Memory, _Pointer[Memory], ctypes.Array]], _flags: int, /) -> IndexBufferHandle: ...
+
+# Read back contents of buffer.
+# 
+# @remarks
+#   Read back is asynchronous, and the result is available at the returned frame.
+#   A zero `size` reads the rest of the buffer. `rowPitch` and `slicePitch` are
+#   unused.
+# 
+#   Read back is intended for reading GPU written (compute, or draw indirect) buffers
+#   back to the CPU. It's not intended to be used in the main render loop, since it
+#   stalls the GPU.
+# 
+# @attention Buffer must be created with one of `BGFX_BUFFER_COMPUTE_*`, or
+#   `BGFX_BUFFER_DRAW_INDIRECT` flags.
+# 
+def bgfx_read_buffer(_src: Optional[Union[BufferRegion, _Pointer[BufferRegion], ctypes.Array]], _data: Any, /) -> int: ...
 
 # Set static index buffer debug name.
 def bgfx_set_index_buffer_name(_handle: IndexBufferHandle, _name: Optional[bytes], _len: int, /) -> None: ...
@@ -2258,12 +2368,20 @@ def bgfx_clear_texture(_handle: TextureHandle, _mip: int, _numMips: int, _layer:
 
 # Read back texture content.
 # 
+# @remarks
+#   Read back is asynchronous, and the result is available at the returned frame.
+#   `TextureRegion::z` selects cube face, 3D slice, or array layer. The region must
+#   cover the whole mip.
+# 
+#   Read back is not intended to be used in the main render loop, since it stalls
+#   the GPU.
+# 
 # @attention Texture must be created with `BGFX_TEXTURE_READ_BACK` flag.
 #            It's a texture for CPU readback, and can't be a GPU resource
 #            at the same time. See `examples/30-picking`.
 # @attention Availability depends on: `BGFX_CAPS_TEXTURE_READ_BACK`.
 # 
-def bgfx_read_texture(_handle: TextureHandle, _data: Any, _layer: int, _mip: int, /) -> int: ...
+def bgfx_read_texture(_src: Optional[Union[TextureRegion, _Pointer[TextureRegion], ctypes.Array]], _data: Any, /) -> int: ...
 
 # Set texture debug name.
 def bgfx_set_texture_name(_handle: TextureHandle, _name: Optional[bytes], _len: int, /) -> None: ...
@@ -2798,29 +2916,74 @@ def bgfx_encoder_dispatch_indirect(
 # Discard previously set state for draw or compute call.
 def bgfx_encoder_discard(_this: Optional[Union[Encoder, _Pointer[Encoder], ctypes.Array]], _flags: int, /) -> None: ...
 
-# Blit 2D texture region between two 2D textures.
+# Blit texture region between two textures.
+# 
+# @remarks
+#   The copy covers the region the two sides have in common: each side gives
+#   the origin it starts at, and the size is the smaller of the two extents.
+#   A zero `width`, `height` or `depth` extends to the rest of that mip.
+# 
+#   Blit is performed on GPU, and it is ordered within the view. In views, all
+#   draw commands are executed after blit and compute commands.
 # 
 # @attention Destination texture must be created with `BGFX_TEXTURE_BLIT_DST` flag.
 # @attention Availability depends on: `BGFX_CAPS_TEXTURE_BLIT`.
 # 
-def bgfx_encoder_blit(
-	_this: Optional[Union[Encoder, _Pointer[Encoder], ctypes.Array]],
-	_id: int,
-	_dst: TextureHandle,
-	_dstMip: int,
-	_dstX: int,
-	_dstY: int,
-	_dstZ: int,
-	_src: TextureHandle,
-	_srcMip: int,
-	_srcX: int,
-	_srcY: int,
-	_srcZ: int,
-	_width: int,
-	_height: int,
-	_depth: int,
-	/,
-) -> None: ...
+def bgfx_encoder_blit(_this: Optional[Union[Encoder, _Pointer[Encoder], ctypes.Array]], _id: int, _dst: Optional[Union[TextureRegion, _Pointer[TextureRegion], ctypes.Array]], _src: Optional[Union[TextureRegion, _Pointer[TextureRegion], ctypes.Array]], /) -> None: ...
+
+# Blit buffer region between two buffers.
+# 
+# @remarks
+#   The source region gives the number of bytes copied, and the destination
+#   region gives only the offset they land at. A zero `size` copies the rest of
+#   the source buffer. `rowPitch` and `slicePitch` are unused.
+# 
+#   Buffer blit is performed on GPU, and it is ordered within the view, same as
+#   texture blit. In views, all draw commands are executed after blit and compute
+#   commands.
+# 
+# @attention Source buffer must be created with one of `BGFX_BUFFER_COMPUTE_*`, or
+#   `BGFX_BUFFER_DRAW_INDIRECT` flags.
+# @attention Destination buffer must be created with `BGFX_BUFFER_COMPUTE_WRITE`, or
+#   `BGFX_BUFFER_DRAW_INDIRECT` flag.
+# @attention Source and destination buffer must be different.
+# 
+def bgfx_encoder_blit_buffer(_this: Optional[Union[Encoder, _Pointer[Encoder], ctypes.Array]], _id: int, _dst: Optional[Union[BufferRegion, _Pointer[BufferRegion], ctypes.Array]], _src: Optional[Union[BufferRegion, _Pointer[BufferRegion], ctypes.Array]], /) -> None: ...
+
+# Blit texture region into buffer.
+# 
+# @remarks
+#   The texture region gives the size of the copy. `BufferRegion::rowPitch` and
+#   `slicePitch` choose how the texels are laid out in the buffer, and 0 packs
+#   them tightly. `BufferRegion::init` fills in the layout the backend copies
+#   fastest, and bgfx repacks internally for any other layout.
+# 
+#   Blit is performed on GPU, and it is ordered within the view, same as texture
+#   blit. In views, all draw commands are executed after blit and compute commands.
+# 
+# @attention Destination buffer must be created with `BGFX_BUFFER_COMPUTE_WRITE`, or
+#   `BGFX_BUFFER_DRAW_INDIRECT` flag.
+# @attention Availability depends on: `BGFX_CAPS_TEXTURE_BLIT`.
+# 
+def bgfx_encoder_blit_to_buffer(_this: Optional[Union[Encoder, _Pointer[Encoder], ctypes.Array]], _id: int, _dst: Optional[Union[BufferRegion, _Pointer[BufferRegion], ctypes.Array]], _src: Optional[Union[TextureRegion, _Pointer[TextureRegion], ctypes.Array]], /) -> None: ...
+
+# Blit buffer contents into texture region.
+# 
+# @remarks
+#   The texture region gives the size of the copy. `BufferRegion::rowPitch` and
+#   `slicePitch` describe how the texels are laid out in the buffer, and 0 reads
+#   them tightly packed. `BufferRegion::init` fills in the layout the backend
+#   copies fastest, and bgfx repacks internally for any other layout.
+# 
+#   Blit is performed on GPU, and it is ordered within the view, same as texture
+#   blit. In views, all draw commands are executed after blit and compute commands.
+# 
+# @attention Source buffer must be created with one of `BGFX_BUFFER_COMPUTE_*`, or
+#   `BGFX_BUFFER_DRAW_INDIRECT` flags.
+# @attention Destination texture must be created with `BGFX_TEXTURE_BLIT_DST` flag.
+# @attention Availability depends on: `BGFX_CAPS_TEXTURE_BLIT`.
+# 
+def bgfx_encoder_blit_from_buffer(_this: Optional[Union[Encoder, _Pointer[Encoder], ctypes.Array]], _id: int, _dst: Optional[Union[TextureRegion, _Pointer[TextureRegion], ctypes.Array]], _src: Optional[Union[BufferRegion, _Pointer[BufferRegion], ctypes.Array]], /) -> None: ...
 
 # Request screen shot of window back buffer.
 # 
@@ -3142,25 +3305,71 @@ def bgfx_dispatch_indirect(
 # Discard previously set state for draw or compute call.
 def bgfx_discard(_flags: int, /) -> None: ...
 
-# Blit 2D texture region between two 2D textures.
+# Blit texture region between two textures.
+# 
+# @remarks
+#   The copy covers the region the two sides have in common: each side gives
+#   the origin it starts at, and the size is the smaller of the two extents.
+#   A zero `width`, `height` or `depth` extends to the rest of that mip.
+# 
+#   Blit is performed on GPU, and it is ordered within the view. In views, all
+#   draw commands are executed after blit and compute commands.
 # 
 # @attention Destination texture must be created with `BGFX_TEXTURE_BLIT_DST` flag.
 # @attention Availability depends on: `BGFX_CAPS_TEXTURE_BLIT`.
 # 
-def bgfx_blit(
-	_id: int,
-	_dst: TextureHandle,
-	_dstMip: int,
-	_dstX: int,
-	_dstY: int,
-	_dstZ: int,
-	_src: TextureHandle,
-	_srcMip: int,
-	_srcX: int,
-	_srcY: int,
-	_srcZ: int,
-	_width: int,
-	_height: int,
-	_depth: int,
-	/,
-) -> None: ...
+def bgfx_blit(_id: int, _dst: Optional[Union[TextureRegion, _Pointer[TextureRegion], ctypes.Array]], _src: Optional[Union[TextureRegion, _Pointer[TextureRegion], ctypes.Array]], /) -> None: ...
+
+# Blit buffer region between two buffers.
+# 
+# @remarks
+#   The source region gives the number of bytes copied, and the destination
+#   region gives only the offset they land at. A zero `size` copies the rest of
+#   the source buffer. `rowPitch` and `slicePitch` are unused.
+# 
+#   Buffer blit is performed on GPU, and it is ordered within the view, same as
+#   texture blit. In views, all draw commands are executed after blit and compute
+#   commands.
+# 
+# @attention Source buffer must be created with one of `BGFX_BUFFER_COMPUTE_*`, or
+#   `BGFX_BUFFER_DRAW_INDIRECT` flags.
+# @attention Destination buffer must be created with `BGFX_BUFFER_COMPUTE_WRITE`, or
+#   `BGFX_BUFFER_DRAW_INDIRECT` flag.
+# @attention Source and destination buffer must be different.
+# 
+def bgfx_blit_buffer(_id: int, _dst: Optional[Union[BufferRegion, _Pointer[BufferRegion], ctypes.Array]], _src: Optional[Union[BufferRegion, _Pointer[BufferRegion], ctypes.Array]], /) -> None: ...
+
+# Blit texture region into buffer.
+# 
+# @remarks
+#   The texture region gives the size of the copy. `BufferRegion::rowPitch` and
+#   `slicePitch` choose how the texels are laid out in the buffer, and 0 packs
+#   them tightly. `BufferRegion::init` fills in the layout the backend copies
+#   fastest, and bgfx repacks internally for any other layout.
+# 
+#   Blit is performed on GPU, and it is ordered within the view, same as texture
+#   blit. In views, all draw commands are executed after blit and compute commands.
+# 
+# @attention Destination buffer must be created with `BGFX_BUFFER_COMPUTE_WRITE`, or
+#   `BGFX_BUFFER_DRAW_INDIRECT` flag.
+# @attention Availability depends on: `BGFX_CAPS_TEXTURE_BLIT`.
+# 
+def bgfx_blit_to_buffer(_id: int, _dst: Optional[Union[BufferRegion, _Pointer[BufferRegion], ctypes.Array]], _src: Optional[Union[TextureRegion, _Pointer[TextureRegion], ctypes.Array]], /) -> None: ...
+
+# Blit buffer contents into texture region.
+# 
+# @remarks
+#   The texture region gives the size of the copy. `BufferRegion::rowPitch` and
+#   `slicePitch` describe how the texels are laid out in the buffer, and 0 reads
+#   them tightly packed. `BufferRegion::init` fills in the layout the backend
+#   copies fastest, and bgfx repacks internally for any other layout.
+# 
+#   Blit is performed on GPU, and it is ordered within the view, same as texture
+#   blit. In views, all draw commands are executed after blit and compute commands.
+# 
+# @attention Source buffer must be created with one of `BGFX_BUFFER_COMPUTE_*`, or
+#   `BGFX_BUFFER_DRAW_INDIRECT` flags.
+# @attention Destination texture must be created with `BGFX_TEXTURE_BLIT_DST` flag.
+# @attention Availability depends on: `BGFX_CAPS_TEXTURE_BLIT`.
+# 
+def bgfx_blit_from_buffer(_id: int, _dst: Optional[Union[TextureRegion, _Pointer[TextureRegion], ctypes.Array]], _src: Optional[Union[BufferRegion, _Pointer[BufferRegion], ctypes.Array]], /) -> None: ...

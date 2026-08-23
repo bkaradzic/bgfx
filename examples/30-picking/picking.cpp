@@ -389,8 +389,8 @@ public:
 				   )
 				{
 					// Blit and read
-					bgfx::blit(RENDER_PASS_BLIT, m_blitTex, 0, 0, m_pickingRT);
-					m_reading = bgfx::readTexture(m_blitTex, m_blitData);
+					bgfx::blit(RENDER_PASS_BLIT, { .handle = m_blitTex }, { .handle = m_pickingRT });
+					m_reading = bgfx::read({ .handle = m_blitTex }, m_blitData);
 				}
 			}
 

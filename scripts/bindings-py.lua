@@ -421,7 +421,9 @@ local function gen_struct_declarations(out, comments)
 		if typ.handle then
 			append(out,
 				"class " .. python_type_name(typ) .. "(ctypes.Structure):",
-				"\t_fields_ = [(\"idx\", ctypes.c_uint16)]",
+				typ.tagged
+					and "\t_fields_ = [(\"idx\", ctypes.c_uint16), (\"type\", ctypes.c_uint16)]"
+					or  "\t_fields_ = [(\"idx\", ctypes.c_uint16)]",
 				"",
 				"\t@property",
 				"\tdef valid(self):",
@@ -485,7 +487,14 @@ local function gen_stub_structs(out)
 		if typ.handle then
 			append(out,
 				"class " .. python_type_name(typ) .. "(ctypes.Structure):",
-				"\tidx: int",
+				"\tidx: int"
+			)
+
+			if typ.tagged then
+				append(out, "\ttype: int")
+			end
+
+			append(out,
 				"",
 				"\t@property",
 				"\tdef valid(self) -> bool: ...",

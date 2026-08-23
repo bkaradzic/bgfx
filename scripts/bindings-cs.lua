@@ -64,25 +64,29 @@ local function hasSuffix(str, suffix)
 	return suffix == "" or str:sub(-#suffix) == suffix
 end
 
+local function hasTypePrefix(ctype, prefix)
+	return hasPrefix( (ctype:gsub("^const%s+", "") ), prefix)
+end
+
 local function convert_type_0(arg)
 
-	if hasPrefix(arg.ctype, "uint64_t") then
+	if hasTypePrefix(arg.ctype, "uint64_t") then
 		return arg.ctype:gsub("uint64_t", "ulong")
-	elseif hasPrefix(arg.ctype, "int64_t") then
+	elseif hasTypePrefix(arg.ctype, "int64_t") then
 		return arg.ctype:gsub("int64_t", "long")
-	elseif hasPrefix(arg.ctype, "uint32_t") then
+	elseif hasTypePrefix(arg.ctype, "uint32_t") then
 		return arg.ctype:gsub("uint32_t", "uint")
-	elseif hasPrefix(arg.ctype, "int32_t") then
+	elseif hasTypePrefix(arg.ctype, "int32_t") then
 		return arg.ctype:gsub("int32_t", "int")
-	elseif hasPrefix(arg.ctype, "uint16_t") then
+	elseif hasTypePrefix(arg.ctype, "uint16_t") then
 		return arg.ctype:gsub("uint16_t", "ushort")
-	elseif hasPrefix(arg.ctype, "int16_t") then
+	elseif hasTypePrefix(arg.ctype, "int16_t") then
 		return arg.ctype:gsub("int16_t", "short")
-	elseif hasPrefix(arg.ctype, "bgfx_view_id_t") then
+	elseif hasTypePrefix(arg.ctype, "bgfx_view_id_t") then
 		return arg.ctype:gsub("bgfx_view_id_t", "ushort")
-	elseif hasPrefix(arg.ctype, "uint8_t") then
+	elseif hasTypePrefix(arg.ctype, "uint8_t") then
 		return arg.ctype:gsub("uint8_t", "byte")
-	elseif hasPrefix(arg.ctype, "uintptr_t") then
+	elseif hasTypePrefix(arg.ctype, "uintptr_t") then
 		return arg.ctype:gsub("uintptr_t", "UIntPtr")
 	elseif arg.ctype == "bgfx_caps_gpu_t" then
 	    return arg.ctype:gsub("bgfx_caps_gpu_t", "uint")
@@ -117,7 +121,7 @@ end
 
 local function convert_struct_type(arg)
 	local ctype = convert_type(arg)
-	if hasPrefix(arg.ctype, "bool") then
+	if hasTypePrefix(arg.ctype, "bool") then
 		ctype = ctype:gsub("bool", "byte")
 	end
 	return ctype
@@ -271,6 +275,9 @@ function converter.types(typ)
 
 		yield("public struct " .. typ.name .. " {")
         yield("    public ushort idx;")
+        if typ.tagged then
+        yield("    public ushort type;")
+        end
         yield("    public bool Valid => idx != UInt16.MaxValue;")
         yield("}")
 	elseif hasSuffix(typ.name, "::Enum") then

@@ -182,6 +182,10 @@ namespace bgfx { namespace noop
 		{
 		}
 
+		void readBuffer(Handle /*_handle*/, void* /*_data*/, uint32_t /*_offset*/, uint32_t /*_size*/) override
+		{
+		}
+
 		void resizeTexture(TextureHandle /*_handle*/, uint16_t /*_width*/, uint16_t /*_height*/, uint8_t /*_numMips*/, uint16_t /*_numLayers*/) override
 		{
 		}

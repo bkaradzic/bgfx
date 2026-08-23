@@ -288,6 +288,9 @@ function converter.types(params)
 
 		yield("pub const " .. typ.name .. " = extern struct {")
 		yield("    idx: c_ushort,")
+		if typ.tagged then
+		yield("    type: c_ushort,")
+		end
 		yield("};")
 	elseif hasSuffix(typ.name, "::Enum") then
 		lastCombinedFlagBlock()

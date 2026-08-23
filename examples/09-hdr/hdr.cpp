@@ -600,8 +600,8 @@ public:
 
 			if (bgfx::isValid(m_rb) )
 			{
-				bgfx::blit(hdrHBlurTonemap, m_rb, 0, 0, bgfx::getTexture(m_lum[4]) );
-				bgfx::readTexture(m_rb, &m_lumBgra8);
+				bgfx::blit(hdrHBlurTonemap, { .handle = m_rb }, { .handle = bgfx::getTexture(m_lum[4]) });
+				bgfx::read({ .handle = m_rb }, &m_lumBgra8);
 			}
 
 			// Advance to next frame. Rendering thread will be kicked to

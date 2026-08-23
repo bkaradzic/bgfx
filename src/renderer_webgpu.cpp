@@ -1416,14 +1416,16 @@ WGPU_IMPORT
 						BX_TRACE("\tmaxComputeWorkgroupsPerDimension: %u",          m_limits.maxComputeWorkgroupsPerDimension);
 						BX_TRACE("\tmaxImmediateSize: %u",                          m_limits.maxImmediateSize);
 
-						g_caps.limits.maxTextureSize     = m_limits.maxTextureDimension2D;
-						g_caps.limits.maxTextureLayers   = m_limits.maxTextureArrayLayers;
-						g_caps.limits.maxTextureSamplers = bx::min(m_limits.maxSamplersPerShaderStage, BGFX_CONFIG_MAX_TEXTURE_SAMPLERS);
-						g_caps.limits.maxComputeBindings = BGFX_CONFIG_MAX_TEXTURE_SAMPLERS;
-						g_caps.limits.maxFBAttachments   = bx::min(m_limits.maxColorAttachments, BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS);
-						g_caps.limits.maxVertexStreams   = bx::min(m_limits.maxVertexBuffers, BGFX_CONFIG_MAX_VERTEX_STREAMS);
+						g_caps.limits.maxTextureSize      = m_limits.maxTextureDimension2D;
+						g_caps.limits.maxTextureLayers    = m_limits.maxTextureArrayLayers;
+						g_caps.limits.maxTextureSamplers  = bx::min(m_limits.maxSamplersPerShaderStage, BGFX_CONFIG_MAX_TEXTURE_SAMPLERS);
+						g_caps.limits.maxComputeBindings  = BGFX_CONFIG_MAX_TEXTURE_SAMPLERS;
+						g_caps.limits.maxFBAttachments    = bx::min(m_limits.maxColorAttachments, BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS);
+						g_caps.limits.maxVertexStreams    = bx::min(m_limits.maxVertexBuffers, BGFX_CONFIG_MAX_VERTEX_STREAMS);
 						g_caps.limits.maxVertexAttributes = m_limits.maxVertexAttributes;
-						g_caps.limits.maxInstanceData    = bx::min<uint32_t>(g_caps.limits.maxInstanceData, g_caps.limits.maxVertexAttributes);
+						g_caps.limits.maxInstanceData     = bx::min<uint32_t>(g_caps.limits.maxInstanceData, g_caps.limits.maxVertexAttributes);
+						g_caps.limits.blitRowPitchAlign   = 256;
+						g_caps.limits.blitOffsetAlign     = 256;
 
 						g_caps.supported = 0
 							| BGFX_CAPS_ALPHA_TO_COVERAGE
@@ -1798,6 +1800,36 @@ WGPU_IMPORT
 			*(bool*)(_userdata2) = true;
 		}
 
+		struct ReadBuffer
+		{
+			WGPUBuffer buffer;
+			uint32_t size;
+			void* data;
+		};
+
+		static void readBufferCb(WGPUMapAsyncStatus _status, WGPUStringView _message, void* _userdata1, void* _userdata2)
+		{
+			BX_ASSERT(WGPUMapAsyncStatus_Success == _status, "%d", _status);
+
+			BX_UNUSED(_status, _message, _userdata2);
+
+			ReadBuffer& readBuffer = *(ReadBuffer*)_userdata1;
+
+			const void* result = (const void*)WGPU_CHECK(wgpuBufferGetConstMappedRange(
+				  readBuffer.buffer
+				, 0
+				, readBuffer.size
+				) );
+
+			bx::memCopy(readBuffer.data, result, readBuffer.size);
+
+			WGPU_CHECK(wgpuBufferUnmap(readBuffer.buffer) );
+
+			wgpuRelease(readBuffer.buffer);
+
+			*(bool*)(_userdata2) = true;
+		}
+
 		void readTexture(TextureHandle _handle, void* _data, uint16_t _layer, uint8_t _mip) override
 		{
 			const TextureWGPU& texture = m_textures[_handle.idx];
@@ -1878,6 +1910,66 @@ WGPU_IMPORT
 					.mode        = WGPUCallbackMode_AllowProcessEvents,
 					.callback    = readTextureCb,
 					.userdata1   = &readTexture,
+					.userdata2   = &s_done,
+				}) );
+
+			while (!s_done)
+			{
+				wgpuInstanceProcessEvents(m_instance);
+			}
+		}
+
+		BufferWGPU& getBuffer(Handle _handle)
+		{
+			if (_handle.isIndexBuffer() )
+			{
+				return m_indexBuffers[_handle.idx];
+			}
+
+			return m_vertexBuffers[_handle.idx];
+		}
+
+		void readBuffer(Handle _handle, void* _data, uint32_t _offset, uint32_t _size) override
+		{
+			const BufferWGPU& buffer = getBuffer(_handle);
+
+			WGPUBufferDescriptor readBufferDesc =
+			{
+				.nextInChain = NULL,
+				.label       = toWGPUStringView("Read Buffer"),
+				.usage       = 0
+					| WGPUBufferUsage_MapRead
+					| WGPUBufferUsage_CopyDst
+					,
+				.size = _size,
+				.mappedAtCreation = false,
+			};
+
+			WGPUBuffer readBufferDst = WGPU_CHECK(wgpuDeviceCreateBuffer(m_device, &readBufferDesc) );
+
+			s_done = false;
+
+			m_cmd.copyBufferToBuffer(buffer.m_buffer, _offset, readBufferDst, 0, _size);
+
+			m_cmd.kick();
+
+			ReadBuffer readBuffer =
+			{
+				.buffer = readBufferDst,
+				.size   = _size,
+				.data   = _data,
+			};
+
+			WGPU_CHECK(wgpuBufferMapAsync(
+				  readBufferDst
+				, WGPUMapMode_Read
+				, 0
+				, _size
+				, {
+					.nextInChain = NULL,
+					.mode        = WGPUCallbackMode_AllowProcessEvents,
+					.callback    = readBufferCb,
+					.userdata1   = &readBuffer,
 					.userdata2   = &s_done,
 				}) );
 
@@ -2051,6 +2143,8 @@ WGPU_IMPORT
 		}
 
 		void submitBlit(BlitState& _bs, uint16_t _view);
+
+		void blitBufferTexture(const BlitItem& _blit);
 
 		void submitUniformCache(UniformCacheState& _ucs, uint16_t _view);
 
@@ -3620,6 +3714,7 @@ WGPU_IMPORT
 			.label = WGPU_STRING_VIEW_INIT,
 			.usage = 0
 				| (storage ? WGPUBufferUsage_Storage : 0)
+				| (storage ? WGPUBufferUsage_CopySrc : 0)
 				| (indirect
 					? WGPUBufferUsage_Indirect
 					: _vertex ? WGPUBufferUsage_Vertex : WGPUBufferUsage_Index
@@ -5628,11 +5723,117 @@ m_resolution.formatColor = TextureFormat::BGRA8;
 		}
 	}
 
+	void RendererContextWGPU::blitBufferTexture(const BlitItem& _blit)
+	{
+		const bool toBuffer = _blit.m_dst.isBuffer();
+
+		const TextureWGPU& texture = m_textures[toBuffer ? _blit.m_src.idx : _blit.m_dst.idx];
+		const BufferWGPU&  buffer  = getBuffer(toBuffer ? _blit.m_dst : _blit.m_src);
+
+		const uint32_t bufferOffset = toBuffer ? _blit.m_dstOffset : _blit.m_srcOffset;
+
+		const TextureFormat::Enum format = TextureFormat::Enum(texture.m_textureFormat);
+
+		const uint32_t rowPitch   = _blit.m_rowPitch;
+		const uint32_t slicePitch = _blit.m_slicePitch;
+		const uint32_t numRows    = calcTextureRegionNumRows(format, _blit.m_height);
+		const uint32_t depth      = bx::max<uint32_t>(1, _blit.m_depth);
+
+		const uint32_t rowsPerImage = slicePitch / rowPitch;
+
+		const uint8_t  mip = toBuffer ? _blit.m_srcMip : _blit.m_dstMip;
+		const uint16_t x   = toBuffer ? _blit.m_srcX   : _blit.m_dstX;
+		const uint16_t y   = toBuffer ? _blit.m_srcY   : _blit.m_dstY;
+		const uint16_t z   = toBuffer ? _blit.m_srcZ   : _blit.m_dstZ;
+
+		const bimg::ImageBlockInfo& blockInfo = bimg::getBlockInfo(bimg::TextureFormat::Enum(format) );
+
+		const uint32_t blockHeight = bx::max<uint32_t>(1, blockInfo.blockHeight);
+
+		const uint32_t offsetAlign = bimg::isDepth(bimg::TextureFormat::Enum(format) )
+			? 4
+			: blockInfo.blockSize
+			;
+
+		const bool direct = (1 == numRows*depth || 0 == rowPitch % 256)
+			&& 0 == bufferOffset % offsetAlign
+			;
+
+		const uint32_t numCopies = direct ? 1 : numRows*depth;
+		const uint32_t copyRows  = direct ? numRows : 1;
+		const uint32_t copyDepth = direct ? depth   : 1;
+
+		for (uint32_t ii = 0; ii < numCopies; ++ii)
+		{
+			const uint32_t slice = direct ? 0 : ii / numRows;
+			const uint32_t row   = direct ? 0 : ii % numRows;
+
+			const WGPUTexelCopyBufferInfo bufferInfo =
+			{
+				.layout =
+				{
+					.offset       = bufferOffset + slice*slicePitch + row*rowPitch,
+					.bytesPerRow  = 1 < copyRows*copyDepth ? rowPitch     : WGPU_COPY_STRIDE_UNDEFINED,
+					.rowsPerImage = 1 < copyDepth          ? rowsPerImage : WGPU_COPY_STRIDE_UNDEFINED,
+				},
+				.buffer = buffer.m_buffer,
+			};
+
+			const WGPUTexelCopyTextureInfo textureInfo =
+			{
+				.texture  = texture.m_texture,
+				.mipLevel = mip,
+				.origin   =
+				{
+					.x = x,
+					.y = y + row*blockHeight,
+					.z = z + slice,
+				},
+				.aspect = WGPUTextureAspect_All,
+			};
+
+			const WGPUExtent3D copySize =
+			{
+				.width              = _blit.m_width,
+				.height             = copyRows*blockHeight,
+				.depthOrArrayLayers = copyDepth,
+			};
+
+			if (toBuffer)
+			{
+				m_cmd.copyTextureToBuffer(textureInfo, bufferInfo, copySize);
+			}
+			else
+			{
+				m_cmd.copyBufferToTexture(bufferInfo, textureInfo, copySize);
+			}
+		}
+	}
+
 	void RendererContextWGPU::submitBlit(BlitState& _bs, uint16_t _view)
 	{
 		while (_bs.hasItem(_view) )
 		{
 			const BlitItem& blit = _bs.advance();
+
+			if (blit.m_src.isBuffer()
+			&&  blit.m_dst.isBuffer() )
+			{
+				const BufferWGPU& srcBuf = getBuffer(blit.m_src);
+				const BufferWGPU& dstBuf = getBuffer(blit.m_dst);
+
+				m_cmd.copyBufferToBuffer(srcBuf.m_buffer, blit.m_srcOffset, dstBuf.m_buffer, blit.m_dstOffset, blit.m_size);
+
+				continue;
+			}
+
+			if (blit.m_src.isBuffer()
+			||  blit.m_dst.isBuffer() )
+			{
+				blitBufferTexture(blit);
+
+				continue;
+			}
 
 			const TextureWGPU& src = m_textures[blit.m_src.idx];
 			const TextureWGPU& dst = m_textures[blit.m_dst.idx];
@@ -7007,6 +7208,7 @@ m_resolution.formatColor = TextureFormat::BGRA8;
 		perfStats.numDraw       = statsKeyType[0];
 		perfStats.numCompute    = statsKeyType[1];
 		perfStats.numBlit       = _render->m_numBlitItems;
+		perfStats.numBlitRepack = _render->m_numBlitRepack;
 
 		perfStats.gpuMemoryMax  = -INT64_MAX;
 		perfStats.gpuMemoryUsed = -INT64_MAX;

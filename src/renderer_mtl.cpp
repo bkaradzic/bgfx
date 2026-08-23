@@ -1683,6 +1683,33 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			texture.m_ptr->getBytes(_data, bytesPerRow, 0, region, _mip, _layer);
 		}
 
+		BufferMtl& getBuffer(Handle _handle)
+		{
+			if (_handle.isIndexBuffer() )
+			{
+				return m_indexBuffers[_handle.idx];
+			}
+
+			return m_vertexBuffers[_handle.idx];
+		}
+
+		void readBuffer(Handle _handle, void* _data, uint32_t _offset, uint32_t _size) override
+		{
+			BufferMtl& buffer = getBuffer(_handle);
+
+			MTL::BlitCommandEncoder* bce = s_renderMtl->getBlitCommandEncoder();
+#if BX_PLATFORM_OSX
+			bce->synchronizeResource(buffer.m_ptr);
+#endif // BX_PLATFORM_OSX
+			BX_UNUSED(bce);
+			endEncoding();
+
+			m_cmd.kick(false, true);
+			m_commandBuffer = NULL;
+
+			bx::memCopy(_data, (const uint8_t*)buffer.m_ptr->contents() + _offset, _size);
+		}
+
 		void resizeTexture(TextureHandle _handle, uint16_t _width, uint16_t _height, uint8_t _numMips, uint16_t _numLayers) override
 		{
 			TextureMtl& texture = m_textures[_handle.idx];
@@ -5693,6 +5720,77 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 		{
 			const BlitItem& blit = _bs.advance();
 
+			if (blit.m_src.isBuffer()
+			&&  blit.m_dst.isBuffer() )
+			{
+				const BufferMtl& srcBuf = getBuffer(blit.m_src);
+				const BufferMtl& dstBuf = getBuffer(blit.m_dst);
+				m_blitCommandEncoder->copyFromBuffer(srcBuf.m_ptr, blit.m_srcOffset, dstBuf.m_ptr, blit.m_dstOffset, blit.m_size);
+
+				continue;
+			}
+
+			if (blit.m_src.isBuffer() )
+			{
+				const BufferMtl&  srcBuf = getBuffer(blit.m_src);
+				const TextureMtl& dstTex = m_textures[blit.m_dst.idx];
+
+				const uint32_t depth    = bx::max<uint32_t>(blit.m_depth, 1);
+				const bool     is3D     = MTL::TextureType3D == dstTex.m_ptr->textureType();
+
+				m_blitCommandEncoder->copyFromBuffer(
+					  srcBuf.m_ptr
+					, blit.m_srcOffset
+					, blit.m_rowPitch
+					, blit.m_slicePitch
+					, MTL::Size::Make(blit.m_width, blit.m_height, is3D ? depth : 1)
+					, dstTex.m_ptr
+					, is3D ? 0 : blit.m_dstZ
+					, blit.m_dstMip
+					, MTL::Origin::Make(blit.m_dstX, blit.m_dstY, is3D ? blit.m_dstZ : 0)
+					);
+
+				continue;
+			}
+
+			if (blit.m_dst.isBuffer() )
+			{
+				const TextureMtl& srcTex = m_textures[blit.m_src.idx];
+				const BufferMtl&  dstBuf = getBuffer(blit.m_dst);
+
+				if (NULL != srcTex.m_ptrMsaa)
+				{
+					BX_ASSERT(false, "Can't blit between buffer and MSAA texture.");
+
+					continue;
+				}
+
+				const uint32_t depth    = bx::max<uint32_t>(blit.m_depth, 1);
+				const bool     is3D     = MTL::TextureType3D == srcTex.m_ptr->textureType();
+
+				m_blitCommandEncoder->copyFromTexture(
+					  srcTex.m_ptr
+					, is3D ? 0 : blit.m_srcZ
+					, blit.m_srcMip
+					, MTL::Origin::Make(blit.m_srcX, blit.m_srcY, is3D ? blit.m_srcZ : 0)
+					, MTL::Size::Make(blit.m_width, blit.m_height, is3D ? depth : 1)
+					, dstBuf.m_ptr
+					, blit.m_dstOffset
+					, blit.m_rowPitch
+					, blit.m_slicePitch
+					);
+
+#if BX_PLATFORM_OSX
+				if (m_hasSynchronizeResource
+				&&  MTL::StorageModeManaged == dstBuf.m_ptr->storageMode() )
+				{
+					m_blitCommandEncoder->synchronizeResource(dstBuf.m_ptr);
+				}
+#endif  // BX_PLATFORM_OSX
+
+				continue;
+			}
+
 			const TextureMtl& src = m_textures[blit.m_src.idx];
 			const TextureMtl& dst = m_textures[blit.m_dst.idx];
 
@@ -6949,6 +7047,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 		perfStats.numDraw       = statsKeyType[0];
 		perfStats.numCompute    = statsKeyType[1];
 		perfStats.numBlit       = _render->m_numBlitItems;
+		perfStats.numBlitRepack = _render->m_numBlitRepack;
 		perfStats.maxGpuLatency = maxGpuLatency;
 		perfStats.gpuFrameNum   = m_gpuTimer.m_frameNum;
 		bx::memCopy(perfStats.numPrims, statsNumPrimsRendered, sizeof(perfStats.numPrims) );

@@ -8,6 +8,8 @@
 #if BGFX_CONFIG_RENDERER_DIRECT3D11
 #	include "renderer_d3d11.h"
 #	include "video_d3d11.h"
+#	include "cs_blit_texture_to_buffer.bin.h"
+#	include "cs_blit_buffer_to_texture.bin.h"
 #	include <bx/pixelformat.h>
 
 namespace bgfx { namespace d3d11
@@ -1740,6 +1742,14 @@ namespace bgfx { namespace d3d11
 
 			m_nvapi.initAftermath(m_device, m_deviceCtx);
 
+			{
+				const Memory t2b = { (uint8_t*)cs_blit_texture_to_buffer_dxbc, sizeof(cs_blit_texture_to_buffer_dxbc) };
+				const Memory b2t = { (uint8_t*)cs_blit_buffer_to_texture_dxbc, sizeof(cs_blit_buffer_to_texture_dxbc) };
+
+				m_blitShader[0].create(&t2b);
+				m_blitShader[1].create(&b2t);
+			}
+
 			g_internalData.context = m_device;
 			return true;
 
@@ -1815,6 +1825,11 @@ namespace bgfx { namespace d3d11
 			m_zeroInitTileCache.invalidate();
 
 			invalidateCache();
+
+			for (uint32_t ii = 0; ii < BX_COUNTOF(m_blitShader); ++ii)
+			{
+				m_blitShader[ii].destroy();
+			}
 
 			for (uint32_t ii = 0; ii < BX_COUNTOF(m_frameBuffers); ++ii)
 			{
@@ -1986,8 +2001,13 @@ namespace bgfx { namespace d3d11
 		{
 			const TextureD3D11& texture = m_textures[_handle.idx];
 			const uint32_t subresource = _mip + _layer*texture.m_numMips;
+
+			BX_ASSERT(NULL != texture.m_staging, "Texture must be created with BGFX_TEXTURE_READ_BACK.");
+
+			m_deviceCtx->CopySubresourceRegion(texture.m_staging, subresource, 0, 0, 0, texture.m_ptr, subresource, NULL);
+
 			D3D11_MAPPED_SUBRESOURCE mapped;
-			DX_CHECK(m_deviceCtx->Map(texture.m_ptr, subresource, D3D11_MAP_READ, 0, &mapped) );
+			DX_CHECK(m_deviceCtx->Map(texture.m_staging, subresource, D3D11_MAP_READ, 0, &mapped) );
 
 			uint32_t srcWidth  = bx::max(1, texture.m_width >>_mip);
 			uint32_t srcHeight = bx::max(1, texture.m_height>>_mip);
@@ -2021,7 +2041,47 @@ namespace bgfx { namespace d3d11
 				bx::memCopy(dst, dstPitch, src, srcPitch, pitch, numRows);
 			}
 
-			m_deviceCtx->Unmap(texture.m_ptr, subresource);
+			m_deviceCtx->Unmap(texture.m_staging, subresource);
+		}
+
+		BufferD3D11& getBuffer(Handle _handle)
+		{
+			if (_handle.isIndexBuffer() )
+			{
+				return m_indexBuffers[_handle.idx];
+			}
+
+			return m_vertexBuffers[_handle.idx];
+		}
+
+		void readBuffer(Handle _handle, void* _data, uint32_t _offset, uint32_t _size) override
+		{
+			const BufferD3D11& buffer = getBuffer(_handle);
+
+			D3D11_BUFFER_DESC desc;
+			bx::memSet(&desc, 0, sizeof(desc) );
+			desc.ByteWidth      = _offset + _size;
+			desc.Usage          = D3D11_USAGE_STAGING;
+			desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
+
+			ID3D11Buffer* staging = NULL;
+			DX_CHECK(m_device->CreateBuffer(&desc, NULL, &staging) );
+
+			D3D11_BOX box;
+			box.left   = _offset;
+			box.right  = _offset + _size;
+			box.top    = 0;
+			box.bottom = 1;
+			box.front  = 0;
+			box.back   = 1;
+			m_deviceCtx->CopySubresourceRegion(staging, 0, _offset, 0, 0, buffer.m_ptr, 0, &box);
+
+			D3D11_MAPPED_SUBRESOURCE mapped;
+			DX_CHECK(m_deviceCtx->Map(staging, 0, D3D11_MAP_READ, 0, &mapped) );
+			bx::memCopy(_data, (const uint8_t*)mapped.pData + _offset, _size);
+			m_deviceCtx->Unmap(staging, 0);
+
+			DX_RELEASE(staging, 0);
 		}
 
 		void resizeTexture(TextureHandle _handle, uint16_t _width, uint16_t _height, uint8_t _numMips, uint16_t _numLayers) override
@@ -2297,6 +2357,7 @@ namespace bgfx { namespace d3d11
 			}
 		}
 
+		void blitBufferTexture(const BlitItem& _blit);
 		void submitBlit(BlitState& _bs, uint16_t _view);
 
 		void submitUniformCache(UniformCacheState& _ucs, uint16_t _view);
@@ -3933,6 +3994,7 @@ namespace bgfx { namespace d3d11
 		IndexBufferD3D11 m_indexBuffers[BGFX_CONFIG_MAX_INDEX_BUFFERS];
 		VertexBufferD3D11 m_vertexBuffers[BGFX_CONFIG_MAX_VERTEX_BUFFERS];
 		ShaderD3D11 m_shaders[BGFX_CONFIG_MAX_SHADERS];
+		ShaderD3D11 m_blitShader[2];
 		ProgramD3D11 m_program[BGFX_CONFIG_MAX_PROGRAMS];
 		TextureD3D11 m_textures[BGFX_CONFIG_MAX_TEXTURES];
 		VertexLayout m_vertexLayouts[BGFX_CONFIG_MAX_VERTEX_LAYOUTS];
@@ -4843,7 +4905,7 @@ namespace bgfx { namespace d3d11
 				}
 			}
 
-			const bool writeOnly      = 0 != (m_flags & (BGFX_TEXTURE_RT_WRITE_ONLY|BGFX_TEXTURE_READ_BACK) );
+			const bool writeOnly      = 0 != (m_flags & BGFX_TEXTURE_RT_WRITE_ONLY);
 			const bool computeWrite   = 0 != (m_flags & BGFX_TEXTURE_COMPUTE_WRITE)
 				|| isVideoDecodeDst
 				;
@@ -4855,6 +4917,16 @@ namespace bgfx { namespace d3d11
 
 			const uint32_t msaaQuality = bx::satSub<uint32_t>(uint32_t( (m_flags&BGFX_TEXTURE_RT_MSAA_MASK) >> BGFX_TEXTURE_RT_MSAA_SHIFT ), 1u);
 			const DXGI_SAMPLE_DESC& msaa = s_msaa[msaaQuality];
+
+			const bool blitUav = true
+				&& blit
+				&& !compressed
+				&& !writeOnly
+				&& 1 == msaa.Count
+				&& !bimg::isDepth(bimg::TextureFormat::Enum(m_textureFormat) )
+				&& 0 != (g_caps.formats[m_textureFormat] & BGFX_CAPS_FORMAT_TEXTURE_IMAGE_WRITE)
+				;
+
 			const bool msaaSample  = true
 				&& 1 < msaa.Count
 				&& 0 != (m_flags&BGFX_TEXTURE_MSAA_SAMPLE)
@@ -4950,11 +5022,15 @@ namespace bgfx { namespace d3d11
 						desc.Usage = D3D11_USAGE_DEFAULT;
 					}
 
+					if (blitUav)
+					{
+						desc.BindFlags |= D3D11_BIND_UNORDERED_ACCESS;
+						desc.Usage = D3D11_USAGE_DEFAULT;
+					}
+
 					if (readBack)
 					{
-						desc.BindFlags      = 0;
-						desc.Usage          = D3D11_USAGE_STAGING;
-						desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
+						desc.Usage = D3D11_USAGE_DEFAULT;
 					}
 
 					if (imageContainer.m_cubeMap)
@@ -5064,9 +5140,7 @@ namespace bgfx { namespace d3d11
 
 					if (readBack)
 					{
-						desc.BindFlags = 0;
-						desc.Usage = D3D11_USAGE_STAGING;
-						desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
+						desc.Usage = D3D11_USAGE_DEFAULT;
 					}
 
 					srvd.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE3D;
@@ -5091,6 +5165,32 @@ namespace bgfx { namespace d3d11
 
 			if (externalShared)
 			{
+			}
+
+			if (readBack)
+			{
+				if (Texture3D == m_type)
+				{
+					D3D11_TEXTURE3D_DESC desc;
+					m_texture3d->GetDesc(&desc);
+					desc.Usage          = D3D11_USAGE_STAGING;
+					desc.BindFlags      = 0;
+					desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
+					desc.MiscFlags      = 0;
+
+					DX_CHECK(s_renderD3D11->m_device->CreateTexture3D(&desc, NULL, (ID3D11Texture3D**)&m_staging) );
+				}
+				else
+				{
+					D3D11_TEXTURE2D_DESC desc;
+					m_texture2d->GetDesc(&desc);
+					desc.Usage          = D3D11_USAGE_STAGING;
+					desc.BindFlags      = 0;
+					desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
+					desc.MiscFlags      = 0;
+
+					DX_CHECK(s_renderD3D11->m_device->CreateTexture2D(&desc, NULL, (ID3D11Texture2D**)&m_staging) );
+				}
 			}
 
 			if (!writeOnly)
@@ -5185,6 +5285,7 @@ namespace bgfx { namespace d3d11
 		DX_RELEASE(m_rt, 0);
 		DX_RELEASE(m_srv, 0);
 		DX_RELEASE(m_uav, 0);
+		DX_RELEASE(m_staging, 0);
 
 		if (0 == (m_flags & BGFX_SAMPLER_INTERNAL_SHARED) )
 		{
@@ -6148,6 +6249,157 @@ namespace bgfx { namespace d3d11
 		}
 	}
 
+	void RendererContextD3D11::blitBufferTexture(const BlitItem& _blit)
+	{
+		const bool toBuffer = _blit.m_dst.isBuffer();
+
+		const TextureD3D11& texture = m_textures[(toBuffer ? _blit.m_src : _blit.m_dst).idx];
+		const BufferD3D11&  buffer  = getBuffer(toBuffer ? _blit.m_dst : _blit.m_src);
+
+		const bimg::TextureFormat::Enum format = bimg::TextureFormat::Enum(texture.m_textureFormat);
+
+		if (bimg::isCompressed(format)
+		||  bimg::isDepth(format) )
+		{
+			BX_WARN(false, "Blit between buffer and texture is not supported for compressed or depth formats.");
+
+			return;
+		}
+
+		if (0 == (g_caps.formats[texture.m_textureFormat] & BGFX_CAPS_FORMAT_TEXTURE_IMAGE_WRITE) )
+		{
+			BX_WARN(false, "Blit between buffer and texture is not supported for texture format %s.", bimg::getName(format) );
+
+			return;
+		}
+
+		if (TextureD3D11::Texture3D == texture.m_type)
+		{
+			BX_WARN(false, "Blit between buffer and 3D texture is not supported.");
+
+			return;
+		}
+
+		if (NULL == m_blitShader[toBuffer ? 0 : 1].m_computeShader)
+		{
+			return;
+		}
+
+		const uint32_t bpp    = bimg::getBitsPerPixel(format) / 8;
+		const uint32_t offset = toBuffer ? _blit.m_dstOffset : _blit.m_srcOffset;
+
+		if (0 != offset % bpp
+		||  0 != _blit.m_rowPitch % bpp)
+		{
+			BX_WARN(false
+				, "Buffer offset %d and row pitch %d must be a multiple of texture format block size %d."
+				, offset
+				, _blit.m_rowPitch
+				, bpp
+				);
+
+			return;
+		}
+
+		const DXGI_FORMAT dxgiFormat = texture.getSrvFormat();
+		const uint32_t numElements   = (_blit.m_rowPitch * _blit.m_height) / bpp;
+
+		ID3D11ShaderResourceView*  srv = NULL;
+		ID3D11UnorderedAccessView* uav = NULL;
+
+		if (toBuffer)
+		{
+			D3D11_SHADER_RESOURCE_VIEW_DESC srvd = {};
+			srvd.Format                         = dxgiFormat;
+			srvd.ViewDimension                  = D3D11_SRV_DIMENSION_TEXTURE2DARRAY;
+			srvd.Texture2DArray.MostDetailedMip = _blit.m_srcMip;
+			srvd.Texture2DArray.MipLevels       = 1;
+			srvd.Texture2DArray.FirstArraySlice = _blit.m_srcZ;
+			srvd.Texture2DArray.ArraySize       = 1;
+
+			DX_CHECK(m_device->CreateShaderResourceView(texture.m_ptr, &srvd, &srv) );
+
+			D3D11_UNORDERED_ACCESS_VIEW_DESC uavd = {};
+			uavd.Format              = dxgiFormat;
+			uavd.ViewDimension       = D3D11_UAV_DIMENSION_BUFFER;
+			uavd.Buffer.FirstElement = offset / bpp;
+			uavd.Buffer.NumElements  = numElements;
+
+			DX_CHECK(m_device->CreateUnorderedAccessView(buffer.m_ptr, &uavd, &uav) );
+		}
+		else
+		{
+			D3D11_SHADER_RESOURCE_VIEW_DESC srvd = {};
+			srvd.Format              = dxgiFormat;
+			srvd.ViewDimension       = D3D11_SRV_DIMENSION_BUFFER;
+			srvd.Buffer.FirstElement = offset / bpp;
+			srvd.Buffer.NumElements  = numElements;
+
+			DX_CHECK(m_device->CreateShaderResourceView(buffer.m_ptr, &srvd, &srv) );
+
+			D3D11_UNORDERED_ACCESS_VIEW_DESC uavd = {};
+			uavd.Format                         = dxgiFormat;
+			uavd.ViewDimension                  = D3D11_UAV_DIMENSION_TEXTURE2DARRAY;
+			uavd.Texture2DArray.MipSlice        = _blit.m_dstMip;
+			uavd.Texture2DArray.FirstArraySlice = _blit.m_dstZ;
+			uavd.Texture2DArray.ArraySize       = 1;
+
+			DX_CHECK(m_device->CreateUnorderedAccessView(texture.m_ptr, &uavd, &uav) );
+		}
+
+		if (NULL == srv
+		||  NULL == uav)
+		{
+			DX_RELEASE(srv, 0);
+			DX_RELEASE(uav, 0);
+
+			return;
+		}
+
+		const ShaderD3D11& shader = m_blitShader[toBuffer ? 0 : 1];
+
+		const float params[8] =
+		{
+			float(toBuffer ? _blit.m_srcX : _blit.m_dstX),
+			float(toBuffer ? _blit.m_srcY : _blit.m_dstY),
+			0.0f,
+			float(_blit.m_rowPitch / bpp),
+			float(_blit.m_width),
+			float(_blit.m_height),
+			1.0f,
+			0.0f,
+		};
+
+		ID3D11DeviceContext* deviceCtx = m_deviceCtx;
+
+		deviceCtx->CSSetShader(shader.m_computeShader, NULL, 0);
+		deviceCtx->CSSetShaderResources(0, 1, &srv);
+		deviceCtx->CSSetUnorderedAccessViews(0, 1, &uav, NULL);
+
+		if (NULL != shader.m_buffer)
+		{
+			deviceCtx->UpdateSubresource(shader.m_buffer, 0, NULL, params, 0, 0);
+			deviceCtx->CSSetConstantBuffers(0, 1, &shader.m_buffer);
+		}
+
+		deviceCtx->Dispatch(
+			  bx::strideAlign(_blit.m_width,  8) / 8
+			, bx::strideAlign(_blit.m_height, 8) / 8
+			, 1
+			);
+
+		ID3D11ShaderResourceView*  srvNull = NULL;
+		ID3D11UnorderedAccessView* uavNull = NULL;
+		deviceCtx->CSSetShaderResources(0, 1, &srvNull);
+		deviceCtx->CSSetUnorderedAccessViews(0, 1, &uavNull, NULL);
+		deviceCtx->CSSetShader(NULL, NULL, 0);
+
+		m_currentProgram = NULL;
+
+		DX_RELEASE(srv, 0);
+		DX_RELEASE(uav, 0);
+	}
+
 	void RendererContextD3D11::submitBlit(BlitState& _bs, uint16_t _view)
 	{
 		ID3D11DeviceContext* deviceCtx = m_deviceCtx;
@@ -6155,6 +6407,33 @@ namespace bgfx { namespace d3d11
 		while (_bs.hasItem(_view) )
 		{
 			const BlitItem& blit = _bs.advance();
+
+			if (blit.m_src.isBuffer()
+			&&  blit.m_dst.isBuffer() )
+			{
+				const BufferD3D11& srcBuf = getBuffer(blit.m_src);
+				const BufferD3D11& dstBuf = getBuffer(blit.m_dst);
+
+				D3D11_BOX box;
+				box.left   = blit.m_srcOffset;
+				box.right  = blit.m_srcOffset + blit.m_size;
+				box.top    = 0;
+				box.bottom = 1;
+				box.front  = 0;
+				box.back   = 1;
+
+				deviceCtx->CopySubresourceRegion(dstBuf.m_ptr, 0, blit.m_dstOffset, 0, 0, srcBuf.m_ptr, 0, &box);
+
+				continue;
+			}
+
+			if (blit.m_src.isBuffer()
+			||  blit.m_dst.isBuffer() )
+			{
+				blitBufferTexture(blit);
+
+				continue;
+			}
 
 			const TextureD3D11& src = m_textures[blit.m_src.idx];
 			const TextureD3D11& dst = m_textures[blit.m_dst.idx];
@@ -6180,66 +6459,13 @@ namespace bgfx { namespace d3d11
 				const uint32_t srcSubresource = blit.m_srcZ*src.m_numMips + blit.m_srcMip;
 				const uint32_t dstSubresource = blit.m_dstZ*dst.m_numMips + blit.m_dstMip;
 
-				if (0 != (dst.m_flags & BGFX_TEXTURE_READ_BACK) )
-				{
-					const D3D11_TEXTURE2D_DESC desc =
-					{
-						.Width          = bx::max<uint32_t>(1, src.m_width  >> blit.m_srcMip),
-						.Height         = bx::max<uint32_t>(1, src.m_height >> blit.m_srcMip),
-						.MipLevels      = 1,
-						.ArraySize      = 1,
-						.Format         = resolveFormat,
-						.SampleDesc     = { .Count = 1, .Quality = 0 },
-						.Usage          = D3D11_USAGE_DEFAULT,
-						.BindFlags      = D3D11_BIND_SHADER_RESOURCE,
-						.CPUAccessFlags = 0,
-						.MiscFlags      = 0,
-					};
-
-					ID3D11Texture2D* scratch;
-					DX_CHECK(m_device->CreateTexture2D(&desc, NULL, &scratch) );
-
-					deviceCtx->ResolveSubresource(
-						  scratch
-						, 0
-						, src.m_ptr
-						, srcSubresource
-						, resolveFormat
-						);
-
-					const D3D11_BOX box =
-					{
-						.left   = blit.m_srcX,
-						.top    = blit.m_srcY,
-						.front  = 0,
-						.right  = uint32_t(blit.m_srcX) + blit.m_width,
-						.bottom = uint32_t(blit.m_srcY) + blit.m_height,
-						.back   = 1,
-					};
-
-					deviceCtx->CopySubresourceRegion(
-						  dst.m_ptr
-						, dstSubresource
-						, blit.m_dstX
-						, blit.m_dstY
-						, 0
-						, scratch
-						, 0
-						, &box
-						);
-
-					DX_RELEASE(scratch, 0);
-				}
-				else
-				{
-					deviceCtx->ResolveSubresource(
-						  dst.m_ptr
-						, dstSubresource
-						, src.m_ptr
-						, srcSubresource
-						, resolveFormat
-						);
-				}
+				deviceCtx->ResolveSubresource(
+					  dst.m_ptr
+					, dstSubresource
+					, src.m_ptr
+					, srcSubresource
+					, resolveFormat
+					);
 
 				continue;
 			}
@@ -7311,6 +7537,7 @@ namespace bgfx { namespace d3d11
 		perfStats.numDraw       = statsKeyType[0];
 		perfStats.numCompute    = statsKeyType[1];
 		perfStats.numBlit       = _render->m_numBlitItems;
+		perfStats.numBlitRepack = _render->m_numBlitRepack;
 		perfStats.maxGpuLatency = maxGpuLatency;
 		perfStats.gpuFrameNum   = result.m_frameNum;
 		bx::memCopy(perfStats.numPrims, statsNumPrimsRendered, sizeof(perfStats.numPrims) );

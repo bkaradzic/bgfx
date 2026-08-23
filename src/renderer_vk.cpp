@@ -2736,6 +2736,47 @@ VK_IMPORT_DEVICE
 			recycleMemory(stagingMemory);
 		}
 
+		BufferVK& getBuffer(Handle _handle)
+		{
+			if (_handle.isIndexBuffer() )
+			{
+				return m_indexBuffers[_handle.idx];
+			}
+
+			return m_vertexBuffers[_handle.idx];
+		}
+
+		void readBuffer(Handle _handle, void* _data, uint32_t _offset, uint32_t _size) override
+		{
+			const BufferVK& buffer = getBuffer(_handle);
+
+			DeviceMemoryAllocationVK stagingMemory;
+			VkBuffer stagingBuffer;
+			VK_CHECK(createReadbackBuffer(_size, &stagingBuffer, &stagingMemory) );
+
+			setMemoryBarrier(
+				  m_commandBuffer
+				, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT
+				, VK_PIPELINE_STAGE_TRANSFER_BIT
+				);
+
+			VkBufferCopy region;
+			region.srcOffset = _offset;
+			region.dstOffset = 0;
+			region.size      = _size;
+			vkCmdCopyBuffer(m_commandBuffer, buffer.m_buffer, stagingBuffer, 1, &region);
+
+			kick(true);
+
+			void* dst = NULL;
+			VK_CHECK(vkMapMemory(m_device, stagingMemory.mem, stagingMemory.offset, _size, 0, &dst) );
+			bx::memCopy(_data, dst, _size);
+			vkUnmapMemory(m_device, stagingMemory.mem);
+
+			vkDestroy(stagingBuffer);
+			recycleMemory(stagingMemory);
+		}
+
 		void resizeTexture(TextureHandle _handle, uint16_t _width, uint16_t _height, uint8_t _numMips, uint16_t _numLayers) override
 		{
 			const TextureVK& texture = m_textures[_handle.idx];
@@ -5580,6 +5621,7 @@ VK_DESTROY
 			| (_vertex              ? VK_BUFFER_USAGE_VERTEX_BUFFER_BIT   : VK_BUFFER_USAGE_INDEX_BUFFER_BIT)
 			| (storage || indirect  ? VK_BUFFER_USAGE_STORAGE_BUFFER_BIT  : 0)
 			| (indirect             ? VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT : 0)
+			| (storage || indirect  ? VK_BUFFER_USAGE_TRANSFER_SRC_BIT    : 0)
 			| VK_BUFFER_USAGE_TRANSFER_DST_BIT
 			;
 		bci.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
@@ -9606,6 +9648,27 @@ VK_DESTROY
 
 			const BlitItem& blit = bs0.advance();
 
+			srcLayouts[item] = VK_IMAGE_LAYOUT_UNDEFINED;
+			dstLayouts[item] = VK_IMAGE_LAYOUT_UNDEFINED;
+
+			if (blit.m_src.isBuffer()
+			&&  blit.m_dst.isBuffer() )
+			{
+				continue;
+			}
+
+			if (blit.m_src.isBuffer() )
+			{
+				dstLayouts[item] = m_textures[blit.m_dst.idx].m_currentImageLayout;
+				continue;
+			}
+
+			if (blit.m_dst.isBuffer() )
+			{
+				srcLayouts[item] = m_textures[blit.m_src.idx].m_currentImageLayout;
+				continue;
+			}
+
 			TextureVK& src = m_textures[blit.m_src.idx];
 			TextureVK& dst = m_textures[blit.m_dst.idx];
 
@@ -9627,6 +9690,127 @@ VK_DESTROY
 		for (uint32_t item = 0; item < numItems; ++item)
 		{
 			const BlitItem& blit = bs0.advance();
+
+			if (blit.m_src.isBuffer()
+			&&  blit.m_dst.isBuffer() )
+			{
+				const BufferVK& srcBuf = getBuffer(blit.m_src);
+				const BufferVK& dstBuf = getBuffer(blit.m_dst);
+
+				setMemoryBarrier(
+					  m_commandBuffer
+					, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT
+					, VK_PIPELINE_STAGE_TRANSFER_BIT
+					);
+
+				VkBufferCopy region;
+				region.srcOffset = blit.m_srcOffset;
+				region.dstOffset = blit.m_dstOffset;
+				region.size      = blit.m_size;
+				vkCmdCopyBuffer(m_commandBuffer, srcBuf.m_buffer, dstBuf.m_buffer, 1, &region);
+
+				setMemoryBarrier(
+					  m_commandBuffer
+					, VK_PIPELINE_STAGE_TRANSFER_BIT
+					, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT
+					);
+
+				continue;
+			}
+
+			if (blit.m_src.isBuffer()
+			||  blit.m_dst.isBuffer() )
+			{
+				const bool toBuffer = blit.m_dst.isBuffer();
+
+				TextureVK& texture = m_textures[toBuffer ? blit.m_src.idx : blit.m_dst.idx];
+				const BufferVK& buffer = getBuffer(toBuffer ? blit.m_dst : blit.m_src);
+
+				BX_ASSERT(1 == texture.m_sampler.Count, "Can't blit between buffer and MSAA texture.");
+
+				texture.setState(
+					  m_commandBuffer
+					, toBuffer
+						? VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL
+						: VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
+					);
+
+				setMemoryBarrier(
+					  m_commandBuffer
+					, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT
+					, VK_PIPELINE_STAGE_TRANSFER_BIT
+					);
+
+				const bool is3D = VK_IMAGE_VIEW_TYPE_3D == texture.m_type;
+				const uint32_t depth = bx::max<uint32_t>(1, blit.m_depth);
+				const uint16_t z = toBuffer ? blit.m_srcZ : blit.m_dstZ;
+
+				uint32_t rowLength, imageHeight;
+				calcTextureRegionTexelPitch(
+					  rowLength
+					, imageHeight
+					, TextureFormat::Enum(texture.m_textureFormat)
+					, blit.m_rowPitch
+					, blit.m_slicePitch
+					);
+
+				const VkBufferImageCopy region =
+				{
+					.bufferOffset      = toBuffer ? blit.m_dstOffset : blit.m_srcOffset,
+					.bufferRowLength   = rowLength,
+					.bufferImageHeight = imageHeight,
+					.imageSubresource  =
+					{
+						.aspectMask     = texture.m_aspectFlags,
+						.mipLevel       = toBuffer ? blit.m_srcMip : blit.m_dstMip,
+						.baseArrayLayer = is3D ? 0u : uint32_t(z),
+						.layerCount     = is3D ? 1u : depth,
+					},
+					.imageOffset =
+					{
+						.x = toBuffer ? blit.m_srcX : blit.m_dstX,
+						.y = toBuffer ? blit.m_srcY : blit.m_dstY,
+						.z = is3D ? z : 0,
+					},
+					.imageExtent =
+					{
+						.width  = blit.m_width,
+						.height = blit.m_height,
+						.depth  = is3D ? depth : 1,
+					},
+				};
+
+				if (toBuffer)
+				{
+					vkCmdCopyImageToBuffer(
+						  m_commandBuffer
+						, texture.m_textureImage
+						, texture.m_currentImageLayout
+						, buffer.m_buffer
+						, 1
+						, &region
+						);
+				}
+				else
+				{
+					vkCmdCopyBufferToImage(
+						  m_commandBuffer
+						, buffer.m_buffer
+						, texture.m_textureImage
+						, texture.m_currentImageLayout
+						, 1
+						, &region
+						);
+				}
+
+				setMemoryBarrier(
+					  m_commandBuffer
+					, VK_PIPELINE_STAGE_TRANSFER_BIT
+					, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT
+					);
+
+				continue;
+			}
 
 			TextureVK& src = m_textures[blit.m_src.idx];
 			TextureVK& dst = m_textures[blit.m_dst.idx];
@@ -9761,6 +9945,24 @@ VK_DESTROY
 		for (uint32_t item = 0; item < numItems; ++item)
 		{
 			const BlitItem& blit = _bs.advance();
+
+			if (blit.m_src.isBuffer()
+			&&  blit.m_dst.isBuffer() )
+			{
+				continue;
+			}
+
+			if (blit.m_src.isBuffer() )
+			{
+				m_textures[blit.m_dst.idx].setState(m_commandBuffer, dstLayouts[item]);
+				continue;
+			}
+
+			if (blit.m_dst.isBuffer() )
+			{
+				m_textures[blit.m_src.idx].setState(m_commandBuffer, srcLayouts[item]);
+				continue;
+			}
 
 			TextureVK& src = m_textures[blit.m_src.idx];
 			TextureVK& dst = m_textures[blit.m_dst.idx];
@@ -10907,6 +11109,7 @@ VK_DESTROY
 		perfStats.numDraw       = statsKeyType[0];
 		perfStats.numCompute    = statsKeyType[1];
 		perfStats.numBlit       = _render->m_numBlitItems;
+		perfStats.numBlitRepack = _render->m_numBlitRepack;
 		perfStats.maxGpuLatency = maxGpuLatency;
 		perfStats.gpuFrameNum   = result.m_frameNum;
 		bx::memCopy(perfStats.numPrims, statsNumPrimsRendered, sizeof(perfStats.numPrims) );
