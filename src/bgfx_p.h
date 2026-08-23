@@ -453,6 +453,12 @@ namespace bgfx
 		return (_magic & BX_MAKEFOURCC(0, 0, 0, 0xff) ) < BX_MAKEFOURCC(0, 0, 0, _version);
 	}
 
+	inline void readRawBindings(bx::ReaderI* _reader, uint32_t& _srvMask, uint32_t& _uavMask, bx::Error* _err)
+	{
+		bx::read(_reader, _srvMask, _err);
+		bx::read(_reader, _uavMask, _err);
+	}
+
 	const char* getShaderTypeName(uint32_t _magic);
 
 	struct Clear
@@ -2553,6 +2559,9 @@ namespace bgfx
 		uint32_t m_hashOut;
 		uint16_t m_num;
 		int16_t  m_refCount;
+		uint16_t m_samplerUniform[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS];
+		uint8_t  m_samplerDimension[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS];
+		uint8_t  m_numSamplers;
 	};
 
 	struct ProgramRef
@@ -5587,11 +5596,11 @@ namespace bgfx
 				return BGFX_INVALID_HANDLE;
 			}
 
-			if ( (isShaderType(magic, 'C') && isShaderVerLess(magic, 3) )
-			||   (isShaderType(magic, 'F') && isShaderVerLess(magic, 5) )
-			||   (isShaderType(magic, 'V') && isShaderVerLess(magic, 5) ) )
+			if (isShaderVerLess(magic, 12) )
 			{
-				BX_TRACE("Unsupported shader binary version.");
+				BX_TRACE("Unsupported shader binary version %d, expected 12 or newer. Recompile shaders with the matching shaderc."
+					, uint8_t(magic>>24)
+					);
 				release(_mem);
 				return BGFX_INVALID_HANDLE;
 			}
@@ -5618,6 +5627,12 @@ namespace bgfx
 			else
 			{
 				bx::read(&reader, hashOut, &err);
+			}
+
+			{
+				uint32_t rawSrvMask, rawUavMask;
+				readRawBindings(&reader, rawSrvMask, rawUavMask, &err);
+				BX_UNUSED(rawSrvMask, rawUavMask);
 			}
 
 			uint16_t count;
@@ -5648,6 +5663,7 @@ namespace bgfx
 			sr.m_hashOut  = hashOut;
 			sr.m_num      = 0;
 			sr.m_uniforms = NULL;
+			sr.m_numSamplers = 0;
 
 			UniformHandle* uniforms = (UniformHandle*)BX_STACK_ALLOC(count*sizeof(UniformHandle) );
 
@@ -5663,6 +5679,7 @@ namespace bgfx
 				uint8_t type = 0;
 				bx::read(&reader, type, &err);
 				type &= ~kUniformMask;
+				const bool isSampler = UniformType::Sampler == UniformType::Enum(type);
 
 				uint8_t num;
 				bx::read(&reader, num, &err);
@@ -5673,11 +5690,15 @@ namespace bgfx
 				uint16_t regCount;
 				bx::read(&reader, regCount, &err);
 
+				uint8_t texComponent = 0;
+				uint8_t texDimension = 0;
 				if (!isShaderVerLess(magic, 8) )
 				{
-					uint16_t texInfo;
-					bx::read(&reader, texInfo, &err);
+					bx::read(&reader, texComponent, &err);
+					bx::read(&reader, texDimension, &err);
 				}
+
+				BX_UNUSED(texComponent);
 
 				if (!isShaderVerLess(magic, 10) )
 				{
@@ -5689,8 +5710,17 @@ namespace bgfx
 				if (PredefinedUniform::Count == predefined
 				&&  UniformType::End != UniformType::Enum(type) )
 				{
-					uniforms[sr.m_num] = createUniform(name, UniformFreq::Count, UniformType::Enum(type), num);
+					const UniformHandle uniform = createUniform(name, UniformFreq::Count, UniformType::Enum(type), num);
+					uniforms[sr.m_num] = uniform;
 					sr.m_num++;
+
+					if (isSampler
+					&&  sr.m_numSamplers < BX_COUNTOF(sr.m_samplerDimension) )
+					{
+						sr.m_samplerUniform[sr.m_numSamplers]   = uniform.idx;
+						sr.m_samplerDimension[sr.m_numSamplers] = uint8_t(idToTextureDimension(texDimension) );
+						sr.m_numSamplers++;
+					}
 				}
 			}
 
@@ -5846,6 +5876,37 @@ namespace bgfx
 				{
 					BX_TRACE("Vertex shader output doesn't match fragment shader input.");
 					return BGFX_INVALID_HANDLE;
+				}
+
+				for (uint32_t ii = 0; ii < vsr.m_numSamplers; ++ii)
+				{
+					const uint8_t vsDim = vsr.m_samplerDimension[ii];
+
+					if (uint8_t(TextureDimension::Count) == vsDim)
+					{
+						continue;
+					}
+
+					for (uint32_t jj = 0; jj < fsr.m_numSamplers; ++jj)
+					{
+						if (vsr.m_samplerUniform[ii] != fsr.m_samplerUniform[jj])
+						{
+							continue;
+						}
+
+						const uint8_t fsDim = fsr.m_samplerDimension[jj];
+
+						if (uint8_t(TextureDimension::Count) != fsDim
+						&&  vsDim != fsDim)
+						{
+							BX_TRACE("Vertex and fragment shader declare different texture dimension for sampler '%S' (vsh %d, fsh %d)."
+								, &m_uniformRef[vsr.m_samplerUniform[ii] ].m_name
+								, vsDim
+								, fsDim
+								);
+							return BGFX_INVALID_HANDLE;
+						}
+					}
 				}
 
 				handle.idx = m_programHandle.alloc();

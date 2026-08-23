@@ -10,12 +10,12 @@ $output v_color
 
 #include <bgfx_compute.sh>
 
-BUFFER_RO(positions, float, 0);
-BUFFER_RO(indices, uint, 1);
+BUFFER_RAW_RO(positions, 0);
+BUFFER_RAW_RO(indices, 1);
 
 uint getIndex(uint i)
 {
-	uint idx32 = indices[i / 2u];
+	uint idx32 = rawLoadUint(indices, i / 2u);
 	if (i % 2u == 0u)
 	{
 		return idx32 & 0xFFFFu;
@@ -31,9 +31,9 @@ vec3 getPosition(uint index)
 	uint strideFloats = uint(u_wfStride);
 	uint offset = index * strideFloats;
 	return vec3(
-		positions[offset + 0u],
-		positions[offset + 1u],
-		positions[offset + 2u]
+		rawLoadFloat(positions, offset + 0u),
+		rawLoadFloat(positions, offset + 1u),
+		rawLoadFloat(positions, offset + 2u)
 	);
 }
 

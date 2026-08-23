@@ -336,17 +336,22 @@ namespace bgfx { namespace glsl
 
 			for (const spirv_cross::Resource& resource : resources.sampled_images)
 			{
+				const spirv_cross::SPIRType& type = compiler.get_type(resource.type_id);
+
 				Uniform un;
-				un.name     = compiler.get_name(resource.id);
-				un.type     = UniformType::Sampler;
-				un.num      = 1;
-				un.regIndex = 0;
-				un.regCount = 1;
+				un.name         = compiler.get_name(resource.id);
+				un.type         = UniformType::Sampler;
+				un.num          = 1;
+				un.regIndex     = 0;
+				un.regCount     = 1;
+				un.texDimension = spirvDimToTextureDimensionId(uint32_t(type.image.dim), type.image.arrayed);
 
 				uniforms.push_back(un);
 			}
 
 			bx::ErrorAssert err;
+
+			RawBindings().write(_shaderWriter, &err);
 
 			uint16_t count = uint16_t(uniforms.size() );
 			bx::write(_shaderWriter, count, &err);

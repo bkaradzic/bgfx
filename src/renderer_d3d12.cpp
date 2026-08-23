@@ -4550,7 +4550,7 @@ namespace bgfx { namespace d3d12
 		alloc(_gpuHandle, cpuHandle);
 	}
 
-	void ScratchBufferD3D12::allocSrv(D3D12_GPU_DESCRIPTOR_HANDLE& _gpuHandle, TextureD3D12& _texture, uint16_t _firstLayer, uint16_t _numLayers, uint8_t _firstMip, uint8_t _numMips, bool _stencil)
+	void ScratchBufferD3D12::allocSrv(D3D12_GPU_DESCRIPTOR_HANDLE& _gpuHandle, TextureD3D12& _texture, uint16_t _firstLayer, uint16_t _numLayers, uint8_t _firstMip, uint8_t _numMips, bool _stencil, TextureDimension::Enum _dimension)
 	{
 		ID3D12Device* device = s_renderD3D12->m_device;
 
@@ -4563,9 +4563,31 @@ namespace bgfx { namespace d3d12
 			&& numLayers >= _texture.m_numLayers
 			;
 
+		const bool asArray = TextureD3D12::TextureCube == _texture.m_type
+			&& (TextureDimension::Dimension2D      == _dimension
+			||  TextureDimension::Dimension2DArray == _dimension)
+			;
+
 		D3D12_SHADER_RESOURCE_VIEW_DESC tmpSrvd;
 		D3D12_SHADER_RESOURCE_VIEW_DESC* srvd = &_texture.m_srvd;
-		if (!fullRange
+		if (asArray)
+		{
+			const uint16_t slices = uint16_t(bx::max<uint32_t>(_texture.m_numLayers, 1u) * 6);
+			const uint16_t first  = bx::min<uint16_t>(_firstLayer, uint16_t(slices - 1) );
+			const uint16_t count  = bx::min<uint16_t>(_numLayers,  uint16_t(slices - first) );
+
+			bx::memCopy(&tmpSrvd, srvd, sizeof(tmpSrvd) );
+			srvd = &tmpSrvd;
+
+			srvd->ViewDimension                      = D3D12_SRV_DIMENSION_TEXTURE2DARRAY;
+			srvd->Texture2DArray.MostDetailedMip     = _firstMip;
+			srvd->Texture2DArray.MipLevels           = numMips;
+			srvd->Texture2DArray.FirstArraySlice     = first;
+			srvd->Texture2DArray.ArraySize           = count;
+			srvd->Texture2DArray.PlaneSlice          = 0;
+			srvd->Texture2DArray.ResourceMinLODClamp = 0;
+		}
+		else if (!fullRange
 		||  _stencil)
 		{
 			bx::memCopy(&tmpSrvd, srvd, sizeof(tmpSrvd) );
@@ -4800,9 +4822,9 @@ namespace bgfx { namespace d3d12
 		device->CreateShaderResourceView(_resource, &_desc, cpuHandle);
 	}
 
-	void ScratchBufferD3D12::allocSrv(D3D12_GPU_DESCRIPTOR_HANDLE& _gpuHandle, BufferD3D12& _buffer)
+	void ScratchBufferD3D12::allocSrv(D3D12_GPU_DESCRIPTOR_HANDLE& _gpuHandle, BufferD3D12& _buffer, bool _raw)
 	{
-		allocSrv(_gpuHandle, _buffer.m_ptr, _buffer.m_srvd);
+		allocSrv(_gpuHandle, _buffer.m_ptr, _raw ? _buffer.m_srvdRaw : _buffer.m_srvd);
 	}
 
 	void ScratchBufferD3D12::allocUav(D3D12_GPU_DESCRIPTOR_HANDLE& _gpuHandle, ID3D12Resource* _resource, const D3D12_UNORDERED_ACCESS_VIEW_DESC& _desc)
@@ -4818,9 +4840,9 @@ namespace bgfx { namespace d3d12
 		device->CreateUnorderedAccessView(_resource, NULL, &_desc, cpuHandle);
 	}
 
-	void ScratchBufferD3D12::allocUav(D3D12_GPU_DESCRIPTOR_HANDLE& _gpuHandle, BufferD3D12& _buffer)
+	void ScratchBufferD3D12::allocUav(D3D12_GPU_DESCRIPTOR_HANDLE& _gpuHandle, BufferD3D12& _buffer, bool _raw)
 	{
-		allocUav(_gpuHandle, _buffer.m_ptr, _buffer.m_uavd);
+		allocUav(_gpuHandle, _buffer.m_ptr, _raw ? _buffer.m_uavdRaw : _buffer.m_uavd);
 	}
 
 	void ChunkedScratchBufferD3D12::createUniform(uint32_t _chunkSize, uint32_t _numChunks)
@@ -5789,26 +5811,6 @@ namespace bgfx { namespace d3d12
 		flush(_commandList);
 	}
 
-	struct UavFormat
-	{
-		DXGI_FORMAT format[3];
-		uint32_t    stride;
-	};
-
-	static const UavFormat s_uavFormat[] =
-	{	//  BGFX_BUFFER_COMPUTE_TYPE_INT,  BGFX_BUFFER_COMPUTE_TYPE_UINT,  BGFX_BUFFER_COMPUTE_TYPE_FLOAT
-		{ { DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_UNKNOWN,            DXGI_FORMAT_UNKNOWN            },  0 }, // ignored
-		{ { DXGI_FORMAT_R8_SINT,           DXGI_FORMAT_R8_UINT,            DXGI_FORMAT_UNKNOWN            },  1 }, // BGFX_BUFFER_COMPUTE_FORMAT_8X1
-		{ { DXGI_FORMAT_R8G8_SINT,         DXGI_FORMAT_R8G8_UINT,          DXGI_FORMAT_UNKNOWN            },  2 }, // BGFX_BUFFER_COMPUTE_FORMAT_8X2
-		{ { DXGI_FORMAT_R8G8B8A8_SINT,     DXGI_FORMAT_R8G8B8A8_UINT,      DXGI_FORMAT_UNKNOWN            },  4 }, // BGFX_BUFFER_COMPUTE_FORMAT_8X4
-		{ { DXGI_FORMAT_R16_SINT,          DXGI_FORMAT_R16_UINT,           DXGI_FORMAT_R16_FLOAT          },  2 }, // BGFX_BUFFER_COMPUTE_FORMAT_16X1
-		{ { DXGI_FORMAT_R16G16_SINT,       DXGI_FORMAT_R16G16_UINT,        DXGI_FORMAT_R16G16_FLOAT       },  4 }, // BGFX_BUFFER_COMPUTE_FORMAT_16X2
-		{ { DXGI_FORMAT_R16G16B16A16_SINT, DXGI_FORMAT_R16G16B16A16_UINT,  DXGI_FORMAT_R16G16B16A16_FLOAT },  8 }, // BGFX_BUFFER_COMPUTE_FORMAT_16X4
-		{ { DXGI_FORMAT_R32_SINT,          DXGI_FORMAT_R32_UINT,           DXGI_FORMAT_R32_FLOAT          },  4 }, // BGFX_BUFFER_COMPUTE_FORMAT_32X1
-		{ { DXGI_FORMAT_R32G32_SINT,       DXGI_FORMAT_R32G32_UINT,        DXGI_FORMAT_R32G32_FLOAT       },  8 }, // BGFX_BUFFER_COMPUTE_FORMAT_32X2
-		{ { DXGI_FORMAT_R32G32B32A32_SINT, DXGI_FORMAT_R32G32B32A32_UINT,  DXGI_FORMAT_R32G32B32A32_FLOAT }, 16 }, // BGFX_BUFFER_COMPUTE_FORMAT_32X4
-	};
-
 	void BufferD3D12::create(uint32_t _size, void* _data, uint16_t _flags, bool _vertex, uint32_t _stride)
 	{
 		m_size    = _size;
@@ -5834,36 +5836,20 @@ namespace bgfx { namespace d3d12
 			format = _vertex ? DXGI_FORMAT_R32G32B32A32_UINT : DXGI_FORMAT_R32_UINT;
 			stride = _vertex ? 16 : 4;
 		}
+		else if (_vertex)
+		{
+			format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+			stride = 16;
+		}
+		else if (0 == (_flags & BGFX_BUFFER_INDEX32) )
+		{
+			format = DXGI_FORMAT_R16_UINT;
+			stride = 2;
+		}
 		else
 		{
-			uint32_t uavFormat = (_flags & BGFX_BUFFER_COMPUTE_FORMAT_MASK) >> BGFX_BUFFER_COMPUTE_FORMAT_SHIFT;
-			if (0 == uavFormat)
-			{
-				if (_vertex)
-				{
-					format = DXGI_FORMAT_R32G32B32A32_FLOAT;
-					stride = 16;
-				}
-				else
-				{
-					if (0 == (_flags & BGFX_BUFFER_INDEX32) )
-					{
-						format = DXGI_FORMAT_R16_UINT;
-						stride = 2;
-					}
-					else
-					{
-						format = DXGI_FORMAT_R32_UINT;
-						stride = 4;
-					}
-				}
-			}
-			else
-			{
-				const uint32_t uavType = bx::satSub<uint32_t>(uint32_t( (_flags & BGFX_BUFFER_COMPUTE_TYPE_MASK) >> BGFX_BUFFER_COMPUTE_TYPE_SHIFT ), 1u);
-				format = s_uavFormat[uavFormat].format[uavType];
-				stride = s_uavFormat[uavFormat].stride;
-			}
+			format = DXGI_FORMAT_R32_UINT;
+			stride = 4;
 		}
 
 		stride = 0 == _stride ? stride : _stride;
@@ -5883,6 +5869,16 @@ namespace bgfx { namespace d3d12
 		m_uavd.Buffer.StructureByteStride  = 0;
 		m_uavd.Buffer.CounterOffsetInBytes = 0;
 		m_uavd.Buffer.Flags                = D3D12_BUFFER_UAV_FLAG_NONE;
+
+		m_srvdRaw                             = m_srvd;
+		m_srvdRaw.Format                      = DXGI_FORMAT_R32_TYPELESS;
+		m_srvdRaw.Buffer.NumElements          = m_size / 4;
+		m_srvdRaw.Buffer.Flags                = D3D12_BUFFER_SRV_FLAG_RAW;
+
+		m_uavdRaw                             = m_uavd;
+		m_uavdRaw.Format                      = DXGI_FORMAT_R32_TYPELESS;
+		m_uavdRaw.Buffer.NumElements          = m_size / 4;
+		m_uavdRaw.Buffer.Flags                = D3D12_BUFFER_UAV_FLAG_RAW;
 
 		ID3D12Device* device = s_renderD3D12->m_device;
 		ID3D12GraphicsCommandList* commandList = s_renderD3D12->m_commandList;
@@ -5975,11 +5971,15 @@ namespace bgfx { namespace d3d12
 			bx::read(&reader, hashOut, &err);
 		}
 
+		readRawBindings(&reader, m_rawSrvMask, m_rawUavMask, &err);
+
 		uint16_t count;
 		bx::read(&reader, count, &err);
 
 		m_numPredefined = 0;
 		m_numUniforms = count;
+
+		bx::memSet(m_textureDimension, uint8_t(TextureDimension::Count), sizeof(m_textureDimension) );
 
 		BX_TRACE("%s Shader consts %d"
 			, getShaderTypeName(magic)
@@ -6011,10 +6011,12 @@ namespace bgfx { namespace d3d12
 				uint16_t regCount = 0;
 				bx::read(&reader, regCount, &err);
 
+				uint8_t texComponent = 0;
+				uint8_t texDimension = 0;
 				if (!isShaderVerLess(magic, 8) )
 				{
-					uint16_t texInfo = 0;
-					bx::read(&reader, texInfo, &err);
+					bx::read(&reader, texComponent, &err);
+					bx::read(&reader, texDimension, &err);
 				}
 
 				if (!isShaderVerLess(magic, 10) )
@@ -6022,6 +6024,8 @@ namespace bgfx { namespace d3d12
 					uint16_t texFormat = 0;
 					bx::read(&reader, texFormat, &err);
 				}
+
+				BX_UNUSED(texComponent);
 
 				const char* kind = "invalid";
 
@@ -6053,6 +6057,11 @@ namespace bgfx { namespace d3d12
 				else
 				{
 					kind = "sampler";
+
+					if (regIndex < BX_COUNTOF(m_textureDimension) )
+					{
+						m_textureDimension[regIndex] = uint8_t(idToTextureDimension(texDimension) );
+					}
 				}
 
 				BX_TRACE("\t%s: %s (%s), num %2d, r.index %3d, r.count %2d"
@@ -7907,6 +7916,10 @@ namespace bgfx { namespace d3d12
 	{
 		D3D12_GPU_DESCRIPTOR_HANDLE m_srvHandle;
 		uint16_t m_samplerStateIdx;
+
+		uint32_t m_rawSrvMask;
+		uint32_t m_rawUavMask;
+		uint32_t m_texDimHash;
 	};
 
 	static constexpr uint8_t kBindStateNotBuilt = 0;
@@ -8211,6 +8224,9 @@ namespace bgfx { namespace d3d12
 		uint16_t currentSamplerStateIdx = kInvalidHandle;
 		ProgramHandle currentProgram    = BGFX_INVALID_HANDLE;
 		uint32_t currentBindIdx         = UINT32_MAX;
+		uint32_t currentRawSrvMask      = 0;
+		uint32_t currentRawUavMask      = 0;
+		uint32_t currentTexDimHash      = 0;
 		bool     hasPredefined          = false;
 		bool     commandListChanged     = false;
 		ID3D12PipelineState* currentPso = NULL;
@@ -8480,6 +8496,22 @@ namespace bgfx { namespace d3d12
 						currentBindIdx = UINT32_MAX;
 					}
 
+					{
+						const ProgramD3D12& program = m_program[key.m_program.idx];
+						currentRawSrvMask = program.getRawSrvMask();
+						currentRawUavMask = program.getRawUavMask();
+						currentTexDimHash = program.getTextureDimensionHash();
+
+						if (kBindStateValid == bindState[bindIdx]
+						&& (bindCache[bindIdx].m_rawSrvMask != currentRawSrvMask
+						||  bindCache[bindIdx].m_rawUavMask != currentRawUavMask
+						||  bindCache[bindIdx].m_texDimHash != currentTexDimHash) )
+						{
+							bindState[bindIdx] = kBindStateNotBuilt;
+							currentBindIdx     = UINT32_MAX;
+						}
+					}
+
 					if (currentBindIdx != bindIdx)
 					{
 						currentBindIdx = bindIdx;
@@ -8495,6 +8527,8 @@ namespace bgfx { namespace d3d12
 							D3D12_GPU_DESCRIPTOR_HANDLE srvHandle[BGFX_MAX_COMPUTE_BINDINGS] = {};
 							uint32_t samplerFlags[BGFX_MAX_COMPUTE_BINDINGS] = {};
 							{
+								const ProgramD3D12& program = m_program[key.m_program.idx];
+
 								for (uint8_t stage = 0; stage < maxComputeBindings; ++stage)
 								{
 									const Binding& bind = renderBind.m_bind[stage];
@@ -8532,6 +8566,7 @@ namespace bgfx { namespace d3d12
 												texture.setState(m_commandList, D3D12_RESOURCE_STATE_GENERIC_READ);
 												scratchBuffer.allocSrv(srvHandle[stage], texture, bind.m_firstLayer, bind.m_numLayers, bind.m_firstMip, bind.m_numMips
 													, 0 != (resolvedFlags & BGFX_SAMPLER_SAMPLE_STENCIL)
+													, program.getTextureDimension(uint8_t(stage) )
 													);
 												samplerFlags[stage] = resolvedFlags & (BGFX_SAMPLER_BITS_MASK | BGFX_SAMPLER_BORDER_COLOR_MASK | BGFX_SAMPLER_COMPARE_MASK);
 
@@ -8550,12 +8585,12 @@ namespace bgfx { namespace d3d12
 												if (Access::Read != bind.m_access)
 												{
 													buffer.setState(m_commandList, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
-													scratchBuffer.allocUav(srvHandle[stage], buffer);
+													scratchBuffer.allocUav(srvHandle[stage], buffer, 0 != (currentRawUavMask & (UINT32_C(1) << stage) ) );
 												}
 												else
 												{
 													buffer.setState(m_commandList, D3D12_RESOURCE_STATE_GENERIC_READ);
-													scratchBuffer.allocSrv(srvHandle[stage], buffer);
+													scratchBuffer.allocSrv(srvHandle[stage], buffer, 0 != (currentRawSrvMask & (UINT32_C(1) << stage) ) );
 												}
 
 												++numSet;
@@ -8575,6 +8610,9 @@ namespace bgfx { namespace d3d12
 									Bind& bind = bindCache[bindIdx];
 									bind.m_srvHandle = srvHandle[0];
 									bind.m_samplerStateIdx = getSamplerState(samplerFlags, maxComputeBindings, _render->m_colorPalette);
+									bind.m_rawSrvMask = currentRawSrvMask;
+									bind.m_rawUavMask = currentRawUavMask;
+									bind.m_texDimHash = currentTexDimHash;
 									bindState[bindIdx] = kBindStateValid;
 									++bindCacheCount;
 									bindCached = &bind;
@@ -8818,6 +8856,22 @@ namespace bgfx { namespace d3d12
 						m_batch.flush(m_commandList);
 					}
 
+					{
+						const ProgramD3D12& program = m_program[key.m_program.idx];
+						currentRawSrvMask = program.getRawSrvMask();
+						currentRawUavMask = program.getRawUavMask();
+						currentTexDimHash = program.getTextureDimensionHash();
+
+						if (kBindStateValid == bindState[bindIdx]
+						&& (bindCache[bindIdx].m_rawSrvMask != currentRawSrvMask
+						||  bindCache[bindIdx].m_rawUavMask != currentRawUavMask
+						||  bindCache[bindIdx].m_texDimHash != currentTexDimHash) )
+						{
+							bindState[bindIdx] = kBindStateNotBuilt;
+							currentBindIdx     = UINT32_MAX;
+						}
+					}
+
 					if (currentBindIdx != bindIdx)
 					{
 						currentBindIdx = bindIdx;
@@ -8829,6 +8883,8 @@ namespace bgfx { namespace d3d12
 							D3D12_GPU_DESCRIPTOR_HANDLE srvHandle[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS] = {};
 							uint32_t samplerFlags[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS] = {};
 							{
+								const ProgramD3D12& program = m_program[key.m_program.idx];
+
 								for (uint32_t stage = 0; stage < BGFX_CONFIG_MAX_TEXTURE_SAMPLERS; ++stage)
 								{
 									const Binding& bind = renderBind.m_bind[stage];
@@ -8866,6 +8922,7 @@ namespace bgfx { namespace d3d12
 												texture.setState(m_commandList, D3D12_RESOURCE_STATE_GENERIC_READ);
 												scratchBuffer.allocSrv(srvHandle[stage], texture, bind.m_firstLayer, bind.m_numLayers, bind.m_firstMip, bind.m_numMips
 													, 0 != (resolvedFlags & BGFX_SAMPLER_SAMPLE_STENCIL)
+													, program.getTextureDimension(uint8_t(stage) )
 													);
 												samplerFlags[stage] = resolvedFlags & (BGFX_SAMPLER_BITS_MASK | BGFX_SAMPLER_BORDER_COLOR_MASK | BGFX_SAMPLER_COMPARE_MASK);
 
@@ -8886,12 +8943,12 @@ namespace bgfx { namespace d3d12
 												if (Access::Read != bind.m_access)
 												{
 													buffer.setState(m_commandList, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
-													scratchBuffer.allocUav(srvHandle[stage], buffer);
+													scratchBuffer.allocUav(srvHandle[stage], buffer, 0 != (currentRawUavMask & (UINT32_C(1) << stage) ) );
 												}
 												else
 												{
 													buffer.setState(m_commandList, D3D12_RESOURCE_STATE_GENERIC_READ);
-													scratchBuffer.allocSrv(srvHandle[stage], buffer);
+													scratchBuffer.allocSrv(srvHandle[stage], buffer, 0 != (currentRawSrvMask & (UINT32_C(1) << stage) ) );
 												}
 
 												++numSet;
@@ -8912,6 +8969,9 @@ namespace bgfx { namespace d3d12
 								Bind& bind = bindCache[bindIdx];
 								bind.m_srvHandle       = srvHandle[0];
 								bind.m_samplerStateIdx = getSamplerState(samplerFlags, BGFX_CONFIG_MAX_TEXTURE_SAMPLERS, _render->m_colorPalette);
+								bind.m_rawSrvMask      = currentRawSrvMask;
+								bind.m_rawUavMask      = currentRawUavMask;
+								bind.m_texDimHash      = currentTexDimHash;
 								bindState[bindIdx] = kBindStateValid;
 								++bindCacheCount;
 								bindCached = &bind;

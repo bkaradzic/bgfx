@@ -475,7 +475,7 @@ void Mesh::load(bx::ReaderSeekerI* _reader, bool _ramcopy)
 					bx::memCopy(group.m_vertices, mem->data, mem->size);
 				}
 
-				group.m_vbh = bgfx::createVertexBuffer(mem, m_layout, BGFX_BUFFER_COMPUTE_READ | BGFX_BUFFER_COMPUTE_FORMAT_32X1 | BGFX_BUFFER_COMPUTE_TYPE_FLOAT);
+				group.m_vbh = bgfx::createVertexBuffer(mem, m_layout, BGFX_BUFFER_COMPUTE_READ);
 			}
 				break;
 
@@ -509,7 +509,7 @@ void Mesh::load(bx::ReaderSeekerI* _reader, bool _ramcopy)
 					bx::memCopy(group.m_vertices, mem->data, mem->size);
 				}
 
-				group.m_vbh = bgfx::createVertexBuffer(mem, m_layout, BGFX_BUFFER_COMPUTE_READ | BGFX_BUFFER_COMPUTE_FORMAT_32X1 | BGFX_BUFFER_COMPUTE_TYPE_FLOAT);
+				group.m_vbh = bgfx::createVertexBuffer(mem, m_layout, BGFX_BUFFER_COMPUTE_READ);
 			}
 				break;
 
@@ -526,7 +526,7 @@ void Mesh::load(bx::ReaderSeekerI* _reader, bool _ramcopy)
 					bx::memCopy(group.m_indices, mem->data, mem->size);
 				}
 
-				group.m_ibh = bgfx::createIndexBuffer(mem, BGFX_BUFFER_COMPUTE_READ | BGFX_BUFFER_COMPUTE_FORMAT_32X1 | BGFX_BUFFER_COMPUTE_TYPE_UINT);
+				group.m_ibh = bgfx::createIndexBuffer(mem, BGFX_BUFFER_COMPUTE_READ);
 			}
 				break;
 

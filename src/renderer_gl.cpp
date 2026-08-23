@@ -6963,6 +6963,12 @@ namespace bgfx { namespace gl
 			bx::read(&reader, hashOut, &err);
 		}
 
+		{
+			uint32_t rawSrvMask, rawUavMask;
+			readRawBindings(&reader, rawSrvMask, rawUavMask, &err);
+			BX_UNUSED(rawSrvMask, rawUavMask);
+		}
+
 		uint16_t count;
 		bx::read(&reader, count, &err);
 

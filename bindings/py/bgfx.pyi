@@ -743,34 +743,6 @@ class StencilFlags(enum.IntFlag):
 	OpPassZMask = 0xf0000000
 
 class BufferFlags(enum.IntFlag):
-	# 1 x 8-bit value
-	ComputeFormat8x1 = 0x1
-	# 2 x 8-bit values
-	ComputeFormat8x2 = 0x2
-	# 4 x 8-bit values
-	ComputeFormat8x4 = 0x3
-	# 1 x 16-bit value
-	ComputeFormat16x1 = 0x4
-	# 2 x 16-bit values
-	ComputeFormat16x2 = 0x5
-	# 4 x 16-bit values
-	ComputeFormat16x4 = 0x6
-	# 1 x 32-bit value
-	ComputeFormat32x1 = 0x7
-	# 2 x 32-bit values
-	ComputeFormat32x2 = 0x8
-	# 4 x 32-bit values
-	ComputeFormat32x4 = 0x9
-	ComputeFormatShift = 0x0
-	ComputeFormatMask = 0xf
-	# Type `int`.
-	ComputeTypeInt = 0x10
-	# Type `uint`.
-	ComputeTypeUint = 0x20
-	# Type `float`.
-	ComputeTypeFloat = 0x30
-	ComputeTypeShift = 0x4
-	ComputeTypeMask = 0x30
 	None_ = 0x0
 	# Buffer will be read by shader.
 	ComputeRead = 0x100

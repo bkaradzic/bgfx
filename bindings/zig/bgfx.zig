@@ -378,45 +378,6 @@ pub const DebugFlags_Text: DebugFlags                   = 0x00000008;
 pub const DebugFlags_Profiler: DebugFlags               = 0x00000010;
 
 pub const BufferFlags = u16;
-/// 1 x 8-bit value
-pub const BufferFlags_ComputeFormat8x1: BufferFlags       = 0x0001;
-
-/// 2 x 8-bit values
-pub const BufferFlags_ComputeFormat8x2: BufferFlags       = 0x0002;
-
-/// 4 x 8-bit values
-pub const BufferFlags_ComputeFormat8x4: BufferFlags       = 0x0003;
-
-/// 1 x 16-bit value
-pub const BufferFlags_ComputeFormat16x1: BufferFlags      = 0x0004;
-
-/// 2 x 16-bit values
-pub const BufferFlags_ComputeFormat16x2: BufferFlags      = 0x0005;
-
-/// 4 x 16-bit values
-pub const BufferFlags_ComputeFormat16x4: BufferFlags      = 0x0006;
-
-/// 1 x 32-bit value
-pub const BufferFlags_ComputeFormat32x1: BufferFlags      = 0x0007;
-
-/// 2 x 32-bit values
-pub const BufferFlags_ComputeFormat32x2: BufferFlags      = 0x0008;
-
-/// 4 x 32-bit values
-pub const BufferFlags_ComputeFormat32x4: BufferFlags      = 0x0009;
-pub const BufferFlags_ComputeFormatShift: BufferFlags     = 0;
-pub const BufferFlags_ComputeFormatMask: BufferFlags      = 0x000f;
-
-/// Type `int`.
-pub const BufferFlags_ComputeTypeInt: BufferFlags         = 0x0010;
-
-/// Type `uint`.
-pub const BufferFlags_ComputeTypeUint: BufferFlags        = 0x0020;
-
-/// Type `float`.
-pub const BufferFlags_ComputeTypeFloat: BufferFlags       = 0x0030;
-pub const BufferFlags_ComputeTypeShift: BufferFlags       = 4;
-pub const BufferFlags_ComputeTypeMask: BufferFlags        = 0x0030;
 pub const BufferFlags_None: BufferFlags                   = 0x0000;
 
 /// Buffer will be read by shader.

@@ -397,22 +397,6 @@ class StencilFlags(enum.IntFlag):
 	OpPassZMask = 0xf0000000
 
 class BufferFlags(enum.IntFlag):
-	ComputeFormat8x1 = 0x1
-	ComputeFormat8x2 = 0x2
-	ComputeFormat8x4 = 0x3
-	ComputeFormat16x1 = 0x4
-	ComputeFormat16x2 = 0x5
-	ComputeFormat16x4 = 0x6
-	ComputeFormat32x1 = 0x7
-	ComputeFormat32x2 = 0x8
-	ComputeFormat32x4 = 0x9
-	ComputeFormatShift = 0x0
-	ComputeFormatMask = 0xf
-	ComputeTypeInt = 0x10
-	ComputeTypeUint = 0x20
-	ComputeTypeFloat = 0x30
-	ComputeTypeShift = 0x4
-	ComputeTypeMask = 0x30
 	None_ = 0x0
 	ComputeRead = 0x100
 	ComputeWrite = 0x200

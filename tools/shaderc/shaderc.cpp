@@ -5,6 +5,7 @@
 
 #include "shaderc.h"
 #include "pp.h"
+#include "../../src/shader.h"
 #include <bx/commandline.h>
 #include <bx/filepath.h>
 #include <bx/file.h>
@@ -13,7 +14,7 @@
 #include <tinystl/vector.h>
 namespace stl = tinystl;
 
-#define BGFX_SHADER_BIN_VERSION 11
+#define BGFX_SHADER_BIN_VERSION 12
 #define BGFX_CHUNK_MAGIC_CSH BX_MAKEFOURCC('C', 'S', 'H', BGFX_SHADER_BIN_VERSION)
 #define BGFX_CHUNK_MAGIC_FSH BX_MAKEFOURCC('F', 'S', 'H', BGFX_SHADER_BIN_VERSION)
 #define BGFX_CHUNK_MAGIC_VSH BX_MAKEFOURCC('V', 'S', 'H', BGFX_SHADER_BIN_VERSION)
@@ -393,6 +394,35 @@ namespace bgfx
 		}
 
 		return UniformType::Count;
+	}
+
+	uint8_t spirvDimToTextureDimensionId(uint32_t _dim, bool _arrayed)
+	{
+		switch (_dim)
+		{
+		case 0: // spv::Dim::Dim1D
+			return textureDimensionToId(TextureDimension::Dimension1D);
+
+		case 1: // spv::Dim::Dim2D
+			return textureDimensionToId(_arrayed
+				? TextureDimension::Dimension2DArray
+				: TextureDimension::Dimension2D
+				);
+
+		case 2: // spv::Dim::Dim3D
+			return textureDimensionToId(TextureDimension::Dimension3D);
+
+		case 3: // spv::Dim::DimCube
+			return textureDimensionToId(_arrayed
+				? TextureDimension::DimensionCubeArray
+				: TextureDimension::DimensionCube
+				);
+
+		default:
+			break;
+		}
+
+		return textureDimensionToId(TextureDimension::Count);
 	}
 
 	int32_t writef(bx::WriterI* _writer, const char* _format, ...)
@@ -1597,6 +1627,7 @@ namespace bgfx
 		{
 			if (profile->lang == ShadingLang::GLSL)
 			{
+				RawBindings().write(_shaderWriter, &err);
 				bx::write(_shaderWriter, uint16_t(0), &err);
 
 				const uint32_t shaderSize = (uint32_t)bx::strLen(input);

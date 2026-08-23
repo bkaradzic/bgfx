@@ -59,6 +59,15 @@
 #define BUFFER_RW(_name, _type, _reg) __BUFFER_XX(_name, _type, _reg, readwrite)
 #define BUFFER_WO(_name, _type, _reg) __BUFFER_XX(_name, _type, _reg, writeonly)
 
+#define BUFFER_RAW_RO(_name, _reg) __BUFFER_XX(_name, uint, _reg, readonly)
+#define BUFFER_RAW_RW(_name, _reg) __BUFFER_XX(_name, uint, _reg, readwrite)
+#define BUFFER_RAW_WO(_name, _reg) __BUFFER_XX(_name, uint, _reg, writeonly)
+
+#define rawLoadUint(_buffer, _index)           _buffer[_index]
+#define rawLoadFloat(_buffer, _index)          uintBitsToFloat(_buffer[_index])
+#define rawStoreUint(_buffer, _index, _value)  _buffer[_index] = _value
+#define rawStoreFloat(_buffer, _index, _value) _buffer[_index] = floatBitsToUint(_value)
+
 #define NUM_THREADS(_x, _y, _z) layout (local_size_x = _x, local_size_y = _y, local_size_z = _z) in;
 
 #define atomicFetchAndAdd(_mem, _data, _original)                    _original = atomicAdd(_mem, _data)
@@ -152,10 +161,28 @@
 #define BUFFER_RO(_name, _struct, _reg) StructuredBuffer<_struct>    _name : REGISTER(t, _reg)
 #define BUFFER_RW(_name, _struct, _reg) RWStructuredBuffer <_struct> _name : REGISTER(u, _reg)
 #define BUFFER_WO(_name, _struct, _reg) BUFFER_RW(_name, _struct, _reg)
+
+#define BUFFER_RAW_RO(_name, _reg) BUFFER_RO(_name, uint, _reg)
+#define BUFFER_RAW_RW(_name, _reg) BUFFER_RW(_name, uint, _reg)
+#define BUFFER_RAW_WO(_name, _reg) BUFFER_WO(_name, uint, _reg)
+
+#define rawLoadUint(_buffer, _index)           _buffer[_index]
+#define rawLoadFloat(_buffer, _index)          uintBitsToFloat(_buffer[_index])
+#define rawStoreUint(_buffer, _index, _value)  _buffer[_index] = _value
+#define rawStoreFloat(_buffer, _index, _value) _buffer[_index] = floatBitsToUint(_value)
 #else
 #define BUFFER_RO(_name, _struct, _reg) Buffer<_struct>   _name : REGISTER(t, _reg)
 #define BUFFER_RW(_name, _struct, _reg) RWBuffer<_struct> _name : REGISTER(u, _reg)
 #define BUFFER_WO(_name, _struct, _reg) BUFFER_RW(_name, _struct, _reg)
+
+#define BUFFER_RAW_RO(_name, _reg) ByteAddressBuffer   _name : REGISTER(t, _reg)
+#define BUFFER_RAW_RW(_name, _reg) RWByteAddressBuffer _name : REGISTER(u, _reg)
+#define BUFFER_RAW_WO(_name, _reg) BUFFER_RAW_RW(_name, _reg)
+
+#define rawLoadUint(_buffer, _index)           _buffer.Load( (_index)*4)
+#define rawLoadFloat(_buffer, _index)          uintBitsToFloat(_buffer.Load( (_index)*4) )
+#define rawStoreUint(_buffer, _index, _value)  _buffer.Store( (_index)*4, _value)
+#define rawStoreFloat(_buffer, _index, _value) _buffer.Store( (_index)*4, floatBitsToUint(_value) )
 #endif // BGFX_SHADER_LANGUAGE_*
 
 #define NUM_THREADS(_x, _y, _z) [numthreads(_x, _y, _z)]
