@@ -7605,6 +7605,51 @@ namespace bgfx { namespace gl
 		return true;
 	}
 
+	static void resolveMsaaRbo(const TextureGL& _src, GLuint _currentFbo)
+	{
+		if (0 == _src.m_rbo
+		||  NULL == glBlitFramebuffer
+		||  bimg::isDepth(bimg::TextureFormat::Enum(_src.m_textureFormat) ) )
+		{
+			return;
+		}
+
+		GLuint fbo[2];
+		GL_CHECK(glGenFramebuffers(BX_COUNTOF(fbo), fbo) );
+
+		GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, fbo[0]) );
+		GL_CHECK(glFramebufferRenderbuffer(GL_READ_FRAMEBUFFER
+			, GL_COLOR_ATTACHMENT0
+			, GL_RENDERBUFFER
+			, _src.m_rbo
+			) );
+
+		GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fbo[1]) );
+		GL_CHECK(glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER
+			, GL_COLOR_ATTACHMENT0
+			, _src.m_target
+			, _src.m_id
+			, 0
+			) );
+
+		GL_CHECK(glDisable(GL_SCISSOR_TEST) );
+		GL_CHECK(glBlitFramebuffer(
+			  0
+			, 0
+			, _src.m_width
+			, _src.m_height
+			, 0
+			, 0
+			, _src.m_width
+			, _src.m_height
+			, GL_COLOR_BUFFER_BIT
+			, GL_NEAREST
+			) );
+
+		GL_CHECK(glDeleteFramebuffers(BX_COUNTOF(fbo), fbo) );
+		GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, _currentFbo) );
+	}
+
 	static bool blitCompressed2D(
 		  const BlitItem& _bi
 		, const TextureGL& _src
@@ -7742,13 +7787,21 @@ namespace bgfx { namespace gl
 					continue;
 				}
 
+				const bool srcReadsMsaaRbo = 0 != src.m_rbo && dst.isMsaaSurface();
+
+				if (!srcReadsMsaaRbo
+				&&  0 == bi.m_srcMip)
+				{
+					resolveMsaaRbo(src, m_currentFbo);
+				}
+
 				GL_CHECK(glCopyImageSubData(
-					  src.m_id
-					, src.m_target
-					, bi.m_srcMip
+					  srcReadsMsaaRbo ? src.m_rbo       : src.m_id
+					, srcReadsMsaaRbo ? GL_RENDERBUFFER : src.m_target
+					, srcReadsMsaaRbo ? 0               : bi.m_srcMip
 					, bi.m_srcX
 					, bi.m_srcY
-					, bi.m_srcZ
+					, srcReadsMsaaRbo ? 0               : bi.m_srcZ
 					, dst.m_id
 					, dst.m_target
 					, bi.m_dstMip
@@ -7773,6 +7826,11 @@ namespace bgfx { namespace gl
 				BX_ASSERT(0 == bi.m_srcZ && 0 == bi.m_dstZ && 1 >= bi.m_depth
 					, "Blitting 3D regions is not supported"
 					);
+
+				if (0 == bi.m_srcMip)
+				{
+					resolveMsaaRbo(src, m_currentFbo);
+				}
 
 				GLuint fbo;
 				GL_CHECK(glGenFramebuffers(1, &fbo) );

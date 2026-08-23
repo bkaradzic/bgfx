@@ -7062,6 +7062,14 @@ namespace bgfx { namespace d3d12
 				, D3D12_RESOURCE_STATE_RESOLVE_DEST
 			);
 
+			const TextureFormatInfo& tfi = s_textureFormat[m_textureFormat];
+			const bool useSrgb = true
+				&& 0 != (m_flags & BGFX_TEXTURE_SRGB)
+				&& !bimg::isDepth(bimg::TextureFormat::Enum(m_textureFormat) )
+				&& DXGI_FORMAT_UNKNOWN != tfi.m_fmtSrgb
+				;
+			const DXGI_FORMAT resolveFormat = useSrgb ? tfi.m_fmtSrgb : tfi.m_fmt;
+
 			for (uint32_t ii = _layer, end = _layer + _numLayers; ii < end; ++ii)
 			{
 				const uint32_t resource = _mip + (ii * m_numMips);
@@ -7070,7 +7078,7 @@ namespace bgfx { namespace d3d12
 					, resource
 					, m_ptr
 					, resource
-					, s_textureFormat[m_textureFormat].m_fmt
+					, resolveFormat
 				);
 			}
 
@@ -7120,6 +7128,12 @@ namespace bgfx { namespace d3d12
 			&& 1  < s_msaa[msaaQuality].Count
 			&& 0 != (m_flags & BGFX_TEXTURE_MSAA_SAMPLE)
 			;
+	}
+
+	bool TextureD3D12::isMultisampled() const
+	{
+		const uint32_t msaaQuality = bx::satSub<uint32_t>(uint32_t( (m_flags&BGFX_TEXTURE_RT_MSAA_MASK) >> BGFX_TEXTURE_RT_MSAA_SHIFT), 1u);
+		return 1 < s_msaa[msaaQuality].Count;
 	}
 
 	D3D12_RESOURCE_STATES TextureD3D12::setState(ID3D12GraphicsCommandList* _commandList, D3D12_RESOURCE_STATES _state)
@@ -7753,10 +7767,10 @@ namespace bgfx { namespace d3d12
 	{
 		ID3D12GraphicsCommandList* commandList = s_renderD3D12->m_commandList;
 
-		Query& query = m_query[_idx];
+		Query& query  = m_query[_idx];
 		query.m_ready = true;
-		query.m_fence = s_renderD3D12->m_cmd.m_currentFence - 1;
-		uint32_t offset = _idx * 2;
+		query.m_fence = s_renderD3D12->m_cmd.m_currentFence;
+		const uint32_t offset = _idx * 2;
 
 		commandList->EndQuery(m_queryHeap
 			, D3D12_QUERY_TYPE_TIMESTAMP
@@ -7873,7 +7887,7 @@ namespace bgfx { namespace d3d12
 			, m_readback
 			, handle.idx * sizeof(uint64_t)
 			);
-		m_fence[idx] = s_renderD3D12->m_cmd.m_currentFence - 1;
+		m_fence[idx] = s_renderD3D12->m_cmd.m_currentFence;
 		m_control.commit(1);
 	}
 
@@ -7956,6 +7970,13 @@ namespace bgfx { namespace d3d12
 
 			if (currentSrc.idx != blit.m_src.idx)
 			{
+				if (NULL != src.m_singleMsaa
+				&&  !dst.isMultisampled()
+				&&  0 == blit.m_srcMip)
+				{
+					src.resolve(m_commandList, BGFX_RESOLVE_NONE, blit.m_srcZ, 1, 0);
+				}
+
 				if (D3D12_RESOURCE_STATES(UINT32_MAX) != srcState)
 				{
 					TextureD3D12& prev = m_textures[currentSrc.idx];
@@ -8094,7 +8115,7 @@ namespace bgfx { namespace d3d12
 
 				const D3D12_TEXTURE_COPY_LOCATION srcLocation =
 				{
-					.pResource        = NULL != src.m_singleMsaa ? src.m_singleMsaa : src.m_ptr,
+					.pResource        = NULL != src.m_singleMsaa && !dst.isMultisampled() ? src.m_singleMsaa : src.m_ptr,
 					.Type             = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX,
 					.SubresourceIndex = srcZ*src.m_numMips+blit.m_srcMip,
 				};
@@ -8238,7 +8259,7 @@ namespace bgfx { namespace d3d12
 		UniformCacheState ucs(_render);
 		BlitState bs(_render);
 
-		uint32_t blendFactor = 0;
+		uint32_t blendFactor = UINT32_MAX;
 
 		const uint64_t primType = _render->m_debug&BGFX_DEBUG_WIREFRAME ? BGFX_STATE_PT_LINES : 0;
 		uint8_t primIndex = uint8_t(primType >> BGFX_STATE_PT_SHIFT);
@@ -8442,6 +8463,7 @@ namespace bgfx { namespace d3d12
 					if (commandListChanged)
 					{
 						commandListChanged = false;
+						blendFactor        = UINT32_MAX;
 
 						m_commandList->SetComputeRootSignature(m_computeRootSignature);
 						ID3D12DescriptorHeap* heaps[] = {
@@ -8762,6 +8784,7 @@ namespace bgfx { namespace d3d12
 					{
 						wasCompute = false;
 						commandListChanged = false;
+						blendFactor        = UINT32_MAX;
 
 						m_commandList->SetGraphicsRootSignature(m_rootSignature);
 						ID3D12DescriptorHeap* heaps[] = {
