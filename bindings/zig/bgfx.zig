@@ -1759,7 +1759,7 @@ pub const Init = extern struct {
     pub const VideoDecoderInit = extern struct {
         magic: u32,
         codec: VideoCodec,
-        parameterSets: [*c]const uint8_t,
+        parameterSets: [*c]const u8,
         parameterSetsSize: u32,
         cachedAuBytes: u32,
         flags: u8,
@@ -1772,7 +1772,7 @@ pub const Init = extern struct {
 
     pub const VideoDecoderFrame = extern struct {
         magic: u32,
-        bitstream: [*c]const uint8_t,
+        bitstream: [*c]const u8,
         aus: [*c]const VideoDecoderAu,
         numAus: u32,
         presentationTimeUs: i64,
