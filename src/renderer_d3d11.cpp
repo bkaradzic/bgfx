@@ -1841,6 +1841,12 @@ namespace bgfx { namespace d3d11
 				m_textures[ii].destroy();
 			}
 
+			for (uint32_t ii = 0; ii < BX_COUNTOF(m_uniforms); ++ii)
+			{
+				bx::free(g_allocator, m_uniforms[ii]);
+				m_uniforms[ii] = NULL;
+			}
+
 			DX_RELEASE(m_annotation, 1);
 			dumpInfoQueue();
 			DX_RELEASE_W(m_infoQueue, 0);
@@ -2477,6 +2483,26 @@ namespace bgfx { namespace d3d11
 			return m_lost;
 		}
 
+		bool handleDeviceLost(HRESULT _hr)
+		{
+			const bool lost = isLost(_hr);
+
+			if (lost
+			&&  !m_lost)
+			{
+				m_lost = true;
+				BGFX_FATAL(false
+					, bgfx::Fatal::DeviceLost
+					, "Device is lost. FAILED HRESULT(%x) %s (%s)"
+					, _hr
+					, getLostReason(_hr)
+					, DXGI_ERROR_DEVICE_REMOVED == _hr ? getLostReason(m_device->GetDeviceRemovedReason() ) : "no info"
+					);
+			}
+
+			return lost;
+		}
+
 		void flip() override
 		{
 			if (!m_lost)
@@ -2514,15 +2540,7 @@ namespace bgfx { namespace d3d11
 					}
 				}
 
-				m_lost = isLost(hr);
-				BGFX_FATAL(
-					  !m_lost
-					, bgfx::Fatal::DeviceLost
-					, "Device is lost. FAILED HRESULT(%x) %s (%s)"
-					, hr
-					, getLostReason(hr)
-					, DXGI_ERROR_DEVICE_REMOVED == hr ? getLostReason(m_device->GetDeviceRemovedReason() ) : "no info"
-					);
+				handleDeviceLost(hr);
 			}
 		}
 
@@ -5983,24 +6001,6 @@ namespace bgfx { namespace d3d11
 		}
 	}
 
-	static bool deviceLost(const HRESULT _hr)
-	{
-		if (isLost(_hr) )
-		{
-			s_renderD3D11->m_lost = true;
-			BGFX_FATAL(false
-				, bgfx::Fatal::DeviceLost
-				, "Device is lost. FAILED HRESULT(%x) %s (%s)"
-				, _hr
-				, getLostReason(_hr)
-				, DXGI_ERROR_DEVICE_REMOVED == _hr ? getLostReason(s_renderD3D11->m_device->GetDeviceRemovedReason() ) : "no info"
-				);
-			return true;
-		}
-
-		return false;
-	}
-
 	bool TimerQueryD3D11::update()
 	{
 		if (0 != m_control.getNumUsed() )
@@ -6020,7 +6020,10 @@ namespace bgfx { namespace d3d11
 			{
 				m_control.consume(1);
 
-				if (deviceLost(hr) )
+				Result& result = m_result[query.m_resultIdx];
+				--result.m_pending;
+
+				if (s_renderD3D11->handleDeviceLost(hr) )
 				{
 					return false;
 				}
@@ -6032,25 +6035,26 @@ namespace bgfx { namespace d3d11
 				};
 
 				D3D11_QUERY_DATA_TIMESTAMP_DISJOINT disjoint;
-				HRESULT hrDisjoint = deviceCtx->GetData(query.m_disjoint, &disjoint, sizeof(disjoint), 0);
-				if (deviceLost(hrDisjoint) )
+				hr = deviceCtx->GetData(query.m_disjoint, &disjoint, sizeof(disjoint), 0);
+
+				if (s_renderD3D11->handleDeviceLost(hr) )
 				{
 					return false;
 				}
-				DX_CHECK(hrDisjoint);
+
+				BX_ASSERT(SUCCEEDED(hr), "GetData(m_disjoint) FAILED 0x%08x.", (uint32_t)hr);
 
 				uint64_t timeBegin;
-				HRESULT hrBegin = deviceCtx->GetData(query.m_begin, &timeBegin, sizeof(timeBegin), 0);
-				if (deviceLost(hrBegin) )
+				hr = deviceCtx->GetData(query.m_begin, &timeBegin, sizeof(timeBegin), 0);
+
+				if (s_renderD3D11->handleDeviceLost(hr) )
 				{
 					return false;
 				}
-				DX_CHECK(hrBegin);
 
-				Result& result = m_result[query.m_resultIdx];
-				--result.m_pending;
-				result.m_frameNum = query.m_frameNum;
+				BX_ASSERT(SUCCEEDED(hr), "GetData(m_begin) FAILED 0x%08x.", (uint32_t)hr);
 
+				result.m_frameNum  = query.m_frameNum;
 				result.m_frequency = disjoint.Frequency;
 				result.m_begin     = timeBegin;
 				result.m_end       = timeEnd;

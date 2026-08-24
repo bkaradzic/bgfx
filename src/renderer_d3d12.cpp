@@ -2131,6 +2131,12 @@ namespace bgfx { namespace d3d12
 				m_textures[ii].destroy();
 			}
 
+			for (uint32_t ii = 0; ii < BX_COUNTOF(m_uniforms); ++ii)
+			{
+				bx::free(g_allocator, m_uniforms[ii]);
+				m_uniforms[ii] = NULL;
+			}
+
 #if BX_PLATFORM_WINDOWS
 			dumpInfoQueue();
 			DX_RELEASE_W(m_infoQueue, 0);
@@ -2186,6 +2192,26 @@ namespace bgfx { namespace d3d12
 			return m_lost;
 		}
 
+		bool handleDeviceLost(HRESULT _hr)
+		{
+			const bool lost = isLost(_hr);
+
+			if (lost
+			&&  !m_lost)
+			{
+				m_lost = true;
+				BGFX_FATAL(false
+					, bgfx::Fatal::DeviceLost
+					, "Device is lost. FAILED 0x%08x %s (%s)"
+					, _hr
+					, getLostReason(_hr)
+					, DXGI_ERROR_DEVICE_REMOVED == _hr ? getLostReason(m_device->GetDeviceRemovedReason() ) : "no info"
+					);
+			}
+
+			return lost;
+		}
+
 		void flip() override
 		{
 			if (!m_lost)
@@ -2223,14 +2249,7 @@ namespace bgfx { namespace d3d12
 				const int64_t now = bx::getHPCounter();
 				m_presentElapsed = now - start;
 
-				m_lost = isLost(hr);
-				BGFX_FATAL(!m_lost
-					, bgfx::Fatal::DeviceLost
-					, "Device is lost. FAILED 0x%08x %s (%s)"
-					, hr
-					, getLostReason(hr)
-					, DXGI_ERROR_DEVICE_REMOVED == hr ? getLostReason(m_device->GetDeviceRemovedReason() ) : "no info"
-					);
+				handleDeviceLost(hr);
 			}
 		}
 
@@ -5165,7 +5184,12 @@ namespace bgfx { namespace d3d12
 			, currentIdx*sizeof(D3D12_QUERY_DATA_PIPELINE_STATISTICS)
 			);
 
-		DX_CHECK(commandList.m_commandList->Close() );
+		HRESULT hr = commandList.m_commandList->Close();
+
+		if (!s_renderD3D12->handleDeviceLost(hr) )
+		{
+			BX_ASSERT(SUCCEEDED(hr), "Close() FAILED 0x%08x.", (uint32_t)hr);
+		}
 
 		ID3D12CommandList* commandLists[] = { commandList.m_commandList };
 		m_commandQueue->ExecuteCommandLists(BX_COUNTOF(commandLists), commandLists);
@@ -5176,8 +5200,22 @@ namespace bgfx { namespace d3d12
 		commandList.m_event = CreateEventExA(NULL, NULL, 0, EVENT_ALL_ACCESS);
 #endif // BX_PLATFORM_LINUX
 		const uint64_t fence = m_currentFence++;
-		m_commandQueue->Signal(m_fence, fence);
-		m_fence->SetEventOnCompletion(fence, commandList.m_event);
+
+		hr = m_commandQueue->Signal(m_fence, fence);
+
+		if (SUCCEEDED(hr) )
+		{
+			hr = m_fence->SetEventOnCompletion(fence, commandList.m_event);
+		}
+
+		if (FAILED(hr) )
+		{
+			s_renderD3D12->handleDeviceLost(hr);
+
+#if !BX_PLATFORM_LINUX
+			SetEvent(commandList.m_event);
+#endif // !BX_PLATFORM_LINUX
+		}
 
 		m_control.commit(1);
 
@@ -5229,10 +5267,18 @@ namespace bgfx { namespace d3d12
 		{
 			CloseHandle(commandList.m_event);
 			commandList.m_event = NULL;
-			m_completedFence = m_fence->GetCompletedValue();
-			BX_WARN(UINT64_MAX != m_completedFence, "D3D12: Device lost.");
 
-			m_commandQueue->Wait(m_fence, m_completedFence);
+			const uint64_t completedFence = m_fence->GetCompletedValue();
+
+			if (UINT64_MAX == completedFence)
+			{
+				s_renderD3D12->handleDeviceLost(DXGI_ERROR_DEVICE_REMOVED);
+			}
+			else
+			{
+				m_completedFence = completedFence;
+				m_commandQueue->Wait(m_fence, m_completedFence);
+			}
 
 			ResourceArray& ra = m_release[m_control.m_read];
 			for (ResourceArray::iterator it = ra.begin(), itEnd = ra.end(); it != itEnd; ++it)
