@@ -780,21 +780,6 @@ WGPU_IMPORT
 		}
 	}
 
-	static void deviceLostCb(
-		  const WGPUDevice* _device
-		, WGPUDeviceLostReason _reason
-		, WGPUStringView _message
-		, void* _userdata1
-		, void* _userdata2
-		)
-	{
-		BX_UNUSED(_device, _reason, _message, _userdata1, _userdata2);
-
-		BX_TRACE("Reason: %d", _reason);
-
-		trace(_message);
-	}
-
 	static uint32_t s_uncapturedError = 0;
 
 	static bool wgpuErrorCheck()
@@ -910,6 +895,52 @@ WGPU_IMPORT
 
 			RendererContextWGPU* renderCtx = (RendererContextWGPU*)_userdata1;
 			renderCtx->m_device = _device;
+		}
+
+		static void deviceLostCb(
+			  const WGPUDevice* _device
+			, WGPUDeviceLostReason _reason
+			, WGPUStringView _message
+			, void* _userdata1
+			, void* _userdata2
+			)
+		{
+			BX_UNUSED(_device, _userdata2);
+
+			BX_TRACE("Reason: %d", _reason);
+
+			trace(_message);
+
+			switch (_reason)
+			{
+			case WGPUDeviceLostReason_Destroyed:
+			case WGPUDeviceLostReason_CallbackCancelled:
+			case WGPUDeviceLostReason_FailedCreation:
+				return;
+
+			default:
+				break;
+			}
+
+			RendererContextWGPU* renderCtx = (RendererContextWGPU*)_userdata1;
+			renderCtx->handleDeviceLost(_message);
+		}
+
+		void handleDeviceLost(const WGPUStringView& _message)
+		{
+			if (0 != bx::atomicCompareAndSwap<uint32_t>(&m_lost, 0, 1) )
+			{
+				return;
+			}
+
+			const bx::StringView msg = toStringView(_message);
+
+			BGFX_FATAL(false
+				, bgfx::Fatal::DeviceLost
+				, "Device is lost. %.*s"
+				, msg.getLength()
+				, msg.getPtr()
+				);
 		}
 
 		WGPUWaitStatus waitForFuture(WGPUFutureWaitInfo& _fwi)
@@ -1268,10 +1299,7 @@ WGPU_IMPORT
 						.deviceLostCallbackInfo =
 							{
 								.nextInChain = NULL,
-								.mode        = BX_ENABLED(BX_PLATFORM_EMSCRIPTEN)
-									? WGPUCallbackMode_AllowSpontaneous
-									: WGPUCallbackMode_WaitAnyOnly
-									,
+								.mode        = WGPUCallbackMode_AllowSpontaneous,
 								.callback    = deviceLostCb,
 								.userdata1   = this,
 								.userdata2   = NULL,
@@ -1563,6 +1591,12 @@ WGPU_IMPORT
 				m_textures[ii].destroy();
 			}
 
+			for (uint32_t ii = 0; ii < BX_COUNTOF(m_uniforms); ++ii)
+			{
+				bx::free(g_allocator, m_uniforms[ii]);
+				m_uniforms[ii] = NULL;
+			}
+
 			m_backBuffer.destroy();
 
 			m_gpuTimer.shutdown();
@@ -1593,11 +1627,16 @@ WGPU_IMPORT
 
 		bool isDeviceRemoved() override
 		{
-			return false;
+			return 0 != m_lost;
 		}
 
 		void flip() override
 		{
+			if (0 != m_lost)
+			{
+				return;
+			}
+
 			int64_t start = bx::getHPCounter();
 
 			for (uint16_t ii = 0; ii < m_numWindows; ++ii)
@@ -3463,6 +3502,8 @@ WGPU_IMPORT
 
 		uint8_t m_fsScratch[64<<10];
 		uint8_t m_vsScratch[64<<10];
+
+		uint32_t m_lost = 0;
 	};
 
 	static RendererContextWGPU* s_renderWGPU;
@@ -5887,6 +5928,11 @@ m_resolution.formatColor = TextureFormat::BGRA8;
 
 	void RendererContextWGPU::submit(Frame* _render, const ClearQuad& _clearQuad, const MipGen& _mipGen, TextVideoMemBlitter& _textVideoMemBlitter)
 	{
+		if (0 != m_lost)
+		{
+			return;
+		}
+
 		m_mipGen = &_mipGen;
 		m_occlusionQuery.readResultsAsync(_render);
 		m_gpuTimer.readResultsAsync();

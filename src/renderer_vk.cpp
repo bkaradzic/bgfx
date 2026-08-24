@@ -2508,6 +2508,12 @@ VK_IMPORT_DEVICE
 				m_textures[ii].destroy();
 			}
 
+			for (uint32_t ii = 0; ii < BX_COUNTOF(m_uniforms); ++ii)
+			{
+				bx::free(g_allocator, m_uniforms[ii]);
+				m_uniforms[ii] = NULL;
+			}
+
 			m_backBuffer.destroy();
 
 			m_cmd.shutdown();
@@ -2560,11 +2566,35 @@ VK_IMPORT_DEVICE
 
 		bool isDeviceRemoved() override
 		{
-			return false;
+			return m_lost;
+		}
+
+		bool handleDeviceLost(VkResult _result)
+		{
+			const bool lost = VK_ERROR_DEVICE_LOST == _result;
+
+			if (lost
+			&&  !m_lost)
+			{
+				m_lost = true;
+				BGFX_FATAL(false
+					, bgfx::Fatal::DeviceLost
+					, "Device is lost. VK error 0x%x: %s"
+					, _result
+					, getName(_result)
+					);
+			}
+
+			return lost;
 		}
 
 		void flip() override
 		{
+			if (m_lost)
+			{
+				return;
+			}
+
 			int64_t start = bx::getHPCounter();
 
 			for (uint16_t ii = 0; ii < m_numWindows; ++ii)
@@ -5013,6 +5043,7 @@ VK_IMPORT_DEVICE
 		bool m_borderColorSupport;
 		bool m_timerQuerySupport;
 		bool m_swapchainMaintenance1Supported = false;
+		bool m_lost = false;
 
 		FrameBufferVK m_backBuffer;
 
@@ -8785,6 +8816,7 @@ VK_DESTROY
 				return false;
 
 			default:
+				s_renderVK->handleDeviceLost(result);
 				BX_ASSERT(VK_SUCCESS == result, "vkAcquireNextImageKHR(...); VK error 0x%x: %s", result, getName(result) );
 				return false;
 			}
@@ -8793,13 +8825,20 @@ VK_DESTROY
 			{
 				BGFX_PROFILER_SCOPE("vkWaitForFences", kColorWait);
 
-				VK_CHECK(vkWaitForFences(
+				result = vkWaitForFences(
 					  device
 					, 1
 					, &m_backBufferFence[m_backBufferColorIdx]
 					, VK_TRUE
 					, UINT64_MAX
-					) );
+					);
+
+				if (s_renderVK->handleDeviceLost(result) )
+				{
+					return false;
+				}
+
+				BX_ASSERT(VK_SUCCESS == result, "vkWaitForFences(...); VK error 0x%x: %s", result, getName(result) );
 			}
 
 			transitionImage(_commandBuffer);
@@ -8873,6 +8912,7 @@ VK_DESTROY
 				break;
 
 			default:
+				s_renderVK->handleDeviceLost(result);
 				BX_ASSERT(VK_SUCCESS == result, "vkQueuePresentKHR(...); VK error 0x%x: %s", result, getName(result) );
 				break;
 			}
@@ -9312,6 +9352,7 @@ VK_DESTROY
 
 			if (VK_SUCCESS != result)
 			{
+				s_renderVK->handleDeviceLost(result);
 				BX_TRACE("Allocate command buffer error: vkWaitForFences failed %d: %s.", result, getName(result) );
 				return result;
 			}
@@ -9422,14 +9463,24 @@ VK_DESTROY
 			{
 				BGFX_PROFILER_SCOPE("vkQueueSubmit", kColorDraw);
 
-				VK_CHECK(vkQueueSubmit(m_queue, 1, &si, m_completedFence) );
+				VkResult result = vkQueueSubmit(m_queue, 1, &si, m_completedFence);
+
+				if (!s_renderVK->handleDeviceLost(result) )
+				{
+					BX_ASSERT(VK_SUCCESS == result, "vkQueueSubmit(...); VK error 0x%x: %s", result, getName(result) );
+				}
 			}
 
 			if (_wait)
 			{
 				BGFX_PROFILER_SCOPE("vkWaitForFences", kColorWait);
 
-				VK_CHECK(vkWaitForFences(device, 1, &m_completedFence, VK_TRUE, UINT64_MAX) );
+				VkResult result = vkWaitForFences(device, 1, &m_completedFence, VK_TRUE, UINT64_MAX);
+
+				if (!s_renderVK->handleDeviceLost(result) )
+				{
+					BX_ASSERT(VK_SUCCESS == result, "vkWaitForFences(...); VK error 0x%x: %s", result, getName(result) );
+				}
 			}
 
 			m_activeCommandBuffer = VK_NULL_HANDLE;
@@ -9741,7 +9792,8 @@ VK_DESTROY
 
 	void RendererContextVK::submit(Frame* _render, const ClearQuad& /*_clearQuad*/, const MipGen& /*_mipGen*/, TextVideoMemBlitter& _textVideoMemBlitter)
 	{
-		if (updateResolution(_render->m_resolution) )
+		if (m_lost
+		||  updateResolution(_render->m_resolution) )
 		{
 			return;
 		}
