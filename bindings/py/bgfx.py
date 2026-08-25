@@ -679,6 +679,12 @@ class TransientVertexBuffer(ctypes.Structure):
 class InstanceDataBuffer(ctypes.Structure):
 	pass
 
+class TextureRegion(ctypes.Structure):
+	pass
+
+class BufferRegion(ctypes.Structure):
+	pass
+
 class TextureInfo(ctypes.Structure):
 	pass
 
@@ -799,6 +805,13 @@ class VertexLayoutHandle(ctypes.Structure):
 	def valid(self):
 		return self.idx != 0xffff
 
+class BufferHandle(ctypes.Structure):
+	_fields_ = [("idx", ctypes.c_uint16), ("type", ctypes.c_uint16)]
+
+	@property
+	def valid(self):
+		return self.idx != 0xffff
+
 ReleaseFn = ctypes.CFUNCTYPE(None, ctypes.c_void_p, ctypes.c_void_p)
 
 CapsGPU._fields_ = [
@@ -834,6 +847,8 @@ CapsLimits._fields_ = [
 	("maxTransientVbSize", ctypes.c_uint32),
 	("maxTransientIbSize", ctypes.c_uint32),
 	("minUniformBufferSize", ctypes.c_uint32),
+	("blitRowPitchAlign", ctypes.c_uint32),
+	("blitOffsetAlign", ctypes.c_uint32),
 ]
 
 Caps._fields_ = [
@@ -933,6 +948,25 @@ InstanceDataBuffer._fields_ = [
 	("handle", VertexBufferHandle),
 ]
 
+TextureRegion._fields_ = [
+	("handle", TextureHandle),
+	("mip", ctypes.c_uint8),
+	("x", ctypes.c_uint16),
+	("y", ctypes.c_uint16),
+	("z", ctypes.c_uint16),
+	("width", ctypes.c_uint16),
+	("height", ctypes.c_uint16),
+	("depth", ctypes.c_uint16),
+]
+
+BufferRegion._fields_ = [
+	("handle", BufferHandle),
+	("offset", ctypes.c_uint32),
+	("size", ctypes.c_uint32),
+	("rowPitch", ctypes.c_uint32),
+	("slicePitch", ctypes.c_uint32),
+]
+
 TextureInfo._fields_ = [
 	("format", ctypes.c_int),
 	("storageSize", ctypes.c_uint32),
@@ -1016,6 +1050,7 @@ Stats._fields_ = [
 	("numDraw", ctypes.c_uint32),
 	("numCompute", ctypes.c_uint32),
 	("numBlit", ctypes.c_uint32),
+	("numBlitRepack", ctypes.c_uint32),
 	("numDrawCallsPeak", ctypes.c_uint32),
 	("maxGpuLatency", ctypes.c_uint32),
 	("gpuFrameNum", ctypes.c_uint32),
@@ -1063,6 +1098,18 @@ def load(path):
 	return _lib
 
 def _bind(lib):
+	global bgfx_texture_region_init
+	bgfx_texture_region_init = lib.bgfx_texture_region_init
+	bgfx_texture_region_init.argtypes = [ctypes.POINTER(TextureRegion), TextureHandle, ctypes.c_uint16, ctypes.c_uint16, ctypes.c_uint16, ctypes.c_uint16]
+	bgfx_texture_region_init.restype = None
+	global bgfx_buffer_region_init_texture
+	bgfx_buffer_region_init_texture = lib.bgfx_buffer_region_init_texture
+	bgfx_buffer_region_init_texture.argtypes = [ctypes.POINTER(BufferRegion), ctypes.POINTER(TextureRegion)]
+	bgfx_buffer_region_init_texture.restype = None
+	global bgfx_buffer_region_init_buffer
+	bgfx_buffer_region_init_buffer = lib.bgfx_buffer_region_init_buffer
+	bgfx_buffer_region_init_buffer.argtypes = [ctypes.POINTER(BufferRegion), BufferHandle, ctypes.c_uint32, ctypes.c_uint32]
+	bgfx_buffer_region_init_buffer.restype = None
 	global bgfx_attachment_init
 	bgfx_attachment_init = lib.bgfx_attachment_init
 	bgfx_attachment_init.argtypes = [ctypes.POINTER(Attachment), TextureHandle, ctypes.c_int, ctypes.c_uint16, ctypes.c_uint16, ctypes.c_uint16, ctypes.c_uint8]
@@ -1183,6 +1230,10 @@ def _bind(lib):
 	bgfx_create_index_buffer = lib.bgfx_create_index_buffer
 	bgfx_create_index_buffer.argtypes = [ctypes.POINTER(Memory), ctypes.c_uint16]
 	bgfx_create_index_buffer.restype = IndexBufferHandle
+	global bgfx_read_buffer
+	bgfx_read_buffer = lib.bgfx_read_buffer
+	bgfx_read_buffer.argtypes = [ctypes.POINTER(BufferRegion), ctypes.c_void_p]
+	bgfx_read_buffer.restype = ctypes.c_uint32
 	global bgfx_set_index_buffer_name
 	bgfx_set_index_buffer_name = lib.bgfx_set_index_buffer_name
 	bgfx_set_index_buffer_name.argtypes = [IndexBufferHandle, ctypes.c_char_p, ctypes.c_int32]
@@ -1361,7 +1412,7 @@ def _bind(lib):
 	bgfx_clear_texture.restype = None
 	global bgfx_read_texture
 	bgfx_read_texture = lib.bgfx_read_texture
-	bgfx_read_texture.argtypes = [TextureHandle, ctypes.c_void_p, ctypes.c_uint16, ctypes.c_uint8]
+	bgfx_read_texture.argtypes = [ctypes.POINTER(TextureRegion), ctypes.c_void_p]
 	bgfx_read_texture.restype = ctypes.c_uint32
 	global bgfx_set_texture_name
 	bgfx_set_texture_name = lib.bgfx_set_texture_name
@@ -1677,8 +1728,20 @@ def _bind(lib):
 	bgfx_encoder_discard.restype = None
 	global bgfx_encoder_blit
 	bgfx_encoder_blit = lib.bgfx_encoder_blit
-	bgfx_encoder_blit.argtypes = [ctypes.POINTER(Encoder), ctypes.c_uint16, TextureHandle, ctypes.c_uint8, ctypes.c_uint16, ctypes.c_uint16, ctypes.c_uint16, TextureHandle, ctypes.c_uint8, ctypes.c_uint16, ctypes.c_uint16, ctypes.c_uint16, ctypes.c_uint16, ctypes.c_uint16, ctypes.c_uint16]
+	bgfx_encoder_blit.argtypes = [ctypes.POINTER(Encoder), ctypes.c_uint16, ctypes.POINTER(TextureRegion), ctypes.POINTER(TextureRegion)]
 	bgfx_encoder_blit.restype = None
+	global bgfx_encoder_blit_buffer
+	bgfx_encoder_blit_buffer = lib.bgfx_encoder_blit_buffer
+	bgfx_encoder_blit_buffer.argtypes = [ctypes.POINTER(Encoder), ctypes.c_uint16, ctypes.POINTER(BufferRegion), ctypes.POINTER(BufferRegion)]
+	bgfx_encoder_blit_buffer.restype = None
+	global bgfx_encoder_blit_to_buffer
+	bgfx_encoder_blit_to_buffer = lib.bgfx_encoder_blit_to_buffer
+	bgfx_encoder_blit_to_buffer.argtypes = [ctypes.POINTER(Encoder), ctypes.c_uint16, ctypes.POINTER(BufferRegion), ctypes.POINTER(TextureRegion)]
+	bgfx_encoder_blit_to_buffer.restype = None
+	global bgfx_encoder_blit_from_buffer
+	bgfx_encoder_blit_from_buffer = lib.bgfx_encoder_blit_from_buffer
+	bgfx_encoder_blit_from_buffer.argtypes = [ctypes.POINTER(Encoder), ctypes.c_uint16, ctypes.POINTER(TextureRegion), ctypes.POINTER(BufferRegion)]
+	bgfx_encoder_blit_from_buffer.restype = None
 	global bgfx_request_screen_shot
 	bgfx_request_screen_shot = lib.bgfx_request_screen_shot
 	bgfx_request_screen_shot.argtypes = [FrameBufferHandle, ctypes.c_char_p]
@@ -1869,5 +1932,17 @@ def _bind(lib):
 	bgfx_discard.restype = None
 	global bgfx_blit
 	bgfx_blit = lib.bgfx_blit
-	bgfx_blit.argtypes = [ctypes.c_uint16, TextureHandle, ctypes.c_uint8, ctypes.c_uint16, ctypes.c_uint16, ctypes.c_uint16, TextureHandle, ctypes.c_uint8, ctypes.c_uint16, ctypes.c_uint16, ctypes.c_uint16, ctypes.c_uint16, ctypes.c_uint16, ctypes.c_uint16]
+	bgfx_blit.argtypes = [ctypes.c_uint16, ctypes.POINTER(TextureRegion), ctypes.POINTER(TextureRegion)]
 	bgfx_blit.restype = None
+	global bgfx_blit_buffer
+	bgfx_blit_buffer = lib.bgfx_blit_buffer
+	bgfx_blit_buffer.argtypes = [ctypes.c_uint16, ctypes.POINTER(BufferRegion), ctypes.POINTER(BufferRegion)]
+	bgfx_blit_buffer.restype = None
+	global bgfx_blit_to_buffer
+	bgfx_blit_to_buffer = lib.bgfx_blit_to_buffer
+	bgfx_blit_to_buffer.argtypes = [ctypes.c_uint16, ctypes.POINTER(BufferRegion), ctypes.POINTER(TextureRegion)]
+	bgfx_blit_to_buffer.restype = None
+	global bgfx_blit_from_buffer
+	bgfx_blit_from_buffer = lib.bgfx_blit_from_buffer
+	bgfx_blit_from_buffer.argtypes = [ctypes.c_uint16, ctypes.POINTER(TextureRegion), ctypes.POINTER(BufferRegion)]
+	bgfx_blit_from_buffer.restype = None

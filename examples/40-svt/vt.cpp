@@ -489,7 +489,11 @@ void PageTable::update(bgfx::ViewId blitViewId)
 		auto stagingTexture = m_stagingTextures[i];
 		auto size = uint16_t(m_info->GetPageTableSize() >> i);
 		bgfx::updateTexture2D(stagingTexture, 0, 0, 0, 0, size, size, bgfx::copy(&m_images[i]->m_data[0], size * size * s_channelCount));
-		bgfx::blit(blitViewId, m_texture, uint8_t(i), 0, 0, 0, stagingTexture, 0, 0, 0, 0, size, size);
+		bgfx::blit(
+			  blitViewId
+			, { .handle = m_texture, .mip = uint8_t(i) }
+			, { .handle = stagingTexture, .width = size, .height = size }
+			);
 	}
 }
 
@@ -748,7 +752,11 @@ void TextureAtlas::uploadPage(Point pt, uint8_t* data, bgfx::ViewId blitViewId)
 	// Copy the texture part to the actual atlas texture
 	auto xpos = uint16_t(pt.m_x * pagesize);
 	auto ypos = uint16_t(pt.m_y * pagesize);
-	bgfx::blit(blitViewId, m_texture, 0, xpos, ypos, 0, writer, 0, 0, 0, 0, pagesize, pagesize);
+	bgfx::blit(
+		  blitViewId
+		, { .handle = m_texture, .x = xpos, .y = ypos }
+		, { .handle = writer, .width = pagesize, .height = pagesize }
+		);
 }
 
 bgfx::TextureHandle TextureAtlas::getTexture()
@@ -799,7 +807,7 @@ void FeedbackBuffer::copy(bgfx::ViewId viewId)
 {
 	m_lastStagingTexture = m_stagingPool.getTexture();
 	// Copy feedback buffer render target to staging texture
-	bgfx::blit(viewId, m_lastStagingTexture, 0, 0, bgfx::getTexture(m_feedbackFrameBuffer));
+	bgfx::blit(viewId, { .handle = m_lastStagingTexture }, { .handle = bgfx::getTexture(m_feedbackFrameBuffer) });
 	m_stagingPool.next();
 }
 
@@ -812,7 +820,7 @@ void FeedbackBuffer::download()
 	}
 
 	// Read the texture
-	bgfx::readTexture(m_lastStagingTexture, &m_downloadBuffer[0]);
+	bgfx::read({ .handle = m_lastStagingTexture }, &m_downloadBuffer[0]);
 	// Loop through pixels and check if anything was written
 	auto data = &m_downloadBuffer[0];
 	auto colors = (Color*)data;

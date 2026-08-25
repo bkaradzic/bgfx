@@ -657,18 +657,8 @@ public:
 					{
 						bgfx::blit(
 							  0
-							, m_textureCube[1]
-							, 0
-							, rect.m_x
-							, rect.m_y
-							, face.m_side
-							, m_textureCube[0]
-							, 0
-							, rect.m_x
-							, rect.m_y
-							, face.m_side
-							, rect.m_width
-							, rect.m_height
+							, { .handle = m_textureCube[1], .x = rect.m_x, .y = rect.m_y, .z = face.m_side }
+							, { .handle = m_textureCube[0], .x = rect.m_x, .y = rect.m_y, .z = face.m_side, .width = rect.m_width, .height = rect.m_height }
 							);
 					}
 
@@ -690,18 +680,8 @@ public:
 						{
 							bgfx::blit(
 								  0
-								, m_textureCube[1]
-								, 0
-								, rect.m_x
-								, rect.m_y
-								, face.m_side
-								, m_textureCube[0]
-								, 0
-								, rect.m_x
-								, rect.m_y
-								, face.m_side
-								, rect.m_width
-								, rect.m_height
+								, { .handle = m_textureCube[1], .x = rect.m_x, .y = rect.m_y, .z = face.m_side }
+								, { .handle = m_textureCube[0], .x = rect.m_x, .y = rect.m_y, .z = face.m_side, .width = rect.m_width, .height = rect.m_height }
 								);
 						}
 
@@ -1050,17 +1030,17 @@ public:
 
 			if (m_blitSupported)
 			{
-				bgfx::blit(1, m_blitTestA, 0, 0, m_blitTestB, 0, 0);
-				bgfx::blit(1, m_blitTestC, 0, 0, m_blitTestA, 0, 0);
+				bgfx::blit(1, { .handle = m_blitTestA }, { .handle = m_blitTestB });
+				bgfx::blit(1, { .handle = m_blitTestC }, { .handle = m_blitTestA });
 
-				bgfx::blit(1, m_blitTestA, 0, 0, m_blitTestB, 0, 0);
-				bgfx::blit(1, m_blitTestB, 0, 0, m_blitTestC, 0, 0);
+				bgfx::blit(1, { .handle = m_blitTestA }, { .handle = m_blitTestB });
+				bgfx::blit(1, { .handle = m_blitTestB }, { .handle = m_blitTestC });
 
-				bgfx::blit(1, m_blitTestA, 0, 0, m_blitTestB, 0, 0);
-				bgfx::blit(1, m_blitTestB, 0, 0, m_blitTestA, 0, 0);
+				bgfx::blit(1, { .handle = m_blitTestA }, { .handle = m_blitTestB });
+				bgfx::blit(1, { .handle = m_blitTestB }, { .handle = m_blitTestA });
 
-				bgfx::blit(1, m_blitTestB, 0, 0, m_blitTestA, 0, 0);
-				bgfx::blit(1, m_blitTestC, 0, 0, m_blitTestB, 0, 0);
+				bgfx::blit(1, { .handle = m_blitTestB }, { .handle = m_blitTestA });
+				bgfx::blit(1, { .handle = m_blitTestC }, { .handle = m_blitTestB });
 			}
 
 			imguiEndFrame();

@@ -197,7 +197,7 @@ int _main_(int _argc, char** _argv)
 			}
 		}
 
-		bgfx::blit(1, rb, 0, 0, bgfx::getTexture(fbh) );
+		bgfx::blit(1, { .handle = rb }, { .handle = bgfx::getTexture(fbh) });
 
 		currentFrame = bgfx::frame();
 	}
@@ -213,7 +213,7 @@ int _main_(int _argc, char** _argv)
 
 		uint8_t* data = (uint8_t*)bx::alloc(&allocator, kWidth*kHeight*4);
 
-		uint32_t expectedFrame = bgfx::readTexture(rb, data);
+		uint32_t expectedFrame = bgfx::read({ .handle = rb }, data);
 
 		while (currentFrame < expectedFrame) // Make sure read texture is complete.
 		{

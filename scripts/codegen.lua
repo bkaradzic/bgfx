@@ -958,7 +958,11 @@ local function text_with_comments(items, item, cstyle, is_classmember, name_alig
 	if is_classmember then
 		name = "m_" .. name
 	end
-	local text = string.format("%s%s %s;", typename, namealign(typename, name_align or DEFAULT_NAME_ALIGN), name)
+	local default = ""
+	if not cstyle and item.default ~= nil then
+		default = " = " .. tostring(item.default)
+	end
+	local text = string.format("%s%s %s%s;", typename, namealign(typename, name_align or DEFAULT_NAME_ALIGN), name, default)
 	if item.comment then
 		if #item.comment > 1 then
 			if cstyle then
@@ -1016,6 +1020,9 @@ function codegen.gen_struct_define(struct, methods)
 				name = "m_" .. name
 			end
 			local text_len = #item.fulltype + 1 + #name + 1
+			if item.default ~= nil then
+				text_len = text_len + 3 + #tostring(item.default)
+			end
 			if text_len > max_text_len then
 				max_text_len = text_len
 			end
@@ -1095,15 +1102,138 @@ end
 local chandle_temp = [[
 typedef struct $NAME_s { uint16_t idx; } $NAME_t;
 ]]
+
+local tagged_chandle_temp = [[
+typedef struct $NAME_s { uint16_t idx; uint16_t type; } $NAME_t;
+
+typedef enum $NAME_type
+{
+$CENUMS
+	$UPPERNAME_TYPE_COUNT
+
+} $NAME_type_t;
+
+$CCONVERTERS
+#if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L
+#define $UPPERNAME(_handle) _Generic( (_handle)$CGENERIC \
+	)(_handle)
+#endif // defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L
+]]
+
+local cconverter_temp = [[
+static inline $NAME_t $CONVERTER($TAGGEDCNAME _handle)
+{
+	$NAME_t handle;
+	handle.idx  = _handle.idx;
+	handle.type = $CTAG;
+	return handle;
+}
+]]
+
 function codegen.gen_chandle(handle)
 	assert(handle.handle, "Not a handle")
-	return (chandle_temp:gsub("$(%u+)", { NAME = handle.cname:match "(.-)_t$" }))
+
+	local name = handle.cname:match "(.-)_t$"
+
+	if not handle.tagged then
+		return (chandle_temp:gsub("$(%u+)", { NAME = name }))
+	end
+
+	local base = camelcase_to_underscorecase(assert(handle.name:match "(.-)Handle$"
+		, "Tagged handle name must end with `Handle`") )
+
+	local enums      = {}
+	local converters = {}
+	local generic    = {}
+	local align      = 0
+
+	for _, taggedName in ipairs(handle.tagged) do
+		align = math.max(align, #camelcase_to_underscorecase(taggedName) + 7)
+	end
+
+	for _, taggedName in ipairs(handle.tagged) do
+		local tag       = assert(taggedName:match "(.-)Handle$", "Tagged handle type must be a handle")
+		local ctag      = name:upper() .. "_TYPE_" .. camelcase_to_underscorecase(tag):upper()
+		local converter = "bgfx_" .. base .. "_from_" .. camelcase_to_underscorecase(tag)
+		local ctagged   = "bgfx_" .. camelcase_to_underscorecase(taggedName) .. "_t"
+
+		enums[#enums+1] = "\t" .. ctag .. ","
+		converters[#converters+1] = (cconverter_temp:gsub("$(%u+)", {
+			NAME        = name,
+			CONVERTER   = converter,
+			TAGGEDCNAME = ctagged,
+			CTAG        = ctag,
+		}))
+		generic[#generic+1] = "\t, " .. ctagged .. string.rep(" ", align - #ctagged) .. ": " .. converter
+	end
+
+	return (tagged_chandle_temp:gsub("$(%u+)", {
+		NAME        = name,
+		UPPERNAME   = name:upper(),
+		CENUMS      = table.concat(enums, "\n") .. "\n",
+		CCONVERTERS = table.concat(converters, "\n"),
+		CGENERIC    = " \\\n" .. table.concat(generic, " \\\n"),
+	}))
 end
 
 local handle_temp = "BGFX_HANDLE($NAME)"
+
+local tagged_handle_temp = [[
+
+struct $NAME
+{
+	enum Enum
+	{
+$ENUMS
+		Count
+	};
+
+	$NAME()
+		: idx(kInvalidHandle)
+		, type(Count)
+	{
+	}
+
+$CTORS
+	uint16_t idx;
+	uint16_t type;
+};
+
+inline bool isValid($NAME _handle) { return bgfx::kInvalidHandle != _handle.idx; }]]
+
+local tagged_ctor_temp = [[
+	$NAME($TAGGEDNAME _handle)
+		: idx(_handle.idx)
+		, type($TAG)
+	{
+	}
+]]
+
 function codegen.gen_handle(handle)
 	assert(handle.handle, "Not a handle")
-	return (handle_temp:gsub("$(%u+)", { NAME = handle.name }))
+
+	if not handle.tagged then
+		return (handle_temp:gsub("$(%u+)", { NAME = handle.name }))
+	end
+
+	local enums = {}
+	local ctors = {}
+
+	for _, name in ipairs(handle.tagged) do
+		local tag = assert(name:match "(.-)Handle$", "Tagged handle type must be a handle")
+		enums[#enums+1] = "\t\t" .. tag .. ","
+		ctors[#ctors+1] = (tagged_ctor_temp:gsub("$(%u+)", {
+			NAME       = handle.name,
+			TAGGEDNAME = name,
+			TAG        = tag,
+		}))
+	end
+
+	return (tagged_handle_temp:gsub("$(%u+)", {
+		NAME  = handle.name,
+		ENUMS = table.concat(enums, "\n") .. "\n",
+		CTORS = table.concat(ctors, "\n"),
+	}))
 end
 
 local idl = require "idl"

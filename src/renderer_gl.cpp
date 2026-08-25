@@ -3592,6 +3592,46 @@ namespace bgfx { namespace gl
 			}
 		}
 
+		GLuint getBufferId(Handle _handle) const
+		{
+			if (_handle.isIndexBuffer() )
+			{
+				return m_indexBuffers[_handle.idx].m_id;
+			}
+
+			return m_vertexBuffers[_handle.idx].m_id;
+		}
+
+		void readBuffer(Handle _handle, void* _data, uint32_t _offset, uint32_t _size) override
+		{
+			if (NULL == glMapBufferRange)
+			{
+				bx::memSet(_data, 0, _size);
+				return;
+			}
+
+			if (NULL != glMemoryBarrier)
+			{
+				GL_CHECK(glMemoryBarrier(GL_BUFFER_UPDATE_BARRIER_BIT) );
+			}
+
+			GL_CHECK(glBindBuffer(GL_COPY_READ_BUFFER, getBufferId(_handle) ) );
+
+			const void* src = glMapBufferRange(GL_COPY_READ_BUFFER, _offset, _size, GL_MAP_READ_BIT);
+
+			if (NULL != src)
+			{
+				bx::memCopy(_data, src, _size);
+				GL_CHECK(glUnmapBuffer(GL_COPY_READ_BUFFER) );
+			}
+			else
+			{
+				bx::memSet(_data, 0, _size);
+			}
+
+			GL_CHECK(glBindBuffer(GL_COPY_READ_BUFFER, 0) );
+		}
+
 		void resizeTexture(TextureHandle _handle, uint16_t _width, uint16_t _height, uint8_t _numMips, uint16_t _numLayers) override
 		{
 			TextureGL& texture = m_textures[_handle.idx];
@@ -3808,6 +3848,8 @@ namespace bgfx { namespace gl
 		}
 
 		void submitBlit(BlitState& _bs, uint16_t _view);
+
+		bool submitBlitBufferItem(const BlitItem& _bi);
 
 		void submitUniformCache(UniformCacheState& _ucs, uint16_t _view);
 
@@ -7741,6 +7783,185 @@ namespace bgfx { namespace gl
 		return true;
 	}
 
+	static void blitBuffer(GLuint _src, GLuint _dst, const BlitItem& _bi)
+	{
+		if (NULL == glCopyBufferSubData)
+		{
+			return;
+		}
+
+		if (NULL != glMemoryBarrier)
+		{
+			GL_CHECK(glMemoryBarrier(GL_BUFFER_UPDATE_BARRIER_BIT) );
+		}
+
+		GL_CHECK(glBindBuffer(GL_COPY_READ_BUFFER,  _src) );
+		GL_CHECK(glBindBuffer(GL_COPY_WRITE_BUFFER, _dst) );
+
+		GL_CHECK(glCopyBufferSubData(
+			  GL_COPY_READ_BUFFER
+			, GL_COPY_WRITE_BUFFER
+			, _bi.m_srcOffset
+			, _bi.m_dstOffset
+			, _bi.m_size
+			) );
+
+		GL_CHECK(glBindBuffer(GL_COPY_READ_BUFFER,  0) );
+		GL_CHECK(glBindBuffer(GL_COPY_WRITE_BUFFER, 0) );
+	}
+
+	static void blitBufferToTexture(const TextureGL& _dst, GLuint _src, const BlitItem& _bi)
+	{
+		if (NULL == glBindBuffer)
+		{
+			return;
+		}
+
+		if (NULL != glMemoryBarrier)
+		{
+			GL_CHECK(glMemoryBarrier(GL_BUFFER_UPDATE_BARRIER_BIT) );
+		}
+
+		GL_CHECK(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, _src) );
+		GL_CHECK(glPixelStorei(GL_UNPACK_ALIGNMENT, 1) );
+		GL_CHECK(glBindTexture(_dst.m_target, _dst.m_id) );
+
+		uint32_t rowLength, imageHeight;
+		calcTextureRegionTexelPitch(
+			  rowLength
+			, imageHeight
+			, TextureFormat::Enum(_dst.m_textureFormat)
+			, _bi.m_rowPitch
+			, _bi.m_slicePitch
+			);
+
+		GL_CHECK(glPixelStorei(GL_UNPACK_ROW_LENGTH,   rowLength) );
+		GL_CHECK(glPixelStorei(GL_UNPACK_IMAGE_HEIGHT, imageHeight) );
+
+		const GLvoid* data = (const GLvoid*)uintptr_t(_bi.m_srcOffset);
+
+		if (GL_TEXTURE_3D             == _dst.m_target
+		||  GL_TEXTURE_2D_ARRAY       == _dst.m_target
+		||  GL_TEXTURE_CUBE_MAP_ARRAY == _dst.m_target)
+		{
+			GL_CHECK(glTexSubImage3D(
+				  _dst.m_target
+				, _bi.m_dstMip
+				, _bi.m_dstX
+				, _bi.m_dstY
+				, _bi.m_dstZ
+				, _bi.m_width
+				, _bi.m_height
+				, bx::max<uint16_t>(1, _bi.m_depth)
+				, _dst.m_fmt
+				, _dst.m_type
+				, data
+				) );
+		}
+		else
+		{
+			GL_CHECK(glTexSubImage2D(
+				  GL_TEXTURE_CUBE_MAP == _dst.m_target
+					? GL_TEXTURE_CUBE_MAP_POSITIVE_X + _bi.m_dstZ
+					: _dst.m_target
+				, _bi.m_dstMip
+				, _bi.m_dstX
+				, _bi.m_dstY
+				, _bi.m_width
+				, _bi.m_height
+				, _dst.m_fmt
+				, _dst.m_type
+				, data
+				) );
+		}
+
+		GL_CHECK(glBindTexture(_dst.m_target, 0) );
+		GL_CHECK(glPixelStorei(GL_UNPACK_IMAGE_HEIGHT, 0) );
+		GL_CHECK(glPixelStorei(GL_UNPACK_ROW_LENGTH,   0) );
+		GL_CHECK(glPixelStorei(GL_UNPACK_ALIGNMENT, 4) );
+		GL_CHECK(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0) );
+	}
+
+	static void blitTextureToBuffer(GLuint _dst, const TextureGL& _src, const BlitItem& _bi)
+	{
+		if (NULL == glBindBuffer)
+		{
+			return;
+		}
+
+		if (NULL == glGetTextureSubImage)
+		{
+			BX_WARN(false, "Blit texture into buffer is not supported. glGetTextureSubImage is unavailable.");
+
+			return;
+		}
+
+		GL_CHECK(glBindBuffer(GL_PIXEL_PACK_BUFFER, _dst) );
+		GL_CHECK(glPixelStorei(GL_PACK_ALIGNMENT, 1) );
+
+		uint32_t rowLength, imageHeight;
+		calcTextureRegionTexelPitch(
+			  rowLength
+			, imageHeight
+			, TextureFormat::Enum(_src.m_textureFormat)
+			, _bi.m_rowPitch
+			, _bi.m_slicePitch
+			);
+
+		GL_CHECK(glPixelStorei(GL_PACK_ROW_LENGTH,   rowLength) );
+		GL_CHECK(glPixelStorei(GL_PACK_IMAGE_HEIGHT, imageHeight) );
+
+		GL_CHECK(glGetTextureSubImage(
+			  _src.m_id
+			, _bi.m_srcMip
+			, _bi.m_srcX
+			, _bi.m_srcY
+			, _bi.m_srcZ
+			, _bi.m_width
+			, _bi.m_height
+			, bx::max<uint16_t>(1, _bi.m_depth)
+			, _src.m_fmt
+			, _src.m_type
+			, _bi.m_size
+			, (GLvoid*)uintptr_t(_bi.m_dstOffset)
+			) );
+
+		GL_CHECK(glPixelStorei(GL_PACK_IMAGE_HEIGHT, 0) );
+		GL_CHECK(glPixelStorei(GL_PACK_ROW_LENGTH,   0) );
+		GL_CHECK(glPixelStorei(GL_PACK_ALIGNMENT, 4) );
+		GL_CHECK(glBindBuffer(GL_PIXEL_PACK_BUFFER, 0) );
+	}
+
+	bool RendererContextGL::submitBlitBufferItem(const BlitItem& _bi)
+	{
+		const bool srcIsBuffer = _bi.m_src.isBuffer();
+		const bool dstIsBuffer = _bi.m_dst.isBuffer();
+
+		if (srcIsBuffer
+		&&  dstIsBuffer)
+		{
+			blitBuffer(getBufferId(_bi.m_src), getBufferId(_bi.m_dst), _bi);
+
+			return true;
+		}
+
+		if (dstIsBuffer)
+		{
+			blitTextureToBuffer(getBufferId(_bi.m_dst), m_textures[_bi.m_src.idx], _bi);
+
+			return true;
+		}
+
+		if (srcIsBuffer)
+		{
+			blitBufferToTexture(m_textures[_bi.m_dst.idx], getBufferId(_bi.m_src), _bi);
+
+			return true;
+		}
+
+		return false;
+	}
+
 	void RendererContextGL::submitBlit(BlitState& _bs, uint16_t _view)
 	{
 		if (m_blitSupported)
@@ -7748,6 +7969,11 @@ namespace bgfx { namespace gl
 			while (_bs.hasItem(_view) )
 			{
 				const BlitItem& bi = _bs.advance();
+
+				if (submitBlitBufferItem(bi) )
+				{
+					continue;
+				}
 
 				const TextureGL& src = m_textures[bi.m_src.idx];
 				const TextureGL& dst = m_textures[bi.m_dst.idx];
@@ -7820,6 +8046,11 @@ namespace bgfx { namespace gl
 			{
 				const BlitItem& bi = _bs.advance();
 
+				if (submitBlitBufferItem(bi) )
+				{
+					continue;
+				}
+
 				const TextureGL& src = m_textures[bi.m_src.idx];
 				const TextureGL& dst = m_textures[bi.m_dst.idx];
 
@@ -7863,6 +8094,15 @@ namespace bgfx { namespace gl
 
 				GL_CHECK(glDeleteFramebuffers(1, &fbo) );
 				GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, m_currentFbo) );
+			}
+		}
+		else
+		{
+			while (_bs.hasItem(_view) )
+			{
+				const BlitItem& bi = _bs.advance();
+
+				submitBlitBufferItem(bi);
 			}
 		}
 	}
@@ -9120,6 +9360,7 @@ namespace bgfx { namespace gl
 		perfStats.numDraw       = statsKeyType[0];
 		perfStats.numCompute    = statsKeyType[1];
 		perfStats.numBlit       = _render->m_numBlitItems;
+		perfStats.numBlitRepack = _render->m_numBlitRepack;
 		perfStats.maxGpuLatency = maxGpuLatency;
 		perfStats.gpuFrameNum   = result.m_frameNum;
 		bx::memCopy(perfStats.numPrims, statsNumPrimsRendered, sizeof(perfStats.numPrims) );

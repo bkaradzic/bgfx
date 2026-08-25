@@ -8,6 +8,8 @@
 #if BGFX_CONFIG_RENDERER_DIRECT3D12
 #	include "renderer_d3d12.h"
 #	include "video_d3d12.h"
+#	include "cs_blit_texture_to_buffer.bin.h"
+#	include "cs_blit_buffer_to_texture.bin.h"
 
 #if !BX_PLATFORM_WINDOWS && !BX_PLATFORM_LINUX
 #	include <inspectable.h>
@@ -831,9 +833,11 @@ namespace bgfx { namespace d3d12
 			, m_rtMsaa(false)
 			, m_directAccessSupport(false)
 			, m_variableRateShadingSupport(false)
+			, m_computeStateDirty(false)
 			, m_mipGen(NULL)
 			, m_zeroInitBuffer(NULL)
 		{
+			bx::memSet(m_blitPso, 0, sizeof(m_blitPso) );
 		}
 
 		~RendererContextD3D12()
@@ -1765,13 +1769,15 @@ namespace bgfx { namespace d3d12
 					| BGFX_CAPS_VERTEX_ID
 					| BGFX_CAPS_VIEWPORT_LAYER_ARRAY
 					);
-				g_caps.limits.maxTextureSize     = D3D12_REQ_TEXTURE2D_U_OR_V_DIMENSION;
-				g_caps.limits.maxTextureLayers   = D3D12_REQ_TEXTURE2D_ARRAY_AXIS_DIMENSION;
-				g_caps.limits.maxFBAttachments   = bx::min<uint8_t>(16, BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS);
-				g_caps.limits.maxComputeBindings = bx::min(D3D12_UAV_SLOT_COUNT, BGFX_MAX_COMPUTE_BINDINGS);
-				g_caps.limits.maxVertexStreams   = BGFX_CONFIG_MAX_VERTEX_STREAMS;
+				g_caps.limits.maxTextureSize      = D3D12_REQ_TEXTURE2D_U_OR_V_DIMENSION;
+				g_caps.limits.maxTextureLayers    = D3D12_REQ_TEXTURE2D_ARRAY_AXIS_DIMENSION;
+				g_caps.limits.maxFBAttachments    = bx::min<uint8_t>(16, BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS);
+				g_caps.limits.maxComputeBindings  = bx::min(D3D12_UAV_SLOT_COUNT, BGFX_MAX_COMPUTE_BINDINGS);
+				g_caps.limits.maxVertexStreams    = BGFX_CONFIG_MAX_VERTEX_STREAMS;
 				g_caps.limits.maxVertexAttributes = D3D12_IA_VERTEX_INPUT_STRUCTURE_ELEMENT_COUNT;
-				g_caps.limits.maxInstanceData    = bx::min<uint32_t>(g_caps.limits.maxInstanceData, g_caps.limits.maxVertexAttributes);
+				g_caps.limits.maxInstanceData     = bx::min<uint32_t>(g_caps.limits.maxInstanceData, g_caps.limits.maxVertexAttributes);
+				g_caps.limits.blitRowPitchAlign   = D3D12_TEXTURE_DATA_PITCH_ALIGNMENT;
+				g_caps.limits.blitOffsetAlign     = D3D12_TEXTURE_DATA_PLACEMENT_ALIGNMENT;
 
 				for (uint32_t ii = 0; ii < TextureFormat::Count; ++ii)
 				{
@@ -2044,6 +2050,38 @@ namespace bgfx { namespace d3d12
 				m_nvapi.initAftermath(m_device, m_commandList);
 			}
 
+			{
+				const Memory t2b = { (uint8_t*)cs_blit_texture_to_buffer_dxil, sizeof(cs_blit_texture_to_buffer_dxil) };
+				const Memory b2t = { (uint8_t*)cs_blit_buffer_to_texture_dxil, sizeof(cs_blit_buffer_to_texture_dxil) };
+
+				m_blitShader[0].create(&t2b);
+				m_blitShader[1].create(&b2t);
+
+				for (uint32_t ii = 0; ii < BX_COUNTOF(m_blitPso); ++ii)
+				{
+					const Memory* code = m_blitShader[ii].m_code;
+
+					if (NULL == code)
+					{
+						continue;
+					}
+
+					const D3D12_COMPUTE_PIPELINE_STATE_DESC desc =
+					{
+						.pRootSignature = m_computeRootSignature,
+						.CS             = { code->data, code->size },
+						.NodeMask       = 0,
+						.CachedPSO      = { NULL, 0 },
+						.Flags          = D3D12_PIPELINE_STATE_FLAG_NONE,
+					};
+
+					DX_CHECK(m_device->CreateComputePipelineState(&desc
+						, IID_ID3D12PipelineState
+						, (void**)&m_blitPso[ii]
+						) );
+				}
+			}
+
 			g_internalData.context = m_device;
 			return true;
 
@@ -2141,6 +2179,12 @@ namespace bgfx { namespace d3d12
 			dumpInfoQueue();
 			DX_RELEASE_W(m_infoQueue, 0);
 #endif // BX_PLATFORM_WINDOWS
+
+			for (uint32_t ii = 0; ii < BX_COUNTOF(m_blitPso); ++ii)
+			{
+				DX_RELEASE(m_blitPso[ii], 0);
+				m_blitShader[ii].destroy();
+			}
 
 			DX_RELEASE(m_rtvDescriptorHeap, 0);
 			DX_RELEASE(m_dsvDescriptorHeap, 0);
@@ -2535,6 +2579,38 @@ namespace bgfx { namespace d3d12
 			DX_RELEASE(readback, 0);
 		}
 
+		BufferD3D12& getBuffer(Handle _handle)
+		{
+			if (_handle.isIndexBuffer() )
+			{
+				return m_indexBuffers[_handle.idx];
+			}
+
+			return m_vertexBuffers[_handle.idx];
+		}
+
+		void readBuffer(Handle _handle, void* _data, uint32_t _offset, uint32_t _size) override
+		{
+			BufferD3D12& buffer = getBuffer(_handle);
+
+			ID3D12Resource* readback = createCommittedResource(m_device, HeapProperty::ReadBack, _size);
+
+			const D3D12_RESOURCE_STATES state = buffer.setState(m_commandList, D3D12_RESOURCE_STATE_COPY_SOURCE);
+			m_commandList->CopyBufferRegion(readback, 0, buffer.m_ptr, _offset, _size);
+			buffer.setState(m_commandList, state);
+
+			finish();
+			m_commandList = m_cmd.alloc();
+
+			void* src = NULL;
+			readback->Map(0, NULL, (void**)&src);
+			bx::memCopy(_data, src, _size);
+			D3D12_RANGE readbackWriteRange = { 0, 0 };
+			readback->Unmap(0, &readbackWriteRange);
+
+			DX_RELEASE(readback, 0);
+		}
+
 		void resizeTexture(TextureHandle _handle, uint16_t _width, uint16_t _height, uint8_t _numMips, uint16_t _numLayers) override
 		{
 			TextureD3D12& texture = m_textures[_handle.idx];
@@ -2829,6 +2905,10 @@ namespace bgfx { namespace d3d12
 		}
 
 		void submitBlit(BlitState& _bs, uint16_t _view);
+
+		void blitBufferTexture(const BlitItem& _blit);
+
+		bool blitBufferTextureCompute(const BlitItem& _blit);
 
 		void submitUniformCache(UniformCacheState& _ucs, uint16_t _view);
 
@@ -4400,8 +4480,13 @@ namespace bgfx { namespace d3d12
 		bool m_directAccessSupport;
 		bool m_variableRateShadingSupport;
 
+		bool m_computeStateDirty;
+
 		const MipGen* m_mipGen;
 		ID3D12Resource* m_zeroInitBuffer;
+
+		ShaderD3D12 m_blitShader[2];
+		ID3D12PipelineState* m_blitPso[2];
 
 		void generateMips(ID3D12GraphicsCommandList* _commandList, TextureD3D12& _texture);
 	};
@@ -7986,6 +8071,368 @@ namespace bgfx { namespace d3d12
 	static constexpr uint8_t kBindStateValid    = 1;
 	static constexpr uint8_t kBindStateEmpty    = 2;
 
+	bool RendererContextD3D12::blitBufferTextureCompute(const BlitItem& _blit)
+	{
+		const bool toBuffer = _blit.m_dst.isBuffer();
+
+		ID3D12PipelineState* pso = m_blitPso[toBuffer ? 0 : 1];
+
+		if (NULL == pso)
+		{
+			return false;
+		}
+
+		TextureD3D12& texture = m_textures[(toBuffer ? _blit.m_src : _blit.m_dst).idx];
+		BufferD3D12&  buffer  = getBuffer(toBuffer ? _blit.m_dst : _blit.m_src);
+
+		const bimg::TextureFormat::Enum format = bimg::TextureFormat::Enum(texture.m_textureFormat);
+
+		if (bimg::isCompressed(format)
+		||  bimg::isDepth(format)
+		||  TextureD3D12::Texture3D == texture.m_type
+		||  NULL != texture.m_singleMsaa
+		||  0 == (g_caps.formats[texture.m_textureFormat] & BGFX_CAPS_FORMAT_TEXTURE_IMAGE_WRITE) )
+		{
+			return false;
+		}
+
+		const bool writable = toBuffer
+			? 0 != (buffer.m_flags  & BGFX_BUFFER_COMPUTE_WRITE)
+			: 0 != (texture.m_flags & BGFX_TEXTURE_COMPUTE_WRITE)
+			;
+
+		if (!writable)
+		{
+			return false;
+		}
+
+		const uint32_t bpp    = bimg::getBitsPerPixel(format) / 8;
+		const uint32_t offset = toBuffer ? _blit.m_dstOffset : _blit.m_srcOffset;
+
+		if (0 != offset % bpp
+		||  0 != _blit.m_rowPitch % bpp
+		||  0 != _blit.m_slicePitch % bpp)
+		{
+			return false;
+		}
+
+		const uint32_t depth = bx::max<uint32_t>(1, _blit.m_depth);
+		const uint16_t z     = toBuffer ? _blit.m_srcZ   : _blit.m_dstZ;
+		const uint8_t  mip   = toBuffer ? _blit.m_srcMip : _blit.m_dstMip;
+
+		const DXGI_FORMAT dxgiFormat = texture.m_srvd.Format;
+		const uint32_t numElements   = _blit.m_size / bpp;
+
+		D3D12_SHADER_RESOURCE_VIEW_DESC srvd = {};
+		srvd.Format                  = dxgiFormat;
+		srvd.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+
+		D3D12_UNORDERED_ACCESS_VIEW_DESC uavd = {};
+		uavd.Format = dxgiFormat;
+
+		if (toBuffer)
+		{
+			srvd.ViewDimension                  = D3D12_SRV_DIMENSION_TEXTURE2DARRAY;
+			srvd.Texture2DArray.MostDetailedMip = mip;
+			srvd.Texture2DArray.MipLevels       = 1;
+			srvd.Texture2DArray.FirstArraySlice = z;
+			srvd.Texture2DArray.ArraySize       = depth;
+
+			uavd.ViewDimension       = D3D12_UAV_DIMENSION_BUFFER;
+			uavd.Buffer.FirstElement = offset / bpp;
+			uavd.Buffer.NumElements  = numElements;
+		}
+		else
+		{
+			srvd.ViewDimension       = D3D12_SRV_DIMENSION_BUFFER;
+			srvd.Buffer.FirstElement = offset / bpp;
+			srvd.Buffer.NumElements  = numElements;
+
+			uavd.ViewDimension                  = D3D12_UAV_DIMENSION_TEXTURE2DARRAY;
+			uavd.Texture2DArray.MipSlice        = mip;
+			uavd.Texture2DArray.FirstArraySlice = z;
+			uavd.Texture2DArray.ArraySize       = depth;
+		}
+
+		texture.setState(m_commandList, toBuffer
+			? D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE
+			: D3D12_RESOURCE_STATE_UNORDERED_ACCESS
+			);
+		buffer.setState(m_commandList, toBuffer
+			? D3D12_RESOURCE_STATE_UNORDERED_ACCESS
+			: D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE
+			);
+
+		ScratchBufferD3D12& scratchBuffer = m_scratchBuffer[m_backBufferColorIdx];
+
+		m_commandList->SetComputeRootSignature(m_computeRootSignature);
+
+		ID3D12DescriptorHeap* heaps[] =
+		{
+			m_samplerAllocator.getHeap(),
+			scratchBuffer.getHeap(),
+		};
+		m_commandList->SetDescriptorHeaps(BX_COUNTOF(heaps), heaps);
+
+		uint32_t samplerFlags[BGFX_MAX_COMPUTE_BINDINGS] = {};
+		const uint16_t samplerStateIdx = getSamplerState(samplerFlags, BGFX_MAX_COMPUTE_BINDINGS, NULL);
+		m_commandList->SetComputeRootDescriptorTable(ComputeRp::Sampler, m_samplerAllocator.get(samplerStateIdx) );
+
+		m_commandList->SetPipelineState(pso);
+
+		D3D12_GPU_DESCRIPTOR_HANDLE srvHandle[BGFX_MAX_COMPUTE_BINDINGS] = {};
+		scratchBuffer.allocSrv(srvHandle[0], toBuffer ? texture.m_ptr : buffer.m_ptr, srvd);
+
+		for (uint32_t ii = 1; ii < BGFX_MAX_COMPUTE_BINDINGS; ++ii)
+		{
+			scratchBuffer.allocEmpty(srvHandle[ii]);
+		}
+
+		m_commandList->SetComputeRootDescriptorTable(ComputeRp::SRV, srvHandle[0]);
+
+		D3D12_GPU_DESCRIPTOR_HANDLE uavHandle[BGFX_MAX_COMPUTE_BINDINGS] = {};
+		scratchBuffer.allocUav(uavHandle[0], toBuffer ? buffer.m_ptr : texture.m_ptr, uavd);
+
+		for (uint32_t ii = 1; ii < BGFX_MAX_COMPUTE_BINDINGS; ++ii)
+		{
+			scratchBuffer.allocEmpty(uavHandle[ii]);
+		}
+
+		m_commandList->SetComputeRootDescriptorTable(ComputeRp::UAV, uavHandle[0]);
+
+		const float blitRegion[8] =
+		{
+			float(toBuffer ? _blit.m_srcX : _blit.m_dstX),
+			float(toBuffer ? _blit.m_srcY : _blit.m_dstY),
+			0.0f,
+			float(_blit.m_rowPitch / bpp),
+			float(_blit.m_width),
+			float(_blit.m_height),
+			float(depth),
+			float(_blit.m_slicePitch / bpp),
+		};
+
+		ChunkedScratchBufferOffset sbo;
+		m_uniformScratchBuffer.write(sbo, blitRegion, sizeof(blitRegion) );
+		m_commandList->SetComputeRootConstantBufferView(ComputeRp::CBV, sbo.buffer + sbo.offsets[0]);
+
+		m_commandList->Dispatch(
+			  bx::max<uint32_t>( (_blit.m_width  + 7) / 8, 1)
+			, bx::max<uint32_t>( (_blit.m_height + 7) / 8, 1)
+			, depth
+			);
+
+		const D3D12_RESOURCE_BARRIER barrier =
+		{
+			.Type  = D3D12_RESOURCE_BARRIER_TYPE_UAV,
+			.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE,
+			.UAV   = { .pResource = toBuffer ? buffer.m_ptr : texture.m_ptr },
+		};
+		m_commandList->ResourceBarrier(1, &barrier);
+
+		m_computeStateDirty = true;
+
+		return true;
+	}
+
+	void RendererContextD3D12::blitBufferTexture(const BlitItem& _blit)
+	{
+		const bool toBuffer = _blit.m_dst.isBuffer();
+
+		TextureD3D12& texture = m_textures[toBuffer ? _blit.m_src.idx : _blit.m_dst.idx];
+		BufferD3D12&  buffer  = getBuffer(toBuffer ? _blit.m_dst : _blit.m_src);
+
+		const uint32_t bufferOffset = toBuffer ? _blit.m_dstOffset : _blit.m_srcOffset;
+
+		const TextureFormat::Enum format = TextureFormat::Enum(texture.m_textureFormat);
+
+		const uint32_t tightPitch = calcTextureRegionPitch(format, _blit.m_width);
+		const uint32_t numRows    = calcTextureRegionNumRows(format, _blit.m_height);
+		const uint32_t depth      = bx::max<uint32_t>(1, _blit.m_depth);
+
+		const uint32_t rowPitch   = _blit.m_rowPitch;
+		const uint32_t slicePitch = _blit.m_slicePitch;
+
+		const uint32_t alignedPitch = bx::alignUp(tightPitch, uint32_t(D3D12_TEXTURE_DATA_PITCH_ALIGNMENT) );
+
+		const bool is3D = TextureD3D12::Texture3D == texture.m_type;
+
+		const uint16_t z   = toBuffer ? _blit.m_srcZ   : _blit.m_dstZ;
+		const uint8_t  mip = toBuffer ? _blit.m_srcMip : _blit.m_dstMip;
+		const uint16_t x   = toBuffer ? _blit.m_srcX   : _blit.m_dstX;
+		const uint16_t y   = toBuffer ? _blit.m_srcY   : _blit.m_dstY;
+
+		const uint32_t numSlices = is3D ? 1 : depth;
+		const uint32_t sliceRows = is3D ? numRows*depth : numRows;
+
+		const bool direct = 0 == rowPitch % D3D12_TEXTURE_DATA_PITCH_ALIGNMENT
+			&& 0 == bufferOffset % D3D12_TEXTURE_DATA_PLACEMENT_ALIGNMENT
+			&& (is3D
+				? slicePitch == rowPitch*numRows
+				: 1 == numSlices || 0 == slicePitch % D3D12_TEXTURE_DATA_PLACEMENT_ALIGNMENT
+				)
+			;
+
+		if (!direct
+		&&  blitBufferTextureCompute(_blit) )
+		{
+			return;
+		}
+
+		const uint32_t scratchSlicePitch = alignedPitch*sliceRows;
+
+		const bool contiguous = rowPitch == alignedPitch
+			&& slicePitch == scratchSlicePitch
+			;
+
+		const uint32_t numCopies = contiguous ? 1 : sliceRows;
+		const uint32_t copySize  = contiguous ? scratchSlicePitch : tightPitch;
+
+		ID3D12Resource* scratch = NULL;
+
+		if (!direct)
+		{
+			const uint32_t scratchSize = scratchSlicePitch*numSlices;
+
+			scratch = createCommittedResource(m_device, HeapProperty::Default, scratchSize);
+
+			if (NULL == scratch)
+			{
+				return;
+			}
+
+			m_cmd.release(scratch);
+		}
+
+		ID3D12Resource* copyPtr         = direct ? buffer.m_ptr : scratch;
+		const uint32_t  copyPitch       = direct ? rowPitch     : alignedPitch;
+		const uint32_t  copySlicePitch  = direct ? slicePitch   : scratchSlicePitch;
+		const uint64_t  copyOffset      = direct ? bufferOffset : 0;
+
+		const D3D12_RESOURCE_DESC desc = getResourceDesc(texture.m_ptr);
+
+		const D3D12_RESOURCE_STATES bufferState = buffer.setState(
+			  m_commandList
+			, toBuffer
+				? D3D12_RESOURCE_STATE_COPY_DEST
+				: D3D12_RESOURCE_STATE_COPY_SOURCE
+			);
+		const D3D12_RESOURCE_STATES textureState = texture.setState(
+			  m_commandList
+			, toBuffer
+				? D3D12_RESOURCE_STATE_COPY_SOURCE
+				: D3D12_RESOURCE_STATE_COPY_DEST
+			);
+
+		if (!direct
+		&&  !toBuffer)
+		{
+			for (uint32_t slice = 0; slice < numSlices; ++slice)
+			{
+				for (uint32_t row = 0; row < numCopies; ++row)
+				{
+					m_commandList->CopyBufferRegion(
+						  scratch
+						, slice*scratchSlicePitch + row*alignedPitch
+						, buffer.m_ptr
+						, bufferOffset + slice*slicePitch + row*rowPitch
+						, copySize
+						);
+				}
+			}
+
+			setResourceBarrier(m_commandList, scratch, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_COPY_SOURCE);
+		}
+
+		for (uint32_t slice = 0; slice < numSlices; ++slice)
+		{
+			const uint32_t subresource = is3D
+				? mip
+				: (TextureD3D12::TextureCube == texture.m_type
+					? z + slice
+					: bx::min<uint32_t>(z + slice, texture.m_numLayers - 1)
+					)*texture.m_numMips + mip
+				;
+
+			D3D12_PLACED_SUBRESOURCE_FOOTPRINT layout;
+			uint32_t footprintRows;
+			uint64_t total;
+			m_device->GetCopyableFootprints(&desc, subresource, 1, 0, &layout, &footprintRows, NULL, &total);
+
+			layout.Offset             = copyOffset + uint64_t(slice)*copySlicePitch;
+			layout.Footprint.Width    = _blit.m_width;
+			layout.Footprint.Height   = _blit.m_height;
+			layout.Footprint.Depth    = is3D ? depth : 1;
+			layout.Footprint.RowPitch = copyPitch;
+
+			const D3D12_TEXTURE_COPY_LOCATION bufferLocation =
+			{
+				.pResource       = copyPtr,
+				.Type            = D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT,
+				.PlacedFootprint = layout,
+			};
+
+			const D3D12_TEXTURE_COPY_LOCATION textureLocation =
+			{
+				.pResource        = texture.m_ptr,
+				.Type             = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX,
+				.SubresourceIndex = subresource,
+			};
+
+			if (toBuffer)
+			{
+				const D3D12_BOX box =
+				{
+					.left   = x,
+					.top    = y,
+					.front  = is3D ? uint32_t(z) : 0,
+					.right  = uint32_t(x) + _blit.m_width,
+					.bottom = uint32_t(y) + _blit.m_height,
+					.back   = is3D ? z + depth : 1,
+				};
+
+				m_commandList->CopyTextureRegion(&bufferLocation, 0, 0, 0, &textureLocation, &box);
+			}
+			else
+			{
+				const D3D12_BOX box =
+				{
+					.left   = 0,
+					.top    = 0,
+					.front  = 0,
+					.right  = _blit.m_width,
+					.bottom = _blit.m_height,
+					.back   = is3D ? depth : 1,
+				};
+
+				m_commandList->CopyTextureRegion(&textureLocation, x, y, is3D ? z : 0, &bufferLocation, &box);
+			}
+		}
+
+		if (!direct
+		&&  toBuffer)
+		{
+			setResourceBarrier(m_commandList, scratch, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_COPY_SOURCE);
+
+			for (uint32_t slice = 0; slice < numSlices; ++slice)
+			{
+				for (uint32_t row = 0; row < numCopies; ++row)
+				{
+					m_commandList->CopyBufferRegion(
+						  buffer.m_ptr
+						, bufferOffset + slice*slicePitch + row*rowPitch
+						, scratch
+						, slice*scratchSlicePitch + row*alignedPitch
+						, copySize
+						);
+				}
+			}
+		}
+
+		texture.setState(m_commandList, textureState);
+		buffer.setState(m_commandList, bufferState);
+	}
+
 	void RendererContextD3D12::submitBlit(BlitState& _bs, uint16_t _view)
 	{
 		TextureHandle currentSrc = { kInvalidHandle };
@@ -7997,6 +8444,31 @@ namespace bgfx { namespace d3d12
 		while (_bs.hasItem(_view) )
 		{
 			const BlitItem& blit = _bs.advance();
+
+			if (blit.m_src.isBuffer()
+			&&  blit.m_dst.isBuffer() )
+			{
+				BufferD3D12& srcBuf = getBuffer(blit.m_src);
+				BufferD3D12& dstBuf = getBuffer(blit.m_dst);
+
+				const D3D12_RESOURCE_STATES srcBufState = srcBuf.setState(m_commandList, D3D12_RESOURCE_STATE_COPY_SOURCE);
+				const D3D12_RESOURCE_STATES dstBufState = dstBuf.setState(m_commandList, D3D12_RESOURCE_STATE_COPY_DEST);
+
+				m_commandList->CopyBufferRegion(dstBuf.m_ptr, blit.m_dstOffset, srcBuf.m_ptr, blit.m_srcOffset, blit.m_size);
+
+				srcBuf.setState(m_commandList, srcBufState);
+				dstBuf.setState(m_commandList, dstBufState);
+
+				continue;
+			}
+
+			if (blit.m_src.isBuffer()
+			||  blit.m_dst.isBuffer() )
+			{
+				blitBufferTexture(blit);
+
+				continue;
+			}
 
 			TextureD3D12& src = m_textures[blit.m_src.idx];
 			TextureD3D12& dst = m_textures[blit.m_dst.idx];
@@ -8506,10 +8978,17 @@ namespace bgfx { namespace d3d12
 						commandListChanged = true;
 					}
 
-					if (commandListChanged)
+					if (commandListChanged
+					||  m_computeStateDirty)
 					{
-						commandListChanged = false;
-						blendFactor        = UINT32_MAX;
+						commandListChanged  = false;
+						m_computeStateDirty = false;
+						blendFactor         = UINT32_MAX;
+
+						currentPso             = NULL;
+						currentBindIdx         = UINT32_MAX;
+						currentSamplerStateIdx = kInvalidHandle;
+						currentProgram         = BGFX_INVALID_HANDLE;
 
 						m_commandList->SetComputeRootSignature(m_computeRootSignature);
 						ID3D12DescriptorHeap* heaps[] = {
@@ -8826,10 +9305,12 @@ namespace bgfx { namespace d3d12
 					currentState.m_stencil = newStencil;
 
 					if (resetState
-					||  commandListChanged)
+					||  commandListChanged
+					||  m_computeStateDirty)
 					{
 						wasCompute = false;
 						commandListChanged = false;
+						m_computeStateDirty = false;
 						blendFactor        = UINT32_MAX;
 
 						m_commandList->SetGraphicsRootSignature(m_rootSignature);
@@ -9265,6 +9746,7 @@ namespace bgfx { namespace d3d12
 		perfStats.numDraw       = statsKeyType[0];
 		perfStats.numCompute    = statsKeyType[1];
 		perfStats.numBlit       = _render->m_numBlitItems;
+		perfStats.numBlitRepack = _render->m_numBlitRepack;
 		perfStats.maxGpuLatency = maxGpuLatency;
 		perfStats.gpuFrameNum   = result.m_frameNum;
 		bx::memCopy(perfStats.numPrims, statsNumPrimsRendered, sizeof(perfStats.numPrims) );

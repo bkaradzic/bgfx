@@ -52,6 +52,27 @@ BGFX_C99_STRUCT_SIZE_CHECK(bgfx::InternalData,          bgfx_internal_data_t);
 
 #if BGFX_CONFIG_C99_API
 
+BGFX_C_API void bgfx_texture_region_init(bgfx_texture_region_t* _this, bgfx_texture_handle_t _handle, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height)
+{
+	bgfx::TextureRegion* This = (bgfx::TextureRegion*)_this;
+	union { bgfx_texture_handle_t c; bgfx::TextureHandle cpp; } handle = { _handle };
+	This->init(handle.cpp, _x, _y, _width, _height);
+}
+
+BGFX_C_API void bgfx_buffer_region_init_texture(bgfx_buffer_region_t* _this, const bgfx_texture_region_t * _texture)
+{
+	bgfx::BufferRegion* This = (bgfx::BufferRegion*)_this;
+	const bgfx::TextureRegion & texture = *(const bgfx::TextureRegion *)_texture;
+	This->init(texture);
+}
+
+BGFX_C_API void bgfx_buffer_region_init_buffer(bgfx_buffer_region_t* _this, bgfx_buffer_handle_t _handle, uint32_t _offset, uint32_t _size)
+{
+	bgfx::BufferRegion* This = (bgfx::BufferRegion*)_this;
+	union { bgfx_buffer_handle_t c; bgfx::BufferHandle cpp; } handle = { _handle };
+	This->init(handle.cpp, _offset, _size);
+}
+
 BGFX_C_API void bgfx_attachment_init(bgfx_attachment_t* _this, bgfx_texture_handle_t _handle, bgfx_access_t _access, uint16_t _layer, uint16_t _numLayers, uint16_t _mip, uint8_t _resolve)
 {
 	bgfx::Attachment* This = (bgfx::Attachment*)_this;
@@ -241,6 +262,12 @@ BGFX_C_API bgfx_index_buffer_handle_t bgfx_create_index_buffer(const bgfx_memory
 	union { bgfx_index_buffer_handle_t c; bgfx::IndexBufferHandle cpp; } handle_ret;
 	handle_ret.cpp = bgfx::createIndexBuffer((const bgfx::Memory*)_mem, _flags);
 	return handle_ret.c;
+}
+
+BGFX_C_API uint32_t bgfx_read_buffer(const bgfx_buffer_region_t * _src, void* _data)
+{
+	const bgfx::BufferRegion & src = *(const bgfx::BufferRegion *)_src;
+	return bgfx::read(src, _data);
 }
 
 BGFX_C_API void bgfx_set_index_buffer_name(bgfx_index_buffer_handle_t _handle, const char* _name, int32_t _len)
@@ -522,10 +549,10 @@ BGFX_C_API void bgfx_clear_texture(bgfx_texture_handle_t _handle, uint8_t _mip, 
 	bgfx::clear(handle.cpp, _mip, _numMips, _layer, _numLayers);
 }
 
-BGFX_C_API uint32_t bgfx_read_texture(bgfx_texture_handle_t _handle, void* _data, uint16_t _layer, uint8_t _mip)
+BGFX_C_API uint32_t bgfx_read_texture(const bgfx_texture_region_t * _src, void* _data)
 {
-	union { bgfx_texture_handle_t c; bgfx::TextureHandle cpp; } handle = { _handle };
-	return bgfx::readTexture(handle.cpp, _data, _layer, _mip);
+	const bgfx::TextureRegion & src = *(const bgfx::TextureRegion *)_src;
+	return bgfx::read(src, _data);
 }
 
 BGFX_C_API void bgfx_set_texture_name(bgfx_texture_handle_t _handle, const char* _name, int32_t _len)
@@ -1026,12 +1053,36 @@ BGFX_C_API void bgfx_encoder_discard(bgfx_encoder_t* _this, uint8_t _flags)
 	This->discard(_flags);
 }
 
-BGFX_C_API void bgfx_encoder_blit(bgfx_encoder_t* _this, bgfx_view_id_t _id, bgfx_texture_handle_t _dst, uint8_t _dstMip, uint16_t _dstX, uint16_t _dstY, uint16_t _dstZ, bgfx_texture_handle_t _src, uint8_t _srcMip, uint16_t _srcX, uint16_t _srcY, uint16_t _srcZ, uint16_t _width, uint16_t _height, uint16_t _depth)
+BGFX_C_API void bgfx_encoder_blit(bgfx_encoder_t* _this, bgfx_view_id_t _id, const bgfx_texture_region_t * _dst, const bgfx_texture_region_t * _src)
 {
 	bgfx::Encoder* This = (bgfx::Encoder*)_this;
-	union { bgfx_texture_handle_t c; bgfx::TextureHandle cpp; } dst = { _dst };
-	union { bgfx_texture_handle_t c; bgfx::TextureHandle cpp; } src = { _src };
-	This->blit((bgfx::ViewId)_id, dst.cpp, _dstMip, _dstX, _dstY, _dstZ, src.cpp, _srcMip, _srcX, _srcY, _srcZ, _width, _height, _depth);
+	const bgfx::TextureRegion & dst = *(const bgfx::TextureRegion *)_dst;
+	const bgfx::TextureRegion & src = *(const bgfx::TextureRegion *)_src;
+	This->blit((bgfx::ViewId)_id, dst, src);
+}
+
+BGFX_C_API void bgfx_encoder_blit_buffer(bgfx_encoder_t* _this, bgfx_view_id_t _id, const bgfx_buffer_region_t * _dst, const bgfx_buffer_region_t * _src)
+{
+	bgfx::Encoder* This = (bgfx::Encoder*)_this;
+	const bgfx::BufferRegion & dst = *(const bgfx::BufferRegion *)_dst;
+	const bgfx::BufferRegion & src = *(const bgfx::BufferRegion *)_src;
+	This->blit((bgfx::ViewId)_id, dst, src);
+}
+
+BGFX_C_API void bgfx_encoder_blit_to_buffer(bgfx_encoder_t* _this, bgfx_view_id_t _id, const bgfx_buffer_region_t * _dst, const bgfx_texture_region_t * _src)
+{
+	bgfx::Encoder* This = (bgfx::Encoder*)_this;
+	const bgfx::BufferRegion & dst = *(const bgfx::BufferRegion *)_dst;
+	const bgfx::TextureRegion & src = *(const bgfx::TextureRegion *)_src;
+	This->blit((bgfx::ViewId)_id, dst, src);
+}
+
+BGFX_C_API void bgfx_encoder_blit_from_buffer(bgfx_encoder_t* _this, bgfx_view_id_t _id, const bgfx_texture_region_t * _dst, const bgfx_buffer_region_t * _src)
+{
+	bgfx::Encoder* This = (bgfx::Encoder*)_this;
+	const bgfx::TextureRegion & dst = *(const bgfx::TextureRegion *)_dst;
+	const bgfx::BufferRegion & src = *(const bgfx::BufferRegion *)_src;
+	This->blit((bgfx::ViewId)_id, dst, src);
 }
 
 BGFX_C_API void bgfx_request_screen_shot(bgfx_frame_buffer_handle_t _handle, const char* _filePath)
@@ -1308,11 +1359,32 @@ BGFX_C_API void bgfx_discard(uint8_t _flags)
 	bgfx::discard(_flags);
 }
 
-BGFX_C_API void bgfx_blit(bgfx_view_id_t _id, bgfx_texture_handle_t _dst, uint8_t _dstMip, uint16_t _dstX, uint16_t _dstY, uint16_t _dstZ, bgfx_texture_handle_t _src, uint8_t _srcMip, uint16_t _srcX, uint16_t _srcY, uint16_t _srcZ, uint16_t _width, uint16_t _height, uint16_t _depth)
+BGFX_C_API void bgfx_blit(bgfx_view_id_t _id, const bgfx_texture_region_t * _dst, const bgfx_texture_region_t * _src)
 {
-	union { bgfx_texture_handle_t c; bgfx::TextureHandle cpp; } dst = { _dst };
-	union { bgfx_texture_handle_t c; bgfx::TextureHandle cpp; } src = { _src };
-	bgfx::blit((bgfx::ViewId)_id, dst.cpp, _dstMip, _dstX, _dstY, _dstZ, src.cpp, _srcMip, _srcX, _srcY, _srcZ, _width, _height, _depth);
+	const bgfx::TextureRegion & dst = *(const bgfx::TextureRegion *)_dst;
+	const bgfx::TextureRegion & src = *(const bgfx::TextureRegion *)_src;
+	bgfx::blit((bgfx::ViewId)_id, dst, src);
+}
+
+BGFX_C_API void bgfx_blit_buffer(bgfx_view_id_t _id, const bgfx_buffer_region_t * _dst, const bgfx_buffer_region_t * _src)
+{
+	const bgfx::BufferRegion & dst = *(const bgfx::BufferRegion *)_dst;
+	const bgfx::BufferRegion & src = *(const bgfx::BufferRegion *)_src;
+	bgfx::blit((bgfx::ViewId)_id, dst, src);
+}
+
+BGFX_C_API void bgfx_blit_to_buffer(bgfx_view_id_t _id, const bgfx_buffer_region_t * _dst, const bgfx_texture_region_t * _src)
+{
+	const bgfx::BufferRegion & dst = *(const bgfx::BufferRegion *)_dst;
+	const bgfx::TextureRegion & src = *(const bgfx::TextureRegion *)_src;
+	bgfx::blit((bgfx::ViewId)_id, dst, src);
+}
+
+BGFX_C_API void bgfx_blit_from_buffer(bgfx_view_id_t _id, const bgfx_texture_region_t * _dst, const bgfx_buffer_region_t * _src)
+{
+	const bgfx::TextureRegion & dst = *(const bgfx::TextureRegion *)_dst;
+	const bgfx::BufferRegion & src = *(const bgfx::BufferRegion *)_src;
+	bgfx::blit((bgfx::ViewId)_id, dst, src);
 }
 
 
@@ -1355,6 +1427,9 @@ BGFX_C_API bgfx_interface_vtbl_t* bgfx_get_interface(uint32_t _version)
 	{
 		static bgfx_interface_vtbl_t s_bgfx_interface =
 		{
+			bgfx_texture_region_init,
+			bgfx_buffer_region_init_texture,
+			bgfx_buffer_region_init_buffer,
 			bgfx_attachment_init,
 			bgfx_vertex_layout_begin,
 			bgfx_vertex_layout_add,
@@ -1390,6 +1465,7 @@ BGFX_C_API bgfx_interface_vtbl_t* bgfx_get_interface(uint32_t _version)
 			bgfx_dbg_text_vprintf,
 			bgfx_dbg_text_image,
 			bgfx_create_index_buffer,
+			bgfx_read_buffer,
 			bgfx_set_index_buffer_name,
 			bgfx_destroy_index_buffer,
 			bgfx_create_vertex_layout,
@@ -1514,6 +1590,9 @@ BGFX_C_API bgfx_interface_vtbl_t* bgfx_get_interface(uint32_t _version)
 			bgfx_encoder_dispatch_indirect,
 			bgfx_encoder_discard,
 			bgfx_encoder_blit,
+			bgfx_encoder_blit_buffer,
+			bgfx_encoder_blit_to_buffer,
+			bgfx_encoder_blit_from_buffer,
 			bgfx_request_screen_shot,
 			bgfx_render_frame,
 			bgfx_set_platform_data,
@@ -1561,7 +1640,10 @@ BGFX_C_API bgfx_interface_vtbl_t* bgfx_get_interface(uint32_t _version)
 			bgfx_dispatch,
 			bgfx_dispatch_indirect,
 			bgfx_discard,
-			bgfx_blit
+			bgfx_blit,
+			bgfx_blit_buffer,
+			bgfx_blit_to_buffer,
+			bgfx_blit_from_buffer
 		};
 
 		return &s_bgfx_interface;

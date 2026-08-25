@@ -343,6 +343,7 @@ namespace bgfx { namespace d3d11
 		TextureD3D11()
 			: m_ptr(NULL)
 			, m_rt(NULL)
+			, m_staging(NULL)
 			, m_srv(NULL)
 			, m_uav(NULL)
 			, m_videoDecoder(NULL)
@@ -376,6 +377,7 @@ namespace bgfx { namespace d3d11
 			ID3D11Texture2D* m_rt2d;
 		};
 
+		ID3D11Resource*            m_staging;
 		ID3D11ShaderResourceView*  m_srv;
 		ID3D11UnorderedAccessView* m_uav;
 		VideoDecoderD3D11*         m_videoDecoder;

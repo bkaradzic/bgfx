@@ -599,6 +599,9 @@ function converter.types(typ)
 	if typ.handle then ---hnadle
 		yield("extern(C++, \"bgfx\") struct " .. typ.name .. "{")
 		yield("\tushort idx;")
+		if typ.tagged then
+		yield("\tushort type;")
+		end
 		yield("}")
 		--yield(typ.name .. " invalidHandle(){ return " .. typ.name .. "(ushort.max); }")
 		

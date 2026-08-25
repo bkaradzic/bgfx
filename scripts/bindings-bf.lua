@@ -46,29 +46,33 @@ local function hasSuffix(str, suffix)
 	return suffix == "" or str:sub(-#suffix) == suffix
 end
 
+local function hasTypePrefix(ctype, prefix)
+	return hasPrefix( (ctype:gsub("^const%s+", "") ), prefix)
+end
+
 local function convert_type_0(arg)
 
-	if hasPrefix(arg.ctype, "uint64_t") then
+	if hasTypePrefix(arg.ctype, "uint64_t") then
 		return arg.ctype:gsub("uint64_t", "uint64")
-	elseif hasPrefix(arg.ctype, "int64_t") then
+	elseif hasTypePrefix(arg.ctype, "int64_t") then
 		return arg.ctype:gsub("int64_t", "int64")
-	elseif hasPrefix(arg.ctype, "uint32_t") then
+	elseif hasTypePrefix(arg.ctype, "uint32_t") then
 		return arg.ctype:gsub("uint32_t", "uint32")
-	elseif hasPrefix(arg.ctype, "int32_t") then
+	elseif hasTypePrefix(arg.ctype, "int32_t") then
 		return arg.ctype:gsub("int32_t", "int32")
-	elseif hasPrefix(arg.ctype, "uint16_t") then
+	elseif hasTypePrefix(arg.ctype, "uint16_t") then
 		return arg.ctype:gsub("uint16_t", "uint16")
-	elseif hasPrefix(arg.ctype, "int16_t") then
+	elseif hasTypePrefix(arg.ctype, "int16_t") then
 		return arg.ctype:gsub("int16_t", "int16")
-	elseif hasPrefix(arg.ctype, "uint8_t") then
+	elseif hasTypePrefix(arg.ctype, "uint8_t") then
 		return arg.ctype:gsub("uint8_t", "uint8")
-	elseif hasPrefix(arg.ctype, "uintptr_t") then
+	elseif hasTypePrefix(arg.ctype, "uintptr_t") then
 		return arg.ctype:gsub("uintptr_t", "void*")
 	elseif arg.ctype == "const char*" then
 		return "char8*"
-	elseif hasPrefix(arg.ctype, "char") then
+	elseif hasTypePrefix(arg.ctype, "char") then
 		return arg.ctype:gsub("char", "char8")
-	elseif hasPrefix(arg.ctype, "byte") then
+	elseif hasTypePrefix(arg.ctype, "byte") then
 		return arg.ctype:gsub("byte", "uint8")
 	elseif arg.ctype == "va_list"
 		or arg.fulltype == "bx::AllocatorI*"
@@ -91,7 +95,7 @@ end
 
 local function convert_struct_type(arg)
 	local ctype = convert_type(arg)
-	if hasPrefix(arg.ctype, "bool") then
+	if hasTypePrefix(arg.ctype, "bool") then
 		ctype = ctype:gsub("bool", "uint8")
 	end
 	return ctype
@@ -238,6 +242,9 @@ function converter.types(typ)
       yield("[CRepr]")
 		yield("public struct " .. typ.name .. " {")
         yield("    public uint16 idx;")
+        if typ.tagged then
+        yield("    public uint16 type;")
+        end
         yield("    public bool Valid => idx != uint16.MaxValue;")
         yield("}")
 	elseif hasSuffix(typ.name, "::Enum") then
