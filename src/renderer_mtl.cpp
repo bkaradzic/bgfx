@@ -5204,6 +5204,11 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 	void FrameBufferMtl::postReset()
 	{
+		if (NULL != m_swapChain)
+		{
+			return;
+		}
+
 		m_width  = 0;
 		m_height = 0;
 
