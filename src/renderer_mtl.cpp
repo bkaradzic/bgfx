@@ -5204,6 +5204,33 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 	void FrameBufferMtl::postReset()
 	{
+		m_width  = 0;
+		m_height = 0;
+
+		for (uint32_t ii = 0; ii < m_num; ++ii)
+		{
+			const Attachment& at = m_colorAttachment[ii];
+
+			if (isValid(at.handle) )
+			{
+				const TextureMtl& texture = s_renderMtl->m_textures[at.handle.idx];
+
+				if (0 == m_width)
+				{
+					m_width  = bx::max<uint32_t>(1, texture.m_width  >> at.mip);
+					m_height = bx::max<uint32_t>(1, texture.m_height >> at.mip);
+				}
+			}
+		}
+
+		if (0 == m_width
+		&&  isValid(m_depthHandle) )
+		{
+			const Attachment& at = m_depthAttachment;
+			const TextureMtl& texture = s_renderMtl->m_textures[at.handle.idx];
+			m_width  = bx::max<uint32_t>(1, texture.m_width  >> at.mip);
+			m_height = bx::max<uint32_t>(1, texture.m_height >> at.mip);
+		}
 	}
 
 	uint16_t FrameBufferMtl::destroy()
