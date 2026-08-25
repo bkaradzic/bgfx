@@ -517,6 +517,7 @@ namespace wgpu {
 		ShaderWGPU()
 			: m_code(NULL)
 			, m_module(NULL)
+			, m_moduleBgra8(NULL)
 			, m_constantBuffer(NULL)
 			, m_hash(0)
 			, m_numUniforms(0)
@@ -527,8 +528,11 @@ namespace wgpu {
 		void create(const Memory* _mem);
 		void destroy();
 
+		WGPUShaderModule getModule(bool _bgra8Storage) const;
+
 		const Memory* m_code;
 		WGPUShaderModule m_module;
+		mutable WGPUShaderModule m_moduleBgra8;
 		UniformBuffer* m_constantBuffer;
 
 		PredefinedUniform m_predefined[PredefinedUniform::Count];
@@ -630,7 +634,8 @@ namespace wgpu {
 
 		TextureWGPU()
 			: m_texture(NULL)
-			, m_textureResolve(NULL)
+			, m_textureMsaa(NULL)
+			, m_msaaCount(1)
 			, m_type(Texture2D)
 		{
 		}
@@ -641,11 +646,12 @@ namespace wgpu {
 		void clear(uint8_t _mip, uint8_t _numMips, uint16_t _layer, uint16_t _numLayers);
 
 		WGPUSampler getSamplerState(uint32_t _samplerFlags) const;
-		WGPUTextureView getTextureView(uint8_t _baseMipLevel, uint8_t _mipLevelCount, bool _storage, uint16_t _baseArrayLayer = 0, uint16_t _arrayLayerCount = UINT16_MAX, bool _force2DArray = false, bool _stencil = false) const;
+		WGPUTextureView getTextureView(uint8_t _baseMipLevel, uint8_t _mipLevelCount, bool _storage, uint16_t _baseArrayLayer = 0, uint16_t _arrayLayerCount = UINT16_MAX, WGPUTextureViewDimension _viewDimension = WGPUTextureViewDimension_Undefined, bool _stencil = false) const;
 
 		WGPUTexture m_texture;
-		WGPUTexture m_textureResolve;
+		WGPUTexture m_textureMsaa;
 		WGPUTextureViewDimension m_viewDimension;
+		WGPUTextureFormat m_fmt;
 
 		uint64_t m_flags;
 		uint32_t m_width;
@@ -653,6 +659,7 @@ namespace wgpu {
 		uint32_t m_depth;
 		uint32_t m_numLayers;
 		uint32_t m_numSides;
+		uint32_t m_msaaCount;
 		uint8_t  m_type;
 		uint8_t  m_requestedFormat;
 		uint8_t  m_textureFormat;
@@ -699,6 +706,7 @@ namespace wgpu {
 			, m_denseIdx(kInvalidHandle)
 			, m_numColorAttachments(0)
 			, m_numAttachments(0)
+			, m_msaaCount(1)
 			, m_needPresent(false)
 		{
 		}
@@ -726,6 +734,7 @@ namespace wgpu {
 
 		Attachment      m_attachment[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
 		WGPUTextureView m_textureView[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
+		WGPUTextureView m_resolveView[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
 		WGPUTextureView m_depthStencilView;
 		uint8_t m_formatDepthStencil;
 
@@ -735,6 +744,7 @@ namespace wgpu {
 
 		uint32_t m_width;
 		uint32_t m_height;
+		uint32_t m_msaaCount;
 
 		SwapChainWGPU m_swapChain;
 		bool m_needPresent;
