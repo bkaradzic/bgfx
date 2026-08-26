@@ -8554,6 +8554,7 @@ VK_DESTROY
 
 		m_needPresent = false;
 		m_needToRecreateSwapchain = false;
+		m_primingAcquires = kPrimingAcquires;
 
 		return result;
 	}
@@ -8826,6 +8827,25 @@ VK_DESTROY
 			m_lastImageAcquiredSemaphore = m_presentDoneSemaphore[m_currentSemaphore];
 			m_currentSemaphore = (m_currentSemaphore + 1) % kMaxBackBuffers;
 
+			// Right after a (re)create no image is available until the first present
+			// commits the surface. With a zero timeout a non-blocking swap chain never
+			// gets past that: acquire returns VK_NOT_READY, so nothing is presented, so
+			// the compositor never hands an image back, and the window stays frozen.
+			// Spending a small wait budget primes the pump; once it is spent this is a
+			// plain non-blocking acquire again, so a window the compositor genuinely
+			// stopped serving is still skipped rather than stalling the other swap chains.
+			uint64_t timeout = 0;
+
+			if (_block)
+			{
+				timeout = UINT64_MAX;
+			}
+			else if (0 < m_primingAcquires)
+			{
+				--m_primingAcquires;
+				timeout = kPrimingAcquireWait;
+			}
+
 			VkResult result;
 			{
 				BGFX_PROFILER_SCOPE("vkAcquireNextImageKHR", kColorFrame);
@@ -8833,7 +8853,7 @@ VK_DESTROY
 				result = vkAcquireNextImageKHR(
 					  device
 					, m_swapChain
-					, _block ? UINT64_MAX : 0
+					, timeout
 					, m_lastImageAcquiredSemaphore
 					, VK_NULL_HANDLE
 					, &m_backBufferColorIdx
@@ -8858,6 +8878,7 @@ VK_DESTROY
 			switch (result)
 			{
 			case VK_SUCCESS:
+				m_primingAcquires = 0;
 				break;
 
 			case VK_ERROR_SURFACE_LOST_KHR:
