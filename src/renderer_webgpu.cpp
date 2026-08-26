@@ -882,9 +882,9 @@ WGPU_IMPORT
 			, m_depthClamp(false)
 			, m_wireframe(false)
 			, m_mipGen(NULL)
-			, m_mipGenStubTexture(NULL)
 		{
 			BX_UNUSED(&popErrorScopeCb, &wgpuErrorCheck, s_backendType, s_adapterType);
+			bx::memSet(m_mipGenStubTexture,     0, sizeof(m_mipGenStubTexture) );
 			bx::memSet(m_mipGenStubTextureView, 0, sizeof(m_mipGenStubTextureView) );
 		}
 
@@ -1595,17 +1595,20 @@ WGPU_IMPORT
 
 			invalidateBindGroupCache();
 
-			for (uint32_t ii = 0; ii < BX_COUNTOF(m_mipGenStubTextureView); ++ii)
+			for (uint32_t ii = 0; ii < BX_COUNTOF(m_mipGenStubTexture); ++ii)
 			{
-				if (NULL != m_mipGenStubTextureView[ii])
+				for (uint32_t jj = 0; jj < BX_COUNTOF(m_mipGenStubTextureView[0]); ++jj)
 				{
-					wgpuRelease(m_mipGenStubTextureView[ii]);
+					if (NULL != m_mipGenStubTextureView[ii][jj])
+					{
+						wgpuRelease(m_mipGenStubTextureView[ii][jj]);
+					}
 				}
-			}
 
-			if (NULL != m_mipGenStubTexture)
-			{
-				wgpuRelease(m_mipGenStubTexture);
+				if (NULL != m_mipGenStubTexture[ii])
+				{
+					wgpuRelease(m_mipGenStubTexture[ii]);
+				}
 			}
 
 			for (uint32_t ii = 0; ii < BX_COUNTOF(m_frameBuffers); ++ii)
@@ -3778,8 +3781,8 @@ WGPU_IMPORT
 		bool m_wireframe;
 
 		const MipGen*   m_mipGen;
-		WGPUTexture     m_mipGenStubTexture;
-		WGPUTextureView m_mipGenStubTextureView[3];
+		WGPUTexture     m_mipGenStubTexture[2];
+		WGPUTextureView m_mipGenStubTextureView[2][3];
 
 		IndexBufferWGPU  m_indexBuffers[BGFX_CONFIG_MAX_INDEX_BUFFERS];
 		VertexBufferWGPU m_vertexBuffers[BGFX_CONFIG_MAX_VERTEX_BUFFERS];
@@ -6214,7 +6217,14 @@ m_resolution.formatColor = TextureFormat::BGRA8;
 			* bx::max<uint32_t>(_texture.m_numLayers, 1)
 			;
 
-		if (NULL == m_mipGenStubTexture)
+		const bool bgra8 = TextureFormat::BGRA8 == _texture.m_textureFormat;
+		const uint32_t stubIdx = bgra8 ? 1 : 0;
+		const WGPUTextureFormat stubFormat = bgra8
+			? WGPUTextureFormat_BGRA8Unorm
+			: WGPUTextureFormat_RGBA8Unorm
+			;
+
+		if (NULL == m_mipGenStubTexture[stubIdx])
 		{
 			WGPUTextureDescriptor dummyDesc =
 			{
@@ -6223,14 +6233,14 @@ m_resolution.formatColor = TextureFormat::BGRA8;
 				.usage           = WGPUTextureUsage_StorageBinding,
 				.dimension       = WGPUTextureDimension_2D,
 				.size            = { 4, 4, 1 },
-				.format          = WGPUTextureFormat_RGBA8Unorm,
+				.format          = stubFormat,
 				.mipLevelCount   = 3,
 				.sampleCount     = 1,
 				.viewFormatCount = 0,
 				.viewFormats     = NULL,
 			};
 
-			m_mipGenStubTexture = WGPU_CHECK(wgpuDeviceCreateTexture(m_device, &dummyDesc) );
+			m_mipGenStubTexture[stubIdx] = WGPU_CHECK(wgpuDeviceCreateTexture(m_device, &dummyDesc) );
 
 			for (uint32_t ii = 0; ii < 3; ++ii)
 			{
@@ -6238,7 +6248,7 @@ m_resolution.formatColor = TextureFormat::BGRA8;
 				{
 					.nextInChain     = NULL,
 					.label           = WGPU_STRING_VIEW_INIT,
-					.format          = WGPUTextureFormat_RGBA8Unorm,
+					.format          = stubFormat,
 					.dimension       = WGPUTextureViewDimension_2DArray,
 					.baseMipLevel    = ii,
 					.mipLevelCount   = 1,
@@ -6248,7 +6258,7 @@ m_resolution.formatColor = TextureFormat::BGRA8;
 					.usage           = WGPUTextureUsage_StorageBinding,
 				};
 
-				m_mipGenStubTextureView[ii] = WGPU_CHECK(wgpuTextureCreateView(m_mipGenStubTexture, &viewDesc) );
+				m_mipGenStubTextureView[stubIdx][ii] = WGPU_CHECK(wgpuTextureCreateView(m_mipGenStubTexture[stubIdx], &viewDesc) );
 			}
 		}
 
@@ -6367,7 +6377,7 @@ m_resolution.formatColor = TextureFormat::BGRA8;
 				}
 				else
 				{
-					view = m_mipGenStubTextureView[ii - numMips];
+					view = m_mipGenStubTextureView[stubIdx][ii - numMips];
 				}
 
 				bindGroupEntry[entryCount++] =
