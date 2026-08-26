@@ -496,10 +496,10 @@ namespace bgfx
 			BX_TRACE("Allow tearing is %ssupported.", allowTearing ? "" : "not ");
 
 			scd.Flags |= allowTearing ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0;
-			scd.Flags |= false
-				|| _scd.swapEffect == DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL
-				|| _scd.swapEffect == DXGI_SWAP_EFFECT_FLIP_DISCARD
-				? 0 // DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT
+			scd.Flags |= (_scd.waitable
+				&& (DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL == _scd.swapEffect
+				 || DXGI_SWAP_EFFECT_FLIP_DISCARD    == _scd.swapEffect) )
+				? DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT
 				: 0
 				;
 
@@ -508,12 +508,17 @@ namespace bgfx
 			DX_RELEASE_I(factory5);
 		}
 
-		DXGI_SWAP_CHAIN_FULLSCREEN_DESC scfd;
-		scfd.RefreshRate.Numerator   = 1;
-		scfd.RefreshRate.Denominator = 60;
-		scfd.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
-		scfd.Scaling  = DXGI_MODE_SCALING_UNSPECIFIED;
-		scfd.Windowed = _scd.windowed;
+		const DXGI_SWAP_CHAIN_FULLSCREEN_DESC scfd =
+		{
+			.RefreshRate =
+			{
+				.Numerator   = 0,
+				.Denominator = 0,
+			},
+			.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED,
+			.Scaling          = DXGI_MODE_SCALING_UNSPECIFIED,
+			.Windowed         = _scd.windowed,
+		};
 
 		hr = m_factory->CreateSwapChainForHwnd(
 			  _device
@@ -618,6 +623,11 @@ namespace bgfx
 			}
 		}
 #endif // BX_PLATFORM_LINUX || BX_PLATFORM_WINDOWS
+
+		if (_scd.waitable)
+		{
+			(*_swapChain)->SetMaximumFrameLatency(bx::max<uint32_t>(1, _scd.maxFrameLatency) );
+		}
 
 		updateHdr10(*_swapChain, _scd);
 

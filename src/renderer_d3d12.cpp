@@ -833,6 +833,7 @@ namespace bgfx { namespace d3d12
 			, m_rtMsaa(false)
 			, m_directAccessSupport(false)
 			, m_variableRateShadingSupport(false)
+			, m_additionalShadingRatesSupport(false)
 			, m_computeStateDirty(false)
 			, m_mipGen(NULL)
 			, m_zeroInitBuffer(NULL)
@@ -1214,6 +1215,7 @@ namespace bgfx { namespace d3d12
 				BX_TRACE("\tVariableShadingRateTier %d", options6.VariableShadingRateTier);
 
 				m_variableRateShadingSupport = D3D12_VARIABLE_SHADING_RATE_TIER_NOT_SUPPORTED != options6.VariableShadingRateTier;
+				m_additionalShadingRatesSupport = !!options6.AdditionalShadingRatesSupported;
 
 				BX_TRACE("\tShadingRateImageTileSize %d", options6.ShadingRateImageTileSize);
 				BX_TRACE("\tBackgroundProcessingSupported %d", options6.BackgroundProcessingSupported);
@@ -1391,6 +1393,7 @@ namespace bgfx { namespace d3d12
 				m_scd.flags      = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
 
 				m_scd.maxFrameLatency = bx::min<uint8_t>(_init.resolution.maxFrameLatency, BGFX_CONFIG_MAX_FRAME_LATENCY);
+				m_scd.waitable        = false;
 				m_scd.nwh             = g_platformData.nwh;
 				m_scd.ndt             = g_platformData.ndt;
 				m_scd.windowed        = true;
@@ -1479,8 +1482,8 @@ namespace bgfx { namespace d3d12
 
 					if (SUCCEEDED(hr) )
 					{
-						m_infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_CORRUPTION, true);
-						m_infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR,      true);
+						m_infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_CORRUPTION, isDebuggerAttached() );
+						m_infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR,      isDebuggerAttached() );
 						m_infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING,    false);
 
 						D3D12_INFO_QUEUE_FILTER filter;
@@ -1545,7 +1548,10 @@ namespace bgfx { namespace d3d12
 				for (uint32_t ii = 0; ii < BX_COUNTOF(m_scratchBuffer); ++ii)
 				{
 					m_scratchBuffer[ii].create(
-						  BGFX_CONFIG_MAX_TEXTURES + BGFX_CONFIG_MAX_SHADERS + BGFX_CONFIG_MAX_DRAW_CALLS
+						  bx::min<uint32_t>(
+							  D3D12_MAX_SHADER_VISIBLE_DESCRIPTOR_HEAP_SIZE_TIER_1 - BGFX_CONFIG_MAX_TEXTURE_SAMPLERS
+							, BGFX_CONFIG_MAX_DRAW_CALLS * BGFX_CONFIG_MAX_TEXTURE_SAMPLERS
+							)
 						, _init.limits.numDrawCalls
 						);
 				}
@@ -2267,12 +2273,9 @@ namespace bgfx { namespace d3d12
 				HRESULT hr = S_OK;
 				uint32_t syncInterval = !!(m_resolution.reset & BGFX_RESET_VSYNC);
 				uint32_t presentFlags = 0;
-				if (syncInterval)
-				{
-					presentFlags |= DXGI_PRESENT_RESTART;
-				}
 #if !BX_PLATFORM_LINUX
-				else if (m_dxgi.tearingSupported() )
+				if (!syncInterval
+				&&  m_dxgi.tearingSupported() )
 				{
 					presentFlags |= DXGI_PRESENT_ALLOW_TEARING;
 				}
@@ -4479,6 +4482,7 @@ namespace bgfx { namespace d3d12
 		bool m_rtMsaa;
 		bool m_directAccessSupport;
 		bool m_variableRateShadingSupport;
+		bool m_additionalShadingRatesSupport;
 
 		bool m_computeStateDirty;
 
@@ -4598,17 +4602,19 @@ namespace bgfx { namespace d3d12
 		DX_RELEASE(m_heap, 0);
 	}
 
-	void ScratchBufferD3D12::reset(D3D12_GPU_DESCRIPTOR_HANDLE& _gpuHandle)
+	void ScratchBufferD3D12::reset(D3D12_GPU_DESCRIPTOR_HANDLE& _gpuHandle, uint32_t _minDescriptors)
 	{
-		if (m_size < m_max
-		&& (m_overflow || m_high*4 > m_size*3) )
+		if (m_size < m_max)
 		{
-			uint32_t want = m_size * 2;
-			if (want < m_high + m_high/2)
+			uint32_t want = m_size;
+
+			if (m_overflow
+			||  m_high*4 > m_size*3)
 			{
-				want = m_high + m_high/2;
+				want = bx::max(m_size * 2, m_high + m_high/2);
 			}
-			want = bx::min<uint32_t>(want, m_max);
+
+			want = bx::min(bx::max(want, _minDescriptors), m_max);
 
 			if (want > m_size)
 			{
@@ -4633,6 +4639,8 @@ namespace bgfx { namespace d3d12
 		if (m_pos >= m_size)
 		{
 			m_overflow = true;
+			++m_pos;
+			m_high = m_pos;
 			return false;
 		}
 
@@ -5544,9 +5552,10 @@ namespace bgfx { namespace d3d12
 					);
 
 				D3D12_VERTEX_BUFFER_VIEW& vbv = _vbv[numStreams];
-				vbv.BufferLocation = vb.m_gpuVA + stream.m_startVertex * stride;
+				const uint32_t offset = stream.m_startVertex * stride;
+				vbv.BufferLocation = vb.m_gpuVA + offset;
 				vbv.StrideInBytes  = stride;
-				vbv.SizeInBytes    = _outNumVertices * stride;
+				vbv.SizeInBytes    = vb.m_size - bx::min(offset, vb.m_size);
 			}
 		}
 
@@ -7439,6 +7448,7 @@ namespace bgfx { namespace d3d12
 		scd.height     = _height;
 		scd.nwh        = _nwh;
 		scd.sampleDesc = s_msaa[0];
+		scd.waitable   = true;
 
 		HRESULT hr;
 		hr = s_renderD3D12->m_dxgi.createSwapChain(
@@ -7450,6 +7460,11 @@ namespace bgfx { namespace d3d12
 		m_state = D3D12_RESOURCE_STATE_PRESENT;
 
 		m_swapChainFormat = scd.format;
+
+		if (scd.waitable)
+		{
+			m_frameLatencyWaitableObject = m_swapChain->GetFrameLatencyWaitableObject();
+		}
 
 		DX_CHECK(s_renderD3D12->m_dxgi.m_factory->MakeWindowAssociation(
 			  (HWND)_nwh
@@ -7482,6 +7497,14 @@ namespace bgfx { namespace d3d12
 
 	uint16_t FrameBufferD3D12::destroy()
 	{
+#if !BX_PLATFORM_LINUX
+		if (NULL != m_frameLatencyWaitableObject)
+		{
+			CloseHandle( (HANDLE)m_frameLatencyWaitableObject);
+			m_frameLatencyWaitableObject = NULL;
+		}
+#endif // !BX_PLATFORM_LINUX
+
 		DX_RELEASE(m_swapChain, 0);
 
 		m_swapChainFormat = DXGI_FORMAT_UNKNOWN;
@@ -7505,6 +7528,14 @@ namespace bgfx { namespace d3d12
 			HRESULT hr = m_swapChain->Present(_syncInterval, _flags);
 			hr = !isLost(hr) ? S_OK : hr;
 			m_needPresent = false;
+
+#if !BX_PLATFORM_LINUX
+			if (NULL != m_frameLatencyWaitableObject)
+			{
+				WaitForSingleObjectEx( (HANDLE)m_frameLatencyWaitableObject, 1000, TRUE);
+			}
+#endif // !BX_PLATFORM_LINUX
+
 			return hr;
 		}
 
@@ -7747,8 +7778,9 @@ namespace bgfx { namespace d3d12
 								, _num
 								, _rect
 								);
-						rtv.ptr += rtvDescriptorSize;
 					}
+
+					rtv.ptr += rtvDescriptorSize;
 				}
 			}
 			else
@@ -8828,7 +8860,7 @@ namespace bgfx { namespace d3d12
 		D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle;
 		ScratchBufferD3D12& scratchBuffer = m_scratchBuffer[m_backBufferColorIdx];
 		m_cmd.finish(m_backBufferColorFence[m_backBufferColorIdx]);
-		scratchBuffer.reset(gpuHandle);
+		scratchBuffer.reset(gpuHandle, (_render->m_numRenderItems + 1) * BGFX_CONFIG_MAX_TEXTURE_SAMPLERS);
 
 		m_uniformScratchBuffer.begin();
 
@@ -8961,7 +8993,11 @@ namespace bgfx { namespace d3d12
 
 					if (m_variableRateShadingSupport)
 					{
-						reinterpret_cast<ID3D12GraphicsCommandList5*>(m_commandList)->RSSetShadingRate(s_shadingRate[renderView.m_shadingRate], NULL);
+						const uint8_t shadingRate = m_additionalShadingRatesSupport
+							? renderView.m_shadingRate
+							: bx::min<uint8_t>(renderView.m_shadingRate, ShadingRate::Rate2x2)
+							;
+						reinterpret_cast<ID3D12GraphicsCommandList5*>(m_commandList)->RSSetShadingRate(s_shadingRate[shadingRate], NULL);
 					}
 				}
 
@@ -9222,14 +9258,17 @@ namespace bgfx { namespace d3d12
 							: compute.m_numIndirect
 							;
 
-						m_commandList->ExecuteIndirect(
-							  s_renderD3D12->m_commandSignature[0]
-							, numDrawIndirect
-							, indirect.m_ptr
-							, compute.m_startIndirect * BGFX_CONFIG_DRAW_INDIRECT_STRIDE
-							, NULL
-							, 0
-							);
+						for (uint32_t ii = 0; ii < numDrawIndirect; ++ii)
+						{ // AMD runs only the first command when MaxCommandCount > 1.
+							m_commandList->ExecuteIndirect(
+								  s_renderD3D12->m_commandSignature[0]
+								, 1
+								, indirect.m_ptr
+								, (compute.m_startIndirect + ii) * BGFX_CONFIG_DRAW_INDIRECT_STRIDE
+								, NULL
+								, 0
+								);
+						}
 					}
 					else
 					{

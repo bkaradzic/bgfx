@@ -124,7 +124,7 @@ namespace bgfx { namespace d3d12
 
 		void create(uint32_t _maxDescriptors, uint32_t _initDescriptors);
 		void destroy();
-		void reset(D3D12_GPU_DESCRIPTOR_HANDLE& _gpuHandle);
+		void reset(D3D12_GPU_DESCRIPTOR_HANDLE& _gpuHandle, uint32_t _minDescriptors = 0);
 
 		void  allocEmpty(D3D12_GPU_DESCRIPTOR_HANDLE& _gpuHandle);
 
@@ -492,6 +492,7 @@ namespace bgfx { namespace d3d12
 			, m_numTh(0)
 			, m_state(D3D12_RESOURCE_STATE_PRESENT)
 			, m_needPresent(false)
+			, m_frameLatencyWaitableObject(NULL)
 		{
 			m_depth.idx = bgfx::kInvalidHandle;
 		}
@@ -519,6 +520,7 @@ namespace bgfx { namespace d3d12
 		Attachment m_attachment[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
 		D3D12_RESOURCE_STATES m_state;
 		bool m_needPresent;
+		void* m_frameLatencyWaitableObject;
 	};
 
 	struct CommandQueueD3D12

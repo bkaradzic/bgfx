@@ -42,6 +42,7 @@ namespace bgfx
 		DXGI_ALPHA_MODE alphaMode;
 		uint32_t flags;
 		uint8_t maxFrameLatency;
+		bool waitable;
 		void* nwh;
 		void* ndt;
 		bool windowed;
