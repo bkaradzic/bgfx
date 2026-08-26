@@ -4702,6 +4702,8 @@ namespace bgfx
 			, layout.m_rowPitch
 			, blockSize
 			);
+		BX_UNUSED(blockSize);
+
 		BX_ASSERT(layout.m_slicePitch >= layout.m_rowPitch*numRows
 			, "Blit buffer slice pitch is too small (%d < %d)."
 			, layout.m_slicePitch

@@ -72,6 +72,15 @@ namespace bgfx
 		return (_abgr >> 8) | (_abgr << 24);
 	}
 
+	inline bool isDebuggerAttached()
+	{
+#if BX_PLATFORM_WINDOWS || BX_PLATFORM_WINRT
+		return !!::IsDebuggerPresent();
+#else
+		return false;
+#endif // BX_PLATFORM_WINDOWS || BX_PLATFORM_WINRT
+	}
+
 #define _DX_CHECK(_call)                                                                   \
 			BX_MACRO_BLOCK_BEGIN                                                           \
 				HRESULT __hr__ = _call;                                                    \

@@ -1144,6 +1144,7 @@ namespace bgfx { namespace d3d11
 					m_scd.flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
 
 					m_scd.maxFrameLatency = bx::min<uint8_t>(_init.resolution.maxFrameLatency, BGFX_CONFIG_MAX_FRAME_LATENCY);
+					m_scd.waitable        = false;
 					m_scd.nwh             = g_platformData.nwh;
 					m_scd.ndt             = g_platformData.ndt;
 					m_scd.windowed        = true;
@@ -1260,7 +1261,7 @@ namespace bgfx { namespace d3d11
 
 				if (SUCCEEDED(hr) )
 				{
-					m_infoQueue->SetBreakOnSeverity(D3D11_MESSAGE_SEVERITY_CORRUPTION, true);
+					m_infoQueue->SetBreakOnSeverity(D3D11_MESSAGE_SEVERITY_CORRUPTION, isDebuggerAttached() );
 					m_infoQueue->SetBreakOnSeverity(D3D11_MESSAGE_SEVERITY_ERROR,      false);
 					m_infoQueue->SetBreakOnSeverity(D3D11_MESSAGE_SEVERITY_WARNING,    false);
 					m_infoQueue->SetBreakOnSeverity(D3D11_MESSAGE_SEVERITY_INFO,       false);
@@ -1697,7 +1698,7 @@ namespace bgfx { namespace d3d11
 				if (_init.debug
 				&&  NULL != m_infoQueue)
 				{
-					m_infoQueue->SetBreakOnSeverity(D3D11_MESSAGE_SEVERITY_ERROR, true);
+					m_infoQueue->SetBreakOnSeverity(D3D11_MESSAGE_SEVERITY_ERROR, isDebuggerAttached() );
 				}
 
 				{ //
