@@ -2599,6 +2599,19 @@ WGPU_IMPORT
 
 			if (!m_backBuffer.isSwapChain() )
 			{
+				if (m_resolution.width  != _resolution.width
+				||  m_resolution.height != _resolution.height)
+				{
+					m_resolution.width  = _resolution.width;
+					m_resolution.height = _resolution.height;
+
+					for (uint32_t ii = 0; ii < BX_COUNTOF(m_frameBuffers); ++ii)
+					{
+						m_frameBuffers[ii].preReset();
+						m_frameBuffers[ii].postReset();
+					}
+				}
+
 				return suspended;
 			}
 
@@ -6088,6 +6101,7 @@ m_resolution.formatColor = TextureFormat::BGRA8;
 
 		const bool direct = (1 == numRows*depth || 0 == rowPitch % 256)
 			&& 0 == bufferOffset % offsetAlign
+			&& 0 == bufferOffset % 512
 			;
 
 		const uint32_t numCopies = direct ? 1 : numRows*depth;

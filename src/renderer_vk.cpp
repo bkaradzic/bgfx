@@ -3221,6 +3221,19 @@ VK_IMPORT_DEVICE
 
 			if (NULL == m_backBuffer.m_nwh)
 			{
+				if (m_resolution.width  != _resolution.width
+				||  m_resolution.height != _resolution.height)
+				{
+					m_resolution.width  = _resolution.width;
+					m_resolution.height = _resolution.height;
+
+					for (uint32_t ii = 0; ii < BX_COUNTOF(m_frameBuffers); ++ii)
+					{
+						m_frameBuffers[ii].preReset();
+						m_frameBuffers[ii].postReset();
+					}
+				}
+
 				return suspended;
 			}
 
