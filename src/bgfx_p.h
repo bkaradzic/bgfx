@@ -982,6 +982,33 @@ namespace bgfx
 	};
 
 	///
+	struct BlitFallback
+	{
+		BlitFallback()
+		{
+			for (uint32_t ii = 0; ii < BX_COUNTOF(m_program); ++ii)
+			{
+				m_program[ii] = BGFX_INVALID_HANDLE;
+			}
+		}
+
+		void init();
+		void shutdown();
+
+		enum Enum
+		{
+			TextureToBuffer,
+			BufferToTexture,
+
+			Count
+		};
+
+		ProgramHandle m_program[Count];
+	};
+
+	extern BlitFallback* g_blitFallback;
+
+	///
 	struct VideoDecode
 	{
 		VideoDecode()
@@ -7191,6 +7218,7 @@ namespace bgfx
 		TextVideoMemBlitter m_textVideoMemBlitter;
 		ClearQuad m_clearQuad;
 		MipGen m_mipGen;
+		BlitFallback m_blitFallback;
 		VideoDecode m_videoDecode;
 
 		RendererContextI* m_renderCtx;
