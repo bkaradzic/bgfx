@@ -592,6 +592,11 @@ namespace bgfx
 #	include "cs_yuv_to_rgb.bin.h"
 #endif // BGFX_CONFIG_VIDEO
 
+#if BGFX_CONFIG_BLIT_FALLBACK
+#	include "cs_blit_texture_to_buffer.bin.h"
+#	include "cs_blit_buffer_to_texture.bin.h"
+#endif // BGFX_CONFIG_BLIT_FALLBACK
+
 	static const EmbeddedShader s_embeddedShaders[] =
 	{
 		BGFX_EMBEDDED_SHADER(vs_debugfont),
@@ -616,6 +621,11 @@ namespace bgfx
 #if BGFX_CONFIG_VIDEO
 		BGFX_EMBEDDED_SHADER(cs_yuv_to_rgb),
 #endif // BGFX_CONFIG_VIDEO
+
+#if BGFX_CONFIG_BLIT_FALLBACK
+		BGFX_EMBEDDED_SHADER(cs_blit_texture_to_buffer),
+		BGFX_EMBEDDED_SHADER(cs_blit_buffer_to_texture),
+#endif // BGFX_CONFIG_BLIT_FALLBACK
 
 		BGFX_EMBEDDED_SHADER_END()
 	};
@@ -1143,6 +1153,67 @@ namespace bgfx
 	{
 	}
 #endif // BGFX_CONFIG_MIP_GEN_FALLBACK
+
+	BlitFallback* g_blitFallback = NULL;
+
+#if BGFX_CONFIG_BLIT_FALLBACK
+	void BlitFallback::init()
+	{
+		BGFX_CHECK_API_THREAD();
+
+		const RendererType::Enum rendererType = g_caps.rendererType;
+
+		if (false
+		||  RendererType::Direct3D11 == rendererType
+		||  RendererType::Direct3D12 == rendererType
+		   )
+		{
+			static const char* cs_blit[] =
+			{
+				"cs_blit_texture_to_buffer",
+				"cs_blit_buffer_to_texture",
+			};
+
+			for (uint32_t ii = 0; ii < BX_COUNTOF(m_program); ++ii)
+			{
+				ShaderHandle csh = createEmbeddedShader(s_embeddedShaders, rendererType, cs_blit[ii]);
+				BX_ASSERT(isValid(csh), "Failed to create blit embedded compute shader \"%s\"", cs_blit[ii]);
+
+				if (isValid(csh) )
+				{
+					m_program[ii] = createProgram(csh, true);
+					BX_ASSERT(isValid(m_program[ii]), "Failed to create blit program.");
+				}
+			}
+
+			g_blitFallback = this;
+		}
+	}
+
+	void BlitFallback::shutdown()
+	{
+		BGFX_CHECK_API_THREAD();
+
+		g_blitFallback = NULL;
+
+		for (uint32_t ii = 0; ii < BX_COUNTOF(m_program); ++ii)
+		{
+			if (isValid(m_program[ii]) )
+			{
+				destroy(m_program[ii]);
+				m_program[ii] = BGFX_INVALID_HANDLE;
+			}
+		}
+	}
+#else
+	void BlitFallback::init()
+	{
+	}
+
+	void BlitFallback::shutdown()
+	{
+	}
+#endif // BGFX_CONFIG_BLIT_FALLBACK
 
 #if BGFX_CONFIG_VIDEO
 	VideoDecode* g_videoDecode = NULL;
@@ -2475,6 +2546,7 @@ namespace bgfx
 		m_textVideoMemBlitter.init(m_init.resolution.debugTextScale);
 		m_clearQuad.init();
 		m_mipGen.init();
+		m_blitFallback.init();
 		m_videoDecode.init();
 
 		m_submit->m_transientVb = createTransientVertexBuffer(_init.limits.maxTransientVbSize);
@@ -2503,6 +2575,7 @@ namespace bgfx
 		m_textVideoMemBlitter.shutdown();
 		m_clearQuad.shutdown();
 		m_mipGen.shutdown();
+		m_blitFallback.shutdown();
 		m_videoDecode.shutdown();
 		frame();
 

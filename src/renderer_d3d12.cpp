@@ -8,8 +8,6 @@
 #if BGFX_CONFIG_RENDERER_DIRECT3D12
 #	include "renderer_d3d12.h"
 #	include "video_d3d12.h"
-#	include "cs_blit_texture_to_buffer.bin.h"
-#	include "cs_blit_buffer_to_texture.bin.h"
 
 #if !BX_PLATFORM_WINDOWS && !BX_PLATFORM_LINUX
 #	include <inspectable.h>
@@ -838,7 +836,6 @@ namespace bgfx { namespace d3d12
 			, m_mipGen(NULL)
 			, m_zeroInitBuffer(NULL)
 		{
-			bx::memSet(m_blitPso, 0, sizeof(m_blitPso) );
 		}
 
 		~RendererContextD3D12()
@@ -2056,38 +2053,6 @@ namespace bgfx { namespace d3d12
 				m_nvapi.initAftermath(m_device, m_commandList);
 			}
 
-			{
-				const Memory t2b = { (uint8_t*)cs_blit_texture_to_buffer_dxil, sizeof(cs_blit_texture_to_buffer_dxil) };
-				const Memory b2t = { (uint8_t*)cs_blit_buffer_to_texture_dxil, sizeof(cs_blit_buffer_to_texture_dxil) };
-
-				m_blitShader[0].create(&t2b);
-				m_blitShader[1].create(&b2t);
-
-				for (uint32_t ii = 0; ii < BX_COUNTOF(m_blitPso); ++ii)
-				{
-					const Memory* code = m_blitShader[ii].m_code;
-
-					if (NULL == code)
-					{
-						continue;
-					}
-
-					const D3D12_COMPUTE_PIPELINE_STATE_DESC desc =
-					{
-						.pRootSignature = m_computeRootSignature,
-						.CS             = { code->data, code->size },
-						.NodeMask       = 0,
-						.CachedPSO      = { NULL, 0 },
-						.Flags          = D3D12_PIPELINE_STATE_FLAG_NONE,
-					};
-
-					DX_CHECK(m_device->CreateComputePipelineState(&desc
-						, IID_ID3D12PipelineState
-						, (void**)&m_blitPso[ii]
-						) );
-				}
-			}
-
 			g_internalData.context = m_device;
 			return true;
 
@@ -2185,12 +2150,6 @@ namespace bgfx { namespace d3d12
 			dumpInfoQueue();
 			DX_RELEASE_W(m_infoQueue, 0);
 #endif // BX_PLATFORM_WINDOWS
-
-			for (uint32_t ii = 0; ii < BX_COUNTOF(m_blitPso); ++ii)
-			{
-				DX_RELEASE(m_blitPso[ii], 0);
-				m_blitShader[ii].destroy();
-			}
 
 			DX_RELEASE(m_rtvDescriptorHeap, 0);
 			DX_RELEASE(m_dsvDescriptorHeap, 0);
@@ -4488,9 +4447,6 @@ namespace bgfx { namespace d3d12
 
 		const MipGen* m_mipGen;
 		ID3D12Resource* m_zeroInitBuffer;
-
-		ShaderD3D12 m_blitShader[2];
-		ID3D12PipelineState* m_blitPso[2];
 
 		void generateMips(ID3D12GraphicsCommandList* _commandList, TextureD3D12& _texture);
 	};
@@ -8107,9 +8063,17 @@ namespace bgfx { namespace d3d12
 	{
 		const bool toBuffer = _blit.m_dst.isBuffer();
 
-		ID3D12PipelineState* pso = m_blitPso[toBuffer ? 0 : 1];
+		if (NULL == g_blitFallback)
+		{
+			return false;
+		}
 
-		if (NULL == pso)
+		const ProgramHandle prog = g_blitFallback->m_program[toBuffer
+			? BlitFallback::TextureToBuffer
+			: BlitFallback::BufferToTexture
+			];
+
+		if (!isValid(prog) )
 		{
 			return false;
 		}
@@ -8210,7 +8174,7 @@ namespace bgfx { namespace d3d12
 		const uint16_t samplerStateIdx = getSamplerState(samplerFlags, BGFX_MAX_COMPUTE_BINDINGS, NULL);
 		m_commandList->SetComputeRootDescriptorTable(ComputeRp::Sampler, m_samplerAllocator.get(samplerStateIdx) );
 
-		m_commandList->SetPipelineState(pso);
+		m_commandList->SetPipelineState(getPipelineState(prog) );
 
 		D3D12_GPU_DESCRIPTOR_HANDLE srvHandle[BGFX_MAX_COMPUTE_BINDINGS] = {};
 		scratchBuffer.allocSrv(srvHandle[0], toBuffer ? texture.m_ptr : buffer.m_ptr, srvd);

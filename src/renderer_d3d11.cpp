@@ -8,8 +8,6 @@
 #if BGFX_CONFIG_RENDERER_DIRECT3D11
 #	include "renderer_d3d11.h"
 #	include "video_d3d11.h"
-#	include "cs_blit_texture_to_buffer.bin.h"
-#	include "cs_blit_buffer_to_texture.bin.h"
 #	include <bx/pixelformat.h>
 
 namespace bgfx { namespace d3d11
@@ -1743,14 +1741,6 @@ namespace bgfx { namespace d3d11
 
 			m_nvapi.initAftermath(m_device, m_deviceCtx);
 
-			{
-				const Memory t2b = { (uint8_t*)cs_blit_texture_to_buffer_dxbc, sizeof(cs_blit_texture_to_buffer_dxbc) };
-				const Memory b2t = { (uint8_t*)cs_blit_buffer_to_texture_dxbc, sizeof(cs_blit_buffer_to_texture_dxbc) };
-
-				m_blitShader[0].create(&t2b);
-				m_blitShader[1].create(&b2t);
-			}
-
 			g_internalData.context = m_device;
 			return true;
 
@@ -1826,11 +1816,6 @@ namespace bgfx { namespace d3d11
 			m_zeroInitTileCache.invalidate();
 
 			invalidateCache();
-
-			for (uint32_t ii = 0; ii < BX_COUNTOF(m_blitShader); ++ii)
-			{
-				m_blitShader[ii].destroy();
-			}
 
 			for (uint32_t ii = 0; ii < BX_COUNTOF(m_frameBuffers); ++ii)
 			{
@@ -3995,7 +3980,6 @@ namespace bgfx { namespace d3d11
 		IndexBufferD3D11 m_indexBuffers[BGFX_CONFIG_MAX_INDEX_BUFFERS];
 		VertexBufferD3D11 m_vertexBuffers[BGFX_CONFIG_MAX_VERTEX_BUFFERS];
 		ShaderD3D11 m_shaders[BGFX_CONFIG_MAX_SHADERS];
-		ShaderD3D11 m_blitShader[2];
 		ProgramD3D11 m_program[BGFX_CONFIG_MAX_PROGRAMS];
 		TextureD3D11 m_textures[BGFX_CONFIG_MAX_TEXTURES];
 		VertexLayout m_vertexLayouts[BGFX_CONFIG_MAX_VERTEX_LAYOUTS];
@@ -6281,7 +6265,17 @@ namespace bgfx { namespace d3d11
 			return;
 		}
 
-		if (NULL == m_blitShader[toBuffer ? 0 : 1].m_computeShader)
+		if (NULL == g_blitFallback)
+		{
+			return;
+		}
+
+		const ProgramHandle prog = g_blitFallback->m_program[toBuffer
+			? BlitFallback::TextureToBuffer
+			: BlitFallback::BufferToTexture
+			];
+
+		if (!isValid(prog) )
 		{
 			return;
 		}
@@ -6357,7 +6351,7 @@ namespace bgfx { namespace d3d11
 			return;
 		}
 
-		const ShaderD3D11& shader = m_blitShader[toBuffer ? 0 : 1];
+		const ShaderD3D11& shader = *m_program[prog.idx].m_vsh;
 
 		const float params[8] =
 		{
