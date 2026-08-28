@@ -296,6 +296,7 @@ namespace bgfx
 	static constexpr uint32_t kDrawCallBlock = BGFX_CONFIG_DRAW_CALL_BLOCK;
 	static constexpr uint32_t kBlitBlock     = 64;
 	static constexpr uint32_t kRectBlock     = 64;
+	static constexpr uint32_t kViewUsedWords = bx::alignUp(BGFX_CONFIG_MAX_VIEWS, 64);
 
 	inline uint32_t alignDrawCalls(uint32_t _num)
 	{
@@ -1615,7 +1616,7 @@ namespace bgfx
 	class FrameArenaT
 	{
 	public:
-		static_assert(0 == (BlockT & (BlockT-1) ), "BGFX_CONFIG_DRAW_CALL_BLOCK must be power of two.");
+		static_assert(bx::isPowerOf2(BlockT), "FrameArenaT BlockT must be power of two.");
 
 		~FrameArenaT()
 		{
@@ -1623,11 +1624,14 @@ namespace bgfx
 		}
 
 #if BGFX_CONFIG_DYNAMIC_FRAME_STORAGE
+		static constexpr uint32_t kBlockMask = BlockT - 1;
+
 		FrameArenaT()
 			: m_block(NULL)
 			, m_reserved(NULL)
 			, m_numBlocks(0)
 			, m_numReservedBlocks(0)
+			, m_reservedCount(0)
 		{
 		}
 
@@ -1637,6 +1641,7 @@ namespace bgfx
 
 			m_numBlocks         = numBlocks(_numMax);
 			m_numReservedBlocks = bx::min(numBlocks(_numReserved), m_numBlocks);
+			m_reservedCount     = m_numReservedBlocks * BlockT;
 
 			m_block = (Ty**)bx::alloc(g_allocator, sizeof(Ty*)*m_numBlocks);
 			bx::memSet(m_block, 0, sizeof(Ty*)*m_numBlocks);
@@ -1669,11 +1674,17 @@ namespace bgfx
 			m_block             = NULL;
 			m_numBlocks         = 0;
 			m_numReservedBlocks = 0;
+			m_reservedCount     = 0;
 		}
 
 		BX_FORCE_INLINE Ty& operator[](uint32_t _idx)
 		{
-			const uint32_t blockIdx = _idx/BlockT;
+			if (_idx < m_reservedCount)
+			{
+				return m_reserved[_idx];
+			}
+
+			const uint32_t blockIdx = _idx / BlockT;
 
 			Ty* block = load(blockIdx);
 
@@ -1682,12 +1693,17 @@ namespace bgfx
 				block = allocBlock(blockIdx);
 			}
 
-			return block[_idx%BlockT];
+			return block[_idx & kBlockMask];
 		}
 
 		BX_FORCE_INLINE const Ty& operator[](uint32_t _idx) const
 		{
-			return load(_idx/BlockT)[_idx%BlockT];
+			if (_idx < m_reservedCount)
+			{
+				return m_reserved[_idx];
+			}
+
+			return load(_idx / BlockT)[_idx & kBlockMask];
 		}
 
 		void shrink(uint32_t _numItems)
@@ -1736,6 +1752,7 @@ namespace bgfx
 		Ty*       m_reserved;
 		uint32_t  m_numBlocks;
 		uint32_t  m_numReservedBlocks;
+		uint32_t  m_reservedCount;
 		bx::Mutex m_lock;
 #else
 		FrameArenaT()
@@ -2322,6 +2339,11 @@ namespace bgfx
 			m_numMips    = 1;
 		}
 
+		bool isOccupied() const
+		{
+			return kInvalidHandle != m_idx;
+		}
+
 		uint32_t m_samplerFlags;
 		uint16_t m_firstLayer;
 		uint16_t m_numLayers;
@@ -2332,8 +2354,28 @@ namespace bgfx
 		uint8_t  m_firstMip;
 		uint8_t  m_numMips;
 	};
-
 	static_assert(16 == sizeof(Binding), "Binding size changed. Whole struct must be properly initialized for hashing and comparing!");
+
+	inline uint32_t hashBindings(const Binding _bind[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS])
+	{
+		bx::HashMurmur3 murmur;
+		murmur.begin();
+
+		uint32_t mask = 0;
+		for (uint32_t ii = 0; ii < BGFX_CONFIG_MAX_TEXTURE_SAMPLERS; ++ii)
+		{
+			mask |= uint32_t(_bind[ii].isOccupied() ) << ii;
+		}
+
+		murmur.add(mask);
+
+		for (BitMaskToIndexIteratorT<uint32_t> it(mask); !it.isDone(); it.next() )
+		{
+			murmur.add(_bind[it.idx]);
+		}
+
+		return murmur.end();
+	}
 
 	struct Stream
 	{
@@ -3090,10 +3132,12 @@ namespace bgfx
 			, m_capture(false)
 			, m_flush(false)
 			, m_needBindDedup(false)
+			, m_numUsedViews(0)
 		{
 			m_numRenderItems = 0;
 			m_numRenderBinds = 0;
 			bx::memSet(m_occlusion, 0xff, sizeof(m_occlusion) );
+			bx::memSet(m_viewUsed, 0, sizeof(m_viewUsed) );
 
 			m_perfStats.viewStats = m_viewStats;
 		}
@@ -3272,6 +3316,28 @@ namespace bgfx
 			m_flush   = false;
 			m_numScreenShots = 0;
 			m_frameNum = frameNum;
+
+			m_numUsedViews = 0;
+			bx::memSet(m_viewUsed, 0, sizeof(m_viewUsed) );
+		}
+
+		void collectUsedViews()
+		{
+			uint16_t num = 0;
+
+			for (uint32_t ww = 0; ww < kViewUsedWords; ++ww)
+			{
+				uint64_t bits = m_viewUsed[ww];
+
+				while (0 != bits)
+				{
+					const uint8_t bit = bx::countTrailingZeros(bits);
+					m_usedViews[num++] = ViewId(ww*64 + bit);
+					bits &= bits - 1;
+				}
+			}
+
+			m_numUsedViews = num;
 		}
 
 		void finish()
@@ -3499,6 +3565,10 @@ namespace bgfx
 		bool m_capture;
 		bool m_flush;
 		bool m_needBindDedup;
+
+		uint64_t m_viewUsed[kViewUsedWords];
+		ViewId   m_usedViews[BGFX_CONFIG_MAX_VIEWS];
+		uint16_t m_numUsedViews;
 	};
 
 	BX_ALIGN_DECL_CACHE_LINE(struct) EncoderImpl
@@ -3539,6 +3609,13 @@ namespace bgfx
 			m_bindLlastIdx  = 0;
 			m_bindEmptyIdx = UINT32_MAX;
 			m_bindDirty    = true;
+
+			bx::memSet(m_viewUsed, 0, sizeof(m_viewUsed) );
+		}
+
+		BX_FORCE_INLINE void markViewUsed(ViewId _id)
+		{
+			m_viewUsed[uint32_t(_id) >> 6] |= uint64_t(1) << (_id & 0x3f);
 		}
 
 		void end(bool _finalize)
@@ -3564,7 +3641,7 @@ namespace bgfx
 
 		uint32_t bindStateIndex()
 		{
-			const uint32_t hash = bx::hash<bx::HashMurmur3>(m_bind.m_bind, sizeof(m_bind.m_bind) );
+			const uint32_t hash = hashBindings(m_bind.m_bind);
 
 			BindHashMap::const_iterator it = m_bindHashMap.find(hash);
 			if (it != m_bindHashMap.end() )
@@ -3862,16 +3939,26 @@ namespace bgfx
 			m_draw.m_numInstances = _numInstances;
 		}
 
+		void setBind(uint8_t _stage, const Binding& _bind)
+		{
+			Binding& dst = m_bind.m_bind[_stage];
+			if (0 != bx::memCmp(&dst, &_bind, sizeof(Binding) ) )
+			{
+				dst = _bind;
+				m_bindDirty = true;
+			}
+		}
+
 		void setTexture(uint8_t _stage, UniformHandle _sampler, TextureHandle _handle, uint32_t _flags)
 		{
-			m_bindDirty = true;
-			Binding& bind = m_bind.m_bind[_stage];
+			Binding bind;
 			bind.setTexture(
 				  _handle
 				, 0 != (_flags&BGFX_SAMPLER_INTERNAL_DEFAULT)
 					? BGFX_SAMPLER_INTERNAL_DEFAULT
 					: _flags
 				);
+			setBind(_stage, bind);
 
 			if (isValid(_sampler) )
 			{
@@ -3882,8 +3969,7 @@ namespace bgfx
 
 		void setTexture(uint8_t _stage, UniformHandle _sampler, TextureHandle _handle, uint16_t _firstLayer, uint16_t _numLayers, uint8_t _firstMip, uint8_t _numMips, uint32_t _flags)
 		{
-			m_bindDirty = true;
-			Binding& bind = m_bind.m_bind[_stage];
+			Binding bind;
 			bind.setTexture(
 				  _handle
 				, _firstLayer
@@ -3894,6 +3980,7 @@ namespace bgfx
 					? BGFX_SAMPLER_INTERNAL_DEFAULT
 					: _flags
 				);
+			setBind(_stage, bind);
 
 			if (isValid(_sampler) )
 			{
@@ -3904,30 +3991,30 @@ namespace bgfx
 
 		void setBuffer(uint8_t _stage, IndexBufferHandle _handle, Access::Enum _access)
 		{
-			m_bindDirty = true;
-			Binding& bind = m_bind.m_bind[_stage];
+			Binding bind;
 			bind.setIndexBuffer(_handle, _access);
+			setBind(_stage, bind);
 		}
 
 		void setBuffer(uint8_t _stage, VertexBufferHandle _handle, Access::Enum _access)
 		{
-			m_bindDirty = true;
-			Binding& bind = m_bind.m_bind[_stage];
+			Binding bind;
 			bind.setBuffer(_handle, _access);
+			setBind(_stage, bind);
 		}
 
 		void setImage(uint8_t _stage, TextureHandle _handle, uint8_t _mip, Access::Enum _access, TextureFormat::Enum _format)
 		{
-			m_bindDirty = true;
-			Binding& bind = m_bind.m_bind[_stage];
+			Binding bind;
 			bind.setImage(_handle, _mip, _access, _format);
+			setBind(_stage, bind);
 		}
 
 		void setImage(uint8_t _stage, TextureHandle _handle, uint16_t _firstLayer, uint16_t _numLayers, uint8_t _mip, Access::Enum _access, TextureFormat::Enum _format)
 		{
-			m_bindDirty = true;
-			Binding& bind = m_bind.m_bind[_stage];
+			Binding bind;
 			bind.setImage(_handle, _firstLayer, _numLayers, _mip, _access, _format);
+			setBind(_stage, bind);
 		}
 
 		void discard(uint8_t _flags)
@@ -4009,6 +4096,8 @@ namespace bgfx
 
 		int64_t m_cpuTimeBegin;
 		int64_t m_cpuTimeEnd;
+
+		uint64_t m_viewUsed[kViewUsedWords];
 	};
 
 	struct VertexLayoutRef
@@ -7012,6 +7101,7 @@ namespace bgfx
 		void freeAllHandles(Frame* _frame);
 		void frameNoRenderWait();
 		void swap();
+		void collectSubmitViewUsed();
 
 		// render thread
 		void flip();
@@ -7095,6 +7185,7 @@ namespace bgfx
 			m_submit->m_needBindDedup = 1 < numSubmittingEncoders;
 			m_submit->m_numRenderItemsRequested = numRenderItemsRequested;
 			m_numDrawCallsPeak = bx::max(m_numDrawCallsPeak, numRenderItemsRequested);
+			collectSubmitViewUsed();
 		}
 
 		bx::Semaphore m_renderSem;
@@ -7131,6 +7222,7 @@ namespace bgfx
 			m_submit->m_needBindDedup = false;
 			m_submit->m_numRenderItemsRequested = m_encoder[0].m_numSubmitted + m_encoder[0].m_numDropped;
 			m_numDrawCallsPeak = bx::max(m_numDrawCallsPeak, m_submit->m_numRenderItemsRequested);
+			collectSubmitViewUsed();
 		}
 #endif // BGFX_CONFIG_MULTITHREADED
 
