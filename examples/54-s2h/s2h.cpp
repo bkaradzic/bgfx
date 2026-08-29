@@ -49,6 +49,7 @@ static const char* s_exampleNames[] =
 	"Features: Quad Post",
 	"Features: Use User Font",
 	"Features: Debug Zoom",
+	"Features: Quad VS/PS",
 };
 
 void renderScreenSpaceQuad(uint8_t _view, bgfx::ProgramHandle _program)
@@ -132,6 +133,7 @@ public:
 		m_program[8] = loadProgram("vs_s2h", "fs_s2h_3d");
 		m_program[9] = loadProgram("vs_s2h", "fs_s2h_clear");
 		m_program[10] = loadProgram("vs_s2h", "fs_s2h_quadpost_scene");
+		m_program[13] = loadProgram("vs_s2h", "fs_s2h_quadvsps");
 		m_quadPostProgram = loadProgram("vs_s2h", "fs_s2h_quadpost");
 		m_userFontProgram = loadProgram("vs_s2h", "fs_s2h_use_user_font");
 		m_debugZoomProgram = loadProgram("vs_s2h", "fs_s2h_debug_zoom");
