@@ -34,6 +34,12 @@ struct PosColorTexCoord0Vertex
 
 bgfx::VertexLayout PosColorTexCoord0Vertex::ms_layout;
 
+static const char* s_exampleNames[] =
+{
+	"Hello World",
+	"Hello Screen",
+};
+
 void renderScreenSpaceQuad(uint8_t _view, bgfx::ProgramHandle _program)
 {
 	bgfx::TransientVertexBuffer tvb;
@@ -95,7 +101,8 @@ public:
 		bgfx::setViewClear(0, BGFX_CLEAR_COLOR|BGFX_CLEAR_DEPTH, 0x050505ff, 1.0f, 0);
 
 		PosColorTexCoord0Vertex::init();
-		m_program = loadProgram("vs_s2h", "fs_s2h");
+		m_program[0] = loadProgram("vs_s2h", "fs_s2h");
+		m_program[1] = loadProgram("vs_s2h", "fs_s2h_screen");
 
 		imguiCreate();
 	}
@@ -103,7 +110,10 @@ public:
 	int shutdown() override
 	{
 		imguiDestroy();
-		bgfx::destroy(m_program);
+		for (bgfx::ProgramHandle& program : m_program)
+		{
+			bgfx::destroy(program);
+		}
 		bgfx::shutdown();
 		return 0;
 	}
@@ -118,11 +128,17 @@ public:
 				| (m_mouseState.m_buttons[entry::MouseButton::Middle] ? IMGUI_MBUT_MIDDLE : 0)
 				, m_mouseState.m_mz, uint16_t(m_width), uint16_t(m_height) );
 			showExampleDialog(this);
+
+			ImGui::SetNextWindowPos(ImVec2(10.0f, 10.0f), ImGuiCond_FirstUseEver);
+			ImGui::Begin("S2H Examples", NULL, 0);
+			ImGui::Combo("Example", &m_example, s_exampleNames, BX_COUNTOF(s_exampleNames) );
+			ImGui::TextWrapped("Select a Shader To Human sample. New samples can share this fullscreen renderer.");
+			ImGui::End();
 			imguiEndFrame();
 
 			bgfx::setViewRect(0, 0, 0, uint16_t(m_width), uint16_t(m_height) );
 			bgfx::touch(0);
-			renderScreenSpaceQuad(0, m_program);
+			renderScreenSpaceQuad(0, m_program[m_example]);
 			bgfx::frame();
 			return true;
 		}
@@ -135,7 +151,8 @@ public:
 	uint32_t m_height;
 	uint32_t m_debug;
 	uint32_t m_reset;
-	bgfx::ProgramHandle m_program;
+	int m_example = 0;
+	bgfx::ProgramHandle m_program[BX_COUNTOF(s_exampleNames)];
 };
 
 } // namespace
