@@ -19,13 +19,15 @@
 	#if !defined(S2H_BGFX) || BGFX_SHADER_LANGUAGE_GLSL
 		#define static
 	#endif
-	#define rsqrt inversesqrt
+	#define rsqrt(_x) (1.0f / sqrt(_x))
 	// bgfx provides its own mul macro.  It must remain in control so matrix
 	// multiplication is translated correctly for every bgfx renderer.
 	#ifndef S2H_BGFX
 		#define mul(a,b) (a) * (b)
 	#endif
-	#define atan2 atan
+	#if !defined(S2H_BGFX) || BGFX_SHADER_LANGUAGE_GLSL
+		#define atan2 atan
+	#endif
 	#define asuint floatBitsToUint
 	#define asfloat uintBitsToFloat
 #endif

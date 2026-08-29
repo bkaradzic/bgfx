@@ -44,6 +44,7 @@ static const char* s_exampleNames[] =
 	"Features: Table",
 	"Features: Generate User Font",
 	"Features: 2D",
+	"Features: 3D",
 };
 
 void renderScreenSpaceQuad(uint8_t _view, bgfx::ProgramHandle _program)
@@ -120,6 +121,7 @@ public:
 		m_program[5] = loadProgram("vs_s2h", "fs_s2h_table");
 		m_program[6] = loadProgram("vs_s2h", "fs_s2h_generate_user_font");
 		m_program[7] = loadProgram("vs_s2h", "fs_s2h_2d");
+		m_program[8] = loadProgram("vs_s2h", "fs_s2h_3d");
 
 		imguiCreate();
 		m_frameTime.reset();
