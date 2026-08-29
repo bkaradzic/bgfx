@@ -56,6 +56,7 @@ all:
 	@make -s --no-print-directory build -C 51-gpufont
 	@make -s --no-print-directory build -C 52-layered
 	@make -s --no-print-directory build -C 53-sky2
+	@make -s --no-print-directory build -C 54-s2h
 
 rebuild:
 	@make -s --no-print-directory rebuild -C 01-cubes
@@ -110,6 +111,7 @@ rebuild:
 	@make -s --no-print-directory rebuild -C 51-gpufont
 	@make -s --no-print-directory rebuild -C 52-layered
 	@make -s --no-print-directory rebuild -C 53-sky2
+	@make -s --no-print-directory rebuild -C 54-s2h
 
 rebuild-embedded:
 	@make -s --no-print-directory rebuild -C 02-metaballs

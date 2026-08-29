@@ -587,6 +587,7 @@ or _OPTIONS["with-combined-examples"] then
 		, "51-gpufont"
 		, "52-layered"
 		, "53-sky2"
+		, "54-s2h"
 		)
 
 
