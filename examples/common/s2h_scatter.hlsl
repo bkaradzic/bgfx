@@ -93,7 +93,7 @@ void s2h_setCursor(inout ContextScatter ui, float2 inpxLeftTop)
 
 void s2h_setScale(inout ContextScatter ui, uint scale)
 {
-	ui.scale = scale;
+	ui.scale = int(scale);
 }
 
 // implement this in your code
@@ -150,17 +150,17 @@ void s2h_printInt(inout ContextScatter ui, int value)
 	// leading '-'
 	if (value < 0)
 	{
-		s2h_printCharacter(ui, '-');
+		s2h_printCharacter(ui, 45u);
 		value = -value;
 	}
 	if (value == 0)
 	{
-		s2h_printCharacter(ui, '0');
+		s2h_printCharacter(ui, 48u);
 		return;
 	}
 	// move to right depending on number length
 	{
-		uint tmp = (uint)value;
+		uint tmp = uint(value);
 		while (tmp != 0u)
 		{
 			ui.pxCursor.x += 8 * ui.scale;
@@ -170,7 +170,7 @@ void s2h_printInt(inout ContextScatter ui, int value)
 	// digits
 	{
 		float backup = ui.pxCursor.x;
-		uint tmp = (uint)value;
+		uint tmp = uint(value);
 		while (tmp != 0u)
 		{
 			// 0..9
@@ -178,7 +178,7 @@ void s2h_printInt(inout ContextScatter ui, int value)
 			tmp /= 10u;
 			// go backwards
 			ui.pxCursor.x -= 8 * ui.scale;
-			s2h_printCharacter(ui, '0' + digit);
+			s2h_printCharacter(ui, 48u + digit);
 			// counter +=8 from printCharacter ()
 			ui.pxCursor.x -= 8 * ui.scale;
 		}
@@ -193,7 +193,7 @@ void s2h_printHex(inout ContextScatter ui, uint value)
 	{
 		// 0..15
 		uint nibble = (value >> (i * 4)) & 0xf;
-		uint start = (nibble < 10) ? '0' : ('A' - 10);
+		uint start = (nibble < 10) ? 48u : 55u;
 		s2h_printCharacter(ui, start + nibble);
 	}
 }
@@ -203,7 +203,7 @@ void s2h_printFloat(inout ContextScatter ui, float value)
 	s2h_printInt(ui, int(value));
 	float fractional = frac(abs(value));
 
-	s2h_printCharacter(ui, '.');
+	s2h_printCharacter(ui, 46u);
 
 	uint digitCount = 3u;
 
@@ -216,7 +216,7 @@ void s2h_printFloat(inout ContextScatter ui, float value)
 		// 0..9
 		uint digit = uint(fractional);
 		fractional = frac(fractional);
-		s2h_printCharacter(ui, '0' + digit);
+		s2h_printCharacter(ui, 48u + digit);
 	}
 }
 
