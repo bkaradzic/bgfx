@@ -193,7 +193,7 @@
 #	define BGFX_CONFIG_GL_USE_WGL 0
 #endif // BGFX_CONFIG_GL_USE_WGL
 
-// Enable hardware video decoder.
+/// Enable hardware video decoder.
 #ifndef BGFX_CONFIG_VIDEO
 #	define BGFX_CONFIG_VIDEO 1
 #endif // BGFX_CONFIG_VIDEO
@@ -247,12 +247,10 @@
 #	define BGFX_CONFIG_RENDERER_VULKAN_ROBUST_BUFFER_ACCESS 0
 #endif // BGFX_CONFIG_RENDERER_VULKAN_ROBUST_BUFFER_ACCESS
 
-/// Enable use of tinystl instead of std containers for internal data
-/// structures. Default is 1 (enabled). Reduces binary size and avoids
-/// std library dependency.
-#ifndef BGFX_CONFIG_USE_TINYSTL
-#	define BGFX_CONFIG_USE_TINYSTL 1
-#endif // BGFX_CONFIG_USE_TINYSTL
+/// Enable debug text.
+#ifndef BGFX_CONFIG_DEBUG_TEXT
+#	define BGFX_CONFIG_DEBUG_TEXT 1
+#endif // BGFX_CONFIG_DEBUG_TEXT
 
 /// Debug text maximum scale factor.
 #ifndef BGFX_CONFIG_DEBUG_TEXT_MAX_SCALE
@@ -478,7 +476,10 @@ static_assert(BGFX_CONFIG_MAX_VERTEX_STREAMS < 32, "Must be less than 32!");
 
 /// Minimum initial size in bytes of the resource command buffer (pre/post
 /// render commands for resource creation and updates). Default is 64 KB.
-/// The buffer grows as needed.
+/// The buffer grows as needed. After `Init::Limits::numDrawCallPeakFrames`
+/// of observing the high-water mark it shrinks toward that peak, but not
+/// below this minimum. Set `numDrawCallPeakFrames` to 0 to keep the largest
+/// size for the lifetime of the context.
 #ifndef BGFX_CONFIG_MIN_RESOURCE_COMMAND_BUFFER_SIZE
 #	define BGFX_CONFIG_MIN_RESOURCE_COMMAND_BUFFER_SIZE (64<<10)
 #endif // BGFX_CONFIG_MIN_RESOURCE_COMMAND_BUFFER_SIZE

@@ -4264,6 +4264,12 @@ WGPU_IMPORT
 
 		bx::read(&reader, m_size, &err);
 		bx::read(&reader, m_blockSize, &err);
+
+		if (bx::strFind(bx::StringView( (const char*)m_code->data, m_code->size), "rgba8unorm").isEmpty() )
+		{
+			release(m_code);
+			m_code = NULL;
+		}
 	}
 
 	void ShaderWGPU::destroy()
@@ -4289,7 +4295,8 @@ WGPU_IMPORT
 
 	WGPUShaderModule ShaderWGPU::getModule(bool _bgra8Storage) const
 	{
-		if (!_bgra8Storage)
+		if (!_bgra8Storage
+		||  NULL == m_code)
 		{
 			return m_module;
 		}
