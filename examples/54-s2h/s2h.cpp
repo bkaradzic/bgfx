@@ -51,6 +51,7 @@ static const char* s_exampleNames[] =
 	"Features: Debug Zoom",
 	"Features: Quad VS/PS",
 	"Features: Scatter",
+	"Zoom 2D",
 };
 
 void renderScreenSpaceQuad(uint8_t _view, bgfx::ProgramHandle _program)
@@ -122,6 +123,7 @@ public:
 		m_uiStateUniform = bgfx::createUniform("u_s2hUiState", bgfx::UniformFreq::View, bgfx::UniformType::Vec4);
 		m_colorUniform   = bgfx::createUniform("u_s2hColor",   bgfx::UniformFreq::View, bgfx::UniformType::Vec4);
 		m_mouseUniform   = bgfx::createUniform("u_s2hMouse",   bgfx::UniformFreq::View, bgfx::UniformType::Vec4);
+		m_zoomUniform    = bgfx::createUniform("u_s2hZoom",    bgfx::UniformFreq::View, bgfx::UniformType::Vec4);
 
 		m_program[0] = loadProgram("vs_s2h", "fs_s2h");
 		m_program[1] = loadProgram("vs_s2h", "fs_s2h_screen");
@@ -135,6 +137,7 @@ public:
 		m_program[9] = loadProgram("vs_s2h", "fs_s2h_clear");
 		m_program[10] = loadProgram("vs_s2h", "fs_s2h_quadpost_scene");
 		m_program[13] = loadProgram("vs_s2h", "fs_s2h_quadvsps");
+		m_program[15] = loadProgram("vs_s2h", "fs_s2h_zoom2d");
 		m_quadPostProgram = loadProgram("vs_s2h", "fs_s2h_quadpost");
 		m_userFontProgram = loadProgram("vs_s2h", "fs_s2h_use_user_font");
 		m_debugZoomProgram = loadProgram("vs_s2h", "fs_s2h_debug_zoom");
@@ -177,6 +180,7 @@ public:
 		bgfx::destroy(m_uiStateUniform);
 		bgfx::destroy(m_colorUniform);
 		bgfx::destroy(m_mouseUniform);
+		bgfx::destroy(m_zoomUniform);
 		bgfx::shutdown();
 		return 0;
 	}
@@ -198,6 +202,10 @@ public:
 			if (2 == m_example)
 			{
 				updateGatherControls();
+			}
+			else if (15 == m_example)
+			{
+				updateZoomControls();
 			}
 
 			imguiEndFrame();
@@ -221,6 +229,13 @@ public:
 				float(m_mouseState.m_mx),
 				float(m_mouseState.m_my),
 				m_gatherMouseDown ? 1.0f : 0.0f,
+				0.0f,
+			};
+			const float zoom[] =
+			{
+				m_zoomPan[0],
+				m_zoomPan[1],
+				m_zoomScale,
 				0.0f,
 			};
 			if (14 == m_example)
@@ -264,6 +279,7 @@ public:
 				bgfx::setViewUniform(0, m_uiStateUniform, uiState);
 				bgfx::setViewUniform(0, m_colorUniform, m_gatherColor);
 				bgfx::setViewUniform(0, m_mouseUniform, mouse);
+				bgfx::setViewUniform(0, m_zoomUniform, zoom);
 				bgfx::touch(0);
 				renderScreenSpaceQuad(0, m_program[m_example]);
 			}
@@ -301,6 +317,14 @@ public:
 			ImGui::SliderFloat("red##gather-red",     &m_gatherColor[0], 0.0f, 1.0f);
 			ImGui::SliderFloat("green##gather-green", &m_gatherColor[1], 0.0f, 1.0f);
 			ImGui::SliderFloat("blue##gather-blue",   &m_gatherColor[2], 0.0f, 1.0f);
+		}
+		else if (15 == m_example)
+		{
+			ImGui::TextWrapped("Left-drag to pan the zoomed canvas. Right-drag vertically to zoom. The fragment shader draws the grid and S2H overlay at the transformed pixel coordinates.");
+			if (ImGui::Button("Reset view##zoom2d-reset") )
+			{
+				resetZoom();
+			}
 		}
 		else
 		{
@@ -375,6 +399,44 @@ public:
 		}
 	}
 
+	void resetZoom()
+	{
+		m_zoomPan[0] = 0.0f;
+		m_zoomPan[1] = 0.0f;
+		m_zoomScale = 1.0f;
+	}
+
+	void updateZoomControls()
+	{
+		const int32_t mouseX = m_mouseState.m_mx;
+		const int32_t mouseY = m_mouseState.m_my;
+		const bool leftDown = m_mouseState.m_buttons[entry::MouseButton::Left];
+		const bool rightDown = m_mouseState.m_buttons[entry::MouseButton::Right];
+		if (ImGui::GetIO().WantCaptureMouse)
+		{
+			m_zoomLastMouseX = mouseX;
+			m_zoomLastMouseY = mouseY;
+			m_zoomLeftDown = false;
+			m_zoomRightDown = false;
+			return;
+		}
+
+		if (leftDown && m_zoomLeftDown)
+		{
+			m_zoomPan[0] -= float(mouseX - m_zoomLastMouseX) / m_zoomScale;
+			m_zoomPan[1] += float(mouseY - m_zoomLastMouseY) / m_zoomScale;
+		}
+		if (rightDown && m_zoomRightDown)
+		{
+			m_zoomScale = bx::clamp(m_zoomScale * bx::pow(2.0f, float(m_zoomLastMouseY - mouseY) * 0.02f), 0.125f, 32.0f);
+		}
+
+		m_zoomLastMouseX = mouseX;
+		m_zoomLastMouseY = mouseY;
+		m_zoomLeftDown = leftDown;
+		m_zoomRightDown = rightDown;
+	}
+
 	entry::MouseState m_mouseState;
 	uint32_t m_width;
 	uint32_t m_height;
@@ -399,10 +461,17 @@ public:
 	bgfx::UniformHandle m_uiStateUniform;
 	bgfx::UniformHandle m_colorUniform;
 	bgfx::UniformHandle m_mouseUniform;
+	bgfx::UniformHandle m_zoomUniform;
 	int m_gatherRadio = 0;
 	bool m_gatherCheckbox = false;
 	bool m_gatherMouseDown = false;
 	float m_gatherColor[4] = { 0.0f, 0.3f, 1.0f, 1.0f };
+	float m_zoomPan[2] = { 0.0f, 0.0f };
+	float m_zoomScale = 1.0f;
+	int32_t m_zoomLastMouseX = 0;
+	int32_t m_zoomLastMouseY = 0;
+	bool m_zoomLeftDown = false;
+	bool m_zoomRightDown = false;
 };
 
 } // namespace
