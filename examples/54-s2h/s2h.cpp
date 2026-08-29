@@ -43,6 +43,7 @@ static const char* s_exampleNames[] =
 	"Features: 2D Coordinate System",
 	"Features: Table",
 	"Features: Generate User Font",
+	"Features: 2D",
 };
 
 void renderScreenSpaceQuad(uint8_t _view, bgfx::ProgramHandle _program)
@@ -118,6 +119,7 @@ public:
 		m_program[4] = loadProgram("vs_s2h", "fs_s2h_coordinate_system");
 		m_program[5] = loadProgram("vs_s2h", "fs_s2h_table");
 		m_program[6] = loadProgram("vs_s2h", "fs_s2h_generate_user_font");
+		m_program[7] = loadProgram("vs_s2h", "fs_s2h_2d");
 
 		imguiCreate();
 		m_frameTime.reset();
