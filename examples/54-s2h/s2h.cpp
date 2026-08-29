@@ -39,6 +39,9 @@ static const char* s_exampleNames[] =
 	"Hello World",
 	"Hello Screen",
 	"Features: Gather",
+	"Features: 2D Arrow",
+	"Features: 2D Coordinate System",
+	"Features: Table",
 };
 
 void renderScreenSpaceQuad(uint8_t _view, bgfx::ProgramHandle _program)
@@ -110,6 +113,9 @@ public:
 		m_program[0] = loadProgram("vs_s2h", "fs_s2h");
 		m_program[1] = loadProgram("vs_s2h", "fs_s2h_screen");
 		m_program[2] = loadProgram("vs_s2h", "fs_s2h_gather");
+		m_program[3] = loadProgram("vs_s2h", "fs_s2h_arrow");
+		m_program[4] = loadProgram("vs_s2h", "fs_s2h_coordinate_system");
+		m_program[5] = loadProgram("vs_s2h", "fs_s2h_table");
 
 		imguiCreate();
 		m_frameTime.reset();

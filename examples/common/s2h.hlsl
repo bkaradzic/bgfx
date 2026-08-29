@@ -166,7 +166,6 @@ void s2h_sliderRGB(inout ContextGather ui, uint widthInCharacters, inout float3 
 void s2h_sliderRGBA(inout ContextGather ui, uint widthInCharacters, inout float4 value);
 
 // not yet for GLSL 
-#ifndef S2H_GLSL
 // see s2h_tableLookupInt()
 void s2h_tableInt(inout ContextGather ui, uint column, float4 backgroundColor, int2 sizeInCharacters, bool goRightNotDown);
 // see s2h_tableLookupFloat()
@@ -185,7 +184,6 @@ float s2h_floatLookupFloat(uint functionId, float x);
 // @param rangeX float2(left, right) e.g. float2(0, 2.0f * 3.1415f)
 // @param rangeY float2(top, bottom) e.g. float2(-1, 1)
 void s2h_function(inout ContextGather ui, uint functionId, float4 backgroundColor, int2 sizeInCharacters, float2 rangeX, float2 rangeY);
-#endif // S2H_GLSL
 
 // helper functions ----------------------------------------------------------------------
 
@@ -681,7 +679,8 @@ void s2h_drawLine(inout ContextGather ui, float2 pxBegin, float2 pxEnd, float4 c
 
 float3 s2h_getHalfSpacePlane(float2 pointA, float2 pointB)
 {
-    float2 ab = normalize(pointA - pointB);
+    float2 pointDelta = pointA - pointB;
+    float2 ab = pointDelta / max(length(pointDelta), 0.0001f);
     float3 abPlane = float3(-ab.y, ab.x, 0);
     abPlane.z = dot(abPlane.xy, -pointA);
 
@@ -705,14 +704,15 @@ void s2h_drawTriangle(inout ContextGather ui, s2h_Triangle tri, float4 color)
 
 void s2h_drawArrow(inout ContextGather ui, float2 pxStart, float2 pxEnd, float4 color,  float arrowHeadLength, float arrowHeadWidth)
 {
-    float2 direction = float2(0,1);
-    direction = normalize(pxEnd - pxStart);
+    float2 directionVector = pxEnd - pxStart;
+    float directionLength = max(length(directionVector), 0.0001f);
+    float2 direction = directionVector / directionLength;
 
     float2 lineStart = pxStart;
     // Subtract the arrow length from lineEnd - arrow fits in pxStart...pxEnd
     float2 lineEnd = pxEnd - direction * arrowHeadLength;
 
-    float2 perpendicularDir = normalize(float2(direction.y, -direction.x)); 
+    float2 perpendicularDir = float2(direction.y, -direction.x);
 
 	s2h_drawLine(ui, lineStart, lineEnd, color);
 
@@ -1113,8 +1113,6 @@ void s2h_sliderRGBA(inout ContextGather ui, uint widthInCharacters, inout float4
 	ui.buttonColor = backup;
 }
 
-// not yet for GLSL 
-#ifndef S2H_GLSL
 void s2h_tableInt(inout ContextGather ui, uint column, float4 backgroundColor, int2 sizeInCharacters, bool goRightNotDown) 
 { 
 	float pxCharSize = s2h_fontSize() * ui.scale;
@@ -1210,8 +1208,6 @@ void s2h_function(inout ContextGather ui, uint functionId, float4 backgroundColo
 	s2h_printLF(ui); 
 	ui.pxCursor.y = backup.y + pxSize.y; 
 } 
-#endif // S2H_GLSL
-
 float3 s2h_accurateLinearToSRGB(float3 linearCol)
 {
 	float3 sRGBLo = linearCol * 12.92;
