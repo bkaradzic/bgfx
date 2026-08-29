@@ -970,8 +970,10 @@ namespace bgfx { namespace d3d12
 			if (NULL != g_platformData.context)
 			{
 				m_device = (ID3D12Device*)g_platformData.context;
-
 				m_device->AddRef();
+
+				setGraphicsDebuggerPresent(true);
+
 				hr = S_OK;
 			}
 			else
@@ -2367,7 +2369,7 @@ namespace bgfx { namespace d3d12
 
 		void readTexture(TextureHandle _handle, void* _data, uint16_t _layer, uint8_t _mip) override
 		{
-			const TextureD3D12& texture = m_textures[_handle.idx];
+			TextureD3D12& texture = m_textures[_handle.idx];
 
 			const uint32_t subresource = _mip + _layer*texture.m_numMips;
 
@@ -2420,7 +2422,10 @@ namespace bgfx { namespace d3d12
 			D3D12_TEXTURE_COPY_LOCATION dstLocation = { readback,      D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT,  { layout } };
 			D3D12_TEXTURE_COPY_LOCATION srcLocation = { texture.m_ptr, D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX, { }        };
 			srcLocation.SubresourceIndex = subresource;
+
+			const D3D12_RESOURCE_STATES state = texture.setState(m_commandList, D3D12_RESOURCE_STATE_COPY_SOURCE);
 			m_commandList->CopyTextureRegion(&dstLocation, 0, 0, 0, &srcLocation, &box);
+			texture.setState(m_commandList, state);
 
 			finish();
 			m_commandList = m_cmd.alloc();
@@ -2442,7 +2447,7 @@ namespace bgfx { namespace d3d12
 			DX_RELEASE(readback, 0);
 		}
 
-		void readTexturePlanar(const TextureD3D12& _texture, const D3D12_RESOURCE_DESC& _desc, uint32_t _subresource, void* _data, uint8_t _mip)
+		void readTexturePlanar(TextureD3D12& _texture, const D3D12_RESOURCE_DESC& _desc, uint32_t _subresource, void* _data, uint8_t _mip)
 		{
 			const uint32_t numSubresourcesPerPlane = _texture.m_numMips * _desc.DepthOrArraySize;
 
@@ -2485,6 +2490,8 @@ namespace bgfx { namespace d3d12
 			box.front  = 0;
 			box.back   = 1;
 
+			const D3D12_RESOURCE_STATES state = _texture.setState(m_commandList, D3D12_RESOURCE_STATE_COPY_SOURCE);
+
 			for (uint32_t plane = 0; plane < BX_COUNTOF(layout); ++plane)
 			{
 				D3D12_TEXTURE_COPY_LOCATION dstLocation = { readback,       D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT,  { layout[plane] } };
@@ -2492,6 +2499,8 @@ namespace bgfx { namespace d3d12
 				srcLocation.SubresourceIndex = _subresource + plane*numSubresourcesPerPlane;
 				m_commandList->CopyTextureRegion(&dstLocation, 0, 0, 0, &srcLocation, &box);
 			}
+
+			_texture.setState(m_commandList, state);
 
 			finish();
 			m_commandList = m_cmd.alloc();

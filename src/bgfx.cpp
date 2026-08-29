@@ -1616,6 +1616,7 @@ namespace bgfx
 		}
 
 		++m_numSubmitted;
+		markViewUsed(_id);
 
 		UniformBuffer* uniformBuffer = m_frame->m_uniformBuffer[m_uniformIdx];
 		m_uniformEnd = uniformBuffer->getPos();
@@ -1699,6 +1700,7 @@ namespace bgfx
 		}
 
 		++m_numSubmitted;
+		markViewUsed(_id);
 
 		UniformBuffer* uniformBuffer = m_frame->m_uniformBuffer[m_uniformIdx];
 		m_uniformEnd = uniformBuffer->getPos();
@@ -1744,6 +1746,8 @@ namespace bgfx
 			return;
 		}
 
+		markViewUsed(_id);
+
 		BlitItem& bi = m_frame->m_blitItem[blitItemIdx];
 		bi = _blit;
 		bi.m_view = _id;
@@ -1756,8 +1760,11 @@ namespace bgfx
 		for (uint32_t ii = 0; ii < BGFX_CONFIG_MAX_VIEWS; ++ii)
 		{
 			m_viewOrder[m_viewRemap[ii] ] = ViewId(ii);
+		}
 
-			View& view = m_view[ii];
+		for (uint32_t ii = 0, num = m_numUsedViews; ii < num; ++ii)
+		{
+			View& view = m_view[m_usedViews[ii] ];
 			Rect rect(0, 0, uint16_t(m_resolution.width), uint16_t(m_resolution.height) );
 
 			if (isValid(view.m_fbh) )
@@ -1839,7 +1846,7 @@ namespace bgfx
 		for (uint32_t ii = 0, num = m_numRenderBinds; ii < num; ++ii)
 		{
 			const RenderBind& renderBind = m_renderBind[ii];
-			const uint32_t hash = bx::hash<bx::HashMurmur3>(renderBind.m_bind, sizeof(renderBind.m_bind) );
+			const uint32_t hash = hashBindings(renderBind.m_bind);
 
 			Context::BindHashMap::const_iterator it = bindHashMap.find(hash);
 
@@ -2854,6 +2861,8 @@ namespace bgfx
 		if (0 != (_flags & BGFX_FRAME_DISCARD) )
 		{
 			m_submit->m_numRenderItems = 0;
+			m_submit->m_numUsedViews   = 0;
+			bx::memSet(m_submit->m_viewUsed, 0, sizeof(m_submit->m_viewUsed) );
 		}
 
 		m_submit->m_capture = 0 != (_flags & BGFX_FRAME_DEBUG_CAPTURE);
@@ -2879,6 +2888,32 @@ namespace bgfx
 		apiSemPost();
 	}
 
+	void Context::collectSubmitViewUsed()
+	{
+		bx::memSet(m_submit->m_viewUsed, 0, sizeof(m_submit->m_viewUsed) );
+
+#if BGFX_CONFIG_MULTITHREADED
+		const uint16_t numEncoders = m_encoderHandle->getNumHandles();
+		for (uint16_t ii = 0; ii < numEncoders; ++ii)
+		{
+			const uint16_t idx = m_encoderHandle->getHandleAt(ii);
+			const uint64_t* src = m_encoder[idx].m_viewUsed;
+
+			for (uint32_t ww = 0; ww < kViewUsedWords; ++ww)
+			{
+				m_submit->m_viewUsed[ww] |= src[ww];
+			}
+		}
+#else
+		for (uint32_t ww = 0; ww < kViewUsedWords; ++ww)
+		{
+			m_submit->m_viewUsed[ww] |= m_encoder[0].m_viewUsed[ww];
+		}
+#endif // BGFX_CONFIG_MULTITHREADED
+
+		m_submit->collectUsedViews();
+	}
+
 	void Context::swap()
 	{
 		freeDynamicBuffers();
@@ -2892,7 +2927,11 @@ namespace bgfx
 		m_uniformCache.frame(m_submit->m_uniformCacheFrame);
 
 		static_assert(bx::isTriviallyCopyable<View>(), "Must be memcopyiable...");
-		bx::memCopy(m_submit->m_view, m_view, sizeof(m_view) );
+		for (uint32_t ii = 0, num = m_submit->m_numUsedViews; ii < num; ++ii)
+		{
+			const ViewId id = m_submit->m_usedViews[ii];
+			m_submit->m_view[id] = m_view[id];
+		}
 
 		if (m_colorPaletteDirty > 0)
 		{
