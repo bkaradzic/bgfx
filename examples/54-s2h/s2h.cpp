@@ -48,6 +48,7 @@ static const char* s_exampleNames[] =
 	"Features: Clear",
 	"Features: Quad Post",
 	"Features: Use User Font",
+	"Features: Debug Zoom",
 };
 
 void renderScreenSpaceQuad(uint8_t _view, bgfx::ProgramHandle _program)
@@ -133,6 +134,7 @@ public:
 		m_program[10] = loadProgram("vs_s2h", "fs_s2h_quadpost_scene");
 		m_quadPostProgram = loadProgram("vs_s2h", "fs_s2h_quadpost");
 		m_userFontProgram = loadProgram("vs_s2h", "fs_s2h_use_user_font");
+		m_debugZoomProgram = loadProgram("vs_s2h", "fs_s2h_debug_zoom");
 		m_quadPostSampler = bgfx::createUniform("s_quadPostColor", bgfx::UniformType::Sampler);
 		createQuadPostTarget();
 
@@ -152,6 +154,7 @@ public:
 		}
 		bgfx::destroy(m_quadPostProgram);
 		bgfx::destroy(m_userFontProgram);
+		bgfx::destroy(m_debugZoomProgram);
 		bgfx::destroy(m_quadPostFrameBuffer);
 		bgfx::destroy(m_quadPostTexture);
 		bgfx::destroy(m_quadPostSampler);
@@ -205,19 +208,19 @@ public:
 				m_gatherMouseDown ? 1.0f : 0.0f,
 				0.0f,
 			};
-			if (10 == m_example || 11 == m_example)
+			if (10 == m_example || 11 == m_example || 12 == m_example)
 			{
 				bgfx::setViewFrameBuffer(0, m_quadPostFrameBuffer);
 				bgfx::setViewRect(0, 0, 0, uint16_t(m_width), uint16_t(m_height) );
 				bgfx::setViewClear(0, BGFX_CLEAR_COLOR, 0x101018ff);
 				bgfx::setViewUniform(0, m_timeUniform, time);
-				renderScreenSpaceQuad(0, 10 == m_example ? m_program[10] : m_program[6]);
+				renderScreenSpaceQuad(0, 11 == m_example ? m_program[6] : m_program[10]);
 
 				bgfx::setViewFrameBuffer(1, BGFX_INVALID_HANDLE);
 				bgfx::setViewRect(1, 0, 0, uint16_t(m_width), uint16_t(m_height) );
 				bgfx::setViewUniform(1, m_mouseUniform, mouse);
 				bgfx::setTexture(0, m_quadPostSampler, m_quadPostTexture);
-				renderScreenSpaceQuad(1, 10 == m_example ? m_quadPostProgram : m_userFontProgram);
+				renderScreenSpaceQuad(1, 10 == m_example ? m_quadPostProgram : (11 == m_example ? m_userFontProgram : m_debugZoomProgram));
 			}
 			else
 			{
@@ -335,6 +338,7 @@ public:
 	bgfx::ProgramHandle m_program[BX_COUNTOF(s_exampleNames)];
 	bgfx::ProgramHandle m_quadPostProgram;
 	bgfx::ProgramHandle m_userFontProgram;
+	bgfx::ProgramHandle m_debugZoomProgram;
 	bgfx::TextureHandle m_quadPostTexture;
 	bgfx::FrameBufferHandle m_quadPostFrameBuffer;
 	bgfx::UniformHandle m_quadPostSampler;
