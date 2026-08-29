@@ -47,6 +47,7 @@ static const char* s_exampleNames[] =
 	"Features: 3D",
 	"Features: Clear",
 	"Features: Quad Post",
+	"Features: Use User Font",
 };
 
 void renderScreenSpaceQuad(uint8_t _view, bgfx::ProgramHandle _program)
@@ -110,6 +111,10 @@ public:
 		bgfx::setViewClear(0, BGFX_CLEAR_COLOR|BGFX_CLEAR_DEPTH, 0x050505ff, 1.0f, 0);
 
 		PosColorTexCoord0Vertex::init();
+		for (bgfx::ProgramHandle& program : m_program)
+		{
+			program = BGFX_INVALID_HANDLE;
+		}
 		m_timeUniform    = bgfx::createUniform("u_s2hTime",    bgfx::UniformFreq::View, bgfx::UniformType::Vec4);
 		m_uiStateUniform = bgfx::createUniform("u_s2hUiState", bgfx::UniformFreq::View, bgfx::UniformType::Vec4);
 		m_colorUniform   = bgfx::createUniform("u_s2hColor",   bgfx::UniformFreq::View, bgfx::UniformType::Vec4);
@@ -127,6 +132,7 @@ public:
 		m_program[9] = loadProgram("vs_s2h", "fs_s2h_clear");
 		m_program[10] = loadProgram("vs_s2h", "fs_s2h_quadpost_scene");
 		m_quadPostProgram = loadProgram("vs_s2h", "fs_s2h_quadpost");
+		m_userFontProgram = loadProgram("vs_s2h", "fs_s2h_use_user_font");
 		m_quadPostSampler = bgfx::createUniform("s_quadPostColor", bgfx::UniformType::Sampler);
 		createQuadPostTarget();
 
@@ -139,9 +145,13 @@ public:
 		imguiDestroy();
 		for (bgfx::ProgramHandle& program : m_program)
 		{
-			bgfx::destroy(program);
+			if (bgfx::isValid(program) )
+			{
+				bgfx::destroy(program);
+			}
 		}
 		bgfx::destroy(m_quadPostProgram);
+		bgfx::destroy(m_userFontProgram);
 		bgfx::destroy(m_quadPostFrameBuffer);
 		bgfx::destroy(m_quadPostTexture);
 		bgfx::destroy(m_quadPostSampler);
@@ -195,19 +205,19 @@ public:
 				m_gatherMouseDown ? 1.0f : 0.0f,
 				0.0f,
 			};
-			if (10 == m_example)
+			if (10 == m_example || 11 == m_example)
 			{
 				bgfx::setViewFrameBuffer(0, m_quadPostFrameBuffer);
 				bgfx::setViewRect(0, 0, 0, uint16_t(m_width), uint16_t(m_height) );
 				bgfx::setViewClear(0, BGFX_CLEAR_COLOR, 0x101018ff);
 				bgfx::setViewUniform(0, m_timeUniform, time);
-				renderScreenSpaceQuad(0, m_program[10]);
+				renderScreenSpaceQuad(0, 10 == m_example ? m_program[10] : m_program[6]);
 
 				bgfx::setViewFrameBuffer(1, BGFX_INVALID_HANDLE);
 				bgfx::setViewRect(1, 0, 0, uint16_t(m_width), uint16_t(m_height) );
 				bgfx::setViewUniform(1, m_mouseUniform, mouse);
 				bgfx::setTexture(0, m_quadPostSampler, m_quadPostTexture);
-				renderScreenSpaceQuad(1, m_quadPostProgram);
+				renderScreenSpaceQuad(1, 10 == m_example ? m_quadPostProgram : m_userFontProgram);
 			}
 			else
 			{
@@ -324,6 +334,7 @@ public:
 	int m_example = 0;
 	bgfx::ProgramHandle m_program[BX_COUNTOF(s_exampleNames)];
 	bgfx::ProgramHandle m_quadPostProgram;
+	bgfx::ProgramHandle m_userFontProgram;
 	bgfx::TextureHandle m_quadPostTexture;
 	bgfx::FrameBufferHandle m_quadPostFrameBuffer;
 	bgfx::UniformHandle m_quadPostSampler;
