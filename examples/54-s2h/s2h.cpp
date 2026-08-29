@@ -46,6 +46,7 @@ static const char* s_exampleNames[] =
 	"Features: 2D",
 	"Features: 3D",
 	"Features: Clear",
+	"Features: Quad Post",
 };
 
 void renderScreenSpaceQuad(uint8_t _view, bgfx::ProgramHandle _program)
@@ -124,6 +125,10 @@ public:
 		m_program[7] = loadProgram("vs_s2h", "fs_s2h_2d");
 		m_program[8] = loadProgram("vs_s2h", "fs_s2h_3d");
 		m_program[9] = loadProgram("vs_s2h", "fs_s2h_clear");
+		m_program[10] = loadProgram("vs_s2h", "fs_s2h_quadpost_scene");
+		m_quadPostProgram = loadProgram("vs_s2h", "fs_s2h_quadpost");
+		m_quadPostSampler = bgfx::createUniform("s_quadPostColor", bgfx::UniformType::Sampler);
+		createQuadPostTarget();
 
 		imguiCreate();
 		m_frameTime.reset();
@@ -136,6 +141,10 @@ public:
 		{
 			bgfx::destroy(program);
 		}
+		bgfx::destroy(m_quadPostProgram);
+		bgfx::destroy(m_quadPostFrameBuffer);
+		bgfx::destroy(m_quadPostTexture);
+		bgfx::destroy(m_quadPostSampler);
 		bgfx::destroy(m_timeUniform);
 		bgfx::destroy(m_uiStateUniform);
 		bgfx::destroy(m_colorUniform);
@@ -186,13 +195,31 @@ public:
 				m_gatherMouseDown ? 1.0f : 0.0f,
 				0.0f,
 			};
-			bgfx::setViewRect(0, 0, 0, uint16_t(m_width), uint16_t(m_height) );
-			bgfx::setViewUniform(0, m_timeUniform, time);
-			bgfx::setViewUniform(0, m_uiStateUniform, uiState);
-			bgfx::setViewUniform(0, m_colorUniform, m_gatherColor);
-			bgfx::setViewUniform(0, m_mouseUniform, mouse);
-			bgfx::touch(0);
-			renderScreenSpaceQuad(0, m_program[m_example]);
+			if (10 == m_example)
+			{
+				bgfx::setViewFrameBuffer(0, m_quadPostFrameBuffer);
+				bgfx::setViewRect(0, 0, 0, uint16_t(m_width), uint16_t(m_height) );
+				bgfx::setViewClear(0, BGFX_CLEAR_COLOR, 0x101018ff);
+				bgfx::setViewUniform(0, m_timeUniform, time);
+				renderScreenSpaceQuad(0, m_program[10]);
+
+				bgfx::setViewFrameBuffer(1, BGFX_INVALID_HANDLE);
+				bgfx::setViewRect(1, 0, 0, uint16_t(m_width), uint16_t(m_height) );
+				bgfx::setViewUniform(1, m_mouseUniform, mouse);
+				bgfx::setTexture(0, m_quadPostSampler, m_quadPostTexture);
+				renderScreenSpaceQuad(1, m_quadPostProgram);
+			}
+			else
+			{
+				bgfx::setViewFrameBuffer(0, BGFX_INVALID_HANDLE);
+				bgfx::setViewRect(0, 0, 0, uint16_t(m_width), uint16_t(m_height) );
+				bgfx::setViewUniform(0, m_timeUniform, time);
+				bgfx::setViewUniform(0, m_uiStateUniform, uiState);
+				bgfx::setViewUniform(0, m_colorUniform, m_gatherColor);
+				bgfx::setViewUniform(0, m_mouseUniform, mouse);
+				bgfx::touch(0);
+				renderScreenSpaceQuad(0, m_program[m_example]);
+			}
 			bgfx::frame();
 			return true;
 		}
@@ -235,6 +262,12 @@ public:
 
 		ImGui::PopItemWidth();
 		ImGui::End();
+	}
+
+	void createQuadPostTarget()
+	{
+		m_quadPostTexture = bgfx::createTexture2D(uint16_t(m_width), uint16_t(m_height), false, 1, bgfx::TextureFormat::RGBA8, BGFX_TEXTURE_RT);
+		m_quadPostFrameBuffer = bgfx::createFrameBuffer(1, &m_quadPostTexture, false);
 	}
 
 	void updateGatherControls()
@@ -290,6 +323,10 @@ public:
 	uint32_t m_reset;
 	int m_example = 0;
 	bgfx::ProgramHandle m_program[BX_COUNTOF(s_exampleNames)];
+	bgfx::ProgramHandle m_quadPostProgram;
+	bgfx::TextureHandle m_quadPostTexture;
+	bgfx::FrameBufferHandle m_quadPostFrameBuffer;
+	bgfx::UniformHandle m_quadPostSampler;
 	FrameTime m_frameTime;
 	bgfx::UniformHandle m_timeUniform;
 	bgfx::UniformHandle m_uiStateUniform;
