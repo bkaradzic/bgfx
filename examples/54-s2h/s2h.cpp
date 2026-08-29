@@ -38,6 +38,7 @@ static const char* s_exampleNames[] =
 {
 	"Hello World",
 	"Hello Screen",
+	"Features: Gather",
 };
 
 void renderScreenSpaceQuad(uint8_t _view, bgfx::ProgramHandle _program)
@@ -101,10 +102,17 @@ public:
 		bgfx::setViewClear(0, BGFX_CLEAR_COLOR|BGFX_CLEAR_DEPTH, 0x050505ff, 1.0f, 0);
 
 		PosColorTexCoord0Vertex::init();
+		m_timeUniform    = bgfx::createUniform("u_s2hTime",    bgfx::UniformFreq::View, bgfx::UniformType::Vec4);
+		m_uiStateUniform = bgfx::createUniform("u_s2hUiState", bgfx::UniformFreq::View, bgfx::UniformType::Vec4);
+		m_colorUniform   = bgfx::createUniform("u_s2hColor",   bgfx::UniformFreq::View, bgfx::UniformType::Vec4);
+		m_mouseUniform   = bgfx::createUniform("u_s2hMouse",   bgfx::UniformFreq::View, bgfx::UniformType::Vec4);
+
 		m_program[0] = loadProgram("vs_s2h", "fs_s2h");
 		m_program[1] = loadProgram("vs_s2h", "fs_s2h_screen");
+		m_program[2] = loadProgram("vs_s2h", "fs_s2h_gather");
 
 		imguiCreate();
+		m_frameTime.reset();
 	}
 
 	int shutdown() override
@@ -114,6 +122,10 @@ public:
 		{
 			bgfx::destroy(program);
 		}
+		bgfx::destroy(m_timeUniform);
+		bgfx::destroy(m_uiStateUniform);
+		bgfx::destroy(m_colorUniform);
+		bgfx::destroy(m_mouseUniform);
 		bgfx::shutdown();
 		return 0;
 	}
@@ -122,21 +134,49 @@ public:
 	{
 		if (!entry::processEvents(m_width, m_height, m_debug, m_reset, &m_mouseState) )
 		{
+			m_frameTime.frame();
 			imguiBeginFrame(m_mouseState.m_mx, m_mouseState.m_my
 				, (m_mouseState.m_buttons[entry::MouseButton::Left] ? IMGUI_MBUT_LEFT : 0)
 				| (m_mouseState.m_buttons[entry::MouseButton::Right] ? IMGUI_MBUT_RIGHT : 0)
 				| (m_mouseState.m_buttons[entry::MouseButton::Middle] ? IMGUI_MBUT_MIDDLE : 0)
 				, m_mouseState.m_mz, uint16_t(m_width), uint16_t(m_height) );
+			m_gatherMouseDown = m_mouseState.m_buttons[entry::MouseButton::Left];
 			showExampleDialog(this);
 
-			ImGui::SetNextWindowPos(ImVec2(10.0f, 10.0f), ImGuiCond_FirstUseEver);
-			ImGui::Begin("S2H Examples", NULL, 0);
-			ImGui::Combo("Example", &m_example, s_exampleNames, BX_COUNTOF(s_exampleNames) );
-			ImGui::TextWrapped("Select a Shader To Human sample. New samples can share this fullscreen renderer.");
-			ImGui::End();
+			drawSettings();
+			if (2 == m_example)
+			{
+				updateGatherControls();
+			}
+
 			imguiEndFrame();
 
+			const float time[] =
+			{
+				bx::toSeconds<float>(m_frameTime.getDurationTime() ),
+				0.0f,
+				0.0f,
+				0.0f,
+			};
+			const float uiState[] =
+			{
+				float(m_gatherRadio),
+				m_gatherCheckbox ? 1.0f : 0.0f,
+				m_gatherColor[3],
+				0.0f,
+			};
+			const float mouse[] =
+			{
+				float(m_mouseState.m_mx),
+				float(m_mouseState.m_my),
+				m_gatherMouseDown ? 1.0f : 0.0f,
+				0.0f,
+			};
 			bgfx::setViewRect(0, 0, 0, uint16_t(m_width), uint16_t(m_height) );
+			bgfx::setViewUniform(0, m_timeUniform, time);
+			bgfx::setViewUniform(0, m_uiStateUniform, uiState);
+			bgfx::setViewUniform(0, m_colorUniform, m_gatherColor);
+			bgfx::setViewUniform(0, m_mouseUniform, mouse);
 			bgfx::touch(0);
 			renderScreenSpaceQuad(0, m_program[m_example]);
 			bgfx::frame();
@@ -146,6 +186,89 @@ public:
 		return false;
 	}
 
+	void drawSettings()
+	{
+		ImGui::SetNextWindowPos(
+			ImVec2(m_width - m_width / 4.0f - 10.0f, 10.0f)
+			, ImGuiCond_FirstUseEver
+			);
+		ImGui::SetNextWindowSize(
+			ImVec2(m_width / 4.0f, m_height / 1.35f)
+			, ImGuiCond_FirstUseEver
+			);
+		ImGui::Begin("Settings", NULL, 0);
+
+		ImGui::PushItemWidth(ImGui::GetWindowWidth() * 0.55f);
+		ImGui::Combo("example", &m_example, s_exampleNames, BX_COUNTOF(s_exampleNames) );
+		ImGui::Separator();
+
+		if (2 == m_example)
+		{
+			ImGui::Text("Gather controls:");
+			ImGui::RadioButton("red##gather-radio-red",     &m_gatherRadio, 1); ImGui::SameLine();
+			ImGui::RadioButton("green##gather-radio-green", &m_gatherRadio, 2); ImGui::SameLine();
+			ImGui::RadioButton("blue##gather-radio-blue",   &m_gatherRadio, 3);
+			ImGui::Checkbox("checkbox##gather-checkbox", &m_gatherCheckbox);
+			ImGui::SliderFloat("alpha##gather-alpha", &m_gatherColor[3], 0.0f, 1.0f);
+			ImGui::SliderFloat("red##gather-red",     &m_gatherColor[0], 0.0f, 1.0f);
+			ImGui::SliderFloat("green##gather-green", &m_gatherColor[1], 0.0f, 1.0f);
+			ImGui::SliderFloat("blue##gather-blue",   &m_gatherColor[2], 0.0f, 1.0f);
+		}
+		else
+		{
+			ImGui::TextWrapped("Select a Shader To Human sample. Sample-specific controls appear here.");
+		}
+
+		ImGui::PopItemWidth();
+		ImGui::End();
+	}
+
+	void updateGatherControls()
+	{
+		const ImVec2 mouse = ImGui::GetIO().MousePos;
+		const auto isInside = [&mouse](float _x, float _y, float _width, float _height)
+		{
+			return mouse.x >= _x && mouse.x < _x + _width
+				&& mouse.y >= _y && mouse.y < _y + _height;
+		};
+
+		if (ImGui::IsMouseClicked(ImGuiMouseButton_Left) )
+		{
+			if (isInside(105.0f, 185.0f, 16.0f, 16.0f) )
+			{
+				m_gatherRadio = 1;
+			}
+			else if (isInside(121.0f, 185.0f, 16.0f, 16.0f) )
+			{
+				m_gatherRadio = 2;
+			}
+			else if (isInside(137.0f, 185.0f, 16.0f, 16.0f) )
+			{
+				m_gatherRadio = 3;
+			}
+			else if (isInside(105.0f, 201.0f, 16.0f, 16.0f) )
+			{
+				m_gatherCheckbox = !m_gatherCheckbox;
+			}
+		}
+
+		if (ImGui::IsMouseDown(ImGuiMouseButton_Left) )
+		{
+			auto updateSlider = [&isInside, &mouse](float _x, float _y, float& _value)
+			{
+				if (isInside(_x, _y, 128.0f, 14.0f) )
+				{
+					_value = bx::clamp((mouse.x - (_x + 2.0f)) / 124.0f, 0.0f, 1.0f);
+				}
+			};
+
+			updateSlider(42.0f, 234.0f, m_gatherColor[3]);
+			updateSlider(90.0f, 250.0f, m_gatherColor[0]);
+			updateSlider(90.0f, 266.0f, m_gatherColor[1]);
+			updateSlider(90.0f, 282.0f, m_gatherColor[2]);
+		}
+	}
+
 	entry::MouseState m_mouseState;
 	uint32_t m_width;
 	uint32_t m_height;
@@ -153,6 +276,15 @@ public:
 	uint32_t m_reset;
 	int m_example = 0;
 	bgfx::ProgramHandle m_program[BX_COUNTOF(s_exampleNames)];
+	FrameTime m_frameTime;
+	bgfx::UniformHandle m_timeUniform;
+	bgfx::UniformHandle m_uiStateUniform;
+	bgfx::UniformHandle m_colorUniform;
+	bgfx::UniformHandle m_mouseUniform;
+	int m_gatherRadio = 0;
+	bool m_gatherCheckbox = false;
+	bool m_gatherMouseDown = false;
+	float m_gatherColor[4] = { 0.0f, 0.3f, 1.0f, 1.0f };
 };
 
 } // namespace
