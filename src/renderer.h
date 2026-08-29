@@ -105,16 +105,13 @@ namespace bgfx
 
 			m_view = m_viewTmp;
 
-			for (uint32_t ii = 0; ii < BGFX_CONFIG_MAX_VIEWS; ++ii)
+			for (uint32_t ii = 0, num = _frame->m_numUsedViews; ii < num; ++ii)
 			{
-				bx::memCopy(&m_view[ii].un.f4x4, &_frame->m_view[ii].m_view.un.f4x4, sizeof(Matrix4) );
-			}
-
-			for (uint32_t ii = 0; ii < BGFX_CONFIG_MAX_VIEWS; ++ii)
-			{
-				bx::float4x4_mul(&m_viewProj[ii].un.f4x4
-					, &m_view[ii].un.f4x4
-					, &_frame->m_view[ii].m_proj.un.f4x4
+				const uint16_t view = _frame->m_usedViews[ii];
+				bx::memCopy(&m_view[view].un.f4x4, &_frame->m_view[view].m_view.un.f4x4, sizeof(Matrix4) );
+				bx::float4x4_mul(&m_viewProj[view].un.f4x4
+					, &m_view[view].un.f4x4
+					, &_frame->m_view[view].m_proj.un.f4x4
 					);
 			}
 		}

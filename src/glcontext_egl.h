@@ -39,15 +39,18 @@ namespace bgfx { namespace gl
 		GlContext()
 			: m_eglDll(NULL)
 			, m_current(NULL)
+			, m_config(NULL)
 			, m_context(NULL)
 			, m_display(NULL)
 			, m_surface(NULL)
+			, m_readSurface(NULL)
 #if BX_PLATFORM_WINDOWS
 			, m_hdc(NULL)
 #elif BX_PLATFORM_LINUX
 			, m_waylandEglDll(NULL)
 			, m_eglWindow(NULL)
 #endif // BX_PLATFORM_*
+			, m_ownsContext(false)
 			, m_msaaContext(false)
 			, m_swapInterval(0)
 		{
@@ -76,6 +79,7 @@ namespace bgfx { namespace gl
 		EGLContext m_context;
 		EGLDisplay m_display;
 		EGLSurface m_surface;
+		EGLSurface m_readSurface;
 
 #if BX_PLATFORM_WINDOWS
 		HDC m_hdc;
@@ -84,6 +88,7 @@ namespace bgfx { namespace gl
 		struct wl_egl_window *m_eglWindow;
 #endif // BX_PLATFORM_*
 
+		bool m_ownsContext;
 		bool m_msaaContext;
 		int  m_swapInterval;
 	};
