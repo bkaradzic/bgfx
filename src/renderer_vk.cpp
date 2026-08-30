@@ -7366,16 +7366,31 @@ VK_DESTROY
 				;
 		}
 
-		VkBufferImageCopy region;
-		region.bufferOffset      = 0;
-		region.bufferRowLength   = bufferRowLength;
-		region.bufferImageHeight = 0;
-		region.imageSubresource.aspectMask     = m_aspectFlags;
-		region.imageSubresource.mipLevel       = _mip;
-		region.imageSubresource.baseArrayLayer = 0;
-		region.imageSubresource.layerCount     = 1;
-		region.imageOffset = { _rect.m_x,     _rect.m_y,      0      };
-		region.imageExtent = { _rect.m_width, _rect.m_height, _depth };
+		VkBufferImageCopy region =
+		{
+			.bufferOffset      = 0,
+			.bufferRowLength   = bufferRowLength,
+			.bufferImageHeight = 0,
+			.imageSubresource =
+			{
+				.aspectMask     = m_aspectFlags,
+				.mipLevel       = _mip,
+				.baseArrayLayer = 0,
+				.layerCount     = 1,
+			},
+			.imageOffset =
+			{
+				.x = _rect.m_x,
+				.y = _rect.m_y,
+				.z = 0,
+			},
+			.imageExtent =
+			{
+				.width  = bx::min<uint32_t>(_rect.m_width,  bx::max(1u, m_width  >> _mip) - _rect.m_x),
+				.height = bx::min<uint32_t>(_rect.m_height, bx::max(1u, m_height >> _mip) - _rect.m_y),
+				.depth  = _depth
+			},
+		};
 
 		uint8_t* data = _mem->data;
 		uint8_t* temp = NULL;
@@ -7385,9 +7400,6 @@ VK_DESTROY
 			temp = (uint8_t*)bx::alloc(g_allocator, slicePitch);
 			bimg::imageDecodeToBgra8(g_allocator, temp, data, _rect.m_width, _rect.m_height, rectPitch, bimg::TextureFormat::Enum(m_requestedFormat) );
 			data = temp;
-
-			region.imageExtent.width  = bx::clamp<uint32_t>(region.imageExtent.width,  0u, bx::max(1u, m_width  >> _mip) - _rect.m_x);
-			region.imageExtent.height = bx::clamp<uint32_t>(region.imageExtent.height, 0u, bx::max(1u, m_height >> _mip) - _rect.m_y);
 		}
 		else if (repackPitch)
 		{
@@ -9861,9 +9873,8 @@ VK_DESTROY
 			const uint32_t dstMipHeight = bx::max<uint32_t>(1, dst.m_height >> blit.m_dstMip);
 			const uint32_t depth        = bx::max<uint32_t>(1, blit.m_depth);
 
-			const bool is3D = VK_IMAGE_VIEW_TYPE_3D == src.m_type;
-
-			BX_ASSERT(!is3D || VK_IMAGE_VIEW_TYPE_3D == dst.m_type, "Can't blit between 2D and 3D image.");
+			const bool isSrc3D = VK_IMAGE_VIEW_TYPE_3D == src.m_type;
+			const bool isDst3D = VK_IMAGE_VIEW_TYPE_3D == dst.m_type;
 
 			const VkImageCopy copyInfo =
 			{
@@ -9871,27 +9882,27 @@ VK_DESTROY
 				{
 					.aspectMask     = src.m_aspectFlags,
 					.mipLevel       = blit.m_srcMip,
-					.baseArrayLayer = is3D ? 0u : uint32_t(blit.m_srcZ),
-					.layerCount     = is3D ? 1u : depth,
+					.baseArrayLayer = isSrc3D ? 0u : uint32_t(blit.m_srcZ),
+					.layerCount     = isSrc3D ? 1u : depth,
 				},
 				.srcOffset =
 				{
 					.x = blit.m_srcX,
 					.y = blit.m_srcY,
-					.z = is3D ? blit.m_srcZ : 0,
+					.z = isSrc3D ? blit.m_srcZ : 0,
 				},
 				.dstSubresource =
 				{
 					.aspectMask     = dst.m_aspectFlags,
 					.mipLevel       = blit.m_dstMip,
-					.baseArrayLayer = is3D ? 0u : uint32_t(blit.m_dstZ),
-					.layerCount     = is3D ? 1u : depth,
+					.baseArrayLayer = isDst3D ? 0u : uint32_t(blit.m_dstZ),
+					.layerCount     = isDst3D ? 1u : depth,
 				},
 				.dstOffset =
 				{
 					.x = blit.m_dstX,
 					.y = blit.m_dstY,
-					.z = is3D ? blit.m_dstZ : 0,
+					.z = isDst3D ? blit.m_dstZ : 0,
 				},
 				.extent =
 				{
@@ -9905,7 +9916,7 @@ VK_DESTROY
 						, srcMipHeight - blit.m_srcY
 						, dstMipHeight - blit.m_dstY
 						),
-					.depth = is3D ? depth : 1,
+					.depth = isSrc3D || isDst3D ? depth : 1,
 				},
 			};
 
