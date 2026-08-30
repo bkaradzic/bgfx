@@ -648,27 +648,23 @@ restart:
 			{
 				selected = app;
 			}
-#if 0
-			DBG("%c %s, %s"
-				, app == selected ? '>' : ' '
-				, app->getName()
-				, app->getDescription()
-				);
-#endif // 0
 		}
 
 		int32_t result = bx::kExitSuccess;
 		s_restartApp[0] = '\0';
-		if (0 == s_numApps)
+
+		char  extraArgsBuf[256];
+		char  tokenBuf[256];
+		char* extraArgv[32];
+		const char* restartArgv[64];
+
+		int argc = _argc;
+		const char* const* argv = _argv;
+
+		if (0 != bx::strLen(s_restartArgs) )
 		{
-			result = ::_main_(_argc, (char**)_argv);
-		}
-		else if (0 != bx::strLen(s_restartArgs) )
-		{
-			char extraArgsBuf[256];
 			bx::strCopy(extraArgsBuf, BX_COUNTOF(extraArgsBuf), s_restartArgs);
 
-			const char* restartArgv[64];
 			int restartArgc = 0;
 
 			if (0 < _argc)
@@ -676,9 +672,7 @@ restart:
 				restartArgv[restartArgc++] = _argv[0];
 			}
 
-			char* extraArgv[32];
 			int extraArgc;
-			char tokenBuf[256];
 			uint32_t tokenBufSize = sizeof(tokenBuf);
 			bx::tokenizeCommandLine(extraArgsBuf, tokenBuf, tokenBufSize, extraArgc, extraArgv, BX_COUNTOF(extraArgv) );
 
@@ -687,11 +681,17 @@ restart:
 				restartArgv[restartArgc++] = extraArgv[ii];
 			}
 
-			result = runApp(getCurrentApp(selected), restartArgc, restartArgv);
+			argc = restartArgc;
+			argv = restartArgv;
+		}
+
+		if (0 == s_numApps)
+		{
+			result = ::_main_(argc, (char**)argv);
 		}
 		else
 		{
-			result = runApp(getCurrentApp(selected), _argc, _argv);
+			result = runApp(getCurrentApp(selected), argc, argv);
 		}
 
 		if (0 != bx::strLen(s_restartApp) )

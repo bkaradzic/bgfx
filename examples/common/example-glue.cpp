@@ -173,7 +173,7 @@ static const char* getPciIdName(uint16_t _pciId)
 	case BGFX_PCI_ID_ARM:                 return "ARM";
 	case BGFX_PCI_ID_INTEL:               return "Intel";
 	case BGFX_PCI_ID_MICROSOFT:           return "Microsoft";
-	case BGFX_PCI_ID_NVIDIA:              return "nVidia";
+	case BGFX_PCI_ID_NVIDIA:              return "Nvidia";
 	case BGFX_PCI_ID_SOFTWARE_RASTERIZER: return "Software Rasterizer";
 	default: break;
 	}
@@ -371,7 +371,7 @@ void showExampleDialog(entry::AppI* _app, const char* _errorText)
 				case BGFX_PCI_ID_AMD:                 items[ii] = "AMD";                 break;
 				case BGFX_PCI_ID_APPLE:               items[ii] = "Apple";               break;
 				case BGFX_PCI_ID_INTEL:               items[ii] = "Intel";               break;
-				case BGFX_PCI_ID_NVIDIA:              items[ii] = "nVidia";              break;
+				case BGFX_PCI_ID_NVIDIA:              items[ii] = "Nvidia";              break;
 				case BGFX_PCI_ID_MICROSOFT:           items[ii] = "Microsoft";           break;
 				case BGFX_PCI_ID_ARM:                 items[ii] = "ARM";                 break;
 				case BGFX_PCI_ID_SOFTWARE_RASTERIZER: items[ii] = "Software Rasterizer"; break;
