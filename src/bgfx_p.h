@@ -2283,6 +2283,7 @@ namespace bgfx
 			m_access   = 0;
 			m_firstMip = _firstMip;
 			m_numMips  = _numMips;
+			m_pad      = 0;
 		}
 
 		void setTexture(TextureHandle _handle, uint16_t _firstLayer, uint16_t _numLayers, uint8_t _firstMip, uint8_t _numMips, uint32_t _samplerFlags)
@@ -2296,6 +2297,7 @@ namespace bgfx
 			m_access   = 0;
 			m_firstMip = _firstMip;
 			m_numMips  = _numMips;
+			m_pad      = 0;
 		}
 
 		void setIndexBuffer(IndexBufferHandle _handle, Access::Enum _access)
@@ -2309,6 +2311,7 @@ namespace bgfx
 			m_access   = uint8_t(_access);
 			m_firstMip = 0;
 			m_numMips  = UINT8_MAX;
+			m_pad      = 0;
 		}
 
 		void setBuffer(VertexBufferHandle _handle, Access::Enum _access)
@@ -2322,6 +2325,7 @@ namespace bgfx
 			m_access   = uint8_t(_access);
 			m_firstMip = 0;
 			m_numMips  = UINT8_MAX;
+			m_pad      = 0;
 		}
 
 		void setImage(TextureHandle _handle, uint8_t _mip, Access::Enum _access, TextureFormat::Enum _format)
@@ -2332,14 +2336,15 @@ namespace bgfx
 		void setImage(TextureHandle _handle, uint16_t _firstLayer, uint16_t _numLayers, uint8_t _mip, Access::Enum _access, TextureFormat::Enum _format)
 		{
 			m_samplerFlags = BGFX_SAMPLER_NONE;
-			m_firstLayer = _firstLayer;
-			m_numLayers  = _numLayers;
-			m_idx        = _handle.idx;
-			m_type       = uint8_t(Binding::Image);
-			m_format     = uint8_t(_format);
-			m_access     = uint8_t(_access);
-			m_firstMip   = _mip;
-			m_numMips    = 1;
+			m_firstLayer   = _firstLayer;
+			m_numLayers    = _numLayers;
+			m_idx      = _handle.idx;
+			m_type     = uint8_t(Binding::Image);
+			m_format   = uint8_t(_format);
+			m_access   = uint8_t(_access);
+			m_firstMip = _mip;
+			m_numMips  = 1;
+			m_pad      = 0;
 		}
 
 		bool isOccupied() const
@@ -2356,19 +2361,27 @@ namespace bgfx
 		uint8_t  m_access;
 		uint8_t  m_firstMip;
 		uint8_t  m_numMips;
+		uint8_t  m_pad;
 	};
 	static_assert(16 == sizeof(Binding), "Binding size changed. Whole struct must be properly initialized for hashing and comparing!");
+
+	inline uint32_t bindingsMask(const Binding _bind[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS])
+	{
+		uint32_t mask = 0;
+		for (uint32_t ii = 0; ii < BGFX_CONFIG_MAX_TEXTURE_SAMPLERS; ++ii)
+		{
+			mask |= uint32_t(_bind[ii].isOccupied() ) << ii;
+		}
+
+		return mask;
+	}
 
 	inline uint32_t hashBindings(const Binding _bind[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS])
 	{
 		bx::HashMurmur3 murmur;
 		murmur.begin();
 
-		uint32_t mask = 0;
-		for (uint32_t ii = 0; ii < BGFX_CONFIG_MAX_TEXTURE_SAMPLERS; ++ii)
-		{
-			mask |= uint32_t(_bind[ii].isOccupied() ) << ii;
-		}
+		const uint32_t mask = bindingsMask(_bind);
 
 		murmur.add(mask);
 
@@ -2378,6 +2391,29 @@ namespace bgfx
 		}
 
 		return murmur.end();
+	}
+
+	inline bool bindingsEqual(
+		  const Binding _lhs[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS]
+		, const Binding _rhs[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS]
+		)
+	{
+		const uint32_t mask = bindingsMask(_lhs);
+
+		if (mask != bindingsMask(_rhs) )
+		{
+			return false;
+		}
+
+		for (BitMaskToIndexIteratorT<uint32_t> it(mask); !it.isDone(); it.next() )
+		{
+			if (0 != bx::memCmp(&_lhs[it.idx], &_rhs[it.idx], sizeof(Binding) ) )
+			{
+				return false;
+			}
+		}
+
+		return true;
 	}
 
 	struct Stream
@@ -3657,7 +3693,7 @@ namespace bgfx
 			{
 				const uint32_t idx = it->second;
 
-				BX_ASSERT(0 == bx::memCmp(&m_frame->m_renderBind[idx], &m_bind, sizeof(m_bind) )
+				BX_ASSERT(bindingsEqual(m_frame->m_renderBind[idx].m_bind, m_bind.m_bind)
 					, "RenderBind hash collision (hash 0x%08x)."
 					, hash
 					);
@@ -3681,7 +3717,7 @@ namespace bgfx
 			}
 			else
 			{
-				BX_ASSERT(0 == bx::memCmp(&m_frame->m_renderBind[m_bindLlastIdx], &m_bind, sizeof(m_bind) )
+				BX_ASSERT(bindingsEqual(m_frame->m_renderBind[m_bindLlastIdx].m_bind, m_bind.m_bind)
 					, "Stale bind dirty flag: cached index %d does not match current bind."
 					, m_bindLlastIdx
 					);
