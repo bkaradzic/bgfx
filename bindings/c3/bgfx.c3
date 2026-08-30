@@ -1831,10 +1831,12 @@ struct InitLimits
 	// `Stats::numDrawCallsPeak` to size it.
 	uint numDrawCalls;
 	// Number of frames the draw-call peak (high-water mark) is observed
-	// before unused storage is released. Set to 0 to keep whatever has
-	// been allocated for the lifetime of the context. With
-	// `BGFX_CONFIG_DYNAMIC_FRAME_STORAGE` disabled nothing per frame is
-	// resized at all, and this only releases unused uniform buffer space.
+	// before unused storage is released. Also used for resource command
+	// buffers and uniform buffers. Set to 0 to keep whatever has been
+	// allocated for the lifetime of the context. With
+	// `BGFX_CONFIG_DYNAMIC_FRAME_STORAGE` disabled draw/blit/rect storage
+	// is not resized; unused uniform and resource command buffer space
+	// is still released.
 	uint numDrawCallPeakFrames;
 	// Minimum resource command buffer size.
 	uint minResourceCbSize;

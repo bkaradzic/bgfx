@@ -15,8 +15,10 @@ namespace bgfx
 	const uint8_t* BX_CONCATENATE(_name, _nvn) = &BX_CONCATENATE(_name, _int_nvn)[0]; \
 	const uint32_t BX_CONCATENATE(_name, _nvn_size) = 1
 
+#if BGFX_CONFIG_DEBUG_TEXT
 BGFX_DECLARE_EMBEDDED_SHADER(vs_debugfont);
 BGFX_DECLARE_EMBEDDED_SHADER(fs_debugfont);
+#endif // BGFX_CONFIG_DEBUG_TEXT
 BGFX_DECLARE_EMBEDDED_SHADER(vs_clear);
 BGFX_DECLARE_EMBEDDED_SHADER(fs_clear0);
 BGFX_DECLARE_EMBEDDED_SHADER(fs_clear1);

@@ -154,7 +154,6 @@ namespace bgfx
 			| BGFX_CLEAR_COLOR_USE_PALETTE \
 			)
 
-#if BGFX_CONFIG_USE_TINYSTL
 namespace bgfx
 {
 	struct TinyStlAllocator
@@ -163,11 +162,11 @@ namespace bgfx
 		static void static_deallocate(void* _ptr, size_t /*_bytes*/);
 	};
 } // namespace bgfx
-#	define TINYSTL_ALLOCATOR bgfx::TinyStlAllocator
-#	include <tinystl/string.h>
-#	include <tinystl/unordered_map.h>
-#	include <tinystl/unordered_set.h>
-#	include <tinystl/vector.h>
+#define TINYSTL_ALLOCATOR bgfx::TinyStlAllocator
+#include <tinystl/string.h>
+#include <tinystl/unordered_map.h>
+#include <tinystl/unordered_set.h>
+#include <tinystl/vector.h>
 
 namespace tinystl
 {
@@ -202,14 +201,6 @@ namespace tinystl
 } // namespace tinystl
 
 namespace stl = tinystl;
-#else
-#	include <list>
-#	include <string>
-#	include <unordered_map>
-#	include <unordered_set>
-#	include <vector>
-namespace stl = std;
-#endif // BGFX_CONFIG_USE_TINYSTL
 
 #if BX_PLATFORM_ANDROID
 #	include <android/native_window.h>
@@ -852,7 +843,10 @@ namespace bgfx
 
 	inline void dbgTextSubmit(RendererContextI* _renderCtx, TextVideoMemBlitter& _blitter, const TextVideoMem* _mem)
 	{
-		dbgTextSubmit(_renderCtx, _blitter, *_mem);
+		if (NULL != _mem)
+		{
+			dbgTextSubmit(_renderCtx, _blitter, *_mem);
+		}
 	}
 
 	template <uint32_t maxKeys>
@@ -1073,6 +1067,7 @@ namespace bgfx
 			, m_pos(0)
 			, m_size(0)
 			, m_minCapacity(0)
+			, m_peak(0)
 		{
 			resize();
 			finish();
@@ -1222,13 +1217,20 @@ namespace bgfx
 			uint8_t cmd = End;
 			write(cmd);
 			m_size = m_pos;
+			m_peak = bx::max(m_peak, m_pos);
 			m_pos = 0;
+		}
 
-			if (m_size < m_minCapacity
-			&&  m_capacity != m_minCapacity)
+		void shrink()
+		{
+			const uint32_t keep = bx::alignUp(bx::max(m_peak, m_minCapacity), 1024);
+
+			if (keep < m_capacity)
 			{
-				resize();
+				resize(keep);
 			}
+
+			m_peak = 0;
 		}
 
 		uint8_t* m_buffer;
@@ -1236,6 +1238,7 @@ namespace bgfx
 		uint32_t m_size;
 		uint32_t m_capacity;
 		uint32_t m_minCapacity;
+		uint32_t m_peak;
 	};
 
 	//
@@ -3226,6 +3229,8 @@ namespace bgfx
 				m_renderBind.shrink(keep);
 				m_blitItem.shrink(m_peakBlit + 1 + kBlitBlock);
 				m_frameCache.m_rectCache.shrink(m_peakRect + 1 + kRectBlock);
+				m_cmdPre.shrink();
+				m_cmdPost.shrink();
 
 				for (uint32_t ii = 0, num = g_caps.limits.maxEncoders; ii < num; ++ii)
 				{
@@ -3260,7 +3265,11 @@ namespace bgfx
 
 			reset();
 			start(0);
-			m_textVideoMem = BX_NEW(g_allocator, TextVideoMem);
+			m_textVideoMem = NULL;
+			if (BX_ENABLED(BGFX_CONFIG_DEBUG_TEXT) )
+			{
+				m_textVideoMem = BX_NEW(g_allocator, TextVideoMem);
+			}
 		}
 
 		void destroy()
@@ -3605,7 +3614,7 @@ namespace bgfx
 			m_numSubmitted = 0;
 			m_numDropped   = 0;
 
-			m_bindHashMap.clear();
+			m_bindHashMap.reset();
 			m_bindLlastIdx  = 0;
 			m_bindEmptyIdx = UINT32_MAX;
 			m_bindDirty    = true;
@@ -4926,27 +4935,36 @@ namespace bgfx
 		{
 			BGFX_MUTEX_SCOPE(m_resourceApiLock);
 
-			const uint8_t debugTextScale = m_init.resolution.debugTextScale;
-			m_submit->m_textVideoMem->resize(
-				  _small
-				, (uint16_t)m_init.resolution.width  / debugTextScale
-				, (uint16_t)m_init.resolution.height / debugTextScale
-				);
-			m_submit->m_textVideoMem->clear(_attr);
+			if (BX_ENABLED(BGFX_CONFIG_DEBUG_TEXT) )
+			{
+				const uint8_t debugTextScale = m_init.resolution.debugTextScale;
+				m_submit->m_textVideoMem->resize(
+					  _small
+					, (uint16_t)m_init.resolution.width  / debugTextScale
+					, (uint16_t)m_init.resolution.height / debugTextScale
+					);
+				m_submit->m_textVideoMem->clear(_attr);
+			}
 		}
 
 		BGFX_API_FUNC(void dbgTextPrintfVargs(uint16_t _x, uint16_t _y, uint8_t _attr, const char* _format, va_list _argList) )
 		{
 			BGFX_MUTEX_SCOPE(m_resourceApiLock);
 
-			m_submit->m_textVideoMem->printfVargs(_x, _y, _attr, _format, _argList);
+			if (BX_ENABLED(BGFX_CONFIG_DEBUG_TEXT) )
+			{
+				m_submit->m_textVideoMem->printfVargs(_x, _y, _attr, _format, _argList);
+			}
 		}
 
 		BGFX_API_FUNC(void dbgTextImage(uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height, const void* _data, uint16_t _pitch) )
 		{
 			BGFX_MUTEX_SCOPE(m_resourceApiLock);
 
-			m_submit->m_textVideoMem->image(_x, _y, _width, _height, _data, _pitch);
+			if (BX_ENABLED(BGFX_CONFIG_DEBUG_TEXT) )
+			{
+				m_submit->m_textVideoMem->image(_x, _y, _width, _height, _data, _pitch);
+			}
 		}
 
 		BGFX_API_FUNC(const Stats* getPerfStats() )
@@ -4957,9 +4975,14 @@ namespace bgfx
 			const Resolution& resolution = m_submit->m_resolution;
 			stats.width  = uint16_t(resolution.width);
 			stats.height = uint16_t(resolution.height);
-			const TextVideoMem* tvm = m_submit->m_textVideoMem;
-			stats.textWidth  = tvm->m_width;
-			stats.textHeight = tvm->m_height;
+			stats.textWidth  = 0;
+			stats.textHeight = 0;
+			if (BX_ENABLED(BGFX_CONFIG_DEBUG_TEXT) )
+			{
+				const TextVideoMem* tvm = m_submit->m_textVideoMem;
+				stats.textWidth  = tvm->m_width;
+				stats.textHeight = tvm->m_height;
+			}
 			stats.encoderStats = m_encoderStats;
 
 			stats.numDynamicIndexBuffers  = m_dynamicIndexBufferHandle.getNumHandles();

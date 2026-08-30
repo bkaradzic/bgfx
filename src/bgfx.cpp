@@ -55,7 +55,6 @@ namespace bgfx
 		, _msg " Use bgfx::getCaps to check " #_caps " backend renderer capabilities." \
 		);
 
-#if BGFX_CONFIG_USE_TINYSTL
 	void* TinyStlAllocator::static_allocate(size_t _bytes)
 	{
 		return bx::alloc(g_allocator, _bytes);
@@ -68,7 +67,6 @@ namespace bgfx
 			bx::free(g_allocator, _ptr);
 		}
 	}
-#endif // BGFX_CONFIG_USE_TINYSTL
 
 	struct Superluminal
 	{
@@ -569,8 +567,10 @@ namespace bgfx
 		va_end(argList);
 	}
 
+#if BGFX_CONFIG_DEBUG_TEXT
 #include "vs_debugfont.bin.h"
 #include "fs_debugfont.bin.h"
+#endif // BGFX_CONFIG_DEBUG_TEXT
 #include "vs_clear.bin.h"
 #include "fs_clear0.bin.h"
 #include "fs_clear1.bin.h"
@@ -599,8 +599,10 @@ namespace bgfx
 
 	static const EmbeddedShader s_embeddedShaders[] =
 	{
+#if BGFX_CONFIG_DEBUG_TEXT
 		BGFX_EMBEDDED_SHADER(vs_debugfont),
 		BGFX_EMBEDDED_SHADER(fs_debugfont),
+#endif // BGFX_CONFIG_DEBUG_TEXT
 		BGFX_EMBEDDED_SHADER(vs_clear),
 		BGFX_EMBEDDED_SHADER(fs_clear0),
 		BGFX_EMBEDDED_SHADER(fs_clear1),
@@ -691,6 +693,7 @@ namespace bgfx
 		}
 	}
 
+#if BGFX_CONFIG_DEBUG_TEXT
 #include "charset.h"
 
 	void charsetFillTexture(const uint8_t* _charset, uint8_t* _rgba, uint32_t _height, uint32_t _pitch, uint32_t _bpp)
@@ -710,6 +713,7 @@ namespace bgfx
 			}
 		}
 	}
+#endif // BGFX_CONFIG_DEBUG_TEXT
 
 	static uint8_t parseAttrTo(char*& _ptr, char _to, uint8_t _default)
 	{
@@ -787,6 +791,7 @@ namespace bgfx
 		}
 	}
 
+#if BGFX_CONFIG_DEBUG_TEXT
 	static constexpr uint32_t kNumCharsPerBatch = 1024;
 	static constexpr uint32_t kNumBatchVertices = kNumCharsPerBatch*4;
 	static constexpr uint32_t kNumBatchIndices  = kNumCharsPerBatch*6;
@@ -990,6 +995,19 @@ namespace bgfx
 
 		_renderCtx->dbgTextRenderEnd(_blitter);
 	}
+#else
+	void TextVideoMemBlitter::init(uint8_t /*_scale*/)
+	{
+	}
+
+	void TextVideoMemBlitter::shutdown()
+	{
+	}
+
+	void dbgTextSubmit(RendererContextI* /*_renderCtx*/, TextVideoMemBlitter& /*_blitter*/, const TextVideoMem& /*_mem*/)
+	{
+	}
+#endif // BGFX_CONFIG_DEBUG_TEXT
 
 	void ClearQuad::init()
 	{
@@ -1838,7 +1856,7 @@ namespace bgfx
 		BGFX_PROFILER_SCOPE("bgfx/DedupBind", kColorSubmit);
 
 		Context::BindHashMap& bindHashMap = s_ctx->m_renderBindHashMap;
-		bindHashMap.clear();
+		bindHashMap.reset();
 
 		RenderItemCount* remap = s_ctx->m_tempValues;
 
@@ -2959,11 +2977,14 @@ namespace bgfx
 
 		bx::memSet(m_seq, 0, sizeof(m_seq) );
 
-		m_submit->m_textVideoMem->resize(
-			  m_render->m_textVideoMem->m_small
-			, m_init.resolution.width
-			, m_init.resolution.height
-			);
+		if (BX_ENABLED(BGFX_CONFIG_DEBUG_TEXT) )
+		{
+			m_submit->m_textVideoMem->resize(
+				  m_render->m_textVideoMem->m_small
+				, m_init.resolution.width
+				, m_init.resolution.height
+				);
+		}
 
 		const int64_t now = bx::getHPCounter();
 		m_submit->m_perfStats.cpuTimeFrame = now - m_frameTimeLast;

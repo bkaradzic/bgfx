@@ -5949,15 +5949,14 @@ VK_DESTROY
 		const void* code = reader.getDataPtr();
 		bx::skip(&reader, shaderSize+1);
 
-		m_code = alloc(shaderSize);
-		bx::memCopy(m_code->data, code, shaderSize);
+		const Memory* shaderCode = copy(code, shaderSize);
 
 		VkShaderModuleCreateInfo smci;
 		smci.sType    = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
 		smci.pNext    = NULL;
 		smci.flags    = 0;
-		smci.codeSize = m_code->size;
-		smci.pCode    = (const uint32_t*)m_code->data;
+		smci.codeSize = shaderCode->size;
+		smci.pCode    = (const uint32_t*)shaderCode->data;
 
 		BX_TRACE("%x", bx::hash<bx::HashMurmur3>(code, shaderSize) );
 		VK_CHECK(vkCreateShaderModule(
@@ -5966,6 +5965,8 @@ VK_DESTROY
 			, s_renderVK->m_allocatorCb
 			, &m_module
 			) );
+
+		release(shaderCode);
 
 		bx::memSet(m_attrMask,  0, sizeof(m_attrMask) );
 		bx::memSet(m_attrRemap, 0, sizeof(m_attrRemap) );
@@ -5990,7 +5991,7 @@ VK_DESTROY
 		murmur.begin();
 		murmur.add(hashIn);
 		murmur.add(hashOut);
-		murmur.add(m_code->data, m_code->size);
+		murmur.add(code, shaderSize);
 		murmur.add(m_numAttrs);
 		murmur.add(m_attrMask,  m_numAttrs);
 		murmur.add(m_attrRemap, m_numAttrs);
@@ -6070,13 +6071,7 @@ VK_DESTROY
 		}
 
 		m_numPredefined = 0;
-
-		if (NULL != m_code)
-		{
-			release(m_code);
-			m_code = NULL;
-			m_hash = 0;
-		}
+		m_hash = 0;
 
 		if (VK_NULL_HANDLE != m_module)
 		{
@@ -6086,7 +6081,7 @@ VK_DESTROY
 
 	void ProgramVK::create(const ShaderVK* _vsh, const ShaderVK* _fsh)
 	{
-		BX_ASSERT(NULL != _vsh->m_code, "Vertex shader doesn't exist.");
+		BX_ASSERT(VK_NULL_HANDLE != _vsh->m_module, "Vertex shader doesn't exist.");
 		m_vsh = _vsh;
 		bx::memCopy(
 			  &m_predefined[0]
@@ -6097,7 +6092,7 @@ VK_DESTROY
 
 		if (NULL != _fsh)
 		{
-			BX_ASSERT(NULL != _fsh->m_code, "Fragment shader doesn't exist.");
+			BX_ASSERT(VK_NULL_HANDLE != _fsh->m_module, "Fragment shader doesn't exist.");
 			m_fsh = _fsh;
 			bx::memCopy(
 				  &m_predefined[m_numPredefined]
