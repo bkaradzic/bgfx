@@ -36,21 +36,21 @@ bgfx::VertexLayout PosColorTexCoord0Vertex::ms_layout;
 
 static const char* s_exampleNames[] =
 {
+	"Features: 3D",
+	"Features: 2D",
+	"Features: Gather",
+	"Features: Debug Zoom",
+	"Features: Scatter",
+	"Features: Quad VS/PS",
+	"Features: Table",
+	"Features: Quad Post",
+	"Features: 2D Arrow",
+	"Features: Generate User Font",
+	"Features: Use User Font",
+	"Features: 2D Coordinate System",
 	"Hello World",
 	"Hello Screen",
-	"Features: Gather",
-	"Features: 2D Arrow",
-	"Features: 2D Coordinate System",
-	"Features: Table",
-	"Features: Generate User Font",
-	"Features: 2D",
-	"Features: 3D",
 	"Features: Clear",
-	"Features: Quad Post",
-	"Features: Use User Font",
-	"Features: Debug Zoom",
-	"Features: Quad VS/PS",
-	"Features: Scatter",
 	"Zoom 2D",
 };
 
@@ -125,18 +125,18 @@ public:
 		m_mouseUniform   = bgfx::createUniform("u_s2hMouse",   bgfx::UniformFreq::View, bgfx::UniformType::Vec4);
 		m_zoomUniform    = bgfx::createUniform("u_s2hZoom",    bgfx::UniformFreq::View, bgfx::UniformType::Vec4);
 
-		m_program[0] = loadProgram("vs_s2h", "fs_s2h");
-		m_program[1] = loadProgram("vs_s2h", "fs_s2h_screen");
+		m_program[0] = loadProgram("vs_s2h", "fs_s2h_3d");
+		m_program[1] = loadProgram("vs_s2h", "fs_s2h_2d");
 		m_program[2] = loadProgram("vs_s2h", "fs_s2h_gather");
-		m_program[3] = loadProgram("vs_s2h", "fs_s2h_arrow");
-		m_program[4] = loadProgram("vs_s2h", "fs_s2h_coordinate_system");
-		m_program[5] = loadProgram("vs_s2h", "fs_s2h_table");
-		m_program[6] = loadProgram("vs_s2h", "fs_s2h_generate_user_font");
-		m_program[7] = loadProgram("vs_s2h", "fs_s2h_2d");
-		m_program[8] = loadProgram("vs_s2h", "fs_s2h_3d");
-		m_program[9] = loadProgram("vs_s2h", "fs_s2h_clear");
-		m_program[10] = loadProgram("vs_s2h", "fs_s2h_quadpost_scene");
-		m_program[13] = loadProgram("vs_s2h", "fs_s2h_quadvsps");
+		m_program[5] = loadProgram("vs_s2h", "fs_s2h_quadvsps");
+		m_program[6] = loadProgram("vs_s2h", "fs_s2h_table");
+		m_program[7] = loadProgram("vs_s2h", "fs_s2h_quadpost_scene");
+		m_program[8] = loadProgram("vs_s2h", "fs_s2h_arrow");
+		m_program[9] = loadProgram("vs_s2h", "fs_s2h_generate_user_font");
+		m_program[11] = loadProgram("vs_s2h", "fs_s2h_coordinate_system");
+		m_program[12] = loadProgram("vs_s2h", "fs_s2h");
+		m_program[13] = loadProgram("vs_s2h", "fs_s2h_screen");
+		m_program[14] = loadProgram("vs_s2h", "fs_s2h_clear");
 		m_program[15] = loadProgram("vs_s2h", "fs_s2h_zoom2d");
 		m_quadPostProgram = loadProgram("vs_s2h", "fs_s2h_quadpost");
 		m_userFontProgram = loadProgram("vs_s2h", "fs_s2h_use_user_font");
@@ -238,7 +238,7 @@ public:
 				m_zoomScale,
 				0.0f,
 			};
-			if (14 == m_example)
+			if (4 == m_example)
 			{
 				const float scatterSize[] = { float(m_width), float(m_height), 0.0f, 0.0f };
 				const uint32_t dispatchWidth = (m_width  + 7) / 8;
@@ -257,19 +257,19 @@ public:
 				bgfx::setTexture(0, m_scatterSampler, m_scatterTexture);
 				renderScreenSpaceQuad(4, m_scatterDisplayProgram);
 			}
-			else if (10 == m_example || 11 == m_example || 12 == m_example)
+			else if (3 == m_example || 7 == m_example || 10 == m_example)
 			{
 				bgfx::setViewFrameBuffer(0, m_quadPostFrameBuffer);
 				bgfx::setViewRect(0, 0, 0, uint16_t(m_width), uint16_t(m_height) );
 				bgfx::setViewClear(0, BGFX_CLEAR_COLOR, 0x101018ff);
 				bgfx::setViewUniform(0, m_timeUniform, time);
-				renderScreenSpaceQuad(0, 11 == m_example ? m_program[6] : m_program[10]);
+				renderScreenSpaceQuad(0, 10 == m_example ? m_program[9] : m_program[7]);
 
 				bgfx::setViewFrameBuffer(1, BGFX_INVALID_HANDLE);
 				bgfx::setViewRect(1, 0, 0, uint16_t(m_width), uint16_t(m_height) );
 				bgfx::setViewUniform(1, m_mouseUniform, mouse);
 				bgfx::setTexture(0, m_quadPostSampler, m_quadPostTexture);
-				renderScreenSpaceQuad(1, 10 == m_example ? m_quadPostProgram : (11 == m_example ? m_userFontProgram : m_debugZoomProgram));
+				renderScreenSpaceQuad(1, 7 == m_example ? m_quadPostProgram : (10 == m_example ? m_userFontProgram : m_debugZoomProgram));
 			}
 			else
 			{
@@ -364,19 +364,23 @@ public:
 
 		if (ImGui::IsMouseClicked(ImGuiMouseButton_Left) )
 		{
-			if (isInside(105.0f, 185.0f, 16.0f, 16.0f) )
+			if (isInside(105.0f, 218.0f, 16.0f, 16.0f) )
 			{
 				m_gatherRadio = 1;
 			}
-			else if (isInside(121.0f, 185.0f, 16.0f, 16.0f) )
+			else if (isInside(121.0f, 218.0f, 16.0f, 16.0f) )
 			{
 				m_gatherRadio = 2;
 			}
-			else if (isInside(137.0f, 185.0f, 16.0f, 16.0f) )
+			else if (isInside(137.0f, 218.0f, 16.0f, 16.0f) )
 			{
 				m_gatherRadio = 3;
 			}
-			else if (isInside(105.0f, 201.0f, 16.0f, 16.0f) )
+			else if (isInside(105.0f, 250.0f, 80.0f, 16.0f) )
+			{
+				m_gatherRadio = 0;
+			}
+			else if (isInside(105.0f, 282.0f, 16.0f, 16.0f) )
 			{
 				m_gatherCheckbox = !m_gatherCheckbox;
 			}
@@ -384,18 +388,18 @@ public:
 
 		if (ImGui::IsMouseDown(ImGuiMouseButton_Left) )
 		{
-			auto updateSlider = [&isInside, &mouse](float _x, float _y, float& _value)
+			auto updateSlider = [&isInside, &mouse](float _x, float _y, float _width, float& _value)
 			{
-				if (isInside(_x, _y, 128.0f, 14.0f) )
+				if (isInside(_x, _y, _width, 14.0f) )
 				{
-					_value = bx::clamp((mouse.x - (_x + 2.0f)) / 124.0f, 0.0f, 1.0f);
+					_value = bx::clamp((mouse.x - (_x + 2.0f)) / (_width - 4.0f), 0.0f, 1.0f);
 				}
 			};
 
-			updateSlider(42.0f, 234.0f, m_gatherColor[3]);
-			updateSlider(90.0f, 250.0f, m_gatherColor[0]);
-			updateSlider(90.0f, 266.0f, m_gatherColor[1]);
-			updateSlider(90.0f, 282.0f, m_gatherColor[2]);
+			updateSlider(42.0f, 346.0f, 128.0f, m_gatherColor[3]);
+			updateSlider(90.0f, 378.0f, 80.0f, m_gatherColor[0]);
+			updateSlider(90.0f, 394.0f, 80.0f, m_gatherColor[1]);
+			updateSlider(90.0f, 410.0f, 80.0f, m_gatherColor[2]);
 		}
 	}
 

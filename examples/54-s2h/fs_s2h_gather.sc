@@ -69,17 +69,51 @@ void main()
 	s2h_printBox(ui, float4(1.0f, 0.0f, 0.0f, 1.0f));
 	s2h_printDisc(ui, float4(0.0f, 1.0f, 0.0f, 1.0f));
 	s2h_printDisc(ui, float4(1.0f, 1.0f, 0.0f, 1.0f));
-	s2h_printLF(ui);
-	s2h_printLF(ui);
 
 	uint radioState = uint(u_s2hUiState.x);
 	uint checkboxState = uint(u_s2hUiState.y);
 	float sliderAlpha = u_s2hUiState.z;
 	float3 sliderColor = u_s2hColor.rgb;
 
-	ui.textColor.rgb = float3(1.0f, 1.0f, 1.0f);
+#if BGFX_SHADER_LANGUAGE_WGSL
+	// shaderc's WGSL backend overflows its compiler stack when all of the
+	// nested S2H widget calls below are emitted together. Keep a compact,
+	// functional presentation for WebGPU; DX11 and GLSL use the full port.
+	s2h_printLF(ui);
+	s2h_printLF(ui);
 	s2h_printTxt(ui, _U, _I, _SPACE, _S, _t, _a);
 	s2h_printTxt(ui, _t, _e, _COLON);
+	s2h_printLF(ui);
+	s2h_printTxt(ui, _SPACE, _SPACE);
+	s2h_printInt(ui, int(radioState));
+	s2h_printTxt(ui, _SPACE, _EQUAL, _SPACE);
+	s2h_radioButton(ui, radioState == 1u);
+	s2h_radioButton(ui, radioState == 2u);
+	s2h_radioButton(ui, radioState == 3u);
+	s2h_printTxt(ui, _SPACE, _r, _a, _d, _i, _o);
+	s2h_printLF(ui);
+	s2h_printTxt(ui, _SPACE, _SPACE);
+	s2h_checkBox(ui, checkboxState != 0u);
+	s2h_printTxt(ui, _SPACE, _c, _h, _e, _c, _k);
+	s2h_printLF(ui);
+	s2h_printTxt(ui, _SPACE, _SPACE);
+	s2h_progress(ui, 5u, frac(u_s2hTime.x));
+	s2h_printLF(ui);
+	s2h_printTxt(ui, _SPACE, _SPACE);
+	s2h_sliderFloat(ui, 8u, sliderAlpha, 0.0f, 1.0f);
+	s2h_printLF(ui);
+	s2h_printTxt(ui, _SPACE, _SPACE);
+	s2h_sliderRGB(ui, 8u, sliderColor);
+#else
+	s2h_setScale(ui, 2.0f);
+	s2h_printLF(ui);
+	s2h_printLF(ui);
+	s2h_printLF(ui);
+	s2h_printTxt(ui, _U, _I, _S, _t, _a, _t);
+	s2h_printTxt(ui, _e, _COLON, _SPACE, _LESS, _MINUS, _MINUS);
+	s2h_printTxt(ui, _SPACE, _T, _o, _u, _c, _h);
+	s2h_printTxt(ui, _SPACE, _M, _e);
+	s2h_printLF(ui);
 	s2h_printLF(ui);
 	s2h_printTxt(ui, _SPACE, _SPACE);
 	s2h_printInt(ui, int(radioState));
@@ -89,27 +123,49 @@ void main()
 	ui.buttonColor = float4(0.0f, 1.0f, 0.0f, 1.0f); s2h_radioButton(ui, radioState == 2u);
 	ui.buttonColor = float4(0.0f, 0.0f, 1.0f, 1.0f); s2h_radioButton(ui, radioState == 3u);
 	ui.buttonColor = buttonColor;
-	s2h_printTxt(ui, _SPACE, _r, _a, _d, _i, _o);
+	s2h_printTxt(ui, _SPACE, _s, _2, _h, _UNDERSCORE, _r);
+	s2h_printTxt(ui, _a, _d, _i, _o, _B, _u);
+	s2h_printTxt(ui, _t, _t, _o, _n);
+	s2h_printLF(ui);
+	s2h_printLF(ui);
+	s2h_printTxt(ui, _SPACE, _SPACE);
+	s2h_printInt(ui, int(radioState));
+	s2h_printTxt(ui, _SPACE, _EQUAL, _SPACE);
+	s2h_printTxt(ui, _C, _l, _e, _a, _r);
+	s2h_button(ui, 5u);
+	s2h_printTxt(ui, _SPACE, _s, _2, _h, _UNDERSCORE, _b);
+	s2h_printTxt(ui, _u, _t, _t, _o, _n);
+	s2h_printLF(ui);
 	s2h_printLF(ui);
 	s2h_printTxt(ui, _SPACE, _SPACE);
 	s2h_printInt(ui, int(checkboxState));
 	s2h_printTxt(ui, _SPACE, _EQUAL, _SPACE);
 	s2h_checkBox(ui, checkboxState != 0u);
-	s2h_printTxt(ui, _SPACE, _c, _h, _e, _c, _k);
+	s2h_printTxt(ui, _SPACE, _s, _2, _h, _UNDERSCORE, _c);
+	s2h_printTxt(ui, _h, _e, _c, _k, _B, _o);
+	s2h_printTxt(ui, _x);
+	s2h_printLF(ui);
 	s2h_printLF(ui);
 	s2h_printTxt(ui, _SPACE, _SPACE);
 	s2h_progress(ui, 5u, frac(u_s2hTime.x));
-	s2h_printTxt(ui, _SPACE, _p, _r, _o, _g, _r);
-	s2h_printTxt(ui, _e, _s, _s);
+	s2h_printTxt(ui, _SPACE, _s, _2, _h, _UNDERSCORE, _p);
+	s2h_printTxt(ui, _r, _o, _g, _r, _e, _s);
+	s2h_printTxt(ui, _s);
+	s2h_printLF(ui);
 	s2h_printLF(ui);
 	s2h_printTxt(ui, _SPACE, _SPACE);
 	s2h_sliderFloat(ui, 8u, sliderAlpha, 0.0f, 1.0f);
-	s2h_printTxt(ui, _SPACE, _s, _l, _i, _d, _e);
-	s2h_printTxt(ui, _r);
+	s2h_printTxt(ui, _SPACE, _s, _2, _h, _UNDERSCORE, _s);
+	s2h_printTxt(ui, _l, _i, _d, _e, _r, _F);
+	s2h_printTxt(ui, _l, _o, _a, _t);
+	s2h_printLF(ui);
 	s2h_printLF(ui);
 	s2h_printTxt(ui, _SPACE, _SPACE);
 	s2h_sliderRGB(ui, 8u, sliderColor);
-	s2h_printTxt(ui, _SPACE, _R, _G, _B);
+	s2h_printTxt(ui, _SPACE, _s, _2, _h, _UNDERSCORE, _s);
+	s2h_printTxt(ui, _l, _i, _d, _e, _r, _R);
+	s2h_printTxt(ui, _G, _B);
+#endif
 
 	float4 background = float4(0.4f, 0.7f, 0.4f, 1.0f);
 	gl_FragColor = lerp(background, float4(ui.dstColor.rgb, 1.0f), ui.dstColor.a);
