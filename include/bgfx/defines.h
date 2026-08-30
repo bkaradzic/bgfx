@@ -15,7 +15,7 @@
 #ifndef BGFX_DEFINES_H_HEADER_GUARD
 #define BGFX_DEFINES_H_HEADER_GUARD
 
-#define BGFX_API_VERSION UINT32_C(157)
+#define BGFX_API_VERSION UINT32_C(158)
 
 /**
  * Color RGB/alpha/depth write. When it's not specified write will be disabled.
@@ -432,6 +432,23 @@
 
 #define BGFX_RESET_RESERVED_SHIFT                 31                   //!< Internal bit shift
 #define BGFX_RESET_RESERVED_MASK                  UINT32_C(0x80000000) //!< Internal bit mask
+
+#define BGFX_SWAP_CHAIN_MSAA_X2                   UINT32_C(0x00000010) //!< Enable 2x MSAA.
+#define BGFX_SWAP_CHAIN_MSAA_X4                   UINT32_C(0x00000020) //!< Enable 4x MSAA.
+#define BGFX_SWAP_CHAIN_MSAA_X8                   UINT32_C(0x00000030) //!< Enable 8x MSAA.
+#define BGFX_SWAP_CHAIN_MSAA_X16                  UINT32_C(0x00000040) //!< Enable 16x MSAA.
+#define BGFX_SWAP_CHAIN_MSAA_SHIFT                4
+#define BGFX_SWAP_CHAIN_MSAA_MASK                 UINT32_C(0x00000070)
+
+#define BGFX_SWAP_CHAIN_NONE                      UINT32_C(0x00000000) //!< No swap chain flags.
+#define BGFX_SWAP_CHAIN_FULLSCREEN                UINT32_C(0x00000001) //!< Not supported yet.
+#define BGFX_SWAP_CHAIN_SRGB_BACKBUFFER           UINT32_C(0x00008000) //!< Enable sRGB backbuffer.
+#define BGFX_SWAP_CHAIN_HDR10                     UINT32_C(0x00010000) //!< Enable HDR10 rendering.
+#define BGFX_SWAP_CHAIN_HIDPI                     UINT32_C(0x00020000) //!< Enable HiDPI rendering.
+#define BGFX_SWAP_CHAIN_TRANSPARENT_BACKBUFFER    UINT32_C(0x00100000) //!< Transparent backbuffer. Availability depends on: `BGFX_CAPS_TRANSPARENT_BACKBUFFER`.
+
+#define BGFX_SWAP_CHAIN_FULLSCREEN_SHIFT          0
+#define BGFX_SWAP_CHAIN_FULLSCREEN_MASK           UINT32_C(0x00000001)
 
 #define BGFX_CAPS_ALPHA_TO_COVERAGE               UINT64_C(0x0000000000000001) //!< Alpha to coverage is supported.
 #define BGFX_CAPS_BLEND_INDEPENDENT               UINT64_C(0x0000000000000002) //!< Blend independent is supported.

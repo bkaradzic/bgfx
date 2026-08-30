@@ -71,10 +71,10 @@ namespace bgfx { namespace gl
 		HGLRC m_context;
 	};
 
-	static HGLRC createContext(HDC _hdc, const Resolution& _resolution)
+	static HGLRC createContext(HDC _hdc, const SwapChain& _swapChain)
 	{
-		const bimg::ImageBlockInfo& colorBlockInfo       = bimg::getBlockInfo(bimg::TextureFormat::Enum(_resolution.formatColor) );
-		const bimg::ImageBlockInfo& depthStecilBlockInfo = bimg::getBlockInfo(bimg::TextureFormat::Enum(_resolution.formatDepthStencil) );
+		const bimg::ImageBlockInfo& colorBlockInfo       = bimg::getBlockInfo(bimg::TextureFormat::Enum(_swapChain.formatColor) );
+		const bimg::ImageBlockInfo& depthStecilBlockInfo = bimg::getBlockInfo(bimg::TextureFormat::Enum(_swapChain.formatDepthStencil) );
 
 		PIXELFORMATDESCRIPTOR pfd;
 		bx::memSet(&pfd, 0, sizeof(pfd) );
@@ -138,7 +138,7 @@ namespace bgfx { namespace gl
 			);
 	}
 
-	void GlContext::create(const Resolution& _resolution)
+	void GlContext::create(const SwapChain& _swapChain, uint32_t _reset)
 	{
 		m_opengl32dll = bx::dlopen("opengl32.dll");
 		BGFX_FATAL(NULL != m_opengl32dll, Fatal::UnableToInitialize, "Failed to load opengl32.dll.");
@@ -148,13 +148,15 @@ namespace bgfx { namespace gl
 
 		// If g_platformHooks.nwh is NULL, the assumption is that GL context was created
 		// by user (for example, using SDL, GLFW, etc.)
-		BX_WARN(NULL != g_platformData.nwh
+		BX_WARN(NULL != _swapChain.nwh
 			||  NULL != g_platformData.context
-			, "bgfx::setPlatform with valid window is not called. This might "
+			, "Init::swapChain has no valid window handle. This might "
 				"be intentional when GL context is created by the user."
 			);
 
-		HWND nwh = (HWND)g_platformData.nwh;
+		m_nwh = _swapChain.nwh;
+
+		HWND nwh = (HWND)m_nwh;
 
 		m_ownsContext = NULL == g_platformData.context;
 
@@ -244,7 +246,7 @@ namespace bgfx { namespace gl
 
 			m_current = NULL;
 
-			m_swapInterval = !!(_resolution.reset & BGFX_RESET_VSYNC) ? 1 : 0;
+			m_swapInterval = !!(_reset & BGFX_RESET_VSYNC) ? 1 : 0;
 
 			if (NULL != wglSwapIntervalEXT)
 			{
@@ -272,7 +274,7 @@ namespace bgfx { namespace gl
 			HDC hdc = GetDC(hwnd);
 			BGFX_FATAL(NULL != hdc, Fatal::UnableToInitialize, "GetDC failed!");
 
-			HGLRC context = createContext(hdc, _resolution);
+			HGLRC context = createContext(hdc, _swapChain);
 
 			wglGetExtensionsStringARB  = wglGetProc<PFNWGLGETEXTENSIONSSTRINGARBPROC >("wglGetExtensionsStringARB");
 			wglChoosePixelFormatARB    = wglGetProc<PFNWGLCHOOSEPIXELFORMATARBPROC   >("wglChoosePixelFormatARB");
@@ -289,8 +291,8 @@ namespace bgfx { namespace gl
 			if (NULL != wglChoosePixelFormatARB
 			&&  NULL != wglCreateContextAttribsARB)
 			{
-				const bimg::ImageBlockInfo& colorBlockInfo       = bimg::getBlockInfo(bimg::TextureFormat::Enum(_resolution.formatColor) );
-				const bimg::ImageBlockInfo& depthStecilBlockInfo = bimg::getBlockInfo(bimg::TextureFormat::Enum(_resolution.formatDepthStencil) );
+				const bimg::ImageBlockInfo& colorBlockInfo       = bimg::getBlockInfo(bimg::TextureFormat::Enum(_swapChain.formatColor) );
+				const bimg::ImageBlockInfo& depthStecilBlockInfo = bimg::getBlockInfo(bimg::TextureFormat::Enum(_swapChain.formatDepthStencil) );
 
 				int32_t attrs[] =
 				{
@@ -376,14 +378,14 @@ namespace bgfx { namespace gl
 
 			if (NULL == m_context)
 			{
-				m_context = createContext(m_hdc, _resolution);
+				m_context = createContext(m_hdc, _swapChain);
 			}
 
 			int result = wglMakeCurrent(m_hdc, m_context);
 			BGFX_FATAL(0 != result, Fatal::UnableToInitialize, "wglMakeCurrent failed!");
 			m_current = NULL;
 
-			m_swapInterval = !!(_resolution.reset & BGFX_RESET_VSYNC) ? 1 : 0;
+			m_swapInterval = !!(_reset & BGFX_RESET_VSYNC) ? 1 : 0;
 			if (NULL != wglSwapIntervalEXT)
 			{
 				wglSwapIntervalEXT(m_swapInterval);
@@ -410,7 +412,7 @@ namespace bgfx { namespace gl
 			m_pixelFormat = 0;
 			m_current     = NULL;
 
-			ReleaseDC(NULL != m_dummyHwnd ? m_dummyHwnd : (HWND)g_platformData.nwh, m_hdc);
+			ReleaseDC(NULL != m_dummyHwnd ? m_dummyHwnd : (HWND)m_nwh, m_hdc);
 			m_hdc = NULL;
 		}
 
@@ -424,9 +426,11 @@ namespace bgfx { namespace gl
 		m_opengl32dll = NULL;
 	}
 
-	void GlContext::resize(const Resolution& _resolution)
+	void GlContext::resize(const SwapChain& _swapChain, uint32_t _reset)
 	{
-		const bool vsync = !!(_resolution.reset & BGFX_RESET_VSYNC);
+		BX_UNUSED(_swapChain);
+
+		const bool vsync = !!(_reset & BGFX_RESET_VSYNC);
 		m_swapInterval = vsync ? 1 : 0;
 
 		if (NULL != wglSwapIntervalEXT)
@@ -479,7 +483,7 @@ namespace bgfx { namespace gl
 
 		if (NULL == _swapChain)
 		{
-			if (NULL != g_platformData.nwh)
+			if (NULL != m_nwh)
 			{
 				SwapBuffers(m_hdc);
 			}

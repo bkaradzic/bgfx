@@ -28,15 +28,18 @@ int32_t _main_(int32_t _argc, char** _argv)
 	bgfx_init_t init;
 	bgfx_init_ctor(&init);
 
-	init.platformData.nwh = entry_get_default_native_window_handle();
-	init.platformData.ndt = entry_get_native_display_handle();
+	init.swapChain.width  = width;
+	init.swapChain.height = height;
+
+	init.swapChain.nwh    = entry_get_default_native_window_handle();
+	init.swapChain.ndt    = entry_get_native_display_handle();
 	init.platformData.type = entry_get_native_window_handle_type();
 
 	bgfx_init(&init);
-	bgfx_reset(width, height, reset, init.resolution.formatColor);
+	bgfx_reset(reset, &init.swapChain);
 
 	// Enable debug text.
-	bgfx_set_debug(debug);
+	bgfx_set_debug(debug, (bgfx_frame_buffer_handle_t)BGFX_INVALID_HANDLE, 0);
 
 	bgfx_set_view_clear(0
 		, BGFX_CLEAR_COLOR|BGFX_CLEAR_DEPTH

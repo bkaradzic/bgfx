@@ -451,7 +451,6 @@ namespace bgfx { namespace d3d12
 
 		void* create(const Memory* _mem, uint64_t _flags, uint8_t _skip, uint64_t _external);
 		void destroy();
-		void overrideInternal(uintptr_t _ptr);
 		void clear(ID3D12GraphicsCommandList* _commandList, uint8_t _mip, uint8_t _numMips, uint16_t _layer, uint16_t _numLayers);
 		void update(ID3D12GraphicsCommandList* _commandList, uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem);
 		void resolve(ID3D12GraphicsCommandList* _commandList, uint8_t _resolve, uint32_t _layer, uint32_t _numLayers, uint32_t _mip);
@@ -479,11 +478,15 @@ namespace bgfx { namespace d3d12
 		VideoDecoderD3D12* m_videoDecoder;
 	};
 
+	constexpr uint16_t kMainFrameBufferIdx = BGFX_CONFIG_MAX_FRAME_BUFFERS;
+
 	struct FrameBufferD3D12
 	{
 		FrameBufferD3D12()
 			: m_swapChain(NULL)
 			, m_swapChainFormat(DXGI_FORMAT_UNKNOWN)
+			, m_msaaRt(NULL)
+			, m_backBufferDepthStencil(NULL)
 			, m_nwh(NULL)
 			, m_width(0)
 			, m_height(0)
@@ -495,10 +498,16 @@ namespace bgfx { namespace d3d12
 			, m_frameLatencyWaitableObject(NULL)
 		{
 			m_depth.idx = bgfx::kInvalidHandle;
+			bx::memSet(&m_desc, 0, sizeof(m_desc) );
+			bx::memSet(m_backBufferColor, 0, sizeof(m_backBufferColor) );
 		}
 
 		void create(uint8_t _num, const Attachment* _attachment);
-		void create(uint16_t _denseIdx, void* _nwh, uint32_t _width, uint32_t _height, TextureFormat::Enum _format, TextureFormat::Enum _depthFormat);
+		void create(uint16_t _denseIdx, const SwapChain& _desc);
+		void update(const SwapChain& _desc);
+		DxgiSwapChainDesc getSwapChainDesc() const;
+		void createSwapChainViews();
+		void destroySwapChainViews();
 		uint16_t destroy();
 		HRESULT present(uint32_t _syncInterval, uint32_t _flags);
 		void preReset();
@@ -507,10 +516,19 @@ namespace bgfx { namespace d3d12
 		void clear(ID3D12GraphicsCommandList* _commandList, const Clear& _clear, const float _palette[][4], const D3D12_RECT* _rect = NULL, uint32_t _num = 0);
 		D3D12_RESOURCE_STATES setState(ID3D12GraphicsCommandList* _commandList, uint8_t _idx, D3D12_RESOURCE_STATES _state);
 
+		bool isSwapChain() const
+		{
+			return NULL != m_swapChain;
+		}
+
 		TextureHandle m_texture[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
 		TextureHandle m_depth;
 		Dxgi::SwapChainI* m_swapChain;
 		DXGI_FORMAT m_swapChainFormat;
+		SwapChain m_desc;
+		ID3D12Resource* m_backBufferColor[BGFX_CONFIG_MAX_BACK_BUFFERS];
+		ID3D12Resource* m_msaaRt;
+		ID3D12Resource* m_backBufferDepthStencil;
 		void* m_nwh;
 		uint32_t m_width;
 		uint32_t m_height;

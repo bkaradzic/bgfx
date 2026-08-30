@@ -737,11 +737,11 @@ int _main_(int _argc, char** _argv)
 	entry::setWindowSize(entry::kDefaultWindowHandle, view.m_width, view.m_height);
 
 	bgfx::Init init;
-	init.platformData.nwh = entry::getNativeWindowHandle(entry::kDefaultWindowHandle);
-	init.platformData.ndt = entry::getNativeDisplayHandle();
-	init.resolution.width = view.m_width;
-	init.resolution.width = view.m_height;
-	init.resolution.reset = 0
+	init.swapChain.nwh    = entry::getNativeWindowHandle(entry::kDefaultWindowHandle);
+	init.swapChain.ndt    = entry::getNativeDisplayHandle();
+	init.swapChain.width = view.m_width;
+	init.swapChain.width = view.m_height;
+	init.reset = 0
 		| BGFX_RESET_VSYNC
 		| BGFX_RESET_MSAA_X16
 		;
@@ -801,7 +801,7 @@ int _main_(int _argc, char** _argv)
 		uint32_t fileIndex = 0;
 
 		entry::WindowState windowState;
-		while (!entry::processWindowEvents(windowState, debug, init.resolution.reset) )
+		while (!entry::processWindowEvents(windowState, debug, init.reset) )
 		{
 			const entry::MouseState& mouseState = windowState.m_mouse;
 			view.m_width  = windowState.m_width;

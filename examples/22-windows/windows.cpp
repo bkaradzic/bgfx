@@ -86,12 +86,12 @@ public:
 		bgfx::Init init;
 		init.type     = args.m_type;
 		init.vendorId = args.m_pciId;
-		init.platformData.nwh  = entry::getNativeWindowHandle(entry::kDefaultWindowHandle);
-		init.platformData.ndt  = entry::getNativeDisplayHandle();
+		init.swapChain.nwh     = entry::getNativeWindowHandle(entry::kDefaultWindowHandle);
+		init.swapChain.ndt     = entry::getNativeDisplayHandle();
 		init.platformData.type = entry::getNativeWindowHandleType();
-		init.resolution.width  = m_width;
-		init.resolution.height = m_height;
-		init.resolution.reset  = m_reset;
+		init.swapChain.width  = m_width;
+		init.swapChain.height = m_height;
+		init.reset  = m_reset;
 		bgfx::init(init);
 
 		const bgfx::Caps* caps = bgfx::getCaps();
@@ -199,27 +199,14 @@ public:
 					|| (win.m_width  != m_state.m_width
 					||  win.m_height != m_state.m_height) )
 					{
-						// When window changes size or native window handle changed
-						// frame buffer must be recreated.
-						if (bgfx::isValid(m_fbh[viewId]) )
+						if (win.m_nwh != m_state.m_nwh
+						&&  bgfx::isValid(m_fbh[viewId]) )
 						{
 							bgfx::destroy(m_fbh[viewId]);
 							m_fbh[viewId].idx = bgfx::kInvalidHandle;
-						}
 
-						// Before we reattach a SwapChain to the window
-						// we must actually free up the previous one.
-						// The DestroyFrameBuffer command goes in the
-						// cmdPost CommandBuffer, which happens after
-						// the frame. The CreateFrameBuffer command goes
-						// int the cmdPre CommandBuffer, which happens
-						// at the beginning of the frame. Without this
-						// bgfx::frame() call, the creation would happen
-						// before it's destroyed, which would cause
-						// the platform window to have two SwapChains
-						// associated with it.
-						// Ideally, we have an operation of ResizeFrameBuffer.
-						bgfx::frame();
+							bgfx::frame();
+						}
 
 						win.m_nwh    = m_state.m_nwh;
 						win.m_width  = m_state.m_width;
@@ -227,7 +214,19 @@ public:
 
 						if (NULL != win.m_nwh)
 						{
-							m_fbh[viewId] = bgfx::createFrameBuffer(win.m_nwh, uint16_t(win.m_width), uint16_t(win.m_height) );
+							bgfx::SwapChain swapChain;
+							swapChain.nwh    = win.m_nwh;
+							swapChain.width  = win.m_width;
+							swapChain.height = win.m_height;
+
+							if (bgfx::isValid(m_fbh[viewId]) )
+							{
+								bgfx::updateSwapChain(m_fbh[viewId], swapChain);
+							}
+							else
+							{
+								m_fbh[viewId] = bgfx::createFrameBuffer(swapChain);
+							}
 						}
 						else
 						{

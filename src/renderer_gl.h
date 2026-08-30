@@ -1471,7 +1471,6 @@ namespace bgfx { namespace gl
 		bool init(GLenum _target, uint32_t _width, uint32_t _height, uint32_t _depth, uint8_t _numMips, uint64_t _flags, uint64_t _external = 0);
 		void create(const Memory* _mem, uint64_t _flags, uint8_t _skip, uint64_t _external = 0);
 		void destroy();
-		void overrideInternal(uintptr_t _ptr);
 		void update(uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem);
 		void clear(uint8_t _mip, uint8_t _numMips, uint16_t _layer, uint16_t _numLayers);
 		void setSamplerState(uint32_t _flags, const float _rgba[4]);
@@ -1547,6 +1546,10 @@ namespace bgfx { namespace gl
 	{
 		FrameBufferGL()
 			: m_swapChain(NULL)
+			, m_swapChainColorTex(0)
+			, m_swapChainColorRbo(0)
+			, m_swapChainDepthRbo(0)
+			, m_swapChainMsaa(1)
 			, m_denseIdx(UINT16_MAX)
 			, m_num(0)
 			, m_needPresent(false)
@@ -1555,13 +1558,29 @@ namespace bgfx { namespace gl
 		}
 
 		void create(uint8_t _num, const Attachment* _attachment);
-		void create(uint16_t _denseIdx, void* _nwh, uint32_t _width, uint32_t _height);
+		void create(uint16_t _denseIdx, const SwapChain& _desc);
+		void update(const SwapChain& _desc);
 		void postReset();
 		uint16_t destroy();
 		void resolve();
 		void discard(uint16_t _flags);
 
+		void createSwapChainFbo(const SwapChain& _desc);
+		void destroySwapChainFbo();
+		void resolveSwapChainFbo();
+		void blitSwapChainFbo();
+
+		GLuint swapChainReadFbo() const
+		{
+			return 0 != m_fbo[1] ? m_fbo[1] : m_fbo[0];
+		}
+
 		SwapChainGL* m_swapChain;
+		SwapChain m_desc;
+		GLuint m_swapChainColorTex;
+		GLuint m_swapChainColorRbo;
+		GLuint m_swapChainDepthRbo;
+		uint32_t m_swapChainMsaa;
 		GLuint m_fbo[2];
 		uint32_t m_width;
 		uint32_t m_height;

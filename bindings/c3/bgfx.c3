@@ -611,6 +611,43 @@ constdef ResetFlags : inline uint
 	RESERVEDMASK           = 0x80000000,
 }
 
+constdef SwapChainFlags : inline uint
+{
+	// Enable 2x MSAA.
+	MSAAX2                 = 0x00000010,
+
+	// Enable 4x MSAA.
+	MSAAX4                 = 0x00000020,
+
+	// Enable 8x MSAA.
+	MSAAX8                 = 0x00000030,
+
+	// Enable 16x MSAA.
+	MSAAX16                = 0x00000040,
+	MSAASHIFT              = 4,
+	MSAAMASK               = 0x00000070,
+
+	// No swap chain flags.
+	NONE                   = 0x00000000,
+
+	// Not supported yet.
+	FULLSCREEN             = 0x00000001,
+
+	// Enable sRGB backbuffer.
+	SRGBBACKBUFFER         = 0x00008000,
+
+	// Enable HDR10 rendering.
+	HDR10                  = 0x00010000,
+
+	// Enable HiDPI rendering.
+	HIDPI                  = 0x00020000,
+
+	// Transparent backbuffer. Availability depends on: `BGFX_CAPS_TRANSPARENT_BACKBUFFER`.
+	TRANSPARENTBACKBUFFER  = 0x00100000,
+	FULLSCREENSHIFT        = 0,
+	FULLSCREENMASK         = 0x00000001,
+}
+
 constdef CapsFlags : inline ulong
 {
 	// Alpha to coverage is supported.
@@ -868,7 +905,7 @@ constdef PciIdFlags : inline ushort
 	// Intel adapter.
 	INTEL                  = 0x8086,
 
-	// nVidia adapter.
+	// NVIDIA adapter.
 	NVIDIA                 = 0x10de,
 
 	// Microsoft adapter.
@@ -1448,22 +1485,22 @@ enum UniformFreq : uint
 
 enum BackbufferRatio : uint
 {
-	// Equal to backbuffer.
+	// Equal to the main window's backbuffer.
 	EQUAL,
 
-	// One half size of backbuffer.
+	// One half size of the main window's backbuffer.
 	HALF,
 
-	// One quarter size of backbuffer.
+	// One quarter size of the main window's backbuffer.
 	QUARTER,
 
-	// One eighth size of backbuffer.
+	// One eighth size of the main window's backbuffer.
 	EIGHTH,
 
-	// One sixteenth size of backbuffer.
+	// One sixteenth size of the main window's backbuffer.
 	SIXTEENTH,
 
-	// Double size of backbuffer.
+	// Double size of the main window's backbuffer.
 	DOUBLE,
 
 	COUNT
@@ -1774,45 +1811,44 @@ struct InternalData
 // Platform data.
 struct PlatformData
 {
-	// Native display type (*nix specific).
-	void* ndt;
-	// Native window handle. If `NULL`, bgfx will create a headless
-	// context/device, provided the rendering API supports it.
-	void* nwh;
 	// GL context, D3D device, or Vulkan device. If `NULL`, bgfx
 	// will create context/device.
 	void* context;
 	// D3D12 Queue. If `NULL` bgfx will create queue.
 	void* queue;
-	// GL back-buffer, or D3D render target view. If `NULL` bgfx will
-	// create back-buffer color surface.
-	void* backBuffer;
-	// Backbuffer depth/stencil. If `NULL`, bgfx will create a back-buffer
-	// depth/stencil surface.
-	void* backBufferDS;
 	// Handle type. Needed for platforms having more than one option.
 	NativeWindowHandleType type;
 }
 
-// Backbuffer resolution and reset parameters.
-struct Resolution
+// Swap chain description.
+struct SwapChain
 {
-	// Backbuffer color format.
-	TextureFormat formatColor;
-	// Backbuffer depth/stencil format.
-	TextureFormat formatDepthStencil;
-	// Backbuffer width.
+	// Native window handle. If `NULL`, bgfx will create a headless
+	// context/device, provided the rendering API supports it.
+	void* nwh;
+	// Native display type (*nix specific). A window that leaves this
+	// `NULL` uses the one the main window was initialized with.
+	void* ndt;
+	// Swap chain width.
 	uint width;
-	// Backbuffer height.
+	// Swap chain height.
 	uint height;
-	// Reset parameters.
-	uint reset;
+	// See: `BGFX_SWAP_CHAIN_*`.
+	uint flags;
+	// Color format.
+	TextureFormat formatColor;
+	// Depth/stencil format, or `TextureFormat::Count` for no depth. Ignored
+	// when `depth` is valid.
+	TextureFormat formatDepthStencil;
+	// Depth attachment. Must be created with `BGFX_TEXTURE_RT`, and match the
+	// swap chain width, height and sample count. When invalid, bgfx creates and
+	// owns a depth surface per `formatDepthStencil`. A texture supplied here is
+	// never destroyed by bgfx, and may be shared by several same-size swap chains.
+	TextureHandle depth;
 	// Number of back buffers.
 	char numBackBuffers;
 	// Maximum frame latency.
 	char maxFrameLatency;
-	// Scale factor for debug text.
-	char debugTextScale;
 }
 
 // Configurable runtime limits parameters.
@@ -1880,8 +1916,13 @@ struct Init
 	bool videoDecode;
 	// Platform data.
 	PlatformData platformData;
-	// Backbuffer resolution and reset parameters. See: `bgfx::Resolution`.
-	Resolution resolution;
+	// Swap chain for the window bgfx creates its device on.
+	// See: `bgfx::SwapChain`.
+	SwapChain swapChain;
+	// Device and frame global settings. Anything that is a
+	// property of one surface belongs in `swapChain` instead.
+	// See: `BGFX_RESET_*`.
+	uint reset;
 	// Configurable runtime limits parameters.
 	InitLimits limits;
 	// Provide application specific callback interface.
@@ -2469,11 +2510,9 @@ extern fn void shutdown() @cname("bgfx_shutdown");
 // @attention This call doesn’t change the window size, it just resizes
 //   the back-buffer. Your windowing code controls the window size.
 // 
-// _width : `Back-buffer width.`
-// _height : `Back-buffer height.`
-// _flags : `See: `BGFX_RESET_*` for more info.   - `BGFX_RESET_NONE` - No reset flags.   - `BGFX_RESET_FULLSCREEN` - Not supported yet.   - `BGFX_RESET_MSAA_X[2/4/8/16]` - Enable 2, 4, 8 or 16 x MSAA.   - `BGFX_RESET_VSYNC` - Enable V-Sync.   - `BGFX_RESET_MAXANISOTROPY` - Turn on/off max anisotropy.   - `BGFX_RESET_CAPTURE` - Begin screen capture.   - `BGFX_RESET_FLUSH_AFTER_RENDER` - Flush rendering after submitting to GPU.   - `BGFX_RESET_FLIP_AFTER_RENDER` - This flag  specifies where flip     occurs. Default behaviour is that flip occurs before rendering new     frame. This flag only has effect when `BGFX_CONFIG_MULTITHREADED=0`.   - `BGFX_RESET_SRGB_BACKBUFFER` - Enable sRGB back-buffer.`
-// _format : `Texture format. See: `TextureFormat::Enum`.`
-extern fn void reset(uint _width, uint _height, uint _flags, TextureFormat _format) @cname("bgfx_reset");
+// _flags : `See: `BGFX_RESET_*` for more info.   - `BGFX_RESET_NONE` - No reset flags.   - `BGFX_RESET_VSYNC` - Enable V-Sync.   - `BGFX_RESET_MAXANISOTROPY` - Turn on/off max anisotropy.   - `BGFX_RESET_CAPTURE` - Begin screen capture.   - `BGFX_RESET_FLUSH_AFTER_RENDER` - Flush rendering after submitting to GPU.   - `BGFX_RESET_FLIP_AFTER_RENDER` - This flag  specifies where flip     occurs. Default behaviour is that flip occurs before rendering new     frame. This flag only has effect when `BGFX_CONFIG_MULTITHREADED=0`. Per-surface settings are not here. `BGFX_SWAP_CHAIN_*` flags belong on `SwapChain::flags`, and are ignored if passed here.`
+// _swapChain : `Main window swap chain. When `NULL` the main window is left untouched and only the device and frame globals above are applied, which is what an application driving its own swap chains wants. Otherwise the main window takes on this description: resize it, change its format, or change its per-surface flags. Fields left neutral keep their current value, and `nwh`/`ndt` are ignored -- main's are bgfx's own. Must be `NULL` when `bgfx::init` created no main window.`
+extern fn void reset(uint _flags, SwapChain* _swapChain) @cname("bgfx_reset");
 
 // Advance to next frame. This is the main frame-advancement call on the
 // API thread (the thread from which `bgfx::init` was called).
@@ -2561,7 +2600,9 @@ extern fn Memory* make_ref_release(void* _data, uint _size, void* _releaseFn, vo
 
 // Set debug flags.
 // _debug : `Available flags:   - `BGFX_DEBUG_IFH` - Infinitely fast hardware. When this flag is set     all rendering calls will be skipped. This is useful when profiling     to quickly assess potential bottlenecks between CPU and GPU.   - `BGFX_DEBUG_PROFILER` - Enable profiler.   - `BGFX_DEBUG_STATS` - Display internal statistics.   - `BGFX_DEBUG_TEXT` - Display debug text.   - `BGFX_DEBUG_WIREFRAME` - Wireframe rendering. All rendering     primitives will be rendered as lines.`
-extern fn void set_debug(uint _debug) @cname("bgfx_set_debug");
+// _handle : `Frame buffer the debug text and statistics are drawn on. Invalid handle selects the window bgfx was initialized with.`
+// _scale : `Debug text scale factor. 0 is the same as 1.`
+extern fn void set_debug(uint _debug, FrameBufferHandle _handle, char _scale) @cname("bgfx_set_debug");
 
 // Clear internal debug text buffer.
 // _attr : `Background color.`
@@ -2996,19 +3037,27 @@ extern fn FrameBufferHandle create_frame_buffer_from_handles(char _num, TextureH
 // _destroyTexture : `If true, textures will be destroyed when frame buffer is destroyed.`
 extern fn FrameBufferHandle create_frame_buffer_from_attachment(char _num, Attachment* _attachment, bool _destroyTexture) @cname("bgfx_create_frame_buffer_from_attachment");
 
-// Create frame buffer for multiple window rendering.
+// Create a frame buffer for a window, from a full swap chain description.
 // 
 // @remarks
 //   Frame buffer cannot be used for sampling.
 // 
 // @attention Availability depends on: `BGFX_CAPS_SWAP_CHAIN`.
 // 
-// _nwh : `OS' target native window handle.`
-// _width : `Window back buffer width.`
-// _height : `Window back buffer height.`
-// _format : `Window back buffer color format.`
-// _depthFormat : `Window back buffer depth format.`
-extern fn FrameBufferHandle create_frame_buffer_from_nwh(void* _nwh, ushort _width, ushort _height, TextureFormat _format, TextureFormat _depthFormat) @cname("bgfx_create_frame_buffer_from_nwh");
+// _desc : `Swap chain description. See: `bgfx::SwapChain`.`
+extern fn FrameBufferHandle create_frame_buffer_from_swap_chain(SwapChain* _desc) @cname("bgfx_create_frame_buffer_from_swap_chain");
+
+// Change a swap chain's size, format or per-surface flags, in place.
+// 
+// The frame buffer handle stays valid, so nothing that refers to it has to be
+// rebuilt. Pass `BGFX_INVALID_HANDLE` to address the window bgfx was
+// initialized with.
+// 
+// @attention Availability depends on: `BGFX_CAPS_SWAP_CHAIN`.
+// 
+// _handle : `Window frame buffer handle. The window bgfx was initialized with is not addressed here; it is `bgfx::reset`'s swap chain.`
+// _desc : `Swap chain description. See: `bgfx::SwapChain`.`
+extern fn void update_swap_chain(FrameBufferHandle _handle, SwapChain* _desc) @cname("bgfx_update_swap_chain");
 
 // Set frame buffer debug name.
 // _handle : `Frame buffer handle.`
@@ -3754,13 +3803,6 @@ extern fn void request_screen_shot(FrameBufferHandle _handle, ZString _filePath)
 // _msecs : `Timeout in milliseconds.`
 extern fn RenderFrame render_frame(int _msecs) @cname("bgfx_render_frame");
 
-// Set platform data.
-// 
-// @warning Must be called before `bgfx::init`.
-// 
-// _data : `Platform data.`
-extern fn void set_platform_data(PlatformData* _data) @cname("bgfx_set_platform_data");
-
 // Get internal data for interop.
 // 
 // @attention It's expected you understand some bgfx internals before you
@@ -3769,38 +3811,6 @@ extern fn void set_platform_data(PlatformData* _data) @cname("bgfx_set_platform_
 // @warning Must be called only on render thread.
 // 
 extern fn InternalData* get_internal_data() @cname("bgfx_get_internal_data");
-
-// Override internal texture with externally created texture. Previously
-// created internal texture will released.
-// 
-// @attention It's expected you understand some bgfx internals before you
-//   use this call.
-// 
-// @warning Must be called only on render thread.
-// 
-// _handle : `Texture handle.`
-// _ptr : `Native API pointer to texture.`
-// _layerIndex : `Layer index for texture arrays (only implemented for D3D11).`
-extern fn uptr override_internal_texture_ptr(TextureHandle _handle, uptr _ptr, ushort _layerIndex) @cname("bgfx_override_internal_texture_ptr");
-
-// Override internal texture by creating new texture. Previously created
-// internal texture will released.
-// 
-// @attention It's expected you understand some bgfx internals before you
-//   use this call.
-// 
-// @returns Native API pointer to texture. If result is 0, texture is not created yet from the
-//   main thread.
-// 
-// @warning Must be called only on render thread.
-// 
-// _handle : `Texture handle.`
-// _width : `Width.`
-// _height : `Height.`
-// _numMips : `Number of mip-maps.`
-// _format : `Texture format. See: `TextureFormat::Enum`.`
-// _flags : `Texture creation (see `BGFX_TEXTURE_*`.), and sampler (see `BGFX_SAMPLER_*`) flags. Default texture sampling mode is linear, and wrap mode is repeat. - `BGFX_SAMPLER_[U/V/W]_[MIRROR/CLAMP]` - Mirror or clamp to edge wrap   mode. - `BGFX_SAMPLER_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]` - Point or anisotropic   sampling.`
-extern fn uptr override_internal_texture(TextureHandle _handle, ushort _width, ushort _height, char _numMips, TextureFormat _format, ulong _flags) @cname("bgfx_override_internal_texture");
 
 // Sets a debug marker. This allows you to group graphics calls together for easy browsing in
 // graphics debugging tools.

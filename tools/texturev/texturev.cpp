@@ -736,10 +736,16 @@ struct View
 					else if (Output::HDR10 == m_outputFormat)
 					{
 						format = bgfx::TextureFormat::RGB10A2;
-						formatFlag = BGFX_RESET_HDR10;
+						formatFlag = BGFX_SWAP_CHAIN_HDR10;
 					}
 
-					bgfx::reset(m_width, m_height, BGFX_RESET_VSYNC | formatFlag, format);
+					bgfx::SwapChain swapChain;
+					swapChain.width       = m_width;
+					swapChain.height      = m_height;
+					swapChain.flags       = formatFlag;
+					swapChain.formatColor = format;
+
+					bgfx::reset(BGFX_RESET_VSYNC, &swapChain);
 				}
 			}
 			else if (0 == bx::strCmp(_argv[1], "help") )
@@ -1511,11 +1517,11 @@ int _main_(int _argc, char** _argv)
 		: view.m_rendererType
 		;
 	init.vendorId          = args.m_pciId;
-	init.platformData.nwh  = entry::getNativeWindowHandle(entry::kDefaultWindowHandle);
-	init.platformData.ndt  = entry::getNativeDisplayHandle();
-	init.resolution.width  = view.m_width;
-	init.resolution.height = view.m_height;
-	init.resolution.reset  = BGFX_RESET_VSYNC;
+	init.swapChain.nwh     = entry::getNativeWindowHandle(entry::kDefaultWindowHandle);
+	init.swapChain.ndt     = entry::getNativeDisplayHandle();
+	init.swapChain.width  = view.m_width;
+	init.swapChain.height = view.m_height;
+	init.reset  = BGFX_RESET_VSYNC;
 	init.videoDecode       = true;
 
 	bgfx::init(init);
@@ -1662,7 +1668,7 @@ int _main_(int _argc, char** _argv)
 
 		entry::WindowState windowState;
 		entry::MouseState mouseStatePrev;
-		while (!entry::processWindowEvents(windowState, debug, init.resolution.reset) )
+		while (!entry::processWindowEvents(windowState, debug, init.reset) )
 		{
 			const entry::MouseState& mouseState = windowState.m_mouse;
 			view.m_width  = windowState.m_width;

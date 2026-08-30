@@ -64,14 +64,14 @@ namespace bgfx { namespace gl
 		char* m_canvas;
 	};
 
-	void GlContext::create(const Resolution& _resolution)
+	void GlContext::create(const SwapChain& _swapChain, uint32_t _reset)
 	{
 		if (NULL != m_primary)
 		{
 			return;
 		}
-		const bimg::ImageBlockInfo& colorBlockInfo       = bimg::getBlockInfo(bimg::TextureFormat::Enum(_resolution.formatColor) );
-		const bimg::ImageBlockInfo& depthStecilBlockInfo = bimg::getBlockInfo(bimg::TextureFormat::Enum(_resolution.formatDepthStencil) );
+		const bimg::ImageBlockInfo& colorBlockInfo       = bimg::getBlockInfo(bimg::TextureFormat::Enum(_swapChain.formatColor) );
+		const bimg::ImageBlockInfo& depthStecilBlockInfo = bimg::getBlockInfo(bimg::TextureFormat::Enum(_swapChain.formatDepthStencil) );
 
 		emscripten_webgl_init_context_attributes(&s_attrs);
 		s_attrs.alpha                     = 0 != colorBlockInfo.aBits;
@@ -82,7 +82,7 @@ namespace bgfx { namespace gl
 		s_attrs.antialias                 = false;
 		s_attrs.minorVersion = 0;
 
-		const char* canvas = (const char*)g_platformData.nwh;
+		const char* canvas = (const char*)_swapChain.nwh;
 		EMSCRIPTEN_WEBGL_CONTEXT_HANDLE context = bx::narrowCast<EMSCRIPTEN_WEBGL_CONTEXT_HANDLE>( (uintptr_t) g_platformData.context);
 		if (context > 0)
 		{
@@ -98,16 +98,16 @@ namespace bgfx { namespace gl
 		}
 		else
 		{
-			m_primary = createSwapChain( (void*)canvas, _resolution.width, _resolution.height);
+			m_primary = createSwapChain( (void*)canvas, _swapChain.width, _swapChain.height);
 		}
 
-		if (0 != _resolution.width
-		&&  0 != _resolution.height)
+		if (0 != _swapChain.width
+		&&  0 != _swapChain.height)
 		{
 			EMSCRIPTEN_CHECK(emscripten_set_canvas_element_size(
 				  canvas
-				, _resolution.width
-				, _resolution.height
+				, _swapChain.width
+				, _swapChain.height
 				) );
 		}
 
@@ -128,7 +128,7 @@ namespace bgfx { namespace gl
 		}
 	}
 
-	void GlContext::resize(const Resolution& _resolution)
+	void GlContext::resize(const SwapChain& _swapChain, uint32_t _reset)
 	{
 		if (m_primary == NULL)
 		{
@@ -137,8 +137,8 @@ namespace bgfx { namespace gl
 
 		EMSCRIPTEN_CHECK(emscripten_set_canvas_element_size(
 			  m_primary->m_canvas
-			, _resolution.width
-			, _resolution.height
+			, _swapChain.width
+			, _swapChain.height
 			) );
 	}
 
