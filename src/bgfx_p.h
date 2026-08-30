@@ -2364,6 +2364,9 @@ namespace bgfx
 		uint8_t  m_pad;
 	};
 	static_assert(16 == sizeof(Binding), "Binding size changed. Whole struct must be properly initialized for hashing and comparing!");
+	static_assert(bx::hasUniqueObjectRepresentation<Binding>()
+		, "Binding is hashed and compared as bytes, so it must not have padding. Add an explicit member to fill the hole."
+		);
 
 	inline uint32_t bindingsMask(const Binding _bind[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS])
 	{
