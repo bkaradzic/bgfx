@@ -367,8 +367,8 @@ static void classifyVertices(unsigned char* result, unsigned int* loop, unsigned
 	memset(loopback, -1, vertex_count * sizeof(unsigned int));
 
 	// incoming & outgoing open edges: ~0u if no open edges, i if there are more than 1
-	// note that this is the same data as required in loop[] arrays; loop[] data is only valid for border/seam
-	// but here it's okay to fill the data out for other types of vertices as well
+	// note that this is the same data as required in loop[] arrays; loop[] data is only used for border/seam by default
+	// in permissive mode we also use it to guide complex-complex collapses, so we fill it for all vertices
 	unsigned int* openinc = loopback;
 	unsigned int* openout = loop;
 
@@ -941,7 +941,7 @@ static void quadricFromAttributes(Quadric& Q, QuadricGrad* G, const Vector3& p0,
 
 		Q.c += w * (gw * gw);
 
-		// the only remaining sum components are ones that depend on attr; these will be addded during error evaluation, see quadricError
+		// the only remaining sum components are ones that depend on attr; these will be added during error evaluation, see quadricError
 		G[k].gx = w * gx;
 		G[k].gy = w * gy;
 		G[k].gz = w * gz;
@@ -1081,18 +1081,22 @@ static void fillFaceQuadrics(Quadric* vertex_quadrics, QuadricGrad* volume_gradi
 	}
 }
 
-static void fillVertexQuadrics(Quadric* vertex_quadrics, const Vector3* vertex_positions, size_t vertex_count, const unsigned int* remap, unsigned int options)
+static void fillVertexQuadrics(Quadric* vertex_quadrics, const Vector3* vertex_positions, size_t vertex_count, const unsigned int* remap, const unsigned char* vertex_lock, const unsigned int* sparse_remap, unsigned int options)
 {
 	// by default, we use a very small weight to improve triangulation and numerical stability without affecting the shape or error
-	float factor = (options & meshopt_SimplifyRegularize) ? 1e-1f : 1e-7f;
+	float factor = (options & meshopt_SimplifyRegularizeLight) ? 1e-2f : ((options & meshopt_SimplifyRegularize) ? 1e-1f : 1e-7f);
 
 	for (size_t i = 0; i < vertex_count; ++i)
 	{
 		if (remap[i] != i)
 			continue;
 
+		// increase regularization weight for vertices marked as priority; for now we only examine the primary vertex
+		unsigned int ri = sparse_remap ? sparse_remap[i] : unsigned(i);
+		bool priority = vertex_lock && (vertex_lock[ri] & meshopt_SimplifyVertex_Priority) != 0;
+
 		const Vector3& p = vertex_positions[i];
-		float w = vertex_quadrics[i].w * factor;
+		float w = vertex_quadrics[i].w * (priority ? 1.0f : factor);
 
 		Quadric Q;
 		quadricFromPoint(Q, p.x, p.y, p.z, w);
@@ -1150,6 +1154,68 @@ static void fillEdgeQuadrics(Quadric* vertex_quadrics, const unsigned int* indic
 			quadricAdd(vertex_quadrics[remap[i1]], Q);
 		}
 	}
+}
+
+static unsigned int oppositeVertex(const EdgeAdjacency& adjacency, unsigned int a, unsigned int b, const unsigned int* remap, const unsigned int* wedge)
+{
+	unsigned int v = a;
+	unsigned int r = ~0u;
+
+	do
+	{
+		unsigned int count = adjacency.offsets[v + 1] - adjacency.offsets[v];
+		const EdgeAdjacency::Edge* edges = adjacency.data + adjacency.offsets[v];
+
+		for (size_t i = 0; i < count; ++i)
+			if (remap[edges[i].next] == remap[b])
+				r = (r == ~0u) ? edges[i].prev : a;
+
+		v = wedge[v];
+	} while (v != a);
+
+	// we only return the opposite vertex if it's unique
+	return r == a ? ~0u : r;
+}
+
+static void fillFoldQuadrics(Quadric* vertex_quadrics, const EdgeAdjacency& adjacency, const Vector3* vertex_positions, size_t vertex_count, const unsigned int* remap, const unsigned int* wedge)
+{
+	for (size_t i0 = 0; i0 < vertex_count; ++i0)
+		for (unsigned int i = adjacency.offsets[i0]; i < adjacency.offsets[i0 + 1]; ++i)
+		{
+			unsigned int i1 = adjacency.data[i].next;
+			unsigned int i2 = adjacency.data[i].prev;
+
+			// since we only process paired edges each edge should occur twice; skip redundant edges
+			if (remap[i1] > remap[i0])
+				continue;
+
+			unsigned int i3 = oppositeVertex(adjacency, i1, unsigned(i0), remap, wedge);
+
+			if (i3 == ~0u)
+				continue;
+
+			Vector3 p10 = {vertex_positions[i1].x - vertex_positions[i0].x, vertex_positions[i1].y - vertex_positions[i0].y, vertex_positions[i1].z - vertex_positions[i0].z};
+			Vector3 p20 = {vertex_positions[i2].x - vertex_positions[i0].x, vertex_positions[i2].y - vertex_positions[i0].y, vertex_positions[i2].z - vertex_positions[i0].z};
+			Vector3 p30 = {vertex_positions[i3].x - vertex_positions[i0].x, vertex_positions[i3].y - vertex_positions[i0].y, vertex_positions[i3].z - vertex_positions[i0].z};
+
+			Vector3 normal = {p10.y * p20.z - p10.z * p20.y, p10.z * p20.x - p10.x * p20.z, p10.x * p20.y - p10.y * p20.x};
+			Vector3 opposite = {p30.y * p10.z - p30.z * p10.y, p30.z * p10.x - p30.x * p10.z, p30.x * p10.y - p30.y * p10.x};
+			float nl = sqrtf(normal.x * normal.x + normal.y * normal.y + normal.z * normal.z);
+			float ol = sqrtf(opposite.x * opposite.x + opposite.y * opposite.y + opposite.z * opposite.z);
+
+			// identify folds by checking dihedral angle against a somewhat arbitrary ~30 degree cutoff
+			if (normal.x * opposite.x + normal.y * opposite.y + normal.z * opposite.z >= -0.85f * nl * ol)
+				continue;
+
+			// use both triangles for symmetry since we won't visit this edge again
+			Quadric Q, QO;
+			quadricFromTriangleEdge(Q, vertex_positions[i0], vertex_positions[i1], vertex_positions[i2], 1.f);
+			quadricFromTriangleEdge(QO, vertex_positions[i0], vertex_positions[i1], vertex_positions[i3], 1.f);
+			quadricAdd(Q, QO);
+
+			quadricAdd(vertex_quadrics[remap[i0]], Q);
+			quadricAdd(vertex_quadrics[remap[i1]], Q);
+		}
 }
 
 static void fillAttributeQuadrics(Quadric* attribute_quadrics, QuadricGrad* attribute_gradients, const unsigned int* indices, size_t index_count, const Vector3* vertex_positions, const float* vertex_attributes, size_t attribute_count)
@@ -1269,6 +1335,20 @@ static float getNeighborhoodRadius(const EdgeAdjacency& adjacency, const Vector3
 	}
 
 	return sqrtf(result);
+}
+
+static unsigned int getComplexTarget(unsigned int v, unsigned int target, const unsigned int* remap, const unsigned int* loop, const unsigned int* loopback)
+{
+	unsigned int r = remap[target];
+
+	// use loop metadata to guide complex collapses towards the correct wedge
+	// this works for edges on attribute discontinuities because loop/loopback track the single half-edge without a pair, similar to seams
+	if (loop[v] != ~0u && remap[loop[v]] == r)
+		return loop[v];
+	else if (loopback[v] != ~0u && remap[loopback[v]] == r)
+		return loopback[v];
+	else
+		return target;
 }
 
 static size_t boundEdgeCollapses(const EdgeAdjacency& adjacency, size_t vertex_count, size_t index_count, unsigned char* vertex_kind)
@@ -1393,15 +1473,22 @@ static void rankEdgeCollapses(Collapse* collapses, size_t collapse_count, const 
 			}
 			else
 			{
-				// complex edges can have multiple wedges, so we need to aggregate errors for all wedges
-				// this is different from seams (where we aggregate pairwise) because all wedges collapse onto the same target
+				// complex edges can have multiple wedges, so we need to aggregate errors for all wedges based on the selected target
 				if (vertex_kind[i0] == Kind_Complex)
 					for (unsigned int v = wedge[i0]; v != i0; v = wedge[v])
-						ei += quadricError(attribute_quadrics[v], &attribute_gradients[v * attribute_count], attribute_count, vertex_positions[i1], &vertex_attributes[i1 * attribute_count]);
+					{
+						unsigned int t = getComplexTarget(v, i1, remap, loop, loopback);
+
+						ei += quadricError(attribute_quadrics[v], &attribute_gradients[v * attribute_count], attribute_count, vertex_positions[t], &vertex_attributes[t * attribute_count]);
+					}
 
 				if (vertex_kind[i1] == Kind_Complex && bidi)
 					for (unsigned int v = wedge[i1]; v != i1; v = wedge[v])
-						ej += quadricError(attribute_quadrics[v], &attribute_gradients[v * attribute_count], attribute_count, vertex_positions[i0], &vertex_attributes[i0 * attribute_count]);
+					{
+						unsigned int t = getComplexTarget(v, i0, remap, loop, loopback);
+
+						ej += quadricError(attribute_quadrics[v], &attribute_gradients[v * attribute_count], attribute_count, vertex_positions[t], &vertex_attributes[t * attribute_count]);
+					}
 			}
 		}
 
@@ -1553,7 +1640,9 @@ static size_t performEdgeCollapses(unsigned int* collapse_remap, unsigned char* 
 
 			do
 			{
-				collapse_remap[v] = i1;
+				unsigned int t = getComplexTarget(v, i1, remap, loop, loopback);
+
+				collapse_remap[v] = t;
 				v = wedge[v];
 			} while (v != i0);
 		}
@@ -2323,7 +2412,6 @@ size_t meshopt_simplifyEdge(unsigned int* destination, const unsigned int* indic
 	assert(vertex_positions_stride % sizeof(float) == 0);
 	assert(target_index_count <= index_count);
 	assert(target_error >= 0);
-	assert((options & ~(meshopt_SimplifyLockBorder | meshopt_SimplifySparse | meshopt_SimplifyErrorAbsolute | meshopt_SimplifyPrune | meshopt_SimplifyRegularize | meshopt_SimplifyPermissive | meshopt_SimplifyInternalSolve | meshopt_SimplifyInternalDebug)) == 0);
 	assert(vertex_attributes_stride >= attribute_count * sizeof(float) && vertex_attributes_stride <= 256);
 	assert(vertex_attributes_stride % sizeof(float) == 0);
 	assert(attribute_count <= kMaxAttributes);
@@ -2417,8 +2505,11 @@ size_t meshopt_simplifyEdge(unsigned int* destination, const unsigned int* indic
 	}
 
 	fillFaceQuadrics(vertex_quadrics, volume_gradients, result, index_count, vertex_positions, remap);
-	fillVertexQuadrics(vertex_quadrics, vertex_positions, vertex_count, remap, options);
+	fillVertexQuadrics(vertex_quadrics, vertex_positions, vertex_count, remap, vertex_lock, sparse_remap, options);
 	fillEdgeQuadrics(vertex_quadrics, result, index_count, vertex_positions, remap, vertex_kind, loop, loopback);
+
+	if (options & meshopt_SimplifyPreserveFolds)
+		fillFoldQuadrics(vertex_quadrics, adjacency, vertex_positions, vertex_count, remap, wedge);
 
 	if (attribute_count)
 		fillAttributeQuadrics(attribute_quadrics, attribute_gradients, result, index_count, vertex_positions, vertex_attributes, attribute_count);
@@ -2626,6 +2717,7 @@ size_t meshopt_simplifySloppy(unsigned int* destination, const unsigned int* ind
 	assert(vertex_positions_stride >= 12 && vertex_positions_stride <= 256);
 	assert(vertex_positions_stride % sizeof(float) == 0);
 	assert(target_index_count <= index_count);
+	assert(target_error >= 0);
 
 	// we expect to get ~2 triangles/vertex in the output
 	size_t target_cell_count = target_index_count / 6;
@@ -2824,7 +2916,7 @@ size_t meshopt_simplifyPoints(unsigned int* destination, const float* vertex_pos
 	size_t min_vertices = 0;
 	size_t max_vertices = vertex_count;
 
-	// instead of starting in the middle, let's guess as to what the answer might be! triangle count usually grows as a square of grid size...
+	// instead of starting in the middle, let's guess as to what the answer might be! surface point count usually grows as a square of grid size...
 	int next_grid_size = int(sqrtf(float(target_cell_count)) + 0.5f);
 
 	for (int pass = 0; pass < 10 + kInterpolationPasses; ++pass)
