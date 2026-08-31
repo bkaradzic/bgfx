@@ -48,6 +48,7 @@
 #include "../Include/Types.h"
 #include "SymbolTable.h"
 #include "ParseHelper.h"
+#include "Versions.h"
 #include "attribute.h"
 #include "glslang_tab.cpp.h"
 #include "ScanContext.h"
@@ -552,6 +553,31 @@ const std::unordered_map<const char*, int, str_hash, str_eq> KeywordMap {
     {"fe4m3vec3",FE4M3VEC3},
     {"fe4m3vec4",FE4M3VEC4},
 
+    {"floate2m1_t",FLOATE2M1_T},
+    {"fe2m1vec2",FE2M1VEC2},
+    {"fe2m1vec3",FE2M1VEC3},
+    {"fe2m1vec4",FE2M1VEC4},
+
+    {"floate3m2_t",FLOATE3M2_T},
+    {"fe3m2vec2",FE3M2VEC2},
+    {"fe3m2vec3",FE3M2VEC3},
+    {"fe3m2vec4",FE3M2VEC4},
+
+    {"floate2m3_t",FLOATE2M3_T},
+    {"fe2m3vec2",FE2M3VEC2},
+    {"fe2m3vec3",FE2M3VEC3},
+    {"fe2m3vec4",FE2M3VEC4},
+
+    {"floatue8m0_t",FLOATUE8M0_T},
+    {"fue8m0vec2",FUE8M0VEC2},
+    {"fue8m0vec3",FUE8M0VEC3},
+    {"fue8m0vec4",FUE8M0VEC4},
+
+    {"floatmxint8_t",FLOATMXINT8_T},
+    {"fmxint8vec2",FMXINT8VEC2},
+    {"fmxint8vec3",FMXINT8VEC3},
+    {"fmxint8vec4",FMXINT8VEC4},
+
     {"float32_t",FLOAT32_T},
     {"f32vec2",F32VEC2},
     {"f32vec3",F32VEC3},
@@ -782,6 +808,8 @@ const std::unordered_map<const char*, int, str_hash, str_eq> KeywordMap {
     {"vector",VECTOR},
     {"resourceheap",RESOURCEHEAP},
     {"samplerheap",SAMPLERHEAP},
+    {"inline", INLINE},
+    {"noinline", NOINLINE},
 };
 const std::unordered_set<const char*, str_hash, str_eq> ReservedSet {
     "common",
@@ -795,8 +823,6 @@ const std::unordered_set<const char*, str_hash, str_eq> ReservedSet {
     "template",
     "this",
     "goto",
-    "inline",
-    "noinline",
     "public",
     "static",
     "extern",
@@ -921,6 +947,11 @@ int TScanContext::tokenize(TPpContext* pp, TParserToken& token)
         case PpAtomConstUint64:        parserToken->sType.lex.i64  = ppToken.i64val;     return UINT64CONSTANT;
         case PpAtomConstDouble:        parserToken->sType.lex.d    = ppToken.dval;       return DOUBLECONSTANT;
         case PpAtomConstFloat16:       parserToken->sType.lex.d    = ppToken.dval;       return FLOAT16CONSTANT;
+        case PpAtomConstFloatE2M1:     parserToken->sType.lex.d    = ppToken.dval;       return FLOATE2M1CONSTANT;
+        case PpAtomConstFloatE3M2:     parserToken->sType.lex.d    = ppToken.dval;       return FLOATE3M2CONSTANT;
+        case PpAtomConstFloatE2M3:     parserToken->sType.lex.d    = ppToken.dval;       return FLOATE2M3CONSTANT;
+        case PpAtomConstFloatUE8M0:    parserToken->sType.lex.d    = ppToken.dval;       return FLOATUE8M0CONSTANT;
+        case PpAtomConstFloatMXINT8:   parserToken->sType.lex.d    = ppToken.dval;       return FLOATMXINT8CONSTANT;
         case PpAtomIdentifier:
         {
             int token = tokenizeIdentifier();
@@ -1556,6 +1587,66 @@ int TScanContext::tokenizeIdentifier()
 
         return identifierOrType();
 
+    case FLOATE2M1_T:
+    case FE2M1VEC2:
+    case FE2M1VEC3:
+    case FE2M1VEC4:
+        if (parseContext.symbolTable.atBuiltInLevel() ||
+            parseContext.extensionTurnedOn(E_GL_EXT_float_e2m1)) {
+            afterType = true;
+            return keyword;
+        }
+
+        return identifierOrType();
+
+    case FLOATE3M2_T:
+    case FE3M2VEC2:
+    case FE3M2VEC3:
+    case FE3M2VEC4:
+        if (parseContext.symbolTable.atBuiltInLevel() ||
+            parseContext.extensionTurnedOn(E_GL_EXT_float_e3m2)) {
+            afterType = true;
+            return keyword;
+        }
+
+        return identifierOrType();
+
+    case FLOATE2M3_T:
+    case FE2M3VEC2:
+    case FE2M3VEC3:
+    case FE2M3VEC4:
+        if (parseContext.symbolTable.atBuiltInLevel() ||
+            parseContext.extensionTurnedOn(E_GL_EXT_float_e2m3)) {
+            afterType = true;
+            return keyword;
+        }
+
+        return identifierOrType();
+
+    case FLOATUE8M0_T:
+    case FUE8M0VEC2:
+    case FUE8M0VEC3:
+    case FUE8M0VEC4:
+        if (parseContext.symbolTable.atBuiltInLevel() ||
+            parseContext.extensionTurnedOn(E_GL_EXT_float_ue8m0)) {
+            afterType = true;
+            return keyword;
+        }
+
+        return identifierOrType();
+
+    case FLOATMXINT8_T:
+    case FMXINT8VEC2:
+    case FMXINT8VEC3:
+    case FMXINT8VEC4:
+        if (parseContext.symbolTable.atBuiltInLevel() ||
+            parseContext.extensionTurnedOn(E_GL_EXT_float_mxint8)) {
+            afterType = true;
+            return keyword;
+        }
+
+        return identifierOrType();
+
     case SAMPLERCUBEARRAY:
     case SAMPLERCUBEARRAYSHADOW:
     case ISAMPLERCUBEARRAY:
@@ -1986,6 +2077,12 @@ int TScanContext::tokenizeIdentifier()
             parseContext.extensionTurnedOn(E_GL_EXT_descriptor_heap))
             return keyword;
         return identifierOrType();
+
+    case INLINE:
+    case NOINLINE:
+        if (!parseContext.extensionTurnedOn(E_GL_EXT_function_control_attributes))
+            return reservedWord();
+        return keyword;
 
     default:
         parseContext.infoSink.info.message(EPrefixInternalError, "Unknown glslang keyword", loc);

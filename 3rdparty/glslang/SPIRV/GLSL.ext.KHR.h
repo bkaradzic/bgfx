@@ -60,6 +60,7 @@ static const char* const E_SPV_AMD_shader_early_and_late_fragment_tests = "SPV_A
 static const char* const E_SPV_KHR_ray_tracing_position_fetch   = "SPV_KHR_ray_tracing_position_fetch";
 static const char* const E_SPV_KHR_cooperative_matrix           = "SPV_KHR_cooperative_matrix";
 static const char* const E_SPV_KHR_maximal_reconvergence        = "SPV_KHR_maximal_reconvergence";
+static const char* const E_SPV_KHR_opacity_micromap             = "SPV_KHR_opacity_micromap";
 static const char* const E_SPV_KHR_subgroup_rotate              = "SPV_KHR_subgroup_rotate";
 static const char* const E_SPV_KHR_expect_assume                = "SPV_KHR_expect_assume";
 static const char* const E_SPV_EXT_replicated_composites        = "SPV_EXT_replicated_composites";

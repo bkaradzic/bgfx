@@ -85,9 +85,9 @@ public:
     int resolveInOutComponent(EShLanguage /*stage*/, TVarEntryInfo& ent) override;
     int resolveInOutIndex(EShLanguage /*stage*/, TVarEntryInfo& ent) override;
     void addStage(EShLanguage stage, TIntermediate& stageIntermediate) override {
-        if (stage < EShLangCount) {
-            stageMask[stage] = true;
-            stageIntermediates[stage] = &stageIntermediate;
+        if ((unsigned)stage < EShLangCount) {
+            stageMask[(unsigned)stage] = true;
+            stageIntermediates[(unsigned)stage] = &stageIntermediate;
         }
     }
     uint32_t computeTypeLocationSize(const TType& type, EShLanguage stage);
@@ -228,6 +228,7 @@ public:
     bool doMap(TIoMapResolver*, TInfoSink&) override;
     TIntermediate* intermediates[EShLangCount];
     bool hadError = false;
+    bool relaxSetBindingLimits = false;
     EProfile profile;
     int version;
 

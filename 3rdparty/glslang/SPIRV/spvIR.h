@@ -481,6 +481,10 @@ public:
     Id getReturnType() const { return functionInstruction.getTypeId(); }
     Id getFuncId() const { return functionInstruction.getResultId(); }
     Id getFuncTypeId() const { return functionInstruction.getIdOperand(1); }
+    void setFunctionControl(FunctionControlMask functionControl)
+    {
+        functionInstruction.setImmediateOperand(0, static_cast<unsigned>(functionControl));
+    }
     void setReturnPrecision(Decoration precision)
     {
         if (precision == Decoration::RelaxedPrecision)

@@ -316,7 +316,8 @@ int TPpContext::CPPelse(int matchelse, TPpToken* ppToken)
             }
         } else if (nextAtom == PpAtomEndif) {
             token = extraTokenCheck(nextAtom, ppToken, scanToken(ppToken));
-            elseSeen[elsetracker] = false;
+            if (elsetracker >= 0)
+                elseSeen[elsetracker] = false;
             --elsetracker;
             if (depth == 0) {
                 // found the #endif we are looking for
@@ -325,7 +326,8 @@ int TPpContext::CPPelse(int matchelse, TPpToken* ppToken)
                 break;
             }
             --depth;
-            --ifdepth;
+            if (ifdepth > 0)
+                --ifdepth;
         } else if (matchelse && depth == 0) {
             if (nextAtom == PpAtomElse) {
                 elseSeen[elsetracker] = true;
@@ -412,11 +414,15 @@ namespace {
     int op_le(int a, int b) { return a <= b; }
     int op_gt(int a, int b) { return a > b; }
     int op_lt(int a, int b) { return a < b; }
-    int op_shl(int a, int b) { return a << b; }
-    int op_shr(int a, int b) { return a >> b; }
-    int op_add(int a, int b) { return a + b; }
-    int op_sub(int a, int b) { return a - b; }
-    int op_mul(int a, int b) { return a * b; }
+    // #if expressions are evaluated in 32-bit signed integers, so a shift count
+    // coming from the source can be out of range, and +, - and * can overflow.
+    // Both are undefined in C++, so give them a defined result here.
+    const int intBits = (int)(sizeof(int) * CHAR_BIT);
+    int op_shl(int a, int b) { return b < 0 || b >= intBits ? 0 : (int)((unsigned)a << b); }
+    int op_shr(int a, int b) { return b < 0 || b >= intBits ? (a < 0 ? -1 : 0) : a >> b; }
+    int op_add(int a, int b) { return (int)((unsigned)a + (unsigned)b); }
+    int op_sub(int a, int b) { return (int)((unsigned)a - (unsigned)b); }
+    int op_mul(int a, int b) { return (int)((unsigned)a * (unsigned)b); }
     int op_div(int a, int b) { return a == INT_MIN && b == -1 ? 0 : a / b; }
     int op_mod(int a, int b) { return a == INT_MIN && b == -1 ? 0 : a % b; }
     int op_pos(int a) { return a; }
@@ -634,7 +640,7 @@ int TPpContext::CPPif(TPpToken* ppToken)
 int TPpContext::CPPifdef(int defined, TPpToken* ppToken)
 {
     int token = scanToken(ppToken);
-    if (ifdepth > maxIfNesting || elsetracker > maxIfNesting) {
+    if (ifdepth >= maxIfNesting || elsetracker >= maxIfNesting) {
         parseContext.ppError(ppToken->loc, "maximum nesting depth exceeded", "#ifdef", "");
         return EndOfInput;
     } else {
@@ -821,6 +827,11 @@ int TPpContext::CPPerror(TPpToken* ppToken)
             token == PpAtomConstInt   || token == PpAtomConstUint   ||
             token == PpAtomConstInt64 || token == PpAtomConstUint64 ||
             token == PpAtomConstFloat16 ||
+            token == PpAtomConstFloatE2M1 ||
+            token == PpAtomConstFloatE3M2 ||
+            token == PpAtomConstFloatE2M3 ||
+            token == PpAtomConstFloatUE8M0 ||
+            token == PpAtomConstFloatMXINT8 ||
             token == PpAtomConstFloat || token == PpAtomConstDouble) {
                 message.append(ppToken->name);
         } else if (token == PpAtomIdentifier || token == PpAtomConstString) {
@@ -858,6 +869,11 @@ int TPpContext::CPPpragma(TPpToken* ppToken)
         case PpAtomConstFloat:
         case PpAtomConstDouble:
         case PpAtomConstFloat16:
+        case PpAtomConstFloatE2M1:
+        case PpAtomConstFloatE3M2:
+        case PpAtomConstFloatE2M3:
+        case PpAtomConstFloatUE8M0:
+        case PpAtomConstFloatMXINT8:
             tokens.push_back(ppToken->name);
             break;
         default:
@@ -998,7 +1014,8 @@ int TPpContext::readCPPline(TPpToken* ppToken)
             if (ifdepth == 0)
                 parseContext.ppError(ppToken->loc, "mismatched statements", "#endif", "");
             else {
-                elseSeen[elsetracker] = false;
+                if (elsetracker >= 0)
+                    elseSeen[elsetracker] = false;
                 --elsetracker;
                 --ifdepth;
             }
@@ -1224,6 +1241,20 @@ MacroExpandResult TPpContext::MacroExpand(TPpToken* ppToken, bool expandUndef, b
 {
     ppToken->space = false;
     int macroAtom = atomStrings.getAtom(ppToken->name);
+
+    // Bound total MacroExpand nesting depth to prevent stack overflow
+    // via unbounded MacroExpand <-> PrescanMacroArg mutual recursion.
+    if (macroExpandDepth >= maxMacroExpandDepth) {
+        parseContext.ppError(ppToken->loc, "macro expansion depth limit exceeded",
+                             "macro expansion", ppToken->name);
+        return MacroExpandNotStarted;
+    }
+    struct DepthGuard {
+        int& d;
+        explicit DepthGuard(int& d_) : d(d_) { ++d; }
+        ~DepthGuard() { --d; }
+    } guard(macroExpandDepth);
+
     if (ppToken->fullyExpanded)
         return MacroExpandNotStarted;
 

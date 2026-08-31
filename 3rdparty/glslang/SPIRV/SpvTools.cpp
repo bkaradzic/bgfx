@@ -183,7 +183,7 @@ void SpirvToolsValidate(const glslang::TIntermediate& intermediate, std::vector<
 
 // Apply the SPIRV-Tools optimizer to generated SPIR-V.  HLSL SPIR-V is legalized in the process.
 void SpirvToolsTransform(const glslang::TIntermediate& intermediate, std::vector<unsigned int>& spirv,
-                         spv::SpvBuildLogger* logger, const SpvOptions* options)
+                         spv::SpvBuildLogger* logger, const SpvOptions* options, bool prelegalization)
 {
     spv_target_env target_env = MapToSpirvToolsEnv(intermediate.getSpv(), logger);
 
@@ -197,35 +197,13 @@ void SpirvToolsTransform(const glslang::TIntermediate& intermediate, std::vector
     if (options->stripDebugInfo) {
         optimizer.RegisterPass(spvtools::CreateStripDebugInfoPass());
     }
-    optimizer.RegisterPass(spvtools::CreateWrapOpKillPass());
-    optimizer.RegisterPass(spvtools::CreateDeadBranchElimPass());
-    optimizer.RegisterPass(spvtools::CreateMergeReturnPass());
-    optimizer.RegisterPass(spvtools::CreateInlineExhaustivePass());
-    optimizer.RegisterPass(spvtools::CreateEliminateDeadFunctionsPass());
-    optimizer.RegisterPass(spvtools::CreateScalarReplacementPass());
-    optimizer.RegisterPass(spvtools::CreateLocalAccessChainConvertPass());
-    optimizer.RegisterPass(spvtools::CreateLocalSingleBlockLoadStoreElimPass());
-    optimizer.RegisterPass(spvtools::CreateLocalSingleStoreElimPass());
-    optimizer.RegisterPass(spvtools::CreateSimplificationPass());
-    optimizer.RegisterPass(spvtools::CreateAggressiveDCEPass());
-    optimizer.RegisterPass(spvtools::CreateVectorDCEPass());
-    optimizer.RegisterPass(spvtools::CreateDeadInsertElimPass());
-    optimizer.RegisterPass(spvtools::CreateAggressiveDCEPass());
-    optimizer.RegisterPass(spvtools::CreateDeadBranchElimPass());
-    optimizer.RegisterPass(spvtools::CreateBlockMergePass());
-    optimizer.RegisterPass(spvtools::CreateLocalMultiStoreElimPass());
-    optimizer.RegisterPass(spvtools::CreateIfConversionPass());
-    optimizer.RegisterPass(spvtools::CreateSimplificationPass());
-    optimizer.RegisterPass(spvtools::CreateAggressiveDCEPass());
-    optimizer.RegisterPass(spvtools::CreateVectorDCEPass());
-    optimizer.RegisterPass(spvtools::CreateDeadInsertElimPass());
-    optimizer.RegisterPass(spvtools::CreateInterpolateFixupPass());
-    if (options->optimizeSize) {
-        optimizer.RegisterPass(spvtools::CreateRedundancyEliminationPass());
-        optimizer.RegisterPass(spvtools::CreateEliminateDeadInputComponentsSafePass());
-    }
-    optimizer.RegisterPass(spvtools::CreateAggressiveDCEPass());
-    optimizer.RegisterPass(spvtools::CreateCFGCleanupPass());
+
+    if (prelegalization)
+        optimizer.RegisterLegalizationPasses();
+    if (options->optimizePerformance)
+        optimizer.RegisterPerformancePasses();
+    if (options->optimizeSize)
+        optimizer.RegisterSizePasses();
 
     spvtools::OptimizerOptions spvOptOptions;
     if (options->optimizerAllowExpandedIDBound)

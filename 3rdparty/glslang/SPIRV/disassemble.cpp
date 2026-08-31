@@ -199,6 +199,9 @@ void SpirvStream::processInstructions()
             resultId = stream[word++];
             --numOperands;
 
+            if (resultId >= bound)
+                Kill(out, "Bad <id>");
+
             // save instruction for future reference
             idInstruction[resultId] = instructionStart;
         }
@@ -382,6 +385,8 @@ void SpirvStream::disassembleInstruction(Id resultId, Id /*typeId*/, Op opCode, 
                 break;
             case Op::OpTypeFloat:
                 switch (stream[word]) {
+                case 4:
+                case 6:
                 case 8:
                 case 16:
                     if (numOperands > 1) {
@@ -396,6 +401,21 @@ void SpirvStream::disassembleInstruction(Id resultId, Id /*typeId*/, Op opCode, 
                             break;
                         case (int)spv::FPEncoding::Float8E5M2EXT:
                             idDescriptor[resultId] = "floate5m2_t";
+                            break;
+                        case (int)spv::FPEncoding::Float4E2M1EXT:
+                            idDescriptor[resultId] = "floate2m1_t";
+                            break;
+                        case (int)spv::FPEncoding::Float6E3M2EXT:
+                            idDescriptor[resultId] = "floate3m2_t";
+                            break;
+                        case (int)spv::FPEncoding::Float6E2M3EXT:
+                            idDescriptor[resultId] = "floate2m3_t";
+                            break;
+                        case (int)spv::FPEncoding::Float8UnsignedE8M0EXT:
+                            idDescriptor[resultId] = "floatue8m0_t";
+                            break;
+                        case (int)spv::FPEncoding::MXInt8EXT:
+                            idDescriptor[resultId] = "floatmxint8_t";
                             break;
                         }
                     } else {
@@ -418,6 +438,8 @@ void SpirvStream::disassembleInstruction(Id resultId, Id /*typeId*/, Op opCode, 
                 idDescriptor[resultId] = "ptr";
                 break;
             case Op::OpTypeVector:
+                if (stream[word] >= bound)
+                    Kill(out, "Bad <id>");
                 if (idDescriptor[stream[word]].size() > 0) {
                     if (idDescriptor[stream[word]].substr(0,2) == "bf") {
                         idDescriptor[resultId].append(idDescriptor[stream[word]].begin(), idDescriptor[stream[word]].begin() + 2);

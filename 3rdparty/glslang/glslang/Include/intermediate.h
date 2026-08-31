@@ -236,6 +236,29 @@ enum TOperator {
     EOpUnpackInt4x16,
     EOpPackUint4x16,
     EOpUnpackUint4x16,
+    EOpUnpackFloat2xE2M1,
+    EOpUnpackFloat4xE2M1,
+    EOpUnpackFloat8xE2M1,
+    EOpUnpackFloat16xE2M1,
+    EOpPackFloat2xE2M1,
+    EOpPackFloat4xE2M1,
+    EOpPackFloat8xE2M1,
+    EOpPackFloat16xE2M1,
+    EOpUnpackFloat4xE3M2,
+    EOpUnpackFloat8xE3M2,
+    EOpUnpackFloat16xE3M2,
+    EOpPackFloat4xE3M2,
+    EOpPackFloat8xE3M2,
+    EOpPackFloat16xE3M2,
+    EOpUnpackFloat4xE2M3,
+    EOpUnpackFloat8xE2M3,
+    EOpUnpackFloat16xE2M3,
+    EOpPackFloat4xE2M3,
+    EOpPackFloat8xE2M3,
+    EOpPackFloat16xE2M3,
+    EOpBitcastExtractE2M1,
+    EOpBitcastExtractE3M2,
+    EOpBitcastExtractE2M3,
     EOpPack16,
     EOpPack32,
     EOpPack64,
@@ -287,6 +310,8 @@ enum TOperator {
     EOpEndStreamPrimitive,   // geometry only
 
     EOpBarrier,
+    EOpControlBarrierArriveEXT,
+    EOpControlBarrierWaitEXT,
     EOpMemoryBarrier,
     EOpMemoryBarrierAtomicCounter,
     EOpMemoryBarrierBuffer,
@@ -459,6 +484,7 @@ enum TOperator {
     EOpCooperativeMatrixReduceNV,
     EOpCooperativeMatrixPerElementOpNV,
     EOpCooperativeMatrixTransposeNV,
+    EOpCooperativeMatrixGetCoordinateEXT,
 
     EOpCreateTensorLayoutNV,
     EOpTensorLayoutSetBlockSizeNV,
@@ -627,6 +653,26 @@ enum TOperator {
     EOpConstructFloatE4M3Vec2,
     EOpConstructFloatE4M3Vec3,
     EOpConstructFloatE4M3Vec4,
+    EOpConstructFloatE2M1,
+    EOpConstructFloatE2M1Vec2,
+    EOpConstructFloatE2M1Vec3,
+    EOpConstructFloatE2M1Vec4,
+    EOpConstructFloatE3M2,
+    EOpConstructFloatE3M2Vec2,
+    EOpConstructFloatE3M2Vec3,
+    EOpConstructFloatE3M2Vec4,
+    EOpConstructFloatE2M3,
+    EOpConstructFloatE2M3Vec2,
+    EOpConstructFloatE2M3Vec3,
+    EOpConstructFloatE2M3Vec4,
+    EOpConstructFloatUE8M0,
+    EOpConstructFloatUE8M0Vec2,
+    EOpConstructFloatUE8M0Vec3,
+    EOpConstructFloatUE8M0Vec4,
+    EOpConstructFloatMXINT8,
+    EOpConstructFloatMXINT8Vec2,
+    EOpConstructFloatMXINT8Vec3,
+    EOpConstructFloatMXINT8Vec4,
     EOpConstructStruct,
     EOpConstructTextureSampler,
     EOpConstructNonuniform,     // expected to be transformed away, not present in final AST
@@ -738,6 +784,18 @@ enum TOperator {
     EOpTextureGatherLodOffsets,
     EOpFragmentMaskFetch,
     EOpFragmentFetch,
+
+    // QCOM Image processing3
+    EOpTextureGatherExtendedGuardBegin,
+    EOpTextureGather4x1QCOM,
+    EOpTextureGatherV2QCOM,
+    EOpTextureGatherH2QCOM,
+    EOpTextureGatherDQCOM,
+    EOpTextureGather4x1OffsetQCOM,
+    EOpTextureGatherV2OffsetQCOM,
+    EOpTextureGatherH2OffsetQCOM,
+    EOpTextureGatherDOffsetQCOM,
+    EOpTextureGatherExtendedGuardEnd,
 
     EOpSparseTextureGuardBegin,
 
@@ -1061,6 +1119,12 @@ enum TLinkType {
     ELinkExport,
 };
 
+enum TFunctionControl {
+    EfcNone       = 0,
+    EfcInline     = 0x1,
+    EfcDontInline = 0x2,
+};
+
 class TIntermTraverser;
 class TIntermVariableDecl;
 class TIntermOperator;
@@ -1223,7 +1287,8 @@ public:
         maxIterations(iterationsInfinite),
         iterationMultiple(1),
         peelCount(0),
-        partialCount(0)
+        partialCount(0),
+        multipleWaitQueuesQCOM(noMultipleQaitQueues)
     { }
 
     virtual       TIntermLoop* getAsLoopNode() { return this; }
@@ -1275,6 +1340,12 @@ public:
     }
     unsigned int getPartialCount() const { return partialCount; }
 
+    static const unsigned int noMultipleQaitQueues = 0xFFFFFFFF;
+    void setMultipleWaitQueuesQCOM(unsigned int numQ) {
+        multipleWaitQueuesQCOM = numQ;
+    }
+    unsigned int getMultipleWaitQueuesQCOM() const { return multipleWaitQueuesQCOM; }
+
 protected:
     TIntermNode* body;       // code to loop over
     TIntermNode* test;       // exit condition associated with loop, could be 0 for 'for' loops
@@ -1288,6 +1359,7 @@ protected:
     unsigned int iterationMultiple;  // as per the SPIR-V specification
     unsigned int peelCount;          // as per the SPIR-V specification
     unsigned int partialCount;       // as per the SPIR-V specification
+    unsigned int multipleWaitQueuesQCOM;
 };
 
 //
@@ -1432,7 +1504,10 @@ public:
     bool isImageFootprint() const { return op > EOpImageFootprintGuardBegin && op < EOpImageFootprintGuardEnd; }
     bool isSparseImage()   const { return op == EOpSparseImageLoad; }
     bool isSubgroup() const { return op > EOpSubgroupGuardStart && op < EOpSubgroupGuardStop; }
-
+    bool isTextureGatherExtended() const
+    {
+      return op > EOpTextureGatherExtendedGuardBegin && op < EOpTextureGatherExtendedGuardEnd;
+    }
     void setOperationPrecision(TPrecisionQualifier p) { operationPrecision = p; }
     TPrecisionQualifier getOperationPrecision() const { return operationPrecision != EpqNone ?
                                                                                      operationPrecision :
@@ -1559,6 +1634,17 @@ public:
             break;
         case EOpTextureGather:
         case EOpSparseTextureGather:
+        case EOpTextureGather4x1QCOM:
+        case EOpTextureGatherV2QCOM:
+        case EOpTextureGatherH2QCOM:
+        case EOpTextureGatherDQCOM:
+            cracked.gather = true;
+            break;
+        case EOpTextureGather4x1OffsetQCOM:
+        case EOpTextureGatherV2OffsetQCOM:
+        case EOpTextureGatherH2OffsetQCOM:
+        case EOpTextureGatherDOffsetQCOM:
+            cracked.offset = true;
             cracked.gather = true;
             break;
         case EOpTextureGatherOffset:
@@ -1687,7 +1773,7 @@ typedef TVector<TStorageQualifier> TQualifierList;
 //
 class TIntermAggregate : public TIntermOperator {
 public:
-    TIntermAggregate() : TIntermOperator(EOpNull), userDefined(false), pragmaTable(nullptr) { 
+    TIntermAggregate() : TIntermOperator(EOpNull), userDefined(false), pragmaTable(nullptr) {
         endLoc.init();
     }
     TIntermAggregate(TOperator o) : TIntermOperator(o), pragmaTable(nullptr) {
@@ -1721,6 +1807,8 @@ public:
 
     void setLinkType(TLinkType l) { linkType = l; }
     TLinkType getLinkType() const { return linkType; }
+    void setFunctionControl(unsigned int fc) { functionControl = fc; }
+    unsigned int getFunctionControl() const { return functionControl; }
 protected:
     TIntermAggregate(const TIntermAggregate&); // disallow copy constructor
     TIntermAggregate& operator=(const TIntermAggregate&); // disallow assignment operator
@@ -1733,6 +1821,7 @@ protected:
     TPragmaTable* pragmaTable;
     TSpirvInstruction spirvInst;
     TLinkType linkType = ELinkNone;
+    unsigned int functionControl = EfcNone;
 
     // Marking the end source location of the aggregate.
     // This is currently only set for a compound statement or a function body, pointing to '}'.

@@ -255,13 +255,14 @@ public:
     explicit TFunction(TOperator o) :
         TSymbol(nullptr),
         op(o),
-        defined(false), prototyped(false), implicitThis(false), illegalImplicitThis(false), variadic(false), defaultParamCount(0) { }
+        defined(false), prototyped(false), implicitThis(false), illegalImplicitThis(false), variadic(false), defaultParamCount(0),
+        functionControl(EfcNone) { }
     TFunction(const TString *name, const TType& retType, TOperator tOp = EOpNull) :
         TSymbol(name),
         mangledName(*name + '('),
         op(tOp),
         defined(false), prototyped(false), implicitThis(false), illegalImplicitThis(false), variadic(false), defaultParamCount(0),
-        linkType(ELinkNone)
+        functionControl(EfcNone), linkType(ELinkNone)
     {
         returnType.shallowCopy(retType);
         declaredBuiltIn = retType.getQualifier().builtIn;
@@ -351,6 +352,13 @@ public:
 
     void setExport() { linkType = ELinkExport; }
     TLinkType getLinkType() const { return linkType; }
+    void addFunctionControl(unsigned int fc) { functionControl |= fc; }
+    void setFunctionControl(unsigned int fc) { functionControl = fc; }
+    unsigned int getFunctionControl() const { return functionControl; }
+    bool hasIncompatibleFunctionControl() const
+    {
+        return (functionControl & EfcInline) != 0 && (functionControl & EfcDontInline) != 0;
+    }
 
 protected:
     explicit TFunction(const TFunction&);
@@ -374,6 +382,7 @@ protected:
     int  defaultParamCount;
 
     TSpirvInstruction spirvInst; // SPIR-V instruction qualifiers
+    unsigned int functionControl;
     TLinkType linkType;
 };
 

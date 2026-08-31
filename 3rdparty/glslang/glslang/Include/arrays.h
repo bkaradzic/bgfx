@@ -205,6 +205,12 @@ struct TSmallArrayVector {
         return (*sizes)[index];
     }
 
+    bool elementEqual(const TSmallArrayVector& rhs, uint32_t thisIdx, uint32_t rhsIdx) const
+    {
+        return sizes && rhs.sizes && thisIdx < sizes->size() && rhsIdx < rhs.sizes->size() &&
+               (*sizes)[thisIdx] == (*rhs.sizes)[rhsIdx];
+    }
+
 protected:
     TSmallArrayVector(const TSmallArrayVector&);
 
@@ -353,6 +359,11 @@ struct TArraySizes {
 
     bool operator==(const TArraySizes& rhs) const { return sizes == rhs.sizes; }
     bool operator!=(const TArraySizes& rhs) const { return sizes != rhs.sizes; }
+
+    bool elementEqual(const TArraySizes& rhs, uint32_t thisIdx, uint32_t rhsIdx) const
+    {
+        return sizes.elementEqual(rhs.sizes, thisIdx, rhsIdx);
+    }
 
 protected:
     TSmallArrayVector sizes;

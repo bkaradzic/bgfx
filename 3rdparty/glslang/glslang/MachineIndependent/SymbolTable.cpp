@@ -75,6 +75,11 @@ void TType::buildMangledName(TString& mangledName) const
     case EbtBFloat16:           mangledName += "bf16";   break;
     case EbtFloatE5M2:          mangledName += "fe5m2";  break;
     case EbtFloatE4M3:          mangledName += "fe4m3";  break;
+    case EbtFloatE2M1:          mangledName += "fe2m1";  break;
+    case EbtFloatE3M2:          mangledName += "fe3m2";  break;
+    case EbtFloatE2M3:          mangledName += "fe2m3";  break;
+    case EbtFloatUE8M0:         mangledName += "fue8m0";  break;
+    case EbtFloatMXINT8:        mangledName += "fmxint8";break;
     case EbtInt8:               mangledName += "i8";     break;
     case EbtUint8:              mangledName += "u8";     break;
     case EbtInt16:              mangledName += "i16";    break;
@@ -448,6 +453,7 @@ TFunction::TFunction(const TFunction& copyOf) : TSymbol(copyOf)
     illegalImplicitThis = copyOf.illegalImplicitThis;
     defaultParamCount = copyOf.defaultParamCount;
     spirvInst = copyOf.spirvInst;
+    functionControl = copyOf.functionControl;
 }
 
 TFunction* TFunction::clone() const

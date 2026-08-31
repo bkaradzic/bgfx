@@ -313,6 +313,11 @@ void TParseContextBase::checkIndex(const TSourceLoc& loc, const TType& type, int
             error(loc, "", "[", "cooperative vector index out of range '%d'", index);
             index = type.computeNumComponents() - 1;
         }
+    } else if (type.isLongVector()) {
+        if (!type.hasSpecConstantVectorComponents() && index >= type.computeNumComponents()) {
+            error(loc, "", "[", "vector index out of range '%d'", index);
+            index = type.computeNumComponents() - 1;
+        }
     }
 }
 
@@ -537,6 +542,7 @@ void TParseContextBase::parseSwizzleSelector(const TSourceLoc& loc, const TStrin
         exyzw,
         ergba,
         estpq,
+        ebadswizzle,
     } fieldSet[MaxSwizzleSelectors];
 
     // Decode the swizzle string.
@@ -596,13 +602,19 @@ void TParseContextBase::parseSwizzleSelector(const TSourceLoc& loc, const TStrin
             break;
 
         default:
-            error(loc, "unknown swizzle selection", compString.c_str(), "");
+            fieldSet[i] = ebadswizzle;
             break;
         }
     }
 
     // Additional error checking.
     for (int i = 0; i < selector.size(); ++i) {
+        if (fieldSet[i] == ebadswizzle) {
+            error(loc, "unknown swizzle selection", compString.c_str(), "");
+            selector.resize(i);
+            break;
+        }
+
         if (selector[i] >= vecSize) {
             error(loc, "vector swizzle selection out of range",  compString.c_str(), "");
             selector.resize(i);
@@ -694,7 +706,7 @@ void TParseContextBase::growAtomicCounterBlock(int binding, const TSourceLoc& lo
         blockQualifier.storage = EvqBuffer;
         
         char charBuffer[512];
-        if (binding != TQualifier::layoutBindingEnd) {
+        if (binding != TQualifier::layoutNotSet) {
             snprintf(charBuffer, 512, "%s_%d", getAtomicCounterBlockName(), binding);
         } else {
             snprintf(charBuffer, 512, "%s_0", getAtomicCounterBlockName());

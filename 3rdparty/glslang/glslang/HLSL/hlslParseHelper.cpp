@@ -51,6 +51,16 @@
 
 namespace glslang {
 
+static bool isLayoutSetOutOfRange(int value, bool relaxSetBindingLimits)
+{
+    return value < 0 || (!relaxSetBindingLimits && value >= static_cast<int>(TQualifier::layoutSetEnd));
+}
+
+static bool isLayoutBindingOutOfRange(int value, bool relaxSetBindingLimits)
+{
+    return value < 0 || (!relaxSetBindingLimits && value >= static_cast<int>(TQualifier::layoutBindingEnd));
+}
+
 HlslParseContext::HlslParseContext(TSymbolTable& symbolTable, TIntermediate& interm, bool parsingBuiltins,
                                    int version, EProfile profile, const SpvVersion& spvVersion, EShLanguage language,
                                    TInfoSink& infoSink,
@@ -581,8 +591,8 @@ bool HlslParseContext::parseMatrixSwizzleSelector(const TSourceLoc& loc, const T
                 error(loc, "matrix component swizzle has too many components", compString.c_str(), "");
                 return false;
             }
-            if (c > compString.size() - 3 ||
-                    ((compString[c+1] == 'm' || compString[c+1] == 'M') && c > compString.size() - 4)) {
+            if (c + 3 > compString.size() ||
+                    ((compString[c+1] == 'm' || compString[c+1] == 'M') && c + 4 > compString.size())) {
                 error(loc, "matrix component swizzle missing", compString.c_str(), "");
                 return false;
             }
@@ -1253,7 +1263,7 @@ int HlslParseContext::addFlattenedMember(const TVariable& variable, const TType&
         TVariable* memberVariable = makeInternalVariable(memberName, type);
         mergeQualifiers(memberVariable->getWritableType().getQualifier(), variable.getType().getQualifier());
 
-        if (flattenData.nextBinding != TQualifier::layoutBindingEnd)
+        if (flattenData.nextBinding != TQualifier::layoutNotSet)
             memberVariable->getWritableType().getQualifier().layoutBinding = flattenData.nextBinding++;
 
         if (memberVariable->getType().isBuiltIn()) {
@@ -1755,6 +1765,12 @@ void HlslParseContext::handleEntryPointAttributes(const TSourceLoc& loc, const T
         case EatNumThreads:
         {
             const TIntermSequence& sequence = it->args->getSequence();
+            // numthreads has three dimensions (x, y, z); localSize is sized to match,
+            // so reject extra arguments rather than indexing past it.
+            if (sequence.size() > 3) {
+                error(loc, "expected at most three arguments", "numthreads", "");
+                break;
+            }
             for (int lid = 0; lid < int(sequence.size()); ++lid)
                 intermediate.setLocalSize(lid, sequence[lid]->getAsConstantUnion()->getConstArray()[0].getIConst());
             break;
@@ -3517,6 +3533,45 @@ void HlslParseContext::decomposeStructBufferMethods(const TSourceLoc& loc, TInte
     TIntermTyped* argArray = indexStructBufferContent(loc, bufferObj);
     if (argArray == nullptr)
         return;  // It might not be a struct buffer method.
+
+    // These builtins resolve by name against a zero-parameter prototype, so normal
+    // overload resolution never checks the argument count. Validate it here before
+    // indexing the argument sequence, otherwise a call with too few arguments reads
+    // past the end of the aggregate (or dereferences a null aggregate for a bare
+    // buffer object with no arguments).
+    const int argCount = argAggregate ? (int)argAggregate->getSequence().size() : 1;
+    int minArgCount = 1; // the buffer object at index 0
+    switch (op) {
+    case EOpMethodLoad:
+    case EOpMethodLoad2:
+    case EOpMethodLoad3:
+    case EOpMethodLoad4:
+    case EOpMethodGetDimensions:
+    case EOpMethodAppend:
+    case EOpInterlockedAdd:
+    case EOpInterlockedAnd:
+    case EOpInterlockedExchange:
+    case EOpInterlockedMax:
+    case EOpInterlockedMin:
+    case EOpInterlockedOr:
+    case EOpInterlockedXor:
+    case EOpInterlockedCompareExchange:
+    case EOpInterlockedCompareStore:
+        minArgCount = 2;
+        break;
+    case EOpMethodStore:
+    case EOpMethodStore2:
+    case EOpMethodStore3:
+    case EOpMethodStore4:
+        minArgCount = 3;
+        break;
+    default:
+        break;
+    }
+    if (argCount < minArgCount) {
+        error(loc, "too few arguments to buffer method", "", "");
+        return;
+    }
 
     switch (op) {
     case EOpMethodLoad:
@@ -7317,14 +7372,14 @@ void HlslParseContext::setLayoutQualifier(const TSourceLoc& loc, TQualifier& qua
             qualifier.layoutLocation = value;
         return;
     } else if (id == "set") {
-        if ((unsigned int)value >= TQualifier::layoutSetEnd)
-            error(loc, "set is too large", id.c_str(), "");
+        if (isLayoutSetOutOfRange(value, relaxSetBindingLimits()))
+            error(loc, "set is out of range", id.c_str(), "");
         else
             qualifier.layoutSet = value;
         return;
     } else if (id == "binding") {
-        if ((unsigned int)value >= TQualifier::layoutBindingEnd)
-            error(loc, "binding is too large", id.c_str(), "");
+        if (isLayoutBindingOutOfRange(value, relaxSetBindingLimits()))
+            error(loc, "binding is out of range", id.c_str(), "");
         else
             qualifier.layoutBinding = value;
         return;
@@ -7535,7 +7590,7 @@ void HlslParseContext::mergeObjectLayoutQualifiers(TQualifier& dst, const TQuali
 
         if (src.hasSet())
             dst.layoutSet = src.layoutSet;
-        if (src.layoutBinding != TQualifier::layoutBindingEnd)
+        if (src.hasBinding())
             dst.layoutBinding = src.layoutBinding;
 
         if (src.hasXfbStride())

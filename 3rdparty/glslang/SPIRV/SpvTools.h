@@ -76,7 +76,7 @@ GLSLANG_EXPORT void SpirvToolsValidate(const glslang::TIntermediate& intermediat
 
 // Apply the SPIRV-Tools optimizer to generated SPIR-V.  HLSL SPIR-V is legalized in the process.
 GLSLANG_EXPORT void SpirvToolsTransform(const glslang::TIntermediate& intermediate, std::vector<unsigned int>& spirv,
-                                        spv::SpvBuildLogger*, const SpvOptions*);
+                                        spv::SpvBuildLogger*, const SpvOptions*, bool prelegalization);
 
 // Apply the SPIRV-Tools EliminateDeadInputComponents pass to generated SPIR-V. Put result in |spirv|.
 GLSLANG_EXPORT void SpirvToolsEliminateDeadInputComponents(spv_target_env target_env, std::vector<unsigned int>& spirv,

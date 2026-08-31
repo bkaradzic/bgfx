@@ -92,7 +92,7 @@ TPpContext::TPpContext(TParseContextBase& pc, const std::string& rootFileName, T
     inElseSkip(false)
 {
     ifdepth = 0;
-    for (elsetracker = 0; elsetracker < maxIfNesting; elsetracker++)
+    for (elsetracker = 0; elsetracker <= maxIfNesting; elsetracker++)
         elseSeen[elsetracker] = false;
     elsetracker = 0;
 

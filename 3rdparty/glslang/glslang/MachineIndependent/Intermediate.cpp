@@ -403,6 +403,11 @@ TIntermTyped* TIntermediate::addUnaryMath(TOperator op, TIntermTyped* child,
     case EOpConstructBFloat16: newType = EbtBFloat16; break;
     case EOpConstructFloatE4M3: newType = EbtFloatE4M3; break;
     case EOpConstructFloatE5M2: newType = EbtFloatE5M2; break;
+    case EOpConstructFloatE2M1: newType = EbtFloatE2M1; break;
+    case EOpConstructFloatE3M2: newType = EbtFloatE3M2; break;
+    case EOpConstructFloatE2M3: newType = EbtFloatE2M3; break;
+    case EOpConstructFloatUE8M0: newType = EbtFloatUE8M0; break;
+    case EOpConstructFloatMXINT8: newType = EbtFloatMXINT8; break;
     default: break; // some compilers want this
     }
 
@@ -439,7 +444,12 @@ TIntermTyped* TIntermediate::addUnaryMath(TOperator op, TIntermTyped* child,
         case EOpConstructFloat16:
         case EOpConstructBFloat16:
         case EOpConstructFloatE5M2:
-        case EOpConstructFloatE4M3: {
+        case EOpConstructFloatE4M3:
+        case EOpConstructFloatE2M1:
+        case EOpConstructFloatE3M2:
+        case EOpConstructFloatE2M3:
+        case EOpConstructFloatUE8M0:
+        case EOpConstructFloatMXINT8: {
             TIntermUnary* unary_node = child->getAsUnaryNode();
             if (unary_node != nullptr)
                 unary_node->updatePrecision();
@@ -581,8 +591,13 @@ bool TIntermediate::isConversionAllowed(TOperator op, TIntermTyped* node) const
 bool TIntermediate::buildConvertOp(TBasicType dst, TBasicType src, TOperator& newOp) const
 {
     // (bfloat16_t,fp8) <-> bool not supported
-    if (((src == EbtBFloat16 || src == EbtFloatE5M2 || src == EbtFloatE4M3) && dst == EbtBool) ||
-        ((dst == EbtBFloat16 || dst == EbtFloatE5M2 || dst == EbtFloatE4M3) && src == EbtBool)) {
+    if (((src == EbtBFloat16 || src == EbtFloatE5M2 || src == EbtFloatE4M3 || isTypeOcpMicroscalingFloat(src)) && dst == EbtBool) ||
+        ((dst == EbtBFloat16 || dst == EbtFloatE5M2 || dst == EbtFloatE4M3 || isTypeOcpMicroscalingFloat(dst)) && src == EbtBool)) {
+        return false;
+    }
+
+    // no type conversions to microscaling types
+    if (isTypeOcpMicroscalingFloat(dst) && src != dst) {
         return false;
     }
 
@@ -621,7 +636,8 @@ TIntermTyped* TIntermediate::createConversion(TBasicType convertTo, TIntermTyped
                                   node->getBasicType() == EbtFloat ||
                                   node->getBasicType() == EbtDouble ||
                                   node->getBasicType() == EbtFloatE5M2 ||
-                                  node->getBasicType() == EbtFloatE4M3);
+                                  node->getBasicType() == EbtFloatE4M3 ||
+                                  isTypeOcpMicroscalingFloat(node->getBasicType()));
 
     if (((convertTo == EbtInt8 || convertTo == EbtUint8) && ! convertFromIntTypes) ||
         ((node->getBasicType() == EbtInt8 || node->getBasicType() == EbtUint8) && ! convertToIntTypes)) {
@@ -879,6 +895,11 @@ TIntermTyped* TIntermediate::addConversion(TOperator op, const TType& type, TInt
     case EOpConstructBFloat16:
     case EOpConstructFloatE5M2:
     case EOpConstructFloatE4M3:
+    case EOpConstructFloatE2M1:
+    case EOpConstructFloatE3M2:
+    case EOpConstructFloatE2M3:
+    case EOpConstructFloatUE8M0:
+    case EOpConstructFloatMXINT8:
     case EOpConstructInt8:
     case EOpConstructUint8:
     case EOpConstructInt16:
@@ -989,6 +1010,11 @@ TIntermTyped* TIntermediate::addConversion(TOperator op, const TType& type, TInt
     case EOpConstructBFloat16:
     case EOpConstructFloatE5M2:
     case EOpConstructFloatE4M3:
+    case EOpConstructFloatE2M1:
+    case EOpConstructFloatE3M2:
+    case EOpConstructFloatE2M3:
+    case EOpConstructFloatUE8M0:
+    case EOpConstructFloatMXINT8:
         canPromoteConstant = true;
         break;
     case EOpConstructFloat16:
@@ -1296,6 +1322,10 @@ bool TIntermediate::isFPPromotion(TBasicType from, TBasicType to) const
         case EbtBFloat16:
         case EbtFloatE5M2:
         case EbtFloatE4M3:
+        case EbtFloatE2M1:
+        case EbtFloatE3M2:
+        case EbtFloatE2M3:
+        case EbtFloatMXINT8:
         case EbtFloat16:
         case EbtFloat:
             return true;
@@ -1388,7 +1418,8 @@ bool TIntermediate::isIntegralConversion(TBasicType from, TBasicType to) const
 
 bool TIntermediate::isFPConversion(TBasicType from, TBasicType to) const
 {
-    if (to == EbtFloat && (from == EbtFloat16 || from == EbtBFloat16 || from == EbtFloatE5M2 || from == EbtFloatE4M3)) {
+    if (to == EbtFloat && (from == EbtFloat16 || from == EbtBFloat16 || from == EbtFloatE5M2 || from == EbtFloatE4M3 ||
+                           from == EbtFloatE2M1 || from == EbtFloatE3M2 || from == EbtFloatE2M3 || from == EbtFloatMXINT8)) {
         return true;
     } else {
         return false;
@@ -1545,6 +1576,10 @@ bool TIntermediate::canImplicitlyPromote(TBasicType from, TBasicType to, TOperat
             case EbtBFloat16:
             case EbtFloatE5M2:
             case EbtFloatE4M3:
+            case EbtFloatE2M1:
+            case EbtFloatE3M2:
+            case EbtFloatE2M3:
+            case EbtFloatMXINT8:
                 return true;
             case EbtInt8:
             case EbtUint8:
@@ -1570,6 +1605,10 @@ bool TIntermediate::canImplicitlyPromote(TBasicType from, TBasicType to, TOperat
             case EbtBFloat16:
             case EbtFloatE5M2:
             case EbtFloatE4M3:
+            case EbtFloatE2M1:
+            case EbtFloatE3M2:
+            case EbtFloatE2M3:
+            case EbtFloatMXINT8:
                 return true;
             case EbtInt8:
             case EbtUint8:
@@ -1642,6 +1681,10 @@ bool TIntermediate::canImplicitlyPromote(TBasicType from, TBasicType to, TOperat
                 return numericFeatures.contains(TNumericFeatures::gpu_shader_int16);
             case EbtFloatE5M2:
             case EbtFloatE4M3:
+            case EbtFloatE2M1:
+            case EbtFloatE3M2:
+            case EbtFloatE2M3:
+            case EbtFloatMXINT8:
                 return true;
             default:
                 break;
@@ -1651,6 +1694,19 @@ bool TIntermediate::canImplicitlyPromote(TBasicType from, TBasicType to, TOperat
             switch (from) {
             case EbtFloatE5M2:
             case EbtFloatE4M3:
+            case EbtFloatE2M1:
+            case EbtFloatE3M2:
+            case EbtFloatE2M3:
+            case EbtFloatMXINT8:
+                return true;
+            default:
+                break;
+            }
+            return false;
+        case EbtFloatE4M3:
+        case EbtFloatE5M2:
+            switch (from) {
+            case EbtFloatE2M1:
                 return true;
             default:
                 break;
@@ -2137,6 +2193,51 @@ TOperator TIntermediate::mapTypeToConstructorOp(const TType& type) const
         default: break; // some compilers want this
         }
         break;
+    case EbtFloatE2M1:
+        switch (type.getVectorSize()) {
+        case 1: op = EOpConstructFloatE2M1;  break;
+        case 2: op = EOpConstructFloatE2M1Vec2;  break;
+        case 3: op = EOpConstructFloatE2M1Vec3;  break;
+        case 4: op = EOpConstructFloatE2M1Vec4;  break;
+        default: break; // some compilers want this
+        }
+        break;
+    case EbtFloatE3M2:
+        switch (type.getVectorSize()) {
+        case 1: op = EOpConstructFloatE3M2;  break;
+        case 2: op = EOpConstructFloatE3M2Vec2;  break;
+        case 3: op = EOpConstructFloatE3M2Vec3;  break;
+        case 4: op = EOpConstructFloatE3M2Vec4;  break;
+        default: break; // some compilers want this
+        }
+        break;
+    case EbtFloatE2M3:
+        switch (type.getVectorSize()) {
+        case 1: op = EOpConstructFloatE2M3;  break;
+        case 2: op = EOpConstructFloatE2M3Vec2;  break;
+        case 3: op = EOpConstructFloatE2M3Vec3;  break;
+        case 4: op = EOpConstructFloatE2M3Vec4;  break;
+        default: break; // some compilers want this
+        }
+        break;
+    case EbtFloatUE8M0:
+        switch (type.getVectorSize()) {
+        case 1: op = EOpConstructFloatUE8M0;  break;
+        case 2: op = EOpConstructFloatUE8M0Vec2;  break;
+        case 3: op = EOpConstructFloatUE8M0Vec3;  break;
+        case 4: op = EOpConstructFloatUE8M0Vec4;  break;
+        default: break; // some compilers want this
+        }
+        break;
+    case EbtFloatMXINT8:
+        switch (type.getVectorSize()) {
+        case 1: op = EOpConstructFloatMXINT8;  break;
+        case 2: op = EOpConstructFloatMXINT8Vec2;  break;
+        case 3: op = EOpConstructFloatMXINT8Vec3;  break;
+        case 4: op = EOpConstructFloatMXINT8Vec4;  break;
+        default: break; // some compilers want this
+        }
+        break;
     case EbtInt8:
         switch(type.getVectorSize()) {
         case 1: op = EOpConstructInt8;   break;
@@ -2547,7 +2648,7 @@ TIntermConstantUnion* TIntermediate::addConstantUnion(bool b, const TSourceLoc& 
 
 TIntermConstantUnion* TIntermediate::addConstantUnion(double d, TBasicType baseType, const TSourceLoc& loc, bool literal) const
 {
-    assert(baseType == EbtFloat || baseType == EbtDouble || baseType == EbtFloat16 || baseType == EbtBFloat16 || baseType == EbtFloatE5M2 || baseType == EbtFloatE4M3);
+    assert(isTypeFloat(baseType));
 
     if (isEsProfile() && (baseType == EbtFloat || baseType == EbtFloat16)) {
         int exponent = 0;
@@ -3909,6 +4010,11 @@ TIntermTyped* TIntermediate::promoteConstantUnion(TBasicType promoteTo, TIntermC
         case EbtBFloat16: PROMOTE(setDConst, double, Get); break; \
         case EbtFloatE5M2: PROMOTE(setDConst, double, Get); break; \
         case EbtFloatE4M3: PROMOTE(setDConst, double, Get); break; \
+        case EbtFloatE2M1: PROMOTE(setDConst, double, Get); break; \
+        case EbtFloatE3M2: PROMOTE(setDConst, double, Get); break; \
+        case EbtFloatE2M3: PROMOTE(setDConst, double, Get); break; \
+        case EbtFloatUE8M0: PROMOTE(setDConst, double, Get); break; \
+        case EbtFloatMXINT8: PROMOTE(setDConst, double, Get); break; \
         case EbtFloat16: PROMOTE(setDConst, double, Get); break; \
         case EbtFloat: PROMOTE(setDConst, double, Get); break; \
         case EbtDouble: PROMOTE(setDConst, double, Get); break; \
@@ -3933,6 +4039,11 @@ TIntermTyped* TIntermediate::promoteConstantUnion(TBasicType promoteTo, TIntermC
         case EbtBFloat16: TO_ALL(getDConst); break;
         case EbtFloatE5M2: TO_ALL(getDConst); break;
         case EbtFloatE4M3: TO_ALL(getDConst); break;
+        case EbtFloatE2M1: TO_ALL(getDConst); break;
+        case EbtFloatE3M2: TO_ALL(getDConst); break;
+        case EbtFloatE2M3: TO_ALL(getDConst); break;
+        case EbtFloatUE8M0: TO_ALL(getDConst); break;
+        case EbtFloatMXINT8: TO_ALL(getDConst); break;
         case EbtDouble: TO_ALL(getDConst); break;
         case EbtInt8: TO_ALL(getI8Const); break;
         case EbtInt16: TO_ALL(getI16Const); break;

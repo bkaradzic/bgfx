@@ -219,6 +219,7 @@ static int c_shader_messages(glslang_messages_t messages)
     CONVERT_MSG(GLSLANG_MSG_ENHANCED, EShMsgEnhanced);
     CONVERT_MSG(GLSLANG_MSG_ABSOLUTE_PATH, EShMsgAbsolutePath);
     CONVERT_MSG(GLSLANG_MSG_DISPLAY_ERROR_COLUMN, EShMsgDisplayErrorColumn);
+    CONVERT_MSG(GLSLANG_MSG_RELAX_SET_BINDING_LIMITS_BIT, EShMsgRelaxSetBindingLimits);
     return res;
 #undef CONVERT_MSG
 }
@@ -349,6 +350,10 @@ GLSLANG_EXPORT glslang_shader_t* glslang_shader_create(const glslang_input_t* in
 
 GLSLANG_EXPORT void glslang_shader_set_preamble(glslang_shader_t* shader, const char* s) {
     shader->shader->setPreamble(s);
+}
+
+GLSLANG_EXPORT void glslang_shader_set_source_entry_point(glslang_shader_t* shader, const char* s) {
+    shader->shader->setSourceEntryPoint(s);
 }
 
 GLSLANG_EXPORT void glslang_shader_set_entry_point(glslang_shader_t* shader, const char* s) {
