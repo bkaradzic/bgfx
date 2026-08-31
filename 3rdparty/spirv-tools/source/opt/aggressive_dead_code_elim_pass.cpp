@@ -310,28 +310,31 @@ Pass::Status AggressiveDCEPass::ProcessDebugInformation(
         // DebugDeclare Variable is not live. Find the value that was being
         // stored to this variable. If it's live then create a new DebugValue
         // with this value. Otherwise let it die in peace.
-        get_def_use_mgr()->ForEachUser(var_id, [this,
-                                                var_id](Instruction* user) {
-          if (user->opcode() == spv::Op::OpStore) {
-            uint32_t stored_value_id = 0;
-            const uint32_t kStoreValueInIdx = 1;
-            stored_value_id = user->GetSingleWordInOperand(kStoreValueInIdx);
-            if (!IsLive(get_def_use_mgr()->GetDef(stored_value_id))) {
-              return true;
-            }
+        bool user_succeeded = get_def_use_mgr()->WhileEachUser(
+            var_id, [this, var_id](Instruction* user) {
+              if (user->opcode() == spv::Op::OpStore) {
+                uint32_t stored_value_id = 0;
+                const uint32_t kStoreValueInIdx = 1;
+                stored_value_id =
+                    user->GetSingleWordInOperand(kStoreValueInIdx);
+                if (!IsLive(get_def_use_mgr()->GetDef(stored_value_id))) {
+                  return true;
+                }
 
-            // value being stored is still live
-            Instruction* next_inst = user->NextNode();
-            bool added =
-                context()->get_debug_info_mgr()->AddDebugValueForVariable(
-                    user, var_id, stored_value_id, user);
-            if (added && next_inst) {
-              auto new_debug_value = next_inst->PreviousNode();
-              AddToWorklist(new_debug_value);
-            }
-          }
-          return true;
-        });
+                // value being stored is still live
+                Instruction* next_inst = user->NextNode();
+                bool added =
+                    context()->get_debug_info_mgr()->AddDebugValueForVariable(
+                        user, var_id, stored_value_id, user);
+                if (context()->id_overflow()) return false;
+                if (added && next_inst) {
+                  auto new_debug_value = next_inst->PreviousNode();
+                  AddToWorklist(new_debug_value);
+                }
+              }
+              return true;
+            });
+        if (!user_succeeded) return false;
       } else if (inst->GetShaderDebugOpcode() ==
                  NonSemanticShaderDebugInfoDebugValue) {
         uint32_t var_operand_idx = kDebugValueValueInIdx;
@@ -1162,6 +1165,7 @@ void AggressiveDCEPass::InitExtensions() {
       "SPV_KHR_maximal_reconvergence",
       "SPV_NV_push_constant_bank",
       "SPV_EXT_opacity_micromap",
+      "SPV_KHR_opacity_micromap",
       "SPV_EXT_shader_invocation_reorder",
       "SPV_EXT_shader_atomic_float16_add",
       "SPV_KHR_abort",

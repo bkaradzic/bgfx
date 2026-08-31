@@ -215,6 +215,29 @@ spv_result_t ValidateDecorationTarget(ValidationState_t& _, spv::Decoration dec,
                << fail() << "must be a variable";
       }
       break;
+    case spv::Decoration::CooperativeMatrixTransposeEXT:
+      switch (target->opcode()) {
+        case spv::Op::OpConvertFToU:
+        case spv::Op::OpConvertFToS:
+        case spv::Op::OpConvertSToF:
+        case spv::Op::OpConvertUToF:
+        case spv::Op::OpUConvert:
+        case spv::Op::OpSConvert:
+        case spv::Op::OpFConvert:
+        case spv::Op::OpCooperativeMatrixConvertUseEXT:
+          break;
+        default:
+          return _.diag(SPV_ERROR_INVALID_ID, inst)
+                 << fail()
+                 << "must be a cooperative matrix conversion instruction";
+      }
+      if (!_.IsCooperativeMatrixKHRType(target->type_id()) ||
+          !_.IsCooperativeMatrixKHRType(_.GetOperandTypeId(target, 2))) {
+        return _.diag(SPV_ERROR_INVALID_ID, inst)
+               << fail()
+               << "must be a cooperative matrix conversion instruction";
+      }
+      break;
     default:
       break;
   }

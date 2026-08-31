@@ -472,6 +472,7 @@ void LocalAccessChainConvertPass::InitExtensions() {
       "SPV_KHR_maximal_reconvergence",
       "SPV_NV_push_constant_bank",
       "SPV_EXT_opacity_micromap",
+      "SPV_KHR_opacity_micromap",
       "SPV_EXT_shader_invocation_reorder",
       "SPV_EXT_shader_atomic_float16_add",
       "SPV_KHR_abort",

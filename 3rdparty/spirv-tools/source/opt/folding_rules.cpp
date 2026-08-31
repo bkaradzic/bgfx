@@ -14,14 +14,14 @@
 
 #include "source/opt/folding_rules.h"
 
-#include <limits>
-#include <memory>
 #include <optional>
 #include <utility>
 
 #include "ir_builder.h"
 #include "source/latest_version_glsl_std_450_header.h"
 #include "source/opt/ir_context.h"
+#include "source/spirv_constant.h"
+#include "source/spirv_target_env.h"
 
 namespace spvtools {
 namespace opt {
@@ -2124,6 +2124,84 @@ std::vector<Operand> GetExtractOperandsForElementOfCompositeConstruct(
   return {};
 }
 
+// If the OpCompositeConstruct that feeds an OpCopyLogical can be retyped to
+// the OpCopyLogical's result type, the layout conversion can be expressed at
+// constituent granularity instead of at aggregate granularity. This rewrites
+// the OpCopyLogical as an OpCompositeConstruct of the result type, using the
+// same constituents where their types already match the corresponding
+// field/element of the result type, and inserting per-field OpCopyLogical
+// instructions only for the fields that genuinely require a layout
+// conversion.
+bool CompositeConstructFeedingCopyLogical(
+    IRContext* context, Instruction* inst,
+    const std::vector<const analysis::Constant*>&) {
+  assert(inst->opcode() == spv::Op::OpCopyLogical &&
+         "Wrong opcode.  Should be OpCopyLogical.");
+  analysis::DefUseManager* def_use_mgr = context->get_def_use_mgr();
+
+  uint32_t src_id = inst->GetSingleWordInOperand(0);
+  Instruction* src_inst = def_use_mgr->GetDef(src_id);
+  if (src_inst->opcode() != spv::Op::OpCompositeConstruct) {
+    return false;
+  }
+
+  Instruction* dst_type_inst = def_use_mgr->GetDef(inst->type_id());
+  const uint32_t num_constituents = src_inst->NumInOperands();
+
+  // Determine the expected type id for each constituent of the destination
+  // type.
+  std::vector<uint32_t> expected_type_ids;
+  expected_type_ids.reserve(num_constituents);
+  if (dst_type_inst->opcode() == spv::Op::OpTypeStruct) {
+    if (dst_type_inst->NumInOperands() != num_constituents) {
+      return false;
+    }
+    for (uint32_t i = 0; i < num_constituents; ++i) {
+      expected_type_ids.push_back(dst_type_inst->GetSingleWordInOperand(i));
+    }
+  } else if (dst_type_inst->opcode() == spv::Op::OpTypeArray) {
+    const uint32_t elem_type_id = dst_type_inst->GetSingleWordInOperand(0);
+    for (uint32_t i = 0; i < num_constituents; ++i) {
+      expected_type_ids.push_back(elem_type_id);
+    }
+  } else {
+    return false;
+  }
+
+  // Build the new constituent list, inserting OpCopyLogical instructions for
+  // the fields whose types differ from the result type.
+  InstructionBuilder ir_builder(
+      context, inst,
+      IRContext::kAnalysisDefUse | IRContext::kAnalysisInstrToBlockMapping);
+  std::vector<Operand> operands;
+  operands.reserve(num_constituents);
+  for (uint32_t i = 0; i < num_constituents; ++i) {
+    const uint32_t cid = src_inst->GetSingleWordInOperand(i);
+    Instruction* cdef = def_use_mgr->GetDef(cid);
+    if (cdef->type_id() == expected_type_ids[i]) {
+      operands.push_back({SPV_OPERAND_TYPE_ID, {cid}});
+      continue;
+    }
+    if (def_use_mgr->GetDef(expected_type_ids[i])->opcode() ==
+        spv::Op::OpTypePointer) {
+      assert(def_use_mgr->GetDef(expected_type_ids[i])->opcode() !=
+                 spv::Op::OpTypePointer &&
+             "Unreachable for valid input");
+    }
+    Instruction* per_field_copy = ir_builder.AddUnaryOp(
+        expected_type_ids[i], spv::Op::OpCopyLogical, cid);
+    if (per_field_copy == nullptr) {
+      return false;
+    }
+    operands.push_back({SPV_OPERAND_TYPE_ID, {per_field_copy->result_id()}});
+  }
+
+  inst->SetOpcode(spv::Op::OpCompositeConstruct);
+  inst->SetInOperands(std::move(operands));
+  context->UpdateDefUse(inst);
+  return true;
+}
+
 bool CompositeConstructFeedingExtract(
     IRContext* context, Instruction* inst,
     const std::vector<const analysis::Constant*>&) {
@@ -3232,6 +3310,10 @@ FoldingRule MergeBinaryOpSelect(spv::Op opcode) {
 
   return [opcode](IRContext* context, Instruction* inst,
                   const std::vector<const analysis::Constant*>& constants) {
+    analysis::ConstantManager* const_mgr = context->get_constant_mgr();
+    analysis::TypeManager* type_mgr = context->get_type_mgr();
+    analysis::DefUseManager* def_use_mgr = context->get_def_use_mgr();
+
     const analysis::Constant* const_input = ConstInput(constants);
     if (!const_input) {
       return false;
@@ -3241,9 +3323,26 @@ FoldingRule MergeBinaryOpSelect(spv::Op opcode) {
       return false;
     }
     std::vector<const analysis::Constant*> select_constants =
-        context->get_constant_mgr()->GetOperandConstants(non_const);
+        const_mgr->GetOperandConstants(non_const);
     if (!select_constants[1] || !select_constants[2]) {
       return false;
+    }
+
+    // The OpSelect that will be created below will use the condition from
+    // `non_const` and a result type matching `inst`. Before SPIR-V 1.4,
+    // OpSelect could not have a scalar condition with a vector result.
+    // We must avoid generating the OpSelect if that would happen.
+    const analysis::Type* result_type = type_mgr->GetType(inst->type_id());
+    if (result_type && result_type->AsVector()) {
+      Instruction* cond_inst =
+          def_use_mgr->GetDef(non_const->GetSingleWordInOperand(0));
+      const analysis::Type* cond_type = type_mgr->GetType(cond_inst->type_id());
+      if (cond_type && !cond_type->AsVector()) {
+        if (spvVersionForTargetEnv(context->grammar().target_env()) <
+            SPV_SPIRV_VERSION_WORD(1, 4)) {
+          return false;
+        }
+      }
     }
 
     InstructionBuilder ir_builder(
@@ -3274,15 +3373,13 @@ FoldingRule MergeBinaryOpSelect(spv::Op opcode) {
     if (context->get_instruction_folder().FoldInstruction(lhs)) {
       context->AnalyzeDefUse(lhs);
       while (lhs->opcode() == spv::Op::OpCopyObject) {
-        lhs =
-            context->get_def_use_mgr()->GetDef(lhs->GetSingleWordInOperand(0));
+        lhs = def_use_mgr->GetDef(lhs->GetSingleWordInOperand(0));
       }
     }
     if (context->get_instruction_folder().FoldInstruction(rhs)) {
       context->AnalyzeDefUse(rhs);
       while (rhs->opcode() == spv::Op::OpCopyObject) {
-        rhs =
-            context->get_def_use_mgr()->GetDef(rhs->GetSingleWordInOperand(0));
+        rhs = def_use_mgr->GetDef(rhs->GetSingleWordInOperand(0));
       }
     }
     inst->SetOpcode(spv::Op::OpSelect);
@@ -4475,6 +4572,9 @@ void FoldingRules::AddFoldingRules() {
 
   rules_[spv::Op::OpCompositeConstruct].push_back(
       CompositeExtractFeedingConstruct);
+
+  rules_[spv::Op::OpCopyLogical].push_back(
+      CompositeConstructFeedingCopyLogical);
 
   rules_[spv::Op::OpCompositeExtract].push_back(InsertFeedingExtract());
   rules_[spv::Op::OpCompositeExtract].push_back(

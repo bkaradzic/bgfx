@@ -131,14 +131,15 @@ bool InstructionCanHaveTypeOperand(const Instruction* inst) {
   const auto opcode = inst->opcode();
   bool type_instruction = spvOpcodeGeneratesType(opcode);
   bool debug_instruction = spvOpcodeIsDebug(opcode) || inst->IsDebugInfo();
-  bool coop_matrix_spec_constant_op_length =
+  bool spec_constant_op_with_type_operand =
       (opcode == spv::Op::OpSpecConstantOp) &&
       (spv::Op(inst->word(3)) == spv::Op::OpCooperativeMatrixLengthNV ||
-       spv::Op(inst->word(3)) == spv::Op::OpCooperativeMatrixLengthKHR);
+       spv::Op(inst->word(3)) == spv::Op::OpCooperativeMatrixLengthKHR ||
+       spvOpcodeGeneratesUntypedPointer(spv::Op(inst->word(3))));
   return type_instruction || debug_instruction || inst->IsNonSemantic() ||
          spvOpcodeIsDecoration(opcode) || instruction_allow_set.count(opcode) ||
          spvOpcodeGeneratesUntypedPointer(opcode) ||
-         coop_matrix_spec_constant_op_length;
+         spec_constant_op_with_type_operand;
 }
 
 bool InstructionRequiresTypeOperand(const Instruction* inst) {

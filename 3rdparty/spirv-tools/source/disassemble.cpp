@@ -599,7 +599,7 @@ spv_result_t DisassembleTargetInstruction(
   return SPV_SUCCESS;
 }
 
-uint32_t GetLineLengthWithoutColor(const std::string line) {
+uint32_t GetLineLengthWithoutColor(const std::string& line) {
   // Currently, every added color is in the form \x1b...m, so instead of doing a
   // lot of string comparisons with spvtools::clr::* strings, we just ignore
   // those ranges.
@@ -804,11 +804,12 @@ void InstructionDisassembler::EmitInstructionImpl(
     comment_separator = ", ";
   }
 
-  stream_ << line.str();
+  const std::string line_str = line.str();
+  stream_ << line_str;
 
   if (!comments.str().empty()) {
     // Align the comments
-    const uint32_t line_length = GetLineLengthWithoutColor(line.str());
+    const uint32_t line_length = GetLineLengthWithoutColor(line_str);
     uint32_t align = std::max(
         {line_length + 2, last_instruction_comment_alignment_, kCommentColumn});
     // Round up the alignment to a multiple of 4 for more niceness.

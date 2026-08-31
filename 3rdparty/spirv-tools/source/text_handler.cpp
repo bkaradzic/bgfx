@@ -168,8 +168,17 @@ bool validBitWidthForFPEncoding(spv_fp_encoding_t enc, uint32_t width,
     case SPV_FP_ENCODING_IEEE754_BINARY64:
       *expected = 64;
       break;
+    case SPV_FP_ENCODING_FLOAT4_E2M1:
+      *expected = 4;
+      break;
+    case SPV_FP_ENCODING_FLOAT6_E2M3:
+    case SPV_FP_ENCODING_FLOAT6_E3M2:
+      *expected = 6;
+      break;
     case SPV_FP_ENCODING_FLOAT8_E5M2:
     case SPV_FP_ENCODING_FLOAT8_E4M3:
+    case SPV_FP_ENCODING_FLOAT8_UNSIGNED_E8M0:
+    case SPV_FP_ENCODING_MXINT8:
       *expected = 8;
       break;
     default:

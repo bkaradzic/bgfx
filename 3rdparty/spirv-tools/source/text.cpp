@@ -45,7 +45,7 @@
 #include "spirv-tools/libspirv.h"
 
 bool spvIsValidIDCharacter(const char value) {
-  return value == '_' || 0 != ::isalnum(value);
+  return value == '_' || 0 != ::isalnum(static_cast<unsigned char>(value));
 }
 
 // Returns true if the given string represents a valid ID name.

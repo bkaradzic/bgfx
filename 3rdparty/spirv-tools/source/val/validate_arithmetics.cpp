@@ -63,8 +63,8 @@ spv_result_t ValidateFloat(ValidationState_t& _, const Instruction* inst,
                << "Expected arithmetic operands to be of Result Type: "
                << spvOpcodeString(opcode) << " operand index " << operand_index;
       }
-      spv_result_t ret =
-          _.CooperativeMatrixShapesMatch(inst, result_type, type_id, false);
+      spv_result_t ret = _.CooperativeMatrixShapesMatch(inst, result_type,
+                                                        type_id, false, false);
       if (ret != SPV_SUCCESS) return ret;
     } else if (_.GetOperandTypeId(inst, operand_index) != result_type)
       return _.diag(SPV_ERROR_INVALID_DATA, inst)
@@ -108,8 +108,8 @@ spv_result_t ValidateUnsignedInt(ValidationState_t& _, const Instruction* inst,
                << "Expected arithmetic operands to be of Result Type: "
                << spvOpcodeString(opcode) << " operand index " << operand_index;
       }
-      spv_result_t ret =
-          _.CooperativeMatrixShapesMatch(inst, result_type, type_id, false);
+      spv_result_t ret = _.CooperativeMatrixShapesMatch(inst, result_type,
+                                                        type_id, false, false);
       if (ret != SPV_SUCCESS) return ret;
     } else if (_.GetOperandTypeId(inst, operand_index) != result_type)
       return _.diag(SPV_ERROR_INVALID_DATA, inst)
@@ -164,8 +164,8 @@ spv_result_t ValidateSignedInt(ValidationState_t& _, const Instruction* inst,
                << "Expected arithmetic operands to be of Result Type: "
                << spvOpcodeString(opcode) << " operand index " << operand_index;
       }
-      spv_result_t ret =
-          _.CooperativeMatrixShapesMatch(inst, result_type, type_id, false);
+      spv_result_t ret = _.CooperativeMatrixShapesMatch(inst, result_type,
+                                                        type_id, false, false);
       if (ret != SPV_SUCCESS) return ret;
     }
 
@@ -715,8 +715,8 @@ spv_result_t ValidateCooperativeMatrixMulAddKHR(ValidationState_t& _,
   return SPV_SUCCESS;
 }
 
-spv_result_t ValidateCooperativeMatrixReduceNV(ValidationState_t& _,
-                                               const Instruction* inst) {
+spv_result_t ValidateCooperativeMatrixReduceEXT(ValidationState_t& _,
+                                                const Instruction* inst) {
   const spv::Op opcode = inst->opcode();
   const uint32_t result_type = inst->type_id();
   if (!_.IsCooperativeMatrixKHRType(result_type)) {
@@ -744,33 +744,48 @@ spv_result_t ValidateCooperativeMatrixReduceNV(ValidationState_t& _,
               "type: "
            << spvOpcodeString(opcode);
   }
-  if (_.FindDef(result_type)->GetOperandAs<uint32_t>(2) !=
-      matrix_type->GetOperandAs<uint32_t>(2)) {
+  const auto result_scope =
+      _.EvalInt32IfConst(_.FindDef(result_type)->GetOperandAs<uint32_t>(2));
+  const auto matrix_scope =
+      _.EvalInt32IfConst(matrix_type->GetOperandAs<uint32_t>(2));
+  if (std::get<1>(result_scope) && std::get<1>(matrix_scope) &&
+      std::get<2>(result_scope) != std::get<2>(matrix_scope)) {
     return _.diag(SPV_ERROR_INVALID_DATA, inst)
            << "Result Type and Matrix type must have the same scope: "
            << spvOpcodeString(opcode);
   }
 
-  if (!_.IsCooperativeMatrixAccType(result_type)) {
+  const auto result_use =
+      _.EvalInt32IfConst(_.FindDef(result_type)->GetOperandAs<uint32_t>(5));
+  if (std::get<1>(result_use) &&
+      std::get<2>(result_use) !=
+          uint32_t(spv::CooperativeMatrixUse::MatrixAccumulatorKHR)) {
     return _.diag(SPV_ERROR_INVALID_DATA, inst)
            << "Result Type must have UseAccumulator: "
            << spvOpcodeString(opcode);
   }
-  if (!_.IsCooperativeMatrixAccType(matrix_type_id)) {
+  const auto matrix_use =
+      _.EvalInt32IfConst(matrix_type->GetOperandAs<uint32_t>(5));
+  if (std::get<1>(matrix_use) &&
+      std::get<2>(matrix_use) !=
+          uint32_t(spv::CooperativeMatrixUse::MatrixAccumulatorKHR)) {
     return _.diag(SPV_ERROR_INVALID_DATA, inst)
            << "Matrix type must have UseAccumulator: "
            << spvOpcodeString(opcode);
   }
 
   const auto reduce_value = inst->GetOperandAs<uint32_t>(3);
+  const uint32_t reduce_row = uint32_t(spv::CooperativeMatrixReduceMask::Row);
+  const uint32_t reduce_column =
+      uint32_t(spv::CooperativeMatrixReduceMask::Column);
+  const uint32_t reduce_row_column = reduce_row | reduce_column;
+  const uint32_t reduce_2x2 =
+      uint32_t(spv::CooperativeMatrixReduceMask::CooperativeMatrixReduce2x2);
 
-  if ((reduce_value &
-       uint32_t(
-           spv::CooperativeMatrixReduceMask::CooperativeMatrixReduce2x2)) &&
-      (reduce_value & uint32_t(spv::CooperativeMatrixReduceMask::Row |
-                               spv::CooperativeMatrixReduceMask::Column))) {
+  if (reduce_value != reduce_row && reduce_value != reduce_column &&
+      reduce_value != reduce_row_column && reduce_value != reduce_2x2) {
     return _.diag(SPV_ERROR_INVALID_DATA, inst)
-           << "Reduce 2x2 must not be used with Row/Column: "
+           << "Reduce must be Row, Column, Row|Column, or 2x2: "
            << spvOpcodeString(opcode);
   }
 
@@ -787,8 +802,8 @@ spv_result_t ValidateCooperativeMatrixReduceNV(ValidationState_t& _,
       uint32_t(spv::CooperativeMatrixReduceMask::CooperativeMatrixReduce2x2)) {
     if (std::get<1>(result_rows) && std::get<1>(result_cols) &&
         std::get<1>(matrix_rows) && std::get<1>(matrix_cols) &&
-        (std::get<2>(result_rows) != std::get<2>(matrix_rows) / 2 ||
-         std::get<2>(result_cols) != std::get<2>(matrix_cols) / 2)) {
+        (uint64_t{std::get<2>(result_rows)} * 2 != std::get<2>(matrix_rows) ||
+         uint64_t{std::get<2>(result_cols)} * 2 != std::get<2>(matrix_cols))) {
       return _.diag(SPV_ERROR_INVALID_DATA, inst)
              << "For Reduce2x2, result rows/cols must be half of matrix "
                 "rows/cols: "
@@ -884,8 +899,8 @@ spv_result_t ArithmeticsPass(ValidationState_t& _, const Instruction* inst) {
       return ValidateCooperativeMatrixMulAddNV(_, inst);
     case spv::Op::OpCooperativeMatrixMulAddKHR:
       return ValidateCooperativeMatrixMulAddKHR(_, inst);
-    case spv::Op::OpCooperativeMatrixReduceNV:
-      return ValidateCooperativeMatrixReduceNV(_, inst);
+    case spv::Op::OpCooperativeMatrixReduceEXT:
+      return ValidateCooperativeMatrixReduceEXT(_, inst);
 
     case spv::Op::OpSpecConstantOp: {
       switch (inst->GetOperandAs<spv::Op>(2u)) {

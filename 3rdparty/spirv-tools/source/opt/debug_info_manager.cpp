@@ -153,6 +153,7 @@ void DebugInfoManager::RegisterDbgDeclare(uint32_t var_id,
 // such as inlining. Invalidate Constant and DefUse managers if used.
 uint32_t AddNewConstInGlobals(IRContext* context, uint32_t const_value) {
   uint32_t id = context->TakeNextId();
+  if (id == 0) return 0;
   std::unique_ptr<Instruction> new_const(new Instruction(
       context, spv::Op::OpConstant, context->get_type_mgr()->GetUIntTypeId(),
       id,
@@ -236,10 +237,12 @@ uint32_t DebugInfoManager::CreateDebugInlinedAt(const Instruction* line,
       else
         line_number =
             context()->get_constant_mgr()->GetUIntConstId(line_number);
+      if (line_number == 0) return kNoInlinedAt;
     }
   }
 
   uint32_t result_id = context()->TakeNextId();
+  if (result_id == 0) return kNoInlinedAt;
   std::unique_ptr<Instruction> inlined_at(new Instruction(
       context(), spv::Op::OpExtInst, context()->get_type_mgr()->GetVoidTypeId(),
       result_id,
@@ -417,6 +420,7 @@ Instruction* DebugInfoManager::GetEmptyDebugExpression() {
   if (empty_debug_expr_inst_ != nullptr) return empty_debug_expr_inst_;
 
   uint32_t result_id = context()->TakeNextId();
+  if (result_id == 0) return nullptr;
   std::unique_ptr<Instruction> empty_debug_expr(new Instruction(
       context(), spv::Op::OpExtInst, context()->get_type_mgr()->GetVoidTypeId(),
       result_id,
@@ -450,8 +454,10 @@ Instruction* DebugInfoManager::CloneDebugInlinedAt(uint32_t clone_inlined_at_id,
                                                    Instruction* insert_before) {
   auto* inlined_at = GetDebugInlinedAt(clone_inlined_at_id);
   if (inlined_at == nullptr) return nullptr;
+  uint32_t result_id = context()->TakeNextId();
+  if (result_id == 0) return nullptr;
   std::unique_ptr<Instruction> new_inlined_at(inlined_at->Clone(context()));
-  new_inlined_at->SetResultId(context()->TakeNextId());
+  new_inlined_at->SetResultId(result_id);
   RegisterDbgInst(new_inlined_at.get());
   if (context()->AreAnalysesValid(IRContext::Analysis::kAnalysisDefUse))
     context()->get_def_use_mgr()->AnalyzeInstDefUse(new_inlined_at.get());
@@ -591,12 +597,18 @@ Instruction* DebugInfoManager::AddDebugValueForDecl(Instruction* dbg_decl,
                                                     Instruction* line) {
   if (dbg_decl == nullptr || !IsDebugDeclare(dbg_decl)) return nullptr;
 
+  Instruction* empty_expr = GetEmptyDebugExpression();
+  if (empty_expr == nullptr) return nullptr;
+
+  uint32_t result_id = context()->TakeNextId();
+  if (result_id == 0) return nullptr;
+
   std::unique_ptr<Instruction> dbg_val(dbg_decl->Clone(context()));
-  dbg_val->SetResultId(context()->TakeNextId());
+  dbg_val->SetResultId(result_id);
   dbg_val->SetInOperand(kExtInstInstructionInIdx, {CommonDebugInfoDebugValue});
   dbg_val->SetOperand(kDebugDeclareOperandVariableIndex, {value_id});
   dbg_val->SetOperand(kDebugValueOperandExpressionIndex,
-                      {GetEmptyDebugExpression()->result_id()});
+                      {empty_expr->result_id()});
   dbg_val->UpdateDebugInfoFrom(dbg_decl, line);
 
   auto* added_dbg_val = insert_before->InsertBefore(std::move(dbg_val));
@@ -798,10 +810,16 @@ void DebugInfoManager::ConvertDebugGlobalToLocalVariable(
   context()->ForgetUses(dbg_global_var);
   context()->AnalyzeUses(dbg_global_var);
 
+  Instruction* empty_expr = GetEmptyDebugExpression();
+  if (empty_expr == nullptr) return;
+
+  uint32_t result_id = context()->TakeNextId();
+  if (result_id == 0) return;
+
   // Create a DebugDeclare
   std::unique_ptr<Instruction> new_dbg_decl(new Instruction(
       context(), spv::Op::OpExtInst, context()->get_type_mgr()->GetVoidTypeId(),
-      context()->TakeNextId(),
+      result_id,
       {
           {spv_operand_type_t::SPV_OPERAND_TYPE_ID, {GetDbgSetImportId()}},
           {spv_operand_type_t::SPV_OPERAND_TYPE_EXTENSION_INSTRUCTION_NUMBER,
@@ -809,8 +827,7 @@ void DebugInfoManager::ConvertDebugGlobalToLocalVariable(
           {spv_operand_type_t::SPV_OPERAND_TYPE_ID,
            {dbg_global_var->result_id()}},
           {spv_operand_type_t::SPV_OPERAND_TYPE_ID, {local_var->result_id()}},
-          {spv_operand_type_t::SPV_OPERAND_TYPE_ID,
-           {GetEmptyDebugExpression()->result_id()}},
+          {spv_operand_type_t::SPV_OPERAND_TYPE_ID, {empty_expr->result_id()}},
       }));
   // Must insert after all OpVariables in block
   Instruction* insert_before = local_var;

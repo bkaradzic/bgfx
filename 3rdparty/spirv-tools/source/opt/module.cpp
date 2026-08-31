@@ -17,10 +17,12 @@
 #include <algorithm>
 #include <cstring>
 #include <ostream>
+#include <unordered_set>
 
 #include "source/operand.h"
 #include "source/opt/ir_context.h"
 #include "source/opt/reflect.h"
+#include "source/util/hash_combine.h"
 
 namespace spvtools {
 namespace opt {
@@ -149,7 +151,8 @@ void Module::ForEachInst(const std::function<void(const Instruction*)>& f,
 #undef DELEGATE
 }
 
-void Module::ToBinary(std::vector<uint32_t>* binary, bool skip_nop) const {
+void Module::ToBinary(std::vector<uint32_t>* binary, bool skip_nop,
+                      bool filter_duplicate_decorations) const {
   binary->push_back(header_.magic_number);
   binary->push_back(header_.version);
   // TODO(antiagainst): should we change the generator number?
@@ -162,9 +165,21 @@ void Module::ToBinary(std::vector<uint32_t>* binary, bool skip_nop) const {
   const Instruction* last_line_inst = nullptr;
   bool between_merge_and_branch = false;
   bool between_label_and_phi_var = false;
-  auto write_inst = [binary, skip_nop, &last_scope, &last_line_inst,
-                     &between_merge_and_branch, &between_label_and_phi_var,
+  std::unordered_set<std::vector<uint32_t>,
+                     spvtools::utils::VectorHash<uint32_t>>
+      seen_decorations;
+  auto write_inst = [binary, skip_nop, filter_duplicate_decorations,
+                     &last_scope, &last_line_inst, &between_merge_and_branch,
+                     &between_label_and_phi_var, &seen_decorations,
                      this](const Instruction* i) {
+    if (filter_duplicate_decorations && i->IsDecoration()) {
+      std::vector<uint32_t> inst_binary;
+      i->ToBinaryWithoutAttachedDebugInsts(&inst_binary);
+      if (seen_decorations.count(inst_binary)) {
+        return;
+      }
+      seen_decorations.insert(inst_binary);
+    }
     // Skip emitting line instructions between merge and branch instructions.
     auto opcode = i->opcode();
     if (between_merge_and_branch && i->IsLineInst()) {

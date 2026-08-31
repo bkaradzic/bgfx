@@ -15,6 +15,7 @@
 #include <cassert>
 #include <functional>
 #include <iostream>
+#include <iterator>
 #include <map>
 #include <string>
 #include <tuple>
@@ -343,6 +344,9 @@ spv_result_t ValidateLoopMerge(ValidationState_t& _, const Instruction* inst) {
     ++operand;
   }
   if ((loop_control >> spv::LoopControlShift::PartialCount) & 0x1) {
+    ++operand;
+  }
+  if ((loop_control >> spv::LoopControlShift::MultipleWaitQueuesQCOM) & 0x1) {
     ++operand;
   }
 
