@@ -4559,6 +4559,19 @@
       "version" : "None"
     },
     {
+      "opname" : "OpBitcastExtractEXT",
+      "class"  : "Conversion",
+      "opcode" : 4195,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef",        "name" : "Base" },
+        { "kind" : "IdRef",        "name" : "Offset" }
+      ],
+      "capabilities" : [ "BitcastExtractEXT" ],
+      "version" : "None"
+    },
+    {
       "opname" : "OpTerminateInvocation",
       "class"  : "Control-Flow",
       "opcode" : 4416,
@@ -5372,6 +5385,20 @@
       "version" : "None"
     },
     {
+      "opname" : "OpBFloat16MulAddQCOM",
+      "class"  : "Arithmetic",
+      "opcode" : 4505,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "Operand 1" },
+        { "kind" : "IdRef", "name" : "Operand 2" },
+        { "kind" : "IdRef", "name" : "Operand 3" }
+      ],
+      "capabilities" : [ "BFloat16MulAddQCOM" ],
+      "version" : "None"
+    },
+    {
       "opname" : "OpCompositeConstructCoopMatQCOM",
       "class"  : "Composite",
       "opcode" : 4540,
@@ -5406,6 +5433,22 @@
         { "kind" : "IdRef", "name" : "index" }
       ],
       "capabilities" : [ "CooperativeMatrixConversionQCOM" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpImageGatherQCOM",
+      "class"  : "Image",
+      "opcode" : 4545,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "Sampled Image" },
+        { "kind" : "IdRef", "name" : "Coordinate" },
+        { "kind" : "IdRef", "name" : "Component" },
+        { "kind" : "IdRef", "name" : "Mode" },
+        { "kind" : "ImageOperands", "quantifier" : "?" }
+      ],
+      "capabilities" : [ "ImageGatherLinearQCOM", "ImageGatherExtendedModesQCOM" ],
       "version" : "None"
     },
     {
@@ -6378,7 +6421,8 @@
       "version" : "None"
     },
     {
-      "opname" : "OpCooperativeMatrixConvertNV",
+      "opname" : "OpCooperativeMatrixConvertUseEXT",
+      "aliases" : ["OpCooperativeMatrixConvertNV"],
       "class"  : "Conversion",
       "opcode" : 5293,
       "operands" : [
@@ -6386,7 +6430,7 @@
         { "kind" : "IdResult" },
         { "kind" : "IdRef",             "name" : "Matrix" }
       ],
-      "capabilities" : [ "CooperativeMatrixConversionsNV" ],
+      "capabilities" : [ "CooperativeMatrixConversionsEXT", "CooperativeMatrixConversionsNV" ],
       "version" : "None"
     },
     {
@@ -7225,6 +7269,19 @@
       "version" : "None"
     },
     {
+      "opname" : "OpCooperativeMatrixGetCoordinateEXT",
+      "class"  : "Miscellaneous",
+      "opcode" : 5363,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef",        "name" : "Matrix" },
+        { "kind" : "IdRef",        "name" : "Index" }
+      ],
+      "capabilities" : [ "CooperativeMatrixGetCoordinateEXT" ],
+      "version" : "None"
+    },
+    {
       "opname" : "OpBeginInvocationInterlockEXT",
       "class"  : "Reserved",
       "opcode" : 5364,
@@ -7241,8 +7298,9 @@
       "version" : "None"
     },
     {
-      "opname" : "OpCooperativeMatrixReduceNV",
-      "class"  : "Arithmetic",
+      "opname" : "OpCooperativeMatrixReduceEXT",
+      "aliases" : ["OpCooperativeMatrixReduceNV"],
+      "class"  : "Function",
       "opcode" : 5366,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -7251,7 +7309,7 @@
         { "kind" : "CooperativeMatrixReduce",      "name" : "Reduce" },
         { "kind" : "IdRef", "name" : "CombineFunc" }
       ],
-      "capabilities" : [ "CooperativeMatrixReductionsNV" ],
+      "capabilities" : [ "CooperativeMatrixReductionsEXT" ],
       "version" : "None"
     },
     {
@@ -7285,7 +7343,8 @@
       "version" : "None"
     },
     {
-      "opname" : "OpCooperativeMatrixPerElementOpNV",
+      "opname" : "OpCooperativeMatrixPerElementOpEXT",
+      "aliases" : ["OpCooperativeMatrixPerElementOpNV"],
       "class"  : "Function",
       "opcode" : 5369,
       "operands" : [
@@ -7295,7 +7354,7 @@
         { "kind" : "IdRef", "name" : "Func" },
         { "kind" : "IdRef",        "quantifier" : "*", "name" : "Operands" }
       ],
-      "capabilities" : [ "CooperativeMatrixPerElementOperationsNV" ],
+      "capabilities" : [ "CooperativeMatrixPerElementOperationsEXT" ],
       "version" : "None"
     },
     {
@@ -12247,6 +12306,14 @@
           ],
           "capabilities" : [ "FPGALoopControlsALTERA" ],
           "version" : "None"
+        },
+        {
+          "enumerant" : "MultipleWaitQueuesQCOM",
+          "value" : "0x10000000",
+          "parameters" : [
+            { "kind" : "LiteralInteger" }
+          ],
+          "version" : "1.0"
         }
       ]
     },
@@ -12688,6 +12755,11 @@
         {
           "enumerant" : "Pred",
           "value" : 14,
+          "version" : "1.0"
+        },
+        {
+          "enumerant" : "ApilaJai",
+          "value" : 15,
           "version" : "1.0"
         }
       ]
@@ -13235,6 +13307,18 @@
           ],
           "capabilities" : [ "TileShadingQCOM" ],
           "version": "None"
+        },
+        {
+          "enumerant" : "SubgroupSizeHalfQCOM",
+          "value" : 4507,
+          "capabilities" : [ "SubgroupSizeQCOM" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "SubgroupSizeFullQCOM",
+          "value" : 4508,
+          "capabilities" : [ "SubgroupSizeQCOM" ],
+          "version" : "None"
         },
         {
           "enumerant": "EarlyAndLateFragmentTestsAMD",
@@ -15361,6 +15445,12 @@
           "version" : "None"
         },
         {
+          "enumerant" : "CooperativeMatrixTransposeEXT",
+          "value" : 5440,
+          "capabilities" : [ "CooperativeMatrixConversionsEXT" ],
+          "version" : "None"
+        },
+        {
           "enumerant" : "SIMTCallINTEL",
           "value" : 5599,
           "parameters" : [
@@ -15943,6 +16033,15 @@
           "parameters" : [
             { "kind" : "LiteralInteger", "name" : "Cache Level" },
             { "kind" : "StoreCacheControl", "name" : "Cache Control" }
+          ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "IntrinsicSAMSUNG",
+          "value" : 7040,
+          "capabilities": [ "IntrinsicSAMSUNG" ],
+          "parameters": [
+            { "kind" : "LiteralInteger", "name" : "Intrinsic ID" }
           ],
           "version" : "None"
         }
@@ -17399,6 +17498,36 @@
           "version" : "None"
         },
         {
+          "enumerant" : "Float6EXT",
+          "value" : 4228,
+          "extensions" : [ "SPV_EXT_ocp_microscaling_types"],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "Float4EXT",
+          "value" : 4229,
+          "extensions" : [ "SPV_EXT_ocp_microscaling_types"],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "Float8UnsignedE8M0EXT",
+          "value" : 4230,
+          "extensions" : [ "SPV_EXT_ocp_microscaling_types"],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "MXInt8EXT",
+          "value" : 4231,
+          "extensions" : [ "SPV_EXT_ocp_microscaling_types"],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "BitcastExtractEXT",
+          "value" : 4232,
+          "extensions" : [ "SPV_EXT_ocp_microscaling_types"],
+          "version" : "None"
+        },
+        {
           "enumerant" : "FragmentShadingRateKHR",
           "value" : 4422,
           "capabilities" : [ "Shader" ],
@@ -17634,6 +17763,36 @@
           "version" : "None"
         },
         {
+          "enumerant" : "BFloat16MulAddQCOM",
+          "value" : 4504,
+          "extensions" : [ "SPV_QCOM_bfloat16_muladd" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "SubgroupSizeQCOM",
+          "value" : 4506,
+          "extensions" : [ "SPV_QCOM_subgroup_size" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "MultipleWaitQueuesQCOM",
+          "value" : 4539,
+          "extensions" : [ "SPV_QCOM_multiple_wait_queues" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "ImageGatherLinearQCOM",
+          "value" : 4543,
+          "extensions" : [ "SPV_QCOM_image_processing3" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "ImageGatherExtendedModesQCOM",
+          "value" : 4544,
+          "extensions" : [ "SPV_QCOM_image_processing3" ],
+          "version" : "None"
+        },
+        {
           "enumerant" : "Float16ImageAMD",
           "value" : 5008,
           "capabilities" : [ "Shader" ],
@@ -17671,7 +17830,7 @@
         {
           "enumerant" : "Int64ImageEXT",
           "value" : 5016,
-          "capabilities" : [ "Shader" ],
+          "capabilities" : [ "Int64" ],
           "extensions" : [ "SPV_EXT_shader_image_int64" ],
           "version" : "None"
         },
@@ -18157,9 +18316,16 @@
           "version" : "None"
         },
         {
-          "enumerant" : "CooperativeMatrixReductionsNV",
+          "enumerant" : "CooperativeMatrixConversionsEXT",
+          "value" : 5429,
+          "extensions" : [ "SPV_EXT_cooperative_matrix_maintenance1" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "CooperativeMatrixReductionsEXT",
+          "aliases" : ["CooperativeMatrixReductionsNV"],
           "value" : 5430,
-          "extensions" : [ "SPV_NV_cooperative_matrix2" ],
+          "extensions" : [ "SPV_EXT_cooperative_matrix_maintenance1", "SPV_NV_cooperative_matrix2" ],
           "version" : "None"
         },
         {
@@ -18169,9 +18335,10 @@
           "version" : "None"
         },
         {
-          "enumerant" : "CooperativeMatrixPerElementOperationsNV",
+          "enumerant" : "CooperativeMatrixPerElementOperationsEXT",
+          "aliases" : ["CooperativeMatrixPerElementOperationsNV"],
           "value" : 5432,
-          "extensions" : [ "SPV_NV_cooperative_matrix2" ],
+          "extensions" : [ "SPV_EXT_cooperative_matrix_maintenance1", "SPV_NV_cooperative_matrix2" ],
           "version" : "None"
         },
         {
@@ -18197,6 +18364,12 @@
           "value" : 5437,
           "capabilities" : [ "RayTracingKHR" ],
           "extensions" : [ "SPV_NV_cluster_acceleration_structure" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "CooperativeMatrixGetCoordinateEXT",
+          "value" : 5438,
+          "extensions" : [ "SPV_EXT_cooperative_matrix_maintenance1" ],
           "version" : "None"
         },
         {
@@ -18808,6 +18981,12 @@
           "capabilities" : [ "Float8EXT" ],
           "extensions" : [ "SPV_VALVE_mixed_float_dot_product" ],
           "version" : "None"
+        },
+        {
+          "enumerant" : "IntrinsicSAMSUNG",
+          "value" : 7041,
+          "extensions" : [ "SPV_SAMSUNG_intrinsic" ],
+          "version" : "None"
         }
       ]
     },
@@ -19259,6 +19438,36 @@
           "value" : 4215,
           "capabilities" : [ "Float8EXT" ],
           "version" : "None"
+        },
+        {
+          "enumerant" : "Float6E2M3EXT",
+          "value" : 4223,
+          "capabilities" : [ "Float6EXT" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "Float6E3M2EXT",
+          "value" : 4224,
+          "capabilities" : [ "Float6EXT" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "Float4E2M1EXT",
+          "value" : 4225,
+          "capabilities" : [ "Float4EXT" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "Float8UnsignedE8M0EXT",
+          "value" : 4226,
+          "capabilities" : [ "Float8UnsignedE8M0EXT" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "MXInt8EXT",
+          "value" : 4227,
+          "capabilities" : [ "MXInt8EXT" ],
+          "version" : "None"
         }
       ]
     },
@@ -19365,6 +19574,32 @@
         {
           "enumerant" : "FloatE5M2NV",
           "value" : 1000491003,
+          "version" : "None"
+        }
+      ]
+    },
+    {
+      "category" : "ValueEnum",
+      "kind" : "GatherModes",
+      "enumerants" : [
+        {
+          "enumerant" : "Gather4x1QCOM",
+          "value" : 0,
+          "version" : "None"
+        },
+        {
+          "enumerant" : "GatherDQCOM",
+          "value" : 1,
+          "version" : "None"
+        },
+        {
+          "enumerant" : "GatherH2QCOM",
+          "value" : 2,
+          "version" : "None"
+        },
+        {
+          "enumerant" : "GatherV2QCOM",
+          "value" : 3,
           "version" : "None"
         }
       ]
