@@ -173,7 +173,7 @@ static const char* getPciIdName(uint16_t _pciId)
 	case BGFX_PCI_ID_ARM:                 return "ARM";
 	case BGFX_PCI_ID_INTEL:               return "Intel";
 	case BGFX_PCI_ID_MICROSOFT:           return "Microsoft";
-	case BGFX_PCI_ID_NVIDIA:              return "Nvidia";
+	case BGFX_PCI_ID_NVIDIA:              return "NVIDIA";
 	case BGFX_PCI_ID_SOFTWARE_RASTERIZER: return "Software Rasterizer";
 	default: break;
 	}
