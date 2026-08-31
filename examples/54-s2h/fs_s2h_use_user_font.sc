@@ -3,7 +3,7 @@ $input v_color0, v_texcoord0
 #include "../common/common.sh"
 #include "s2h_bgfx.sh"
 
-uniform sampler2D s_quadPostColor;
+SAMPLER2D(s_quadPostColor, 0);
 
 uint userFontCharacter(uint _index)
 {

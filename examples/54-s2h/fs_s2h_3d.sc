@@ -28,7 +28,14 @@ float4x4 lookAt(float3 _eye, float3 _target, float3 _up)
 	float3 zaxis = safeNormalize(_target - _eye);
 	float3 xaxis = safeNormalize(cross(_up, zaxis));
 	float3 yaxis = cross(zaxis, xaxis);
+	// HLSL float4x4 constructors receive rows, while GLSL mat4 constructors
+	// receive columns. s2h_drawBasis expects world-space basis vectors in the
+	// matrix columns, so only the HLSL path needs the transpose.
+#if BGFX_SHADER_LANGUAGE_GLSL
+	return float4x4(float4(xaxis, 0.0f), float4(yaxis, 0.0f), float4(zaxis, 0.0f), float4(_eye, 1.0f));
+#else
 	return transpose(float4x4(float4(xaxis, 0.0f), float4(yaxis, 0.0f), float4(zaxis, 0.0f), float4(_eye, 1.0f)));
+#endif
 }
 
 void main()
