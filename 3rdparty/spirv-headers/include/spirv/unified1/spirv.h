@@ -15,7 +15,7 @@
 
 /*
 ** Enumeration tokens for SPIR-V, in various styles:
-**   C, C++, C++11, JSON, Lua, Python, C#, D, Beef
+**   C, C++, C++11, JSON, Lua, Python, C#, Java, D, Beef
 ** 
 ** - C will have tokens with a "Spv" prefix, e.g.: SpvSourceLanguageGLSL
 ** - C++ will have tokens in the "spv" name space, e.g.: spv::SourceLanguageGLSL
@@ -24,6 +24,8 @@
 ** - Python will use dictionaries, e.g.: spv['SourceLanguage']['GLSL']
 ** - C# will use enum classes in the Specification class located in the "Spv" namespace,
 **     e.g.: Spv.Specification.SourceLanguage.GLSL
+** - Java will use enum classes in the Spv class in the org.khronos.spv package,
+**     e.g.: Spv.SourceLanguage.GLSL
 ** - D will have tokens under the "spv" module, e.g: spv.SourceLanguage.GLSL
 ** - Beef will use enum classes in the Specification class located in the "Spv" namespace,
 **     e.g.: Spv.Specification.SourceLanguage.GLSL
@@ -64,6 +66,7 @@ typedef enum SpvSourceLanguage_ {
     SpvSourceLanguageZig = 12,
     SpvSourceLanguageRust = 13,
     SpvSourceLanguagePred = 14,
+    SpvSourceLanguageApilaJai = 15,
     SpvSourceLanguageMax = 0x7fffffff,
 } SpvSourceLanguage;
 
@@ -163,6 +166,8 @@ typedef enum SpvExecutionMode_ {
     SpvExecutionModeRoundingModeRTZ = 4463,
     SpvExecutionModeNonCoherentTileAttachmentReadQCOM = 4489,
     SpvExecutionModeTileShadingRateQCOM = 4490,
+    SpvExecutionModeSubgroupSizeHalfQCOM = 4507,
+    SpvExecutionModeSubgroupSizeFullQCOM = 4508,
     SpvExecutionModeEarlyAndLateFragmentTestsAMD = 5017,
     SpvExecutionModeStencilRefReplacingEXT = 5027,
     SpvExecutionModeCoalescingAMDX = 5069,
@@ -592,6 +597,7 @@ typedef enum SpvDecoration_ {
     SpvDecorationBindlessImageNV = 5399,
     SpvDecorationBoundSamplerNV = 5400,
     SpvDecorationBoundImageNV = 5401,
+    SpvDecorationCooperativeMatrixTransposeEXT = 5440,
     SpvDecorationSIMTCallINTEL = 5599,
     SpvDecorationReferencedIndirectlyINTEL = 5602,
     SpvDecorationClobberINTEL = 5607,
@@ -701,6 +707,7 @@ typedef enum SpvDecoration_ {
     SpvDecorationConditionalINTEL = 6247,
     SpvDecorationCacheControlLoadINTEL = 6442,
     SpvDecorationCacheControlStoreINTEL = 6443,
+    SpvDecorationIntrinsicSAMSUNG = 7040,
     SpvDecorationMax = 0x7fffffff,
 } SpvDecoration;
 
@@ -900,6 +907,7 @@ typedef enum SpvLoopControlShift_ {
     SpvLoopControlLoopCountINTELShift = 24,
     SpvLoopControlMaxReinvocationDelayALTERAShift = 25,
     SpvLoopControlMaxReinvocationDelayINTELShift = 25,
+    SpvLoopControlMultipleWaitQueuesQCOMShift = 28,
     SpvLoopControlMax = 0x7fffffff,
 } SpvLoopControlShift;
 
@@ -934,6 +942,7 @@ typedef enum SpvLoopControlMask_ {
     SpvLoopControlLoopCountINTELMask = 0x01000000,
     SpvLoopControlMaxReinvocationDelayALTERAMask = 0x02000000,
     SpvLoopControlMaxReinvocationDelayINTELMask = 0x02000000,
+    SpvLoopControlMultipleWaitQueuesQCOMMask = 0x10000000,
 } SpvLoopControlMask;
 
 typedef enum SpvFunctionControlShift_ {
@@ -1153,6 +1162,11 @@ typedef enum SpvCapability_ {
     SpvCapabilityCooperativeMatrixLayoutsARM = 4201,
     SpvCapabilityFloat8EXT = 4212,
     SpvCapabilityFloat8CooperativeMatrixEXT = 4213,
+    SpvCapabilityFloat6EXT = 4228,
+    SpvCapabilityFloat4EXT = 4229,
+    SpvCapabilityFloat8UnsignedE8M0EXT = 4230,
+    SpvCapabilityMXInt8EXT = 4231,
+    SpvCapabilityBitcastExtractEXT = 4232,
     SpvCapabilityFragmentShadingRateKHR = 4422,
     SpvCapabilitySubgroupBallotKHR = 4423,
     SpvCapabilityDrawParameters = 4427,
@@ -1191,6 +1205,11 @@ typedef enum SpvCapability_ {
     SpvCapabilityTileShadingQCOM = 4495,
     SpvCapabilityCooperativeMatrixConversionQCOM = 4496,
     SpvCapabilityTextureBlockMatch2QCOM = 4498,
+    SpvCapabilityBFloat16MulAddQCOM = 4504,
+    SpvCapabilitySubgroupSizeQCOM = 4506,
+    SpvCapabilityMultipleWaitQueuesQCOM = 4539,
+    SpvCapabilityImageGatherLinearQCOM = 4543,
+    SpvCapabilityImageGatherExtendedModesQCOM = 4544,
     SpvCapabilityFloat16ImageAMD = 5008,
     SpvCapabilityImageGatherBiasLodAMD = 5009,
     SpvCapabilityFragmentMaskAMD = 5010,
@@ -1288,13 +1307,17 @@ typedef enum SpvCapability_ {
     SpvCapabilityPushConstantBanksNV = 5423,
     SpvCapabilityLongVectorEXT = 5425,
     SpvCapabilityShader64BitIndexingEXT = 5426,
+    SpvCapabilityCooperativeMatrixConversionsEXT = 5429,
+    SpvCapabilityCooperativeMatrixReductionsEXT = 5430,
     SpvCapabilityCooperativeMatrixReductionsNV = 5430,
     SpvCapabilityCooperativeMatrixConversionsNV = 5431,
+    SpvCapabilityCooperativeMatrixPerElementOperationsEXT = 5432,
     SpvCapabilityCooperativeMatrixPerElementOperationsNV = 5432,
     SpvCapabilityCooperativeMatrixTensorAddressingNV = 5433,
     SpvCapabilityCooperativeMatrixBlockLoadsNV = 5434,
     SpvCapabilityCooperativeVectorTrainingNV = 5435,
     SpvCapabilityRayTracingClusterAccelerationStructureNV = 5437,
+    SpvCapabilityCooperativeMatrixGetCoordinateEXT = 5438,
     SpvCapabilityTensorAddressingNV = 5439,
     SpvCapabilityCooperativeMatrixDecodeVectorNV = 5447,
     SpvCapabilitySubgroupShuffleINTEL = 5568,
@@ -1416,6 +1439,7 @@ typedef enum SpvCapability_ {
     SpvCapabilityDotProductFloat16AccFloat16VALVE = 6913,
     SpvCapabilityDotProductBFloat16AccVALVE = 6914,
     SpvCapabilityDotProductFloat8AccFloat32VALVE = 6915,
+    SpvCapabilityIntrinsicSAMSUNG = 7041,
     SpvCapabilityMax = 0x7fffffff,
 } SpvCapability;
 
@@ -1704,6 +1728,11 @@ typedef enum SpvFPEncoding_ {
     SpvFPEncodingBFloat16KHR = 0,
     SpvFPEncodingFloat8E4M3EXT = 4214,
     SpvFPEncodingFloat8E5M2EXT = 4215,
+    SpvFPEncodingFloat6E2M3EXT = 4223,
+    SpvFPEncodingFloat6E3M2EXT = 4224,
+    SpvFPEncodingFloat4E2M1EXT = 4225,
+    SpvFPEncodingFloat8UnsignedE8M0EXT = 4226,
+    SpvFPEncodingMXInt8EXT = 4227,
     SpvFPEncodingMax = 0x7fffffff,
 } SpvFPEncoding;
 
@@ -1733,6 +1762,14 @@ typedef enum SpvComponentType_ {
     SpvComponentTypeFloatE5M2NV = 1000491003,
     SpvComponentTypeMax = 0x7fffffff,
 } SpvComponentType;
+
+typedef enum SpvGatherModes_ {
+    SpvGatherModesGather4x1QCOM = 0,
+    SpvGatherModesGatherDQCOM = 1,
+    SpvGatherModesGatherH2QCOM = 2,
+    SpvGatherModesGatherV2QCOM = 3,
+    SpvGatherModesMax = 0x7fffffff,
+} SpvGatherModes;
 
 typedef enum SpvOp_ {
     SpvOpNop = 0,
@@ -2093,6 +2130,7 @@ typedef enum SpvOp_ {
     SpvOpGraphSetOutputARM = 4185,
     SpvOpGraphEndARM = 4186,
     SpvOpTypeGraphARM = 4190,
+    SpvOpBitcastExtractEXT = 4195,
     SpvOpTerminateInvocation = 4416,
     SpvOpTypeUntypedPointerKHR = 4417,
     SpvOpUntypedVariableKHR = 4418,
@@ -2153,9 +2191,11 @@ typedef enum SpvOp_ {
     SpvOpImageBlockMatchWindowSADQCOM = 4501,
     SpvOpImageBlockMatchGatherSSDQCOM = 4502,
     SpvOpImageBlockMatchGatherSADQCOM = 4503,
+    SpvOpBFloat16MulAddQCOM = 4505,
     SpvOpCompositeConstructCoopMatQCOM = 4540,
     SpvOpCompositeExtractCoopMatQCOM = 4541,
     SpvOpExtractSubArrayQCOM = 4542,
+    SpvOpImageGatherQCOM = 4545,
     SpvOpGroupIAddNonUniformAMD = 5000,
     SpvOpGroupFAddNonUniformAMD = 5001,
     SpvOpGroupFMinNonUniformAMD = 5002,
@@ -2228,6 +2268,7 @@ typedef enum SpvOp_ {
     SpvOpCooperativeVectorReduceSumAccumulateNV = 5291,
     SpvOpCooperativeVectorMatrixMulAddNV = 5292,
     SpvOpCooperativeMatrixConvertNV = 5293,
+    SpvOpCooperativeMatrixConvertUseEXT = 5293,
     SpvOpEmitMeshTasksEXT = 5294,
     SpvOpSetMeshOutputsEXT = 5295,
     SpvOpGroupNonUniformPartitionEXT = 5296,
@@ -2292,11 +2333,14 @@ typedef enum SpvOp_ {
     SpvOpCooperativeMatrixStoreNV = 5360,
     SpvOpCooperativeMatrixMulAddNV = 5361,
     SpvOpCooperativeMatrixLengthNV = 5362,
+    SpvOpCooperativeMatrixGetCoordinateEXT = 5363,
     SpvOpBeginInvocationInterlockEXT = 5364,
     SpvOpEndInvocationInterlockEXT = 5365,
+    SpvOpCooperativeMatrixReduceEXT = 5366,
     SpvOpCooperativeMatrixReduceNV = 5366,
     SpvOpCooperativeMatrixLoadTensorNV = 5367,
     SpvOpCooperativeMatrixStoreTensorNV = 5368,
+    SpvOpCooperativeMatrixPerElementOpEXT = 5369,
     SpvOpCooperativeMatrixPerElementOpNV = 5369,
     SpvOpTypeTensorLayoutNV = 5370,
     SpvOpTypeTensorViewNV = 5371,
@@ -3032,6 +3076,7 @@ inline void SpvHasResultAndType(SpvOp opcode, bool *hasResult, bool *hasResultTy
     case SpvOpGraphSetOutputARM: *hasResult = false; *hasResultType = false; break;
     case SpvOpGraphEndARM: *hasResult = false; *hasResultType = false; break;
     case SpvOpTypeGraphARM: *hasResult = true; *hasResultType = false; break;
+    case SpvOpBitcastExtractEXT: *hasResult = true; *hasResultType = true; break;
     case SpvOpTerminateInvocation: *hasResult = false; *hasResultType = false; break;
     case SpvOpTypeUntypedPointerKHR: *hasResult = true; *hasResultType = false; break;
     case SpvOpUntypedVariableKHR: *hasResult = true; *hasResultType = true; break;
@@ -3086,9 +3131,11 @@ inline void SpvHasResultAndType(SpvOp opcode, bool *hasResult, bool *hasResultTy
     case SpvOpImageBlockMatchWindowSADQCOM: *hasResult = true; *hasResultType = true; break;
     case SpvOpImageBlockMatchGatherSSDQCOM: *hasResult = true; *hasResultType = true; break;
     case SpvOpImageBlockMatchGatherSADQCOM: *hasResult = true; *hasResultType = true; break;
+    case SpvOpBFloat16MulAddQCOM: *hasResult = true; *hasResultType = true; break;
     case SpvOpCompositeConstructCoopMatQCOM: *hasResult = true; *hasResultType = true; break;
     case SpvOpCompositeExtractCoopMatQCOM: *hasResult = true; *hasResultType = true; break;
     case SpvOpExtractSubArrayQCOM: *hasResult = true; *hasResultType = true; break;
+    case SpvOpImageGatherQCOM: *hasResult = true; *hasResultType = true; break;
     case SpvOpGroupIAddNonUniformAMD: *hasResult = true; *hasResultType = true; break;
     case SpvOpGroupFAddNonUniformAMD: *hasResult = true; *hasResultType = true; break;
     case SpvOpGroupFMinNonUniformAMD: *hasResult = true; *hasResultType = true; break;
@@ -3159,7 +3206,7 @@ inline void SpvHasResultAndType(SpvOp opcode, bool *hasResult, bool *hasResultTy
     case SpvOpCooperativeVectorOuterProductAccumulateNV: *hasResult = false; *hasResultType = false; break;
     case SpvOpCooperativeVectorReduceSumAccumulateNV: *hasResult = false; *hasResultType = false; break;
     case SpvOpCooperativeVectorMatrixMulAddNV: *hasResult = true; *hasResultType = true; break;
-    case SpvOpCooperativeMatrixConvertNV: *hasResult = true; *hasResultType = true; break;
+    case SpvOpCooperativeMatrixConvertUseEXT: *hasResult = true; *hasResultType = true; break;
     case SpvOpEmitMeshTasksEXT: *hasResult = false; *hasResultType = false; break;
     case SpvOpSetMeshOutputsEXT: *hasResult = false; *hasResultType = false; break;
     case SpvOpGroupNonUniformPartitionEXT: *hasResult = true; *hasResultType = true; break;
@@ -3220,12 +3267,13 @@ inline void SpvHasResultAndType(SpvOp opcode, bool *hasResult, bool *hasResultTy
     case SpvOpCooperativeMatrixStoreNV: *hasResult = false; *hasResultType = false; break;
     case SpvOpCooperativeMatrixMulAddNV: *hasResult = true; *hasResultType = true; break;
     case SpvOpCooperativeMatrixLengthNV: *hasResult = true; *hasResultType = true; break;
+    case SpvOpCooperativeMatrixGetCoordinateEXT: *hasResult = true; *hasResultType = true; break;
     case SpvOpBeginInvocationInterlockEXT: *hasResult = false; *hasResultType = false; break;
     case SpvOpEndInvocationInterlockEXT: *hasResult = false; *hasResultType = false; break;
-    case SpvOpCooperativeMatrixReduceNV: *hasResult = true; *hasResultType = true; break;
+    case SpvOpCooperativeMatrixReduceEXT: *hasResult = true; *hasResultType = true; break;
     case SpvOpCooperativeMatrixLoadTensorNV: *hasResult = true; *hasResultType = true; break;
     case SpvOpCooperativeMatrixStoreTensorNV: *hasResult = false; *hasResultType = false; break;
-    case SpvOpCooperativeMatrixPerElementOpNV: *hasResult = true; *hasResultType = true; break;
+    case SpvOpCooperativeMatrixPerElementOpEXT: *hasResult = true; *hasResultType = true; break;
     case SpvOpTypeTensorLayoutNV: *hasResult = true; *hasResultType = false; break;
     case SpvOpTypeTensorViewNV: *hasResult = true; *hasResultType = false; break;
     case SpvOpCreateTensorLayoutNV: *hasResult = true; *hasResultType = true; break;
@@ -3566,6 +3614,7 @@ inline const char* SpvSourceLanguageToString(SpvSourceLanguage value) {
     case SpvSourceLanguageZig: return "Zig";
     case SpvSourceLanguageRust: return "Rust";
     case SpvSourceLanguagePred: return "Pred";
+    case SpvSourceLanguageApilaJai: return "ApilaJai";
     default: return "Unknown";
     }
 }
@@ -3665,6 +3714,8 @@ inline const char* SpvExecutionModeToString(SpvExecutionMode value) {
     case SpvExecutionModeRoundingModeRTZ: return "RoundingModeRTZ";
     case SpvExecutionModeNonCoherentTileAttachmentReadQCOM: return "NonCoherentTileAttachmentReadQCOM";
     case SpvExecutionModeTileShadingRateQCOM: return "TileShadingRateQCOM";
+    case SpvExecutionModeSubgroupSizeHalfQCOM: return "SubgroupSizeHalfQCOM";
+    case SpvExecutionModeSubgroupSizeFullQCOM: return "SubgroupSizeFullQCOM";
     case SpvExecutionModeEarlyAndLateFragmentTestsAMD: return "EarlyAndLateFragmentTestsAMD";
     case SpvExecutionModeStencilRefReplacingEXT: return "StencilRefReplacingEXT";
     case SpvExecutionModeCoalescingAMDX: return "CoalescingAMDX";
@@ -4022,6 +4073,7 @@ inline const char* SpvDecorationToString(SpvDecoration value) {
     case SpvDecorationBindlessImageNV: return "BindlessImageNV";
     case SpvDecorationBoundSamplerNV: return "BoundSamplerNV";
     case SpvDecorationBoundImageNV: return "BoundImageNV";
+    case SpvDecorationCooperativeMatrixTransposeEXT: return "CooperativeMatrixTransposeEXT";
     case SpvDecorationSIMTCallINTEL: return "SIMTCallINTEL";
     case SpvDecorationReferencedIndirectlyINTEL: return "ReferencedIndirectlyINTEL";
     case SpvDecorationClobberINTEL: return "ClobberINTEL";
@@ -4088,6 +4140,7 @@ inline const char* SpvDecorationToString(SpvDecoration value) {
     case SpvDecorationConditionalINTEL: return "ConditionalINTEL";
     case SpvDecorationCacheControlLoadINTEL: return "CacheControlLoadINTEL";
     case SpvDecorationCacheControlStoreINTEL: return "CacheControlStoreINTEL";
+    case SpvDecorationIntrinsicSAMSUNG: return "IntrinsicSAMSUNG";
     default: return "Unknown";
     }
 }
@@ -4344,6 +4397,11 @@ inline const char* SpvCapabilityToString(SpvCapability value) {
     case SpvCapabilityCooperativeMatrixLayoutsARM: return "CooperativeMatrixLayoutsARM";
     case SpvCapabilityFloat8EXT: return "Float8EXT";
     case SpvCapabilityFloat8CooperativeMatrixEXT: return "Float8CooperativeMatrixEXT";
+    case SpvCapabilityFloat6EXT: return "Float6EXT";
+    case SpvCapabilityFloat4EXT: return "Float4EXT";
+    case SpvCapabilityFloat8UnsignedE8M0EXT: return "Float8UnsignedE8M0EXT";
+    case SpvCapabilityMXInt8EXT: return "MXInt8EXT";
+    case SpvCapabilityBitcastExtractEXT: return "BitcastExtractEXT";
     case SpvCapabilityFragmentShadingRateKHR: return "FragmentShadingRateKHR";
     case SpvCapabilitySubgroupBallotKHR: return "SubgroupBallotKHR";
     case SpvCapabilityDrawParameters: return "DrawParameters";
@@ -4380,6 +4438,11 @@ inline const char* SpvCapabilityToString(SpvCapability value) {
     case SpvCapabilityTileShadingQCOM: return "TileShadingQCOM";
     case SpvCapabilityCooperativeMatrixConversionQCOM: return "CooperativeMatrixConversionQCOM";
     case SpvCapabilityTextureBlockMatch2QCOM: return "TextureBlockMatch2QCOM";
+    case SpvCapabilityBFloat16MulAddQCOM: return "BFloat16MulAddQCOM";
+    case SpvCapabilitySubgroupSizeQCOM: return "SubgroupSizeQCOM";
+    case SpvCapabilityMultipleWaitQueuesQCOM: return "MultipleWaitQueuesQCOM";
+    case SpvCapabilityImageGatherLinearQCOM: return "ImageGatherLinearQCOM";
+    case SpvCapabilityImageGatherExtendedModesQCOM: return "ImageGatherExtendedModesQCOM";
     case SpvCapabilityFloat16ImageAMD: return "Float16ImageAMD";
     case SpvCapabilityImageGatherBiasLodAMD: return "ImageGatherBiasLodAMD";
     case SpvCapabilityFragmentMaskAMD: return "FragmentMaskAMD";
@@ -4454,13 +4517,15 @@ inline const char* SpvCapabilityToString(SpvCapability value) {
     case SpvCapabilityPushConstantBanksNV: return "PushConstantBanksNV";
     case SpvCapabilityLongVectorEXT: return "LongVectorEXT";
     case SpvCapabilityShader64BitIndexingEXT: return "Shader64BitIndexingEXT";
-    case SpvCapabilityCooperativeMatrixReductionsNV: return "CooperativeMatrixReductionsNV";
+    case SpvCapabilityCooperativeMatrixConversionsEXT: return "CooperativeMatrixConversionsEXT";
+    case SpvCapabilityCooperativeMatrixReductionsEXT: return "CooperativeMatrixReductionsEXT";
     case SpvCapabilityCooperativeMatrixConversionsNV: return "CooperativeMatrixConversionsNV";
-    case SpvCapabilityCooperativeMatrixPerElementOperationsNV: return "CooperativeMatrixPerElementOperationsNV";
+    case SpvCapabilityCooperativeMatrixPerElementOperationsEXT: return "CooperativeMatrixPerElementOperationsEXT";
     case SpvCapabilityCooperativeMatrixTensorAddressingNV: return "CooperativeMatrixTensorAddressingNV";
     case SpvCapabilityCooperativeMatrixBlockLoadsNV: return "CooperativeMatrixBlockLoadsNV";
     case SpvCapabilityCooperativeVectorTrainingNV: return "CooperativeVectorTrainingNV";
     case SpvCapabilityRayTracingClusterAccelerationStructureNV: return "RayTracingClusterAccelerationStructureNV";
+    case SpvCapabilityCooperativeMatrixGetCoordinateEXT: return "CooperativeMatrixGetCoordinateEXT";
     case SpvCapabilityTensorAddressingNV: return "TensorAddressingNV";
     case SpvCapabilityCooperativeMatrixDecodeVectorNV: return "CooperativeMatrixDecodeVectorNV";
     case SpvCapabilitySubgroupShuffleINTEL: return "SubgroupShuffleINTEL";
@@ -4555,6 +4620,7 @@ inline const char* SpvCapabilityToString(SpvCapability value) {
     case SpvCapabilityDotProductFloat16AccFloat16VALVE: return "DotProductFloat16AccFloat16VALVE";
     case SpvCapabilityDotProductBFloat16AccVALVE: return "DotProductBFloat16AccVALVE";
     case SpvCapabilityDotProductFloat8AccFloat32VALVE: return "DotProductFloat8AccFloat32VALVE";
+    case SpvCapabilityIntrinsicSAMSUNG: return "IntrinsicSAMSUNG";
     default: return "Unknown";
     }
 }
@@ -4712,6 +4778,11 @@ inline const char* SpvFPEncodingToString(SpvFPEncoding value) {
     case SpvFPEncodingBFloat16KHR: return "BFloat16KHR";
     case SpvFPEncodingFloat8E4M3EXT: return "Float8E4M3EXT";
     case SpvFPEncodingFloat8E5M2EXT: return "Float8E5M2EXT";
+    case SpvFPEncodingFloat6E2M3EXT: return "Float6E2M3EXT";
+    case SpvFPEncodingFloat6E3M2EXT: return "Float6E3M2EXT";
+    case SpvFPEncodingFloat4E2M1EXT: return "Float4E2M1EXT";
+    case SpvFPEncodingFloat8UnsignedE8M0EXT: return "Float8UnsignedE8M0EXT";
+    case SpvFPEncodingMXInt8EXT: return "MXInt8EXT";
     default: return "Unknown";
     }
 }
@@ -4743,6 +4814,16 @@ inline const char* SpvComponentTypeToString(SpvComponentType value) {
     case SpvComponentTypeUnsignedInt8PackedNV: return "UnsignedInt8PackedNV";
     case SpvComponentTypeFloatE4M3NV: return "FloatE4M3NV";
     case SpvComponentTypeFloatE5M2NV: return "FloatE5M2NV";
+    default: return "Unknown";
+    }
+}
+
+inline const char* SpvGatherModesToString(SpvGatherModes value) {
+    switch (value) {
+    case SpvGatherModesGather4x1QCOM: return "Gather4x1QCOM";
+    case SpvGatherModesGatherDQCOM: return "GatherDQCOM";
+    case SpvGatherModesGatherH2QCOM: return "GatherH2QCOM";
+    case SpvGatherModesGatherV2QCOM: return "GatherV2QCOM";
     default: return "Unknown";
     }
 }
@@ -5107,6 +5188,7 @@ inline const char* SpvOpToString(SpvOp value) {
     case SpvOpGraphSetOutputARM: return "OpGraphSetOutputARM";
     case SpvOpGraphEndARM: return "OpGraphEndARM";
     case SpvOpTypeGraphARM: return "OpTypeGraphARM";
+    case SpvOpBitcastExtractEXT: return "OpBitcastExtractEXT";
     case SpvOpTerminateInvocation: return "OpTerminateInvocation";
     case SpvOpTypeUntypedPointerKHR: return "OpTypeUntypedPointerKHR";
     case SpvOpUntypedVariableKHR: return "OpUntypedVariableKHR";
@@ -5161,9 +5243,11 @@ inline const char* SpvOpToString(SpvOp value) {
     case SpvOpImageBlockMatchWindowSADQCOM: return "OpImageBlockMatchWindowSADQCOM";
     case SpvOpImageBlockMatchGatherSSDQCOM: return "OpImageBlockMatchGatherSSDQCOM";
     case SpvOpImageBlockMatchGatherSADQCOM: return "OpImageBlockMatchGatherSADQCOM";
+    case SpvOpBFloat16MulAddQCOM: return "OpBFloat16MulAddQCOM";
     case SpvOpCompositeConstructCoopMatQCOM: return "OpCompositeConstructCoopMatQCOM";
     case SpvOpCompositeExtractCoopMatQCOM: return "OpCompositeExtractCoopMatQCOM";
     case SpvOpExtractSubArrayQCOM: return "OpExtractSubArrayQCOM";
+    case SpvOpImageGatherQCOM: return "OpImageGatherQCOM";
     case SpvOpGroupIAddNonUniformAMD: return "OpGroupIAddNonUniformAMD";
     case SpvOpGroupFAddNonUniformAMD: return "OpGroupFAddNonUniformAMD";
     case SpvOpGroupFMinNonUniformAMD: return "OpGroupFMinNonUniformAMD";
@@ -5295,12 +5379,13 @@ inline const char* SpvOpToString(SpvOp value) {
     case SpvOpCooperativeMatrixStoreNV: return "OpCooperativeMatrixStoreNV";
     case SpvOpCooperativeMatrixMulAddNV: return "OpCooperativeMatrixMulAddNV";
     case SpvOpCooperativeMatrixLengthNV: return "OpCooperativeMatrixLengthNV";
+    case SpvOpCooperativeMatrixGetCoordinateEXT: return "OpCooperativeMatrixGetCoordinateEXT";
     case SpvOpBeginInvocationInterlockEXT: return "OpBeginInvocationInterlockEXT";
     case SpvOpEndInvocationInterlockEXT: return "OpEndInvocationInterlockEXT";
-    case SpvOpCooperativeMatrixReduceNV: return "OpCooperativeMatrixReduceNV";
+    case SpvOpCooperativeMatrixReduceEXT: return "OpCooperativeMatrixReduceEXT";
     case SpvOpCooperativeMatrixLoadTensorNV: return "OpCooperativeMatrixLoadTensorNV";
     case SpvOpCooperativeMatrixStoreTensorNV: return "OpCooperativeMatrixStoreTensorNV";
-    case SpvOpCooperativeMatrixPerElementOpNV: return "OpCooperativeMatrixPerElementOpNV";
+    case SpvOpCooperativeMatrixPerElementOpEXT: return "OpCooperativeMatrixPerElementOpEXT";
     case SpvOpTypeTensorLayoutNV: return "OpTypeTensorLayoutNV";
     case SpvOpTypeTensorViewNV: return "OpTypeTensorViewNV";
     case SpvOpCreateTensorLayoutNV: return "OpCreateTensorLayoutNV";
