@@ -78,13 +78,21 @@ void FriendlyNameMapper::SaveName(uint32_t id,
                                   const std::string& suggested_name) {
   if (name_for_id_.find(id) != name_for_id_.end()) return;
 
-  const std::string sanitized_suggested_name = Sanitize(suggested_name);
-  std::string name = sanitized_suggested_name;
+  std::string base_name;
+
+  // Limit the size of the name to limit memory usage.
+  const uint32_t kMaxSize = 256;
+  if (suggested_name.size() > kMaxSize) {
+    base_name = to_string(id);
+  } else {
+    base_name = Sanitize(suggested_name);
+  }
+  std::string name = base_name;
   auto inserted = used_names_.insert(name);
   if (!inserted.second) {
-    const std::string base_name = sanitized_suggested_name + "_";
+    const std::string base_name_prefix = base_name + "_";
     for (uint32_t index = 0; !inserted.second; ++index) {
-      name = base_name + to_string(index);
+      name = base_name_prefix + to_string(index);
       inserted = used_names_.insert(name);
     }
   }
@@ -225,6 +233,27 @@ spv_result_t FriendlyNameMapper::ParseInstruction(
         }
         if (spv::FPEncoding(inst.words[3]) == spv::FPEncoding::Float8E5M2EXT) {
           SaveName(result_id, "fp8e5m2");
+          break;
+        }
+        if (spv::FPEncoding(inst.words[3]) == spv::FPEncoding::Float6E2M3EXT) {
+          SaveName(result_id, "fp6e2m3");
+          break;
+        }
+        if (spv::FPEncoding(inst.words[3]) == spv::FPEncoding::Float6E3M2EXT) {
+          SaveName(result_id, "fp6e3m2");
+          break;
+        }
+        if (spv::FPEncoding(inst.words[3]) == spv::FPEncoding::Float4E2M1EXT) {
+          SaveName(result_id, "fp4e2m1");
+          break;
+        }
+        if (spv::FPEncoding(inst.words[3]) ==
+            spv::FPEncoding::Float8UnsignedE8M0EXT) {
+          SaveName(result_id, "fp8e8m0");
+          break;
+        }
+        if (spv::FPEncoding(inst.words[3]) == spv::FPEncoding::MXInt8EXT) {
+          SaveName(result_id, "mxint8");
           break;
         }
       }

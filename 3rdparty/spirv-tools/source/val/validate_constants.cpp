@@ -633,6 +633,10 @@ spv_result_t ValidateSpecConstantOp(ValidationState_t& _,
     case spv::Op::OpInBoundsAccessChain:
     case spv::Op::OpPtrAccessChain:
     case spv::Op::OpInBoundsPtrAccessChain:
+    case spv::Op::OpUntypedAccessChainKHR:
+    case spv::Op::OpUntypedInBoundsAccessChainKHR:
+    case spv::Op::OpUntypedPtrAccessChainKHR:
+    case spv::Op::OpUntypedInBoundsPtrAccessChainKHR:
       if (!_.HasCapability(spv::Capability::Kernel)) {
         return _.diag(SPV_ERROR_INVALID_ID, inst)
                << "Specialization constant operation " << spvOpcodeString(op)

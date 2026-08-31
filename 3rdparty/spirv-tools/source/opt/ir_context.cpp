@@ -118,6 +118,12 @@ void IRContext::InvalidateAnalyses(IRContext::Analysis analyses_to_invalidate) {
   // dominator analysis should be invalidated as well.
   if (analyses_to_invalidate & kAnalysisCFG) {
     analyses_to_invalidate |= kAnalysisDominatorAnalysis;
+    analyses_to_invalidate |= kAnalysisStructuredCFG;
+  }
+
+  if (analyses_to_invalidate & kAnalysisLoopAnalysis) {
+    analyses_to_invalidate |= kAnalysisScalarEvolution;
+    analyses_to_invalidate |= kAnalysisLiveness;
   }
 
   if (analyses_to_invalidate & kAnalysisDefUse) {
@@ -142,6 +148,9 @@ void IRContext::InvalidateAnalyses(IRContext::Analysis analyses_to_invalidate) {
     dominator_trees_.clear();
     post_dominator_trees_.clear();
   }
+  if (analyses_to_invalidate & kAnalysisLoopAnalysis) {
+    loop_descriptors_.clear();
+  }
   if (analyses_to_invalidate & kAnalysisNameMap) {
     id_to_name_.reset(nullptr);
   }
@@ -159,6 +168,12 @@ void IRContext::InvalidateAnalyses(IRContext::Analysis analyses_to_invalidate) {
   }
   if (analyses_to_invalidate & kAnalysisLiveness) {
     liveness_mgr_.reset(nullptr);
+  }
+  if (analyses_to_invalidate & kAnalysisScalarEvolution) {
+    scalar_evolution_analysis_.reset(nullptr);
+  }
+  if (analyses_to_invalidate & kAnalysisRegisterPressure) {
+    reg_pressure_.reset(nullptr);
   }
   if (analyses_to_invalidate & kAnalysisTypes) {
     type_mgr_.reset(nullptr);
@@ -211,7 +226,8 @@ Instruction* IRContext::KillInst(Instruction* inst) {
   if (inst->opcode() == spv::Op::OpCapability ||
       inst->opcode() == spv::Op::OpConditionalCapabilityINTEL ||
       inst->opcode() == spv::Op::OpExtension ||
-      inst->opcode() == spv::Op::OpConditionalExtensionINTEL) {
+      inst->opcode() == spv::Op::OpConditionalExtensionINTEL ||
+      inst->opcode() == spv::Op::OpExtInstImport) {
     // We reset the feature manager, instead of updating it, because it is just
     // as much work.  We would have to remove all capabilities implied by this
     // capability that are not also implied by the remaining OpCapability
@@ -271,7 +287,8 @@ void IRContext::CollectNonSemanticTree(
     work_list.pop_back();
     get_def_use_mgr()->ForEachUser(
         i, [&work_list, to_kill, &seen](Instruction* user) {
-          if (user->IsNonSemanticInstruction() && seen.insert(user).second) {
+          if (user->IsNonSemanticInstruction() && !user->IsDebugLineInst() &&
+              seen.insert(user).second) {
             work_list.push_back(user);
             to_kill->insert(user);
           }
@@ -392,7 +409,6 @@ bool IRContext::IsConsistent() {
     }
   }
 
-  return true;
   if (AreAnalysesValid(kAnalysisIdToFuncMapping)) {
     for (auto& fn : *module_) {
       if (id_to_func_[fn.result_id()] != &fn) {
@@ -433,6 +449,37 @@ bool IRContext::IsConsistent() {
     analysis::DecorationManager current(module());
 
     if (*dec_mgr != current) {
+      return false;
+    }
+  }
+
+  if (AreAnalysesValid(kAnalysisDominatorAnalysis)) {
+    for (const auto& it : dominator_trees_) {
+      const Function* f = it.first;
+      const DominatorAnalysis& cached_dom = it.second;
+      DominatorAnalysis new_dom;
+      new_dom.InitializeTree(*cfg(), f);
+
+      if (!(cached_dom == new_dom)) {
+        return false;
+      }
+    }
+    for (const auto& it : post_dominator_trees_) {
+      const Function* f = it.first;
+      const PostDominatorAnalysis& cached_post_dom = it.second;
+      PostDominatorAnalysis new_post_dom;
+      new_post_dom.InitializeTree(*cfg(), f);
+
+      if (!(cached_post_dom == new_post_dom)) {
+        return false;
+      }
+    }
+  }
+
+  if (AreAnalysesValid(kAnalysisStructuredCFG)) {
+    StructuredCFGAnalysis new_struct_cfg(this);
+    StructuredCFGAnalysis* cached_struct_cfg = struct_cfg_analysis_.get();
+    if (!(*cached_struct_cfg == new_struct_cfg)) {
       return false;
     }
   }
@@ -973,9 +1020,9 @@ void IRContext::AddCalls(const Function* func, std::queue<uint32_t>* todo) {
     for (auto ii = bi->begin(); ii != bi->end(); ++ii) {
       if (ii->opcode() == spv::Op::OpFunctionCall)
         todo->push(ii->GetSingleWordInOperand(0));
-      if (ii->opcode() == spv::Op::OpCooperativeMatrixPerElementOpNV)
+      if (ii->opcode() == spv::Op::OpCooperativeMatrixPerElementOpEXT)
         todo->push(ii->GetSingleWordInOperand(1));
-      if (ii->opcode() == spv::Op::OpCooperativeMatrixReduceNV)
+      if (ii->opcode() == spv::Op::OpCooperativeMatrixReduceEXT)
         todo->push(ii->GetSingleWordInOperand(2));
       if (ii->opcode() == spv::Op::OpCooperativeMatrixLoadTensorNV) {
         const auto memory_operands_index = 3;

@@ -637,7 +637,8 @@ spv_result_t ValidateImageOperands(ValidationState_t& _,
       if (opcode != spv::Op::OpImageGather &&
           opcode != spv::Op::OpImageDrefGather &&
           opcode != spv::Op::OpImageSparseGather &&
-          opcode != spv::Op::OpImageSparseDrefGather) {
+          opcode != spv::Op::OpImageSparseDrefGather &&
+          opcode != spv::Op::OpImageGatherQCOM) {
         return _.diag(SPV_ERROR_INVALID_DATA, inst)
                << _.VkErrorID(10213)
                << "Image Operand Offset can only be used with "
@@ -652,7 +653,8 @@ spv_result_t ValidateImageOperands(ValidationState_t& _,
     if (opcode != spv::Op::OpImageGather &&
         opcode != spv::Op::OpImageDrefGather &&
         opcode != spv::Op::OpImageSparseGather &&
-        opcode != spv::Op::OpImageSparseDrefGather) {
+        opcode != spv::Op::OpImageSparseDrefGather &&
+        opcode != spv::Op::OpImageGatherQCOM) {
       return _.diag(SPV_ERROR_INVALID_DATA, inst)
              << "Image Operand ConstOffsets can only be used with "
                 "OpImageGather and OpImageDrefGather";
@@ -908,7 +910,9 @@ bool IsSparse(spv::Op opcode) {
       return true;
     }
 
-    default: { return false; }
+    default: {
+      return false;
+    }
   }
 
   return false;
@@ -1192,6 +1196,7 @@ bool IsAllowedSampledImageOperand(spv::Op opcode, ValidationState_t& _) {
     case spv::Op::OpImageBlockMatchWindowSSDQCOM:
     case spv::Op::OpImageBlockMatchGatherSADQCOM:
     case spv::Op::OpImageBlockMatchGatherSSDQCOM:
+    case spv::Op::OpImageGatherQCOM:
     case spv::Op::OpImageSampleFootprintNV:
       return true;
     case spv::Op::OpStore:
@@ -1218,6 +1223,7 @@ spv_result_t ValidateImageCoordinate(ValidationState_t& _,
       opcode == spv::Op::OpImageSampleProjDrefImplicitLod ||
       opcode == spv::Op::OpImageSampleProjDrefExplicitLod ||
       opcode == spv::Op::OpImageGather ||
+      opcode == spv::Op::OpImageGatherQCOM ||
       opcode == spv::Op::OpImageDrefGather ||
       opcode == spv::Op::OpImageQueryLod ||
       opcode == spv::Op::OpImageSparseSampleImplicitLod ||
@@ -1846,8 +1852,10 @@ spv_result_t ValidateImageGather(ValidationState_t& _,
           ValidateImageCoordinate(_, inst, info, /* word_index = */ 3))
     return result;
 
+  unsigned n_additional_operands = 0;
   if (opcode == spv::Op::OpImageGather ||
-      opcode == spv::Op::OpImageSparseGather) {
+      opcode == spv::Op::OpImageSparseGather ||
+      opcode == spv::Op::OpImageGatherQCOM) {
     const uint32_t component = inst->GetOperandAs<uint32_t>(4);
     const uint32_t component_index_type = _.GetTypeId(component);
     if (!_.IsIntScalarType(component_index_type, 32)) {
@@ -1862,14 +1870,53 @@ spv_result_t ValidateImageGather(ValidationState_t& _,
                   "environment";
       }
     }
+    if (opcode == spv::Op::OpImageGatherQCOM) {
+      const uint32_t mode = inst->GetOperandAs<uint32_t>(5);
+      const uint32_t mode_index_type = _.GetTypeId(mode);
+      if (!_.IsIntScalarType(mode_index_type) ||
+          _.GetBitWidth(mode_index_type) != 32) {
+        return _.diag(SPV_ERROR_INVALID_DATA, inst)
+               << "Expected Mode to be 32-bit int scalar";
+      }
+      const spv::Op modeOpc = _.GetIdOpcode(mode);
+      if (spvOpcodeIsConstant(modeOpc) && !spvOpcodeIsSpecConstant(modeOpc)) {
+        uint64_t m_val = -1;
+        if (_.EvalConstantValUint64(mode, &m_val)) {
+          if (m_val == 0) {
+            if (!_.HasCapability(spv::Capability::ImageGatherLinearQCOM)) {
+              return _.diag(SPV_ERROR_INVALID_CAPABILITY, inst)
+                     << "Mode GatherModesGather4x1QCOM (== 0) requires "
+                        "capability ImageGatherLinearQCOM.";
+            }
+          } else if (m_val < 4) {
+            if (!_.HasCapability(
+                    spv::Capability::ImageGatherExtendedModesQCOM)) {
+              return _.diag(SPV_ERROR_INVALID_CAPABILITY, inst)
+                     << "Mode GatherModesGatherDQCOM (== "
+                        "1)/GatherModesGatherH2QCOM (== 2"
+                        ")/GatherModesGatherV2QCOM (== 3)"
+                        " requires capability ImageGatherExtendedModesQCOM.";
+            }
+          } else {
+            return _.diag(SPV_ERROR_INVALID_DATA, inst)
+                   << "GatherModesGather4x1QCOM (== 0)/"
+                      "GatherModesGatherDQCOM (== 1)/"
+                      "GatherModesGatherH2QCOM (== 2)/"
+                      "GatherModesGatherV2QCOM (== 3) "
+                      "are the only supported modes.";
+          }
+        }
+      }
+      n_additional_operands += 1;
+    }
   } else {
     assert(opcode == spv::Op::OpImageDrefGather ||
            opcode == spv::Op::OpImageSparseDrefGather);
     if (spv_result_t result = ValidateImageDref(_, inst, info)) return result;
   }
 
-  if (spv_result_t result =
-          ValidateImageOperands(_, inst, info, /* word_index = */ 7))
+  if (spv_result_t result = ValidateImageOperands(
+          _, inst, info, /* word_index = */ (7 + n_additional_operands)))
     return result;
 
   return SPV_SUCCESS;
@@ -2682,6 +2729,7 @@ spv_result_t ImagePass(ValidationState_t& _, const Instruction* inst) {
     case spv::Op::OpImageDrefGather:
     case spv::Op::OpImageSparseGather:
     case spv::Op::OpImageSparseDrefGather:
+    case spv::Op::OpImageGatherQCOM:
       return ValidateImageGather(_, inst);
 
     case spv::Op::OpImageRead:
@@ -2787,6 +2835,7 @@ bool IsImageInstruction(const spv::Op opcode) {
     case spv::Op::OpImageBlockMatchWindowSSDQCOM:
     case spv::Op::OpImageBlockMatchGatherSADQCOM:
     case spv::Op::OpImageBlockMatchGatherSSDQCOM:
+    case spv::Op::OpImageGatherQCOM:
       return true;
     default:
       break;

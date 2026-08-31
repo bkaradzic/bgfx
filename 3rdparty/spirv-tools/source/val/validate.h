@@ -144,6 +144,8 @@ spv_result_t InstructionPass(ValidationState_t& _, const Instruction* inst);
 /// has been propagated down to the group members.
 spv_result_t ValidateDecorations(ValidationState_t& _);
 
+spv_result_t ValidateExplicitLayout(ValidationState_t& _);
+
 /// Performs validation of built-in variables.
 spv_result_t ValidateBuiltIns(ValidationState_t& _);
 

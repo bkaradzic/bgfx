@@ -489,6 +489,7 @@ spv_result_t Parser::parseOperand(size_t inst_offset,
   // Assume non-numeric values.  This will be updated for literal numbers.
   parsed_operand.number_kind = SPV_NUMBER_NONE;
   parsed_operand.number_bit_width = 0;
+  parsed_operand.fp_encoding = SPV_FP_ENCODING_UNKNOWN;
 
   if (_.word_index >= _.num_words)
     return exhaustedInputDiagnostic(inst_offset, opcode, type);
@@ -744,7 +745,8 @@ spv_result_t Parser::parseOperand(size_t inst_offset,
     case SPV_OPERAND_TYPE_HOST_ACCESS_QUALIFIER:
     case SPV_OPERAND_TYPE_LOAD_CACHE_CONTROL:
     case SPV_OPERAND_TYPE_STORE_CACHE_CONTROL:
-    case SPV_OPERAND_TYPE_NAMED_MAXIMUM_NUMBER_OF_REGISTERS: {
+    case SPV_OPERAND_TYPE_NAMED_MAXIMUM_NUMBER_OF_REGISTERS:
+    case SPV_OPERAND_TYPE_GATHER_MODES: {
       // A single word that is a plain enum value.
 
       // Map an optional operand type to its corresponding concrete type.

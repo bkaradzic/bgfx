@@ -722,6 +722,8 @@ Optimizer::PassToken CreateSSARewritePass();
 // redundancy elimination and DCE.
 Optimizer::PassToken CreateConvertRelaxedToHalfPass();
 
+Optimizer::PassToken CreateConvertToUntypedPass();
+
 // Create relax float ops pass.
 // This pass decorates all float32 result instructions with RelaxedPrecision
 // if not already so decorated.

@@ -713,6 +713,11 @@ class ValidationState_t {
   bool IsFP8VectorType(uint32_t id) const;
   bool IsFP8CoopMatType(uint32_t id) const;
   bool IsFP8Type(uint32_t id) const;
+  bool IsOCPMicroscalingScalarType(uint32_t id) const;
+  bool IsOCPMicroscalingNonByteScalarType(uint32_t id) const;
+  bool IsOCPMicroscalingType(uint32_t id) const;
+  bool ContainsOCPMicroscalingType(uint32_t id) const;
+  bool ContainsOCPMicroscalingNonByteType(uint32_t id) const;
   bool IsFloatScalarType(uint32_t id, uint32_t width = 0) const;
   bool IsFloatArrayType(uint32_t id) const;
   bool IsFloatVectorType(uint32_t id) const;
@@ -722,6 +727,7 @@ class ValidationState_t {
   bool IsIntScalarType(uint32_t id, uint32_t width = 0) const;
   bool IsIntScalarTypeWithSignedness(uint32_t id, uint32_t signedness) const;
   bool IsIntVectorType(uint32_t id) const;
+  bool IsIntVectorType(uint32_t id, uint32_t width, uint32_t components) const;
   bool IsIntScalarOrVectorType(uint32_t id) const;
   bool IsUnsignedIntScalarType(uint32_t id) const;
   bool IsUnsignedIntVectorType(uint32_t id) const;
@@ -956,7 +962,7 @@ class ValidationState_t {
   spv_result_t CooperativeMatrixShapesMatch(const Instruction* inst,
                                             uint32_t result_type_id,
                                             uint32_t m2, bool is_conversion,
-                                            bool swap_row_col = false);
+                                            bool swap_row_col);
 
   spv_result_t CooperativeVectorDimensionsMatch(const Instruction* inst,
                                                 uint32_t v1, uint32_t v2);

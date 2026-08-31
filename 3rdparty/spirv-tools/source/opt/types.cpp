@@ -400,6 +400,18 @@ bool Float::IsSameImpl(const Type* that, IsSameCache*) const {
 std::string Float::str() const {
   std::ostringstream oss;
   switch (encoding_) {
+    case spv::FPEncoding::Float4E2M1EXT:
+      assert(width_ == 4);
+      oss << "fp4e2m1";
+      break;
+    case spv::FPEncoding::Float6E2M3EXT:
+      assert(width_ == 6);
+      oss << "fp6e2m3";
+      break;
+    case spv::FPEncoding::Float6E3M2EXT:
+      assert(width_ == 6);
+      oss << "fp6e3m2";
+      break;
     case spv::FPEncoding::BFloat16KHR:
       assert(width_ == 16);
       oss << "bfloat16";
@@ -411,6 +423,14 @@ std::string Float::str() const {
     case spv::FPEncoding::Float8E5M2EXT:
       assert(width_ == 8);
       oss << "fp8e5m2";
+      break;
+    case spv::FPEncoding::Float8UnsignedE8M0EXT:
+      assert(width_ == 8);
+      oss << "fp8e8m0";
+      break;
+    case spv::FPEncoding::MXInt8EXT:
+      assert(width_ == 8);
+      oss << "mxint8";
       break;
     default:
       oss << "float" << width_;

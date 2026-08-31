@@ -26,6 +26,45 @@
 namespace spvtools {
 namespace val {
 
+namespace {
+
+bool IsNumericScalarOrVectorType(ValidationState_t& _, uint32_t type_id) {
+  return _.IsFloatScalarType(type_id) || _.IsFloatVectorType(type_id) ||
+         _.IsIntScalarType(type_id) || _.IsIntVectorType(type_id);
+}
+
+bool IsIEEEOrAlternativeFloatTypeAllowedForOCPMicroscalingFConvert(
+    ValidationState_t& _, uint32_t type_id) {
+  const uint32_t component_type = _.GetComponentType(type_id);
+  const Instruction* inst = _.FindDef(component_type);
+  if (!inst || inst->opcode() != spv::Op::OpTypeFloat) return false;
+
+  if (inst->words().size() <= 3) return true;
+
+  const auto encoding = inst->GetOperandAs<spv::FPEncoding>(2);
+  return encoding == spv::FPEncoding::Float8E4M3EXT ||
+         encoding == spv::FPEncoding::Float8E5M2EXT ||
+         encoding == spv::FPEncoding::BFloat16KHR;
+}
+
+spv_result_t ValidateVulkanOCPMicroscalingFloatIntConversion(
+    ValidationState_t& _, const Instruction* inst, uint32_t float_type) {
+  if (spvIsVulkanEnv(_.context()->target_env) &&
+      _.ContainsOCPMicroscalingType(float_type)) {
+    return _.diag(SPV_ERROR_INVALID_DATA, inst)
+           << _.VkErrorID(12465) << spvOpcodeString(inst->opcode())
+           << " must not consume or produce OCP microscaling types in the "
+              "Vulkan environment.";
+  }
+  return SPV_SUCCESS;
+}
+
+bool HasCoopMatTranspose(ValidationState_t& _, uint32_t id) {
+  return _.HasDecoration(id, spv::Decoration::CooperativeMatrixTransposeEXT);
+}
+
+}  // namespace
+
 spv_result_t ValidateShaderBitWidth(ValidationState_t& _,
                                     const Instruction* inst) {
   if (_.HasCapability(spv::Capability::Shader)) {
@@ -68,7 +107,8 @@ spv_result_t ValidateConvertFToU(ValidationState_t& _, const Instruction* inst,
   } else if (_.IsCooperativeMatrixType(result_type) ||
              _.IsCooperativeMatrixType(input_type)) {
     spv_result_t ret =
-        _.CooperativeMatrixShapesMatch(inst, result_type, input_type, true);
+        _.CooperativeMatrixShapesMatch(inst, result_type, input_type, true,
+                                       HasCoopMatTranspose(_, inst->id()));
     if (ret != SPV_SUCCESS) return ret;
   } else {
     if (_.GetDimension(result_type) != _.GetDimension(input_type))
@@ -76,6 +116,10 @@ spv_result_t ValidateConvertFToU(ValidationState_t& _, const Instruction* inst,
              << "Expected input to have the same dimension as Result Type: "
              << spvOpcodeString(opcode);
   }
+
+  if (auto error =
+          ValidateVulkanOCPMicroscalingFloatIntConversion(_, inst, input_type))
+    return error;
 
   if (auto error = ValidateShaderBitWidth(_, inst)) return error;
 
@@ -110,7 +154,8 @@ spv_result_t ValidateConvertFToS(ValidationState_t& _, const Instruction* inst,
   } else if (_.IsCooperativeMatrixType(result_type) ||
              _.IsCooperativeMatrixType(input_type)) {
     spv_result_t ret =
-        _.CooperativeMatrixShapesMatch(inst, result_type, input_type, true);
+        _.CooperativeMatrixShapesMatch(inst, result_type, input_type, true,
+                                       HasCoopMatTranspose(_, inst->id()));
     if (ret != SPV_SUCCESS) return ret;
   } else {
     if (_.GetDimension(result_type) != _.GetDimension(input_type))
@@ -118,6 +163,10 @@ spv_result_t ValidateConvertFToS(ValidationState_t& _, const Instruction* inst,
              << "Expected input to have the same dimension as Result Type: "
              << spvOpcodeString(opcode);
   }
+
+  if (auto error =
+          ValidateVulkanOCPMicroscalingFloatIntConversion(_, inst, input_type))
+    return error;
 
   if (auto error = ValidateShaderBitWidth(_, inst)) return error;
 
@@ -153,7 +202,8 @@ spv_result_t ValidateConvertIntToF(ValidationState_t& _,
   } else if (_.IsCooperativeMatrixType(result_type) ||
              _.IsCooperativeMatrixType(input_type)) {
     spv_result_t ret =
-        _.CooperativeMatrixShapesMatch(inst, result_type, input_type, true);
+        _.CooperativeMatrixShapesMatch(inst, result_type, input_type, true,
+                                       HasCoopMatTranspose(_, inst->id()));
     if (ret != SPV_SUCCESS) return ret;
   } else {
     if (_.GetDimension(result_type) != _.GetDimension(input_type))
@@ -161,6 +211,10 @@ spv_result_t ValidateConvertIntToF(ValidationState_t& _,
              << "Expected input to have the same dimension as Result Type: "
              << spvOpcodeString(opcode);
   }
+
+  if (auto error =
+          ValidateVulkanOCPMicroscalingFloatIntConversion(_, inst, result_type))
+    return error;
 
   if (auto error = ValidateShaderBitWidth(_, inst)) return error;
 
@@ -196,7 +250,8 @@ spv_result_t ValidateUConvert(ValidationState_t& _, const Instruction* inst,
   } else if (_.IsCooperativeMatrixType(result_type) ||
              _.IsCooperativeMatrixType(input_type)) {
     spv_result_t ret =
-        _.CooperativeMatrixShapesMatch(inst, result_type, input_type, true);
+        _.CooperativeMatrixShapesMatch(inst, result_type, input_type, true,
+                                       HasCoopMatTranspose(_, inst->id()));
     if (ret != SPV_SUCCESS) return ret;
   } else {
     if (_.GetDimension(result_type) != _.GetDimension(input_type))
@@ -241,7 +296,8 @@ spv_result_t ValidateSConvert(ValidationState_t& _, const Instruction* inst,
   } else if (_.IsCooperativeMatrixType(result_type) ||
              _.IsCooperativeMatrixType(input_type)) {
     spv_result_t ret =
-        _.CooperativeMatrixShapesMatch(inst, result_type, input_type, true);
+        _.CooperativeMatrixShapesMatch(inst, result_type, input_type, true,
+                                       HasCoopMatTranspose(_, inst->id()));
     if (ret != SPV_SUCCESS) return ret;
   } else {
     if (_.GetDimension(result_type) != _.GetDimension(input_type))
@@ -286,7 +342,8 @@ spv_result_t ValidateFConvert(ValidationState_t& _, const Instruction* inst,
   } else if (_.IsCooperativeMatrixType(result_type) ||
              _.IsCooperativeMatrixType(input_type)) {
     spv_result_t ret =
-        _.CooperativeMatrixShapesMatch(inst, result_type, input_type, true);
+        _.CooperativeMatrixShapesMatch(inst, result_type, input_type, true,
+                                       HasCoopMatTranspose(_, inst->id()));
     if (ret != SPV_SUCCESS) return ret;
   } else {
     if (_.GetDimension(result_type) != _.GetDimension(input_type))
@@ -304,6 +361,25 @@ spv_result_t ValidateFConvert(ValidationState_t& _, const Instruction* inst,
               "component type of Result Type: "
            << spvOpcodeString(opcode);
   }
+
+  if (spvIsVulkanEnv(_.context()->target_env)) {
+    if (_.ContainsOCPMicroscalingType(result_type)) {
+      return _.diag(SPV_ERROR_INVALID_DATA, inst)
+             << _.VkErrorID(12466) << spvOpcodeString(opcode)
+             << " must not produce OCP microscaling types in the Vulkan "
+                "environment.";
+    }
+    if (_.ContainsOCPMicroscalingType(input_type) &&
+        !IsIEEEOrAlternativeFloatTypeAllowedForOCPMicroscalingFConvert(
+            _, result_type)) {
+      return _.diag(SPV_ERROR_INVALID_DATA, inst)
+             << _.VkErrorID(12467) << spvOpcodeString(opcode)
+             << " consuming an OCP microscaling type in the Vulkan "
+                "environment must produce IEEE 754, Float8E4M3EXT, "
+                "Float8E5M2EXT, or BFloat16KHR.";
+    }
+  }
+
   return SPV_SUCCESS;
 }
 
@@ -545,10 +621,12 @@ spv_result_t ValidatePtrCastToGeneric(ValidationState_t& _,
 
   if (input_storage_class != spv::StorageClass::Workgroup &&
       input_storage_class != spv::StorageClass::CrossWorkgroup &&
-      input_storage_class != spv::StorageClass::Function)
+      input_storage_class != spv::StorageClass::Function &&
+      input_storage_class != spv::StorageClass::CodeSectionINTEL)
     return _.diag(SPV_ERROR_INVALID_DATA, inst)
            << "Expected input to have storage class Workgroup, "
-           << "CrossWorkgroup or Function: " << spvOpcodeString(opcode);
+           << "CrossWorkgroup, Function or CodeSectionINTEL: "
+           << spvOpcodeString(opcode);
 
   if (result_data_type != input_data_type)
     return _.diag(SPV_ERROR_INVALID_DATA, inst)
@@ -572,10 +650,12 @@ spv_result_t ValidateGenericCastToPtr(ValidationState_t& _,
 
   if (result_storage_class != spv::StorageClass::Workgroup &&
       result_storage_class != spv::StorageClass::CrossWorkgroup &&
-      result_storage_class != spv::StorageClass::Function)
+      result_storage_class != spv::StorageClass::Function &&
+      result_storage_class != spv::StorageClass::CodeSectionINTEL)
     return _.diag(SPV_ERROR_INVALID_DATA, inst)
            << "Expected Result Type to have storage class Workgroup, "
-           << "CrossWorkgroup or Function: " << spvOpcodeString(opcode);
+           << "CrossWorkgroup, Function or CodeSectionINTEL: "
+           << spvOpcodeString(opcode);
 
   const uint32_t input_type = _.GetOperandTypeId(inst, operand_index);
   spv::StorageClass input_storage_class;
@@ -633,10 +713,12 @@ spv_result_t ValidateGenericCastToPtrExplicit(ValidationState_t& _,
 
   if (target_storage_class != spv::StorageClass::Workgroup &&
       target_storage_class != spv::StorageClass::CrossWorkgroup &&
-      target_storage_class != spv::StorageClass::Function)
+      target_storage_class != spv::StorageClass::Function &&
+      target_storage_class != spv::StorageClass::CodeSectionINTEL)
     return _.diag(SPV_ERROR_INVALID_DATA, inst)
            << "Expected target storage class to be Workgroup, "
-           << "CrossWorkgroup or Function: " << spvOpcodeString(opcode);
+           << "CrossWorkgroup, Function or CodeSectionINTEL: "
+           << spvOpcodeString(opcode);
   return SPV_SUCCESS;
 }
 
@@ -694,8 +776,8 @@ spv_result_t ValidateBitcast(ValidationState_t& _, const Instruction* inst,
   }
 
   if (result_is_coopmat) {
-    spv_result_t ret =
-        _.CooperativeMatrixShapesMatch(inst, result_type, input_type, false);
+    spv_result_t ret = _.CooperativeMatrixShapesMatch(inst, result_type,
+                                                      input_type, false, false);
     if (ret != SPV_SUCCESS) return ret;
   }
 
@@ -782,40 +864,174 @@ spv_result_t ValidateConvertUToAccelerationStructure(ValidationState_t& _,
   return SPV_SUCCESS;
 }
 
+spv_result_t ValidateBitcastExtract(ValidationState_t& _,
+                                    const Instruction* inst) {
+  const spv::Op opcode = inst->opcode();
+  const uint32_t result_type = inst->type_id();
+  const uint32_t base_type = _.GetOperandTypeId(inst, 2);
+  const uint32_t offset_type = _.GetOperandTypeId(inst, 3);
+
+  if (!IsNumericScalarOrVectorType(_, result_type)) {
+    return _.diag(SPV_ERROR_INVALID_DATA, inst)
+           << _.VkErrorID(12468)
+           << "Expected Result Type to be a numerical scalar or vector type: "
+           << spvOpcodeString(opcode);
+  }
+
+  if (spvIsVulkanEnv(_.context()->target_env) &&
+      !_.ContainsOCPMicroscalingNonByteType(result_type)) {
+    return _.diag(SPV_ERROR_INVALID_DATA, inst)
+           << _.VkErrorID(12468)
+           << "Expected Result Type to be a Float4EXT or Float6EXT type in "
+              "the Vulkan environment: "
+           << spvOpcodeString(opcode);
+  }
+
+  if (!base_type || !IsNumericScalarOrVectorType(_, base_type)) {
+    return _.diag(SPV_ERROR_INVALID_DATA, inst)
+           << _.VkErrorID(12469)
+           << "Expected Base to be a numerical scalar or vector type: "
+           << spvOpcodeString(opcode);
+  }
+
+  if (spvIsVulkanEnv(_.context()->target_env) &&
+      !_.IsIntScalarType(base_type) && !_.IsIntVectorType(base_type)) {
+    return _.diag(SPV_ERROR_INVALID_DATA, inst)
+           << _.VkErrorID(12469)
+           << "Expected Base to be an integer scalar or vector type in the "
+              "Vulkan environment: "
+           << spvOpcodeString(opcode);
+  }
+
+  if (_.GetDimension(result_type) != _.GetDimension(base_type)) {
+    return _.diag(SPV_ERROR_INVALID_DATA, inst)
+           << "Expected Base to have the same dimension as Result Type: "
+           << spvOpcodeString(opcode);
+  }
+
+  if (_.GetBitWidth(base_type) <= _.GetBitWidth(result_type)) {
+    return _.diag(SPV_ERROR_INVALID_DATA, inst)
+           << "Expected Base component bit width to be greater than Result "
+              "Type component bit width: "
+           << spvOpcodeString(opcode);
+  }
+
+  if (!offset_type || !_.IsIntScalarType(offset_type)) {
+    return _.diag(SPV_ERROR_INVALID_DATA, inst)
+           << "Expected Offset to be a scalar integer type: "
+           << spvOpcodeString(opcode);
+  }
+
+  return SPV_SUCCESS;
+}
+
 spv_result_t ValidateCooperativeMatrix(ValidationState_t& _,
                                        const Instruction* inst) {
   const spv::Op opcode = inst->opcode();
   const uint32_t result_type = inst->type_id();
-  if (!_.IsCooperativeMatrixType(result_type)) {
+  if (!_.IsCooperativeMatrixKHRType(result_type)) {
     return _.diag(SPV_ERROR_INVALID_DATA, inst)
-           << "Expected cooperative matrix Result Type: "
+           << "Expected OpTypeCooperativeMatrixKHR Result Type: "
            << spvOpcodeString(opcode);
   }
   const uint32_t input_type = _.GetOperandTypeId(inst, 2);
-  if (!_.IsCooperativeMatrixType(input_type)) {
+  if (!_.IsCooperativeMatrixKHRType(input_type)) {
     return _.diag(SPV_ERROR_INVALID_DATA, inst)
-           << "Expected cooperative matrix type for Matrix input: "
+           << "Expected OpTypeCooperativeMatrixKHR type for Matrix input: "
            << spvOpcodeString(opcode);
   }
 
-  bool swap_row_col = (opcode == spv::Op::OpCooperativeMatrixTransposeNV);
+  const bool has_transpose_decoration = HasCoopMatTranspose(_, inst->id());
+  const bool swap_row_col = opcode == spv::Op::OpCooperativeMatrixTransposeNV ||
+                            has_transpose_decoration;
   if (auto error = _.CooperativeMatrixShapesMatch(inst, result_type, input_type,
                                                   true, swap_row_col))
     return error;
 
-  if (opcode == spv::Op::OpCooperativeMatrixConvertNV) {
-    if (_.FindDef(result_type)->GetOperandAs<uint32_t>(1) !=
-        _.FindDef(input_type)->GetOperandAs<uint32_t>(1)) {
+  if (opcode == spv::Op::OpCooperativeMatrixConvertUseEXT) {
+    auto result_comp_type_id =
+        _.FindDef(result_type)->GetOperandAs<uint32_t>(1);
+    auto input_comp_type_id = _.FindDef(input_type)->GetOperandAs<uint32_t>(1);
+    auto result_comp_type = _.FindDef(result_comp_type_id);
+    auto input_comp_type = _.FindDef(input_comp_type_id);
+
+    const bool same_component_type = result_comp_type_id == input_comp_type_id;
+    const bool signedness_only_difference =
+        result_comp_type->opcode() == spv::Op::OpTypeInt &&
+        input_comp_type->opcode() == spv::Op::OpTypeInt &&
+        result_comp_type->word(2) == input_comp_type->word(2) &&
+        result_comp_type->word(3) != input_comp_type->word(3);
+    if (!same_component_type && !signedness_only_difference) {
       return _.diag(SPV_ERROR_INVALID_DATA, inst)
              << "Result Type and Matrix component types mismatch: "
+             << spvOpcodeString(opcode);
+    }
+
+    const auto result_use_id =
+        _.FindDef(result_type)->GetOperandAs<uint32_t>(5);
+    const auto input_use_id = _.FindDef(input_type)->GetOperandAs<uint32_t>(5);
+    const auto result_use_eval = _.EvalInt32IfConst(result_use_id);
+    const auto input_use_eval = _.EvalInt32IfConst(input_use_id);
+    const bool result_is_const_int32 = std::get<1>(result_use_eval);
+    const bool input_is_const_int32 = std::get<1>(input_use_eval);
+    const uint32_t result_use = std::get<2>(result_use_eval);
+    const uint32_t input_use = std::get<2>(input_use_eval);
+
+    const auto is_accumulator = [](uint32_t use) {
+      return use == uint32_t(spv::CooperativeMatrixUse::MatrixAccumulatorKHR);
+    };
+    const auto is_a_or_b = [](uint32_t use) {
+      return use == uint32_t(spv::CooperativeMatrixUse::MatrixAKHR) ||
+             use == uint32_t(spv::CooperativeMatrixUse::MatrixBKHR);
+    };
+
+    bool invalid_use_change = result_use_id == input_use_id;
+    if (_.HasCapability(spv::Capability::CooperativeMatrixConversionsEXT)) {
+      if (result_is_const_int32 && input_is_const_int32) {
+        invalid_use_change |=
+            !((is_accumulator(input_use) && is_a_or_b(result_use)) ||
+              (is_a_or_b(input_use) && is_accumulator(result_use)));
+      } else {
+        invalid_use_change |=
+            (result_is_const_int32 && !is_accumulator(result_use) &&
+             !is_a_or_b(result_use)) ||
+            (input_is_const_int32 && !is_accumulator(input_use) &&
+             !is_a_or_b(input_use));
+      }
+    } else {
+      invalid_use_change |=
+          (result_is_const_int32 && !is_a_or_b(result_use)) ||
+          (input_is_const_int32 && !is_accumulator(input_use));
+    }
+
+    if (invalid_use_change) {
+      return _.diag(SPV_ERROR_INVALID_DATA, inst)
+             << "Matrix and Result Type must convert between "
+                "MatrixAccumulatorKHR and MatrixAKHR or MatrixBKHR: "
              << spvOpcodeString(opcode);
     }
   }
 
   if (opcode == spv::Op::OpCooperativeMatrixTransposeNV) {
-    if (!_.IsCooperativeMatrixBType(result_type)) {
+    const auto result_use_id =
+        _.FindDef(result_type)->GetOperandAs<uint32_t>(5);
+    const auto input_use_id = _.FindDef(input_type)->GetOperandAs<uint32_t>(5);
+    const auto result_use_eval = _.EvalInt32IfConst(result_use_id);
+    const auto input_use_eval = _.EvalInt32IfConst(input_use_id);
+    const bool result_is_const_int32 = std::get<1>(result_use_eval);
+    const bool input_is_const_int32 = std::get<1>(input_use_eval);
+    const uint32_t result_use = std::get<2>(result_use_eval);
+    const uint32_t input_use = std::get<2>(input_use_eval);
+    if (result_use_id == input_use_id ||
+        (result_is_const_int32 &&
+         result_use != uint32_t(spv::CooperativeMatrixUse::MatrixBKHR)) ||
+        (input_is_const_int32 &&
+         input_use !=
+             uint32_t(spv::CooperativeMatrixUse::MatrixAccumulatorKHR))) {
       return _.diag(SPV_ERROR_INVALID_DATA, inst)
-             << "Result Type must have UseB: " << spvOpcodeString(opcode);
+             << "Result Type must have UseB and Matrix must have "
+                "UseAccumulator: "
+             << spvOpcodeString(opcode);
     }
   }
   return SPV_SUCCESS;
@@ -920,9 +1136,11 @@ spv_result_t ConversionPass(ValidationState_t& _, const Instruction* inst) {
       return ValidateGenericCastToPtrExplicit(_, inst);
     case spv::Op::OpBitcast:
       return ValidateBitcast(_, inst);
+    case spv::Op::OpBitcastExtractEXT:
+      return ValidateBitcastExtract(_, inst);
     case spv::Op::OpConvertUToAccelerationStructureKHR:
       return ValidateConvertUToAccelerationStructure(_, inst);
-    case spv::Op::OpCooperativeMatrixConvertNV:
+    case spv::Op::OpCooperativeMatrixConvertUseEXT:
     case spv::Op::OpCooperativeMatrixTransposeNV:
       return ValidateCooperativeMatrix(_, inst);
     case spv::Op::OpBitCastArrayQCOM:

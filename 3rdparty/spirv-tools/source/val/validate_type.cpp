@@ -148,6 +148,37 @@ spv_result_t ValidateTypeFloat(ValidationState_t& _, const Instruction* inst) {
     return SPV_SUCCESS;
   }
 
+  if (num_bits == 4) {
+    if (!encoding.has_value()) {
+      // we don't support fp4 without encoding
+      return _.diag(SPV_ERROR_INVALID_DATA, inst)
+             << "4-bit floating point type requires an encoding.";
+    }
+    if (encoding.value() != spv::FPEncoding::Float4E2M1EXT) {
+      return _.diag(SPV_ERROR_INVALID_DATA, inst)
+             << "Unsupported 4-bit floating point encoding ("
+             << static_cast<uint32_t>(encoding.value()) << ").";
+    }
+
+    return SPV_SUCCESS;
+  }
+  if (num_bits == 6) {
+    if (!encoding.has_value()) {
+      // we don't support fp6 without encoding
+      return _.diag(SPV_ERROR_INVALID_DATA, inst)
+             << "6-bit floating point type requires an encoding.";
+    }
+    const auto enc = encoding.value();
+    if (enc != spv::FPEncoding::Float6E2M3EXT &&
+        enc != spv::FPEncoding::Float6E3M2EXT) {
+      return _.diag(SPV_ERROR_INVALID_DATA, inst)
+             << "Unsupported 6-bit floating point encoding ("
+             << static_cast<uint32_t>(enc) << ").";
+    }
+
+    return SPV_SUCCESS;
+  }
+
   if (num_bits == 16) {
     // An absence of FP encoding implies IEEE 754. The Float16 and Float16Buffer
     // capabilities only enable IEEE 754 binary 16
@@ -170,12 +201,15 @@ spv_result_t ValidateTypeFloat(ValidationState_t& _, const Instruction* inst) {
     if (!_.features().declare_float8_type) {
       return _.diag(SPV_ERROR_INVALID_DATA, inst)
              << "Using a 8-bit floating point "
-             << "type requires the Float8EXT capability.";
+             << "type requires one of the following capabilities: Float8EXT, "
+                "Float8UnsignedE8M0EXT, MXInt8EXT.";
     }
     if (encoding.has_value()) {
       const auto enc = encoding.value();
       if (enc != spv::FPEncoding::Float8E4M3EXT &&
-          enc != spv::FPEncoding::Float8E5M2EXT) {
+          enc != spv::FPEncoding::Float8E5M2EXT &&
+          enc != spv::FPEncoding::Float8UnsignedE8M0EXT &&
+          enc != spv::FPEncoding::MXInt8EXT) {
         return _.diag(SPV_ERROR_INVALID_DATA, inst)
                << "Unsupported 8-bit floating point encoding ("
                << static_cast<uint32_t>(enc) << ").";

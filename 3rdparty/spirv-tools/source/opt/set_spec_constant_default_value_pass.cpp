@@ -363,7 +363,8 @@ Pass::Status SetSpecConstantDefaultValuePass::Process() {
 // Returns true if the given char is ':', '\0' or considered as blank space
 // (i.e.: '\n', '\r', '\v', '\t', '\f' and ' ').
 bool IsSeparator(char ch) {
-  return std::strchr(":\0", ch) || std::isspace(ch) != 0;
+  return std::strchr(":\0", ch) ||
+         std::isspace(static_cast<unsigned char>(ch)) != 0;
 }
 
 std::unique_ptr<SetSpecConstantDefaultValuePass::SpecIdToValueStrMap>
@@ -375,7 +376,8 @@ SetSpecConstantDefaultValuePass::ParseDefaultValuesString(const char* str) {
   // The parsing loop, break when points to the end.
   while (*str) {
     // Find the spec id.
-    while (std::isspace(*str)) str++;  // skip leading spaces.
+    while (std::isspace(static_cast<unsigned char>(*str)))
+      str++;  // skip leading spaces.
     const char* entry_begin = str;
     while (!IsSeparator(*str)) str++;
     const char* entry_end = str;
@@ -407,7 +409,7 @@ SetSpecConstantDefaultValuePass::ParseDefaultValuesString(const char* str) {
     (*spec_id_to_value)[spec_id] = std::string(val_begin, val_end - val_begin);
 
     // Skip trailing spaces.
-    while (std::isspace(*str)) str++;
+    while (std::isspace(static_cast<unsigned char>(*str))) str++;
   }
 
   return spec_id_to_value;

@@ -740,7 +740,13 @@ spv_result_t ValidateStorageClass(ValidationState_t& _,
                     if (inst->words().size() > 3) {
                       auto encoding = inst->GetOperandAs<spv::FPEncoding>(2);
                       if ((encoding == spv::FPEncoding::Float8E4M3EXT) ||
-                          (encoding == spv::FPEncoding::Float8E5M2EXT)) {
+                          (encoding == spv::FPEncoding::Float8E5M2EXT) ||
+                          (encoding == spv::FPEncoding::Float6E2M3EXT) ||
+                          (encoding == spv::FPEncoding::Float6E3M2EXT) ||
+                          (encoding == spv::FPEncoding::Float4E2M1EXT) ||
+                          (encoding ==
+                           spv::FPEncoding::Float8UnsignedE8M0EXT) ||
+                          (encoding == spv::FPEncoding::MXInt8EXT)) {
                         return true;
                       }
                     }
@@ -748,7 +754,8 @@ spv_result_t ValidateStorageClass(ValidationState_t& _,
                   return false;
                 })) {
           return _.diag(SPV_ERROR_INVALID_ID, interface_var)
-                 << _.VkErrorID(10823) << "FP8 E4M3/E5M2 OpVariable <id> "
+                 << _.VkErrorID(10823)
+                 << "FP8 or OCP microscaling OpVariable <id> "
                  << _.getIdName(interface_var->id()) << " must not be declared "
                  << "with a Storage Class of Input or Output.";
         }
