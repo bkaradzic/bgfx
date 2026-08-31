@@ -10,7 +10,7 @@ void main()
 	float4 background = float4(0.01f, 0.01f, 0.1f, 1.0f);
 
 	ContextGather ui;
-	float2 pixelPosition = floor(gl_FragCoord.xy) + 0.5f;
+	float2 pixelPosition = floor(s2h_getPixelCoord(gl_FragCoord.xy)) + 0.5f;
 	s2h_init(ui, pixelPosition);
 	s2h_setScale(ui, 2);
 	s2h_setCursor(ui, float2(10.0f, 10.0f));

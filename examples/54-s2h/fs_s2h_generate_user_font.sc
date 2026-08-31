@@ -21,7 +21,7 @@ float3 hsb2rgb(float3 _color)
 
 void main()
 {
-	float2 pixelPosition = floor(gl_FragCoord.xy);
+	float2 pixelPosition = floor(s2h_getPixelCoord(gl_FragCoord.xy));
 	ContextGather ui;
 	s2h_init(ui, float2(mod(pixelPosition.x, 8.0f), pixelPosition.y));
 

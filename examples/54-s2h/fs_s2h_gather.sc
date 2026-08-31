@@ -26,7 +26,7 @@ void printDiscEx(inout ContextGather _ui, float4 _color)
 void main()
 {
 	ContextGather ui;
-	s2h_init(ui, gl_FragCoord.xy);
+	s2h_init(ui, s2h_getPixelCoord(gl_FragCoord.xy));
 	ui.mouseInput = u_s2hMouse;
 	s2h_setCursor(ui, float2(10.0f, 10.0f));
 

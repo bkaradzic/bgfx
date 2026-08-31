@@ -34,7 +34,8 @@ float4x4 lookAt(float3 _eye, float3 _target, float3 _up)
 void main()
 {
 	float2 resolution = u_viewRect.zw;
-	float2 uv = gl_FragCoord.xy / resolution;
+	float2 pixel = s2h_getPixelCoord(gl_FragCoord.xy);
+	float2 uv = pixel / resolution;
 	float2 screen = uv * 2.0f - 1.0f;
 	screen.x *= resolution.x / resolution.y;
 	screen.y = -screen.y;
@@ -57,7 +58,7 @@ void main()
 	s2h_drawBasis(context, lookAt(float3(s, 1.0f, c), float3(0.0f, 1.0f, 0.0f), float3(0.0f, 1.0f, 0.0f)), 1.0f);
 
 	ContextGather ui;
-	s2h_init(ui, gl_FragCoord.xy);
+	s2h_init(ui, pixel);
 	s2h_setCursor(ui, float2(10.0f, 10.0f));
 	s2h_setScale(ui, 2);
 	s2h_printTxt(ui, _P, _o, _s, _COLON);

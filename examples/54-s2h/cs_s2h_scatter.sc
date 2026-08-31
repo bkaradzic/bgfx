@@ -12,7 +12,12 @@ void onGfxForAllScatter(int2 _pixel, float4 _color)
 	if (_pixel.x >= 0 && _pixel.y >= 0
 	&& _pixel.x < int(u_s2hScatterSize.x) && _pixel.y < int(u_s2hScatterSize.y) )
 	{
-		imageStore(s_scatterColor, _pixel, _color);
+		int2 outputPixel = _pixel;
+		if (u_s2hScatterSize.z != 0.0f)
+		{
+			outputPixel.y = int(u_s2hScatterSize.y) - 1 - outputPixel.y;
+		}
+		imageStore(s_scatterColor, outputPixel, _color);
 	}
 }
 

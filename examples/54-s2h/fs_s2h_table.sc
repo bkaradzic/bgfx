@@ -51,7 +51,7 @@ float s2h_floatLookupFloat(uint _functionId, float _x)
 void main()
 {
 	ContextGather ui;
-	s2h_init(ui, gl_FragCoord.xy);
+	s2h_init(ui, s2h_getPixelCoord(gl_FragCoord.xy));
 	s2h_setCursor(ui, float2(10.0f, 10.0f));
 
 	ui.textColor.rgb = float3(1.0f, 1.0f, 1.0f);

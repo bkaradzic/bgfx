@@ -19,7 +19,7 @@ uint userFontCharacter(uint _index)
 
 void main()
 {
-	float2 pixel = floor(gl_FragCoord.xy);
+	float2 pixel = floor(s2h_getPixelCoord(gl_FragCoord.xy));
 	float3 background = float3(0.02f, 0.02f, 0.03f);
 	float3 color = background;
 	const float scale = 8.0f;

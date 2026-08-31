@@ -16,12 +16,13 @@ float3 safeNormalize(float3 _value)
 void main()
 {
 	float2 resolution = u_viewRect.zw;
-	float2 pixel = floor(gl_FragCoord.xy);
+	float2 fragmentPixel = s2h_getPixelCoord(gl_FragCoord.xy);
+	float2 pixel = floor(fragmentPixel);
 	uint2 gridPosition = uint2(pixel) / 16u;
 	bool checker = (gridPosition.x % 2u) == (gridPosition.y % 2u);
 	float3 fallbackColor = checker ? float3(0.29f, 0.29f, 0.348f) : float3(0.27f, 0.27f, 0.324f);
 
-	float2 screen = gl_FragCoord.xy / resolution * 2.0f - 1.0f;
+	float2 screen = fragmentPixel / resolution * 2.0f - 1.0f;
 	screen.x *= resolution.x / resolution.y;
 	screen.y = -screen.y;
 	float orbit = u_s2hTime.x * 0.2f;

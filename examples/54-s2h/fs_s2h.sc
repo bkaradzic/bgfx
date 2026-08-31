@@ -9,7 +9,7 @@ $input v_color0, v_texcoord0
 void main()
 {
 	ContextGather ui;
-	s2h_init(ui, gl_FragCoord.xy);
+	s2h_init(ui, s2h_getPixelCoord(gl_FragCoord.xy));
 	s2h_setCursor(ui, float2(16.0f, 16.0f));
 	s2h_setScale(ui, 2.0f);
 

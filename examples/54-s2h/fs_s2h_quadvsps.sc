@@ -14,7 +14,7 @@ void main()
 	float3 color = lerp(float3(0.03f, 0.04f, 0.08f), float3(1.0f, 0.0f, 1.0f), border * 0.4f);
 
 	ContextGather ui;
-	s2h_init(ui, gl_FragCoord.xy);
+	s2h_init(ui, s2h_getPixelCoord(gl_FragCoord.xy));
 	s2h_setCursor(ui, float2(10.0f, 10.0f));
 	s2h_setScale(ui, 2);
 	s2h_printTxt(ui, _Q, _u, _a, _d);

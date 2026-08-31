@@ -23,7 +23,7 @@ void testDrawArrow(inout ContextGather _ui, float2 _start, float2 _end, float _h
 void main()
 {
 	ContextGather ui;
-	s2h_init(ui, gl_FragCoord.xy);
+	s2h_init(ui, s2h_getPixelCoord(gl_FragCoord.xy));
 	ui.mouseInput = u_s2hMouse;
 
 	for (float width = 0.0f; width < 8.0f; width += 1.0f)

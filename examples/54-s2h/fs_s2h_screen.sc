@@ -7,7 +7,7 @@ $input v_color0, v_texcoord0
 
 void main()
 {
-	float2 pxPos = gl_FragCoord.xy;
+	float2 pxPos = s2h_getPixelCoord(gl_FragCoord.xy);
 	float2 dimensions = u_viewRect.zw;
 	float2 uv = pxPos / dimensions;
 

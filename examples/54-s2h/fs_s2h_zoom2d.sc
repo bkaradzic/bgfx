@@ -16,7 +16,7 @@ float grid(float2 _position, float _scale)
 
 void main()
 {
-	float2 pixel = gl_FragCoord.xy;
+	float2 pixel = s2h_getPixelCoord(gl_FragCoord.xy);
 	float zoomScale = u_s2hZoom.z;
 	float2 zoomedPixel = (pixel + u_s2hZoom.xy) * zoomScale;
 	float2 snappedPixel = floor(zoomedPixel) + 0.5f;

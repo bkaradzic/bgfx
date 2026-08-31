@@ -8,7 +8,7 @@ uniform vec4 u_s2hMouse;
 
 void main()
 {
-	float2 pixel = gl_FragCoord.xy;
+	float2 pixel = s2h_getPixelCoord(gl_FragCoord.xy);
 	float2 resolution = u_viewRect.zw;
 	float2 mouse = u_s2hMouse.xy;
 	float3 color = texture2D(s_quadPostColor, v_texcoord0).rgb;
