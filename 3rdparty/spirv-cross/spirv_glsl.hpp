@@ -995,6 +995,17 @@ protected:
 	uint32_t required_polyfills_relaxed = 0;
 	void require_polyfill(Polyfill polyfill, bool relaxed);
 
+	struct IntegerDotProduct
+	{
+		Id result_type;
+		Id argument_type[2];
+		Op op;
+	};
+	SmallVector<IntegerDotProduct> integer_dot_products_polyfills;
+	void add_integer_dot_product_polyfill(const IntegerDotProduct &idot);
+	std::string integer_dot_product_entry_point(const IntegerDotProduct &idot);
+	void emit_polyfills_integer_dot_product();
+
 	bool ray_tracing_is_khr = false;
 	bool barycentric_is_nv = false;
 	void ray_tracing_khr_fixup_locations();

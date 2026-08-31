@@ -677,6 +677,7 @@ struct CLIArguments
 	bool msl_manual_helper_invocation_updates = true;
 	bool msl_check_discarded_frag_stores = false;
 	bool msl_force_fragment_with_side_effects_execution = false;
+	bool msl_emulate_reversed_depth_viewport = false;
 	bool msl_sample_dref_lod_array_as_grad = false;
 	bool msl_runtime_array_rich_descriptor = false;
 	bool msl_replace_recursive_inputs = false;
@@ -981,6 +982,7 @@ static void print_help_msl()
 	                "\t\t\t4. Fragment is always discarded in fragment execution.\n"
 	                "\t\tHowever, Vulkan expects fragment shader to be executed since it cannot be discarded until the discard\n"
 	                "\t\tpresent in the fragment execution, which would also execute the operations with side effects.\n"
+	                "\t[--msl-emulate-reversed-depth-viewport]:\n\t\tEmulate reversed-depth viewports by inverting clip-space Z.\n"
 	                "\t[--msl-sample-dref-lod-array-as-grad]:\n\t\tUse a gradient instead of a level argument.\n"
 	                "\t\tSome Metal devices have a bug where the level() argument to\n"
 	                "\t\tdepth2d_array<T>::sample_compare() in a fragment shader is biased by some\n"
@@ -1298,6 +1300,7 @@ static string compile_iteration(const CLIArguments &args, std::vector<uint32_t> 
 		msl_opts.manual_helper_invocation_updates = args.msl_manual_helper_invocation_updates;
 		msl_opts.check_discarded_frag_stores = args.msl_check_discarded_frag_stores;
 		msl_opts.force_fragment_with_side_effects_execution = args.msl_force_fragment_with_side_effects_execution;
+		msl_opts.emulate_reversed_depth_viewport = args.msl_emulate_reversed_depth_viewport;
 		msl_opts.sample_dref_lod_array_as_grad = args.msl_sample_dref_lod_array_as_grad;
 		msl_opts.ios_support_base_vertex_instance = true;
 		msl_opts.runtime_array_rich_descriptor = args.msl_runtime_array_rich_descriptor;
@@ -1901,6 +1904,7 @@ static int main_inner(int argc, char *argv[])
 	        [&args](CLIParser &) { args.msl_manual_helper_invocation_updates = false; });
 	cbs.add("--msl-check-discarded-frag-stores", [&args](CLIParser &) { args.msl_check_discarded_frag_stores = true; });
 	cbs.add("--msl-force-frag-with-side-effects-execution", [&args](CLIParser &) { args.msl_force_fragment_with_side_effects_execution = true; });
+	cbs.add("--msl-emulate-reversed-depth-viewport", [&args](CLIParser &) { args.msl_emulate_reversed_depth_viewport = true; });
 	cbs.add("--msl-sample-dref-lod-array-as-grad",
 	        [&args](CLIParser &) { args.msl_sample_dref_lod_array_as_grad = true; });
 	cbs.add("--msl-no-readwrite-texture-fences", [&args](CLIParser &) { args.msl_readwrite_texture_fences = false; });

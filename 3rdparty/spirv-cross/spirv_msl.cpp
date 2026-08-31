@@ -1792,6 +1792,7 @@ string CompilerMSL::compile()
 	// Create structs to hold input, output and uniform variables.
 	// Do output first to ensure out. is declared at top of entry function.
 	qual_pos_var_name = "";
+	qual_viewport_idx_var_name = "";
 	if (is_mesh_shader())
 	{
 		fixup_implicit_builtin_block_names(get_execution_model());
@@ -2986,6 +2987,8 @@ void CompilerMSL::add_plain_variable_to_interface_block(StorageClass storage, co
 		set_member_decoration(ib_type.self, ib_mbr_idx, DecorationBuiltIn, builtin);
 		if (builtin == BuiltInPosition && storage == StorageClassOutput)
 			qual_pos_var_name = qual_var_name;
+		if (builtin == BuiltInViewportIndex && storage == StorageClassOutput)
+			qual_viewport_idx_var_name = qual_var_name;
 	}
 
 	// Copy interpolation decorations if needed
@@ -3614,6 +3617,8 @@ void CompilerMSL::add_plain_member_variable_to_interface_block(StorageClass stor
 		set_member_decoration(ib_type.self, ib_mbr_idx, DecorationBuiltIn, builtin);
 		if (builtin == BuiltInPosition && storage == StorageClassOutput)
 			qual_pos_var_name = qual_var_name;
+		if (builtin == BuiltInViewportIndex && storage == StorageClassOutput)
+			qual_viewport_idx_var_name = qual_var_name;
 	}
 
 	const SPIRConstant *c = nullptr;
@@ -6436,13 +6441,14 @@ void CompilerMSL::emit_custom_functions()
 			statement("template<typename T, int LCols, int LRows, int RCols, int RRows>");
 			statement("[[clang::optnone]] matrix<T, RCols, LRows> spvFMulMatrixMatrix(matrix<T, LCols, LRows> l, matrix<T, RCols, RRows> r)");
 			begin_scope();
+			statement("static_assert(LCols == RRows, \"column-row configuration mismatch\");");
 			statement("matrix<T, RCols, LRows> res;");
 			statement("for (uint i = 0; i < RCols; i++)");
 			begin_scope();
-			statement("vec<T, RCols> tmp(0);");
+			statement("vec<T, LRows> tmp(0);");
 			statement("for (uint j = 0; j < LCols; j++)");
 			begin_scope();
-			statement("tmp = fma(vec<T, RCols>(r[i][j]), l[j], tmp);");
+			statement("tmp = fma(vec<T, LRows>(r[i][j]), l[j], tmp);");
 			end_scope();
 			statement("res[i] = tmp;");
 			end_scope();
@@ -9869,6 +9875,7 @@ void CompilerMSL::emit_instruction(const Instruction &instruction)
 
 			auto &e = set<SPIRExpression>(id, join(to_expression(ops[2]), "_atomic[", coord, "]"), result_type, true);
 			e.loaded_from = var ? var->self : ID(0);
+			e.access_chain = true; // This is kinda an access chain and should be treated as a dereferenced expression.
 			inherit_expression_dependencies(id, ops[3]);
 		}
 		else
@@ -11515,9 +11522,7 @@ void CompilerMSL::emit_atomic_func_op(uint32_t result_type, uint32_t result_id, 
 		// There is no other way, since C++ does not have explicit signage for atomics.
 		exp += type_to_glsl(remapped_type);
 		exp += "*)";
-
-		exp += "&";
-		exp += to_enclosed_expression(obj);
+		exp += to_enclosed_pointer_expression(obj);
 	}
 
 	if (is_atomic_compare_exchange_strong)
@@ -13544,6 +13549,20 @@ void CompilerMSL::emit_fixup()
 
 		if (is_vertex_like_shader() && !qual_pos_var_name.empty())
 		{
+			if (msl_options.emulate_reversed_depth_viewport)
+			{
+				if (qual_viewport_idx_var_name.empty())
+					// If ViewportIndex is not written, the primitive uses viewport 0.
+					statement("if ((spvEmulatedReversedDepthViewportMask & 1u) != 0u)");
+				else
+					statement("if (((spvEmulatedReversedDepthViewportMask >> uint(", qual_viewport_idx_var_name,
+					          ")) & 1u) != 0u)");
+				begin_scope();
+				statement(qual_pos_var_name, ".z = ", qual_pos_var_name, ".w - ", qual_pos_var_name,
+				          ".z;    // Emulate reversed-depth viewport");
+				end_scope();
+			}
+
 			if (options.vertex.fixup_clipspace)
 				statement(qual_pos_var_name, ".z = (", qual_pos_var_name, ".z + ", qual_pos_var_name,
 						  ".w) * 0.5;       // Adjust clip-space for Metal");
@@ -14795,6 +14814,15 @@ void CompilerMSL::entry_point_args_builtin(string &ep_args)
 
 	if (needs_base_instance_arg == TriState::Yes)
 		ep_args += built_in_func_arg(BuiltInBaseInstance, !ep_args.empty());
+
+	if (msl_options.emulate_reversed_depth_viewport && stage_out_var_id && !capture_output_to_buffer &&
+	    is_vertex_like_shader() && !qual_pos_var_name.empty())
+	{
+		if (!ep_args.empty())
+			ep_args += ", ";
+		ep_args += join("constant uint& spvEmulatedReversedDepthViewportMask [[buffer(",
+		                msl_options.reversed_depth_viewport_buffer_index, ")]]");
+	}
 
 	if (capture_output_to_buffer)
 	{

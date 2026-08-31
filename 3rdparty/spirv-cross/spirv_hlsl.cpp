@@ -1610,7 +1610,9 @@ void CompilerHLSL::emit_specialization_constants_and_structs()
 			auto &undef = id.get<SPIRUndef>();
 			auto &type = this->get<SPIRType>(undef.basetype);
 			// OpUndef can be void for some reason ...
-			if (type.basetype == SPIRType::Void)
+			// Apparently also block types, but we don't declare those as normal types,
+			// so skip those. It's only used in some esoteric debug instructions in DXC.
+			if (type.basetype == SPIRType::Void || type_is_top_level_block(type))
 				return;
 
 			string initializer;
@@ -5923,6 +5925,7 @@ void CompilerHLSL::emit_instruction(const Instruction &instruction)
 {
 	auto ops = stream(instruction);
 	auto opcode = static_cast<Op>(instruction.op);
+	uint32_t length = instruction.length;
 
 #define HLSL_BOP(op) emit_binary_op(ops[0], ops[1], ops[2], ops[3], #op)
 #define HLSL_BOP_CAST(op, type) \
@@ -6907,6 +6910,69 @@ void CompilerHLSL::emit_instruction(const Instruction &instruction)
 		statement("geometry_stream.RestartStrip();");
 		break;
 	}
+
+	case OpSDot:
+	case OpUDot:
+	case OpSUDot:
+	case OpSDotAccSat:
+	case OpUDotAccSat:
+	case OpSUDotAccSat:
+	{
+		uint32_t result_type = ops[0];
+		uint32_t id = ops[1];
+		bool is_acc_sat = opcode == OpSDotAccSat || opcode == OpUDotAccSat || opcode == OpSUDotAccSat;
+
+		if (length == (is_acc_sat ? 6 : 5))
+		{
+			if (ops[length - 1] != PackedVectorFormatPackedVectorFormat4x8Bit)
+				SPIRV_CROSS_THROW("Only 4x8bit packing is supported.");
+		}
+
+		// Don't bother with polyfills. Integer dot products that aren't full speed are worthless.
+		if (hlsl_options.shader_model < 64)
+			SPIRV_CROSS_THROW("Integer dot product requires SM 6.4.");
+		if (opcode == OpSUDotAccSat || opcode == OpSUDot)
+			SPIRV_CROSS_THROW("Mixed signed dot product not supported.");
+		if (expression_type(ops[2]).vecsize != 1)
+			SPIRV_CROSS_THROW("HLSL dot products must be 4x8bit packed.");
+		if (integer_width != 32)
+			SPIRV_CROSS_THROW("HLSL dot products must be 32-bit accumulator.");
+
+		const char *intrinsic;
+		if (opcode == OpSDot || opcode == OpSDotAccSat)
+			intrinsic = "dot4add_i8packed";
+		else
+			intrinsic = "dot4add_u8packed";
+
+		auto expr = join(intrinsic, "(", to_expression(ops[2]), ", ", to_expression(ops[3]), ", ");
+
+		// HLSL only has the accumulating variant without saturation.
+		// We could implement saturation ourselves, but it negates the point of using it.
+		// Take the lazier approach and just implement it as-is.
+		// Saturation is extremely unlikely to come up for any reasonable i8 kernel.
+		if (is_acc_sat)
+			expr += to_expression(ops[4]) + " /* WARN: HLSL will not saturate */)";
+		else
+			expr += "0)";
+
+		if (((opcode == OpSDot || opcode == OpSDotAccSat) && get <SPIRType>(result_type).basetype != SPIRType::Int) ||
+		    ((opcode == OpUDot || opcode == OpUDotAccSat) && get <SPIRType>(result_type).basetype != SPIRType::UInt))
+		{
+			expr = join(type_to_glsl(get <SPIRType>(result_type)), "(", expr, ")");
+		}
+
+		bool forward = should_forward(ops[2]) && should_forward(ops[3]);
+		if (is_acc_sat && forward)
+			forward = should_forward(ops[4]);
+
+		emit_op(result_type, id, expr, forward);
+		inherit_expression_dependencies(id, ops[2]);
+		inherit_expression_dependencies(id, ops[3]);
+		if (is_acc_sat)
+			inherit_expression_dependencies(id, ops[4]);
+		break;
+	}
+
 	default:
 		CompilerGLSL::emit_instruction(instruction);
 		break;
