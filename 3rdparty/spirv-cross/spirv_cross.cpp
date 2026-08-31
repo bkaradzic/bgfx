@@ -497,6 +497,10 @@ void Compiler::register_write(uint32_t chain)
 		// If our variable is in a storage class which can alias with other buffers,
 		// invalidate all variables which depend on aliased variables. And if this is a
 		// variable pointer, then invalidate all variables regardless.
+		// For BDA, this is overly conservative, since BDA pointers are usually restrict
+		// depending on how that BDA pointer is loaded, but being overly conservative
+		// is better than risking bad aliasing which is very hard to diagnose.
+		// The only real cost is slightly less pretty code, which is an acceptable compromise.
 		if (get_variable_data_type(*var).pointer)
 		{
 			flush_all_active_variables();
