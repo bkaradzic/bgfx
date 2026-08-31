@@ -549,7 +549,7 @@
 #define BGFX_PCI_ID_AMD                           UINT16_C(0x1002) //!< AMD adapter.
 #define BGFX_PCI_ID_APPLE                         UINT16_C(0x106b) //!< Apple adapter.
 #define BGFX_PCI_ID_INTEL                         UINT16_C(0x8086) //!< Intel adapter.
-#define BGFX_PCI_ID_NVIDIA                        UINT16_C(0x10de) //!< nVidia adapter.
+#define BGFX_PCI_ID_NVIDIA                        UINT16_C(0x10de) //!< NVIDIA adapter.
 #define BGFX_PCI_ID_MICROSOFT                     UINT16_C(0x1414) //!< Microsoft adapter.
 #define BGFX_PCI_ID_ARM                           UINT16_C(0x13b5) //!< ARM adapter.
 

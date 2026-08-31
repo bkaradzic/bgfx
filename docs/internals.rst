@@ -265,7 +265,7 @@ Debugging and profiling
 
 ``BGFX_CONFIG_DEBUG_TEXT_MAX_SCALE`` - Debug text maximum scale factor for ``bgfx::dbgTextPrintf``. Default is 4.
 
-``BGFX_CONFIG_DEBUG_PERFHUD`` - Enable nVidia PerfHUD integration. Default is 0.
+``BGFX_CONFIG_DEBUG_PERFHUD`` - Enable NVIDIA PerfHUD integration. Default is 0.
 
 ``BGFX_CONFIG_DEBUG_ANNOTATION`` - Enable annotation for graphics debuggers (e.g. RenderDoc, PIX). Default matches ``BGFX_CONFIG_DEBUG``.
 
@@ -288,4 +288,4 @@ Miscellaneous
 
 ``BGFX_CONFIG_DRAW_INDIRECT_STRIDE`` - Stride in bytes of each draw indirect command. Fixed at 32 bytes. Not configurable.
 
-``BGFX_CONFIG_PREFER_DISCRETE_GPU`` - On laptops with integrated and discrete GPU, prefer selection of the discrete GPU (nVidia and AMD). Default is 1 on Windows, 0 elsewhere.
+``BGFX_CONFIG_PREFER_DISCRETE_GPU`` - On laptops with integrated and discrete GPU, prefer selection of the discrete GPU (NVIDIA and AMD). Default is 1 on Windows, 0 elsewhere.

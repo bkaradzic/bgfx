@@ -460,7 +460,7 @@ flag.PciId { bits = 16, const, section = "Initialization and Shutdown" }
 	.Amd                 (0x1002) --- AMD adapter.
 	.Apple               (0x106b) --- Apple adapter.
 	.Intel               (0x8086) --- Intel adapter.
-	.Nvidia              (0x10de) --- nVidia adapter.
+	.Nvidia              (0x10de) --- NVIDIA adapter.
 	.Microsoft           (0x1414) --- Microsoft adapter.
 	.Arm                 (0x13b5) --- ARM adapter.
 	()

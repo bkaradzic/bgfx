@@ -360,7 +360,7 @@ namespace bgfx { namespace gl
 				m_context = wglCreateContextAttribsARB(m_hdc, 0, contextAttrs);
 				if (NULL == m_context)
 				{
-					// nVidia doesn't like context profile mask for contexts below 3.2?
+					// NVIDIA doesn't like context profile mask for contexts below 3.2?
 					contextAttrs[6] = WGL_CONTEXT_PROFILE_MASK_ARB == contextAttrs[6] ? 0 : contextAttrs[6];
 					m_context = wglCreateContextAttribsARB(m_hdc, 0, contextAttrs);
 				}

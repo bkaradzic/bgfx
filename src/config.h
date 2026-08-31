@@ -257,7 +257,7 @@
 #	define BGFX_CONFIG_DEBUG_TEXT_MAX_SCALE 4
 #endif // BGFX_CONFIG_DEBUG_TEXT_MAX_SCALE
 
-/// Enable nVidia PerfHUD integration.
+/// Enable NVIDIA PerfHUD integration.
 #ifndef BGFX_CONFIG_DEBUG_PERFHUD
 #	define BGFX_CONFIG_DEBUG_PERFHUD 0
 #endif // BGFX_CONFIG_DEBUG_NVPERFHUD
@@ -615,7 +615,7 @@ static_assert(BGFX_CONFIG_MAX_VERTEX_STREAMS < 32, "Must be less than 32!");
 #endif // BGFX_CONFIG_MAX_FRAME_LATENCY
 
 /// On laptops with integrated and discrete GPU, prefer selection of the
-/// discrete GPU. Applies to nVidia and AMD on Windows only.
+/// discrete GPU. Applies to NVIDIA and AMD on Windows only.
 /// Default is 1 on Windows, 0 elsewhere.
 #ifndef BGFX_CONFIG_PREFER_DISCRETE_GPU
 #	define BGFX_CONFIG_PREFER_DISCRETE_GPU BX_PLATFORM_WINDOWS
