@@ -98,7 +98,9 @@ https://www.carbongames.com/airmech-strike - AirMech is a free-to-play
 futuristic action real-time strategy video game developed and published by
 Carbon Games.
 
-![AirMech screenshot](https://www.mobygames.com/images/shots/l/830630-airmech-playstation-4-screenshot-blue-bar-on-your-mech-indicates.jpg)
+<a href="http://www.youtube.com/watch?feature=player_embedded&v=dMUSomUxrHk"
+target="_blank"><img src="http://img.youtube.com/vi/dMUSomUxrHk/0.jpg"
+alt="AirMech Wastelands Trailer 2" width="640" height="480" border="0" /></a>
 
 ## cmftStudio
 
