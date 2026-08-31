@@ -4,7 +4,7 @@
 /*
 ** Copyright 2015-2026 The Khronos Group Inc.
 **
-** SPDX-License-Identifier: Apache-2.0
+** SPDX-License-Identifier: Apache-2.0 OR MIT
 */
 
 /*
@@ -66,7 +66,7 @@ extern "C" {
 //#define VK_API_VERSION VK_MAKE_API_VERSION(0, 1, 0, 0) // Patch version should always be set to 0
 
 // Version of this file
-#define VK_HEADER_VERSION 354
+#define VK_HEADER_VERSION 361
 
 // Complete version of this file
 #define VK_HEADER_VERSION_COMPLETE VK_MAKE_API_VERSION(0, 1, 4, VK_HEADER_VERSION)
@@ -1343,6 +1343,8 @@ typedef enum VkStructureType {
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LAYERED_API_VULKAN_PROPERTIES_KHR = 1000562004,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_ATOMIC_FLOAT16_VECTOR_FEATURES_NV = 1000563000,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_REPLICATED_COMPOSITES_FEATURES_EXT = 1000564000,
+    VK_STRUCTURE_TYPE_TENSOR_EXPLICIT_TILING_FORMAT_PROPERTIES_ARM = 1000565000,
+    VK_STRUCTURE_TYPE_TENSOR_ROLLING_BACKING_CREATE_INFO_ARM = 1000565001,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_FLOAT8_FEATURES_EXT = 1000567000,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_VALIDATION_FEATURES_NV = 1000568000,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CLUSTER_ACCELERATION_STRUCTURE_FEATURES_NV = 1000569000,
@@ -1468,6 +1470,9 @@ typedef enum VkStructureType {
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COMPUTE_OCCUPANCY_PRIORITY_FEATURES_NV = 1000645001,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_11_FEATURES_KHR = 1000657000,
     VK_STRUCTURE_TYPE_QUEUE_FAMILY_OPTIMAL_IMAGE_TRANSFER_GRANULARITY_PROPERTIES_KHR = 1000657001,
+    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COOPERATIVE_MATRIX_MAINTENANCE_1_FEATURES_EXT = 1000659000,
+    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COOPERATIVE_MATRIX_INFO_2_EXT = 1000659001,
+    VK_STRUCTURE_TYPE_COOPERATIVE_MATRIX_PROPERTIES_2_EXT = 1000659002,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_SUBGROUP_PARTITIONED_FEATURES_EXT = 1000662000,
     VK_STRUCTURE_TYPE_UBM_SURFACE_CREATE_INFO_SEC = 1000664000,
     VK_STRUCTURE_TYPE_FORMAT_PROPERTIES_4_KHR = 1000668000,
@@ -1477,6 +1482,7 @@ typedef enum VkStructureType {
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_FLAGS_FEATURES_KHR = 1000668004,
     VK_STRUCTURE_TYPE_IMAGE_STENCIL_USAGE_2_CREATE_INFO_KHR = 1000668005,
     VK_STRUCTURE_TYPE_SHARED_PRESENT_SURFACE_CAPABILITIES_2_KHR = 1000668006,
+    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_OCP_MICROSCALING_TYPES_FEATURES_EXT = 1000672000,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_MIXED_FLOAT_DOT_PRODUCT_FEATURES_VALVE = 1000673000,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_THROTTLE_HINT_FEATURES_SEC = 1000674000,
     VK_STRUCTURE_TYPE_THROTTLE_HINT_SUBMIT_INFO_SEC = 1000674001,
@@ -1484,7 +1490,10 @@ typedef enum VkStructureType {
     VK_STRUCTURE_TYPE_DATA_GRAPH_PIPELINE_SESSION_NEURAL_STATISTICS_CREATE_INFO_ARM = 1000676001,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DATA_GRAPH_NEURAL_ACCELERATOR_STATISTICS_FEATURES_ARM = 1000676002,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PRIMITIVE_RESTART_INDEX_FEATURES_EXT = 1000678000,
+    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_TILING_CONTROL_FEATURES_EXT = 1000687000,
+    VK_STRUCTURE_TYPE_IMAGE_TILING_CONTROL_CREATE_INFO_EXT = 1000687001,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COOPERATIVE_MATRIX_DECODE_VECTOR_FEATURES_NV = 1000689000,
+    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PRIVATE_DATA_BASE_HANDLE_FEATURES_NV = 1000707000,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VARIABLE_POINTER_FEATURES = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VARIABLE_POINTERS_FEATURES,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_DRAW_PARAMETER_FEATURES = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_DRAW_PARAMETERS_FEATURES,
   // VK_STRUCTURE_TYPE_DEBUG_REPORT_CREATE_INFO_EXT is a legacy alias
@@ -6368,6 +6377,7 @@ typedef enum VkDriverId {
     VK_DRIVER_ID_MESA_KOSMICKRISP = 28,
     VK_DRIVER_ID_MESA_GFXSTREAM = 29,
     VK_DRIVER_ID_APE_SOFT = 30,
+    VK_DRIVER_ID_RESERVED_31 = 31,
     VK_DRIVER_ID_AMD_PROPRIETARY_KHR = VK_DRIVER_ID_AMD_PROPRIETARY,
     VK_DRIVER_ID_AMD_OPEN_SOURCE_KHR = VK_DRIVER_ID_AMD_OPEN_SOURCE,
     VK_DRIVER_ID_MESA_RADV_KHR = VK_DRIVER_ID_MESA_RADV,
@@ -7118,6 +7128,11 @@ typedef enum VkToolPurposeFlagBits {
     VK_TOOL_PURPOSE_FLAG_BITS_MAX_ENUM = 0x7FFFFFFF
 } VkToolPurposeFlagBits;
 typedef VkFlags VkToolPurposeFlags;
+
+typedef enum VkPrivateDataSlotCreateFlagBits {
+    VK_PRIVATE_DATA_SLOT_CREATE_BASE_OBJECT_HANDLE_BIT_NV = 0x00000001,
+    VK_PRIVATE_DATA_SLOT_CREATE_FLAG_BITS_MAX_ENUM = 0x7FFFFFFF
+} VkPrivateDataSlotCreateFlagBits;
 typedef VkFlags VkPrivateDataSlotCreateFlags;
 typedef VkFlags64 VkPipelineStageFlags2;
 
@@ -13506,6 +13521,11 @@ typedef enum VkComponentTypeKHR {
     VK_COMPONENT_TYPE_UINT8_PACKED_NV = 1000491001,
     VK_COMPONENT_TYPE_FLOAT8_E4M3_EXT = 1000491002,
     VK_COMPONENT_TYPE_FLOAT8_E5M2_EXT = 1000491003,
+    VK_COMPONENT_TYPE_FLOAT6_E2M3_EXT = 1000672000,
+    VK_COMPONENT_TYPE_FLOAT6_E3M2_EXT = 1000672001,
+    VK_COMPONENT_TYPE_FLOAT4_E2M1_EXT = 1000672002,
+    VK_COMPONENT_TYPE_FLOAT8_UNSIGNED_E8M0_EXT = 1000672003,
+    VK_COMPONENT_TYPE_MXINT8_EXT = 1000672004,
     VK_COMPONENT_TYPE_FLOAT16_NV = VK_COMPONENT_TYPE_FLOAT16_KHR,
     VK_COMPONENT_TYPE_FLOAT32_NV = VK_COMPONENT_TYPE_FLOAT32_KHR,
     VK_COMPONENT_TYPE_FLOAT64_NV = VK_COMPONENT_TYPE_FLOAT64_KHR,
@@ -20056,6 +20076,8 @@ typedef VkPrivateDataSlot VkPrivateDataSlotEXT;
 #define VK_EXT_PRIVATE_DATA_EXTENSION_NAME "VK_EXT_private_data"
 typedef VkPrivateDataSlotCreateFlags VkPrivateDataSlotCreateFlagsEXT;
 
+typedef VkPrivateDataSlotCreateFlagBits VkPrivateDataSlotCreateFlagBitsEXT;
+
 typedef VkPhysicalDevicePrivateDataFeatures VkPhysicalDevicePrivateDataFeaturesEXT;
 
 typedef VkDevicePrivateDataCreateInfo VkDevicePrivateDataCreateInfoEXT;
@@ -20324,7 +20346,7 @@ VKAPI_ATTR void VKAPI_CALL vkCmdEndPerTileExecutionQCOM(
 
 // VK_NV_low_latency is a preprocessor guard. Do not pass it to API calls.
 #define VK_NV_low_latency 1
-#define VK_NV_LOW_LATENCY_SPEC_VERSION    1
+#define VK_NV_LOW_LATENCY_SPEC_VERSION    2
 #define VK_NV_LOW_LATENCY_EXTENSION_NAME  "VK_NV_low_latency"
 typedef struct VkQueryLowLatencySupportNV {
     VkStructureType    sType;
@@ -20332,6 +20354,60 @@ typedef struct VkQueryLowLatencySupportNV {
     void*              pQueriedLowLatencyData;
 } VkQueryLowLatencySupportNV;
 
+typedef void (VKAPI_PTR *PFN_vkSetLatencySleepModeLegacyNV)(VkDevice device, VkBool32 lowLatencyMode, VkBool32 lowLatencyBoost, uint32_t minimumIntervalUs);
+typedef void (VKAPI_PTR *PFN_vkLatencySleepLegacyNV)(VkDevice device, VkSemaphore signalSemaphore, uint64_t value);
+typedef void (VKAPI_PTR *PFN_vkSetLatencyMarkerLegacyNV)(VkDevice device, uint64_t frameID, uint32_t marker);
+typedef void (VKAPI_PTR *PFN_vkGetLatencyTimingsLegacyNV)(VkDevice device, void* pTimings);
+typedef void (VKAPI_PTR *PFN_vkQueueNotifyOutOfBandLegacyNV)(VkQueue queue, uint32_t queueType);
+typedef void (VKAPI_PTR *PFN_vkGetSleepStatusLegacyNV)(VkDevice device, VkBool32* pLowLatencyMode);
+typedef void (VKAPI_PTR *PFN_vkShutdownLatencyDeviceLegacyNV)(VkDevice device);
+
+#ifndef VK_NO_PROTOTYPES
+#ifndef VK_ONLY_EXPORTED_PROTOTYPES
+VKAPI_ATTR void VKAPI_CALL vkSetLatencySleepModeLegacyNV(
+    VkDevice                                    device,
+    VkBool32                                    lowLatencyMode,
+    VkBool32                                    lowLatencyBoost,
+    uint32_t                                    minimumIntervalUs);
+#endif
+
+#ifndef VK_ONLY_EXPORTED_PROTOTYPES
+VKAPI_ATTR void VKAPI_CALL vkLatencySleepLegacyNV(
+    VkDevice                                    device,
+    VkSemaphore                                 signalSemaphore,
+    uint64_t                                    value);
+#endif
+
+#ifndef VK_ONLY_EXPORTED_PROTOTYPES
+VKAPI_ATTR void VKAPI_CALL vkSetLatencyMarkerLegacyNV(
+    VkDevice                                    device,
+    uint64_t                                    frameID,
+    uint32_t                                    marker);
+#endif
+
+#ifndef VK_ONLY_EXPORTED_PROTOTYPES
+VKAPI_ATTR void VKAPI_CALL vkGetLatencyTimingsLegacyNV(
+    VkDevice                                    device,
+    void*                                       pTimings);
+#endif
+
+#ifndef VK_ONLY_EXPORTED_PROTOTYPES
+VKAPI_ATTR void VKAPI_CALL vkQueueNotifyOutOfBandLegacyNV(
+    VkQueue                                     queue,
+    uint32_t                                    queueType);
+#endif
+
+#ifndef VK_ONLY_EXPORTED_PROTOTYPES
+VKAPI_ATTR void VKAPI_CALL vkGetSleepStatusLegacyNV(
+    VkDevice                                    device,
+    VkBool32*                                   pLowLatencyMode);
+#endif
+
+#ifndef VK_ONLY_EXPORTED_PROTOTYPES
+VKAPI_ATTR void VKAPI_CALL vkShutdownLatencyDeviceLegacyNV(
+    VkDevice                                    device);
+#endif
+#endif
 
 
 // VK_EXT_descriptor_buffer is a preprocessor guard. Do not pass it to API calls.
@@ -21700,6 +21776,7 @@ typedef struct VkPhysicalDeviceOpacityMicromapFeaturesEXT {
     void*              pNext;
     VkBool32           micromap;
     VkBool32           micromapCaptureReplay;
+    // micromapHostCommands is legacy, but no reason was given in the API XML
     VkBool32           micromapHostCommands;
 } VkPhysicalDeviceOpacityMicromapFeaturesEXT;
 
@@ -22908,6 +22985,11 @@ VK_DEFINE_NON_DISPATCHABLE_HANDLE(VkTensorViewARM)
 typedef enum VkTensorTilingARM {
     VK_TENSOR_TILING_OPTIMAL_ARM = 0,
     VK_TENSOR_TILING_LINEAR_ARM = 1,
+    VK_TENSOR_TILING_BRICK_16_WIDE_ARM = 1000565000,
+    VK_TENSOR_TILING_BRICK_8_WIDE_ARM = 1000565001,
+    VK_TENSOR_TILING_BRICK_4_WIDE_ARM = 1000565002,
+    VK_TENSOR_TILING_BLOCK_U_INTERLEAVED_ARM = 1000565003,
+    VK_TENSOR_TILING_BLOCK_U_INTERLEAVED_64K_ARM = 1000565004,
     VK_TENSOR_TILING_MAX_ENUM_ARM = 0x7FFFFFFF
 } VkTensorTilingARM;
 typedef VkFlags64 VkTensorCreateFlagsARM;
@@ -23933,7 +24015,7 @@ typedef struct VkPhysicalDeviceDynamicRenderingUnusedAttachmentsFeaturesEXT {
 
 // VK_NV_low_latency2 is a preprocessor guard. Do not pass it to API calls.
 #define VK_NV_low_latency2 1
-#define VK_NV_LOW_LATENCY_2_SPEC_VERSION  2
+#define VK_NV_LOW_LATENCY_2_SPEC_VERSION  3
 #define VK_NV_LOW_LATENCY_2_EXTENSION_NAME "VK_NV_low_latency2"
 
 typedef enum VkLatencyMarkerNV {
@@ -24834,6 +24916,29 @@ typedef struct VkPhysicalDeviceShaderReplicatedCompositesFeaturesEXT {
     void*              pNext;
     VkBool32           shaderReplicatedComposites;
 } VkPhysicalDeviceShaderReplicatedCompositesFeaturesEXT;
+
+
+
+// VK_ARM_tensor_controls is a preprocessor guard. Do not pass it to API calls.
+#define VK_ARM_tensor_controls 1
+#define VK_MAX_TENSOR_CREATE_INFO_ROLLING_BACKING_WRAP_COUNT_ARM 4U
+#define VK_ARM_TENSOR_CONTROLS_SPEC_VERSION 1
+#define VK_ARM_TENSOR_CONTROLS_EXTENSION_NAME "VK_ARM_tensor_controls"
+typedef struct VkTensorRollingBackingCreateInfoARM {
+    VkStructureType    sType;
+    const void*        pNext;
+    uint32_t           wraps[VK_MAX_TENSOR_CREATE_INFO_ROLLING_BACKING_WRAP_COUNT_ARM];
+} VkTensorRollingBackingCreateInfoARM;
+
+typedef struct VkTensorExplicitTilingFormatPropertiesARM {
+    VkStructureType          sType;
+    void*                    pNext;
+    VkFormatFeatureFlags2    brick16TilingTensorFeatures;
+    VkFormatFeatureFlags2    brick8TilingTensorFeatures;
+    VkFormatFeatureFlags2    brick4TilingTensorFeatures;
+    VkFormatFeatureFlags2    blockUTilingTensorFeatures;
+    VkFormatFeatureFlags2    blockU64kTilingTensorFeatures;
+} VkTensorExplicitTilingFormatPropertiesARM;
 
 
 
@@ -26281,6 +26386,60 @@ VKAPI_ATTR void VKAPI_CALL vkCmdSetComputeOccupancyPriorityNV(
 #endif
 
 
+// VK_EXT_cooperative_matrix_maintenance1 is a preprocessor guard. Do not pass it to API calls.
+#define VK_EXT_cooperative_matrix_maintenance1 1
+#define VK_EXT_COOPERATIVE_MATRIX_MAINTENANCE_1_SPEC_VERSION 1
+#define VK_EXT_COOPERATIVE_MATRIX_MAINTENANCE_1_EXTENSION_NAME "VK_EXT_cooperative_matrix_maintenance1"
+
+typedef enum VkCooperativeMatrixFlagBitsEXT {
+    VK_COOPERATIVE_MATRIX_SATURATING_ACCUMULATION_BIT_EXT = 0x00000001,
+    VK_COOPERATIVE_MATRIX_FLAG_BITS_MAX_ENUM_EXT = 0x7FFFFFFF
+} VkCooperativeMatrixFlagBitsEXT;
+typedef VkFlags VkCooperativeMatrixFlagsEXT;
+typedef struct VkCooperativeMatrixProperties2EXT {
+    VkStructureType       sType;
+    void*                 pNext;
+    uint32_t              MGranularity;
+    uint32_t              NGranularity;
+    uint32_t              KGranularity;
+    VkComponentTypeKHR    AType;
+    VkComponentTypeKHR    BType;
+    VkComponentTypeKHR    CType;
+    VkComponentTypeKHR    ResultType;
+} VkCooperativeMatrixProperties2EXT;
+
+typedef struct VkPhysicalDeviceCooperativeMatrixInfo2EXT {
+    VkStructureType                sType;
+    const void*                    pNext;
+    VkScopeKHR                     scope;
+    uint32_t                       invocations;
+    uint32_t                       subgroupSize;
+    VkCooperativeMatrixFlagsEXT    flags;
+} VkPhysicalDeviceCooperativeMatrixInfo2EXT;
+
+typedef struct VkPhysicalDeviceCooperativeMatrixMaintenance1FeaturesEXT {
+    VkStructureType    sType;
+    void*              pNext;
+    VkBool32           cooperativeMatrixProperties2;
+    VkBool32           cooperativeMatrixReductions;
+    VkBool32           cooperativeMatrixConversions;
+    VkBool32           cooperativeMatrixPerElementOperations;
+    VkBool32           cooperativeMatrixGetCoordinate;
+} VkPhysicalDeviceCooperativeMatrixMaintenance1FeaturesEXT;
+
+typedef VkResult (VKAPI_PTR *PFN_vkGetPhysicalDeviceCooperativeMatrixProperties2EXT)(VkPhysicalDevice physicalDevice, const VkPhysicalDeviceCooperativeMatrixInfo2EXT* pCooperativeMatrixInfo, uint32_t* pPropertyCount, VkCooperativeMatrixProperties2EXT* pProperties);
+
+#ifndef VK_NO_PROTOTYPES
+#ifndef VK_ONLY_EXPORTED_PROTOTYPES
+VKAPI_ATTR VkResult VKAPI_CALL vkGetPhysicalDeviceCooperativeMatrixProperties2EXT(
+    VkPhysicalDevice                            physicalDevice,
+    const VkPhysicalDeviceCooperativeMatrixInfo2EXT* pCooperativeMatrixInfo,
+    uint32_t*                                   pPropertyCount,
+    VkCooperativeMatrixProperties2EXT*          pProperties);
+#endif
+#endif
+
+
 // VK_EXT_shader_subgroup_partitioned is a preprocessor guard. Do not pass it to API calls.
 #define VK_EXT_shader_subgroup_partitioned 1
 #define VK_EXT_SHADER_SUBGROUP_PARTITIONED_SPEC_VERSION 1
@@ -26290,6 +26449,21 @@ typedef struct VkPhysicalDeviceShaderSubgroupPartitionedFeaturesEXT {
     void*              pNext;
     VkBool32           shaderSubgroupPartitioned;
 } VkPhysicalDeviceShaderSubgroupPartitionedFeaturesEXT;
+
+
+
+// VK_EXT_shader_ocp_microscaling_types is a preprocessor guard. Do not pass it to API calls.
+#define VK_EXT_shader_ocp_microscaling_types 1
+#define VK_EXT_SHADER_OCP_MICROSCALING_TYPES_SPEC_VERSION 1
+#define VK_EXT_SHADER_OCP_MICROSCALING_TYPES_EXTENSION_NAME "VK_EXT_shader_ocp_microscaling_types"
+typedef struct VkPhysicalDeviceShaderOCPMicroscalingTypesFeaturesEXT {
+    VkStructureType    sType;
+    void*              pNext;
+    VkBool32           shaderFloat4;
+    VkBool32           shaderFloat6;
+    VkBool32           shaderFloat8UnsignedE8M0;
+    VkBool32           shaderMXInt8;
+} VkPhysicalDeviceShaderOCPMicroscalingTypesFeaturesEXT;
 
 
 
@@ -26385,6 +26559,31 @@ VKAPI_ATTR void VKAPI_CALL vkCmdSetPrimitiveRestartIndexEXT(
 #endif
 
 
+// VK_EXT_image_tiling_control is a preprocessor guard. Do not pass it to API calls.
+#define VK_EXT_image_tiling_control 1
+#define VK_EXT_IMAGE_TILING_CONTROL_SPEC_VERSION 1
+#define VK_EXT_IMAGE_TILING_CONTROL_EXTENSION_NAME "VK_EXT_image_tiling_control"
+
+typedef enum VkImageTilingControlEXT {
+    VK_IMAGE_TILING_CONTROL_DEFAULT_EXT = 0,
+    VK_IMAGE_TILING_CONTROL_MIN_SIZE_EXT = 1,
+    VK_IMAGE_TILING_CONTROL_MAX_PERFORMANCE_EXT = 2,
+    VK_IMAGE_TILING_CONTROL_MAX_ENUM_EXT = 0x7FFFFFFF
+} VkImageTilingControlEXT;
+typedef struct VkPhysicalDeviceImageTilingControlFeaturesEXT {
+    VkStructureType    sType;
+    void*              pNext;
+    VkBool32           imageTilingControl;
+} VkPhysicalDeviceImageTilingControlFeaturesEXT;
+
+typedef struct VkImageTilingControlCreateInfoEXT {
+    VkStructureType            sType;
+    const void*                pNext;
+    VkImageTilingControlEXT    tilingControl;
+} VkImageTilingControlCreateInfoEXT;
+
+
+
 // VK_NV_cooperative_matrix_decode_vector is a preprocessor guard. Do not pass it to API calls.
 #define VK_NV_cooperative_matrix_decode_vector 1
 #define VK_NV_COOPERATIVE_MATRIX_DECODE_VECTOR_SPEC_VERSION 1
@@ -26394,6 +26593,18 @@ typedef struct VkPhysicalDeviceCooperativeMatrixDecodeVectorFeaturesNV {
     void*              pNext;
     VkBool32           cooperativeMatrixDecodeVector;
 } VkPhysicalDeviceCooperativeMatrixDecodeVectorFeaturesNV;
+
+
+
+// VK_NV_private_data_base_handle is a preprocessor guard. Do not pass it to API calls.
+#define VK_NV_private_data_base_handle 1
+#define VK_NV_PRIVATE_DATA_BASE_HANDLE_SPEC_VERSION 1
+#define VK_NV_PRIVATE_DATA_BASE_HANDLE_EXTENSION_NAME "VK_NV_private_data_base_handle"
+typedef struct VkPhysicalDevicePrivateDataBaseHandleFeaturesNV {
+    VkStructureType    sType;
+    void*              pNext;
+    VkBool32           privateDataBaseHandle;
+} VkPhysicalDevicePrivateDataBaseHandleFeaturesNV;
 
 
 
@@ -26492,6 +26703,7 @@ typedef struct VkPhysicalDeviceAccelerationStructureFeaturesKHR {
     VkBool32           accelerationStructure;
     VkBool32           accelerationStructureCaptureReplay;
     VkBool32           accelerationStructureIndirectBuild;
+    // accelerationStructureHostCommands is legacy, but no reason was given in the API XML
     VkBool32           accelerationStructureHostCommands;
     VkBool32           descriptorBindingAccelerationStructureUpdateAfterBind;
 } VkPhysicalDeviceAccelerationStructureFeaturesKHR;
