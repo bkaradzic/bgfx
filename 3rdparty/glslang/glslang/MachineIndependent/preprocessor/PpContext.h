@@ -298,6 +298,11 @@ public:
                     case PpAtomConstFloat:
                     case PpAtomConstDouble:
                     case PpAtomConstFloat16:
+                    case PpAtomConstFloatE2M1:
+                    case PpAtomConstFloatE3M2:
+                    case PpAtomConstFloatE2M3:
+                    case PpAtomConstFloatUE8M0:
+                    case PpAtomConstFloatMXINT8:
                     case PpAtomConstString:
                     case PpAtomIdentifier:
                         return true;
@@ -393,9 +398,9 @@ protected:
 
     static const int maxIfNesting = 65;
 
-    int ifdepth;                  // current #if-#else-#endif nesting in the cpp.c file (pre-processor)
-    bool elseSeen[maxIfNesting];  // Keep a track of whether an else has been seen at a particular depth
-    int elsetracker;              // #if-#else and #endif constructs...Counter.
+    int ifdepth;                      // current #if-#else-#endif nesting in the cpp.c file (pre-processor)
+    bool elseSeen[maxIfNesting + 1];  // Keep a track of whether an else has been seen at a particular depth
+    int elsetracker;                  // #if-#else and #endif constructs...Counter.
 
     class tMacroInput : public tInput {
     public:
@@ -441,36 +446,13 @@ protected:
         static const int marker = -3;
     };
 
-    class tStringifyLevelInput : public tInput {
-        int what;
-        tStringifyLevelInput(TPpContext* pp) : tInput(pp) { }
-    public:
-        static tStringifyLevelInput popMarker(TPpContext* pp)
-        {
-            tStringifyLevelInput sl(pp);
-            sl.what = POP;
-            return sl;
-        }
-
-        static tStringifyLevelInput pushMarker(TPpContext* pp)
-        {
-            tStringifyLevelInput sl(pp);
-            sl.what = PUSH;
-            return sl;
-        }
-
-        int scan(TPpToken*) override
-        {
-            if (done)
-                return EndOfInput;
-            done = true;
-
-            return what;
-        }
-        virtual int getch() override { assert(0); return EndOfInput; }
-        virtual void ungetch() override { assert(0); }
-        static const int PUSH = -4;
-        static const int POP = -5;
+    struct tStringifyLevelInput {
+      // PUSH is a token atom indicating a new stringizing (#) level
+      // during macro body expansion.
+      static constexpr int PUSH = -4;
+      // PUSH is a token atom indicating the end of a stringizing level
+      // during macro body expansion.
+      static constexpr int POP = -5;
     };
 
     class tZeroInput : public tInput {
@@ -484,6 +466,10 @@ protected:
     std::vector<tInput*> inputStack;
     bool errorOnVersion;
     bool versionSeen;
+    // Current nesting depth of MacroExpand() calls; bounded to prevent
+    // stack overflow via unbounded MacroExpand <-> PrescanMacroArg recursion.
+    int macroExpandDepth = 0;
+    static const int maxMacroExpandDepth = 200;
 
     //
     // from Pp.cpp

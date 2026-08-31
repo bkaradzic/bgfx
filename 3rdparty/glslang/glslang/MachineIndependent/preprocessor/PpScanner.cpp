@@ -261,6 +261,11 @@ int TPpContext::lFloatConst(int len, int ch, TPpToken* ppToken)
     // Suffix:
     bool isDouble = false;
     bool isFloat16 = false;
+    bool isFE2M1 = false;
+    bool isFE3M2 = false;
+    bool isFE2M3 = false;
+    bool isFUE8M0 = false;
+    bool isFMXINT8 = false;
     if (ch == 'l' || ch == 'L') {
         if (ifdepth == 0 && parseContext.intermediate.getSource() == EShSourceGlsl)
             parseContext.doubleCheck(ppToken->loc, "double floating-point suffix");
@@ -308,6 +313,44 @@ int TPpContext::lFloatConst(int len, int ch, TPpToken* ppToken)
         if (ifdepth == 0 && !hasDecimalOrExponent)
             parseContext.ppError(ppToken->loc, "float literal needs a decimal point or exponent", "", "");
         saveName(ch);
+
+        auto const &try_str = [&](const char *str, size_t numChar) {
+            size_t counter = 0;
+            for (size_t i = 0; i < numChar; ++i) {
+                if (getChar() != str[i]) {
+                    break;
+                }
+                counter++;
+            }
+            if (counter == numChar) {
+                for (size_t i = 0; i < numChar; ++i) {
+                    saveName(str[i]);
+                }
+                return true;
+            } else {
+                // called getChar one more than counter times
+                counter++;
+                while (counter) {
+                    ungetChar();
+                    counter--;
+                }
+                return false;
+            }
+        };
+
+        if (ch == 'f') {
+            if (try_str("e2m1", 4)) {
+                isFE2M1 = true;
+            } else if (try_str("e3m2", 4)) {
+                isFE3M2 = true;
+            } else if (try_str("e2m3", 4)) {
+                isFE2M3 = true;
+            } else if (try_str("ue8m0", 5)) {
+                isFUE8M0 = true;
+            } else if (try_str("mxint8", 6)) {
+                isFMXINT8 = true;
+            }
+        }
     } else
         ungetChar();
 
@@ -364,6 +407,16 @@ int TPpContext::lFloatConst(int len, int ch, TPpToken* ppToken)
         return PpAtomConstDouble;
     else if (isFloat16)
         return PpAtomConstFloat16;
+    else if (isFE2M1)
+        return PpAtomConstFloatE2M1;
+    else if (isFE3M2)
+        return PpAtomConstFloatE3M2;
+    else if (isFE2M3)
+        return PpAtomConstFloatE2M3;
+    else if (isFUE8M0)
+        return PpAtomConstFloatUE8M0;
+    else if (isFMXINT8)
+        return PpAtomConstFloatMXINT8;
     else
         return PpAtomConstFloat;
 }
@@ -1308,6 +1361,11 @@ int TPpContext::tokenize(TPpToken& ppToken)
         case PpAtomConstUint16:
         case PpAtomConstDouble:
         case PpAtomConstFloat16:
+        case PpAtomConstFloatE2M1:
+        case PpAtomConstFloatE3M2:
+        case PpAtomConstFloatE2M3:
+        case PpAtomConstFloatUE8M0:
+        case PpAtomConstFloatMXINT8:
             if (ppToken.name[0] == '\0')
                 continue;
             break;

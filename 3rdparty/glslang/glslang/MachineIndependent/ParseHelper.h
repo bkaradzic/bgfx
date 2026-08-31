@@ -91,9 +91,9 @@ public:
             parsingBuiltins(parsingBuiltins), scanContext(nullptr), ppContext(nullptr),
             limits(resources.limits),
             globalUniformBlock(nullptr),
-            globalUniformBinding(TQualifier::layoutBindingEnd),
-            globalUniformSet(TQualifier::layoutSetEnd),
-            atomicCounterBlockSet(TQualifier::layoutSetEnd)
+            globalUniformBinding(TQualifier::layoutNotSet),
+            globalUniformSet(TQualifier::layoutNotSet),
+            atomicCounterBlockSet(TQualifier::layoutNotSet)
     {
         // use storage buffer on SPIR-V 1.3 and up
         if (spvVersion.spv >= EShTargetSpv_1_3)
@@ -230,8 +230,8 @@ protected:
 
     // Manage the global uniform block (default uniforms in GLSL, $Global in HLSL)
     TVariable* globalUniformBlock;     // the actual block, inserted into the symbol table
-    unsigned int globalUniformBinding; // the block's binding number
-    unsigned int globalUniformSet;     // the block's set number
+    int globalUniformBinding;          // the block's binding number
+    int globalUniformSet;              // the block's set number
     int firstNewMember;                // the index of the first member not yet inserted into the symbol table
     // override this to set the language-specific name
     virtual const char* getGlobalUniformBlockName() const { return ""; }
@@ -240,7 +240,7 @@ protected:
 
     // Manage the atomic counter block (used for atomic_uints with Vulkan-Relaxed)
     TMap<int, TVariable*> atomicCounterBuffers;
-    unsigned int atomicCounterBlockSet;
+    int atomicCounterBlockSet;
     TMap<int, int> atomicCounterBlockFirstNewMember;
     // override this to set the language-specific name
     virtual const char* getAtomicCounterBlockName() const { return ""; }
@@ -358,7 +358,7 @@ public:
     TIntermTyped* addOutputArgumentConversions(const TFunction&, TIntermAggregate&) const;
     TIntermTyped* addAssign(const TSourceLoc&, TOperator op, TIntermTyped* left, TIntermTyped* right);
     void builtInOpCheck(const TSourceLoc&, const TFunction&, TIntermOperator&);
-    void requireDerivativeLayout(const TSourceLoc&, const char* featureDesc);
+    void requireDerivativeLayout(const TSourceLoc&, const char* featureDesc, bool isDerivativeOp);
     void nonOpBuiltInCheck(const TSourceLoc&, const TFunction&, TIntermAggregate&);
     void userFunctionCallCheck(const TSourceLoc&, TIntermAggregate&);
     void samplerConstructorLocationCheck(const TSourceLoc&, const char* token, TIntermNode*);
@@ -458,7 +458,7 @@ public:
     TParameter getParamWithDefault(const TPublicType& ty, TString* identifier, TIntermTyped* initializer,
                                    const TSourceLoc& loc);
     void inheritMemoryQualifiers(const TQualifier& from, TQualifier& to);
-    void descHeapBuiltinRemap(TType* type, bool isInnerBlock);
+    void descHeapBuiltinRemap(TType* type, bool rootNode);
     bool untypedHeapCheck(TSymbol* symbol, const TType& type, const TSourceLoc& loc, const char* name);
     TIntermNode* declareBlock(const TSourceLoc&, TTypeList& typeList, const TString* instanceName = nullptr, TArraySizes* arraySizes = nullptr);
     void blockStorageRemap(const TSourceLoc&, const TString*, TQualifier&);
@@ -490,7 +490,7 @@ public:
     // Determine loop control from attributes
     void handleLoopAttributes(const TAttributes& attributes, TIntermNode*);
     // Function attributes
-    void handleFunctionAttributes(const TSourceLoc&, const TAttributes&);
+    void handleFunctionAttributes(const TSourceLoc&, TFunction&, const TAttributes&);
 
     // GL_EXT_spirv_intrinsics
     TSpirvRequirement* makeSpirvRequirement(const TSourceLoc& loc, const TString& name,

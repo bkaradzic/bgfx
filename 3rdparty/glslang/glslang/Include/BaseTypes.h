@@ -52,6 +52,11 @@ enum TBasicType {
     EbtBFloat16,
     EbtFloatE5M2,
     EbtFloatE4M3,
+    EbtFloatE2M1,
+    EbtFloatE3M2,
+    EbtFloatE2M3,
+    EbtFloatUE8M0,
+    EbtFloatMXINT8,
     EbtInt8,
     EbtUint8,
     EbtInt16,
@@ -641,6 +646,25 @@ __inline bool isTypeFloat(TBasicType type)
     case EbtBFloat16:
     case EbtFloatE5M2:
     case EbtFloatE4M3:
+    case EbtFloatE2M1:
+    case EbtFloatE3M2:
+    case EbtFloatE2M3:
+    case EbtFloatUE8M0:
+    case EbtFloatMXINT8:
+        return true;
+    default:
+        return false;
+    }
+}
+
+__inline bool isTypeOcpMicroscalingFloat(TBasicType type)
+{
+    switch (type) {
+    case EbtFloatE2M1:
+    case EbtFloatE3M2:
+    case EbtFloatE2M3:
+    case EbtFloatUE8M0:
+    case EbtFloatMXINT8:
         return true;
     default:
         return false;
@@ -650,6 +674,13 @@ __inline bool isTypeFloat(TBasicType type)
 __inline uint32_t GetNumBits(TBasicType type)
 {
     switch (type) {
+    case EbtFloatE2M1:
+        return 4;
+    case EbtFloatE3M2:
+    case EbtFloatE2M3:
+        return 6;
+    case EbtFloatUE8M0:
+    case EbtFloatMXINT8:
     case EbtInt8:
     case EbtUint8:
     case EbtFloatE5M2:

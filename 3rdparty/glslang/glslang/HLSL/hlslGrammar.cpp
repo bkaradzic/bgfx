@@ -1211,7 +1211,8 @@ bool HlslGrammar::acceptSubpassInputType(TType& type)
         }
     }
 
-    const TBasicType subpassBasicType = subpassType.isStruct() ? (*subpassType.getStruct())[0].type->getBasicType()
+    const TBasicType subpassBasicType = (subpassType.isStruct() && !subpassType.getStruct()->empty())
+        ? (*subpassType.getStruct())[0].type->getBasicType()
         : subpassType.getBasicType();
 
     TSampler sampler;
@@ -1436,7 +1437,8 @@ bool HlslGrammar::acceptTextureType(TType& type)
     if (image || dim == EsdBuffer)
         format = parseContext.getLayoutFromTxType(token.loc, txType);
 
-    const TBasicType txBasicType = txType.isStruct() ? (*txType.getStruct())[0].type->getBasicType()
+    const TBasicType txBasicType = (txType.isStruct() && !txType.getStruct()->empty())
+        ? (*txType.getStruct())[0].type->getBasicType()
         : txType.getBasicType();
 
     // Non-image Buffers are combined

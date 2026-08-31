@@ -314,6 +314,30 @@ bool TOutputTraverser::visitUnary(TVisit /* visit */, TIntermUnary* node)
     case EOpPackFloat2x16:    out.debug << "packFloat2x16";      break;
     case EOpUnpackFloat2x16:  out.debug << "unpackFloat2x16";    break;
 
+    case EOpUnpackFloat2xE2M1:  out.debug << "unpackFloat2xfe2m1EXT";   break;
+    case EOpUnpackFloat4xE2M1:  out.debug << "unpackFloat4xfe2m1EXT";   break;
+    case EOpUnpackFloat8xE2M1:  out.debug << "unpackFloat8xfe2m1EXT";   break;
+    case EOpUnpackFloat16xE2M1: out.debug << "unpackFloat16xfe2m1EXT";  break;
+    case EOpPackFloat2xE2M1:    out.debug << "packFloat2xfe2m1EXT";     break;
+    case EOpPackFloat4xE2M1:    out.debug << "packFloat4xfe2m1EXT";     break;
+    case EOpPackFloat8xE2M1:    out.debug << "packFloat8xfe2m1EXT";     break;
+    case EOpPackFloat16xE2M1:   out.debug << "packFloat16xfe2m1EXT";    break;
+    case EOpUnpackFloat4xE3M2:  out.debug << "unpackFloat4xfe3m2EXT";   break;
+    case EOpUnpackFloat8xE3M2:  out.debug << "unpackFloat8xfe3m2EXT";   break;
+    case EOpUnpackFloat16xE3M2: out.debug << "unpackFloat16xfe3m2EXT";  break;
+    case EOpPackFloat4xE3M2:    out.debug << "packFloat4xfe3m2EXT";     break;
+    case EOpPackFloat8xE3M2:    out.debug << "packFloat8xfe3m2EXT";     break;
+    case EOpPackFloat16xE3M2:   out.debug << "packFloat16xfe3m2EXT";    break;
+    case EOpUnpackFloat4xE2M3:  out.debug << "unpackFloat4xfe2m3EXT";   break;
+    case EOpUnpackFloat8xE2M3:  out.debug << "unpackFloat8xfe2m3EXT";   break;
+    case EOpUnpackFloat16xE2M3: out.debug << "unpackFloat16xfe2m3EXT";  break;
+    case EOpPackFloat4xE2M3:    out.debug << "packFloat4xfe2m3EXT";     break;
+    case EOpPackFloat8xE2M3:    out.debug << "packFloat8xfe2m3EXT";     break;
+    case EOpPackFloat16xE2M3:   out.debug << "packFloat16xfe2m3EXT";    break;
+    case EOpBitcastExtractE2M1: out.debug << "bitcastExtractfe2m1EXT";  break;
+    case EOpBitcastExtractE3M2: out.debug << "bitcastExtractfe3m2EXT";  break;
+    case EOpBitcastExtractE2M3: out.debug << "bitcastExtractfe2m3EXT";  break;
+
     case EOpLength:         out.debug << "length";               break;
     case EOpNormalize:      out.debug << "normalize";            break;
     case EOpDPdx:           out.debug << "dPdx";                 break;
@@ -638,6 +662,26 @@ bool TOutputTraverser::visitAggregate(TVisit /* visit */, TIntermAggregate* node
     case EOpConstructFloatE4M3Vec2:  out.debug << "Construct fe4m3vec2";   break;
     case EOpConstructFloatE4M3Vec3:  out.debug << "Construct fe4m3vec3";   break;
     case EOpConstructFloatE4M3Vec4:  out.debug << "Construct fe4m3vec4";   break;
+    case EOpConstructFloatE2M1:  out.debug << "Construct floate2m1_t"; break;
+    case EOpConstructFloatE2M1Vec2:  out.debug << "Construct fe2m1vec2";   break;
+    case EOpConstructFloatE2M1Vec3:  out.debug << "Construct fe2m1vec3";   break;
+    case EOpConstructFloatE2M1Vec4:  out.debug << "Construct fe2m1vec4";   break;
+    case EOpConstructFloatE3M2:  out.debug << "Construct floate3m2_t"; break;
+    case EOpConstructFloatE3M2Vec2:  out.debug << "Construct fe3m2vec2";   break;
+    case EOpConstructFloatE3M2Vec3:  out.debug << "Construct fe3m2vec3";   break;
+    case EOpConstructFloatE3M2Vec4:  out.debug << "Construct fe3m2vec4";   break;
+    case EOpConstructFloatE2M3:  out.debug << "Construct floate2m3_t"; break;
+    case EOpConstructFloatE2M3Vec2:  out.debug << "Construct fe2m3vec2";   break;
+    case EOpConstructFloatE2M3Vec3:  out.debug << "Construct fe2m3vec3";   break;
+    case EOpConstructFloatE2M3Vec4:  out.debug << "Construct fe2m3vec4";   break;
+    case EOpConstructFloatUE8M0:  out.debug << "Construct floatue8m0_t"; break;
+    case EOpConstructFloatUE8M0Vec2:  out.debug << "Construct fue8m0vec2";   break;
+    case EOpConstructFloatUE8M0Vec3:  out.debug << "Construct fue8m0vec3";   break;
+    case EOpConstructFloatUE8M0Vec4:  out.debug << "Construct fue8m0vec4";   break;
+    case EOpConstructFloatMXINT8:  out.debug << "Construct floatmxint8_t"; break;
+    case EOpConstructFloatMXINT8Vec2:  out.debug << "Construct fmxint8vec2";   break;
+    case EOpConstructFloatMXINT8Vec3:  out.debug << "Construct fmxint8vec3";   break;
+    case EOpConstructFloatMXINT8Vec4:  out.debug << "Construct fmxint8vec4";   break;
     case EOpConstructFloat16:   out.debug << "Construct float16_t"; break;
     case EOpConstructF16Vec2:   out.debug << "Construct f16vec2";   break;
     case EOpConstructF16Vec3:   out.debug << "Construct f16vec3";   break;
@@ -806,6 +850,14 @@ bool TOutputTraverser::visitAggregate(TVisit /* visit */, TIntermAggregate* node
     case EOpSparseTextureGatherLodOffset:   out.debug << "sparseTextureGatherLodOffset";    break;
     case EOpSparseTextureGatherLodOffsets:  out.debug << "sparseTextureGatherLodOffsets";   break;
     case EOpSparseImageLoadLod:             out.debug << "sparseImageLoadLod";              break;
+    case EOpTextureGather4x1QCOM:           out.debug << "textureGather4x1QCOM";            break;
+    case EOpTextureGatherV2QCOM:            out.debug << "textureGatherV2QCOM";             break;
+    case EOpTextureGatherH2QCOM:            out.debug << "textureGatherH2QCOM";             break;
+    case EOpTextureGatherDQCOM:             out.debug << "textureGatherDQCOM";              break;
+    case EOpTextureGather4x1OffsetQCOM:     out.debug << "textureGather4x1OffsetQCOM";      break;
+    case EOpTextureGatherV2OffsetQCOM:      out.debug << "textureGatherV2OffsetQCOM";       break;
+    case EOpTextureGatherH2OffsetQCOM:      out.debug << "textureGatherH2OffsetQCOM";       break;
+    case EOpTextureGatherDOffsetQCOM:       out.debug << "textureGatherDOffsetQCOM";        break;
     case EOpImageSampleFootprintNV:             out.debug << "imageSampleFootprintNV";          break;
     case EOpImageSampleFootprintClampNV:        out.debug << "imageSampleFootprintClampNV";     break;
     case EOpImageSampleFootprintLodNV:          out.debug << "imageSampleFootprintLodNV";       break;
@@ -981,6 +1033,7 @@ bool TOutputTraverser::visitAggregate(TVisit /* visit */, TIntermAggregate* node
     case EOpCooperativeMatrixReduceNV: out.debug << "Reduce cooperative matrices"; break;
     case EOpCooperativeMatrixPerElementOpNV: out.debug << "cooperative matrix per element op"; break;
     case EOpCooperativeMatrixTransposeNV: out.debug << "Transpose cooperative matrix"; break;
+    case EOpCooperativeMatrixGetCoordinateEXT: out.debug << "Cooperative matrix get coordinate"; break;
 
     case EOpCooperativeVectorMatMulNV: out.debug << "Cooperative vector matrix multiply NV"; break;
     case EOpCooperativeVectorMatMulAddNV: out.debug << "Cooperative vector matrix multiply add NV"; break;
@@ -1185,6 +1238,11 @@ static void OutputConstantUnion(TInfoSink& out, const TIntermTyped* node, const 
         case EbtBFloat16:
         case EbtFloatE5M2:
         case EbtFloatE4M3:
+        case EbtFloatE2M1:
+        case EbtFloatE3M2:
+        case EbtFloatE2M3:
+        case EbtFloatUE8M0:
+        case EbtFloatMXINT8:
             OutputDouble(out, constUnion[i].getDConst(), extra);
             out.debug << "\n";
             break;

@@ -99,6 +99,7 @@ protected:
     void addImageFunctions(TSampler, const TString& typeName, int version, EProfile profile);
     void addSamplingFunctions(TSampler, const TString& typeName, int version, EProfile profile);
     void addGatherFunctions(TSampler, const TString& typeName, int version, EProfile profile);
+    void addGatherFunctionsQCOM();
 
     // Helpers for making textual representations of the permutations
     // of texturing/imaging functions.

@@ -119,7 +119,7 @@ extern int yylex(YYSTYPE*, TParseContext&);
 
 %parse-param {glslang::TParseContext* pParseContext}
 %lex-param {parseContext}
-%pure-parser  // enable thread safety
+%define api.pure  // enable thread safety
 %expect 1     // One shift reduce conflict because of if | else
 
 %token <lex> CONST BOOL INT UINT FLOAT
@@ -146,7 +146,7 @@ extern int yylex(YYSTYPE*, TParseContext&);
 %token <lex> UTEXTURE2D UTEXTURE3D UTEXTURECUBE UTEXTURE2DARRAY
 
 %token <lex> ATTRIBUTE VARYING
-%token <lex> FLOATE5M2_T FLOATE4M3_T BFLOAT16_T FLOAT16_T FLOAT32_T DOUBLE FLOAT64_T
+%token <lex> FLOATE5M2_T FLOATE4M3_T BFLOAT16_T FLOAT16_T FLOAT32_T DOUBLE FLOAT64_T FLOATE2M1_T FLOATE3M2_T FLOATE2M3_T FLOATUE8M0_T FLOATMXINT8_T
 %token <lex> INT64_T UINT64_T INT32_T UINT32_T INT16_T UINT16_T INT8_T UINT8_T
 %token <lex> I64VEC2 I64VEC3 I64VEC4
 %token <lex> U64VEC2 U64VEC3 U64VEC4
@@ -160,6 +160,11 @@ extern int yylex(YYSTYPE*, TParseContext&);
 %token <lex> BF16VEC2 BF16VEC3 BF16VEC4
 %token <lex> FE5M2VEC2 FE5M2VEC3 FE5M2VEC4
 %token <lex> FE4M3VEC2 FE4M3VEC3 FE4M3VEC4
+%token <lex> FE2M1VEC2 FE2M1VEC3 FE2M1VEC4
+%token <lex> FE3M2VEC2 FE3M2VEC3 FE3M2VEC4
+%token <lex> FE2M3VEC2 FE2M3VEC3 FE2M3VEC4
+%token <lex> FUE8M0VEC2 FUE8M0VEC3 FUE8M0VEC4
+%token <lex> FMXINT8VEC2 FMXINT8VEC3 FMXINT8VEC4
 %token <lex> F16VEC2 F16VEC3 F16VEC4 F16MAT2 F16MAT3 F16MAT4
 %token <lex> F32VEC2 F32VEC3 F32VEC4 F32MAT2 F32MAT3 F32MAT4
 %token <lex> F64VEC2 F64VEC3 F64VEC4 F64MAT2 F64MAT3 F64MAT4
@@ -269,6 +274,7 @@ extern int yylex(YYSTYPE*, TParseContext&);
 %token <lex> INVARIANT
 %token <lex> HIGH_PRECISION MEDIUM_PRECISION LOW_PRECISION PRECISION
 %token <lex> PACKED RESOURCE SUPERP
+%token <lex> INLINE NOINLINE
 
 %token <lex> FLOATCONSTANT INTCONSTANT UINTCONSTANT BOOLCONSTANT
 %token <lex> IDENTIFIER TYPE_NAME
@@ -280,7 +286,7 @@ extern int yylex(YYSTYPE*, TParseContext&);
 %token <lex> UNIFORM SHARED BUFFER TILEIMAGEEXT
 %token <lex> FLAT SMOOTH LAYOUT
 
-%token <lex> DOUBLECONSTANT INT16CONSTANT UINT16CONSTANT FLOAT16CONSTANT INT32CONSTANT UINT32CONSTANT
+%token <lex> DOUBLECONSTANT INT16CONSTANT UINT16CONSTANT FLOAT16CONSTANT INT32CONSTANT UINT32CONSTANT FLOATE2M1CONSTANT FLOATE3M2CONSTANT FLOATE2M3CONSTANT FLOATUE8M0CONSTANT FLOATMXINT8CONSTANT
 %token <lex> INT64CONSTANT UINT64CONSTANT
 %token <lex> SUBROUTINE DEMOTE FUNCTION
 %token <lex> PAYLOADNV PAYLOADINNV HITATTRNV CALLDATANV CALLDATAINNV 
@@ -330,7 +336,7 @@ extern int yylex(YYSTYPE*, TParseContext&);
 %type <interm.type> block_heap_inner_structure
 %type <interm.typeLine> struct_declarator
 %type <interm.typeList> struct_declarator_list struct_declaration struct_declaration_list
-%type <interm.typeList> struct_declaration_with_heap struct_declaration_without_heap
+%type <interm.typeList> struct_declaration_no_inline_block struct_declaration_no_inline_block_list
 %type <interm> block_structure
 %type <interm.function> function_header function_declarator
 %type <interm.function> function_header_with_parameters
@@ -425,6 +431,26 @@ primary_expression
     | FLOAT16CONSTANT {
         parseContext.float16Check($1.loc, "half float literal");
         $$ = parseContext.intermediate.addConstantUnion($1.d, EbtFloat16, $1.loc, true);
+    }
+    | FLOATE2M1CONSTANT {
+        parseContext.floate2m1ScalarVectorCheck($1.loc, "fe2m1 literal");
+        $$ = parseContext.intermediate.addConstantUnion($1.d, EbtFloatE2M1, $1.loc, true);
+    }
+    | FLOATE3M2CONSTANT {
+        parseContext.floate3m2ScalarVectorCheck($1.loc, "fe3m2 literal");
+        $$ = parseContext.intermediate.addConstantUnion($1.d, EbtFloatE3M2, $1.loc, true);
+    }
+    | FLOATE2M3CONSTANT {
+        parseContext.floate2m3ScalarVectorCheck($1.loc, "fe2m3 literal");
+        $$ = parseContext.intermediate.addConstantUnion($1.d, EbtFloatE2M3, $1.loc, true);
+    }
+    | FLOATUE8M0CONSTANT {
+        parseContext.floatue8m0ScalarVectorCheck($1.loc, "fue8m0 literal");
+        $$ = parseContext.intermediate.addConstantUnion($1.d, EbtFloatUE8M0, $1.loc, true);
+    }
+    | FLOATMXINT8CONSTANT {
+        parseContext.floatmxint8ScalarVectorCheck($1.loc, "fmxint8 literal");
+        $$ = parseContext.intermediate.addConstantUnion($1.d, EbtFloatMXINT8, $1.loc, true);
     }
     ;
 
@@ -940,7 +966,7 @@ declaration
     ;
 
 block_structure
-    : type_qualifier IDENTIFIER LEFT_BRACE { parseContext.nestedBlockCheck($1.loc); } struct_declaration_without_heap RIGHT_BRACE {
+    : type_qualifier IDENTIFIER LEFT_BRACE { parseContext.nestedBlockCheck($1.loc); } struct_declaration_list RIGHT_BRACE {
         --parseContext.blockNestingLevel;
         parseContext.blockName = $2.string;
         parseContext.globalQualifierFixCheck($1.loc, $1.qualifier);
@@ -972,26 +998,26 @@ function_prototype
         $$.function = $1;
         if (parseContext.compileOnly) $$.function->setExport();
         $$.loc = $2.loc;
-        const char * extensions[2] = { E_GL_EXT_subgroup_uniform_control_flow, E_GL_EXT_maximal_reconvergence };
-        parseContext.requireExtensions($2.loc, 2, extensions, "attribute");
-        parseContext.handleFunctionAttributes($2.loc, *$3);
+        const char * extensions[3] = { E_GL_EXT_subgroup_uniform_control_flow, E_GL_EXT_maximal_reconvergence, E_GL_EXT_function_control_attributes };
+        parseContext.requireExtensions($2.loc, 3, extensions, "attribute");
+        parseContext.handleFunctionAttributes($2.loc, *$$.function, *$3);
     }
     | attribute function_declarator RIGHT_PAREN {
         $$.function = $2;
         if (parseContext.compileOnly) $$.function->setExport();
         $$.loc = $3.loc;
-        const char * extensions[2] = { E_GL_EXT_subgroup_uniform_control_flow, E_GL_EXT_maximal_reconvergence };
-        parseContext.requireExtensions($3.loc, 2, extensions, "attribute");
-        parseContext.handleFunctionAttributes($3.loc, *$1);
+        const char * extensions[3] = { E_GL_EXT_subgroup_uniform_control_flow, E_GL_EXT_maximal_reconvergence, E_GL_EXT_function_control_attributes };
+        parseContext.requireExtensions($3.loc, 3, extensions, "attribute");
+        parseContext.handleFunctionAttributes($3.loc, *$$.function, *$1);
     }
     | attribute function_declarator RIGHT_PAREN attribute {
         $$.function = $2;
         if (parseContext.compileOnly) $$.function->setExport();
         $$.loc = $3.loc;
-        const char * extensions[2] = { E_GL_EXT_subgroup_uniform_control_flow, E_GL_EXT_maximal_reconvergence };
-        parseContext.requireExtensions($3.loc, 2, extensions, "attribute");
-        parseContext.handleFunctionAttributes($3.loc, *$1);
-        parseContext.handleFunctionAttributes($3.loc, *$4);
+        const char * extensions[3] = { E_GL_EXT_subgroup_uniform_control_flow, E_GL_EXT_maximal_reconvergence, E_GL_EXT_function_control_attributes };
+        parseContext.requireExtensions($3.loc, 3, extensions, "attribute");
+        parseContext.handleFunctionAttributes($3.loc, *$$.function, *$1);
+        parseContext.handleFunctionAttributes($3.loc, *$$.function, *$4);
     }
     ;
 
@@ -1367,7 +1393,7 @@ layout_qualifier_id
         $$.init($1.loc);
         parseContext.setLayoutQualifier($1.loc, $$, *$1.string);
     }
-    | IDENTIFIER EQUAL constant_expression {
+    | IDENTIFIER EQUAL assignment_expression {
         $$.init($1.loc);
         parseContext.setLayoutQualifier($1.loc, $$, *$1.string, $3);
     }
@@ -1985,6 +2011,31 @@ type_specifier_nonarray
         $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
         $$.basicType = EbtFloatE4M3;
     }
+    | FLOATE2M1_T {
+        parseContext.floate2m1ScalarVectorCheck($1.loc, "floate2m1_t", parseContext.symbolTable.atBuiltInLevel());
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        $$.basicType = EbtFloatE2M1;
+    }
+    | FLOATE3M2_T {
+        parseContext.floate3m2ScalarVectorCheck($1.loc, "floate3m2_t", parseContext.symbolTable.atBuiltInLevel());
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        $$.basicType = EbtFloatE3M2;
+    }
+    | FLOATE2M3_T {
+        parseContext.floate2m3ScalarVectorCheck($1.loc, "floate2m3_t", parseContext.symbolTable.atBuiltInLevel());
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        $$.basicType = EbtFloatE2M3;
+    }
+    | FLOATUE8M0_T {
+        parseContext.floatue8m0ScalarVectorCheck($1.loc, "floatue8m0_t", parseContext.symbolTable.atBuiltInLevel());
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        $$.basicType = EbtFloatUE8M0;
+    }
+    | FLOATMXINT8_T {
+        parseContext.floatmxint8ScalarVectorCheck($1.loc, "floatmxint8_t", parseContext.symbolTable.atBuiltInLevel());
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        $$.basicType = EbtFloatMXINT8;
+    }
     | FLOAT16_T {
         parseContext.float16ScalarVectorCheck($1.loc, "float16_t", parseContext.symbolTable.atBuiltInLevel());
         $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
@@ -2116,6 +2167,96 @@ type_specifier_nonarray
         parseContext.floate4m3ScalarVectorCheck($1.loc, "fe4m3 vector", parseContext.symbolTable.atBuiltInLevel());
         $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
         $$.basicType = EbtFloatE4M3;
+        $$.setVector(4);
+    }
+    | FE2M1VEC2 {
+        parseContext.floate2m1ScalarVectorCheck($1.loc, "fe2m1 vector", parseContext.symbolTable.atBuiltInLevel());
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        $$.basicType = EbtFloatE2M1;
+        $$.setVector(2);
+    }
+    | FE2M1VEC3 {
+        parseContext.floate2m1ScalarVectorCheck($1.loc, "fe2m1 vector", parseContext.symbolTable.atBuiltInLevel());
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        $$.basicType = EbtFloatE2M1;
+        $$.setVector(3);
+    }
+    | FE2M1VEC4 {
+        parseContext.floate2m1ScalarVectorCheck($1.loc, "fe2m1 vector", parseContext.symbolTable.atBuiltInLevel());
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        $$.basicType = EbtFloatE2M1;
+        $$.setVector(4);
+    }
+    | FE3M2VEC2 {
+        parseContext.floate3m2ScalarVectorCheck($1.loc, "fe3m2 vector", parseContext.symbolTable.atBuiltInLevel());
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        $$.basicType = EbtFloatE3M2;
+        $$.setVector(2);
+    }
+    | FE3M2VEC3 {
+        parseContext.floate3m2ScalarVectorCheck($1.loc, "fe3m2 vector", parseContext.symbolTable.atBuiltInLevel());
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        $$.basicType = EbtFloatE3M2;
+        $$.setVector(3);
+    }
+    | FE3M2VEC4 {
+        parseContext.floate3m2ScalarVectorCheck($1.loc, "fe3m2 vector", parseContext.symbolTable.atBuiltInLevel());
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        $$.basicType = EbtFloatE3M2;
+        $$.setVector(4);
+    }
+    | FE2M3VEC2 {
+        parseContext.floate2m3ScalarVectorCheck($1.loc, "fe2m3 vector", parseContext.symbolTable.atBuiltInLevel());
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        $$.basicType = EbtFloatE2M3;
+        $$.setVector(2);
+    }
+    | FE2M3VEC3 {
+        parseContext.floate2m3ScalarVectorCheck($1.loc, "fe2m3 vector", parseContext.symbolTable.atBuiltInLevel());
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        $$.basicType = EbtFloatE2M3;
+        $$.setVector(3);
+    }
+    | FE2M3VEC4 {
+        parseContext.floate2m3ScalarVectorCheck($1.loc, "fe2m3 vector", parseContext.symbolTable.atBuiltInLevel());
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        $$.basicType = EbtFloatE2M3;
+        $$.setVector(4);
+    }
+    | FUE8M0VEC2 {
+        parseContext.floatue8m0ScalarVectorCheck($1.loc, "fue8m0 vector", parseContext.symbolTable.atBuiltInLevel());
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        $$.basicType = EbtFloatUE8M0;
+        $$.setVector(2);
+    }
+    | FUE8M0VEC3 {
+        parseContext.floatue8m0ScalarVectorCheck($1.loc, "fue8m0 vector", parseContext.symbolTable.atBuiltInLevel());
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        $$.basicType = EbtFloatUE8M0;
+        $$.setVector(3);
+    }
+    | FUE8M0VEC4 {
+        parseContext.floatue8m0ScalarVectorCheck($1.loc, "fue8m0 vector", parseContext.symbolTable.atBuiltInLevel());
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        $$.basicType = EbtFloatUE8M0;
+        $$.setVector(4);
+    }
+    | FMXINT8VEC2 {
+        parseContext.floatmxint8ScalarVectorCheck($1.loc, "fmxint8 vector", parseContext.symbolTable.atBuiltInLevel());
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        $$.basicType = EbtFloatMXINT8;
+        $$.setVector(2);
+    }
+    | FMXINT8VEC3 {
+        parseContext.floatmxint8ScalarVectorCheck($1.loc, "fmxint8 vector", parseContext.symbolTable.atBuiltInLevel());
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        $$.basicType = EbtFloatMXINT8;
+        $$.setVector(3);
+    }
+    | FMXINT8VEC4 {
+        parseContext.floatmxint8ScalarVectorCheck($1.loc, "fmxint8 vector", parseContext.symbolTable.atBuiltInLevel());
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        $$.basicType = EbtFloatMXINT8;
         $$.setVector(4);
     }
     | F16VEC2 {
@@ -3702,6 +3843,8 @@ type_specifier_nonarray
             $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
             $$.basicType = EbtStruct;
             $$.userDef = &structure;
+            if (structure.getQualifier().isBufferType())
+                $$.qualifier = structure.getQualifier();
         } else
             parseContext.error($1.loc, "expected type name", $1.string->c_str(), "");
     }
@@ -3752,23 +3895,10 @@ struct_specifier
     ;
 
 struct_declaration_list
-    : struct_declaration_without_heap {
+    : struct_declaration {
         $$ = $1;
     }
-    | struct_declaration_with_heap {
-        $$ = $1;
-    }
-    | struct_declaration_with_heap struct_declaration_without_heap {
-        $$ = $1;
-        for (unsigned int i = 0; i < $2->size(); ++i) {
-            for (unsigned int j = 0; j < $$->size(); ++j) {
-                if ((*$$)[j].type->getFieldName() == (*$2)[i].type->getFieldName())
-                    parseContext.error((*$2)[i].loc, "duplicate member name:", "", (*$2)[i].type->getFieldName().c_str());
-            }
-            $$->push_back((*$2)[i]);
-        }
-    }
-    | struct_declaration_without_heap struct_declaration_with_heap {
+    | struct_declaration_list struct_declaration {
         $$ = $1;
         for (unsigned int i = 0; i < $2->size(); ++i) {
             for (unsigned int j = 0; j < $$->size(); ++j) {
@@ -3780,8 +3910,11 @@ struct_declaration_list
     }
     ;
 
-struct_declaration_with_heap
-    : block_heap_inner_structure struct_declarator_list SEMICOLON {
+struct_declaration
+    : struct_declaration_no_inline_block {
+        $$ = $1;
+    }
+    | block_heap_inner_structure struct_declarator_list SEMICOLON {
         $$ = $2;
         parseContext.voidErrorCheck($1.loc, (*$2)[0].type->getFieldName(), $1.basicType);
         parseContext.precisionQualifierCheck($1.loc, $1.basicType, $1.qualifier, $1.hasTypeParameter());
@@ -3798,25 +3931,26 @@ struct_declaration_with_heap
     ;
 
 block_heap_inner_structure
-    : type_qualifier LEFT_BRACE { parseContext.nestedBlockCheck($1.loc, true); } struct_declaration_without_heap RIGHT_BRACE {
+    : type_qualifier LEFT_BRACE { parseContext.nestedBlockCheck($1.loc, true); } struct_declaration_no_inline_block_list RIGHT_BRACE {
         --parseContext.blockNestingLevel;
         parseContext.globalQualifierFixCheck($1.loc, $1.qualifier);
         parseContext.checkNoShaderLayouts($1.loc, $1.shaderQualifiers);
         $$.init($1.loc);
-        TType* innerStructure = new TType($4, TString(""));
-        $$.basicType = EbtBlock;
-        $$.userDef = innerStructure;
-        $$.qualifier = $1.qualifier;
+        TType* innerStructure = new TType($4, TString(""), $1.qualifier);
+        if (! $1.qualifier.hasBufferReference())
+            parseContext.error($1.loc, "only buffer_reference blocks can be declared inline inside a heap block", "", "");
+        TType* referenceType = new TType(EbtReference, *innerStructure, TString(""));
+        $$.basicType = EbtReference;
+        $$.userDef = referenceType;
         $$.qualifier.layoutDescriptorHeap = true;
-        $$.qualifier.layoutDescriptorInnerBlock = true;
     }
     ;
 
-struct_declaration_without_heap
-    : struct_declaration {
+struct_declaration_no_inline_block_list
+    : struct_declaration_no_inline_block {
         $$ = $1;
     }
-    | struct_declaration_without_heap struct_declaration {
+    | struct_declaration_no_inline_block_list struct_declaration_no_inline_block {
         $$ = $1;
         for (unsigned int i = 0; i < $2->size(); ++i) {
             for (unsigned int j = 0; j < $$->size(); ++j) {
@@ -3828,7 +3962,7 @@ struct_declaration_without_heap
     }
     ;
 
-struct_declaration
+struct_declaration_no_inline_block
     : type_specifier struct_declarator_list SEMICOLON {
         if ($1.arraySizes) {
             parseContext.profileRequires($1.loc, ENoProfile, 120, E_GL_3DL_array_objects, "arrayed type");
@@ -4158,8 +4292,8 @@ iteration_statement
         $$ = $1;
     }
     | attribute iteration_statement_nonattributed {
-        const char * extensions[2] = { E_GL_EXT_control_flow_attributes, E_GL_EXT_control_flow_attributes2 };
-        parseContext.requireExtensions($2->getLoc(), 2, extensions, "attribute");
+        const char * extensions[3] = { E_GL_EXT_control_flow_attributes, E_GL_EXT_control_flow_attributes2, E_GL_QCOM_multiple_wait_queues };
+        parseContext.requireExtensions($2->getLoc(), 3, extensions, "attribute");
         parseContext.handleLoopAttributes(*$1, $2);
         $$ = $2;
     }
@@ -4343,6 +4477,7 @@ function_definition
         parseContext.symbolTable.pop(&parseContext.defaultPrecision[0]);
         $$ = parseContext.intermediate.growAggregate($1.intermNode, $3);
         $$->getAsAggregate()->setLinkType($1.function->getLinkType());
+        $$->getAsAggregate()->setFunctionControl($1.function->getFunctionControl());
         parseContext.intermediate.setAggregateOperator($$, EOpFunction, $1.function->getType(), $1.loc);
         $$->getAsAggregate()->setName($1.function->getMangledName().c_str());
 
@@ -4384,6 +4519,12 @@ single_attribute
     }
     | IDENTIFIER LEFT_PAREN constant_expression RIGHT_PAREN {
         $$ = parseContext.makeAttributes(*$1.string, $3);
+    }
+    | INLINE {
+        $$ = parseContext.makeAttributes(TString("inline"));
+    }
+    | NOINLINE {
+        $$ = parseContext.makeAttributes(TString("noinline"));
     }
 
 spirv_requirements_list

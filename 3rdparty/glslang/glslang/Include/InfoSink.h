@@ -36,7 +36,9 @@
 #define _INFOSINK_INCLUDED_
 
 #include "../Include/Common.h"
+#if __has_include(<filesystem>)
 #include <filesystem>
+#endif
 #include <cmath>
 
 namespace glslang {
@@ -105,11 +107,19 @@ public:
         }
 
         if(loc.getFilename() == nullptr && shaderFileName != nullptr && absolute) {
+        #if defined(__cpp_lib_filesystem)
             append(std::filesystem::absolute(shaderFileName).string());
+        #else
+            append(shaderFileName);
+        #endif
         } else {
             std::string location = loc.getStringNameOrNum(false);
             if (absolute) {
+        #if defined(__cpp_lib_filesystem)
                 append(std::filesystem::absolute(location).string());
+        #else
+                append(location);
+        #endif
             } else {
                 append(location);
             }

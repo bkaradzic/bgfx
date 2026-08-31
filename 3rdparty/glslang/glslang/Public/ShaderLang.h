@@ -274,6 +274,7 @@ enum EShMessages : unsigned {
     EShMsgDisplayErrorColumn   = (1 << 17), // Display error message column aswell as line
     EShMsgLinkTimeOptimization = (1 << 18), // perform cross-stage optimizations during linking
     EShMsgValidateCrossStageIO = (1 << 19), // validate shader inputs have matching outputs in previous stage
+    EShMsgRelaxSetBindingLimits = (1 << 20), // relax layout(set/binding) limits
     LAST_ELEMENT_MARKER(EShMsgCount),
 };
 
@@ -508,6 +509,7 @@ public:
 #endif
     void setNoStorageFormat(bool useUnknownFormat);
     void setNanMinMaxClamp(bool nanMinMaxClamp);
+    void setDiscardIsTerminate(bool discardIsTerminate);
     void setTextureSamplerTransformMode(EShTextureSamplerTransformMode mode);
     void addBlockStorageOverride(const char* nameStr, glslang::TBlockStorageClass backing);
 
@@ -781,9 +783,55 @@ protected:
     const TType* type;
 };
 
-class  TReflection;
-class  TIoMapper;
-struct TVarEntryInfo;
+class TReflection;
+class TIoMapper;
+class TIntermSymbol;
+
+struct GLSLANG_EXPORT TVarEntryInfo {
+    long long id;
+    TIntermSymbol* symbol;
+    bool live;
+    TLayoutPacking upgradedToPushConstantPacking; // ElpNone means it hasn't been upgraded
+    int newBinding;
+    int newSet;
+    int newLocation;
+    int newComponent;
+    int newIndex;
+    EShLanguage stage;
+
+    void clearNewAssignments() {
+        upgradedToPushConstantPacking = ElpNone;
+        newBinding = -1;
+        newSet = -1;
+        newLocation = -1;
+        newComponent = -1;
+        newIndex = -1;
+    }
+
+    struct TOrderById {
+        inline bool operator()(const TVarEntryInfo& l, const TVarEntryInfo& r) { return l.id < r.id; }
+    };
+
+    struct TOrderByPriority {
+        // ordering:
+        // 1) has both binding and set
+        // 2) has binding but no set
+        // 3) has no binding but set
+        // 4) has no binding and no set
+        bool operator()(const TVarEntryInfo& l, const TVarEntryInfo& r);
+   };
+
+    struct TOrderByPriorityAndLive {
+        // ordering:
+        // 1) do live variables first
+        // 2) has both binding and set
+        // 3) has binding but no set
+        // 4) has no binding but set
+        // 5) has no binding and no set
+        bool operator()(const TVarEntryInfo& l, const TVarEntryInfo& r);
+   };
+};
+
 
 // Allows to customize the binding layout after linking.
 // All used uniform variables will invoke at least validateBinding.

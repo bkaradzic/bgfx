@@ -52,6 +52,7 @@
 namespace glslang {
 
 class TIntermAggregate;
+class TIntermTyped;
 
 const int GlslangMaxTypeLength = 200;  // TODO: need to print block/struct one member per line, so this can stay bounded
 
@@ -262,6 +263,11 @@ struct TSampler {   // misnomer now; includes images, textures without sampler, 
         case EbtBFloat16: s.append("bf16"); break;
         case EbtFloatE5M2: s.append("fe5m2"); break;
         case EbtFloatE4M3: s.append("fe4m3"); break;
+        case EbtFloatE2M1: s.append("fe2m1"); break;
+        case EbtFloatE3M2: s.append("fe3m2"); break;
+        case EbtFloatE2M3: s.append("fe2m3"); break;
+        case EbtFloatUE8M0: s.append("fue8m0"); break;
+        case EbtFloatMXINT8: s.append("fmxint8"); break;
         case EbtInt8:   s.append("i8");  break;
         case EbtUint16: s.append("u8");  break;
         case EbtInt16:  s.append("i16"); break;
@@ -810,8 +816,8 @@ public:
             break;
         case EbsPushConstant :
             storage = EvqUniform;
-            layoutSet = TQualifier::layoutSetEnd;
-            layoutBinding = TQualifier::layoutBindingEnd;
+            layoutSet = TQualifier::layoutNotSet;
+            layoutBinding = TQualifier::layoutNotSet;
             break;
         default:
             break;
@@ -862,6 +868,7 @@ public:
 
         layoutPushConstant = false;
         layoutBufferReference = false;
+        layoutDescriptorBufferType = false;
         layoutPassthrough = false;
         layoutViewportRelative = false;
         // -2048 as the default value indicating layoutSecondaryViewportRelative is not set
@@ -884,8 +891,10 @@ public:
         layoutBank = layoutBankEnd;
         layoutDescriptorHeap = false;
         layoutDescriptorStride = layoutDescriptorStrideEnd;
+        layoutDescriptorSize = layoutDescriptorSizeEnd;
         layoutHeapOffset = 0;
-        layoutDescriptorInnerBlock = false;
+        layoutHeapOffsetNode = nullptr;
+        descriptorHeapDescriptorNode = false;
     }
     void clearInterstageLayout()
     {
@@ -915,6 +924,7 @@ public:
                hasFormat() ||
                isShaderRecord() ||
                isPushConstant() ||
+               isBufferType() ||
                hasBufferReference();
     }
     bool hasLayout() const
@@ -935,10 +945,10 @@ public:
                  unsigned int layoutComponent            :  3;
     static const unsigned int layoutComponentEnd      =     4;
 
-                 unsigned int layoutSet                  :  7;
+                 int layoutSet;
     static const unsigned int layoutSetEnd           =   0x3F;
 
-                 unsigned int layoutBinding              : 16;
+                 int layoutBinding;
     static const unsigned int layoutBindingEnd      =  0xFFFF;
 
                  unsigned int layoutIndex                :  8;
@@ -956,8 +966,8 @@ public:
                  unsigned int layoutXfbOffset            : 13;
     static const unsigned int layoutXfbOffsetEnd     = 0x1FFF;
 
-                 unsigned int layoutAttachment           :  8;  // for input_attachment_index
-    static const unsigned int layoutAttachmentEnd      = 0XFF;
+                 unsigned int layoutAttachment;                 // for input_attachment_index
+    static const unsigned int layoutAttachmentEnd = INT_MAX;
 
                  unsigned int layoutSpecConstantId;
     static const unsigned int layoutSpecConstantIdEnd = UINT_MAX;
@@ -968,6 +978,9 @@ public:
                  unsigned int layoutDescriptorStride;
     static const unsigned int layoutDescriptorStrideEnd = 0x0;
 
+                 unsigned int layoutDescriptorSize;
+    static const unsigned int layoutDescriptorSizeEnd = 0x0;
+
     // stored as log2 of the actual alignment value
                  unsigned int layoutBufferReferenceAlign :  6;
     static const unsigned int layoutBufferReferenceAlignEnd = 0x3F;
@@ -976,6 +989,7 @@ public:
 
     bool layoutPushConstant;
     bool layoutBufferReference;
+    bool layoutDescriptorBufferType;
     bool layoutPassthrough;
     bool layoutViewportRelative;
     int layoutSecondaryViewportRelativeOffset;
@@ -985,8 +999,9 @@ public:
     bool layoutHitObjectShaderRecordNV;
     bool layoutHitObjectShaderRecordEXT;
     bool layoutDescriptorHeap;
-    bool layoutDescriptorInnerBlock;
+    bool descriptorHeapDescriptorNode;
     int layoutHeapOffset;
+    TIntermTyped* layoutHeapOffsetNode;
 
     // GL_EXT_spirv_intrinsics
     int spirvStorageClass;
@@ -1014,8 +1029,8 @@ public:
         layoutAlign = layoutNotSet;
         layoutMemberOffset = layoutNotSet;
 
-        layoutSet = layoutSetEnd;
-        layoutBinding = layoutBindingEnd;
+        layoutSet = layoutNotSet;
+        layoutBinding = layoutNotSet;
         layoutAttachment = layoutAttachmentEnd;
     }
 
@@ -1043,11 +1058,11 @@ public:
     }
     bool hasSet() const
     {
-        return layoutSet != layoutSetEnd;
+        return layoutSet != layoutNotSet;
     }
     bool hasBinding() const
     {
-        return layoutBinding != layoutBindingEnd;
+        return layoutBinding != layoutNotSet;
     }
     bool hasOffset() const
     {
@@ -1096,6 +1111,7 @@ public:
     TLayoutFormat getFormat() const { return layoutFormat; }
     bool isPushConstant() const { return layoutPushConstant; }
     bool isShaderRecord() const { return layoutShaderRecord; }
+    bool isBufferType() const { return layoutDescriptorBufferType; }
     bool isFullQuads() const { return layoutFullQuads; }
     bool isQuadDeriv() const { return layoutQuadDeriv; }
     bool hasHitObjectShaderRecordNV() const { return layoutHitObjectShaderRecordNV; }
@@ -1970,8 +1986,7 @@ public:
     virtual void updateImplicitArraySize(int size) { assert(isArray()); arraySizes->updateImplicitSize(size); }
     virtual void setImplicitlySized(bool isImplicitSized) { arraySizes->setImplicitlySized(isImplicitSized); }
     virtual bool isStruct() const { return basicType == EbtStruct || basicType == EbtBlock; }
-    virtual bool isFloatingDomain() const { return basicType == EbtFloat || basicType == EbtDouble || basicType == EbtFloat16 ||
-                                                   basicType == EbtBFloat16 || basicType == EbtFloatE5M2 || basicType == EbtFloatE4M3; }
+    virtual bool isFloatingDomain() const { return isTypeFloat(basicType); }
     virtual bool isIntegerDomain() const
     {
         switch (basicType) {
@@ -2109,6 +2124,11 @@ public:
             case EbtBFloat16:
             case EbtFloatE5M2:
             case EbtFloatE4M3:
+            case EbtFloatE2M1:
+            case EbtFloatE3M2:
+            case EbtFloatE2M3:
+            case EbtFloatUE8M0:
+            case EbtFloatMXINT8:
             case EbtInt8:
             case EbtUint8:
             case EbtInt16:
@@ -2148,6 +2168,20 @@ public:
     bool contains8BitFloat() const
     {
         return containsBasicType(EbtFloatE5M2) || containsBasicType(EbtFloatE4M3);
+    }
+    bool containsOcpMicroscalingFloat() const
+    {
+        return containsBasicType(EbtFloatE2M1) ||
+               containsBasicType(EbtFloatE3M2) ||
+               containsBasicType(EbtFloatE2M3) ||
+               containsBasicType(EbtFloatUE8M0) ||
+               containsBasicType(EbtFloatMXINT8);
+    }
+    bool containsOcpMicroscalingNonByteFloat() const
+    {
+        return containsBasicType(EbtFloatE2M1) ||
+               containsBasicType(EbtFloatE3M2) ||
+               containsBasicType(EbtFloatE2M3);
     }
     bool contains64BitInt() const
     {
@@ -2277,6 +2311,11 @@ public:
         case EbtBFloat16:          return "bfloat16_t";
         case EbtFloatE5M2:         return "floate5m2_t";
         case EbtFloatE4M3:         return "floate4m3_t";
+        case EbtFloatE2M1:         return "floate2m1_t";
+        case EbtFloatE3M2:         return "floate3m2_t";
+        case EbtFloatE2M3:         return "floate2m3_t";
+        case EbtFloatUE8M0:        return "floatue8m0_t";
+        case EbtFloatMXINT8:       return "floatmxint8_t";
         case EbtInt8:              return "int8_t";
         case EbtUint8:             return "uint8_t";
         case EbtInt16:             return "int16_t";
@@ -2390,6 +2429,8 @@ public:
                 appendStr(" push_constant");
               if (qualifier.layoutBufferReference)
                 appendStr(" buffer_reference");
+              if (qualifier.layoutDescriptorBufferType)
+                appendStr(" buffer_type");
               if (qualifier.hasBufferReferenceAlign()) {
                 appendStr(" buffer_reference_align=");
                 appendUint(1u << qualifier.layoutBufferReferenceAlign);
@@ -2435,8 +2476,17 @@ public:
                   appendStr(" descriptor_stride=");
                   appendInt(qualifier.layoutDescriptorStride);
               }
-              if (qualifier.layoutHeapOffset)
+              if (qualifier.layoutDescriptorSize != TQualifier::layoutDescriptorSizeEnd) {
+                  appendStr(" descriptor_size=");
+                  appendInt(qualifier.layoutDescriptorSize);
+              }
+              if (qualifier.layoutHeapOffset || qualifier.layoutHeapOffsetNode) {
                   appendStr(" heap_offset=");
+                  if (qualifier.layoutHeapOffsetNode)
+                      appendStr("<constant-expression>");
+                  else
+                      appendInt(qualifier.layoutHeapOffset);
+              }
 
               appendStr(")");
             }

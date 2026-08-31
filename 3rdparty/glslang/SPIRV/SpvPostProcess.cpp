@@ -554,8 +554,9 @@ void Builder::postProcessFeatures() {
     }
 
     // Add Aliased decoration if there's more than one Workgroup Block variable.
-    if (capabilities.find(spv::Capability::WorkgroupMemoryExplicitLayoutKHR) != capabilities.end()) {
-        assert(entryPoints.size() == 1);
+    // Compile-only mode emits no entry point, so there is no interface to scan.
+    if (capabilities.find(spv::Capability::WorkgroupMemoryExplicitLayoutKHR) != capabilities.end() &&
+        !entryPoints.empty()) {
         auto &ep = entryPoints[0];
 
         std::vector<Id> workgroup_variables;

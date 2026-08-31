@@ -225,13 +225,13 @@ public:
 
 protected:
     struct TFlattenData {
-        TFlattenData() : nextBinding(TQualifier::layoutBindingEnd),
+        TFlattenData() : nextBinding(TQualifier::layoutNotSet),
                          nextLocation(TQualifier::layoutLocationEnd) { }
         TFlattenData(int nb, int nl) : nextBinding(nb), nextLocation(nl) { }
 
         TVector<TVariable*> members;     // individual flattened variables
         TVector<int> offsets;            // offset to next tree level
-        unsigned int nextBinding;        // next binding to use.
+        int nextBinding;                 // next binding to use.
         unsigned int nextLocation;       // next location to use
     };
 

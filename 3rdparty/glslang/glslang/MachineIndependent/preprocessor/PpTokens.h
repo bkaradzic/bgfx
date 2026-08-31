@@ -132,6 +132,11 @@ enum EFixedAtoms {
     PpAtomConstFloat,
     PpAtomConstDouble,
     PpAtomConstFloat16,
+    PpAtomConstFloatE2M1,
+    PpAtomConstFloatE3M2,
+    PpAtomConstFloatE2M3,
+    PpAtomConstFloatUE8M0,
+    PpAtomConstFloatMXINT8,
     PpAtomConstString,
 
     // Identifiers
