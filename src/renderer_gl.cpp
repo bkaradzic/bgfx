@@ -8194,6 +8194,11 @@ namespace bgfx { namespace gl
 		}
 		PrimInfo prim = s_primInfo[primIndex];
 
+		const bool primitiveRestartSupported = false
+			|| BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES >= 30)
+			|| s_extension[Extension::ARB_ES3_compatibility].m_supported
+			;
+
 		GL_CHECK(glPolygonMode(GL_FRONT_AND_BACK
 			, _render->m_debug&BGFX_DEBUG_WIREFRAME
 			? GL_LINE
@@ -8867,6 +8872,19 @@ namespace bgfx { namespace gl
 					const uint64_t pt = newFlags&BGFX_STATE_PT_MASK;
 					primIndex = uint8_t(pt>>BGFX_STATE_PT_SHIFT);
 					prim = s_primInfo[primIndex];
+
+					if (primitiveRestartSupported)
+					{
+						if (BGFX_STATE_PT_TRISTRIP  == pt
+						||  BGFX_STATE_PT_LINESTRIP == pt)
+						{
+							GL_CHECK(glEnable(GL_PRIMITIVE_RESTART_FIXED_INDEX) );
+						}
+						else
+						{
+							GL_CHECK(glDisable(GL_PRIMITIVE_RESTART_FIXED_INDEX) );
+						}
+					}
 				}
 
 				bool programChanged = false;

@@ -3775,6 +3775,7 @@ namespace bgfx { namespace d3d12
 			, const VertexLayout** _layouts
 			, ProgramHandle _program
 			, uint8_t _numInstanceData
+			, bool _index32 = false
 			)
 		{
 			ProgramD3D12& program = m_program[_program.idx];
@@ -3856,6 +3857,7 @@ namespace bgfx { namespace d3d12
 			murmur.begin();
 			murmur.add(_state);
 			murmur.add(rgba);
+			murmur.add(_index32);
 			murmur.add(_stencil);
 			murmur.add(program.m_vsh->m_hash);
 			murmur.add(program.m_vsh->m_attrMask, sizeof(program.m_vsh->m_attrMask) );
@@ -3970,6 +3972,18 @@ namespace bgfx { namespace d3d12
 
 			uint8_t primIndex = uint8_t( (_state&BGFX_STATE_PT_MASK) >> BGFX_STATE_PT_SHIFT);
 			desc.PrimitiveTopologyType = s_primInfo[primIndex].m_topologyType;
+
+			const uint64_t pt = _state & BGFX_STATE_PT_MASK;
+			desc.IBStripCutValue = (false
+				|| BGFX_STATE_PT_TRISTRIP  == pt
+				|| BGFX_STATE_PT_LINESTRIP == pt
+				)
+				? (_index32
+						? D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_0xFFFFFFFF
+						: D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_0xFFFF
+						)
+				: D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_DISABLED
+				;
 
 			if (isValid(m_fbh) )
 			{
@@ -9397,6 +9411,7 @@ namespace bgfx { namespace d3d12
 						, layouts
 						, key.m_program
 						, uint8_t(draw.m_instanceDataStride/16)
+						, isValid(draw.m_indexBuffer) && !draw.isIndex16()
 						);
 
 					if (currentBindIdx != bindIdx
