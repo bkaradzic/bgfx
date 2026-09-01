@@ -4153,7 +4153,13 @@ VK_IMPORT_DEVICE
 			inputAssemblyState.pNext = NULL;
 			inputAssemblyState.flags = 0;
 			inputAssemblyState.topology = s_primInfo[(_state&BGFX_STATE_PT_MASK) >> BGFX_STATE_PT_SHIFT].m_topology;
-			inputAssemblyState.primitiveRestartEnable = VK_FALSE;
+			inputAssemblyState.primitiveRestartEnable = (false
+				|| VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP == inputAssemblyState.topology
+				|| VK_PRIMITIVE_TOPOLOGY_LINE_STRIP     == inputAssemblyState.topology
+				)
+				? VK_TRUE
+				: VK_FALSE
+				;
 
 			VkPipelineRasterizationStateCreateInfo rasterizationState;
 			setRasterizerState(rasterizationState, _state, m_wireframe);

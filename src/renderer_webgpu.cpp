@@ -3195,6 +3195,7 @@ WGPU_IMPORT
 			murmur.add(layout.m_attributes, sizeof(layout.m_attributes) );
 			murmur.add(_msaaCount);
 			murmur.add(_numInstanceData);
+			murmur.add(_isIndex16);
 			murmur.add(_useDepthAttachment);
 			addAttachmentState(murmur, fb);
 			const uint32_t hash = murmur.end();
