@@ -26,16 +26,18 @@
 #include "s2h_glsl.hlsl"
 
 // S2H examples use a top-left pixel origin to match their source tools and
-// host mouse coordinates. bgfx exposes the native fragment origin, so the
-// host supplies the target height and whether the renderer is bottom-left.
-uniform vec4 u_s2hScreen;
-
+// host mouse coordinates. u_viewRect is supplied by bgfx for every view;
+// bgfx_ndc.z is the OpenGL origin sign (and is substituted by the GL renderer).
 float2 s2h_getPixelCoord(float2 _fragmentCoord)
 {
+	#if BGFX_SHADER_LANGUAGE_GLSL
 	return float2(
 		  _fragmentCoord.x
-		, mix(_fragmentCoord.y, u_s2hScreen.x - _fragmentCoord.y, u_s2hScreen.y)
+		, mix(_fragmentCoord.y, u_viewRect.w - _fragmentCoord.y, 0.5f * (bgfx_ndc.z + 1.0f))
 		);
+	#else
+	return _fragmentCoord;
+	#endif // BGFX_SHADER_LANGUAGE_GLSL
 }
 
 #endif // S2H_BGFX_INCLUDE

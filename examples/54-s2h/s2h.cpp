@@ -126,7 +126,6 @@ public:
 		m_colorUniform   = bgfx::createUniform("u_s2hColor",   bgfx::UniformFreq::View, bgfx::UniformType::Vec4);
 		m_mouseUniform   = bgfx::createUniform("u_s2hMouse",   bgfx::UniformFreq::View, bgfx::UniformType::Vec4);
 		m_zoomUniform    = bgfx::createUniform("u_s2hZoom",    bgfx::UniformFreq::View, bgfx::UniformType::Vec4);
-		m_screenUniform  = bgfx::createUniform("u_s2hScreen",  bgfx::UniformFreq::View, bgfx::UniformType::Vec4);
 
 		m_program[0] = loadProgram("vs_s2h", "fs_s2h_3d");
 		m_program[1] = loadProgram("vs_s2h", "fs_s2h_2d");
@@ -184,7 +183,6 @@ public:
 		bgfx::destroy(m_colorUniform);
 		bgfx::destroy(m_mouseUniform);
 		bgfx::destroy(m_zoomUniform);
-		bgfx::destroy(m_screenUniform);
 		bgfx::shutdown();
 		return 0;
 	}
@@ -243,13 +241,6 @@ public:
 				0.0f,
 			};
 			const bool originBottomLeft = bgfx::getCaps()->originBottomLeft;
-			const float screen[] =
-			{
-				float(m_height),
-				originBottomLeft ? 1.0f : 0.0f,
-				0.0f,
-				0.0f,
-			};
 			if (4 == m_example)
 			{
 				const float scatterSize[] = { float(m_width), float(m_height), originBottomLeft ? 1.0f : 0.0f, 0.0f };
@@ -275,13 +266,11 @@ public:
 				bgfx::setViewRect(0, 0, 0, uint16_t(m_width), uint16_t(m_height) );
 				bgfx::setViewClear(0, BGFX_CLEAR_COLOR, 0x101018ff);
 				bgfx::setViewUniform(0, m_timeUniform, time);
-				bgfx::setViewUniform(0, m_screenUniform, screen);
 				renderScreenSpaceQuad(0, 10 == m_example ? m_program[9] : m_program[7]);
 
 				bgfx::setViewFrameBuffer(1, BGFX_INVALID_HANDLE);
 				bgfx::setViewRect(1, 0, 0, uint16_t(m_width), uint16_t(m_height) );
 				bgfx::setViewUniform(1, m_mouseUniform, mouse);
-				bgfx::setViewUniform(1, m_screenUniform, screen);
 				bgfx::setTexture(0, m_quadPostSampler, m_quadPostTexture);
 				renderScreenSpaceQuad(1, 7 == m_example ? m_quadPostProgram : (10 == m_example ? m_userFontProgram : m_debugZoomProgram), originBottomLeft);
 			}
@@ -294,7 +283,6 @@ public:
 				bgfx::setViewUniform(0, m_colorUniform, m_gatherColor);
 				bgfx::setViewUniform(0, m_mouseUniform, mouse);
 				bgfx::setViewUniform(0, m_zoomUniform, zoom);
-				bgfx::setViewUniform(0, m_screenUniform, screen);
 				bgfx::touch(0);
 				renderScreenSpaceQuad(0, m_program[m_example]);
 			}
@@ -481,7 +469,6 @@ public:
 	bgfx::UniformHandle m_colorUniform;
 	bgfx::UniformHandle m_mouseUniform;
 	bgfx::UniformHandle m_zoomUniform;
-	bgfx::UniformHandle m_screenUniform;
 	int m_gatherRadio = 0;
 	bool m_gatherCheckbox = false;
 	bool m_gatherMouseDown = false;
