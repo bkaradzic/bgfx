@@ -1803,16 +1803,21 @@ namespace bgfx
 
 	struct MatrixCache
 	{
+		static constexpr uint32_t kMaxChunks = 16;
+
 		MatrixCache()
-			: m_cache(NULL)
-			, m_num(1)
+			: m_num(1)
 			, m_max(0)
 			, m_capacity(0)
+			, m_numChunks(0)
 			, m_peak(0)
 			, m_observe(0)
 			, m_numPeakFrames(0)
-			, m_overflowedBy(0)
 		{
+			bx::memSet(m_chunk, 0, sizeof(m_chunk) );
+			bx::memSet(m_chunkBase, 0, sizeof(m_chunkBase) );
+			bx::memSet(m_chunkSize, 0, sizeof(m_chunkSize) );
+			m_identity.setIdentity();
 		}
 
 		void create(uint32_t _numReserved, uint32_t _numMax, uint32_t _numPeakFrames)
@@ -1825,26 +1830,91 @@ namespace bgfx
 				_numPeakFrames = 0;
 			}
 
-			m_max = bx::min(_numReserved, m_capacity);
-			alloc();
-			m_num   = 1;
-			m_peak   = 0;
-			m_observe = 0;
+			resize(bx::min(_numReserved, m_capacity) );
+
+			m_num           = 1;
+			m_peak          = 0;
+			m_observe       = 0;
 			m_numPeakFrames = _numPeakFrames;
-			m_overflowedBy  = 0;
 		}
 
 		void destroy()
 		{
-			bx::free(g_allocator, m_cache);
-			m_cache = NULL;
+			freeChunks();
+		}
+
+		void freeChunks()
+		{
+			for (uint32_t ii = 0; ii < m_numChunks; ++ii)
+			{
+				bx::free(g_allocator, m_chunk[ii], BX_ALIGNOF(Matrix4) );
+				m_chunk[ii] = NULL;
+			}
+
+			m_numChunks = 0;
+			m_max       = 0;
 		}
 
 		void resize(uint32_t _max)
 		{
-			bx::free(g_allocator, m_cache);
-			m_max = _max;
-			alloc();
+			freeChunks();
+			addChunk(_max);
+		}
+
+		bool addChunk(uint32_t _num)
+		{
+			if (m_numChunks == kMaxChunks
+			||  m_max       >= m_capacity)
+			{
+				return false;
+			}
+
+			const uint32_t size = bx::min(
+				  m_capacity - m_max
+				, bx::max(_num, bx::max<uint32_t>(kDrawCallBlock, m_max) )
+				);
+
+			Matrix4* chunk = (Matrix4*)bx::alloc(g_allocator, sizeof(Matrix4)*size, BX_ALIGNOF(Matrix4) );
+
+			if (0 == m_numChunks)
+			{
+				chunk[0].setIdentity();
+			}
+
+			m_chunkBase[m_numChunks] = m_max;
+			m_chunkSize[m_numChunks] = size;
+			m_chunk[m_numChunks]     = chunk;
+
+			bx::atomicFetchAndAdd<uint32_t>(&m_numChunks, 1);
+			bx::atomicFetchAndAdd<uint32_t>(&m_max, size);
+
+			return true;
+		}
+
+		Matrix4& at(uint32_t _idx)
+		{
+			if (_idx < m_chunkSize[0])
+			{
+				return m_chunk[0][_idx];
+			}
+
+			for (uint32_t ii = 1, num = m_numChunks; ii < num; ++ii)
+			{
+				const uint32_t base = m_chunkBase[ii];
+
+				if (_idx >= base
+				&&  _idx <  base + m_chunkSize[ii])
+				{
+					return m_chunk[ii][_idx - base];
+				}
+			}
+
+			return m_identity;
+		}
+
+		const Matrix4& at(uint32_t _idx) const
+		{
+			return const_cast<MatrixCache*>(this)->at(_idx);
 		}
 
 		uint32_t capacityFor(uint32_t _used) const
@@ -1856,10 +1926,9 @@ namespace bgfx
 		{
 			const uint32_t used = m_num;
 
-			if (0 != m_overflowedBy
-			&&  m_max < m_capacity)
+			if (1 < m_numChunks)
 			{
-				resize(bx::min(m_capacity, capacityFor(m_max + m_overflowedBy) ) );
+				resize(bx::min(m_capacity, capacityFor(used) ) );
 				m_peak    = 0;
 				m_observe = 0;
 			}
@@ -1881,24 +1950,42 @@ namespace bgfx
 				}
 			}
 
-			m_overflowedBy = 0;
-			m_num          = 1;
+			m_num = 1;
 		}
 
 		uint32_t reserve(uint16_t* _num)
 		{
-			uint32_t num = *_num;
-			uint32_t first = bx::atomicFetchAndAddsat<uint32_t>(&m_num, num, m_max);
+			const uint32_t num = *_num;
 
-			if (first+num > m_max)
+			for (;;)
 			{
-				bx::atomicFetchAndAddsat<uint32_t>(&m_overflowedBy, num, m_capacity);
+				const uint32_t max   = m_max;
+				const uint32_t first = bx::atomicFetchAndAddsat<uint32_t>(&m_num, num, max);
+
+				if (first + num <= max)
+				{
+					*_num = bx::narrowCast<uint16_t>(num);
+					return first;
+				}
+
+				if (!grow(num, max) )
+				{
+					*_num = 0;
+					return m_max;
+				}
+			}
+		}
+
+		BX_NO_INLINE bool grow(uint32_t _num, uint32_t _max)
+		{
+			bx::MutexScope lock(m_lock);
+
+			if (m_max != _max)
+			{
+				return true;
 			}
 
-			num   = bx::min(num, m_max-first);
-			*_num = bx::narrowCast<uint16_t>(num);
-
-			return first;
+			return addChunk(_num);
 		}
 
 		uint32_t add(const void* _mtx, uint16_t* _num)
@@ -1906,7 +1993,12 @@ namespace bgfx
 			if (NULL != _mtx)
 			{
 				uint32_t first = reserve(_num);
-				bx::memCopy(&m_cache[first], _mtx, sizeof(Matrix4)*(*_num) );
+
+				if (0 != *_num)
+				{
+					bx::memCopy(&at(first), _mtx, sizeof(Matrix4)*(*_num) );
+				}
+
 				return first;
 			}
 
@@ -1917,33 +2009,21 @@ namespace bgfx
 
 		float* toPtr(uint32_t _cacheIdx)
 		{
-			BX_ASSERT(_cacheIdx <= m_max, "Matrix cache out of bounds index %d (max: %d)"
-				, _cacheIdx
-				, m_max
-				);
-			return m_cache[_cacheIdx].un.val;
+			return at(_cacheIdx).un.val;
 		}
 
-		uint32_t fromPtr(const void* _ptr) const
-		{
-			return uint32_t( (const Matrix4*)_ptr - m_cache);
-		}
-
-		void alloc()
-		{
-			m_cache = (Matrix4*)bx::alloc(g_allocator, sizeof(Matrix4)*(m_max + 1) );
-			m_cache[0].setIdentity();
-			m_cache[m_max].setIdentity();
-		}
-
-		Matrix4* m_cache;
-		uint32_t m_num;
-		uint32_t m_max;
-		uint32_t m_capacity;
-		uint32_t m_peak;
-		uint32_t m_observe;
-		uint32_t m_numPeakFrames;
-		uint32_t m_overflowedBy;
+		Matrix4*  m_chunk[kMaxChunks];
+		uint32_t  m_chunkBase[kMaxChunks];
+		uint32_t  m_chunkSize[kMaxChunks];
+		Matrix4   m_identity;
+		uint32_t  m_num;
+		uint32_t  m_max;
+		uint32_t  m_capacity;
+		uint32_t  m_numChunks;
+		uint32_t  m_peak;
+		uint32_t  m_observe;
+		uint32_t  m_numPeakFrames;
+		bx::Mutex m_lock;
 	};
 
 	struct RectCache
