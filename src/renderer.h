@@ -646,9 +646,11 @@ namespace bgfx
 			ChunkTy sbc;
 			static_cast<Derived*>(this)->createChunk(sbc);
 
-			const uint32_t lastChunk = bx::max(uint32_t(m_chunks.size()-1), 1);
-			const uint32_t at = UINT32_MAX == _at ? lastChunk : _at;
-			const uint32_t chunkIndex = at % bx::max(m_chunks.size(), 1);
+			const uint32_t numChunks  = uint32_t(m_chunks.size() );
+			const uint32_t chunkIndex = UINT32_MAX == _at
+				? numChunks
+				: bx::min(_at, numChunks)
+				;
 
 			m_chunkControl.resize(m_chunkSize);
 
