@@ -243,7 +243,7 @@ namespace bgfx
 
 				case PredefinedUniform::Model:
 					{
-						const Matrix4& model = frameCache.m_matrixCache.m_cache[_draw.m_startMatrix];
+						const Matrix4& model = frameCache.m_matrixCache.at(_draw.m_startMatrix);
 						_renderer->setShaderUniform4x4f(flags
 							, predefined.m_loc
 							, model.un.val
@@ -255,7 +255,7 @@ namespace bgfx
 				case PredefinedUniform::ModelView:
 					{
 						Matrix4 modelView;
-						const Matrix4& model = frameCache.m_matrixCache.m_cache[_draw.m_startMatrix];
+						const Matrix4& model = frameCache.m_matrixCache.at(_draw.m_startMatrix);
 						bx::model4x4_mul(&modelView.un.f4x4
 							, &model.un.f4x4
 							, &m_view[_view].un.f4x4
@@ -272,7 +272,7 @@ namespace bgfx
 					{
 						Matrix4 modelView;
 						Matrix4 invModelView;
-						const Matrix4& model = frameCache.m_matrixCache.m_cache[_draw.m_startMatrix];
+						const Matrix4& model = frameCache.m_matrixCache.at(_draw.m_startMatrix);
 						bx::model4x4_mul(&modelView.un.f4x4
 							, &model.un.f4x4
 							, &m_view[_view].un.f4x4
@@ -291,7 +291,7 @@ namespace bgfx
 				case PredefinedUniform::ModelViewProj:
 					{
 						Matrix4 modelViewProj;
-						const Matrix4& model = frameCache.m_matrixCache.m_cache[_draw.m_startMatrix];
+						const Matrix4& model = frameCache.m_matrixCache.at(_draw.m_startMatrix);
 						bx::model4x4_mul_viewproj4x4(&modelViewProj.un.f4x4
 							, &model.un.f4x4
 							, &m_viewProj[_view].un.f4x4
