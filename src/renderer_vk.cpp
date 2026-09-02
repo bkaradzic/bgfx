@@ -5586,7 +5586,7 @@ VK_DESTROY
 			VK_CHECK(s_renderVK->allocateMemory(&mr, flags, &_chunk.deviceMem, true) );
 		}
 
-		m_chunkSize = bx::narrowCast<uint32_t>(mr.size);
+		BX_ASSERT(mr.size >= m_chunkSize, "Memory requirement is smaller than the requested chunk size.");
 
 		VK_CHECK(vkBindBufferMemory(device, _chunk.buffer, _chunk.deviceMem.mem, _chunk.deviceMem.offset) );
 
