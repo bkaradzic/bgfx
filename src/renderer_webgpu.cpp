@@ -2964,6 +2964,25 @@ WGPU_IMPORT
 			return entryCount;
 		}
 
+		void addBindingFormats(bx::HashMurmur3& _murmur, const ProgramWGPU& _program, const RenderBind& _renderBind) const
+		{
+			for (uint32_t stage = 0; stage < BGFX_CONFIG_MAX_TEXTURE_SAMPLERS; ++stage)
+			{
+				const ShaderBinding& shaderBind = _program.m_shaderBinding[stage];
+				const Binding& bind = _renderBind.m_bind[stage];
+
+				if (isValid(shaderBind.uniformHandle)
+				&&  kInvalidHandle != bind.m_idx
+				&&  (Binding::Image == bind.m_type || Binding::Texture == bind.m_type) )
+				{
+					const TextureWGPU& texture = m_textures[bind.m_idx];
+					_murmur.add(texture.m_fmt);
+					_murmur.add(texture.m_textureFormat);
+					_murmur.add(texture.m_viewDimension);
+				}
+			}
+		}
+
 		static bool hasBgra8Storage(const WGPUBindGroupLayoutEntry* _entries, uint32_t _num)
 		{
 			for (uint32_t ii = 0; ii < _num; ++ii)
@@ -2985,6 +3004,7 @@ WGPU_IMPORT
 			murmur.begin();
 			murmur.add(program.m_vsh->m_hash);
 			murmur.add(&_renderBind.m_bind, sizeof(_renderBind.m_bind) );
+			addBindingFormats(murmur, program, _renderBind);
 			const uint32_t hash = murmur.end();
 
 			ComputePipeline* computePipeline = m_computePipelineCache.find(hash);
@@ -3162,6 +3182,8 @@ WGPU_IMPORT
 					murmur.add(&_renderBind.m_bind[stage], sizeof(_renderBind.m_bind[stage]) );
 				}
 			}
+
+			addBindingFormats(murmur, program, _renderBind);
 
 			murmur.add(program.m_vsh->m_hash);
 			murmur.add(program.m_vsh->m_attrMask, sizeof(program.m_vsh->m_attrMask) );
@@ -4813,12 +4835,18 @@ WGPU_IMPORT
 			srcData = temp;
 		}
 
-		const uint32_t width   = bx::min(bx::max(1u, bx::alignUp(m_width  >> _mip, blockInfo.blockWidth ) ), _rect.m_width);
-		const uint32_t height  = bx::min(bx::max(1u, bx::alignUp(m_height >> _mip, blockInfo.blockHeight) ), _rect.m_height);
+		const uint32_t mipWidth  = bx::alignUp(bx::max(1u, m_width  >> _mip), blockInfo.blockWidth);
+		const uint32_t mipHeight = bx::alignUp(bx::max(1u, m_height >> _mip), blockInfo.blockHeight);
+
+		const uint32_t rectWidth  = bx::alignUp<uint32_t>(_rect.m_width,  blockInfo.blockWidth);
+		const uint32_t rectHeight = bx::alignUp<uint32_t>(_rect.m_height, blockInfo.blockHeight);
+
+		const uint32_t width   = bx::min<uint32_t>(rectWidth,  mipWidth  - bx::min<uint32_t>(_rect.m_x, mipWidth ) );
+		const uint32_t height  = bx::min<uint32_t>(rectHeight, mipHeight - bx::min<uint32_t>(_rect.m_y, mipHeight) );
 		const uint32_t depth   = bx::max<uint32_t>(1, _depth);
 		const uint32_t originZ = TextureWGPU::TextureCube == m_type ? _z*6 + _side : _z;
 
-		const uint32_t rowsPerImage = bx::max(1u, height/blockInfo.blockHeight);
+		const uint32_t rowsPerImage = bx::max(1u, (height + blockInfo.blockHeight - 1)/blockInfo.blockHeight);
 
 		s_renderWGPU->m_cmd.writeTexture(
 			{
@@ -6966,6 +6994,7 @@ m_resolution.formatColor = TextureFormat::BGRA8;
 					murmur.add(renderBind.m_bind, sizeof(renderBind.m_bind) );
 					murmur.add(sbo.buffer);
 					murmur.add(vsSize);
+					murmur.add(uintptr_t(bindGroupLayout) );
 					const uint32_t bindHash = murmur.end();
 
 					BindGroupMap::iterator it = m_bindGroupMap.find(bindHash);
@@ -7167,6 +7196,7 @@ m_resolution.formatColor = TextureFormat::BGRA8;
 					murmur.add(sbo.buffer);
 					murmur.add(vsSize);
 					murmur.add(fsSize);
+					murmur.add(uintptr_t(bindGroupLayout) );
 					const uint32_t bindHash = murmur.end();
 
 					BindGroupMap::iterator bindIt = m_bindGroupMap.find(bindHash);
