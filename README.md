@@ -173,14 +173,12 @@ https://github.com/mamedev/mame - MAME - Multiple Arcade Machine Emulator.
 
 ## Blackshift
 
-https://blackshift.itch.io/blackshift - Blackshift is a grid-based, space-themed
-action puzzle game which isn't afraid of complexity - think Chip's Challenge on
-crack.
+https://store.steampowered.com/app/741110/Blackshift/ - Blackshift is a
+grid-based action puzzle game game full of guns, blocks, robots, bombs, 
+lasers, conveyor belts, mirrors, machines, landmines, keys, doors, 
+teleports, crystals, force fields, secrets and mysteries.
 
-<a href="http://www.youtube.com/watch?feature=player_embedded&v=PUl8612Y-ds"
-target="_blank"><img src="http://img.youtube.com/vi/PUl8612Y-ds/0.jpg"
-alt="Blackshift Trailer, May 2016"
-width="640" height="480" border="0" /></a>
+![Blackshift screenshot](https://foon.uk/bsshots/3.jpg)
 
 ## Real-Time Polygonal-Light Shading with Linearly Transformed Cosines
 
