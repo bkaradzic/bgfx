@@ -4879,6 +4879,7 @@ namespace bgfx { namespace d3d12
 
 		if (fullRange
 		&&  !_stencil
+		&&  !asArray
 		&&  NULL == _texture.m_singleMsaa)
 		{
 			if (0 == _texture.m_srvHandle.ptr)
@@ -4941,7 +4942,9 @@ namespace bgfx { namespace d3d12
 					break;
 
 				case D3D12_UAV_DIMENSION_TEXTURE3D:
-					uavd->Texture3D.MipSlice = _mip;
+					uavd->Texture3D.MipSlice    = _mip;
+					uavd->Texture3D.FirstWSlice = 0;
+					uavd->Texture3D.WSize       = bx::max<uint32_t>(1, _texture.m_depth >> _mip);
 					break;
 				}
 			}
