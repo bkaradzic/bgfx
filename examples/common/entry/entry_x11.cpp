@@ -366,6 +366,7 @@ namespace entry
 				| ButtonPressMask
 				| ButtonReleaseMask
 				| ExposureMask
+				| FocusChangeMask
 				| KeyPressMask
 				| KeyReleaseMask
 				| PointerMotionMask
@@ -529,7 +530,8 @@ namespace entry
 										{
 											Status status = 0;
 											uint8_t utf8[4];
-											int len = Xutf8LookupString(ic, &xkey, (char*)utf8, sizeof(utf8), &keysym, &status);
+											KeySym textKeysym = 0;
+											int len = Xutf8LookupString(ic, &xkey, (char*)utf8, sizeof(utf8), &textKeysym, &status);
 											switch (status)
 											{
 											case XLookupChars:
@@ -555,6 +557,14 @@ namespace entry
 									break;
 								}
 							}
+							break;
+
+						case FocusOut:
+							m_modifiers = Modifier::None;
+							break;
+
+						case MappingNotify:
+							XRefreshKeyboardMapping(&event.xmapping);
 							break;
 
 						case ConfigureNotify:
