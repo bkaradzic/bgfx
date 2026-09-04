@@ -12,7 +12,7 @@ uniform vec4 u_s2hUiState;
 uniform vec4 u_s2hColor;
 uniform vec4 u_s2hMouse;
 
-void printDiscEx(inout ContextGather _ui, float4 _color)
+void printDiscEx(inout ContextGather _ui, vec4 _color)
 {
 	s2h_printDisc(_ui, _color);
 	s2h_printTxt(_ui, _SPACE);
@@ -28,16 +28,16 @@ void main()
 	ContextGather ui;
 	s2h_init(ui, s2h_getPixelCoord(gl_FragCoord.xy));
 	ui.mouseInput = u_s2hMouse;
-	s2h_setCursor(ui, float2(10.0f, 10.0f));
+	s2h_setCursor(ui, vec2(10.0f, 10.0f));
 
-	ui.textColor.rgb = float3(1.0f, 1.0f, 1.0f);
+	ui.textColor.rgb = vec3(1.0f, 1.0f, 1.0f);
 	s2h_setScale(ui, 3.0f);
 	s2h_printTxt(ui, _G, _a, _t, _h, _e, _r);
 	s2h_printTxt(ui, _T, _e, _s, _t);
 	s2h_printLF(ui);
 	s2h_printLF(ui);
 
-	ui.textColor.rgb = float3(0.0f, 0.0f, 0.0f);
+	ui.textColor.rgb = vec3(0.0f, 0.0f, 0.0f);
 	s2h_setScale(ui, 2.0f);
 	s2h_printTxt(ui, _P, _i, _x, _e, _l, _EQUAL);
 	s2h_printTxt(ui, _T, _h, _r, _e, _a, _d);
@@ -45,11 +45,11 @@ void main()
 	s2h_printLF(ui);
 
 	s2h_setScale(ui, 1.0f);
-	ui.textColor.rgb = float3(1.0f, 0.0f, 0.0f); s2h_printTxt(ui, _R);
-	ui.textColor.rgb = float3(0.0f, 1.0f, 0.0f); s2h_printTxt(ui, _G);
-	ui.textColor.rgb = float3(0.0f, 0.0f, 1.0f); s2h_printTxt(ui, _B);
+	ui.textColor.rgb = vec3(1.0f, 0.0f, 0.0f); s2h_printTxt(ui, _R);
+	ui.textColor.rgb = vec3(0.0f, 1.0f, 0.0f); s2h_printTxt(ui, _G);
+	ui.textColor.rgb = vec3(0.0f, 0.0f, 1.0f); s2h_printTxt(ui, _B);
 	s2h_printTxt(ui, _SPACE);
-	ui.textColor.rgb = float3(0.0f, 0.0f, 0.0f);
+	ui.textColor.rgb = vec3(0.0f, 0.0f, 0.0f);
 	s2h_printTxt(ui, _X, _Y, _Z, _COLON);
 	s2h_printLF(ui);
 	s2h_printInt(ui, 12345);
@@ -65,15 +65,15 @@ void main()
 	s2h_printTxt(ui, _COMMA);
 	s2h_printFloat(ui, 0.34f);
 	s2h_printLF(ui);
-	s2h_printBox(ui, float4(1.0f, 0.7f, 0.3f, 1.0f));
-	s2h_printBox(ui, float4(1.0f, 0.0f, 0.0f, 1.0f));
-	s2h_printDisc(ui, float4(0.0f, 1.0f, 0.0f, 1.0f));
-	s2h_printDisc(ui, float4(1.0f, 1.0f, 0.0f, 1.0f));
+	s2h_printBox(ui, vec4(1.0f, 0.7f, 0.3f, 1.0f));
+	s2h_printBox(ui, vec4(1.0f, 0.0f, 0.0f, 1.0f));
+	s2h_printDisc(ui, vec4(0.0f, 1.0f, 0.0f, 1.0f));
+	s2h_printDisc(ui, vec4(1.0f, 1.0f, 0.0f, 1.0f));
 
 	uint radioState = uint(u_s2hUiState.x);
 	uint checkboxState = uint(u_s2hUiState.y);
 	float sliderAlpha = u_s2hUiState.z;
-	float3 sliderColor = u_s2hColor.rgb;
+	vec3 sliderColor = u_s2hColor.rgb;
 
 #if BGFX_SHADER_LANGUAGE_WGSL
 	// shaderc's WGSL backend overflows its compiler stack when all of the
@@ -118,10 +118,10 @@ void main()
 	s2h_printTxt(ui, _SPACE, _SPACE);
 	s2h_printInt(ui, int(radioState));
 	s2h_printTxt(ui, _SPACE, _EQUAL, _SPACE);
-	float4 buttonColor = ui.buttonColor;
-	ui.buttonColor = float4(1.0f, 0.0f, 0.0f, 1.0f); s2h_radioButton(ui, radioState == 1u);
-	ui.buttonColor = float4(0.0f, 1.0f, 0.0f, 1.0f); s2h_radioButton(ui, radioState == 2u);
-	ui.buttonColor = float4(0.0f, 0.0f, 1.0f, 1.0f); s2h_radioButton(ui, radioState == 3u);
+	vec4 buttonColor = ui.buttonColor;
+	ui.buttonColor = vec4(1.0f, 0.0f, 0.0f, 1.0f); s2h_radioButton(ui, radioState == 1u);
+	ui.buttonColor = vec4(0.0f, 1.0f, 0.0f, 1.0f); s2h_radioButton(ui, radioState == 2u);
+	ui.buttonColor = vec4(0.0f, 0.0f, 1.0f, 1.0f); s2h_radioButton(ui, radioState == 3u);
 	ui.buttonColor = buttonColor;
 	s2h_printTxt(ui, _SPACE, _s, _2, _h, _UNDERSCORE, _r);
 	s2h_printTxt(ui, _a, _d, _i, _o, _B, _u);
@@ -167,6 +167,6 @@ void main()
 	s2h_printTxt(ui, _G, _B);
 #endif
 
-	float4 background = float4(0.4f, 0.7f, 0.4f, 1.0f);
-	gl_FragColor = lerp(background, float4(ui.dstColor.rgb, 1.0f), ui.dstColor.a);
+	vec4 background = vec4(0.4f, 0.7f, 0.4f, 1.0f);
+	gl_FragColor = lerp(background, vec4(ui.dstColor.rgb, 1.0f), ui.dstColor.a);
 }

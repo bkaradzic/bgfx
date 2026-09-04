@@ -19,20 +19,20 @@ uint userFontCharacter(uint _index)
 
 void main()
 {
-	float2 pixel = floor(s2h_getPixelCoord(gl_FragCoord.xy));
-	float3 background = float3(0.02f, 0.02f, 0.03f);
-	float3 color = background;
+	vec2 pixel = floor(s2h_getPixelCoord(gl_FragCoord.xy));
+	vec3 background = vec3(0.02f, 0.02f, 0.03f);
+	vec3 color = background;
 	const float scale = 8.0f;
-	float2 origin = float2(32.0f, 48.0f);
-	float2 local = pixel - origin;
+	vec2 origin = vec2(32.0f, 48.0f);
+	vec2 local = pixel - origin;
 	if (local.x >= 0.0f && local.y >= 0.0f && local.x < 8.0f * 8.0f * scale && local.y < 8.0f * scale)
 	{
 		uint characterIndex = uint(local.x / (8.0f * scale));
-		float2 glyphPixel = floor(float2(mod(local.x / scale, 8.0f), local.y / scale));
+		vec2 glyphPixel = floor(vec2(mod(local.x / scale, 8.0f), local.y / scale));
 		uint character = userFontCharacter(characterIndex);
-		float2 atlasPixel = float2(float(character - 32u) * 8.0f + glyphPixel.x, glyphPixel.y);
-		float2 atlasUv = (atlasPixel + 0.5f) / u_viewRect.zw;
+		vec2 atlasPixel = vec2(float(character - 32u) * 8.0f + glyphPixel.x, glyphPixel.y);
+		vec2 atlasUv = (atlasPixel + 0.5f) / u_viewRect.zw;
 		color = texture2D(s_quadPostColor, atlasUv).rgb;
 	}
-	gl_FragColor = float4(color, 1.0f);
+	gl_FragColor = vec4(color, 1.0f);
 }
