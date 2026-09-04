@@ -355,6 +355,9 @@ namespace entry
 			m_visual = DefaultVisual(m_display, screen);
 			m_root   = RootWindow(m_display, screen);
 
+			m_netWmState           = XInternAtom(m_display, "_NET_WM_STATE",            False);
+			m_netWmStateFullscreen = XInternAtom(m_display, "_NET_WM_STATE_FULLSCREEN", False);
+
 			bx::memSet(&m_windowAttrs, 0, sizeof(m_windowAttrs) );
 			m_windowAttrs.background_pixel = 0;
 			m_windowAttrs.border_pixel     = 0;
@@ -583,7 +586,8 @@ namespace entry
 			XUnmapWindow(m_display, m_window[0]);
 			XDestroyWindow(m_display, m_window[0]);
 
-			XCloseDisplay(m_display);
+			// The graphics driver registers Xlib extension hooks on the display,
+			// and it is unloaded during renderer shutdown.
 			m_display = NULL;
 
 			return thread.getExitCode();
@@ -673,6 +677,9 @@ namespace entry
 		int32_t m_depth;
 		Visual* m_visual;
 		Window  m_root;
+
+		Atom    m_netWmState;
+		Atom    m_netWmStateFullscreen;
 
 		XSetWindowAttributes m_windowAttrs;
 
@@ -772,7 +779,31 @@ namespace entry
 
 	void toggleFullscreen(WindowHandle _handle)
 	{
-		BX_UNUSED(_handle);
+		Display* display = s_ctx.m_display;
+		Window   window  = s_ctx.m_window[_handle.idx];
+
+		constexpr long kNetWmStateToggle  = 2;
+		constexpr long kSourceApplication = 1;
+
+		XEvent event;
+		bx::memSet(&event, 0, sizeof(event) );
+		event.type                 = ClientMessage;
+		event.xclient.window       = window;
+		event.xclient.message_type = s_ctx.m_netWmState;
+		event.xclient.format       = 32;
+		event.xclient.data.l[0]    = kNetWmStateToggle;
+		event.xclient.data.l[1]    = long(s_ctx.m_netWmStateFullscreen);
+		event.xclient.data.l[2]    = 0;
+		event.xclient.data.l[3]    = kSourceApplication;
+		event.xclient.data.l[4]    = 0;
+
+		XSendEvent(display
+			, s_ctx.m_root
+			, False
+			, SubstructureNotifyMask|SubstructureRedirectMask
+			, &event
+			);
+		XFlush(display);
 	}
 
 	void setMouseLock(WindowHandle _handle, bool _lock)
