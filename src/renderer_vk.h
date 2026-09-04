@@ -763,6 +763,11 @@ VK_DESTROY_FUNC(DescriptorSet);
 
 	constexpr uint32_t kMaxBackBuffers = bx::max(BGFX_CONFIG_MAX_BACK_BUFFERS, 10);
 
+	// How long a non-blocking swap chain is allowed to wait for its first image
+	// after a (re)create, and for how many acquires. See SwapChainVK::acquire.
+	constexpr uint32_t kPrimingAcquires    = 10;
+	constexpr uint64_t kPrimingAcquireWait = 10000000; // 10ms
+
 	struct SwapChainVK
 	{
 		SwapChainVK()
@@ -771,6 +776,7 @@ VK_DESTROY_FUNC(DescriptorSet);
 			, m_lastImageRenderedSemaphore(VK_NULL_HANDLE)
 			, m_lastImageAcquiredSemaphore(VK_NULL_HANDLE)
 			, m_needPresent(false)
+			, m_primingAcquires(0)
 			, m_backBufferDepthStencilImageView(VK_NULL_HANDLE)
 			, m_backBufferColorMsaaImageView(VK_NULL_HANDLE)
 		{
@@ -834,6 +840,10 @@ VK_DESTROY_FUNC(DescriptorSet);
 		bool m_needPresent;
 		bool m_needToRecreateSwapchain;
 		bool m_needToRecreateSurface;
+
+		// Non-blocking acquires still allowed to wait for the compositor to hand
+		// back the first image after a (re)create. See SwapChainVK::acquire.
+		uint32_t m_primingAcquires;
 
 		TextureVK   m_backBufferDepthStencil;
 		VkImageView m_backBufferDepthStencilImageView;
