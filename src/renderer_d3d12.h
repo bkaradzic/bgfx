@@ -441,6 +441,7 @@ namespace bgfx { namespace d3d12
 			, m_handle(NULL)
 			, m_directAccessPtr(NULL)
 			, m_state(D3D12_RESOURCE_STATE_COMMON)
+			, m_subStates(NULL)
 			, m_numMips(0)
 			, m_videoDecoder(NULL)
 		{
@@ -455,6 +456,13 @@ namespace bgfx { namespace d3d12
 		void update(ID3D12GraphicsCommandList* _commandList, uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem);
 		void resolve(ID3D12GraphicsCommandList* _commandList, uint8_t _resolve, uint32_t _layer, uint32_t _numLayers, uint32_t _mip);
 		D3D12_RESOURCE_STATES setState(ID3D12GraphicsCommandList* _commandList, D3D12_RESOURCE_STATES _state);
+
+		void setState(ID3D12GraphicsCommandList* _commandList, D3D12_RESOURCE_STATES _state, uint16_t _firstMip, uint16_t _numMips, uint16_t _firstSlice, uint16_t _numSlices);
+
+		uint32_t getNumSlices() const;
+		uint32_t getNumPtrMips() const;
+		uint32_t getNumSubresources() const;
+
 		bool isMsaaSurface() const;
 		bool isMultisampled() const;
 
@@ -466,6 +474,7 @@ namespace bgfx { namespace d3d12
 		HANDLE m_handle;
 		void* m_directAccessPtr;
 		D3D12_RESOURCE_STATES m_state;
+		D3D12_RESOURCE_STATES* m_subStates;
 		uint64_t m_flags;
 		uint32_t m_width;
 		uint32_t m_height;
@@ -535,6 +544,7 @@ namespace bgfx { namespace d3d12
 		uint16_t m_denseIdx;
 		uint8_t m_num;
 		uint8_t m_numTh;
+		uint8_t m_colorAttachIdx[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
 		Attachment m_attachment[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
 		D3D12_RESOURCE_STATES m_state;
 		bool m_needPresent;

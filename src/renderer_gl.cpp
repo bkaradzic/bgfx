@@ -3152,6 +3152,8 @@ namespace bgfx { namespace gl
 					}
 				}
 
+				m_glctx.makeCurrent(NULL);
+
 				if (m_needPresent)
 				{
 					// Ensure the back buffer is bound as the source of the flip
@@ -3745,6 +3747,9 @@ namespace bgfx { namespace gl
 				, true
 				);
 			bx::free(g_allocator, data);
+
+			m_glctx.makeCurrent(NULL);
+			GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, m_backBufferFbo) );
 		}
 
 		void updateViewName(ViewId _id, const char* _name) override
@@ -3849,6 +3854,8 @@ namespace bgfx { namespace gl
 				GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, m_backBufferFbo) );
 			}
 
+			BGFX_GL_PROFILER_BEGIN_LITERAL("debugtext", kColorFrame);
+
 			GL_CHECK(glViewport(0, 0, width, height) );
 
 			GL_CHECK(glDisable(GL_SCISSOR_TEST) );
@@ -3925,6 +3932,10 @@ namespace bgfx { namespace gl
 
 		void dbgTextRenderEnd(TextVideoMemBlitter& /*_blitter*/) override
 		{
+			BGFX_GL_PROFILER_END();
+
+			m_glctx.makeCurrent(NULL);
+			GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, m_backBufferFbo) );
 		}
 
 		void updateResolution(const SwapChain& _swapChain, uint32_t _reset)
@@ -4010,6 +4021,12 @@ namespace bgfx { namespace gl
 			&&  m_rtMsaa)
 			{
 				FrameBufferGL& frameBuffer = m_frameBuffers[m_fbh.idx];
+
+				m_glctx.makeCurrent(UINT16_MAX != frameBuffer.m_denseIdx
+					? frameBuffer.m_swapChain
+					: NULL
+					);
+
 				frameBuffer.resolve();
 				m_rtMsaa = false;
 			}
@@ -7152,6 +7169,8 @@ namespace bgfx { namespace gl
 
 	void FrameBufferGL::create(uint8_t _num, const Attachment* _attachment)
 	{
+		s_renderGL->m_glctx.makeCurrent(NULL);
+
 		GL_CHECK(glGenFramebuffers(1, &m_fbo[0]) );
 
 		m_denseIdx = UINT16_MAX;
@@ -9828,17 +9847,13 @@ namespace bgfx { namespace gl
 				max = frameTime;
 			}
 
-			dbgTextSubmit(this, _textVideoMemBlitter, tvm, _render->m_debugFrameBuffer, _render->m_debugTextScale);
-
 			BGFX_GL_PROFILER_END();
+
+			dbgTextSubmit(this, _textVideoMemBlitter, tvm, _render->m_debugFrameBuffer, _render->m_debugTextScale);
 		}
 		else if (_render->m_debug & BGFX_DEBUG_TEXT)
 		{
-			BGFX_GL_PROFILER_BEGIN_LITERAL("debugtext", kColorFrame);
-
 			dbgTextSubmit(this, _textVideoMemBlitter, _render->m_textVideoMem, _render->m_debugFrameBuffer, _render->m_debugTextScale);
-
-			BGFX_GL_PROFILER_END();
 		}
 
 		if (0 != m_vao)

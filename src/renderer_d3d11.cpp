@@ -3565,6 +3565,32 @@ namespace bgfx { namespace d3d11
 			}
 		}
 
+		static bool isZeroColorClear(const Clear& _clear, const float _palette[][4])
+		{
+			if (0 == (BGFX_CLEAR_COLOR & _clear.m_flags) )
+			{
+				return false;
+			}
+
+			if (0 != (BGFX_CLEAR_COLOR_USE_PALETTE & _clear.m_flags) )
+			{
+				const uint8_t index = _clear.m_index[0];
+
+				return UINT8_MAX != index
+					&& 0.0f == _palette[index][0]
+					&& 0.0f == _palette[index][1]
+					&& 0.0f == _palette[index][2]
+					&& 0.0f == _palette[index][3]
+					;
+			}
+
+			return 0 == _clear.m_index[0]
+				&& 0 == _clear.m_index[1]
+				&& 0 == _clear.m_index[2]
+				&& 0 == _clear.m_index[3]
+				;
+		}
+
 		void clearQuad(const ClearQuad& _clearQuad, const Rect& _rect, const Clear& _clear, const float _palette[][4])
 		{
 			uint32_t width;
@@ -3584,9 +3610,20 @@ namespace bgfx { namespace d3d11
 
 			const Rect fbRect(0, 0, bx::narrowCast<uint16_t>(width), bx::narrowCast<uint16_t>(height) );
 
+			const bool intColor = true
+				&& isValid(m_fbh)
+				&& m_frameBuffers[m_fbh.idx].m_intColor
+				&& 0 != (_clear.m_flags & BGFX_CLEAR_COLOR)
+				&& !isZeroColorClear(_clear, _palette)
+				;
+
 			const bool needsQuadClear = true
 				&& isValid(m_fbh)
-				&& m_frameBuffers[m_fbh.idx].m_needsQuadClear
+				&& !intColor
+				&& (false
+					|| m_frameBuffers[m_fbh.idx].m_needsQuadClear
+					|| (m_frameBuffers[m_fbh.idx].m_needsQuadClearZero && isZeroColorClear(_clear, _palette) )
+					)
 				;
 
 			if (_rect.isEqual(fbRect)
@@ -5428,7 +5465,15 @@ namespace bgfx { namespace d3d11
 		s_renderD3D11->m_deviceCtx->OMSetRenderTargets(0, NULL, NULL);
 		destroySwapChainViews();
 
-		DX_CHECK(s_renderD3D11->m_dxgi.resizeBuffers(m_swapChain, scd) );
+		const HRESULT hr = s_renderD3D11->m_dxgi.resizeBuffers(m_swapChain, scd);
+
+		if (FAILED(hr) )
+		{
+			BX_TRACE("Failed to resize swap chain, hr 0x%08x.", hr);
+			DX_RELEASE(m_swapChain, 0);
+			m_num = 0;
+			return;
+		}
 
 		createSwapChainViews();
 	}
@@ -5614,6 +5659,7 @@ namespace bgfx { namespace d3d11
 		m_width  = 0;
 		m_height = 0;
 		m_needsQuadClear = false;
+		m_intColor       = false;
 
 		if (0 < m_numTh)
 		{
@@ -5727,6 +5773,18 @@ namespace bgfx { namespace d3d11
 					}
 					else if (Access::Write == at.access)
 					{
+						m_needsQuadClearZero |= 0 != at.mip
+							|| 0 != at.layer
+							|| 1 < texture.m_numLayers
+							;
+
+						{
+							const bx::EncodingType::Enum encoding = bx::EncodingType::Enum(bimg::getBlockInfo(bimg::TextureFormat::Enum(texture.m_textureFormat) ).encoding);
+							m_intColor |= bx::EncodingType::Int  == encoding
+								||        bx::EncodingType::Uint == encoding
+								;
+						}
+
 						D3D11_RENDER_TARGET_VIEW_DESC desc;
 						desc.Format = texture.getSrvFormat();
 						switch (texture.m_type)

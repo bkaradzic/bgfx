@@ -472,6 +472,18 @@ namespace bgfx { namespace d3d12
 		_commandList->ResourceBarrier(1, &barrier);
 	}
 
+	void setResourceBarrier(ID3D12GraphicsCommandList* _commandList, const ID3D12Resource* _resource, D3D12_RESOURCE_STATES _stateBefore, D3D12_RESOURCE_STATES _stateAfter, uint32_t _subresource)
+	{
+		D3D12_RESOURCE_BARRIER barrier;
+		barrier.Type  = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+		barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+		barrier.Transition.pResource   = const_cast<ID3D12Resource*>(_resource);
+		barrier.Transition.Subresource = _subresource;
+		barrier.Transition.StateBefore = _stateBefore;
+		barrier.Transition.StateAfter  = _stateAfter;
+		_commandList->ResourceBarrier(1, &barrier);
+	}
+
 	BX_PRAGMA_DIAGNOSTIC_PUSH();
 	BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG("-Wunused-const-variable");
 	BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG("-Wunneeded-internal-declaration");
@@ -1715,7 +1727,6 @@ namespace bgfx { namespace d3d12
 					DX_RELEASE(outBlob, 0);
 				}
 
-				///
 				m_directAccessSupport = true
 					&& BX_ENABLED(BX_PLATFORM_XBOXONE)
 					&& m_architecture.UMA
@@ -2904,7 +2915,7 @@ namespace bgfx { namespace d3d12
 
 			if (NULL != swapFb)
 			{
-				DX_RELEASE(backBuffer, 0);
+				DX_RELEASE(backBuffer, swapFb->getSwapChainDesc().bufferCount);
 			}
 		}
 
@@ -3365,7 +3376,8 @@ namespace bgfx { namespace d3d12
 					for (uint8_t ii = 0, num = frameBuffer.m_num; ii < num; ++ii)
 					{
 						TextureD3D12& texture = m_textures[frameBuffer.m_texture[ii].idx];
-						texture.setState(m_commandList, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+						const Attachment& at = frameBuffer.m_attachment[frameBuffer.m_colorAttachIdx[ii]];
+						texture.setState(m_commandList, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, at.mip, 1, at.layer, at.numLayers);
 					}
 
 					if (isValid(frameBuffer.m_depth) )
@@ -3457,7 +3469,8 @@ namespace bgfx { namespace d3d12
 					for (uint8_t ii = 0, num = frameBuffer.m_num; ii < num; ++ii)
 					{
 						TextureD3D12& texture = m_textures[frameBuffer.m_texture[ii].idx];
-						texture.setState(m_commandList, D3D12_RESOURCE_STATE_RENDER_TARGET);
+						const Attachment& at = frameBuffer.m_attachment[frameBuffer.m_colorAttachIdx[ii]];
+						texture.setState(m_commandList, D3D12_RESOURCE_STATE_RENDER_TARGET, at.mip, 1, at.layer, at.numLayers);
 					}
 
 					if (isValid(frameBuffer.m_depth) )
@@ -3891,7 +3904,9 @@ namespace bgfx { namespace d3d12
 
 					murmur.add(0 < frameBuffer.m_num
 						? m_textures[frameBuffer.m_texture[0].idx].m_flags & BGFX_TEXTURE_RT_MSAA_MASK
-						: UINT64_C(0)
+						: isValid(frameBuffer.m_depth)
+							? m_textures[frameBuffer.m_depth.idx].m_flags & BGFX_TEXTURE_RT_MSAA_MASK
+							: UINT64_C(0)
 						);
 				}
 				else
@@ -4028,9 +4043,13 @@ namespace bgfx { namespace d3d12
 					// (BGFX_SWAP_CHAIN_MSAA_*), not main's.
 					desc.SampleDesc = frameBuffer.getSwapChainDesc().sampleDesc;
 				}
-				else if (0 < frameBuffer.m_num)
+				else if (0 < frameBuffer.m_num || isValid(frameBuffer.m_depth) )
 				{
-					const uint64_t flags = m_textures[frameBuffer.m_texture[0].idx].m_flags;
+					const TextureHandle th = 0 < frameBuffer.m_num
+						? frameBuffer.m_texture[0]
+						: frameBuffer.m_depth
+						;
+					const uint64_t flags = m_textures[th.idx].m_flags;
 					const uint32_t msaaQuality = bx::satSub<uint32_t>(uint32_t( (flags & BGFX_TEXTURE_RT_MSAA_MASK) >> BGFX_TEXTURE_RT_MSAA_SHIFT), 1u);
 
 					desc.SampleDesc = s_msaa[msaaQuality];
@@ -4720,28 +4739,28 @@ namespace bgfx { namespace d3d12
 				srvd->Texture3D.ResourceMinLODClamp = 0;
 				break;
 			}
+		}
 
-			if (_stencil)
+		if (_stencil)
+		{
+			srvd->Format = DXGI_FORMAT_R32G8X24_TYPELESS == s_textureFormat[_texture.m_textureFormat].m_fmt
+				? DXGI_FORMAT_X32_TYPELESS_G8X24_UINT
+				: DXGI_FORMAT_X24_TYPELESS_G8_UINT
+				;
+			srvd->Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+
+			switch (srvd->ViewDimension)
 			{
-				srvd->Format = DXGI_FORMAT_R32G8X24_TYPELESS == s_textureFormat[_texture.m_textureFormat].m_fmt
-					? DXGI_FORMAT_X32_TYPELESS_G8X24_UINT
-					: DXGI_FORMAT_X24_TYPELESS_G8_UINT
-					;
-				srvd->Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+			case D3D12_SRV_DIMENSION_TEXTURE2D:
+				srvd->Texture2D.PlaneSlice = 1;
+				break;
 
-				switch (srvd->ViewDimension)
-				{
-				case D3D12_SRV_DIMENSION_TEXTURE2D:
-					srvd->Texture2D.PlaneSlice = 1;
-					break;
+			case D3D12_SRV_DIMENSION_TEXTURE2DARRAY:
+				srvd->Texture2DArray.PlaneSlice = 1;
+				break;
 
-				case D3D12_SRV_DIMENSION_TEXTURE2DARRAY:
-					srvd->Texture2DArray.PlaneSlice = 1;
-					break;
-
-				default:
-					break;
-				}
+			default:
+				break;
 			}
 		}
 
@@ -6864,6 +6883,9 @@ namespace bgfx { namespace d3d12
 		videoDecoderDestroy(m_videoDecoder);
 		m_videoDecoder = NULL;
 
+		bx::free(g_allocator, m_subStates);
+		m_subStates = NULL;
+
 		if (NULL != m_ptr)
 		{
 			if (NULL != m_directAccessPtr)
@@ -7243,8 +7265,51 @@ namespace bgfx { namespace d3d12
 		return 1 < s_msaa[msaaQuality].Count;
 	}
 
+	uint32_t TextureD3D12::getNumSlices() const
+	{
+		return Texture3D == m_type
+			? 1
+			: bx::max<uint32_t>(m_numLayers, 1) * (TextureCube == m_type ? 6 : 1)
+			;
+	}
+
+	uint32_t TextureD3D12::getNumPtrMips() const
+	{
+		return NULL != m_singleMsaa
+			? 1
+			: bx::max<uint32_t>(m_numMips, 1)
+			;
+	}
+
+	uint32_t TextureD3D12::getNumSubresources() const
+	{
+		return getNumPtrMips() * getNumSlices();
+	}
+
 	D3D12_RESOURCE_STATES TextureD3D12::setState(ID3D12GraphicsCommandList* _commandList, D3D12_RESOURCE_STATES _state)
 	{
+		if (NULL != m_subStates)
+		{
+			const uint32_t numSubresources = getNumSubresources();
+
+			for (uint32_t ii = 0; ii < numSubresources; ++ii)
+			{
+				if (m_subStates[ii] != _state)
+				{
+					setResourceBarrier(_commandList, m_ptr, m_subStates[ii], _state, ii);
+					m_subStates[ii] = _state;
+				}
+			}
+
+			const D3D12_RESOURCE_STATES old = m_state;
+			m_state = _state;
+
+			bx::free(g_allocator, m_subStates);
+			m_subStates = NULL;
+
+			return old;
+		}
+
 		if (m_state != _state)
 		{
 			setResourceBarrier(_commandList
@@ -7257,6 +7322,58 @@ namespace bgfx { namespace d3d12
 		}
 
 		return _state;
+	}
+
+	void TextureD3D12::setState(ID3D12GraphicsCommandList* _commandList, D3D12_RESOURCE_STATES _state, uint16_t _firstMip, uint16_t _numMips, uint16_t _firstSlice, uint16_t _numSlices)
+	{
+		const uint32_t mipCount   = getNumPtrMips();
+		const uint32_t sliceCount = getNumSlices();
+
+		const uint32_t firstMip = bx::min<uint32_t>(_firstMip, mipCount - 1);
+		const uint32_t numMips  = 0 == _numMips
+			? mipCount - firstMip
+			: bx::min<uint32_t>(_numMips, mipCount - firstMip)
+			;
+
+		const uint32_t firstSlice = bx::min<uint32_t>(_firstSlice, sliceCount - 1);
+		const uint32_t numSlices  = 0 == _numSlices
+			? sliceCount - firstSlice
+			: bx::min<uint32_t>(_numSlices, sliceCount - firstSlice)
+			;
+
+		if (0 == firstMip
+		&&  0 == firstSlice
+		&&  numMips   == mipCount
+		&&  numSlices == sliceCount)
+		{
+			setState(_commandList, _state);
+			return;
+		}
+
+		if (NULL == m_subStates)
+		{
+			const uint32_t numSubresources = getNumSubresources();
+			m_subStates = (D3D12_RESOURCE_STATES*)bx::alloc(g_allocator, numSubresources*sizeof(D3D12_RESOURCE_STATES) );
+
+			for (uint32_t ii = 0; ii < numSubresources; ++ii)
+			{
+				m_subStates[ii] = m_state;
+			}
+		}
+
+		for (uint32_t slice = firstSlice, sliceEnd = firstSlice + numSlices; slice < sliceEnd; ++slice)
+		{
+			for (uint32_t mip = firstMip, mipEnd = firstMip + numMips; mip < mipEnd; ++mip)
+			{
+				const uint32_t subresource = mip + slice*mipCount;
+
+				if (m_subStates[subresource] != _state)
+				{
+					setResourceBarrier(_commandList, m_ptr, m_subStates[subresource], _state, subresource);
+					m_subStates[subresource] = _state;
+				}
+			}
+		}
 	}
 
 	void RendererContextD3D12::generateMips(ID3D12GraphicsCommandList* _commandList, TextureD3D12& _texture)
@@ -7491,7 +7608,25 @@ namespace bgfx { namespace d3d12
 		};
 		static_assert(BX_COUNTOF(nodeMask) == BX_COUNTOF(presentQueue) );
 
-		DX_CHECK(s_renderD3D12->m_dxgi.resizeBuffers(m_swapChain, scd, nodeMask, presentQueue) );
+		const HRESULT hr = s_renderD3D12->m_dxgi.resizeBuffers(m_swapChain, scd, nodeMask, presentQueue);
+
+		if (FAILED(hr) )
+		{
+			BX_TRACE("Failed to resize swap chain, hr 0x%08x.", hr);
+
+#if !BX_PLATFORM_LINUX
+			if (NULL != m_frameLatencyWaitableObject)
+			{
+				CloseHandle( (HANDLE)m_frameLatencyWaitableObject);
+				m_frameLatencyWaitableObject = NULL;
+			}
+#endif // !BX_PLATFORM_LINUX
+
+			DX_RELEASE(m_swapChain, 0);
+			m_swapChainFormat = DXGI_FORMAT_UNKNOWN;
+			m_num = 0;
+			return;
+		}
 
 		m_state           = D3D12_RESOURCE_STATE_PRESENT;
 		m_swapChainFormat = scd.format;
@@ -7860,6 +7995,7 @@ namespace bgfx { namespace d3d12
 					else if (Access::Write == at.access)
 					{
 						m_texture[m_num] = at.handle;
+						m_colorAttachIdx[m_num] = uint8_t(ii);
 						D3D12_CPU_DESCRIPTOR_HANDLE rtv = { rtvDescriptor.ptr + m_num * rtvDescriptorSize };
 
 						D3D12_RENDER_TARGET_VIEW_DESC desc;
@@ -8047,7 +8183,7 @@ namespace bgfx { namespace d3d12
 				, _state
 				);
 
-			DX_RELEASE(colorBuffer, 0);
+			DX_RELEASE(colorBuffer, getSwapChainDesc().bufferCount);
 
 			bx::swap(m_state, _state);
 		}
@@ -9360,7 +9496,7 @@ namespace bgfx { namespace d3d12
 													? bind.m_samplerFlags
 													: uint32_t(texture.m_flags)
 													;
-												texture.setState(m_commandList, D3D12_RESOURCE_STATE_GENERIC_READ);
+												texture.setState(m_commandList, D3D12_RESOURCE_STATE_GENERIC_READ, bind.m_firstMip, bind.m_numMips, bind.m_firstLayer, bind.m_numLayers);
 												scratchBuffer.allocSrv(srvHandle[stage], texture, bind.m_firstLayer, bind.m_numLayers, bind.m_firstMip, bind.m_numMips
 													, 0 != (resolvedFlags & BGFX_SAMPLER_SAMPLE_STENCIL)
 													, program.getTextureDimension(uint8_t(stage) )
@@ -9723,7 +9859,7 @@ namespace bgfx { namespace d3d12
 													? bind.m_samplerFlags
 													: uint32_t(texture.m_flags)
 													;
-												texture.setState(m_commandList, D3D12_RESOURCE_STATE_GENERIC_READ);
+												texture.setState(m_commandList, D3D12_RESOURCE_STATE_GENERIC_READ, bind.m_firstMip, bind.m_numMips, bind.m_firstLayer, bind.m_numLayers);
 												scratchBuffer.allocSrv(srvHandle[stage], texture, bind.m_firstLayer, bind.m_numLayers, bind.m_firstMip, bind.m_numMips
 													, 0 != (resolvedFlags & BGFX_SAMPLER_SAMPLE_STENCIL)
 													, program.getTextureDimension(uint8_t(stage) )

@@ -5607,7 +5607,9 @@ WGPU_IMPORT
 			.usage           = m_surfaceConfig.usage,
 		};
 
-		return WGPU_CHECK(wgpuTextureCreateView(m_texture, &textureViewDesc) );
+		WGPUTextureView textureView = WGPU_CHECK(wgpuTextureCreateView(m_texture, &textureViewDesc) );
+
+		return textureView;
 	}
 
 	void SwapChainWGPU::present()

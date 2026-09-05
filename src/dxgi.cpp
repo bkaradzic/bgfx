@@ -586,7 +586,7 @@ namespace bgfx
 
 		if (FAILED(hr) )
 		{
-			BX_TRACE("Failed to create swap chain.");
+			BX_TRACE("Failed to create swap chain, hr 0x%08x.", hr);
 			return hr;
 		}
 
@@ -633,7 +633,7 @@ namespace bgfx
 			if (SUCCEEDED(hr) )
 			{
 				swapChain2->SetMaximumFrameLatency(bx::max<uint32_t>(1, _scd.maxFrameLatency) );
-				DX_RELEASE(swapChain2, 0);
+				DX_RELEASE(swapChain2, 1);
 			}
 		}
 
