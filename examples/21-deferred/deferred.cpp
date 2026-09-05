@@ -286,18 +286,9 @@ public:
 		m_useTArray = false;
 		m_useUav = false;
 
-		if (0 != (BGFX_CAPS_TEXTURE_2D_ARRAY & bgfx::getCaps()->supported) )
-		{
-			m_lightTaProgram   = loadProgram("vs_deferred_light",   "fs_deferred_light_ta");
-			m_combineTaProgram = loadProgram("vs_deferred_combine", "fs_deferred_combine_ta");
-			m_debugTaProgram   = loadProgram("vs_deferred_debug",   "fs_deferred_debug_ta");
-		}
-		else
-		{
-			m_lightTaProgram   = BGFX_INVALID_HANDLE;
-			m_combineTaProgram = BGFX_INVALID_HANDLE;
-			m_debugTaProgram   = BGFX_INVALID_HANDLE;
-		}
+		m_lightTaProgram   = loadProgram("vs_deferred_light",   "fs_deferred_light_ta");
+		m_combineTaProgram = loadProgram("vs_deferred_combine", "fs_deferred_combine_ta");
+		m_debugTaProgram   = loadProgram("vs_deferred_debug",   "fs_deferred_debug_ta");
 
 		if (0 != (BGFX_CAPS_IMAGE_RW & bgfx::getCaps()->supported)
 		&&  0 != (BGFX_CAPS_FORMAT_TEXTURE_IMAGE_READ & bgfx::getCaps()->formats[bgfx::TextureFormat::RGBA8])

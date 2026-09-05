@@ -130,7 +130,7 @@ class AttribType(enum.IntEnum):
 	Int16 = 3
 	# Uint16
 	Uint16 = 4
-	# Half, availability depends on: `BGFX_CAPS_VERTEX_ATTRIB_HALF`.
+	# Half.
 	Half = 5
 	# Float
 	Float = 6
@@ -1010,77 +1010,50 @@ class SwapChainFullscreenFlags(enum.IntFlag):
 	Mask = 0x1
 
 class CapsFlags(enum.IntFlag):
-	# Alpha to coverage is supported.
-	AlphaToCoverage = 0x1
 	# Blend independent is supported.
-	BlendIndependent = 0x2
+	BlendIndependent = 0x1
 	# Compute shaders are supported.
-	Compute = 0x4
+	Compute = 0x2
 	# Conservative rasterization is supported.
-	ConservativeRaster = 0x8
+	ConservativeRaster = 0x4
 	# Draw indirect is supported.
-	DrawIndirect = 0x10
+	DrawIndirect = 0x8
 	# Draw indirect with indirect count is supported.
-	DrawIndirectCount = 0x20
-	# Fragment depth is available in fragment shader.
-	FragmentDepth = 0x40
+	DrawIndirectCount = 0x10
 	# Fragment ordering is available in fragment shader.
-	FragmentOrdering = 0x80
+	FragmentOrdering = 0x20
 	# Graphics debugger is present.
-	GraphicsDebugger = 0x100
+	GraphicsDebugger = 0x40
 	# HDR10 rendering is supported.
-	Hdr10 = 0x200
-	# HiDPI rendering is supported.
-	Hidpi = 0x400
+	Hdr10 = 0x80
 	# Image Read/Write is supported.
-	ImageRw = 0x800
+	ImageRw = 0x100
 	# 32-bit indices are supported.
-	Index32 = 0x1000
-	# Instancing is supported.
-	Instancing = 0x2000
-	# Occlusion query is supported.
-	OcclusionQuery = 0x4000
+	Index32 = 0x200
 	# PrimitiveID is available in fragment shader.
-	PrimitiveId = 0x8000
+	PrimitiveId = 0x400
 	# Renderer is on separate thread.
-	RendererMultithreaded = 0x10000
+	RendererMultithreaded = 0x800
 	# Multiple windows are supported.
-	SwapChain = 0x20000
-	# Texture blit is supported.
-	TextureBlit = 0x40000
-	# Texture compare less equal mode is supported.
-	TextureCompareLequal = 0x80000
-	TextureCompareReserved = 0x100000
+	SwapChain = 0x1000
 	# Cubemap texture array is supported.
-	TextureCubeArray = 0x200000
+	TextureCubeArray = 0x2000
 	# CPU direct access to GPU texture memory.
-	TextureDirectAccess = 0x400000
+	TextureDirectAccess = 0x4000
 	# External texture is supported.
-	TextureExternal = 0x800000
+	TextureExternal = 0x8000
 	# External shared texture is supported.
-	TextureExternalShared = 0x1000000
-	# Read-back texture is supported.
-	TextureReadBack = 0x2000000
-	# 2D texture array is supported.
-	Texture_2dArray = 0x4000000
-	# 3D textures are supported.
-	Texture_3d = 0x8000000
+	TextureExternalShared = 0x10000
 	# Transparent back buffer supported.
-	TransparentBackbuffer = 0x10000000
+	TransparentBackbuffer = 0x20000
 	# Variable Rate Shading
-	VariableRateShading = 0x20000000
-	# Vertex attribute half-float is supported.
-	VertexAttribHalf = 0x40000000
+	VariableRateShading = 0x40000
 	# Vertex attribute 10_10_10_2 is supported.
-	VertexAttribUint10 = 0x80000000
-	# Rendering with VertexID only is supported.
-	VertexId = 0x100000000
+	VertexAttribUint10 = 0x80000
 	# Hardware video decode is supported.
-	VideoDecode = 0x200000000
+	VideoDecode = 0x100000
 	# Viewport layer is available in vertex shader.
-	ViewportLayerArray = 0x400000000
-	# All texture compare modes are supported.
-	TextureCompareAll = 0x180000
+	ViewportLayerArray = 0x200000
 
 class CapsFormatFlags(enum.IntFlag):
 	# Texture format is not supported.
@@ -2421,7 +2394,6 @@ def bgfx_clear_texture(_handle: TextureHandle, _mip: int, _numMips: int, _layer:
 # @attention Texture must be created with `BGFX_TEXTURE_READ_BACK` flag.
 #            It's a texture for CPU readback, and can't be a GPU resource
 #            at the same time. See `examples/30-picking`.
-# @attention Availability depends on: `BGFX_CAPS_TEXTURE_READ_BACK`.
 # 
 def bgfx_read_texture(_src: Optional[Union[TextureRegion, _Pointer[TextureRegion], ctypes.Array]], _data: Any, /) -> int: ...
 
@@ -2803,7 +2775,6 @@ def bgfx_encoder_set_transient_vertex_buffer_with_layout(
 # Set number of vertices for auto generated vertices use in conjunction
 # with gl_VertexID.
 # 
-# @attention Availability depends on: `BGFX_CAPS_VERTEX_ID`.
 # 
 def bgfx_encoder_set_vertex_count(_this: Optional[Union[Encoder, _Pointer[Encoder], ctypes.Array]], _numVertices: int, /) -> None: ...
 
@@ -2819,7 +2790,6 @@ def bgfx_encoder_set_instance_data_from_dynamic_vertex_buffer(_this: Optional[Un
 # Set number of instances for auto generated instances use in conjunction
 # with gl_InstanceID.
 # 
-# @attention Availability depends on: `BGFX_CAPS_VERTEX_ID`.
 # 
 def bgfx_encoder_set_instance_count(_this: Optional[Union[Encoder, _Pointer[Encoder], ctypes.Array]], _numInstances: int, /) -> None: ...
 
@@ -2979,7 +2949,6 @@ def bgfx_encoder_discard(_this: Optional[Union[Encoder, _Pointer[Encoder], ctype
 #   draw commands are executed after blit and compute commands.
 # 
 # @attention Destination texture must be created with `BGFX_TEXTURE_BLIT_DST` flag.
-# @attention Availability depends on: `BGFX_CAPS_TEXTURE_BLIT`.
 # 
 def bgfx_encoder_blit(_this: Optional[Union[Encoder, _Pointer[Encoder], ctypes.Array]], _id: int, _dst: Optional[Union[TextureRegion, _Pointer[TextureRegion], ctypes.Array]], _src: Optional[Union[TextureRegion, _Pointer[TextureRegion], ctypes.Array]], /) -> None: ...
 
@@ -3015,7 +2984,6 @@ def bgfx_encoder_blit_buffer(_this: Optional[Union[Encoder, _Pointer[Encoder], c
 # 
 # @attention Destination buffer must be created with `BGFX_BUFFER_COMPUTE_WRITE`, or
 #   `BGFX_BUFFER_DRAW_INDIRECT` flag.
-# @attention Availability depends on: `BGFX_CAPS_TEXTURE_BLIT`.
 # 
 def bgfx_encoder_blit_to_buffer(_this: Optional[Union[Encoder, _Pointer[Encoder], ctypes.Array]], _id: int, _dst: Optional[Union[BufferRegion, _Pointer[BufferRegion], ctypes.Array]], _src: Optional[Union[TextureRegion, _Pointer[TextureRegion], ctypes.Array]], /) -> None: ...
 
@@ -3033,7 +3001,6 @@ def bgfx_encoder_blit_to_buffer(_this: Optional[Union[Encoder, _Pointer[Encoder]
 # @attention Source buffer must be created with one of `BGFX_BUFFER_COMPUTE_*`, or
 #   `BGFX_BUFFER_DRAW_INDIRECT` flags.
 # @attention Destination texture must be created with `BGFX_TEXTURE_BLIT_DST` flag.
-# @attention Availability depends on: `BGFX_CAPS_TEXTURE_BLIT`.
 # 
 def bgfx_encoder_blit_from_buffer(_this: Optional[Union[Encoder, _Pointer[Encoder], ctypes.Array]], _id: int, _dst: Optional[Union[TextureRegion, _Pointer[TextureRegion], ctypes.Array]], _src: Optional[Union[BufferRegion, _Pointer[BufferRegion], ctypes.Array]], /) -> None: ...
 
@@ -3179,7 +3146,6 @@ def bgfx_set_transient_vertex_buffer_with_layout(_stream: int, _tvb: Optional[Un
 # Set number of vertices for auto generated vertices use in conjunction
 # with gl_VertexID.
 # 
-# @attention Availability depends on: `BGFX_CAPS_VERTEX_ID`.
 # 
 def bgfx_set_vertex_count(_numVertices: int, /) -> None: ...
 
@@ -3195,7 +3161,6 @@ def bgfx_set_instance_data_from_dynamic_vertex_buffer(_handle: DynamicVertexBuff
 # Set number of instances for auto generated instances use in conjunction
 # with gl_InstanceID.
 # 
-# @attention Availability depends on: `BGFX_CAPS_VERTEX_ID`.
 # 
 def bgfx_set_instance_count(_numInstances: int, /) -> None: ...
 
@@ -3331,7 +3296,6 @@ def bgfx_discard(_flags: int, /) -> None: ...
 #   draw commands are executed after blit and compute commands.
 # 
 # @attention Destination texture must be created with `BGFX_TEXTURE_BLIT_DST` flag.
-# @attention Availability depends on: `BGFX_CAPS_TEXTURE_BLIT`.
 # 
 def bgfx_blit(_id: int, _dst: Optional[Union[TextureRegion, _Pointer[TextureRegion], ctypes.Array]], _src: Optional[Union[TextureRegion, _Pointer[TextureRegion], ctypes.Array]], /) -> None: ...
 
@@ -3367,7 +3331,6 @@ def bgfx_blit_buffer(_id: int, _dst: Optional[Union[BufferRegion, _Pointer[Buffe
 # 
 # @attention Destination buffer must be created with `BGFX_BUFFER_COMPUTE_WRITE`, or
 #   `BGFX_BUFFER_DRAW_INDIRECT` flag.
-# @attention Availability depends on: `BGFX_CAPS_TEXTURE_BLIT`.
 # 
 def bgfx_blit_to_buffer(_id: int, _dst: Optional[Union[BufferRegion, _Pointer[BufferRegion], ctypes.Array]], _src: Optional[Union[TextureRegion, _Pointer[TextureRegion], ctypes.Array]], /) -> None: ...
 
@@ -3385,6 +3348,5 @@ def bgfx_blit_to_buffer(_id: int, _dst: Optional[Union[BufferRegion, _Pointer[Bu
 # @attention Source buffer must be created with one of `BGFX_BUFFER_COMPUTE_*`, or
 #   `BGFX_BUFFER_DRAW_INDIRECT` flags.
 # @attention Destination texture must be created with `BGFX_TEXTURE_BLIT_DST` flag.
-# @attention Availability depends on: `BGFX_CAPS_TEXTURE_BLIT`.
 # 
 def bgfx_blit_from_buffer(_id: int, _dst: Optional[Union[TextureRegion, _Pointer[TextureRegion], ctypes.Array]], _src: Optional[Union[BufferRegion, _Pointer[BufferRegion], ctypes.Array]], /) -> None: ...

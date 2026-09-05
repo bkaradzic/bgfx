@@ -207,16 +207,10 @@ public:
 				, uint16_t(m_height)
 				);
 
+			showExampleDialog(this);
+
 			const bgfx::Caps* caps = bgfx::getCaps();
-			bool blitSupport = 0 != (caps->supported & BGFX_CAPS_TEXTURE_BLIT);
 
-			showExampleDialog(this
-				, !blitSupport
-				? "BGFX_CAPS_TEXTURE_BLIT is not supported."
-				: NULL
-				);
-
-			if (blitSupport)
 			{
 				ImGui::SetNextWindowPos(
 					  ImVec2(m_width - m_width / 5.0f - 10.0f, 10.0f)

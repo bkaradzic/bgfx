@@ -131,9 +131,7 @@ public:
 		// Render targets.
 		m_shadowMapSize = 512;
 
-		// Shadow samplers are supported at least partially supported if texture
-		// compare less equal feature is supported.
-		m_shadowSamplerSupported = 0 != (caps->supported & BGFX_CAPS_TEXTURE_COMPARE_LEQUAL);
+		m_shadowSamplerSupported = true;
 		m_useShadowSampler = m_shadowSamplerSupported;
 
 		m_shadowMapFB = BGFX_INVALID_HANDLE;

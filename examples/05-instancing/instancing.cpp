@@ -172,18 +172,9 @@ public:
 				, 0
 			);
 
-			// Get renderer capabilities info.
-			const bgfx::Caps* caps = bgfx::getCaps();
-
-			// Check if instancing is supported.
-			const bool instancingSupported = 0 != (BGFX_CAPS_INSTANCING & caps->supported);
-			m_useInstancing &= instancingSupported;
-
 			ImGui::Text("%d draw calls", bgfx::getStats()->numDraw);
 
-			ImGui::BeginDisabled(!instancingSupported);
 			ImGui::Checkbox("Use Instancing", &m_useInstancing);
-			ImGui::EndDisabled();
 
 			ImGui::Text("Grid Side Size:");
 			ImGui::SliderInt("##size", (int*)&m_sideSize, 1, 512);
@@ -208,16 +199,6 @@ public:
 			// This dummy draw call is here to make sure that view 0 is cleared
 			// if no other draw calls are submitted to view 0.
 			bgfx::touch(0);
-
-			if (!instancingSupported)
-			{
-				// When instancing is not supported by GPU, implement alternative
-				// code path that doesn't use instancing.
-				bool blink = uint32_t(time*3.0f)&1;
-				bgfx::dbgTextPrintf(0, 0, blink ? 0x4f : 0x04, " Instancing is not supported by GPU. ");
-
-				m_useInstancing = false;
-			}
 
 			const bx::Vec3 at  = { 0.0f, 0.0f,   0.0f };
 			const bx::Vec3 eye = { 0.0f, 0.0f, -35.0f };

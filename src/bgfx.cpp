@@ -1925,38 +1925,25 @@ namespace bgfx
 	static const CapsFlags s_capsFlags[] =
 	{
 #define CAPS_FLAGS(_x) { _x, #_x }
-		CAPS_FLAGS(BGFX_CAPS_ALPHA_TO_COVERAGE),
 		CAPS_FLAGS(BGFX_CAPS_BLEND_INDEPENDENT),
 		CAPS_FLAGS(BGFX_CAPS_COMPUTE),
 		CAPS_FLAGS(BGFX_CAPS_CONSERVATIVE_RASTER),
 		CAPS_FLAGS(BGFX_CAPS_DRAW_INDIRECT),
-		CAPS_FLAGS(BGFX_CAPS_FRAGMENT_DEPTH),
 		CAPS_FLAGS(BGFX_CAPS_FRAGMENT_ORDERING),
 		CAPS_FLAGS(BGFX_CAPS_GRAPHICS_DEBUGGER),
 		CAPS_FLAGS(BGFX_CAPS_HDR10),
-		CAPS_FLAGS(BGFX_CAPS_HIDPI),
 		CAPS_FLAGS(BGFX_CAPS_IMAGE_RW),
 		CAPS_FLAGS(BGFX_CAPS_INDEX32),
-		CAPS_FLAGS(BGFX_CAPS_INSTANCING),
-		CAPS_FLAGS(BGFX_CAPS_OCCLUSION_QUERY),
 		CAPS_FLAGS(BGFX_CAPS_PRIMITIVE_ID),
 		CAPS_FLAGS(BGFX_CAPS_RENDERER_MULTITHREADED),
 		CAPS_FLAGS(BGFX_CAPS_SWAP_CHAIN),
-		CAPS_FLAGS(BGFX_CAPS_TEXTURE_2D_ARRAY),
-		CAPS_FLAGS(BGFX_CAPS_TEXTURE_3D),
-		CAPS_FLAGS(BGFX_CAPS_TEXTURE_BLIT),
-		CAPS_FLAGS(BGFX_CAPS_TEXTURE_COMPARE_ALL),
-		CAPS_FLAGS(BGFX_CAPS_TEXTURE_COMPARE_LEQUAL),
 		CAPS_FLAGS(BGFX_CAPS_TEXTURE_CUBE_ARRAY),
 		CAPS_FLAGS(BGFX_CAPS_TEXTURE_DIRECT_ACCESS),
 		CAPS_FLAGS(BGFX_CAPS_TEXTURE_EXTERNAL),
 		CAPS_FLAGS(BGFX_CAPS_TEXTURE_EXTERNAL_SHARED),
-		CAPS_FLAGS(BGFX_CAPS_TEXTURE_READ_BACK),
 		CAPS_FLAGS(BGFX_CAPS_TRANSPARENT_BACKBUFFER),
 		CAPS_FLAGS(BGFX_CAPS_VARIABLE_RATE_SHADING),
-		CAPS_FLAGS(BGFX_CAPS_VERTEX_ATTRIB_HALF),
 		CAPS_FLAGS(BGFX_CAPS_VERTEX_ATTRIB_UINT10),
-		CAPS_FLAGS(BGFX_CAPS_VERTEX_ID),
 		CAPS_FLAGS(BGFX_CAPS_VIDEO_DECODE),
 		CAPS_FLAGS(BGFX_CAPS_VIEWPORT_LAYER_ARRAY),
 #undef CAPS_FLAGS
@@ -4365,7 +4352,6 @@ namespace bgfx
 
 	void Encoder::setCondition(OcclusionQueryHandle _handle, bool _visible)
 	{
-		BGFX_CHECK_CAPS(BGFX_CAPS_OCCLUSION_QUERY, "Occlusion query is not supported!");
 		BGFX_ENCODER(setCondition(_handle, _visible) );
 	}
 
@@ -4515,7 +4501,6 @@ namespace bgfx
 
 	void Encoder::setVertexCount(uint32_t _numVertices)
 	{
-		BGFX_CHECK_CAPS(BGFX_CAPS_VERTEX_ID, "Auto generated vertices are not supported!");
 		BGFX_ENCODER(setVertexCount(_numVertices) );
 	}
 
@@ -4550,7 +4535,6 @@ namespace bgfx
 
 	void Encoder::setInstanceCount(uint32_t _numInstances)
 	{
-		BGFX_CHECK_CAPS(BGFX_CAPS_VERTEX_ID, "Auto generated instances are not supported!");
 		BGFX_ENCODER(setInstanceCount(_numInstances) );
 	}
 
@@ -4604,11 +4588,6 @@ namespace bgfx
 
 	void Encoder::submit(ViewId _id, ProgramHandle _program, OcclusionQueryHandle _occlusionQuery, uint32_t _depth, uint8_t _flags)
 	{
-		BX_ASSERT(false
-			|| !isValid(_occlusionQuery)
-			|| 0 != (g_caps.supported & BGFX_CAPS_OCCLUSION_QUERY)
-			, "Occlusion query is not supported! Use bgfx::getCaps to check BGFX_CAPS_OCCLUSION_QUERY backend renderer capabilities."
-			);
 		BGFX_CHECK_HANDLE_INVALID_OK("submit", s_ctx->m_programHandle, _program);
 		BGFX_CHECK_HANDLE_INVALID_OK("submit", s_ctx->m_occlusionQueryHandle, _occlusionQuery);
 		BGFX_ENCODER(submit(_id, _program, _occlusionQuery, _depth, _flags) );
@@ -4870,7 +4849,6 @@ namespace bgfx
 
 	void Encoder::blit(ViewId _id, const TextureRegion& _dst, const TextureRegion& _src)
 	{
-		BGFX_CHECK_CAPS(BGFX_CAPS_TEXTURE_BLIT, "Texture blit is not supported!");
 		BGFX_CHECK_HANDLE("blit/src TextureHandle", s_ctx->m_textureHandle, _src.handle);
 		BGFX_CHECK_HANDLE("blit/dst TextureHandle", s_ctx->m_textureHandle, _dst.handle);
 
@@ -5011,7 +4989,6 @@ namespace bgfx
 
 	void Encoder::blit(ViewId _id, const BufferRegion& _dst, const TextureRegion& _src)
 	{
-		BGFX_CHECK_CAPS(BGFX_CAPS_TEXTURE_BLIT, "Texture blit is not supported!");
 		BGFX_CHECK_HANDLE("blit/src TextureHandle", s_ctx->m_textureHandle, _src.handle);
 
 		const TextureRef& src = s_ctx->m_textureRef[_src.handle.idx];
@@ -5085,7 +5062,6 @@ namespace bgfx
 
 	void Encoder::blit(ViewId _id, const TextureRegion& _dst, const BufferRegion& _src)
 	{
-		BGFX_CHECK_CAPS(BGFX_CAPS_TEXTURE_BLIT, "Texture blit is not supported!");
 		BGFX_CHECK_HANDLE("blit/dst TextureHandle", s_ctx->m_textureHandle, _dst.handle);
 
 		const TextureRef& dst = s_ctx->m_textureRef[_dst.handle.idx];
@@ -5453,7 +5429,6 @@ namespace bgfx
 
 	void allocInstanceDataBuffer(InstanceDataBuffer* _idb, uint32_t _num, uint16_t _stride)
 	{
-		BGFX_CHECK_CAPS(BGFX_CAPS_INSTANCING, "Instancing is not supported!");
 		BX_ASSERT(bx::isAligned(_stride, 16), "Stride must be multiple of 16.");
 		BX_ASSERT(0 < _num, "Requesting 0 instanced data vertices.");
 		s_ctx->allocInstanceDataBuffer(_idb, _num, _stride);
@@ -5779,16 +5754,6 @@ namespace bgfx
 			);
 
 		BGFX_ERROR_CHECK(false
-			|| !is3DTexture
-			|| 0 != (g_caps.supported & BGFX_CAPS_TEXTURE_3D)
-			, _err
-			, BGFX_ERROR_TEXTURE_VALIDATION
-			, "Texture3D is not supported! "
-			  "Use bgfx::getCaps to check `BGFX_CAPS_TEXTURE_3D` backend renderer capabilities."
-			, ""
-			);
-
-		BGFX_ERROR_CHECK(false
 			|| _width  <= g_caps.limits.maxTextureSize
 			|| _height <= g_caps.limits.maxTextureSize
 			, _err
@@ -5815,16 +5780,6 @@ namespace bgfx
 			, _err
 			, BGFX_ERROR_TEXTURE_VALIDATION
 			, "Can't create compute texture with `BGFX_TEXTURE_READ_BACK` flag."
-			, ""
-			);
-
-		BGFX_ERROR_CHECK(false
-			|| 1 >= _numLayers
-			|| 0 != (g_caps.supported & BGFX_CAPS_TEXTURE_2D_ARRAY)
-			, _err
-			, BGFX_ERROR_TEXTURE_VALIDATION
-			, "Texture array is not supported! "
-			  "Use bgfx::getCaps to check `BGFX_CAPS_TEXTURE_2D_ARRAY` backend renderer capabilities."
 			, ""
 			);
 
@@ -6361,7 +6316,6 @@ namespace bgfx
 	void updateTexture3D(TextureHandle _handle, uint8_t _mip, uint16_t _x, uint16_t _y, uint16_t _z, uint16_t _width, uint16_t _height, uint16_t _depth, const Memory* _mem)
 	{
 		BX_ASSERT(NULL != _mem, "_mem can't be NULL");
-		BGFX_CHECK_CAPS(BGFX_CAPS_TEXTURE_3D, "Texture3D is not supported!");
 
 		if (0 == _width
 		||  0 == _height
@@ -6393,7 +6347,6 @@ namespace bgfx
 	uint32_t read(const TextureRegion& _src, void* _data)
 	{
 		BX_ASSERT(NULL != _data, "_data can't be NULL");
-		BGFX_CHECK_CAPS(BGFX_CAPS_TEXTURE_READ_BACK, "Texture read-back is not supported!");
 		BGFX_CHECK_HANDLE("read TextureHandle", s_ctx->m_textureHandle, _src.handle);
 
 		const TextureRef& src = s_ctx->m_textureRef[_src.handle.idx];
@@ -6580,19 +6533,16 @@ namespace bgfx
 
 	OcclusionQueryHandle createOcclusionQuery()
 	{
-		BGFX_CHECK_CAPS(BGFX_CAPS_OCCLUSION_QUERY, "Occlusion query is not supported!");
 		return s_ctx->createOcclusionQuery();
 	}
 
 	OcclusionQueryResult::Enum getResult(OcclusionQueryHandle _handle, int32_t* _result)
 	{
-		BGFX_CHECK_CAPS(BGFX_CAPS_OCCLUSION_QUERY, "Occlusion query is not supported!");
 		return s_ctx->getResult(_handle, _result);
 	}
 
 	void destroy(OcclusionQueryHandle _handle)
 	{
-		BGFX_CHECK_CAPS(BGFX_CAPS_OCCLUSION_QUERY, "Occlusion query is not supported!");
 		s_ctx->destroyOcclusionQuery(_handle);
 	}
 
@@ -7265,65 +7215,42 @@ static_assert( (0
 	^ BGFX_STATE_WRITE_MASK
 	) );
 
-static_assert(FLAGS_MASK_TEST(BGFX_CAPS_TEXTURE_COMPARE_LEQUAL, BGFX_CAPS_TEXTURE_COMPARE_ALL) );
 
 static_assert( (0
-	| BGFX_CAPS_ALPHA_TO_COVERAGE
 	| BGFX_CAPS_BLEND_INDEPENDENT
 	| BGFX_CAPS_COMPUTE
 	| BGFX_CAPS_CONSERVATIVE_RASTER
 	| BGFX_CAPS_DRAW_INDIRECT
-	| BGFX_CAPS_FRAGMENT_DEPTH
 	| BGFX_CAPS_FRAGMENT_ORDERING
 	| BGFX_CAPS_GRAPHICS_DEBUGGER
 	| BGFX_CAPS_HDR10
-	| BGFX_CAPS_HIDPI
 	| BGFX_CAPS_INDEX32
-	| BGFX_CAPS_INSTANCING
-	| BGFX_CAPS_OCCLUSION_QUERY
 	| BGFX_CAPS_RENDERER_MULTITHREADED
 	| BGFX_CAPS_SWAP_CHAIN
-	| BGFX_CAPS_TEXTURE_2D_ARRAY
-	| BGFX_CAPS_TEXTURE_3D
-	| BGFX_CAPS_TEXTURE_BLIT
 	| BGFX_CAPS_TEXTURE_CUBE_ARRAY
 	| BGFX_CAPS_TEXTURE_DIRECT_ACCESS
 	| BGFX_CAPS_TEXTURE_EXTERNAL
 	| BGFX_CAPS_TEXTURE_EXTERNAL_SHARED
-	| BGFX_CAPS_TEXTURE_READ_BACK
-	| BGFX_CAPS_VERTEX_ATTRIB_HALF
 	| BGFX_CAPS_VERTEX_ATTRIB_UINT10
-	| BGFX_CAPS_VERTEX_ID
 	| BGFX_CAPS_PRIMITIVE_ID
 	| BGFX_CAPS_VIEWPORT_LAYER_ARRAY
 	| BGFX_CAPS_DRAW_INDIRECT_COUNT
 	) == (0
-	^ BGFX_CAPS_ALPHA_TO_COVERAGE
 	^ BGFX_CAPS_BLEND_INDEPENDENT
 	^ BGFX_CAPS_COMPUTE
 	^ BGFX_CAPS_CONSERVATIVE_RASTER
 	^ BGFX_CAPS_DRAW_INDIRECT
-	^ BGFX_CAPS_FRAGMENT_DEPTH
 	^ BGFX_CAPS_FRAGMENT_ORDERING
 	^ BGFX_CAPS_GRAPHICS_DEBUGGER
 	^ BGFX_CAPS_HDR10
-	^ BGFX_CAPS_HIDPI
 	^ BGFX_CAPS_INDEX32
-	^ BGFX_CAPS_INSTANCING
-	^ BGFX_CAPS_OCCLUSION_QUERY
 	^ BGFX_CAPS_RENDERER_MULTITHREADED
 	^ BGFX_CAPS_SWAP_CHAIN
-	^ BGFX_CAPS_TEXTURE_2D_ARRAY
-	^ BGFX_CAPS_TEXTURE_3D
-	^ BGFX_CAPS_TEXTURE_BLIT
 	^ BGFX_CAPS_TEXTURE_CUBE_ARRAY
 	^ BGFX_CAPS_TEXTURE_DIRECT_ACCESS
 	^ BGFX_CAPS_TEXTURE_EXTERNAL
 	^ BGFX_CAPS_TEXTURE_EXTERNAL_SHARED
-	^ BGFX_CAPS_TEXTURE_READ_BACK
-	^ BGFX_CAPS_VERTEX_ATTRIB_HALF
 	^ BGFX_CAPS_VERTEX_ATTRIB_UINT10
-	^ BGFX_CAPS_VERTEX_ID
 	^ BGFX_CAPS_PRIMITIVE_ID
 	^ BGFX_CAPS_VIEWPORT_LAYER_ARRAY
 	^ BGFX_CAPS_DRAW_INDIRECT_COUNT

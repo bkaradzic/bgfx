@@ -210,7 +210,7 @@ public:
 		const uint64_t supportedCaps      = bgfx::getCaps()->supported;
 		const bool computeSupported       = !!(BGFX_CAPS_COMPUTE             & supportedCaps);
 		const bool indirectSupported      = !!(BGFX_CAPS_DRAW_INDIRECT       & supportedCaps);
-		const bool instancingSupported    = !!(BGFX_CAPS_INSTANCING          & supportedCaps);
+		const bool instancingSupported    = true;
 		const bool indirectCountSupported = !!(BGFX_CAPS_DRAW_INDIRECT_COUNT & supportedCaps);
 
 		if (computeSupported
@@ -332,7 +332,7 @@ public:
 			const uint64_t supportedCaps      = bgfx::getCaps()->supported;
 			const bool computeSupported       = !!(BGFX_CAPS_COMPUTE             & supportedCaps);
 			const bool indirectSupported      = !!(BGFX_CAPS_DRAW_INDIRECT       & supportedCaps);
-			const bool instancingSupported    = !!(BGFX_CAPS_INSTANCING          & supportedCaps);
+			const bool instancingSupported    = true;
 			const bool indirectCountSupported = !!(BGFX_CAPS_DRAW_INDIRECT_COUNT & supportedCaps);
 
 			imguiBeginFrame(m_mouseState.m_mx

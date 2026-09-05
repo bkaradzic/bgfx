@@ -650,111 +650,71 @@ constdef SwapChainFlags : inline uint
 
 constdef CapsFlags : inline ulong
 {
-	// Alpha to coverage is supported.
-	ALPHATOCOVERAGE        = 0x0000000000000001,
-
 	// Blend independent is supported.
-	BLENDINDEPENDENT       = 0x0000000000000002,
+	BLENDINDEPENDENT       = 0x0000000000000001,
 
 	// Compute shaders are supported.
-	COMPUTE                = 0x0000000000000004,
+	COMPUTE                = 0x0000000000000002,
 
 	// Conservative rasterization is supported.
-	CONSERVATIVERASTER     = 0x0000000000000008,
+	CONSERVATIVERASTER     = 0x0000000000000004,
 
 	// Draw indirect is supported.
-	DRAWINDIRECT           = 0x0000000000000010,
+	DRAWINDIRECT           = 0x0000000000000008,
 
 	// Draw indirect with indirect count is supported.
-	DRAWINDIRECTCOUNT      = 0x0000000000000020,
-
-	// Fragment depth is available in fragment shader.
-	FRAGMENTDEPTH          = 0x0000000000000040,
+	DRAWINDIRECTCOUNT      = 0x0000000000000010,
 
 	// Fragment ordering is available in fragment shader.
-	FRAGMENTORDERING       = 0x0000000000000080,
+	FRAGMENTORDERING       = 0x0000000000000020,
 
 	// Graphics debugger is present.
-	GRAPHICSDEBUGGER       = 0x0000000000000100,
+	GRAPHICSDEBUGGER       = 0x0000000000000040,
 
 	// HDR10 rendering is supported.
-	HDR10                  = 0x0000000000000200,
-
-	// HiDPI rendering is supported.
-	HIDPI                  = 0x0000000000000400,
+	HDR10                  = 0x0000000000000080,
 
 	// Image Read/Write is supported.
-	IMAGERW                = 0x0000000000000800,
+	IMAGERW                = 0x0000000000000100,
 
 	// 32-bit indices are supported.
-	INDEX32                = 0x0000000000001000,
-
-	// Instancing is supported.
-	INSTANCING             = 0x0000000000002000,
-
-	// Occlusion query is supported.
-	OCCLUSIONQUERY         = 0x0000000000004000,
+	INDEX32                = 0x0000000000000200,
 
 	// PrimitiveID is available in fragment shader.
-	PRIMITIVEID            = 0x0000000000008000,
+	PRIMITIVEID            = 0x0000000000000400,
 
 	// Renderer is on separate thread.
-	RENDERERMULTITHREADED  = 0x0000000000010000,
+	RENDERERMULTITHREADED  = 0x0000000000000800,
 
 	// Multiple windows are supported.
-	SWAPCHAIN              = 0x0000000000020000,
-
-	// Texture blit is supported.
-	TEXTUREBLIT            = 0x0000000000040000,
-
-	// Texture compare less equal mode is supported.
-	TEXTURECOMPARELEQUAL   = 0x0000000000080000,
-	TEXTURECOMPARERESERVED = 0x0000000000100000,
+	SWAPCHAIN              = 0x0000000000001000,
 
 	// Cubemap texture array is supported.
-	TEXTURECUBEARRAY       = 0x0000000000200000,
+	TEXTURECUBEARRAY       = 0x0000000000002000,
 
 	// CPU direct access to GPU texture memory.
-	TEXTUREDIRECTACCESS    = 0x0000000000400000,
+	TEXTUREDIRECTACCESS    = 0x0000000000004000,
 
 	// External texture is supported.
-	TEXTUREEXTERNAL        = 0x0000000000800000,
+	TEXTUREEXTERNAL        = 0x0000000000008000,
 
 	// External shared texture is supported.
-	TEXTUREEXTERNALSHARED  = 0x0000000001000000,
-
-	// Read-back texture is supported.
-	TEXTUREREADBACK        = 0x0000000002000000,
-
-	// 2D texture array is supported.
-	TEXTURE_2DARRAY        = 0x0000000004000000,
-
-	// 3D textures are supported.
-	TEXTURE_3D             = 0x0000000008000000,
+	TEXTUREEXTERNALSHARED  = 0x0000000000010000,
 
 	// Transparent back buffer supported.
-	TRANSPARENTBACKBUFFER  = 0x0000000010000000,
+	TRANSPARENTBACKBUFFER  = 0x0000000000020000,
 
 	// Variable Rate Shading
-	VARIABLERATESHADING    = 0x0000000020000000,
-
-	// Vertex attribute half-float is supported.
-	VERTEXATTRIBHALF       = 0x0000000040000000,
+	VARIABLERATESHADING    = 0x0000000000040000,
 
 	// Vertex attribute 10_10_10_2 is supported.
-	VERTEXATTRIBUINT10     = 0x0000000080000000,
-
-	// Rendering with VertexID only is supported.
-	VERTEXID               = 0x0000000100000000,
+	VERTEXATTRIBUINT10     = 0x0000000000080000,
 
 	// Hardware video decode is supported.
-	VIDEODECODE            = 0x0000000200000000,
+	VIDEODECODE            = 0x0000000000100000,
 
 	// Viewport layer is available in vertex shader.
-	VIEWPORTLAYERARRAY     = 0x0000000400000000,
-
-	// All texture compare modes are supported.
-	TEXTURECOMPAREALL      = 0x0000000000180000,
+	VIEWPORTLAYERARRAY     = 0x0000000000200000,
 }
 
 constdef CapsFormatFlags : inline uint
@@ -1114,7 +1074,7 @@ enum AttribType : uint
 	// Uint16
 	UINT16,
 
-	// Half, availability depends on: `BGFX_CAPS_VERTEX_ATTRIB_HALF`.
+	// Half.
 	HALF,
 
 	// Float
@@ -2881,7 +2841,7 @@ extern fn TextureHandle create_texture(Memory* _mem, ulong _flags, char _skip, T
 // _width : `Width.`
 // _height : `Height.`
 // _hasMips : `Indicates that texture contains full mip-map chain.`
-// _numLayers : `Number of layers in texture array. Must be 1 if caps `BGFX_CAPS_TEXTURE_2D_ARRAY` flag is not set.`
+// _numLayers : `Number of layers in texture array.`
 // _format : `Texture format. See: `TextureFormat::Enum`.`
 // _flags : `Texture creation (see `BGFX_TEXTURE_*`.), and sampler (see `BGFX_SAMPLER_*`) flags. Default texture sampling mode is linear, and wrap mode is repeat. - `BGFX_SAMPLER_[U/V/W]_[MIRROR/CLAMP]` - Mirror or clamp to edge wrap   mode. - `BGFX_SAMPLER_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]` - Point or anisotropic   sampling.`
 // _mem : `Texture data. If `_mem` is non-NULL, created texture will be immutable. If `_mem` is NULL content of the texture is uninitialized. When `_numLayers` is more than 1, expected memory layout is texture and all mips together for each array element.`
@@ -2892,7 +2852,7 @@ extern fn TextureHandle create_texture_2d(ushort _width, ushort _height, bool _h
 // if back buffer resolution changes.
 // _ratio : `Texture size in respect to back-buffer size. See: `BackbufferRatio::Enum`.`
 // _hasMips : `Indicates that texture contains full mip-map chain.`
-// _numLayers : `Number of layers in texture array. Must be 1 if caps `BGFX_CAPS_TEXTURE_2D_ARRAY` flag is not set.`
+// _numLayers : `Number of layers in texture array.`
 // _format : `Texture format. See: `TextureFormat::Enum`.`
 // _flags : `Texture creation (see `BGFX_TEXTURE_*`.), and sampler (see `BGFX_SAMPLER_*`) flags. Default texture sampling mode is linear, and wrap mode is repeat. - `BGFX_SAMPLER_[U/V/W]_[MIRROR/CLAMP]` - Mirror or clamp to edge wrap   mode. - `BGFX_SAMPLER_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]` - Point or anisotropic   sampling.`
 extern fn TextureHandle create_texture_2d_scaled(BackbufferRatio _ratio, bool _hasMips, ushort _numLayers, TextureFormat _format, ulong _flags) @cname("bgfx_create_texture_2d_scaled");
@@ -2911,7 +2871,7 @@ extern fn TextureHandle create_texture_3d(ushort _width, ushort _height, ushort 
 // Create Cube texture.
 // _size : `Cube side size.`
 // _hasMips : `Indicates that texture contains full mip-map chain.`
-// _numLayers : `Number of layers in texture array. Must be 1 if caps `BGFX_CAPS_TEXTURE_2D_ARRAY` flag is not set.`
+// _numLayers : `Number of layers in texture array.`
 // _format : `Texture format. See: `TextureFormat::Enum`.`
 // _flags : `Texture creation (see `BGFX_TEXTURE_*`.), and sampler (see `BGFX_SAMPLER_*`) flags. Default texture sampling mode is linear, and wrap mode is repeat. - `BGFX_SAMPLER_[U/V/W]_[MIRROR/CLAMP]` - Mirror or clamp to edge wrap   mode. - `BGFX_SAMPLER_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]` - Point or anisotropic   sampling.`
 // _mem : `Texture data. If `_mem` is non-NULL, created texture will be immutable. If `_mem` is NULL content of the texture is uninitialized. When `_numLayers` is more than`
@@ -2986,7 +2946,6 @@ extern fn void clear_texture(TextureHandle _handle, char _mip, char _numMips, us
 // @attention Texture must be created with `BGFX_TEXTURE_READ_BACK` flag.
 //            It's a texture for CPU readback, and can't be a GPU resource
 //            at the same time. See `examples/30-picking`.
-// @attention Availability depends on: `BGFX_CAPS_TEXTURE_READ_BACK`.
 // 
 // _src : `Source texture region.`
 // _data : `Destination buffer.`
@@ -3494,7 +3453,6 @@ extern fn void encoder_set_transient_vertex_buffer_with_layout(Encoder* _this, c
 // Set number of vertices for auto generated vertices use in conjunction
 // with gl_VertexID.
 // 
-// @attention Availability depends on: `BGFX_CAPS_VERTEX_ID`.
 // 
 // _numVertices : `Number of vertices.`
 extern fn void encoder_set_vertex_count(Encoder* _this, uint _numVertices) @cname("bgfx_encoder_set_vertex_count");
@@ -3520,7 +3478,6 @@ extern fn void encoder_set_instance_data_from_dynamic_vertex_buffer(Encoder* _th
 // Set number of instances for auto generated instances use in conjunction
 // with gl_InstanceID.
 // 
-// @attention Availability depends on: `BGFX_CAPS_VERTEX_ID`.
 // 
 // _numInstances : `Number of instances.`
 extern fn void encoder_set_instance_count(Encoder* _this, uint _numInstances) @cname("bgfx_encoder_set_instance_count");
@@ -3682,7 +3639,6 @@ extern fn void encoder_discard(Encoder* _this, char _flags) @cname("bgfx_encoder
 //   draw commands are executed after blit and compute commands.
 // 
 // @attention Destination texture must be created with `BGFX_TEXTURE_BLIT_DST` flag.
-// @attention Availability depends on: `BGFX_CAPS_TEXTURE_BLIT`.
 // 
 // _id : `View id.`
 // _dst : `Destination texture region.`
@@ -3724,7 +3680,6 @@ extern fn void encoder_blit_buffer(Encoder* _this, ushort _id, BufferRegion* _ds
 // 
 // @attention Destination buffer must be created with `BGFX_BUFFER_COMPUTE_WRITE`, or
 //   `BGFX_BUFFER_DRAW_INDIRECT` flag.
-// @attention Availability depends on: `BGFX_CAPS_TEXTURE_BLIT`.
 // 
 // _id : `View id.`
 // _dst : `Destination buffer region.`
@@ -3745,7 +3700,6 @@ extern fn void encoder_blit_to_buffer(Encoder* _this, ushort _id, BufferRegion* 
 // @attention Source buffer must be created with one of `BGFX_BUFFER_COMPUTE_*`, or
 //   `BGFX_BUFFER_DRAW_INDIRECT` flags.
 // @attention Destination texture must be created with `BGFX_TEXTURE_BLIT_DST` flag.
-// @attention Availability depends on: `BGFX_CAPS_TEXTURE_BLIT`.
 // 
 // _id : `View id.`
 // _dst : `Destination texture region.`
@@ -3955,7 +3909,6 @@ extern fn void set_transient_vertex_buffer_with_layout(char _stream, TransientVe
 // Set number of vertices for auto generated vertices use in conjunction
 // with gl_VertexID.
 // 
-// @attention Availability depends on: `BGFX_CAPS_VERTEX_ID`.
 // 
 // _numVertices : `Number of vertices.`
 extern fn void set_vertex_count(uint _numVertices) @cname("bgfx_set_vertex_count");
@@ -3981,7 +3934,6 @@ extern fn void set_instance_data_from_dynamic_vertex_buffer(DynamicVertexBufferH
 // Set number of instances for auto generated instances use in conjunction
 // with gl_InstanceID.
 // 
-// @attention Availability depends on: `BGFX_CAPS_VERTEX_ID`.
 // 
 // _numInstances : `Number of instances.`
 extern fn void set_instance_count(uint _numInstances) @cname("bgfx_set_instance_count");
@@ -4141,7 +4093,6 @@ extern fn void discard(char _flags) @cname("bgfx_discard");
 //   draw commands are executed after blit and compute commands.
 // 
 // @attention Destination texture must be created with `BGFX_TEXTURE_BLIT_DST` flag.
-// @attention Availability depends on: `BGFX_CAPS_TEXTURE_BLIT`.
 // 
 // _id : `View id.`
 // _dst : `Destination texture region.`
@@ -4183,7 +4134,6 @@ extern fn void blit_buffer(ushort _id, BufferRegion* _dst, BufferRegion* _src) @
 // 
 // @attention Destination buffer must be created with `BGFX_BUFFER_COMPUTE_WRITE`, or
 //   `BGFX_BUFFER_DRAW_INDIRECT` flag.
-// @attention Availability depends on: `BGFX_CAPS_TEXTURE_BLIT`.
 // 
 // _id : `View id.`
 // _dst : `Destination buffer region.`
@@ -4204,7 +4154,6 @@ extern fn void blit_to_buffer(ushort _id, BufferRegion* _dst, TextureRegion* _sr
 // @attention Source buffer must be created with one of `BGFX_BUFFER_COMPUTE_*`, or
 //   `BGFX_BUFFER_DRAW_INDIRECT` flags.
 // @attention Destination texture must be created with `BGFX_TEXTURE_BLIT_DST` flag.
-// @attention Availability depends on: `BGFX_CAPS_TEXTURE_BLIT`.
 // 
 // _id : `View id.`
 // _dst : `Destination texture region.`

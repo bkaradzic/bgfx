@@ -146,7 +146,7 @@ namespace bgfx
 			Uint10, //!< Uint10, availability depends on: `BGFX_CAPS_VERTEX_ATTRIB_UINT10`.
 			Int16,  //!< Int16
 			Uint16, //!< Uint16
-			Half,   //!< Half, availability depends on: `BGFX_CAPS_VERTEX_ATTRIB_HALF`.
+			Half,   //!< Half.
 			Float,  //!< Float
 			Int32,  //!< Int32
 			Uint32, //!< Uint32
@@ -1613,8 +1613,6 @@ namespace bgfx
 		///
 		/// @param[in] _numVertices Number of vertices.
 		///
-		/// @attention Availability depends on: `BGFX_CAPS_VERTEX_ID`.
-		///
 		/// @attention C99's equivalent binding is `bgfx_encoder_set_vertex_count`.
 		///
 		void setVertexCount(uint32_t _numVertices);
@@ -1671,8 +1669,6 @@ namespace bgfx
 		/// with gl_InstanceID.
 		///
 		/// @param[in] _numInstances Number of instances.
-		///
-		/// @attention Availability depends on: `BGFX_CAPS_VERTEX_ID`.
 		///
 		/// @attention C99's equivalent binding is `bgfx_encoder_set_instance_count`.
 		///
@@ -2007,8 +2003,6 @@ namespace bgfx
 		///
 		/// @attention Destination texture must be created with `BGFX_TEXTURE_BLIT_DST` flag.
 		///
-		/// @attention Availability depends on: `BGFX_CAPS_TEXTURE_BLIT`.
-		///
 		/// @attention C99's equivalent binding is `bgfx_encoder_blit`.
 		///
 		void blit(
@@ -2066,8 +2060,6 @@ namespace bgfx
 		/// @attention Destination buffer must be created with `BGFX_BUFFER_COMPUTE_WRITE`, or
 		///   `BGFX_BUFFER_DRAW_INDIRECT` flag.
 		///
-		/// @attention Availability depends on: `BGFX_CAPS_TEXTURE_BLIT`.
-		///
 		/// @attention C99's equivalent binding is `bgfx_encoder_blit_to_buffer`.
 		///
 		void blit(
@@ -2095,8 +2087,6 @@ namespace bgfx
 		///   `BGFX_BUFFER_DRAW_INDIRECT` flags.
 		///
 		/// @attention Destination texture must be created with `BGFX_TEXTURE_BLIT_DST` flag.
-		///
-		/// @attention Availability depends on: `BGFX_CAPS_TEXTURE_BLIT`.
 		///
 		/// @attention C99's equivalent binding is `bgfx_encoder_blit_from_buffer`.
 		///
@@ -3351,8 +3341,7 @@ namespace bgfx
 	/// @param[in] _width Width.
 	/// @param[in] _height Height.
 	/// @param[in] _hasMips Indicates that texture contains full mip-map chain.
-	/// @param[in] _numLayers Number of layers in texture array. Must be 1 if caps
-	///   `BGFX_CAPS_TEXTURE_2D_ARRAY` flag is not set.
+	/// @param[in] _numLayers Number of layers in texture array.
 	/// @param[in] _format Texture format. See: `TextureFormat::Enum`.
 	/// @param[in] _flags Texture creation (see `BGFX_TEXTURE_*`.), and sampler (see `BGFX_SAMPLER_*`)
 	///   flags. Default texture sampling mode is linear, and wrap mode is repeat.
@@ -3385,8 +3374,7 @@ namespace bgfx
 	///
 	/// @param[in] _ratio Texture size in respect to back-buffer size. See: `BackbufferRatio::Enum`.
 	/// @param[in] _hasMips Indicates that texture contains full mip-map chain.
-	/// @param[in] _numLayers Number of layers in texture array. Must be 1 if caps
-	///   `BGFX_CAPS_TEXTURE_2D_ARRAY` flag is not set.
+	/// @param[in] _numLayers Number of layers in texture array.
 	/// @param[in] _format Texture format. See: `TextureFormat::Enum`.
 	/// @param[in] _flags Texture creation (see `BGFX_TEXTURE_*`.), and sampler (see `BGFX_SAMPLER_*`)
 	///   flags. Default texture sampling mode is linear, and wrap mode is repeat.
@@ -3444,8 +3432,7 @@ namespace bgfx
 	///
 	/// @param[in] _size Cube side size.
 	/// @param[in] _hasMips Indicates that texture contains full mip-map chain.
-	/// @param[in] _numLayers Number of layers in texture array. Must be 1 if caps
-	///   `BGFX_CAPS_TEXTURE_2D_ARRAY` flag is not set.
+	/// @param[in] _numLayers Number of layers in texture array.
 	/// @param[in] _format Texture format. See: `TextureFormat::Enum`.
 	/// @param[in] _flags Texture creation (see `BGFX_TEXTURE_*`.), and sampler (see `BGFX_SAMPLER_*`)
 	///   flags. Default texture sampling mode is linear, and wrap mode is repeat.
@@ -3612,8 +3599,6 @@ namespace bgfx
 	/// @attention Texture must be created with `BGFX_TEXTURE_READ_BACK` flag.
 	///            It's a texture for CPU readback, and can't be a GPU resource
 	///            at the same time. See `examples/30-picking`.
-	///
-	/// @attention Availability depends on: `BGFX_CAPS_TEXTURE_READ_BACK`.
 	///
 	/// @attention C99's equivalent binding is `bgfx_read_texture`.
 	///
@@ -4694,8 +4679,6 @@ namespace bgfx
 	///
 	/// @param[in] _numVertices Number of vertices.
 	///
-	/// @attention Availability depends on: `BGFX_CAPS_VERTEX_ID`.
-	///
 	/// @attention C99's equivalent binding is `bgfx_set_vertex_count`.
 	///
 	void setVertexCount(uint32_t _numVertices);
@@ -4752,8 +4735,6 @@ namespace bgfx
 	/// with gl_InstanceID.
 	///
 	/// @param[in] _numInstances Number of instances.
-	///
-	/// @attention Availability depends on: `BGFX_CAPS_VERTEX_ID`.
 	///
 	/// @attention C99's equivalent binding is `bgfx_set_instance_count`.
 	///
@@ -5086,8 +5067,6 @@ namespace bgfx
 	///
 	/// @attention Destination texture must be created with `BGFX_TEXTURE_BLIT_DST` flag.
 	///
-	/// @attention Availability depends on: `BGFX_CAPS_TEXTURE_BLIT`.
-	///
 	/// @attention C99's equivalent binding is `bgfx_blit`.
 	///
 	void blit(
@@ -5145,8 +5124,6 @@ namespace bgfx
 	/// @attention Destination buffer must be created with `BGFX_BUFFER_COMPUTE_WRITE`, or
 	///   `BGFX_BUFFER_DRAW_INDIRECT` flag.
 	///
-	/// @attention Availability depends on: `BGFX_CAPS_TEXTURE_BLIT`.
-	///
 	/// @attention C99's equivalent binding is `bgfx_blit_to_buffer`.
 	///
 	void blit(
@@ -5174,8 +5151,6 @@ namespace bgfx
 	///   `BGFX_BUFFER_DRAW_INDIRECT` flags.
 	///
 	/// @attention Destination texture must be created with `BGFX_TEXTURE_BLIT_DST` flag.
-	///
-	/// @attention Availability depends on: `BGFX_CAPS_TEXTURE_BLIT`.
 	///
 	/// @attention C99's equivalent binding is `bgfx_blit_from_buffer`.
 	///

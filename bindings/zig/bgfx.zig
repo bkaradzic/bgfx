@@ -630,111 +630,71 @@ pub const SwapChainFlags_FullscreenShift: SwapChainFlags        = 0;
 pub const SwapChainFlags_FullscreenMask: SwapChainFlags         = 0x00000001;
 
 pub const CapsFlags = u64;
-/// Alpha to coverage is supported.
-pub const CapsFlags_AlphaToCoverage: CapsFlags        = 0x0000000000000001;
-
 /// Blend independent is supported.
-pub const CapsFlags_BlendIndependent: CapsFlags       = 0x0000000000000002;
+pub const CapsFlags_BlendIndependent: CapsFlags       = 0x0000000000000001;
 
 /// Compute shaders are supported.
-pub const CapsFlags_Compute: CapsFlags                = 0x0000000000000004;
+pub const CapsFlags_Compute: CapsFlags                = 0x0000000000000002;
 
 /// Conservative rasterization is supported.
-pub const CapsFlags_ConservativeRaster: CapsFlags     = 0x0000000000000008;
+pub const CapsFlags_ConservativeRaster: CapsFlags     = 0x0000000000000004;
 
 /// Draw indirect is supported.
-pub const CapsFlags_DrawIndirect: CapsFlags           = 0x0000000000000010;
+pub const CapsFlags_DrawIndirect: CapsFlags           = 0x0000000000000008;
 
 /// Draw indirect with indirect count is supported.
-pub const CapsFlags_DrawIndirectCount: CapsFlags      = 0x0000000000000020;
-
-/// Fragment depth is available in fragment shader.
-pub const CapsFlags_FragmentDepth: CapsFlags          = 0x0000000000000040;
+pub const CapsFlags_DrawIndirectCount: CapsFlags      = 0x0000000000000010;
 
 /// Fragment ordering is available in fragment shader.
-pub const CapsFlags_FragmentOrdering: CapsFlags       = 0x0000000000000080;
+pub const CapsFlags_FragmentOrdering: CapsFlags       = 0x0000000000000020;
 
 /// Graphics debugger is present.
-pub const CapsFlags_GraphicsDebugger: CapsFlags       = 0x0000000000000100;
+pub const CapsFlags_GraphicsDebugger: CapsFlags       = 0x0000000000000040;
 
 /// HDR10 rendering is supported.
-pub const CapsFlags_Hdr10: CapsFlags                  = 0x0000000000000200;
-
-/// HiDPI rendering is supported.
-pub const CapsFlags_Hidpi: CapsFlags                  = 0x0000000000000400;
+pub const CapsFlags_Hdr10: CapsFlags                  = 0x0000000000000080;
 
 /// Image Read/Write is supported.
-pub const CapsFlags_ImageRw: CapsFlags                = 0x0000000000000800;
+pub const CapsFlags_ImageRw: CapsFlags                = 0x0000000000000100;
 
 /// 32-bit indices are supported.
-pub const CapsFlags_Index32: CapsFlags                = 0x0000000000001000;
-
-/// Instancing is supported.
-pub const CapsFlags_Instancing: CapsFlags             = 0x0000000000002000;
-
-/// Occlusion query is supported.
-pub const CapsFlags_OcclusionQuery: CapsFlags         = 0x0000000000004000;
+pub const CapsFlags_Index32: CapsFlags                = 0x0000000000000200;
 
 /// PrimitiveID is available in fragment shader.
-pub const CapsFlags_PrimitiveId: CapsFlags            = 0x0000000000008000;
+pub const CapsFlags_PrimitiveId: CapsFlags            = 0x0000000000000400;
 
 /// Renderer is on separate thread.
-pub const CapsFlags_RendererMultithreaded: CapsFlags  = 0x0000000000010000;
+pub const CapsFlags_RendererMultithreaded: CapsFlags  = 0x0000000000000800;
 
 /// Multiple windows are supported.
-pub const CapsFlags_SwapChain: CapsFlags              = 0x0000000000020000;
-
-/// Texture blit is supported.
-pub const CapsFlags_TextureBlit: CapsFlags            = 0x0000000000040000;
-
-/// Texture compare less equal mode is supported.
-pub const CapsFlags_TextureCompareLequal: CapsFlags   = 0x0000000000080000;
-pub const CapsFlags_TextureCompareReserved: CapsFlags = 0x0000000000100000;
+pub const CapsFlags_SwapChain: CapsFlags              = 0x0000000000001000;
 
 /// Cubemap texture array is supported.
-pub const CapsFlags_TextureCubeArray: CapsFlags       = 0x0000000000200000;
+pub const CapsFlags_TextureCubeArray: CapsFlags       = 0x0000000000002000;
 
 /// CPU direct access to GPU texture memory.
-pub const CapsFlags_TextureDirectAccess: CapsFlags    = 0x0000000000400000;
+pub const CapsFlags_TextureDirectAccess: CapsFlags    = 0x0000000000004000;
 
 /// External texture is supported.
-pub const CapsFlags_TextureExternal: CapsFlags        = 0x0000000000800000;
+pub const CapsFlags_TextureExternal: CapsFlags        = 0x0000000000008000;
 
 /// External shared texture is supported.
-pub const CapsFlags_TextureExternalShared: CapsFlags  = 0x0000000001000000;
-
-/// Read-back texture is supported.
-pub const CapsFlags_TextureReadBack: CapsFlags        = 0x0000000002000000;
-
-/// 2D texture array is supported.
-pub const CapsFlags_Texture2DArray: CapsFlags         = 0x0000000004000000;
-
-/// 3D textures are supported.
-pub const CapsFlags_Texture3D: CapsFlags              = 0x0000000008000000;
+pub const CapsFlags_TextureExternalShared: CapsFlags  = 0x0000000000010000;
 
 /// Transparent back buffer supported.
-pub const CapsFlags_TransparentBackbuffer: CapsFlags  = 0x0000000010000000;
+pub const CapsFlags_TransparentBackbuffer: CapsFlags  = 0x0000000000020000;
 
 /// Variable Rate Shading
-pub const CapsFlags_VariableRateShading: CapsFlags    = 0x0000000020000000;
-
-/// Vertex attribute half-float is supported.
-pub const CapsFlags_VertexAttribHalf: CapsFlags       = 0x0000000040000000;
+pub const CapsFlags_VariableRateShading: CapsFlags    = 0x0000000000040000;
 
 /// Vertex attribute 10_10_10_2 is supported.
-pub const CapsFlags_VertexAttribUint10: CapsFlags     = 0x0000000080000000;
-
-/// Rendering with VertexID only is supported.
-pub const CapsFlags_VertexId: CapsFlags               = 0x0000000100000000;
+pub const CapsFlags_VertexAttribUint10: CapsFlags     = 0x0000000000080000;
 
 /// Hardware video decode is supported.
-pub const CapsFlags_VideoDecode: CapsFlags            = 0x0000000200000000;
+pub const CapsFlags_VideoDecode: CapsFlags            = 0x0000000000100000;
 
 /// Viewport layer is available in vertex shader.
-pub const CapsFlags_ViewportLayerArray: CapsFlags     = 0x0000000400000000;
-
-/// All texture compare modes are supported.
-pub const CapsFlags_TextureCompareAll: CapsFlags      = 0x0000000000180000;
+pub const CapsFlags_ViewportLayerArray: CapsFlags     = 0x0000000000200000;
 
 pub const CapsFormatFlags = u32;
 /// Texture format is not supported.
@@ -1072,7 +1032,7 @@ pub const AttribType = enum(c_int) {
     /// Uint16
     Uint16,
 
-    /// Half, availability depends on: `BGFX_CAPS_VERTEX_ATTRIB_HALF`.
+    /// Half.
     Half,
 
     /// Float
@@ -2117,7 +2077,6 @@ pub const Init = extern struct {
         /// Set number of vertices for auto generated vertices use in conjunction
         /// with gl_VertexID.
         /// 
-        /// @attention Availability depends on: `BGFX_CAPS_VERTEX_ID`.
         /// 
         /// <param name="_numVertices">Number of vertices.</param>
         pub inline fn setVertexCount(self: ?*Encoder, _numVertices: u32) void {
@@ -2147,7 +2106,6 @@ pub const Init = extern struct {
         /// Set number of instances for auto generated instances use in conjunction
         /// with gl_InstanceID.
         /// 
-        /// @attention Availability depends on: `BGFX_CAPS_VERTEX_ID`.
         /// 
         /// <param name="_numInstances">Number of instances.</param>
         pub inline fn setInstanceCount(self: ?*Encoder, _numInstances: u32) void {
@@ -2327,7 +2285,6 @@ pub const Init = extern struct {
         ///   draw commands are executed after blit and compute commands.
         /// 
         /// @attention Destination texture must be created with `BGFX_TEXTURE_BLIT_DST` flag.
-        /// @attention Availability depends on: `BGFX_CAPS_TEXTURE_BLIT`.
         /// 
         /// <param name="_id">View id.</param>
         /// <param name="_dst">Destination texture region.</param>
@@ -2371,7 +2328,6 @@ pub const Init = extern struct {
         /// 
         /// @attention Destination buffer must be created with `BGFX_BUFFER_COMPUTE_WRITE`, or
         ///   `BGFX_BUFFER_DRAW_INDIRECT` flag.
-        /// @attention Availability depends on: `BGFX_CAPS_TEXTURE_BLIT`.
         /// 
         /// <param name="_id">View id.</param>
         /// <param name="_dst">Destination buffer region.</param>
@@ -2393,7 +2349,6 @@ pub const Init = extern struct {
         /// @attention Source buffer must be created with one of `BGFX_BUFFER_COMPUTE_*`, or
         ///   `BGFX_BUFFER_DRAW_INDIRECT` flags.
         /// @attention Destination texture must be created with `BGFX_TEXTURE_BLIT_DST` flag.
-        /// @attention Availability depends on: `BGFX_CAPS_TEXTURE_BLIT`.
         /// 
         /// <param name="_id">View id.</param>
         /// <param name="_dst">Destination texture region.</param>
@@ -3128,7 +3083,7 @@ extern fn bgfx_create_texture(_mem: [*c]const Memory, _flags: u64, _skip: u8, _i
 /// <param name="_width">Width.</param>
 /// <param name="_height">Height.</param>
 /// <param name="_hasMips">Indicates that texture contains full mip-map chain.</param>
-/// <param name="_numLayers">Number of layers in texture array. Must be 1 if caps `BGFX_CAPS_TEXTURE_2D_ARRAY` flag is not set.</param>
+/// <param name="_numLayers">Number of layers in texture array.</param>
 /// <param name="_format">Texture format. See: `TextureFormat::Enum`.</param>
 /// <param name="_flags">Texture creation (see `BGFX_TEXTURE_*`.), and sampler (see `BGFX_SAMPLER_*`) flags. Default texture sampling mode is linear, and wrap mode is repeat. - `BGFX_SAMPLER_[U/V/W]_[MIRROR/CLAMP]` - Mirror or clamp to edge wrap   mode. - `BGFX_SAMPLER_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]` - Point or anisotropic   sampling.</param>
 /// <param name="_mem">Texture data. If `_mem` is non-NULL, created texture will be immutable. If `_mem` is NULL content of the texture is uninitialized. When `_numLayers` is more than 1, expected memory layout is texture and all mips together for each array element.</param>
@@ -3142,7 +3097,7 @@ extern fn bgfx_create_texture_2d(_width: u16, _height: u16, _hasMips: bool, _num
 /// if back buffer resolution changes.
 /// <param name="_ratio">Texture size in respect to back-buffer size. See: `BackbufferRatio::Enum`.</param>
 /// <param name="_hasMips">Indicates that texture contains full mip-map chain.</param>
-/// <param name="_numLayers">Number of layers in texture array. Must be 1 if caps `BGFX_CAPS_TEXTURE_2D_ARRAY` flag is not set.</param>
+/// <param name="_numLayers">Number of layers in texture array.</param>
 /// <param name="_format">Texture format. See: `TextureFormat::Enum`.</param>
 /// <param name="_flags">Texture creation (see `BGFX_TEXTURE_*`.), and sampler (see `BGFX_SAMPLER_*`) flags. Default texture sampling mode is linear, and wrap mode is repeat. - `BGFX_SAMPLER_[U/V/W]_[MIRROR/CLAMP]` - Mirror or clamp to edge wrap   mode. - `BGFX_SAMPLER_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]` - Point or anisotropic   sampling.</param>
 pub inline fn createTexture2DScaled(_ratio: BackbufferRatio, _hasMips: bool, _numLayers: u16, _format: TextureFormat, _flags: u64) TextureHandle {
@@ -3167,7 +3122,7 @@ extern fn bgfx_create_texture_3d(_width: u16, _height: u16, _depth: u16, _hasMip
 /// Create Cube texture.
 /// <param name="_size">Cube side size.</param>
 /// <param name="_hasMips">Indicates that texture contains full mip-map chain.</param>
-/// <param name="_numLayers">Number of layers in texture array. Must be 1 if caps `BGFX_CAPS_TEXTURE_2D_ARRAY` flag is not set.</param>
+/// <param name="_numLayers">Number of layers in texture array.</param>
 /// <param name="_format">Texture format. See: `TextureFormat::Enum`.</param>
 /// <param name="_flags">Texture creation (see `BGFX_TEXTURE_*`.), and sampler (see `BGFX_SAMPLER_*`) flags. Default texture sampling mode is linear, and wrap mode is repeat. - `BGFX_SAMPLER_[U/V/W]_[MIRROR/CLAMP]` - Mirror or clamp to edge wrap   mode. - `BGFX_SAMPLER_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]` - Point or anisotropic   sampling.</param>
 /// <param name="_mem">Texture data. If `_mem` is non-NULL, created texture will be immutable. If `_mem` is NULL content of the texture is uninitialized. When `_numLayers` is more than</param>
@@ -3257,7 +3212,6 @@ extern fn bgfx_clear_texture(_handle: TextureHandle, _mip: u8, _numMips: u8, _la
 /// @attention Texture must be created with `BGFX_TEXTURE_READ_BACK` flag.
 ///            It's a texture for CPU readback, and can't be a GPU resource
 ///            at the same time. See `examples/30-picking`.
-/// @attention Availability depends on: `BGFX_CAPS_TEXTURE_READ_BACK`.
 /// 
 /// <param name="_src">Source texture region.</param>
 /// <param name="_data">Destination buffer.</param>
@@ -3882,7 +3836,6 @@ extern fn bgfx_encoder_set_transient_vertex_buffer_with_layout(self: ?*Encoder, 
 /// Set number of vertices for auto generated vertices use in conjunction
 /// with gl_VertexID.
 /// 
-/// @attention Availability depends on: `BGFX_CAPS_VERTEX_ID`.
 /// 
 /// <param name="_numVertices">Number of vertices.</param>
 extern fn bgfx_encoder_set_vertex_count(self: ?*Encoder, _numVertices: u32) void;
@@ -3908,7 +3861,6 @@ extern fn bgfx_encoder_set_instance_data_from_dynamic_vertex_buffer(self: ?*Enco
 /// Set number of instances for auto generated instances use in conjunction
 /// with gl_InstanceID.
 /// 
-/// @attention Availability depends on: `BGFX_CAPS_VERTEX_ID`.
 /// 
 /// <param name="_numInstances">Number of instances.</param>
 extern fn bgfx_encoder_set_instance_count(self: ?*Encoder, _numInstances: u32) void;
@@ -4070,7 +4022,6 @@ extern fn bgfx_encoder_discard(self: ?*Encoder, _flags: u8) void;
 ///   draw commands are executed after blit and compute commands.
 /// 
 /// @attention Destination texture must be created with `BGFX_TEXTURE_BLIT_DST` flag.
-/// @attention Availability depends on: `BGFX_CAPS_TEXTURE_BLIT`.
 /// 
 /// <param name="_id">View id.</param>
 /// <param name="_dst">Destination texture region.</param>
@@ -4112,7 +4063,6 @@ extern fn bgfx_encoder_blit_buffer(self: ?*Encoder, _id: ViewId, _dst: [*c]const
 /// 
 /// @attention Destination buffer must be created with `BGFX_BUFFER_COMPUTE_WRITE`, or
 ///   `BGFX_BUFFER_DRAW_INDIRECT` flag.
-/// @attention Availability depends on: `BGFX_CAPS_TEXTURE_BLIT`.
 /// 
 /// <param name="_id">View id.</param>
 /// <param name="_dst">Destination buffer region.</param>
@@ -4133,7 +4083,6 @@ extern fn bgfx_encoder_blit_to_buffer(self: ?*Encoder, _id: ViewId, _dst: [*c]co
 /// @attention Source buffer must be created with one of `BGFX_BUFFER_COMPUTE_*`, or
 ///   `BGFX_BUFFER_DRAW_INDIRECT` flags.
 /// @attention Destination texture must be created with `BGFX_TEXTURE_BLIT_DST` flag.
-/// @attention Availability depends on: `BGFX_CAPS_TEXTURE_BLIT`.
 /// 
 /// <param name="_id">View id.</param>
 /// <param name="_dst">Destination texture region.</param>
@@ -4409,7 +4358,6 @@ extern fn bgfx_set_transient_vertex_buffer_with_layout(_stream: u8, _tvb: [*c]co
 /// Set number of vertices for auto generated vertices use in conjunction
 /// with gl_VertexID.
 /// 
-/// @attention Availability depends on: `BGFX_CAPS_VERTEX_ID`.
 /// 
 /// <param name="_numVertices">Number of vertices.</param>
 pub inline fn setVertexCount(_numVertices: u32) void {
@@ -4447,7 +4395,6 @@ extern fn bgfx_set_instance_data_from_dynamic_vertex_buffer(_handle: DynamicVert
 /// Set number of instances for auto generated instances use in conjunction
 /// with gl_InstanceID.
 /// 
-/// @attention Availability depends on: `BGFX_CAPS_VERTEX_ID`.
 /// 
 /// <param name="_numInstances">Number of instances.</param>
 pub inline fn setInstanceCount(_numInstances: u32) void {
@@ -4661,7 +4608,6 @@ extern fn bgfx_discard(_flags: u8) void;
 ///   draw commands are executed after blit and compute commands.
 /// 
 /// @attention Destination texture must be created with `BGFX_TEXTURE_BLIT_DST` flag.
-/// @attention Availability depends on: `BGFX_CAPS_TEXTURE_BLIT`.
 /// 
 /// <param name="_id">View id.</param>
 /// <param name="_dst">Destination texture region.</param>
@@ -4709,7 +4655,6 @@ extern fn bgfx_blit_buffer(_id: ViewId, _dst: [*c]const BufferRegion, _src: [*c]
 /// 
 /// @attention Destination buffer must be created with `BGFX_BUFFER_COMPUTE_WRITE`, or
 ///   `BGFX_BUFFER_DRAW_INDIRECT` flag.
-/// @attention Availability depends on: `BGFX_CAPS_TEXTURE_BLIT`.
 /// 
 /// <param name="_id">View id.</param>
 /// <param name="_dst">Destination buffer region.</param>
@@ -4733,7 +4678,6 @@ extern fn bgfx_blit_to_buffer(_id: ViewId, _dst: [*c]const BufferRegion, _src: [
 /// @attention Source buffer must be created with one of `BGFX_BUFFER_COMPUTE_*`, or
 ///   `BGFX_BUFFER_DRAW_INDIRECT` flags.
 /// @attention Destination texture must be created with `BGFX_TEXTURE_BLIT_DST` flag.
-/// @attention Availability depends on: `BGFX_CAPS_TEXTURE_BLIT`.
 /// 
 /// <param name="_id">View id.</param>
 /// <param name="_dst">Destination texture region.</param>

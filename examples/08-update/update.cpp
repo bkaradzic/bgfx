@@ -309,8 +309,8 @@ public:
 		static_assert(24 == BX_COUNTOF(m_textures));
 
 		const bgfx::Caps* caps = bgfx::getCaps();
-		m_texture3DSupported = !!(caps->supported & BGFX_CAPS_TEXTURE_3D);
-		m_blitSupported      = !!(caps->supported & BGFX_CAPS_TEXTURE_BLIT);
+		m_texture3DSupported = true;
+		m_blitSupported      = true;
 		m_computeSupported   = !!(caps->supported & BGFX_CAPS_COMPUTE);
 		m_numTextures3d      = 0;
 

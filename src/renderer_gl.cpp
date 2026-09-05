@@ -2231,7 +2231,6 @@ namespace bgfx { namespace gl
 			, m_textureSwizzleSupport(false)
 			, m_timerQuerySupport(false)
 			, m_occlusionQuerySupport(false)
-			, m_atocSupport(false)
 			, m_conservativeRasterSupport(false)
 			, m_flip(false)
 			, m_hash( (BX_PLATFORM_WINDOWS<<1) | BX_ARCH_64BIT)
@@ -2723,16 +2722,7 @@ namespace bgfx { namespace gl
 
 				g_caps.formats[TextureFormat::BGRA8] |= BGFX_CAPS_FORMAT_TEXTURE_BACKBUFFER;
 
-				g_caps.supported |= BGFX_CAPS_TEXTURE_3D;
-				g_caps.supported |= BGFX_CAPS_TEXTURE_COMPARE_ALL;
-				g_caps.supported |= BGFX_CAPS_VERTEX_ATTRIB_HALF;
-				g_caps.supported |= false
-					|| s_extension[Extension::ARB_vertex_type_2_10_10_10_rev].m_supported
-					|| s_extension[Extension::OES_vertex_type_10_10_10_2].m_supported
-					? BGFX_CAPS_VERTEX_ATTRIB_UINT10
-					: 0
-					;
-				g_caps.supported |= BGFX_CAPS_FRAGMENT_DEPTH;
+				g_caps.supported |= BGFX_CAPS_VERTEX_ATTRIB_UINT10;
 				g_caps.supported |= (false
 					|| s_extension[Extension::ARB_draw_buffers_blend  ].m_supported
 					|| s_extension[Extension::OES_draw_buffers_indexed].m_supported
@@ -2808,32 +2798,9 @@ namespace bgfx { namespace gl
 				m_blitFboSupported     = !m_blitSupported && BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES);
 				m_readBackFboSupported = !m_readBackSupported;
 
-				g_caps.supported |= m_blitSupported || m_blitFboSupported
-					? BGFX_CAPS_TEXTURE_BLIT
-					: 0
-					;
-
-				g_caps.supported |= m_readBackSupported || m_readBackFboSupported
-					? BGFX_CAPS_TEXTURE_READ_BACK
-					: 0
-					;
-
 				g_caps.supported |= BGFX_CAPS_TEXTURE_EXTERNAL;
 
-				g_caps.supported |= false
-					|| s_extension[Extension::EXT_texture_array].m_supported
-					|| s_extension[Extension::EXT_gpu_shader4].m_supported
-					|| (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES) && !BX_ENABLED(BX_PLATFORM_EMSCRIPTEN) )
-					? BGFX_CAPS_TEXTURE_2D_ARRAY
-					: 0
-					;
 
-				g_caps.supported |= false
-					|| s_extension[Extension::EXT_gpu_shader4].m_supported
-					|| (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES) && !BX_ENABLED(BX_PLATFORM_EMSCRIPTEN) )
-					? BGFX_CAPS_VERTEX_ID
-					: 0
-					;
 
 				g_caps.supported |= false
 					|| BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL)
@@ -2919,15 +2886,7 @@ namespace bgfx { namespace gl
 					&& NULL != glGetQueryObjectui64v
 					;
 
-				m_occlusionQuerySupport = false
-					|| BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES) // Core since ES 3.0.
-					|| s_extension[Extension::ARB_occlusion_query        ].m_supported
-					|| s_extension[Extension::ARB_occlusion_query2       ].m_supported
-					|| s_extension[Extension::EXT_occlusion_query_boolean].m_supported
-					|| s_extension[Extension::NV_occlusion_query         ].m_supported
-					;
-
-				m_occlusionQuerySupport &= true
+				m_occlusionQuerySupport = true
 					&& NULL != glGenQueries
 					&& NULL != glDeleteQueries
 					&& NULL != glBeginQuery
@@ -2935,7 +2894,6 @@ namespace bgfx { namespace gl
 					&& NULL != glGetQueryObjectuiv
 					;
 
-				m_atocSupport = s_extension[Extension::ARB_multisample].m_supported;
 				m_conservativeRasterSupport = s_extension[Extension::NV_conservative_raster].m_supported;
 
 				// Note: ES 3.1 has image load/store in core, but read-write
@@ -2946,10 +2904,7 @@ namespace bgfx { namespace gl
 					;
 
 				g_caps.supported |= 0
-					| (m_atocSupport               ? BGFX_CAPS_ALPHA_TO_COVERAGE      : 0)
 					| (m_conservativeRasterSupport ? BGFX_CAPS_CONSERVATIVE_RASTER    : 0)
-					| (m_occlusionQuerySupport     ? BGFX_CAPS_OCCLUSION_QUERY        : 0)
-					| BGFX_CAPS_TEXTURE_COMPARE_LEQUAL
 					| (computeSupport              ? BGFX_CAPS_COMPUTE                : 0)
 					| (m_imageLoadStoreSupport     ? BGFX_CAPS_IMAGE_RW               : 0)
 					;
@@ -2994,37 +2949,19 @@ namespace bgfx { namespace gl
 					m_readPixelsFmt = GL_RGBA;
 				}
 
-				if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES))
+				if (NULL == glVertexAttribDivisor
+				||  NULL == glDrawArraysInstanced
+				||  NULL == glDrawElementsInstanced)
 				{
-					g_caps.supported |= BGFX_CAPS_INSTANCING;
-				}
-				else
-				{
-					if (s_extension[Extension::ANGLE_instanced_arrays].m_supported
-					||  s_extension[Extension::  ARB_instanced_arrays].m_supported
-					||  s_extension[Extension::  EXT_instanced_arrays].m_supported
-					|| (s_extension[Extension::   NV_instanced_arrays].m_supported && s_extension[Extension::NV_draw_instanced].m_supported)
-					   )
+					if (NULL != glVertexAttribDivisorNV
+					&&  NULL != glDrawArraysInstancedNV
+					&&  NULL != glDrawElementsInstancedNV)
 					{
-						if (NULL != glVertexAttribDivisor
-						&&  NULL != glDrawArraysInstanced
-						&&  NULL != glDrawElementsInstanced)
-						{
-							g_caps.supported |= BGFX_CAPS_INSTANCING;
-						}
-						else if (NULL != glVertexAttribDivisorNV
-							 &&  NULL != glDrawArraysInstancedNV
-							 &&  NULL != glDrawElementsInstancedNV)
-						{
-							glVertexAttribDivisor   = glVertexAttribDivisorNV;
-							glDrawArraysInstanced   = glDrawArraysInstancedNV;
-							glDrawElementsInstanced = glDrawElementsInstancedNV;
-
-							g_caps.supported |= BGFX_CAPS_INSTANCING;
-						}
+						glVertexAttribDivisor   = glVertexAttribDivisorNV;
+						glDrawArraysInstanced   = glDrawArraysInstancedNV;
+						glDrawElementsInstanced = glDrawElementsInstancedNV;
 					}
-
-					if (0 == (g_caps.supported & BGFX_CAPS_INSTANCING) )
+					else
 					{
 						glVertexAttribDivisor   = stubVertexAttribDivisor;
 						glDrawArraysInstanced   = stubDrawArraysInstanced;
@@ -5178,7 +5115,6 @@ namespace bgfx { namespace gl
 		bool m_textureSwizzleSupport;
 		bool m_timerQuerySupport;
 		bool m_occlusionQuerySupport;
-		bool m_atocSupport;
 		bool m_conservativeRasterSupport;
 		bool m_imageLoadStoreSupport;
 		bool m_flip;
@@ -9092,17 +9028,10 @@ namespace bgfx { namespace gl
 						) & changedFlags)
 					||  blendFactor != draw.m_rgba)
 					{
-						if (m_atocSupport)
-						{
-							if (BGFX_STATE_BLEND_ALPHA_TO_COVERAGE & newFlags)
-							{
-								GL_CHECK(glEnable(GL_SAMPLE_ALPHA_TO_COVERAGE) );
-							}
-							else
-							{
-								GL_CHECK(glDisable(GL_SAMPLE_ALPHA_TO_COVERAGE) );
-							}
-						}
+						GL_CHECK(BGFX_STATE_BLEND_ALPHA_TO_COVERAGE & newFlags
+							? glEnable(GL_SAMPLE_ALPHA_TO_COVERAGE)
+							: glDisable(GL_SAMPLE_ALPHA_TO_COVERAGE)
+							);
 
 						if ( ( (0
 							| BGFX_STATE_BLEND_EQUATION_MASK

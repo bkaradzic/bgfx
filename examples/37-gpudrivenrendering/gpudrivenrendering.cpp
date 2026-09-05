@@ -1046,7 +1046,6 @@ public:
 
 			// Check if instancing, compute and draw indirect are supported.
 			const uint64_t requiredCaps = 0
-				| BGFX_CAPS_INSTANCING
 				| BGFX_CAPS_COMPUTE
 				| BGFX_CAPS_DRAW_INDIRECT
 				;

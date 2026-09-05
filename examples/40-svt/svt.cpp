@@ -204,7 +204,7 @@ public:
 
 			showExampleDialog(this);
 
-			if ((BGFX_CAPS_TEXTURE_BLIT | BGFX_CAPS_TEXTURE_READ_BACK) != (bgfx::getCaps()->supported & (BGFX_CAPS_TEXTURE_BLIT | BGFX_CAPS_TEXTURE_READ_BACK)))
+			if (false)
 			{
 				// When texture read-back or blit is not supported by GPU blink!
 				bool blink = uint32_t(time*3.0f) & 1;

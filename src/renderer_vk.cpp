@@ -1858,27 +1858,16 @@ VK_IMPORT_INSTANCE
 					;
 
 				g_caps.supported |= ( 0
-					| BGFX_CAPS_ALPHA_TO_COVERAGE
 					| (m_deviceFeatures.independentBlend ? BGFX_CAPS_BLEND_INDEPENDENT : 0)
 					| BGFX_CAPS_COMPUTE
 					| (indirectDrawSupport ? BGFX_CAPS_DRAW_INDIRECT : 0)
-					| BGFX_CAPS_FRAGMENT_DEPTH
 					| BGFX_CAPS_IMAGE_RW
 					| (m_deviceFeatures.fullDrawIndexUint32 ? BGFX_CAPS_INDEX32 : 0)
-					| BGFX_CAPS_INSTANCING
-					| BGFX_CAPS_OCCLUSION_QUERY
 					| ( (!headless || wsiSurfaceSupported() ) ? BGFX_CAPS_SWAP_CHAIN : 0)
-					| BGFX_CAPS_TEXTURE_2D_ARRAY
-					| BGFX_CAPS_TEXTURE_3D
-					| BGFX_CAPS_TEXTURE_BLIT
-					| BGFX_CAPS_TEXTURE_COMPARE_ALL
 					| (m_deviceFeatures.imageCubeArray ? BGFX_CAPS_TEXTURE_CUBE_ARRAY : 0)
 					| BGFX_CAPS_TEXTURE_EXTERNAL
-					| BGFX_CAPS_TEXTURE_READ_BACK
 					| BGFX_CAPS_TRANSPARENT_BACKBUFFER
-					| BGFX_CAPS_VERTEX_ATTRIB_HALF
 					| BGFX_CAPS_VERTEX_ATTRIB_UINT10
-					| BGFX_CAPS_VERTEX_ID
 					| (m_deviceFeatures.geometryShader ? BGFX_CAPS_PRIMITIVE_ID : 0)
 					);
 

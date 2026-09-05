@@ -1020,180 +1020,114 @@ public static partial class bgfx
 	public enum CapsFlags : ulong
 	{
 		/// <summary>
-		/// Alpha to coverage is supported.
-		/// </summary>
-		AlphaToCoverage        = 0x0000000000000001,
-	
-		/// <summary>
 		/// Blend independent is supported.
 		/// </summary>
-		BlendIndependent       = 0x0000000000000002,
+		BlendIndependent       = 0x0000000000000001,
 	
 		/// <summary>
 		/// Compute shaders are supported.
 		/// </summary>
-		Compute                = 0x0000000000000004,
+		Compute                = 0x0000000000000002,
 	
 		/// <summary>
 		/// Conservative rasterization is supported.
 		/// </summary>
-		ConservativeRaster     = 0x0000000000000008,
+		ConservativeRaster     = 0x0000000000000004,
 	
 		/// <summary>
 		/// Draw indirect is supported.
 		/// </summary>
-		DrawIndirect           = 0x0000000000000010,
+		DrawIndirect           = 0x0000000000000008,
 	
 		/// <summary>
 		/// Draw indirect with indirect count is supported.
 		/// </summary>
-		DrawIndirectCount      = 0x0000000000000020,
-	
-		/// <summary>
-		/// Fragment depth is available in fragment shader.
-		/// </summary>
-		FragmentDepth          = 0x0000000000000040,
+		DrawIndirectCount      = 0x0000000000000010,
 	
 		/// <summary>
 		/// Fragment ordering is available in fragment shader.
 		/// </summary>
-		FragmentOrdering       = 0x0000000000000080,
+		FragmentOrdering       = 0x0000000000000020,
 	
 		/// <summary>
 		/// Graphics debugger is present.
 		/// </summary>
-		GraphicsDebugger       = 0x0000000000000100,
+		GraphicsDebugger       = 0x0000000000000040,
 	
 		/// <summary>
 		/// HDR10 rendering is supported.
 		/// </summary>
-		Hdr10                  = 0x0000000000000200,
-	
-		/// <summary>
-		/// HiDPI rendering is supported.
-		/// </summary>
-		Hidpi                  = 0x0000000000000400,
+		Hdr10                  = 0x0000000000000080,
 	
 		/// <summary>
 		/// Image Read/Write is supported.
 		/// </summary>
-		ImageRw                = 0x0000000000000800,
+		ImageRw                = 0x0000000000000100,
 	
 		/// <summary>
 		/// 32-bit indices are supported.
 		/// </summary>
-		Index32                = 0x0000000000001000,
-	
-		/// <summary>
-		/// Instancing is supported.
-		/// </summary>
-		Instancing             = 0x0000000000002000,
-	
-		/// <summary>
-		/// Occlusion query is supported.
-		/// </summary>
-		OcclusionQuery         = 0x0000000000004000,
+		Index32                = 0x0000000000000200,
 	
 		/// <summary>
 		/// PrimitiveID is available in fragment shader.
 		/// </summary>
-		PrimitiveId            = 0x0000000000008000,
+		PrimitiveId            = 0x0000000000000400,
 	
 		/// <summary>
 		/// Renderer is on separate thread.
 		/// </summary>
-		RendererMultithreaded  = 0x0000000000010000,
+		RendererMultithreaded  = 0x0000000000000800,
 	
 		/// <summary>
 		/// Multiple windows are supported.
 		/// </summary>
-		SwapChain              = 0x0000000000020000,
-	
-		/// <summary>
-		/// Texture blit is supported.
-		/// </summary>
-		TextureBlit            = 0x0000000000040000,
-	
-		/// <summary>
-		/// Texture compare less equal mode is supported.
-		/// </summary>
-		TextureCompareLequal   = 0x0000000000080000,
-		TextureCompareReserved = 0x0000000000100000,
+		SwapChain              = 0x0000000000001000,
 	
 		/// <summary>
 		/// Cubemap texture array is supported.
 		/// </summary>
-		TextureCubeArray       = 0x0000000000200000,
+		TextureCubeArray       = 0x0000000000002000,
 	
 		/// <summary>
 		/// CPU direct access to GPU texture memory.
 		/// </summary>
-		TextureDirectAccess    = 0x0000000000400000,
+		TextureDirectAccess    = 0x0000000000004000,
 	
 		/// <summary>
 		/// External texture is supported.
 		/// </summary>
-		TextureExternal        = 0x0000000000800000,
+		TextureExternal        = 0x0000000000008000,
 	
 		/// <summary>
 		/// External shared texture is supported.
 		/// </summary>
-		TextureExternalShared  = 0x0000000001000000,
-	
-		/// <summary>
-		/// Read-back texture is supported.
-		/// </summary>
-		TextureReadBack        = 0x0000000002000000,
-	
-		/// <summary>
-		/// 2D texture array is supported.
-		/// </summary>
-		Texture2dArray         = 0x0000000004000000,
-	
-		/// <summary>
-		/// 3D textures are supported.
-		/// </summary>
-		Texture3d              = 0x0000000008000000,
+		TextureExternalShared  = 0x0000000000010000,
 	
 		/// <summary>
 		/// Transparent back buffer supported.
 		/// </summary>
-		TransparentBackbuffer  = 0x0000000010000000,
+		TransparentBackbuffer  = 0x0000000000020000,
 	
 		/// <summary>
 		/// Variable Rate Shading
 		/// </summary>
-		VariableRateShading    = 0x0000000020000000,
-	
-		/// <summary>
-		/// Vertex attribute half-float is supported.
-		/// </summary>
-		VertexAttribHalf       = 0x0000000040000000,
+		VariableRateShading    = 0x0000000000040000,
 	
 		/// <summary>
 		/// Vertex attribute 10_10_10_2 is supported.
 		/// </summary>
-		VertexAttribUint10     = 0x0000000080000000,
-	
-		/// <summary>
-		/// Rendering with VertexID only is supported.
-		/// </summary>
-		VertexId               = 0x0000000100000000,
+		VertexAttribUint10     = 0x0000000000080000,
 	
 		/// <summary>
 		/// Hardware video decode is supported.
 		/// </summary>
-		VideoDecode            = 0x0000000200000000,
+		VideoDecode            = 0x0000000000100000,
 	
 		/// <summary>
 		/// Viewport layer is available in vertex shader.
 		/// </summary>
-		ViewportLayerArray     = 0x0000000400000000,
-	
-		/// <summary>
-		/// All texture compare modes are supported.
-		/// </summary>
-		TextureCompareAll      = 0x0000000000180000,
+		ViewportLayerArray     = 0x0000000000200000,
 	}
 	
 	[Flags]
@@ -1758,7 +1692,7 @@ public static partial class bgfx
 		Uint16,
 	
 		/// <summary>
-		/// Half, availability depends on: `BGFX_CAPS_VERTEX_ATTRIB_HALF`.
+		/// Half.
 		/// </summary>
 		Half,
 	
@@ -3852,7 +3786,7 @@ public static partial class bgfx
 	/// <param name="_width">Width.</param>
 	/// <param name="_height">Height.</param>
 	/// <param name="_hasMips">Indicates that texture contains full mip-map chain.</param>
-	/// <param name="_numLayers">Number of layers in texture array. Must be 1 if caps `BGFX_CAPS_TEXTURE_2D_ARRAY` flag is not set.</param>
+	/// <param name="_numLayers">Number of layers in texture array.</param>
 	/// <param name="_format">Texture format. See: `TextureFormat::Enum`.</param>
 	/// <param name="_flags">Texture creation (see `BGFX_TEXTURE_*`.), and sampler (see `BGFX_SAMPLER_*`) flags. Default texture sampling mode is linear, and wrap mode is repeat. - `BGFX_SAMPLER_[U/V/W]_[MIRROR/CLAMP]` - Mirror or clamp to edge wrap   mode. - `BGFX_SAMPLER_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]` - Point or anisotropic   sampling.</param>
 	/// <param name="_mem">Texture data. If `_mem` is non-NULL, created texture will be immutable. If `_mem` is NULL content of the texture is uninitialized. When `_numLayers` is more than 1, expected memory layout is texture and all mips together for each array element.</param>
@@ -3868,7 +3802,7 @@ public static partial class bgfx
 	///
 	/// <param name="_ratio">Texture size in respect to back-buffer size. See: `BackbufferRatio::Enum`.</param>
 	/// <param name="_hasMips">Indicates that texture contains full mip-map chain.</param>
-	/// <param name="_numLayers">Number of layers in texture array. Must be 1 if caps `BGFX_CAPS_TEXTURE_2D_ARRAY` flag is not set.</param>
+	/// <param name="_numLayers">Number of layers in texture array.</param>
 	/// <param name="_format">Texture format. See: `TextureFormat::Enum`.</param>
 	/// <param name="_flags">Texture creation (see `BGFX_TEXTURE_*`.), and sampler (see `BGFX_SAMPLER_*`) flags. Default texture sampling mode is linear, and wrap mode is repeat. - `BGFX_SAMPLER_[U/V/W]_[MIRROR/CLAMP]` - Mirror or clamp to edge wrap   mode. - `BGFX_SAMPLER_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]` - Point or anisotropic   sampling.</param>
 	///
@@ -3897,7 +3831,7 @@ public static partial class bgfx
 	///
 	/// <param name="_size">Cube side size.</param>
 	/// <param name="_hasMips">Indicates that texture contains full mip-map chain.</param>
-	/// <param name="_numLayers">Number of layers in texture array. Must be 1 if caps `BGFX_CAPS_TEXTURE_2D_ARRAY` flag is not set.</param>
+	/// <param name="_numLayers">Number of layers in texture array.</param>
 	/// <param name="_format">Texture format. See: `TextureFormat::Enum`.</param>
 	/// <param name="_flags">Texture creation (see `BGFX_TEXTURE_*`.), and sampler (see `BGFX_SAMPLER_*`) flags. Default texture sampling mode is linear, and wrap mode is repeat. - `BGFX_SAMPLER_[U/V/W]_[MIRROR/CLAMP]` - Mirror or clamp to edge wrap   mode. - `BGFX_SAMPLER_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]` - Point or anisotropic   sampling.</param>
 	/// <param name="_mem">Texture data. If `_mem` is non-NULL, created texture will be immutable. If `_mem` is NULL content of the texture is uninitialized. When `_numLayers` is more than</param>
@@ -3995,7 +3929,6 @@ public static partial class bgfx
 	/// @attention Texture must be created with `BGFX_TEXTURE_READ_BACK` flag.
 	///            It's a texture for CPU readback, and can't be a GPU resource
 	///            at the same time. See `examples/30-picking`.
-	/// @attention Availability depends on: `BGFX_CAPS_TEXTURE_READ_BACK`.
 	/// 
 	/// </summary>
 	///
@@ -4792,7 +4725,6 @@ public static partial class bgfx
 	/// Set number of vertices for auto generated vertices use in conjunction
 	/// with gl_VertexID.
 	/// 
-	/// @attention Availability depends on: `BGFX_CAPS_VERTEX_ID`.
 	/// 
 	/// </summary>
 	///
@@ -4838,7 +4770,6 @@ public static partial class bgfx
 	/// Set number of instances for auto generated instances use in conjunction
 	/// with gl_InstanceID.
 	/// 
-	/// @attention Availability depends on: `BGFX_CAPS_VERTEX_ID`.
 	/// 
 	/// </summary>
 	///
@@ -5090,7 +5021,6 @@ public static partial class bgfx
 	///   draw commands are executed after blit and compute commands.
 	/// 
 	/// @attention Destination texture must be created with `BGFX_TEXTURE_BLIT_DST` flag.
-	/// @attention Availability depends on: `BGFX_CAPS_TEXTURE_BLIT`.
 	/// 
 	/// </summary>
 	///
@@ -5142,7 +5072,6 @@ public static partial class bgfx
 	/// 
 	/// @attention Destination buffer must be created with `BGFX_BUFFER_COMPUTE_WRITE`, or
 	///   `BGFX_BUFFER_DRAW_INDIRECT` flag.
-	/// @attention Availability depends on: `BGFX_CAPS_TEXTURE_BLIT`.
 	/// 
 	/// </summary>
 	///
@@ -5168,7 +5097,6 @@ public static partial class bgfx
 	/// @attention Source buffer must be created with one of `BGFX_BUFFER_COMPUTE_*`, or
 	///   `BGFX_BUFFER_DRAW_INDIRECT` flags.
 	/// @attention Destination texture must be created with `BGFX_TEXTURE_BLIT_DST` flag.
-	/// @attention Availability depends on: `BGFX_CAPS_TEXTURE_BLIT`.
 	/// 
 	/// </summary>
 	///
@@ -5492,7 +5420,6 @@ public static partial class bgfx
 	/// Set number of vertices for auto generated vertices use in conjunction
 	/// with gl_VertexID.
 	/// 
-	/// @attention Availability depends on: `BGFX_CAPS_VERTEX_ID`.
 	/// 
 	/// </summary>
 	///
@@ -5538,7 +5465,6 @@ public static partial class bgfx
 	/// Set number of instances for auto generated instances use in conjunction
 	/// with gl_InstanceID.
 	/// 
-	/// @attention Availability depends on: `BGFX_CAPS_VERTEX_ID`.
 	/// 
 	/// </summary>
 	///
@@ -5788,7 +5714,6 @@ public static partial class bgfx
 	///   draw commands are executed after blit and compute commands.
 	/// 
 	/// @attention Destination texture must be created with `BGFX_TEXTURE_BLIT_DST` flag.
-	/// @attention Availability depends on: `BGFX_CAPS_TEXTURE_BLIT`.
 	/// 
 	/// </summary>
 	///
@@ -5840,7 +5765,6 @@ public static partial class bgfx
 	/// 
 	/// @attention Destination buffer must be created with `BGFX_BUFFER_COMPUTE_WRITE`, or
 	///   `BGFX_BUFFER_DRAW_INDIRECT` flag.
-	/// @attention Availability depends on: `BGFX_CAPS_TEXTURE_BLIT`.
 	/// 
 	/// </summary>
 	///
@@ -5866,7 +5790,6 @@ public static partial class bgfx
 	/// @attention Source buffer must be created with one of `BGFX_BUFFER_COMPUTE_*`, or
 	///   `BGFX_BUFFER_DRAW_INDIRECT` flags.
 	/// @attention Destination texture must be created with `BGFX_TEXTURE_BLIT_DST` flag.
-	/// @attention Availability depends on: `BGFX_CAPS_TEXTURE_BLIT`.
 	/// 
 	/// </summary>
 	///

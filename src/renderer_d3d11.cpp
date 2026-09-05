@@ -980,12 +980,6 @@ namespace bgfx { namespace d3d11
 					D3D_FEATURE_LEVEL_12_0,
 					D3D_FEATURE_LEVEL_11_1,
 					D3D_FEATURE_LEVEL_11_0,
-					D3D_FEATURE_LEVEL_10_1,
-					D3D_FEATURE_LEVEL_10_0,
-#if BX_PLATFORM_WINRT
-					D3D_FEATURE_LEVEL_9_3,
-					D3D_FEATURE_LEVEL_9_2,
-#endif // BX_PLATFORM_WINRT
 				};
 
 				HRESULT hr = S_OK;
@@ -1259,144 +1253,52 @@ namespace bgfx { namespace d3d11
 
 			{
 				g_caps.supported |= (0
-					| BGFX_CAPS_TEXTURE_3D
-					| BGFX_CAPS_VERTEX_ATTRIB_HALF
 					| BGFX_CAPS_VERTEX_ATTRIB_UINT10
-					| BGFX_CAPS_VERTEX_ID
-					| BGFX_CAPS_FRAGMENT_DEPTH
 					| (getIntelExtensions(m_device)
 						? BGFX_CAPS_FRAGMENT_ORDERING
 						| BGFX_CAPS_TEXTURE_DIRECT_ACCESS
 						: 0)
 					| BGFX_CAPS_SWAP_CHAIN
 					| BGFX_CAPS_DRAW_INDIRECT
-					| BGFX_CAPS_TEXTURE_BLIT
-					| BGFX_CAPS_TEXTURE_READ_BACK
-					| ( (m_featureLevel >= D3D_FEATURE_LEVEL_9_2)
-						? BGFX_CAPS_OCCLUSION_QUERY
-						: 0)
-					| BGFX_CAPS_ALPHA_TO_COVERAGE
 					| ( (m_deviceInterfaceVersion >= 3)
 						? BGFX_CAPS_CONSERVATIVE_RASTER
 						: 0)
-					| BGFX_CAPS_TEXTURE_2D_ARRAY
 					| BGFX_CAPS_TEXTURE_CUBE_ARRAY
 					| ((m_featureLevel >= D3D_FEATURE_LEVEL_11_1)
 						? BGFX_CAPS_IMAGE_RW
 						: 0)
-					| ((m_featureLevel >= D3D_FEATURE_LEVEL_11_0)
-						? BGFX_CAPS_PRIMITIVE_ID
-						: 0)
+					| BGFX_CAPS_PRIMITIVE_ID
 					| BGFX_CAPS_TEXTURE_EXTERNAL
 					);
 
-				m_timerQuerySupport   = m_featureLevel >= D3D_FEATURE_LEVEL_10_0;
+				m_timerQuerySupport   = true;
 				m_directAccessSupport = 0 != (g_caps.supported & BGFX_CAPS_TEXTURE_DIRECT_ACCESS);
 
-				if (m_featureLevel <= D3D_FEATURE_LEVEL_9_2)
-				{
-					g_caps.limits.maxTextureSize   = D3D_FL9_1_REQ_TEXTURE2D_U_OR_V_DIMENSION;
-					g_caps.limits.maxFBAttachments = uint8_t(bx::min(
-						  D3D_FL9_1_SIMULTANEOUS_RENDER_TARGET_COUNT
-						, BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS
-						) );
-					g_caps.limits.maxVertexStreams = uint8_t(bx::min(
-						  16
-						, BGFX_CONFIG_MAX_VERTEX_STREAMS
-						) );
-				}
-				else if (m_featureLevel == D3D_FEATURE_LEVEL_9_3)
-				{
-					g_caps.limits.maxTextureSize   = D3D_FL9_3_REQ_TEXTURE2D_U_OR_V_DIMENSION;
-					g_caps.limits.maxFBAttachments = uint8_t(bx::min(
-						  D3D_FL9_3_SIMULTANEOUS_RENDER_TARGET_COUNT
-						, BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS
-						) );
-					g_caps.limits.maxVertexStreams = uint8_t(bx::min(
-						  16
-						, BGFX_CONFIG_MAX_VERTEX_STREAMS
-						) );
-				}
-				else
-				{
-					g_caps.limits.maxComputeBindings = bx::min(BGFX_MAX_COMPUTE_BINDINGS
-						, D3D_FEATURE_LEVEL_11_1 <= m_featureLevel
-						? D3D11_1_UAV_SLOT_COUNT
-						: D3D11_PS_CS_UAV_REGISTER_COUNT
-						);
+				g_caps.limits.maxComputeBindings = bx::min(BGFX_MAX_COMPUTE_BINDINGS
+					, D3D_FEATURE_LEVEL_11_1 <= m_featureLevel
+					? D3D11_1_UAV_SLOT_COUNT
+					: D3D11_PS_CS_UAV_REGISTER_COUNT
+					);
 
-					g_caps.supported |= BGFX_CAPS_TEXTURE_COMPARE_ALL;
-					g_caps.limits.maxTextureSize   = D3D11_REQ_TEXTURE2D_U_OR_V_DIMENSION;
-					g_caps.limits.maxTextureLayers = D3D11_REQ_TEXTURE2D_ARRAY_AXIS_DIMENSION;
-					g_caps.limits.maxFBAttachments = uint8_t(bx::min(
-						  D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT
-						, BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS
-						) );
-					g_caps.limits.maxVertexStreams = uint8_t(bx::min(
-						  D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT
-						, BGFX_CONFIG_MAX_VERTEX_STREAMS
-						) );
-					g_caps.limits.maxVertexAttributes = D3D11_IA_VERTEX_INPUT_STRUCTURE_ELEMENT_COUNT;
-				}
+				g_caps.limits.maxTextureSize   = D3D11_REQ_TEXTURE2D_U_OR_V_DIMENSION;
+				g_caps.limits.maxTextureLayers = D3D11_REQ_TEXTURE2D_ARRAY_AXIS_DIMENSION;
+				g_caps.limits.maxFBAttachments = uint8_t(bx::min(
+					  D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT
+					, BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS
+					) );
+				g_caps.limits.maxVertexStreams = uint8_t(bx::min(
+					  D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT
+					, BGFX_CONFIG_MAX_VERTEX_STREAMS
+					) );
+				g_caps.limits.maxVertexAttributes = D3D11_IA_VERTEX_INPUT_STRUCTURE_ELEMENT_COUNT;
 
 				g_caps.limits.maxInstanceData = bx::min(g_caps.limits.maxInstanceData, g_caps.limits.maxVertexAttributes);
 
-				// 32-bit indices only supported on 9_2+.
-				if (m_featureLevel >= D3D_FEATURE_LEVEL_9_2)
-				{
-					g_caps.supported |= BGFX_CAPS_INDEX32;
-				}
-
-				// Independent blend only supported on 10_1+.
-				if (m_featureLevel >= D3D_FEATURE_LEVEL_10_1)
-				{
-					g_caps.supported |= BGFX_CAPS_BLEND_INDEPENDENT;
-				}
-
-				// Compute support is optional on 10_0 and 10_1 targets.
-				if (m_featureLevel == D3D_FEATURE_LEVEL_10_0
-				||  m_featureLevel == D3D_FEATURE_LEVEL_10_1)
-				{
-					D3D11_FEATURE_DATA_D3D10_X_HARDWARE_OPTIONS data;
-					HRESULT hr = m_device->CheckFeatureSupport(D3D11_FEATURE_D3D10_X_HARDWARE_OPTIONS, &data, sizeof(data) );
-					if (SUCCEEDED(hr)
-					&&  data.ComputeShaders_Plus_RawAndStructuredBuffers_Via_Shader_4_x)
-					{
-						g_caps.supported |= BGFX_CAPS_COMPUTE;
-					}
-				}
-				else if (m_featureLevel >= D3D_FEATURE_LEVEL_11_0)
-				{
-					g_caps.supported |= BGFX_CAPS_COMPUTE;
-				}
-
-				// Instancing fully supported on 9_3+, optionally partially supported at lower levels.
-				if (m_featureLevel >= D3D_FEATURE_LEVEL_9_3)
-				{
-					g_caps.supported |= BGFX_CAPS_INSTANCING;
-				}
-				else
-				{
-					D3D11_FEATURE_DATA_D3D9_SIMPLE_INSTANCING_SUPPORT data;
-					HRESULT hr = m_device->CheckFeatureSupport(D3D11_FEATURE_D3D9_SIMPLE_INSTANCING_SUPPORT, &data, sizeof(data) );
-					if (SUCCEEDED(hr)
-					&&  data.SimpleInstancingSupported)
-					{
-						g_caps.supported |= BGFX_CAPS_INSTANCING;
-					}
-				}
-
-				// shadow compare is optional on 9_1 through 9_3 targets
-				if (m_featureLevel <= D3D_FEATURE_LEVEL_9_3)
-				{
-					D3D11_FEATURE_DATA_D3D9_SHADOW_SUPPORT data;
-					HRESULT hr = m_device->CheckFeatureSupport(D3D11_FEATURE_D3D9_SHADOW_SUPPORT, &data, sizeof(data) );
-					if (SUCCEEDED(hr)
-					&&  data.SupportsDepthAsTextureWithLessEqualComparisonFilter)
-					{
-						g_caps.supported |= BGFX_CAPS_TEXTURE_COMPARE_LEQUAL;
-					}
-				}
+				g_caps.supported |= 0
+					| BGFX_CAPS_BLEND_INDEPENDENT
+					| BGFX_CAPS_COMPUTE
+					| BGFX_CAPS_INDEX32
+					;
 
 				// support for SV_ViewportArrayIndex and SV_RenderTargetArrayIndex in the vertex shader is optional
 				{
@@ -2594,10 +2496,7 @@ namespace bgfx { namespace d3d11
 			uint32_t maxAnisotropy = 1;
 			if (!!(_reset & BGFX_RESET_MAXANISOTROPY) )
 			{
-				maxAnisotropy = (m_featureLevel == D3D_FEATURE_LEVEL_9_1)
-								? D3D_FL9_1_DEFAULT_MAX_ANISOTROPY
-								: D3D11_REQ_MAXANISOTROPY
-								;
+				maxAnisotropy = D3D11_REQ_MAXANISOTROPY;
 			}
 
 			if (m_maxAnisotropy != maxAnisotropy)
@@ -2606,10 +2505,7 @@ namespace bgfx { namespace d3d11
 				m_samplerStateCache.invalidate();
 			}
 
-			bool depthClamp = true
-				&& !!(_reset & BGFX_RESET_DEPTH_CLAMP)
-				&& m_featureLevel > D3D_FEATURE_LEVEL_9_3 // disabling depth clamp is only supported on 10_0+
-				;
+			bool depthClamp = !!(_reset & BGFX_RESET_DEPTH_CLAMP);
 
 			if (m_depthClamp != depthClamp)
 			{
@@ -3273,12 +3169,8 @@ namespace bgfx { namespace d3d11
 
 			ID3D11DeviceContext* deviceCtx = m_deviceCtx;
 
-			// vertex texture fetch not supported on 9_1 through 9_3
-			if (m_featureLevel > D3D_FEATURE_LEVEL_9_3)
-			{
-				deviceCtx->VSSetShaderResources(0, maxTextureSamplers, s_zero.m_srv);
-				deviceCtx->VSSetSamplers(0, maxTextureSamplers, s_zero.m_sampler);
-			}
+			deviceCtx->VSSetShaderResources(0, maxTextureSamplers, s_zero.m_srv);
+			deviceCtx->VSSetSamplers(0, maxTextureSamplers, s_zero.m_sampler);
 
 			if (m_featureLevel > D3D_FEATURE_LEVEL_11_0)
 			{
@@ -3308,12 +3200,8 @@ namespace bgfx { namespace d3d11
 
 			ID3D11DeviceContext* deviceCtx = m_deviceCtx;
 
-			// vertex texture fetch not supported on 9_1 through 9_3
-			if (m_featureLevel > D3D_FEATURE_LEVEL_9_3)
-			{
-				deviceCtx->VSSetShaderResources(0, maxTextureSamplers, m_textureStage.m_srv);
-				deviceCtx->VSSetSamplers(0, maxTextureSamplers, m_textureStage.m_sampler);
-			}
+			deviceCtx->VSSetShaderResources(0, maxTextureSamplers, m_textureStage.m_srv);
+			deviceCtx->VSSetSamplers(0, maxTextureSamplers, m_textureStage.m_sampler);
 
 			if (m_featureLevel > D3D_FEATURE_LEVEL_11_0)
 			{
