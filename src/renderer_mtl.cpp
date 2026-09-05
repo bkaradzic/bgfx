@@ -910,7 +910,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 			m_fbh = BGFX_INVALID_HANDLE;
 			bx::memSet(m_uniforms, 0, sizeof(m_uniforms) );
-			m_resolution = _init.resolution;
+			m_mainSwapChain = _init.swapChain;
 
 			m_device = (MTL::Device*)g_platformData.context;
 
@@ -1172,24 +1172,18 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			m_vertexDescriptor           = newVertexDescriptor();
 			m_samplerDescriptor          = newSamplerDescriptor();
 
-			if (NULL == g_platformData.nwh)
+			if (NULL == _init.swapChain.nwh)
 			{
 				BX_TRACE("Headless.");
 			}
 			else
 			{
-				m_mainFrameBuffer.create(
-					  0
-					, g_platformData.nwh
-					, m_resolution.width
-					, m_resolution.height
-					, m_resolution.formatColor
-					, m_resolution.formatDepthStencil
-					);
-				m_textVideoMem.resize(false, m_resolution.width, m_resolution.height);
+				m_mainFrameBuffer.create(0, m_mainSwapChain);
+				m_textVideoMem.resize(false, m_mainSwapChain.width, m_mainSwapChain.height);
 				m_textVideoMem.clear();
 
 				m_numWindows = 1;
+				m_windows[0] = BGFX_INVALID_HANDLE;
 
 				if (NULL == m_mainFrameBuffer.m_swapChain->m_metalLayer)
 				{
@@ -1198,7 +1192,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 				}
 			}
 
-			m_cmd.init(m_device, _init.resolution.maxFrameLatency);
+			m_cmd.init(m_device, _init.swapChain.maxFrameLatency);
 			BGFX_FATAL(NULL != m_cmd.m_commandQueue, Fatal::UnableToInitialize, "Unable to create Metal device.");
 
 			m_uniformScratchBuffer.createUniform(2<<20, BGFX_CONFIG_MAX_FRAME_LATENCY);
@@ -1737,11 +1731,6 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			release(mem);
 		}
 
-		void overrideInternal(TextureHandle _handle, uintptr_t _ptr, uint16_t /*_layerIndex*/) override
-		{
-			m_textures[_handle.idx].overrideInternal(_ptr);
-		}
-
 		uintptr_t getInternal(TextureHandle _handle) override
 		{
 			return uintptr_t(m_textures[_handle.idx].m_ptr);
@@ -1757,13 +1746,13 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			m_frameBuffers[_handle.idx].create(_num, _attachment);
 		}
 
-		void createFrameBuffer(FrameBufferHandle _handle, void* _nwh, uint32_t _width, uint32_t _height, TextureFormat::Enum _format, TextureFormat::Enum _depthFormat) override
+		void createFrameBuffer(FrameBufferHandle _handle, const SwapChain& _desc) override
 		{
 			for (uint32_t ii = 0, num = m_numWindows; ii < num; ++ii)
 			{
 				FrameBufferHandle handle = m_windows[ii];
 				if (isValid(handle)
-				&&  m_frameBuffers[handle.idx].m_nwh == _nwh)
+				&&  m_frameBuffers[handle.idx].m_nwh == _desc.nwh)
 				{
 					destroyFrameBuffer(handle);
 				}
@@ -1773,7 +1762,16 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			m_windows[denseIdx] = _handle;
 
 			FrameBufferMtl& fb = m_frameBuffers[_handle.idx];
-			fb.create(denseIdx, _nwh, _width, _height, _format, _depthFormat);
+			fb.create(denseIdx, _desc);
+		}
+
+		void resizeFrameBuffer(FrameBufferHandle _handle, const SwapChain& _desc) override
+		{
+			FrameBufferMtl& fb = m_frameBuffers[_handle.idx];
+
+			fb.m_width  = _desc.width;
+			fb.m_height = _desc.height;
+			fb.resizeSwapChain(_desc);
 		}
 
 		void destroyFrameBuffer(FrameBufferHandle _handle) override
@@ -1824,12 +1822,25 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			m_uniformReg.remove(_handle);
 		}
 
+		FrameBufferMtl& getFrameBuffer(FrameBufferHandle _fbh)
+		{
+			return isValid(_fbh)
+				? m_frameBuffers[_fbh.idx]
+				: m_mainFrameBuffer
+				;
+		}
+
+		const FrameBufferMtl& getFrameBuffer(FrameBufferHandle _fbh) const
+		{
+			return isValid(_fbh)
+				? m_frameBuffers[_fbh.idx]
+				: m_mainFrameBuffer
+				;
+		}
+
 		void requestScreenShot(FrameBufferHandle _handle, const char* _filePath) override
 		{
-			SwapChainMtl* swapChain = isValid(_handle)
-				? m_frameBuffers[_handle.idx].m_swapChain
-				: m_mainFrameBuffer.m_swapChain
-				;
+			SwapChainMtl* swapChain = getFrameBuffer(_handle).m_swapChain;
 
 			if (NULL == swapChain
 			||  NULL == swapChain->m_screenshotTarget)
@@ -1936,8 +1947,9 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 		void submit(Frame* _render, const ClearQuad& _clearQuad, const MipGen& _mipGen, TextVideoMemBlitter& _textVideoMemBlitter) override;
 
-		void dbgTextRenderBegin(TextVideoMemBlitter& /*_blitter*/) override
+		void dbgTextRenderBegin(TextVideoMemBlitter& /*_blitter*/, FrameBufferHandle _handle) override
 		{
+			m_dbgTextFbh = _handle;
 		}
 
 		void dbgTextRender(TextVideoMemBlitter& _blitter, uint32_t _numIndices) override
@@ -1960,10 +1972,11 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 				endEncoding();
 
-				const uint32_t width  = m_resolution.width;
-				const uint32_t height = m_resolution.height;
+				const FrameBufferHandle fbh = m_dbgTextFbh;
+				const FrameBufferMtl& frameBuffer = getFrameBuffer(fbh);
 
-				FrameBufferHandle fbh = BGFX_INVALID_HANDLE;
+				const uint32_t width  = frameBuffer.m_width;
+				const uint32_t height = frameBuffer.m_height;
 
 				MTL::RenderPassDescriptor* renderPassDescriptor = newRenderPassDescriptor();
 
@@ -2067,7 +2080,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			bool needPresent = false;
 			for (uint32_t ii = 0, num = m_numWindows; ii < num; ++ii)
 			{
-				FrameBufferMtl& frameBuffer = ii == 0 ? m_mainFrameBuffer : m_frameBuffers[m_windows[ii].idx];
+				FrameBufferMtl& frameBuffer = getFrameBuffer(m_windows[ii]);
 				if (NULL != frameBuffer.m_swapChain
 				&&  frameBuffer.m_swapChain->m_drawableTexture)
 				{
@@ -2085,7 +2098,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 			for (uint32_t ii = 0, num = m_numWindows; ii < num; ++ii)
 			{
-				FrameBufferMtl& frameBuffer = ii == 0 ? m_mainFrameBuffer : m_frameBuffers[m_windows[ii].idx];
+				FrameBufferMtl& frameBuffer = getFrameBuffer(m_windows[ii]);
 
 				if (NULL != frameBuffer.m_swapChain
 				&&  frameBuffer.m_swapChain->m_drawableTexture)
@@ -2103,20 +2116,20 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			m_cmd.kick(false, false);
 		}
 
-		void updateResolution(const Resolution& _resolution)
+		void updateResolution(const SwapChain& _swapChain, uint32_t _reset)
 		{
 			SwapChainMtl* swapChain = m_mainFrameBuffer.m_swapChain;
 
 			if (NULL != swapChain)
 			{
-				swapChain->m_maxAnisotropy = !!(_resolution.reset & BGFX_RESET_MAXANISOTROPY)
+				swapChain->m_maxAnisotropy = !!(_reset & BGFX_RESET_MAXANISOTROPY)
 					? 16
 					: 1
 					;
 			}
 
 			m_depthClamp = m_supportsDepthClipMode
-				&& !!(_resolution.reset & BGFX_RESET_DEPTH_CLAMP);
+				&& !!(_reset & BGFX_RESET_DEPTH_CLAMP);
 
 			uint32_t maskFlags = ~(0
 				| BGFX_RESET_MAXANISOTROPY
@@ -2127,21 +2140,18 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 #if BX_PLATFORM_OSX
 #	if __MAC_OS_X_VERSION_MAX_ALLOWED >= 101300
 			if (m_hasVSync
-			&& !!((_resolution.reset ^ m_resolution.reset) & BGFX_RESET_VSYNC) )
+			&& !!((_reset ^ m_reset) & BGFX_RESET_VSYNC) )
 			{
-				m_resolution.reset = 0
-					| (m_resolution.reset & ~BGFX_RESET_VSYNC)
-					| ( _resolution.reset &  BGFX_RESET_VSYNC)
+				m_reset = 0
+					| (m_reset & ~BGFX_RESET_VSYNC)
+					| ( _reset &  BGFX_RESET_VSYNC)
 					;
 
-				const bool displaySync = !!(m_resolution.reset & BGFX_RESET_VSYNC);
+				const bool displaySync = !!(m_reset & BGFX_RESET_VSYNC);
 
 				for (uint32_t ii = 0, num = m_numWindows; ii < num; ++ii)
 				{
-					FrameBufferMtl& fb = 0 == ii
-						? m_mainFrameBuffer
-						: m_frameBuffers[m_windows[ii].idx]
-						;
+					FrameBufferMtl& fb = getFrameBuffer(m_windows[ii]);
 
 					if (NULL != fb.m_swapChain
 					&&  NULL != fb.m_swapChain->m_metalLayer)
@@ -2155,26 +2165,28 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 #	endif // __MAC_OS_X_VERSION_MAX_ALLOWED >= 101300
 #endif // BX_PLATFORM_OSX
 
-			if (m_resolution.width            !=  _resolution.width
-			||  m_resolution.height           !=  _resolution.height
-			|| (m_resolution.reset&maskFlags) != (_resolution.reset&maskFlags) )
+			if (m_mainSwapChain.width            !=  _swapChain.width
+			||  m_mainSwapChain.height           !=  _swapChain.height
+			||  m_mainSwapChain.nwh              !=  _swapChain.nwh
+			||  m_mainSwapChain.ndt              !=  _swapChain.ndt
+			|| (m_reset&maskFlags) != (_reset&maskFlags) )
 			{
-				m_resolution = _resolution;
+				m_mainSwapChain = _swapChain;
 
 				const MTL::PixelFormat prevPixelFormat = getSwapChainPixelFormat(swapChain);
 
 				if (NULL != swapChain)
 				{
-					if (m_resolution.reset & BGFX_RESET_INTERNAL_FORCE
-					&&  swapChain->m_nwh != g_platformData.nwh)
+					if (m_reset & BGFX_RESET_INTERNAL_FORCE
+					&&  swapChain->m_nwh != m_mainSwapChain.nwh)
 					{
-						swapChain->init(g_platformData.nwh);
+						swapChain->init(m_mainSwapChain.nwh);
 					}
 
-					m_mainFrameBuffer.resizeSwapChain(_resolution.width, _resolution.height);
+					m_mainFrameBuffer.resizeSwapChain(_swapChain);
 				}
 
-				m_resolution.reset &= ~BGFX_RESET_INTERNAL_FORCE;
+				m_reset &= ~BGFX_RESET_INTERNAL_FORCE;
 
 				for (uint32_t ii = 0; ii < BX_COUNTOF(m_frameBuffers); ++ii)
 				{
@@ -2183,7 +2195,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 				updateCapture();
 
-				m_textVideoMem.resize(false, _resolution.width, _resolution.height);
+				m_textVideoMem.resize(false, _swapChain.width, _swapChain.height);
 				m_textVideoMem.clear();
 
 				const MTL::PixelFormat pixelFormat = getSwapChainPixelFormat(swapChain);
@@ -2212,11 +2224,11 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 		void updateCapture()
 		{
-			if (m_resolution.reset&BGFX_RESET_CAPTURE)
+			if (m_reset&BGFX_RESET_CAPTURE)
 			{
-				m_captureSize = m_resolution.width*m_resolution.height*4;
+				m_captureSize = m_mainSwapChain.width*m_mainSwapChain.height*4;
 				m_capture = bx::realloc(g_allocator, m_capture, m_captureSize);
-				g_callback->captureBegin(m_resolution.width, m_resolution.height, m_resolution.width*4, TextureFormat::BGRA8, false);
+				g_callback->captureBegin(m_mainSwapChain.width, m_mainSwapChain.height, m_mainSwapChain.width*4, TextureFormat::BGRA8, false);
 			}
 			else
 			{
@@ -2241,10 +2253,10 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 				m_cmd.kick(false, true);
 				m_commandBuffer = 0;
 
-				MTL::Region region(0, 0, 0, m_resolution.width, m_resolution.height, 1);
+				MTL::Region region(0, 0, 0, m_mainSwapChain.width, m_mainSwapChain.height, 1);
 
-				const uint8_t  bpp   = bimg::getBitsPerPixel(bimg::TextureFormat::Enum(m_resolution.formatColor) );
-				const uint32_t pitch = m_resolution.width * bpp / 8;
+				const uint8_t  bpp   = bimg::getBitsPerPixel(bimg::TextureFormat::Enum(m_mainSwapChain.formatColor) );
+				const uint32_t pitch = m_mainSwapChain.width * bpp / 8;
 
 				swapChain->m_screenshotTarget->getBytes(m_capture, pitch, 0, region, 0, 0);
 
@@ -2562,10 +2574,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			if (!isValid(_fbh)
 			||  m_frameBuffers[_fbh.idx].m_swapChain)
 			{
-				SwapChainMtl* swapChain = !isValid(_fbh)
-					? m_mainFrameBuffer.m_swapChain
-					: m_frameBuffers[_fbh.idx].m_swapChain
-					;
+				SwapChainMtl* swapChain = getFrameBuffer(_fbh).m_swapChain;
 
 				if (NULL != swapChain)
 				{
@@ -2592,8 +2601,8 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 				}
 				else
 				{
-					_renderPassDescriptor->setRenderTargetWidth( bx::max<uint32_t>(1, m_resolution.width) );
-					_renderPassDescriptor->setRenderTargetHeight(bx::max<uint32_t>(1, m_resolution.height) );
+					_renderPassDescriptor->setRenderTargetWidth( bx::max<uint32_t>(1, m_mainSwapChain.width) );
+					_renderPassDescriptor->setRenderTargetHeight(bx::max<uint32_t>(1, m_mainSwapChain.height) );
 					_renderPassDescriptor->setDefaultRasterSampleCount(1);
 				}
 			}
@@ -3093,10 +3102,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 				if (!isValid(_fbh)
 				||  s_renderMtl->m_frameBuffers[_fbh.idx].m_swapChain)
 				{
-					SwapChainMtl* swapChain = !isValid(_fbh)
-						? s_renderMtl->m_mainFrameBuffer.m_swapChain
-						: s_renderMtl->m_frameBuffers[_fbh.idx].m_swapChain
-						;
+					SwapChainMtl* swapChain = s_renderMtl->getFrameBuffer(_fbh).m_swapChain;
 
 					if (NULL != swapChain)
 					{
@@ -3720,7 +3726,8 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 		FrameBufferHandle m_fbh;
 		bool m_rtMsaa;
 
-		Resolution m_resolution;
+		SwapChain m_mainSwapChain;
+		uint32_t  m_reset;
 		void* m_capture;
 		uint32_t m_captureSize;
 
@@ -3748,6 +3755,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 		MTL::RenderCommandEncoder*  m_renderCommandEncoder;
 		MTL::ComputeCommandEncoder* m_computeCommandEncoder;
 		FrameBufferHandle           m_renderCommandEncoderFbh;
+		FrameBufferHandle           m_dbgTextFbh;
 	};
 
 	PipelineStateMtl* videoGetComputePipelineState(RendererContextMtl* _renderer, ProgramHandle _handle)
@@ -4449,13 +4457,6 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 		m_ptrViews.clear();
 	}
 
-	void TextureMtl::overrideInternal(uintptr_t _ptr)
-	{
-		destroy();
-		m_flags |= BGFX_SAMPLER_INTERNAL_SHARED;
-		m_ptr = (MTL::Texture*)(void*)_ptr;
-	}
-
 	void TextureMtl::update(uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem)
 	{
 		if (0 != (m_flags & BGFX_TEXTURE_INTERNAL_VIDEO_DECODE_DST) )
@@ -4917,12 +4918,6 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			m_metalLayer->setDevice(s_renderMtl->m_device);
 			MtlObjAccess::send<void>(m_metalLayer, sel_registerName("setMagnificationFilter:"), nsstr("nearest") );
 
-			const Resolution& resolution = s_renderMtl->m_resolution;
-			m_metalLayer->setPixelFormat( (MTL::PixelFormat)( (resolution.reset & BGFX_RESET_SRGB_BACKBUFFER)
-				? s_textureFormat[resolution.formatColor].fmtSrgb
-				: s_textureFormat[resolution.formatColor].fmt) )
-				;
-
 			retain(m_metalLayer);
 		}
 
@@ -4931,37 +4926,38 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 	void SwapChainMtl::releaseBackBuffer()
 	{
-		MTL_RELEASE(m_backBufferStencil, m_backBufferDepth == m_backBufferStencil ? 1 : 0);
-		MTL_RELEASE_W(m_backBufferDepth, 0);
+		if (m_borrowedDepth)
+		{
+			m_backBufferDepth   = NULL;
+			m_backBufferStencil = NULL;
+			m_borrowedDepth     = false;
+		}
+		else
+		{
+			MTL_RELEASE(m_backBufferStencil, m_backBufferDepth == m_backBufferStencil ? 1 : 0);
+			MTL_RELEASE_W(m_backBufferDepth, 0);
+		}
+
 		MTL_RELEASE_W(m_backBufferColorMsaa, 0);
 	}
 
-	uint32_t SwapChainMtl::resize(uint32_t _width, uint32_t _height, TextureFormat::Enum _format, TextureFormat::Enum _depthFormat)
+	uint32_t SwapChainMtl::resize(const SwapChain& _desc)
 	{
 		releaseBackBuffer();
 
-		const Resolution& resolution   = s_renderMtl->m_resolution;
-
-		const uint32_t resetFlags      = resolution.reset;
-		const uint32_t maxFrameLatency = resolution.maxFrameLatency;
-		const TextureFormat::Enum formatColor = TextureFormat::Count == _format
-			? resolution.formatColor
-			: _format
-			;
-		const TextureFormat::Enum formatDepthStencil = TextureFormat::Count == _depthFormat
-			? resolution.formatDepthStencil
-			: _depthFormat
-			;
+		const uint32_t maxFrameLatency = _desc.maxFrameLatency;
+		const TextureFormat::Enum formatColor        = _desc.formatColor;
+		const TextureFormat::Enum formatDepthStencil = _desc.formatDepthStencil;
 
 		m_colorFormat = formatColor;
 
-		const int32_t sampleCount = s_msaa[(resetFlags & BGFX_RESET_MSAA_MASK)>>BGFX_RESET_MSAA_SHIFT];
+		const int32_t sampleCount = s_msaa[(_desc.flags & BGFX_SWAP_CHAIN_MSAA_MASK)>>BGFX_SWAP_CHAIN_MSAA_SHIFT];
 
 #if BX_PLATFORM_OSX
 #	if __MAC_OS_X_VERSION_MAX_ALLOWED >= 101300
 		if (s_renderMtl->m_hasVSync)
 		{
-			m_metalLayer->setDisplaySyncEnabled(!!(resetFlags & BGFX_RESET_VSYNC) );
+			m_metalLayer->setDisplaySyncEnabled(!!(s_renderMtl->m_reset & BGFX_RESET_VSYNC) );
 		}
 
 		if (s_renderMtl->m_hasMaximumDrawableCount)
@@ -4976,16 +4972,16 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 #endif // BX_PLATFORM_OSX
 
 		{
-			m_metalLayer->setDrawableSize(CGSizeMake(_width, _height) );
-			m_metalLayer->setPixelFormat( (MTL::PixelFormat)( (resetFlags & BGFX_RESET_SRGB_BACKBUFFER)
+			m_metalLayer->setDrawableSize(CGSizeMake(_desc.width, _desc.height) );
+			m_metalLayer->setPixelFormat( (MTL::PixelFormat)( (_desc.flags & BGFX_SWAP_CHAIN_SRGB_BACKBUFFER)
 				? s_textureFormat[formatColor].fmtSrgb
 				: s_textureFormat[formatColor].fmt) )
 				;
 
 			const CGSize actualSize = m_metalLayer->drawableSize();
 			BX_WARN(true
-				&& uint32_t(actualSize.width)  == _width
-				&& uint32_t(actualSize.height) == _height
+				&& uint32_t(actualSize.width)  == _desc.width
+				&& uint32_t(actualSize.height) == _desc.height
 				, "CAMetalLayer drawableSize is %ux%u after requesting %ux%u. "
 				  "The host layer (MTKView? with autoReizeDrawable=YES) "
 				  "is overriding the size requested via bgfx::init/reset. "
@@ -4993,8 +4989,8 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 				  "drawable size to bgfx."
 				, uint32_t(actualSize.width)
 				, uint32_t(actualSize.height)
-				, _width
-				, _height
+				, _desc.width
+				, _desc.height
 				);
 			BX_UNUSED(actualSize);
 		}
@@ -5006,8 +5002,8 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			: MTL::TextureType2D)
 			;
 
-		desc->setWidth(_width);
-		desc->setHeight(_height);
+		desc->setWidth(_desc.width);
+		desc->setHeight(_desc.height);
 		desc->setDepth(1);
 		desc->setMipmapLevelCount(1);
 		desc->setSampleCount(sampleCount);
@@ -5022,7 +5018,18 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			desc->setUsage(MTL::TextureUsageRenderTarget);
 		}
 
-		if (bimg::isDepth(bimg::TextureFormat::Enum(formatDepthStencil) ) )
+		if (isValid(_desc.depth) )
+		{
+			const TextureMtl& depth = s_renderMtl->m_textures[_desc.depth.idx];
+
+			m_backBufferDepth   = depth.m_ptr;
+			m_backBufferStencil = NULL != depth.m_ptrStencil
+				? depth.m_ptrStencil
+				: depth.m_ptr
+				;
+			m_borrowedDepth = true;
+		}
+		else if (bimg::isDepth(bimg::TextureFormat::Enum(formatDepthStencil) ) )
 		{
 			const MTL::PixelFormat depthFormat = s_textureFormat[formatDepthStencil].fmt;
 
@@ -5188,18 +5195,17 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 		m_pixelFormatHash = murmur.end();
 	}
 
-	void FrameBufferMtl::create(uint16_t _denseIdx, void* _nwh, uint32_t _width, uint32_t _height, TextureFormat::Enum _format, TextureFormat::Enum _depthFormat)
+	void FrameBufferMtl::create(uint16_t _denseIdx, const SwapChain& _desc)
 	{
-		BX_UNUSED(_format, _depthFormat);
 		m_swapChain = BX_NEW(g_allocator, SwapChainMtl);
 		m_num       = 0;
-		m_width     = _width;
-		m_height    = _height;
-		m_nwh       = _nwh;
+		m_width     = _desc.width;
+		m_height    = _desc.height;
+		m_nwh       = _desc.nwh;
 		m_denseIdx  = _denseIdx;
 
-		m_swapChain->init(_nwh);
-		resizeSwapChain(_width, _height, _format, _depthFormat);
+		m_swapChain->init(_desc.nwh);
+		resizeSwapChain(_desc);
 	}
 
 	void FrameBufferMtl::postReset()
@@ -5280,9 +5286,9 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 		s_renderMtl->endEncoding();
 	}
 
-	void FrameBufferMtl::resizeSwapChain(uint32_t _width, uint32_t _height, TextureFormat::Enum _format, TextureFormat::Enum _depthFormat)
+	void FrameBufferMtl::resizeSwapChain(const SwapChain& _desc)
 	{
-		m_pixelFormatHash = m_swapChain->resize(_width, _height, _format, _depthFormat);
+		m_pixelFormatHash = m_swapChain->resize(_desc);
 	}
 
 	void CommandQueueMtl::init(MTL::Device* _device, uint32_t _maxFrameLatency)
@@ -5929,14 +5935,11 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			m_blitCommandEncoder = NULL;
 		}
 
-		updateResolution(_render->m_resolution);
+		updateResolution(_render->m_mainSwapChain, _render->m_reset);
 
 		for (uint32_t ii = 0, num = m_numWindows; ii < num; ++ii)
 		{
-			FrameBufferMtl& frameBuffer = 0 == ii
-				? m_mainFrameBuffer
-				: m_frameBuffers[m_windows[ii].idx]
-				;
+			FrameBufferMtl& frameBuffer = getFrameBuffer(m_windows[ii]);
 
 			SwapChainMtl* swapChain = frameBuffer.m_swapChain;
 
@@ -5954,8 +5957,8 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 				needScreenshot = _render->m_screenShot[jj].handle.idx == fbhIdx;
 			}
 
-			const uint32_t width  = 0 == ii ? m_resolution.width  : frameBuffer.m_width;
-			const uint32_t height = 0 == ii ? m_resolution.height : frameBuffer.m_height;
+			const uint32_t width  = 0 == ii ? m_mainSwapChain.width  : frameBuffer.m_width;
+			const uint32_t height = 0 == ii ? m_mainSwapChain.height : frameBuffer.m_height;
 
 			if (needScreenshot)
 			{
@@ -6133,8 +6136,8 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 					{
 						const FrameBufferHandle viewFbh = _render->m_view[view].m_fbh;
 
-						uint32_t width  = m_resolution.width;
-						uint32_t height = m_resolution.height;
+						uint32_t width  = m_mainSwapChain.width;
+						uint32_t height = m_mainSwapChain.height;
 
 						if (isValid(viewFbh) )
 						{
@@ -7139,12 +7142,12 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 					, freq/frameTime
 					);
 
-				const uint32_t msaa = (m_resolution.reset&BGFX_RESET_MSAA_MASK)>>BGFX_RESET_MSAA_SHIFT;
+				const uint32_t msaa = (m_mainSwapChain.flags&BGFX_SWAP_CHAIN_MSAA_MASK)>>BGFX_SWAP_CHAIN_MSAA_SHIFT;
 				tvm.printf(10, pos++, 0x8b, "  Reset flags: [%c] vsync, [%c] MSAAx%d, [%c] MaxAnisotropy "
-					, !!(m_resolution.reset&BGFX_RESET_VSYNC) ? '\xfe' : ' '
+					, !!(m_reset&BGFX_RESET_VSYNC) ? '\xfe' : ' '
 					, 0 != msaa ? '\xfe' : ' '
 					, 1<<msaa
-					, !!(m_resolution.reset&BGFX_RESET_MAXANISOTROPY) ? '\xfe' : ' '
+					, !!(m_reset&BGFX_RESET_MAXANISOTROPY) ? '\xfe' : ' '
 					);
 
 				double elapsedCpuMs = double(frameTime)*toMs;
@@ -7189,7 +7192,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 				max = frameTime;
 			}
 
-			dbgTextSubmit(this, _textVideoMemBlitter, tvm);
+			dbgTextSubmit(this, _textVideoMemBlitter, tvm, _render->m_debugFrameBuffer, _render->m_debugTextScale);
 			rce = m_renderCommandEncoder;
 
 			rce->popDebugGroup();
@@ -7199,7 +7202,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 		{
 			rce->pushDebugGroup(nsstr("debugtext") );
 
-			dbgTextSubmit(this, _textVideoMemBlitter, _render->m_textVideoMem);
+			dbgTextSubmit(this, _textVideoMemBlitter, _render->m_textVideoMem, _render->m_debugFrameBuffer, _render->m_debugTextScale);
 			rce = m_renderCommandEncoder;
 
 			rce->popDebugGroup();
@@ -7220,10 +7223,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 		for (uint32_t ii = 0, num = m_numWindows; ii < num; ++ii)
 		{
-			FrameBufferMtl& frameBuffer = 0 == ii
-				? m_mainFrameBuffer
-				: m_frameBuffers[m_windows[ii].idx]
-				;
+			FrameBufferMtl& frameBuffer = getFrameBuffer(m_windows[ii]);
 
 			SwapChainMtl* swapChain = frameBuffer.m_swapChain;
 

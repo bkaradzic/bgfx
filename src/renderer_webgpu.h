@@ -671,31 +671,39 @@ namespace wgpu {
 		SwapChainWGPU()
 			: m_nwh(NULL)
 			, m_surface(NULL)
+			, m_texture(NULL)
 			, m_textureView(NULL)
 			, m_msaaTextureView(NULL)
 			, m_depthStencilView(NULL)
+			, m_viewFormat(WGPUTextureFormat_Undefined)
+			, m_readable(false)
 		{
 		}
 
-		bool create(void* _nwh, const Resolution& _resolution);
+		bool create(void* _nwh, const SwapChain& _desc);
 		void destroy();
-		void update(void* _nwh, const Resolution& _resolution);
+		void update(void* _nwh, const SwapChain& _desc);
 
 		bool createSurface(void* _nwh);
 
-		bool configure(const Resolution& _resolution);
+		bool configure(const SwapChain& _desc);
+		WGPUTextureView createTextureView();
 		void present();
 
 		void* m_nwh;
-		Resolution m_resolution;
+		SwapChain m_desc;
 		WGPUSurfaceConfiguration m_surfaceConfig;
 
 		WGPUSurface m_surface;
+		WGPUTexture m_texture;
 		WGPUTextureView m_textureView;
 		WGPUTextureView m_msaaTextureView;
 		WGPUTextureView m_depthStencilView;
 
+		WGPUTextureFormat m_viewFormat;
+
 		uint8_t m_formatDepthStencil;
+		bool m_readable;
 	};
 
 	struct FrameBufferWGPU
@@ -712,13 +720,13 @@ namespace wgpu {
 		}
 
 		void create(uint8_t _num, const Attachment* _attachment);
-		bool create(uint16_t _denseIdx, void* _nwh, uint32_t _width, uint32_t _height, TextureFormat::Enum _colorFormat, TextureFormat::Enum _depthFormat = TextureFormat::Count);
+		bool create(uint16_t _denseIdx, const SwapChain& _desc);
 		uint16_t destroy();
 
 		void preReset();
 		void postReset();
 
-		void update(const Resolution& _resolution);
+		void update(const SwapChain& _desc);
 
 		void present();
 

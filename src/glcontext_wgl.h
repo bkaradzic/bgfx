@@ -73,6 +73,7 @@ typedef void (APIENTRYP PFNGLSTENCILOPPROC) (GLenum fail, GLenum zfail, GLenum z
 			, m_pfd()
 			, m_current(NULL)
 			, m_opengl32dll(NULL)
+			, m_nwh(NULL)
 			, m_context(NULL)
 			, m_hdc(NULL)
 			, m_dummyHwnd(NULL)
@@ -83,9 +84,9 @@ typedef void (APIENTRYP PFNGLSTENCILOPPROC) (GLenum fail, GLenum zfail, GLenum z
 		{
 		}
 
-		void create(const Resolution& _resolution);
+		void create(const SwapChain& _swapChain, uint32_t _reset);
 		void destroy();
-		void resize(const Resolution& _resolution);
+		void resize(const SwapChain& _swapChain, uint32_t _reset);
 
 		uint64_t getCaps() const;
 		SwapChainGL* createSwapChain(void* _nwh, int32_t _width, int32_t _height);
@@ -104,6 +105,7 @@ typedef void (APIENTRYP PFNGLSTENCILOPPROC) (GLenum fail, GLenum zfail, GLenum z
 		PIXELFORMATDESCRIPTOR m_pfd;
 		SwapChainGL* m_current;
 		void* m_opengl32dll;
+		void* m_nwh;
 		HGLRC m_context;
 		HDC   m_hdc;
 		HWND  m_dummyHwnd;

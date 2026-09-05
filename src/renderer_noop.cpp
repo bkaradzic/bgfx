@@ -190,10 +190,6 @@ namespace bgfx { namespace noop
 		{
 		}
 
-		void overrideInternal(TextureHandle /*_handle*/, uintptr_t /*_ptr*/, uint16_t /*_layerIndex*/) override
-		{
-		}
-
 		uintptr_t getInternal(TextureHandle /*_handle*/) override
 		{
 			return 0;
@@ -207,7 +203,7 @@ namespace bgfx { namespace noop
 		{
 		}
 
-		void createFrameBuffer(FrameBufferHandle /*_handle*/, void* /*_nwh*/, uint32_t /*_width*/, uint32_t /*_height*/, TextureFormat::Enum /*_format*/, TextureFormat::Enum /*_depthFormat*/) override
+		void createFrameBuffer(FrameBufferHandle /*_handle*/, const SwapChain& /*_desc*/) override
 		{
 		}
 
@@ -268,7 +264,7 @@ namespace bgfx { namespace noop
 			perfStats.gpuMemoryUsed = -INT64_MAX;
 		}
 
-		void dbgTextRenderBegin(TextVideoMemBlitter& /*_blitter*/) override
+		void dbgTextRenderBegin(TextVideoMemBlitter& /*_blitter*/, FrameBufferHandle /*_handle*/) override
 		{
 		}
 

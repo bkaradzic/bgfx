@@ -432,8 +432,6 @@ namespace bgfx { namespace mtl
 
 		void create(const Memory* _mem, uint64_t _flags, uint8_t _skip, uint64_t _external);
 		void destroy();
-		void overrideInternal(uintptr_t _ptr);
-
 		void update(
 			  uint8_t _side
 			, uint8_t _mip
@@ -491,6 +489,7 @@ namespace bgfx { namespace mtl
 			, m_backBufferStencil()
 			, m_maxAnisotropy(0)
 			, m_colorFormat(TextureFormat::Count)
+			, m_borrowedDepth(false)
 		{
 		}
 
@@ -500,7 +499,7 @@ namespace bgfx { namespace mtl
 
 		void releaseBackBuffer();
 
-		uint32_t resize(uint32_t _width, uint32_t _height, TextureFormat::Enum _format, TextureFormat::Enum _depthFormat);
+		uint32_t resize(const SwapChain& _desc);
 
 		MTL::Texture* currentDrawableTexture();
 
@@ -517,6 +516,7 @@ namespace bgfx { namespace mtl
 		uint32_t m_maxAnisotropy;
 		void* m_nwh;
 		TextureFormat::Enum m_colorFormat;
+		bool m_borrowedDepth;
 	};
 
 	struct FrameBufferMtl
@@ -532,24 +532,12 @@ namespace bgfx { namespace mtl
 		}
 
 		void create(uint8_t _num, const Attachment* _attachment);
-		void create(
-			  uint16_t _denseIdx
-			, void* _nwh
-			, uint32_t _width
-			, uint32_t _height
-			, TextureFormat::Enum _format
-			, TextureFormat::Enum _depthFormat
-			);
+		void create(uint16_t _denseIdx, const SwapChain& _desc);
 		void postReset();
 		uint16_t destroy();
 
 		void resolve();
-		void resizeSwapChain(
-			  uint32_t _width
-			, uint32_t _height
-			, TextureFormat::Enum _format = TextureFormat::Count
-			, TextureFormat::Enum _depthFormat = TextureFormat::Count
-			);
+		void resizeSwapChain(const SwapChain& _desc);
 
 		SwapChainMtl* m_swapChain;
 		void* m_nwh;

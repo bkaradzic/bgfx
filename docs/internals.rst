@@ -256,9 +256,9 @@ Sort key
 Swap chain
 ^^^^^^^^^^
 
-``BGFX_CONFIG_MAX_BACK_BUFFERS`` - Maximum number of back buffers for the swap chain. Default is 4. The actual number used is specified via ``bgfx::Resolution::numBackBuffers``.
+``BGFX_CONFIG_MAX_BACK_BUFFERS`` - Maximum number of back buffers for the swap chain. Default is 4. The actual number used is specified via ``bgfx::SwapChain::numBackBuffers``.
 
-``BGFX_CONFIG_MAX_FRAME_LATENCY`` - Maximum frame latency (number of frames that can be queued ahead). Default is 3. The actual value is specified via ``bgfx::Resolution::maxFrameLatency``.
+``BGFX_CONFIG_MAX_FRAME_LATENCY`` - Maximum frame latency (number of frames that can be queued ahead). Default is 3. The actual value is specified via ``bgfx::SwapChain::maxFrameLatency``.
 
 Debugging and profiling
 ^^^^^^^^^^^^^^^^^^^^^^^

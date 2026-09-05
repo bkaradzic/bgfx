@@ -71,8 +71,8 @@ int _main_(int _argc, char** _argv)
 	bgfx::Init init;
 	init.type     = args.m_type;
 	init.vendorId = args.m_pciId;
-	init.resolution.width  = 0;
-	init.resolution.height = 0;
+	init.swapChain.width  = 0;
+	init.swapChain.height = 0;
 
 	if (!bgfx::init(init) )
 	{

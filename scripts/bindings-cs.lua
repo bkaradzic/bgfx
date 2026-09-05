@@ -169,7 +169,7 @@ function gen.gen_dllname()
 	return csharp_dllname_template
 end
 
-local combined = { "State", "Stencil", "Buffer", "Texture", "Sampler", "Reset" }
+local combined = { "State", "Stencil", "Buffer", "Texture", "Sampler", "Reset", "SwapChain" }
 
 for _, v in ipairs(combined) do
 	combined[v] = {}
@@ -308,7 +308,10 @@ function converter.types(typ)
 		enum["[" .. typ.typename .. "::Count]"] = #typ.enum
 
 	elseif typ.bits ~= nil then
-		local prefix, name = typ.name:match "(%u%l+)(.*)"
+		local prefix, name = typ.name:match "(%u%l+%u%l+)(.*)"
+		if not combined[prefix] then
+			prefix, name = typ.name:match "(%u%l+)(.*)"
+		end
 		if prefix ~= lastCombinedFlag then
 			lastCombinedFlagBlock()
 			lastCombinedFlag = prefix

@@ -30,9 +30,6 @@ Initialization and Shutdown
 .. doxygendefine:: BGFX_PCI_ID_MICROSOFT
 .. doxygendefine:: BGFX_PCI_ID_ARM
 
-.. doxygenstruct:: bgfx::Resolution
-    :members:
-
 .. doxygenstruct:: bgfx::Init
     :members:
 
@@ -62,6 +59,25 @@ Reset flags control back-buffer resolution, MSAA, vsync, and other global render
 .. doxygendefine:: BGFX_RESET_TRANSPARENT_BACKBUFFER
 
 .. doxygenfunction:: bgfx::reset
+
+Swap Chain
+**********
+
+Swap chain flags control properties of a single presentation surface. They are numerically
+identical to their ``BGFX_RESET_*`` counterparts, so main's flags round-trip losslessly.
+
+.. doxygendefine:: BGFX_SWAP_CHAIN_NONE
+.. doxygendefine:: BGFX_SWAP_CHAIN_FULLSCREEN
+.. doxygendefine:: BGFX_SWAP_CHAIN_SRGB_BACKBUFFER
+.. doxygendefine:: BGFX_SWAP_CHAIN_HDR10
+.. doxygendefine:: BGFX_SWAP_CHAIN_HIDPI
+.. doxygendefine:: BGFX_SWAP_CHAIN_TRANSPARENT_BACKBUFFER
+
+.. doxygenstruct:: bgfx::SwapChain
+    :members:
+
+.. doxygenfunction:: bgfx::createFrameBuffer(const SwapChain& _desc)
+.. doxygenfunction:: bgfx::updateSwapChain
 
 Frame
 *****
@@ -200,10 +216,7 @@ It is only necessary to use these APIs in conjunction with creating windows.
     :members:
 
 .. doxygenfunction:: bgfx::renderFrame
-.. doxygenfunction:: bgfx::setPlatformData
 .. doxygenfunction:: bgfx::getInternalData
-.. doxygenfunction:: bgfx::overrideInternal(TextureHandle _handle, uintptr_t _ptr, uint16_t _layerIndex = 0)
-.. doxygenfunction:: bgfx::overrideInternal(TextureHandle _handle, uint16_t _width, uint16_t _height, uint8_t _numMips, TextureFormat::Enum _format, uint64_t _flags = BGFX_TEXTURE_NONE | BGFX_SAMPLER_NONE)
 
 Miscellaneous
 ~~~~~~~~~~~~~
@@ -656,7 +669,6 @@ Frame Buffers
 .. doxygenfunction:: bgfx::createFrameBuffer(BackbufferRatio::Enum _ratio, TextureFormat::Enum _format, uint64_t _textureFlags = BGFX_SAMPLER_U_CLAMP|BGFX_SAMPLER_V_CLAMP)
 .. doxygenfunction:: bgfx::createFrameBuffer(uint8_t _num, const TextureHandle* _handles, bool _destroyTexture)
 .. doxygenfunction:: bgfx::createFrameBuffer(uint8_t _num, const Attachment* _attachment, bool _destroyTexture)
-.. doxygenfunction:: bgfx::createFrameBuffer(void* _nwh, uint16_t _width, uint16_t _height, TextureFormat::Enum _format = TextureFormat::Count, TextureFormat::Enum _depthFormat = TextureFormat::Count)
 .. doxygenfunction:: bgfx::setName(FrameBufferHandle _handle, const char* _name, int32_t _len = INT32_MAX)
 .. doxygenfunction:: bgfx::getTexture
 .. doxygenfunction:: bgfx::destroy(FrameBufferHandle _handle)

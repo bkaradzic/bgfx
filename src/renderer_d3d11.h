@@ -353,7 +353,6 @@ namespace bgfx { namespace d3d11
 
 		void* create(const Memory* _mem, uint64_t _flags, uint8_t _skip, uint64_t _external);
 		void destroy();
-		void overrideInternal(uintptr_t _ptr, uint16_t _layerIndex);
 		void update(uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem);
 		void clear(uint8_t _mip, uint8_t _numMips, uint16_t _layer, uint16_t _numLayers);
 		void commit(uint8_t _stage, uint32_t _flags, const float _palette[][4], uint16_t _firstLayer = 0, uint16_t _numLayers = UINT16_MAX, uint8_t _firstMip = 0, uint8_t _numMips = UINT8_MAX, TextureDimension::Enum _dimension = TextureDimension::Count);
@@ -392,11 +391,14 @@ namespace bgfx { namespace d3d11
 		uint8_t  m_numMips;
 	};
 
+	constexpr uint16_t kMainFrameBufferIdx = BGFX_CONFIG_MAX_FRAME_BUFFERS;
+
 	struct FrameBufferD3D11
 	{
 		FrameBufferD3D11()
 			: m_dsv(NULL)
 			, m_swapChain(NULL)
+			, m_msaaRt(NULL)
 			, m_nwh(NULL)
 			, m_width(0)
 			, m_height(0)
@@ -407,13 +409,18 @@ namespace bgfx { namespace d3d11
 			, m_needPresent(false)
 			, m_needsQuadClear(false)
 		{
+			bx::memSet(&m_desc, 0, sizeof(m_desc) );
 			bx::memSet(m_rtv, 0, sizeof(m_rtv) );
 			bx::memSet(m_uav, 0, sizeof(m_uav) );
 			bx::memSet(m_srv, 0, sizeof(m_srv) );
 		}
 
 		void create(uint8_t _num, const Attachment* _attachment);
-		void create(uint16_t _denseIdx, void* _nwh, uint32_t _width, uint32_t _height, TextureFormat::Enum _format, TextureFormat::Enum _depthFormat);
+		void create(uint16_t _denseIdx, const SwapChain& _desc);
+		void update(const SwapChain& _desc);
+		DxgiSwapChainDesc getSwapChainDesc() const;
+		void createSwapChainViews();
+		void destroySwapChainViews();
 		uint16_t destroy();
 		void preReset(bool _force = false);
 		void postReset();
@@ -422,11 +429,18 @@ namespace bgfx { namespace d3d11
 		void set();
 		HRESULT present(uint32_t _syncInterval, uint32_t _flags);
 
+		bool isSwapChain() const
+		{
+			return NULL != m_swapChain;
+		}
+
 		ID3D11RenderTargetView*    m_rtv[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
 		ID3D11UnorderedAccessView* m_uav[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
 		ID3D11ShaderResourceView*  m_srv[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
 		ID3D11DepthStencilView*    m_dsv;
 		Dxgi::SwapChainI* m_swapChain;
+		ID3D11Texture2D*  m_msaaRt;
+		SwapChain m_desc;
 		void* m_nwh;
 		uint32_t m_width;
 		uint32_t m_height;

@@ -9,7 +9,7 @@ import bindbc.common.types: c_int64, c_uint64, va_list;
 import bindbc.bgfx.config;
 static import bgfx.impl;
 
-enum uint apiVersion = 157;
+enum uint apiVersion = 158;
 
 alias ViewID = ushort;
 
@@ -472,6 +472,32 @@ enum ResetReserved: ResetReserved_{
 	mask   = 0x8000_0000, ///Internal bit mask
 }
 
+alias SwapChainMSAA_ = uint;
+enum SwapChainMSAA: SwapChainMSAA_{
+	x2     = 0x0000_0010, ///Enable 2x MSAA.
+	x4     = 0x0000_0020, ///Enable 4x MSAA.
+	x8     = 0x0000_0030, ///Enable 8x MSAA.
+	x16    = 0x0000_0040, ///Enable 16x MSAA.
+	shift  = 4,
+	mask   = 0x0000_0070,
+}
+
+alias SwapChain_ = uint;
+enum SwapChain: SwapChain_{
+	none                   = 0x0000_0000, ///No swap chain flags.
+	fullscreen             = 0x0000_0001, ///Not supported yet.
+	srgbBackbuffer         = 0x0000_8000, ///Enable sRGB backbuffer.
+	hdr10                  = 0x0001_0000, ///Enable HDR10 rendering.
+	hiDPI                  = 0x0002_0000, ///Enable HiDPI rendering.
+	transparentBackbuffer  = 0x0010_0000, ///Transparent backbuffer. Availability depends on: `BGFX_CAPS_TRANSPARENT_BACKBUFFER`.
+}
+
+alias SwapChainFullscreen_ = uint;
+enum SwapChainFullscreen: SwapChainFullscreen_{
+	shift  = 0,
+	mask   = 0x0000_0001,
+}
+
 alias CapFlags_ = ulong;
 enum CapFlags: CapFlags_{
 	alphaToCoverage         = 0x0000_0000_0000_0001, ///Alpha to coverage is supported.
@@ -603,7 +629,7 @@ enum PCIID: PCIID_{
 	amd                 = 0x1002, ///AMD adapter.
 	apple               = 0x106B, ///Apple adapter.
 	intel               = 0x8086, ///Intel adapter.
-	nvidia              = 0x10DE, ///nVidia adapter.
+	nvidia              = 0x10DE, ///NVIDIA adapter.
 	microsoft           = 0x1414, ///Microsoft adapter.
 	arm                 = 0x13B5, ///ARM adapter.
 }
@@ -854,7 +880,15 @@ enum UniformFreq: bgfx.impl.UniformFreq.Enum{
 	count = bgfx.impl.UniformFreq.Enum.count,
 }
 
-///Backbuffer ratio enum.
+/**
+Backbuffer ratio enum.
+
+The ratio is always relative to the window bgfx was initialized with, and is
+re-resolved by `bgfx::reset`. It is not relative to whichever window a texture
+happens to be rendered to, so on a second window a ratio texture is not
+meaningfully sized. For that reason a ratio texture cannot be used as
+`SwapChain::depth`.
+*/
 enum BackbufferRatio: bgfx.impl.BackbufferRatio.Enum{
 	equal = bgfx.impl.BackbufferRatio.Enum.equal,
 	half = bgfx.impl.BackbufferRatio.Enum.half,
@@ -1227,8 +1261,17 @@ extern(C++, "bgfx") struct InternalData{
 
 ///Platform data.
 extern(C++, "bgfx") struct PlatformData{
-	void* ndt; ///Native display type (*nix specific).
-	
+	/**
+	GL context, D3D device, or Vulkan device. If `NULL`, bgfx
+	will create context/device.
+	*/
+	void* context;
+	void* queue; ///D3D12 Queue. If `NULL` bgfx will create queue.
+	NativeWindowHandleType type; ///Handle type. Needed for platforms having more than one option.
+}
+
+///Swap chain description.
+extern(C++, "bgfx") struct SwapChain{
 	/**
 	Native window handle. If `NULL`, bgfx will create a headless
 	context/device, provided the rendering API supports it.
@@ -1236,36 +1279,30 @@ extern(C++, "bgfx") struct PlatformData{
 	void* nwh;
 	
 	/**
-	GL context, D3D device, or Vulkan device. If `NULL`, bgfx
-	will create context/device.
+	Native display type (*nix specific). A window that leaves this
+	`NULL` uses the one the main window was initialized with.
 	*/
-	void* context;
-	void* queue; ///D3D12 Queue. If `NULL` bgfx will create queue.
+	void* ndt;
+	uint width; ///Swap chain width.
+	uint height; ///Swap chain height.
+	uint flags; ///See: `BGFX_SWAP_CHAIN_*`.
+	TextureFormat formatColor; ///Color format.
 	
 	/**
-	GL back-buffer, or D3D render target view. If `NULL` bgfx will
-	create back-buffer color surface.
+	Depth/stencil format, or `TextureFormat::Count` for no depth. Ignored
+	when `depth` is valid.
 	*/
-	void* backBuffer;
+	TextureFormat formatDepthStencil;
 	
 	/**
-	Backbuffer depth/stencil. If `NULL`, bgfx will create a back-buffer
-	depth/stencil surface.
+	Depth attachment. Must be created with `BGFX_TEXTURE_RT`, and match the
+	swap chain width, height and sample count. When invalid, bgfx creates and
+	owns a depth surface per `formatDepthStencil`. A texture supplied here is
+	never destroyed by bgfx, and may be shared by several same-size swap chains.
 	*/
-	void* backBufferDS;
-	NativeWindowHandleType type; ///Handle type. Needed for platforms having more than one option.
-}
-
-///Backbuffer resolution and reset parameters.
-extern(C++, "bgfx") struct Resolution{
-	TextureFormat formatColor; ///Backbuffer color format.
-	TextureFormat formatDepthStencil; ///Backbuffer depth/stencil format.
-	uint width; ///Backbuffer width.
-	uint height; ///Backbuffer height.
-	uint reset; ///Reset parameters.
+	TextureHandle depth;
 	ubyte numBackBuffers; ///Number of back buffers.
 	ubyte maxFrameLatency; ///Maximum frame latency.
-	ubyte debugTextScale; ///Scale factor for debug text.
 	extern(D) mixin(joinFnBinds((){
 		FnBind[] ret = [
 			{q{void}, q{this}, q{}, ext: `C++`},
@@ -1346,7 +1383,19 @@ extern(C++, "bgfx") struct Init{
 	bool fallback; ///Enable fallback to next available renderer.
 	bool videoDecode; ///Enable video decoding.
 	PlatformData platformData; ///Platform data.
-	Resolution resolution; ///Backbuffer resolution and reset parameters. See: `bgfx::Resolution`.
+	
+	/**
+	Swap chain for the window bgfx creates its device on.
+	See: `bgfx::SwapChain`.
+	*/
+	SwapChain swapChain;
+	
+	/**
+	Device and frame global settings. Anything that is a
+	property of one surface belongs in `swapChain` instead.
+	See: `BGFX_RESET_*`.
+	*/
+	uint reset;
 	Limits limits; ///Configurable runtime limits parameters.
 	
 	/**
@@ -2480,12 +2529,8 @@ mixin(joinFnBinds((){
 		*   the back-buffer. Your windowing code controls the window size.
 		* 
 		Params:
-			width = Back-buffer width.
-			height = Back-buffer height.
 			flags = See: `BGFX_RESET_*` for more info.
 		  - `BGFX_RESET_NONE` - No reset flags.
-		  - `BGFX_RESET_FULLSCREEN` - Not supported yet.
-		  - `BGFX_RESET_MSAA_X[2/4/8/16]` - Enable 2, 4, 8 or 16 x MSAA.
 		  - `BGFX_RESET_VSYNC` - Enable V-Sync.
 		  - `BGFX_RESET_MAXANISOTROPY` - Turn on/off max anisotropy.
 		  - `BGFX_RESET_CAPTURE` - Begin screen capture.
@@ -2493,10 +2538,18 @@ mixin(joinFnBinds((){
 		  - `BGFX_RESET_FLIP_AFTER_RENDER` - This flag  specifies where flip
 		    occurs. Default behaviour is that flip occurs before rendering new
 		    frame. This flag only has effect when `BGFX_CONFIG_MULTITHREADED=0`.
-		  - `BGFX_RESET_SRGB_BACKBUFFER` - Enable sRGB back-buffer.
-			format = Texture format. See: `TextureFormat::Enum`.
+		Per-surface settings are not here. `BGFX_SWAP_CHAIN_*` flags belong
+		on `SwapChain::flags`, and are ignored if passed here.
+			swapChain = Main window swap chain. When `NULL` the main window is left
+		untouched and only the device and frame globals above are
+		applied, which is what an application driving its own swap
+		chains wants. Otherwise the main window takes on this
+		description: resize it, change its format, or change its
+		per-surface flags. Fields left neutral keep their current
+		value, and `nwh`/`ndt` are ignored -- main's are bgfx's own.
+		Must be `NULL` when `bgfx::init` created no main window.
 		*/
-		{q{void}, q{reset}, q{uint width, uint height, uint flags=Reset.none, bgfx.impl.TextureFormat.Enum format=TextureFormat.count}, ext: `C++, "bgfx"`},
+		{q{void}, q{reset}, q{uint flags=Reset.none, const(SwapChain)* swapChain=null}, ext: `C++, "bgfx"`},
 		
 		/**
 		* Advance to next frame. This is the main frame-advancement call on the
@@ -2589,8 +2642,11 @@ mixin(joinFnBinds((){
 		  - `BGFX_DEBUG_TEXT` - Display debug text.
 		  - `BGFX_DEBUG_WIREFRAME` - Wireframe rendering. All rendering
 		    primitives will be rendered as lines.
+			handle = Frame buffer the debug text and statistics are drawn on.
+		Invalid handle selects the window bgfx was initialized with.
+			scale = Debug text scale factor. 0 is the same as 1.
 		*/
-		{q{void}, q{setDebug}, q{uint debug_}, ext: `C++, "bgfx"`},
+		{q{void}, q{setDebug}, q{uint debug_, FrameBufferHandle handle=invalidHandle!FrameBufferHandle, ubyte scale=0}, ext: `C++, "bgfx"`},
 		
 		/**
 		* Clear internal debug text buffer.
@@ -3345,7 +3401,7 @@ mixin(joinFnBinds((){
 		{q{FrameBufferHandle}, q{createFrameBuffer}, q{ubyte num, const(Attachment)* attachment, bool destroyTexture=false}, ext: `C++, "bgfx"`},
 		
 		/**
-		* Create frame buffer for multiple window rendering.
+		* Create a frame buffer for a window, from a full swap chain description.
 		* 
 		* Remarks:
 		*   Frame buffer cannot be used for sampling.
@@ -3353,13 +3409,25 @@ mixin(joinFnBinds((){
 		* Attention: Availability depends on: `BGFX_CAPS_SWAP_CHAIN`.
 		* 
 		Params:
-			nwh = OS' target native window handle.
-			width = Window back buffer width.
-			height = Window back buffer height.
-			format = Window back buffer color format.
-			depthFormat = Window back buffer depth format.
+			desc = Swap chain description. See: `bgfx::SwapChain`.
 		*/
-		{q{FrameBufferHandle}, q{createFrameBuffer}, q{void* nwh, ushort width, ushort height, bgfx.impl.TextureFormat.Enum format=TextureFormat.count, bgfx.impl.TextureFormat.Enum depthFormat=TextureFormat.count}, ext: `C++, "bgfx"`},
+		{q{FrameBufferHandle}, q{createFrameBuffer}, q{ref const SwapChain desc}, ext: `C++, "bgfx"`},
+		
+		/**
+		* Change a swap chain's size, format or per-surface flags, in place.
+		* 
+		* The frame buffer handle stays valid, so nothing that refers to it has to be
+		* rebuilt. Pass `BGFX_INVALID_HANDLE` to address the window bgfx was
+		* initialized with.
+		* 
+		* Attention: Availability depends on: `BGFX_CAPS_SWAP_CHAIN`.
+		* 
+		Params:
+			handle = Window frame buffer handle. The window bgfx was initialized
+		with is not addressed here; it is `bgfx::reset`'s swap chain.
+			desc = Swap chain description. See: `bgfx::SwapChain`.
+		*/
+		{q{void}, q{updateSwapChain}, q{FrameBufferHandle handle, ref const SwapChain desc}, ext: `C++, "bgfx"`},
 		
 		/**
 		* Set frame buffer debug name.
@@ -3814,16 +3882,6 @@ mixin(joinFnBinds((){
 		{q{RenderFrame}, q{renderFrame}, q{int msecs=-1}, ext: `C++, "bgfx"`},
 		
 		/**
-		* Set platform data.
-		* 
-		* Warning: Must be called before `bgfx::init`.
-		* 
-		Params:
-			data = Platform data.
-		*/
-		{q{void}, q{setPlatformData}, q{ref const PlatformData data}, ext: `C++, "bgfx"`},
-		
-		/**
 		* Get internal data for interop.
 		* 
 		* Attention: It's expected you understand some bgfx internals before you
@@ -3833,49 +3891,6 @@ mixin(joinFnBinds((){
 		* 
 		*/
 		{q{const(InternalData)*}, q{getInternalData}, q{}, ext: `C++, "bgfx"`},
-		
-		/**
-		* Override internal texture with externally created texture. Previously
-		* created internal texture will released.
-		* 
-		* Attention: It's expected you understand some bgfx internals before you
-		*   use this call.
-		* 
-		* Warning: Must be called only on render thread.
-		* 
-		Params:
-			handle = Texture handle.
-			ptr = Native API pointer to texture.
-			layerIndex = Layer index for texture arrays (only implemented for D3D11).
-		*/
-		{q{size_t}, q{overrideInternal}, q{TextureHandle handle, size_t ptr, ushort layerIndex=0}, ext: `C++, "bgfx"`},
-		
-		/**
-		* Override internal texture by creating new texture. Previously created
-		* internal texture will released.
-		* 
-		* Attention: It's expected you understand some bgfx internals before you
-		*   use this call.
-		* 
-		* Returns: Native API pointer to texture. If result is 0, texture is not created yet from the
-		*   main thread.
-		* 
-		* Warning: Must be called only on render thread.
-		* 
-		Params:
-			handle = Texture handle.
-			width = Width.
-			height = Height.
-			numMIPs = Number of mip-maps.
-			format = Texture format. See: `TextureFormat::Enum`.
-			flags = Texture creation (see `BGFX_TEXTURE_*`.), and sampler (see `BGFX_SAMPLER_*`)
-		flags. Default texture sampling mode is linear, and wrap mode is repeat.
-		- `BGFX_SAMPLER_[U/V/W]_[MIRROR/CLAMP]` - Mirror or clamp to edge wrap
-		  mode.
-		- `BGFX_SAMPLER_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]` - Point or anisotropic
-		  sampling.
-		*/
-		{q{size_t}, q{overrideInternal}, q{TextureHandle handle, ushort width, ushort height, ubyte numMIPs, bgfx.impl.TextureFormat.Enum format, c_uint64 flags=Texture.none | Sampler.none}, ext: `C++, "bgfx"`},
 		
 		/**
 		* Sets a debug marker. This allows you to group graphics calls together for easy browsing in
@@ -4464,7 +4479,7 @@ mixin(joinFnBinds((){
 		
 	];
 	return ret;
-}(), "Resolution, Init.Limits, Init, TextureRegion, BufferRegion, Attachment, VertexLayout, Encoder, "));
+}(), "SwapChain, Init.Limits, Init, TextureRegion, BufferRegion, Attachment, VertexLayout, Encoder, "));
 
 static if(!staticBinding):
 import bindbc.loader;

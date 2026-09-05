@@ -184,9 +184,9 @@ BGFX_C_API void bgfx_shutdown(void)
 	bgfx::shutdown();
 }
 
-BGFX_C_API void bgfx_reset(uint32_t _width, uint32_t _height, uint32_t _flags, bgfx_texture_format_t _format)
+BGFX_C_API void bgfx_reset(uint32_t _flags, const bgfx_swap_chain_t* _swapChain)
 {
-	bgfx::reset(_width, _height, _flags, (bgfx::TextureFormat::Enum)_format);
+	bgfx::reset(_flags, (const bgfx::SwapChain*)_swapChain);
 }
 
 BGFX_C_API uint32_t bgfx_frame(uint8_t _flags)
@@ -229,9 +229,10 @@ BGFX_C_API const bgfx_memory_t* bgfx_make_ref_release(const void* _data, uint32_
 	return (const bgfx_memory_t*)bgfx::makeRef(_data, _size, (bgfx::ReleaseFn)_releaseFn, _userData);
 }
 
-BGFX_C_API void bgfx_set_debug(uint32_t _debug)
+BGFX_C_API void bgfx_set_debug(uint32_t _debug, bgfx_frame_buffer_handle_t _handle, uint8_t _scale)
 {
-	bgfx::setDebug(_debug);
+	union { bgfx_frame_buffer_handle_t c; bgfx::FrameBufferHandle cpp; } handle = { _handle };
+	bgfx::setDebug(_debug, handle.cpp, _scale);
 }
 
 BGFX_C_API void bgfx_dbg_text_clear(uint8_t _attr, bool _small)
@@ -601,11 +602,19 @@ BGFX_C_API bgfx_frame_buffer_handle_t bgfx_create_frame_buffer_from_attachment(u
 	return handle_ret.c;
 }
 
-BGFX_C_API bgfx_frame_buffer_handle_t bgfx_create_frame_buffer_from_nwh(void* _nwh, uint16_t _width, uint16_t _height, bgfx_texture_format_t _format, bgfx_texture_format_t _depthFormat)
+BGFX_C_API bgfx_frame_buffer_handle_t bgfx_create_frame_buffer_from_swap_chain(const bgfx_swap_chain_t* _desc)
 {
+	const bgfx::SwapChain& desc = *(const bgfx::SwapChain*)_desc;
 	union { bgfx_frame_buffer_handle_t c; bgfx::FrameBufferHandle cpp; } handle_ret;
-	handle_ret.cpp = bgfx::createFrameBuffer(_nwh, _width, _height, (bgfx::TextureFormat::Enum)_format, (bgfx::TextureFormat::Enum)_depthFormat);
+	handle_ret.cpp = bgfx::createFrameBuffer(desc);
 	return handle_ret.c;
+}
+
+BGFX_C_API void bgfx_update_swap_chain(bgfx_frame_buffer_handle_t _handle, const bgfx_swap_chain_t* _desc)
+{
+	union { bgfx_frame_buffer_handle_t c; bgfx::FrameBufferHandle cpp; } handle = { _handle };
+	const bgfx::SwapChain& desc = *(const bgfx::SwapChain*)_desc;
+	bgfx::updateSwapChain(handle.cpp, desc);
 }
 
 BGFX_C_API void bgfx_set_frame_buffer_name(bgfx_frame_buffer_handle_t _handle, const char* _name, int32_t _len)
@@ -1096,27 +1105,9 @@ BGFX_C_API bgfx_render_frame_t bgfx_render_frame(int32_t _msecs)
 	return (bgfx_render_frame_t)bgfx::renderFrame(_msecs);
 }
 
-BGFX_C_API void bgfx_set_platform_data(const bgfx_platform_data_t * _data)
-{
-	const bgfx::PlatformData & data = *(const bgfx::PlatformData *)_data;
-	bgfx::setPlatformData(data);
-}
-
 BGFX_C_API const bgfx_internal_data_t* bgfx_get_internal_data(void)
 {
 	return (const bgfx_internal_data_t*)bgfx::getInternalData();
-}
-
-BGFX_C_API uintptr_t bgfx_override_internal_texture_ptr(bgfx_texture_handle_t _handle, uintptr_t _ptr, uint16_t _layerIndex)
-{
-	union { bgfx_texture_handle_t c; bgfx::TextureHandle cpp; } handle = { _handle };
-	return bgfx::overrideInternal(handle.cpp, _ptr, _layerIndex);
-}
-
-BGFX_C_API uintptr_t bgfx_override_internal_texture(bgfx_texture_handle_t _handle, uint16_t _width, uint16_t _height, uint8_t _numMips, bgfx_texture_format_t _format, uint64_t _flags)
-{
-	union { bgfx_texture_handle_t c; bgfx::TextureHandle cpp; } handle = { _handle };
-	return bgfx::overrideInternal(handle.cpp, _width, _height, _numMips, (bgfx::TextureFormat::Enum)_format, _flags);
 }
 
 BGFX_C_API void bgfx_set_marker(const char* _name, int32_t _len)
@@ -1518,7 +1509,8 @@ BGFX_C_API bgfx_interface_vtbl_t* bgfx_get_interface(uint32_t _version)
 			bgfx_create_frame_buffer_scaled,
 			bgfx_create_frame_buffer_from_handles,
 			bgfx_create_frame_buffer_from_attachment,
-			bgfx_create_frame_buffer_from_nwh,
+			bgfx_create_frame_buffer_from_swap_chain,
+			bgfx_update_swap_chain,
 			bgfx_set_frame_buffer_name,
 			bgfx_get_texture,
 			bgfx_destroy_frame_buffer,
@@ -1595,10 +1587,7 @@ BGFX_C_API bgfx_interface_vtbl_t* bgfx_get_interface(uint32_t _version)
 			bgfx_encoder_blit_from_buffer,
 			bgfx_request_screen_shot,
 			bgfx_render_frame,
-			bgfx_set_platform_data,
 			bgfx_get_internal_data,
-			bgfx_override_internal_texture_ptr,
-			bgfx_override_internal_texture,
 			bgfx_set_marker,
 			bgfx_set_state,
 			bgfx_set_condition,

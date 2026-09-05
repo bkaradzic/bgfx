@@ -38,6 +38,7 @@ namespace bgfx { namespace gl
 	{
 		GlContext()
 			: m_eglDll(NULL)
+			, m_nwh(NULL)
 			, m_current(NULL)
 			, m_config(NULL)
 			, m_context(NULL)
@@ -56,9 +57,9 @@ namespace bgfx { namespace gl
 		{
 		}
 
-		void create(const Resolution& _resolution);
+		void create(const SwapChain& _swapChain, uint32_t _reset);
 		void destroy();
-		void resize(const Resolution& _resolution);
+		void resize(const SwapChain& _swapChain, uint32_t _reset);
 
 		uint64_t getCaps() const;
 		SwapChainGL* createSwapChain(void* _nwh, int32_t _width, int32_t _height);
@@ -74,6 +75,7 @@ namespace bgfx { namespace gl
 		}
 
 		void* m_eglDll;
+		void* m_nwh;
 		SwapChainGL* m_current;
 		EGLConfig  m_config;
 		EGLContext m_context;

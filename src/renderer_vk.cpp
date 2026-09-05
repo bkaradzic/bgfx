@@ -1269,7 +1269,7 @@ VK_IMPORT_DEVICE
 
 			ErrorState::Enum errorState = ErrorState::Default;
 
-			const bool headless = NULL == g_platformData.nwh;
+			const bool headless = NULL == _init.swapChain.nwh;
 
 			const void* nextFeatures = NULL;
 
@@ -1280,7 +1280,7 @@ VK_IMPORT_DEVICE
 
 			m_fbh = BGFX_INVALID_HANDLE;
 			bx::memSet(m_uniforms, 0, sizeof(m_uniforms) );
-			bx::memSet(&m_resolution, 0, sizeof(m_resolution) );
+			bx::memSet(&m_mainSwapChain, 0, sizeof(m_mainSwapChain) );
 
 			bool imported = true;
 			VkResult result;
@@ -2207,9 +2207,9 @@ VK_IMPORT_DEVICE
 			}
 
 			{
-				m_maxFrameLatency = _init.resolution.maxFrameLatency == 0
+				m_maxFrameLatency = _init.swapChain.maxFrameLatency == 0
 					? BGFX_CONFIG_MAX_FRAME_LATENCY
-					: _init.resolution.maxFrameLatency
+					: _init.swapChain.maxFrameLatency
 					;
 
 				result = m_cmd.init(m_globalQueueFamily, m_globalQueue);
@@ -2234,23 +2234,17 @@ VK_IMPORT_DEVICE
 			m_presentElapsed = 0;
 
 			{
-				m_resolution = _init.resolution;
-				m_resolution.reset &= ~BGFX_RESET_INTERNAL_FORCE;
+				m_mainSwapChain = _init.swapChain;
+				m_reset &= ~BGFX_RESET_INTERNAL_FORCE;
 
 				m_numWindows = 0;
 
 				if (!headless)
 				{
-					m_textVideoMem.resize(false, _init.resolution.width, _init.resolution.height);
+					m_textVideoMem.resize(false, _init.swapChain.width, _init.swapChain.height);
 					m_textVideoMem.clear();
 
-					result = m_backBuffer.create(
-						  UINT16_MAX
-						, g_platformData.nwh
-						, m_resolution.width
-						, m_resolution.height
-						, m_resolution.formatColor
-						);
+					result = m_backBuffer.create(UINT16_MAX, m_mainSwapChain);
 
 					if (VK_SUCCESS != result)
 					{
@@ -2599,12 +2593,7 @@ VK_IMPORT_DEVICE
 
 			for (uint16_t ii = 0; ii < m_numWindows; ++ii)
 			{
-				FrameBufferVK& fb = isValid(m_windows[ii])
-					? m_frameBuffers[m_windows[ii].idx]
-					: m_backBuffer
-					;
-
-				fb.present();
+				getFrameBuffer(m_windows[ii]).present();
 			}
 
 			const int64_t now = bx::getHPCounter();
@@ -2807,10 +2796,6 @@ VK_IMPORT_DEVICE
 			bgfx::release(mem);
 		}
 
-		void overrideInternal(TextureHandle /*_handle*/, uintptr_t /*_ptr*/, uint16_t /*_layerIndex*/) override
-		{
-		}
-
 		uintptr_t getInternal(TextureHandle /*_handle*/) override
 		{
 			return 0;
@@ -2827,13 +2812,13 @@ VK_IMPORT_DEVICE
 			m_frameBuffers[_handle.idx].create(_num, _attachment);
 		}
 
-		void createFrameBuffer(FrameBufferHandle _handle, void* _nwh, uint32_t _width, uint32_t _height, TextureFormat::Enum _format, TextureFormat::Enum _depthFormat) override
+		void createFrameBuffer(FrameBufferHandle _handle, const SwapChain& _desc) override
 		{
 			for (uint32_t ii = 0, num = m_numWindows; ii < num; ++ii)
 			{
 				FrameBufferHandle handle = m_windows[ii];
 				if (isValid(handle)
-				&&  m_frameBuffers[handle.idx].m_nwh == _nwh)
+				&&  m_frameBuffers[handle.idx].m_nwh == _desc.nwh)
 				{
 					destroyFrameBuffer(handle);
 				}
@@ -2841,13 +2826,17 @@ VK_IMPORT_DEVICE
 
 			uint16_t denseIdx = m_numWindows++;
 			m_windows[denseIdx] = _handle;
-			VK_CHECK(m_frameBuffers[_handle.idx].create(denseIdx, _nwh, _width, _height, _format, _depthFormat) );
+			VK_CHECK(m_frameBuffers[_handle.idx].create(denseIdx, _desc) );
+		}
+
+		void resizeFrameBuffer(FrameBufferHandle _handle, const SwapChain& _desc) override
+		{
+			m_frameBuffers[_handle.idx].update(m_commandBuffer, _desc);
 		}
 
 		void destroyFrameBuffer(FrameBufferHandle _handle) override
 		{
 			FrameBufferVK& frameBuffer = m_frameBuffers[_handle.idx];
-
 			if (m_fbh.idx == _handle.idx)
 			{
 				m_fbh = BGFX_INVALID_HANDLE;
@@ -2892,10 +2881,7 @@ VK_IMPORT_DEVICE
 
 		void requestScreenShot(FrameBufferHandle _fbh, const char* _filePath) override
 		{
-			const FrameBufferVK& frameBuffer = isValid(_fbh)
-				? m_frameBuffers[_fbh.idx]
-				: m_backBuffer
-				;
+			FrameBufferVK& frameBuffer = getFrameBuffer(_fbh);
 			const SwapChainVK& swapChain = frameBuffer.m_swapChain;
 
 			if (!isSwapChainReadable(swapChain) )
@@ -2903,6 +2889,8 @@ VK_IMPORT_DEVICE
 				BX_TRACE("Unable to capture screenshot %s.", _filePath);
 				return;
 			}
+
+			frameBuffer.resolve();
 
 			auto callback = [](void* _src, uint32_t _width, uint32_t _height, bgfx::TextureFormat::Enum _format, uint32_t _pitch, const void* _userData)
 			{
@@ -3024,12 +3012,15 @@ VK_IMPORT_DEVICE
 
 		void submit(Frame* _render, const ClearQuad& _clearQuad, const MipGen& _mipGen, TextVideoMemBlitter& _textVideoMemBlitter) override;
 
-		void dbgTextRenderBegin(TextVideoMemBlitter& _blitter) override
+		void dbgTextRenderBegin(TextVideoMemBlitter& _blitter, FrameBufferHandle _handle) override
 		{
-			const uint32_t width  = m_backBuffer.m_width;
-			const uint32_t height = m_backBuffer.m_height;
+			m_dbgTextFbh = _handle;
 
-			setFrameBuffer(BGFX_INVALID_HANDLE);
+			const FrameBufferVK& frameBuffer = getFrameBuffer(_handle);
+			const uint32_t width  = frameBuffer.m_width;
+			const uint32_t height = frameBuffer.m_height;
+
+			setFrameBuffer(_handle);
 
 			VkViewport vp;
 			vp.x        = 0.0f;
@@ -3123,8 +3114,10 @@ VK_IMPORT_DEVICE
 		{
 			const uint32_t numVertices = _numIndices*4/6;
 
+			FrameBufferVK& frameBuffer = getFrameBuffer(m_dbgTextFbh);
+
 			if (0 < numVertices
-			&&  m_backBuffer.isRenderable() )
+			&&  frameBuffer.isRenderable() )
 			{
 				m_indexBuffers[_blitter.m_ib->handle.idx].update(m_commandBuffer, 0, _numIndices*2, _blitter.m_ib->data, true);
 				m_vertexBuffers[_blitter.m_vb->handle.idx].update(m_commandBuffer, 0, numVertices*_blitter.m_layout.m_stride, _blitter.m_vb->data, true);
@@ -3132,12 +3125,12 @@ VK_IMPORT_DEVICE
 				VkRenderPassBeginInfo rpbi;
 				rpbi.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
 				rpbi.pNext = NULL;
-				rpbi.renderPass  = m_backBuffer.m_renderPass;
-				rpbi.framebuffer = m_backBuffer.m_currentFramebuffer;
+				rpbi.renderPass  = frameBuffer.m_renderPass;
+				rpbi.framebuffer = frameBuffer.m_currentFramebuffer;
 				rpbi.renderArea.offset.x = 0;
 				rpbi.renderArea.offset.y = 0;
-				rpbi.renderArea.extent.width  = m_backBuffer.m_width;
-				rpbi.renderArea.extent.height = m_backBuffer.m_height;
+				rpbi.renderArea.extent.width  = frameBuffer.m_width;
+				rpbi.renderArea.extent.height = frameBuffer.m_height;
 				rpbi.clearValueCount = 0;
 				rpbi.pClearValues    = NULL;
 
@@ -3175,7 +3168,7 @@ VK_IMPORT_DEVICE
 				m_frameBuffers[ii].postReset();
 			}
 
-			if (m_resolution.reset & BGFX_RESET_CAPTURE)
+			if (m_reset & BGFX_RESET_CAPTURE)
 			{
 				const uint8_t  bpp         = bimg::getBitsPerPixel(bimg::TextureFormat::Enum(m_backBuffer.m_swapChain.m_colorFormat) );
 				const uint32_t pitch       = m_backBuffer.m_width * bpp / 8;
@@ -3190,16 +3183,16 @@ VK_IMPORT_DEVICE
 					VK_CHECK(createReadbackBuffer(m_captureSize, &m_captureBuffer, &m_captureMemory) );
 				}
 
-				g_callback->captureBegin(m_resolution.width, m_resolution.height, pitch, m_resolution.formatColor, false);
+				g_callback->captureBegin(m_mainSwapChain.width, m_mainSwapChain.height, pitch, m_mainSwapChain.formatColor, false);
 			}
 		}
 
-		bool updateResolution(const Resolution& _resolution)
+		bool updateResolution(const SwapChain& _swapChain, uint32_t _reset)
 		{
-			const bool suspended = !!(_resolution.reset & BGFX_RESET_SUSPEND);
+			const bool suspended = !!(_reset & BGFX_RESET_SUSPEND);
 
 			float maxAnisotropy = 1.0f;
-			if (!!(_resolution.reset & BGFX_RESET_MAXANISOTROPY) )
+			if (!!(_reset & BGFX_RESET_MAXANISOTROPY) )
 			{
 				maxAnisotropy = m_deviceProperties.limits.maxSamplerAnisotropy;
 			}
@@ -3211,7 +3204,7 @@ VK_IMPORT_DEVICE
 				m_samplerBorderColorCache.invalidate();
 			}
 
-			bool depthClamp = m_deviceFeatures.depthClamp && !!(_resolution.reset & BGFX_RESET_DEPTH_CLAMP);
+			bool depthClamp = m_deviceFeatures.depthClamp && !!(_reset & BGFX_RESET_DEPTH_CLAMP);
 
 			if (m_depthClamp != depthClamp)
 			{
@@ -3219,13 +3212,13 @@ VK_IMPORT_DEVICE
 				m_pipelineStateCache.invalidate();
 			}
 
-			if (NULL == m_backBuffer.m_nwh)
+			if (!m_backBuffer.isSwapChain() )
 			{
-				if (m_resolution.width  != _resolution.width
-				||  m_resolution.height != _resolution.height)
+				if (m_mainSwapChain.width  != _swapChain.width
+				||  m_mainSwapChain.height != _swapChain.height)
 				{
-					m_resolution.width  = _resolution.width;
-					m_resolution.height = _resolution.height;
+					m_mainSwapChain.width  = _swapChain.width;
+					m_mainSwapChain.height = _swapChain.height;
 
 					for (uint32_t ii = 0; ii < BX_COUNTOF(m_frameBuffers); ++ii)
 					{
@@ -3244,62 +3237,56 @@ VK_IMPORT_DEVICE
 				);
 
 			if (m_swapchainMaintenance1Supported
-			&& !!((_resolution.reset ^ m_resolution.reset) & BGFX_RESET_VSYNC) )
+			&& !!((_reset ^ m_reset) & BGFX_RESET_VSYNC) )
 			{
-				m_resolution.reset = 0
-					| (m_resolution.reset & ~BGFX_RESET_VSYNC)
-					| ( _resolution.reset &  BGFX_RESET_VSYNC)
+				m_reset = 0
+					| (m_reset & ~BGFX_RESET_VSYNC)
+					| ( _reset &  BGFX_RESET_VSYNC)
 					;
+
+				const bool vsync = !!(m_reset & BGFX_RESET_VSYNC);
 
 				for (uint16_t ii = 0; ii < m_numWindows; ++ii)
 				{
-					FrameBufferVK& fb = isValid(m_windows[ii])
-						? m_frameBuffers[m_windows[ii].idx]
-						: m_backBuffer
-						;
-
-					fb.m_swapChain.m_resolution.reset = 0
-						| (fb.m_swapChain.m_resolution.reset & ~BGFX_RESET_VSYNC)
-						| (                _resolution.reset &  BGFX_RESET_VSYNC)
-						;
+					getFrameBuffer(m_windows[ii]).m_swapChain.m_vsync = vsync;
 				}
 
 				maskFlags &= ~BGFX_RESET_VSYNC;
 			}
 
 			if (false
-			||  m_resolution.formatColor        !=  _resolution.formatColor
-			||  m_resolution.formatDepthStencil !=  _resolution.formatDepthStencil
-			||  m_resolution.width              !=  _resolution.width
-			||  m_resolution.height             !=  _resolution.height
-			|| (m_resolution.reset&maskFlags)   != (_resolution.reset&maskFlags)
+			||  m_mainSwapChain.formatColor        !=  _swapChain.formatColor
+			||  m_mainSwapChain.formatDepthStencil !=  _swapChain.formatDepthStencil
+			||  m_mainSwapChain.width              !=  _swapChain.width
+			||  m_mainSwapChain.height             !=  _swapChain.height
+			||  m_mainSwapChain.nwh                !=  _swapChain.nwh
+			||  m_mainSwapChain.ndt                !=  _swapChain.ndt
+			|| (m_reset&maskFlags)   != (_reset&maskFlags)
 			||  m_backBuffer.m_swapChain.m_needToRecreateSurface
 			||  m_backBuffer.m_swapChain.m_needToRecreateSwapchain
 			   )
 			{
-				uint32_t flags = _resolution.reset & (~BGFX_RESET_INTERNAL_FORCE);
+				uint32_t flags = _reset & (~BGFX_RESET_INTERNAL_FORCE);
 
-				if (m_backBuffer.m_nwh != g_platformData.nwh)
+				if (m_backBuffer.m_nwh != m_mainSwapChain.nwh)
 				{
-					m_backBuffer.m_nwh = g_platformData.nwh;
+					m_backBuffer.m_nwh = m_mainSwapChain.nwh;
 				}
 
-				m_resolution = _resolution;
-				m_resolution.reset = flags;
+				m_mainSwapChain = _swapChain;
+				m_reset = flags;
 
-				m_textVideoMem.resize(false, _resolution.width, _resolution.height);
+				m_textVideoMem.resize(false, _swapChain.width, _swapChain.height);
 				m_textVideoMem.clear();
 
 				preReset();
 
-				m_backBuffer.update(m_commandBuffer, m_resolution);
+				m_backBuffer.update(m_commandBuffer, m_mainSwapChain);
 				// Update the resolution again here, as the actual width and height
 				// is now final (as it was potentially clamped by the Vulkan driver).
-				m_resolution.width = m_backBuffer.m_width;
-				m_resolution.height = m_backBuffer.m_height;
+				m_mainSwapChain.width = m_backBuffer.m_width;
+				m_mainSwapChain.height = m_backBuffer.m_height;
 
-				// Propagate reset flags (e.g. BGFX_RESET_VSYNC) to secondary window swapchains,
-				// otherwise they'd keep their original present mode and ignore the reset.
 				for (uint16_t ii = 0; ii < m_numWindows; ++ii)
 				{
 					if (!isValid(m_windows[ii]) )
@@ -3308,10 +3295,8 @@ VK_IMPORT_DEVICE
 					}
 
 					FrameBufferVK& fb = m_frameBuffers[m_windows[ii].idx];
-					Resolution fbResolution = m_resolution;
-					fbResolution.width  = fb.m_width;
-					fbResolution.height = fb.m_height;
-					fb.update(m_commandBuffer, fbResolution);
+					const SwapChain desc = fb.m_swapChain.m_desc;
+					fb.update(m_commandBuffer, desc);
 				}
 
 				postReset();
@@ -3342,23 +3327,31 @@ VK_IMPORT_DEVICE
 			setShaderUniform(_flags, _regIndex, _val, _numRegs);
 		}
 
+		FrameBufferVK& getFrameBuffer(FrameBufferHandle _fbh)
+		{
+			return isValid(_fbh)
+				? m_frameBuffers[_fbh.idx]
+				: m_backBuffer
+				;
+		}
+
+		const FrameBufferVK& getFrameBuffer(FrameBufferHandle _fbh) const
+		{
+			return isValid(_fbh)
+				? m_frameBuffers[_fbh.idx]
+				: m_backBuffer
+				;
+		}
+
 		void setFrameBuffer(FrameBufferHandle _fbh)
 		{
 			BGFX_PROFILER_SCOPE("RendererContextVK::setFrameBuffer()", kColorFrame);
 
-			FrameBufferVK& newFrameBuffer = isValid(_fbh)
-				? m_frameBuffers[_fbh.idx]
-				: m_backBuffer
-				;
+			FrameBufferVK& newFrameBuffer = getFrameBuffer(_fbh);
+			FrameBufferVK& oldFrameBuffer = getFrameBuffer(m_fbh);
 
-			FrameBufferVK& oldFrameBuffer = isValid(m_fbh)
-				? m_frameBuffers[m_fbh.idx]
-				: m_backBuffer
-				;
-
-			if (NULL == oldFrameBuffer.m_nwh
-			&&  m_fbh.idx != _fbh.idx)
-			{
+			if (!oldFrameBuffer.isSwapChain()
+			&&  m_fbh.idx != _fbh.idx)			{
 				oldFrameBuffer.resolve();
 
 				for (uint8_t ii = 0, num = oldFrameBuffer.m_num; ii < num; ++ii)
@@ -3383,15 +3376,15 @@ VK_IMPORT_DEVICE
 				}
 			}
 
-			if (!isValid(_fbh)
-			&&  NULL == m_backBuffer.m_nwh)
+			if (!newFrameBuffer.isSwapChain() )
 			{
-				m_fbh = _fbh;
-				return;
-			}
+				if (0 == newFrameBuffer.m_num
+				&& !isValid(newFrameBuffer.m_depth) )
+				{
+					m_fbh = _fbh;
+					return;
+				}
 
-			if (NULL == newFrameBuffer.m_nwh)
-			{
 				for (uint8_t ii = 0, num = newFrameBuffer.m_num; ii < num; ++ii)
 				{
 					TextureVK& texture = m_textures[newFrameBuffer.m_texture[ii].idx];
@@ -3412,11 +3405,17 @@ VK_IMPORT_DEVICE
 			}
 			else
 			{
+				if (isValid(newFrameBuffer.m_swapChain.m_desc.depth) )
+				{
+					TextureVK& texture = m_textures[newFrameBuffer.m_swapChain.m_desc.depth.idx];
+					texture.setState(
+						  m_commandBuffer
+						, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL
+						);
+				}
+
 				int64_t start = bx::getHPCounter();
-				// Only block acquiring the main back buffer: window swap chains may not be
-				// served anymore (e.g. fully occluded window on Wayland compositors without
-				// fifo-v1) and must not stall the whole frame.
-				newFrameBuffer.acquire(m_commandBuffer, &newFrameBuffer == &m_backBuffer);
+				newFrameBuffer.acquire(m_commandBuffer, !isValid(_fbh) );
 				m_presentElapsed += bx::getHPCounter() - start;
 			}
 
@@ -3469,10 +3468,7 @@ VK_IMPORT_DEVICE
 				bas->colorWriteMask = writeMask;
 			}
 
-			const FrameBufferVK& frameBuffer = isValid(m_fbh)
-				? m_frameBuffers[m_fbh.idx]
-				: m_backBuffer
-				;
+			const FrameBufferVK& frameBuffer = getFrameBuffer(m_fbh);
 
 			const uint32_t numAttachments = NULL == frameBuffer.m_nwh
 				? frameBuffer.m_num
@@ -3860,13 +3856,13 @@ VK_IMPORT_DEVICE
 			const VkFormat formats[2] =
 			{
 				swapChain.m_sci.imageFormat,
-				swapChain.m_backBufferDepthStencil.m_format
+				swapChain.m_depthStencilFormat
 			};
 
 			const VkImageAspectFlags aspects[2] =
 			{
 				VK_IMAGE_ASPECT_COLOR_BIT,
-				swapChain.m_backBufferDepthStencil.m_aspectFlags
+				swapChain.m_depthStencilAspect
 			};
 
 			const bool resolve[2] =
@@ -4108,10 +4104,7 @@ VK_IMPORT_DEVICE
 				}
 			}
 
-			const FrameBufferVK& frameBuffer = isValid(m_fbh)
-				? m_frameBuffers[m_fbh.idx]
-				: m_backBuffer
-				;
+			const FrameBufferVK& frameBuffer = getFrameBuffer(m_fbh);
 
 			bx::HashMurmur2A murmur;
 			murmur.begin();
@@ -4784,10 +4777,7 @@ VK_IMPORT_DEVICE
 			bgfx::TextureFormat::Enum mrtFormat[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
 			VkImageAspectFlags depthAspectMask;
 
-			const FrameBufferVK& fb = isValid(m_fbh)
-				? m_frameBuffers[m_fbh.idx]
-				: m_backBuffer
-				;
+			const FrameBufferVK& fb = getFrameBuffer(m_fbh);
 
 			if (NULL == fb.m_nwh)
 			{
@@ -4803,7 +4793,7 @@ VK_IMPORT_DEVICE
 			{
 				numMrt = 1;
 				mrtFormat[0]    = fb.m_swapChain.m_colorFormat;
-				depthAspectMask = fb.m_swapChain.m_backBufferDepthStencil.m_aspectFlags;
+				depthAspectMask = fb.m_swapChain.m_depthStencilAspect;
 			}
 
 			VkClearAttachment attachments[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS + 1];
@@ -5107,6 +5097,8 @@ VK_IMPORT_DEVICE
 
 		FrameBufferVK m_backBuffer;
 
+		FrameBufferHandle m_dbgTextFbh;
+
 		uint16_t m_numWindows;
 		FrameBufferHandle m_windows[BGFX_CONFIG_MAX_FRAME_BUFFERS];
 		int64_t m_presentElapsed;
@@ -5164,7 +5156,8 @@ VK_IMPORT_DEVICE
 		StateCacheT<uint32_t> m_samplerBorderColorCache;
 		StateCacheLru<VkImageView, 1024> m_imageViewCache;
 
-		Resolution m_resolution;
+		SwapChain m_mainSwapChain;
+		uint32_t  m_reset;
 		float m_maxAnisotropy;
 		bool m_depthClamp;
 		bool m_wireframe;
@@ -7866,7 +7859,7 @@ VK_DESTROY
 		}
 	}
 
-	VkResult SwapChainVK::create(VkCommandBuffer _commandBuffer, void* _nwh, const Resolution& _resolution)
+	VkResult SwapChainVK::create(VkCommandBuffer _commandBuffer, void* _nwh, const SwapChain& _desc)
 	{
 		struct ErrorState
 		{
@@ -7888,8 +7881,9 @@ VK_DESTROY
 			return result;
 		}
 
-		m_nwh = _nwh;
-		m_resolution = _resolution;
+		m_nwh   = _nwh;
+		m_desc  = _desc;
+		m_vsync = !!(s_renderVK->m_reset & BGFX_RESET_VSYNC);
 
 		m_queue = s_renderVK->m_globalQueue;
 
@@ -8007,42 +8001,48 @@ VK_DESTROY
 		m_nwh = NULL;
 	}
 
-	void SwapChainVK::update(VkCommandBuffer _commandBuffer, void* _nwh, const Resolution& _resolution)
+	void SwapChainVK::update(VkCommandBuffer _commandBuffer, void* _nwh, const SwapChain& _desc)
 	{
 		BGFX_PROFILER_SCOPE("SwapChainVK::update", kColorFrame);
 
 		const VkPhysicalDevice physicalDevice = s_renderVK->m_physicalDevice;
 
-		const uint64_t recreateSurfaceMask     = BGFX_RESET_HIDPI;
-		const uint64_t recreateSwapchainMask   = 0
-			| BGFX_RESET_SRGB_BACKBUFFER
-			| (s_renderVK->m_swapchainMaintenance1Supported ? BGFX_RESET_NONE : BGFX_RESET_VSYNC)
+		const uint64_t recreateSurfaceMask     = BGFX_SWAP_CHAIN_HIDPI;
+		const uint64_t recreateSwapchainMask   = BGFX_SWAP_CHAIN_SRGB_BACKBUFFER;
+		const uint64_t recreateAttachmentsMask = BGFX_SWAP_CHAIN_MSAA_MASK;
+
+		const bool vsync = !!(s_renderVK->m_reset & BGFX_RESET_VSYNC);
+		const bool vsyncChanged = false
+			|| (m_vsync != vsync && !s_renderVK->m_swapchainMaintenance1Supported)
 			;
-		const uint64_t recreateAttachmentsMask = BGFX_RESET_MSAA_MASK;
 
 		const bool recreateSurface = false
 			|| m_needToRecreateSurface
 			|| m_nwh != _nwh
-			|| (m_resolution.reset & recreateSurfaceMask) != (_resolution.reset & recreateSurfaceMask)
+			|| (m_desc.flags & recreateSurfaceMask) != (_desc.flags & recreateSurfaceMask)
 			;
 
 		const bool recreateSwapchain = false
 			|| m_needToRecreateSwapchain
-			|| m_resolution.formatColor        != _resolution.formatColor
-			|| m_resolution.formatDepthStencil != _resolution.formatDepthStencil
-			|| m_resolution.width              != _resolution.width
-			|| m_resolution.height             != _resolution.height
-			|| (m_resolution.reset & recreateSwapchainMask) != (_resolution.reset & recreateSwapchainMask)
+			|| m_desc.formatColor      != _desc.formatColor
+			|| m_desc.formatDepthStencil != _desc.formatDepthStencil
+			|| m_desc.width       != _desc.width
+			|| m_desc.height      != _desc.height
+			|| (m_desc.flags & recreateSwapchainMask) != (_desc.flags & recreateSwapchainMask)
+			|| vsyncChanged
 			|| recreateSurface
 			;
 
+		// A different user depth (or none) is a different depth attachment.
 		const bool recreateAttachments = false
-			|| (m_resolution.reset & recreateAttachmentsMask) != (_resolution.reset & recreateAttachmentsMask)
+			|| (m_desc.flags & recreateAttachmentsMask) != (_desc.flags & recreateAttachmentsMask)
+			|| m_desc.depth.idx != _desc.depth.idx
 			|| recreateSwapchain
 			;
 
-		m_nwh = _nwh;
-		m_resolution = _resolution;
+		m_nwh   = _nwh;
+		m_desc  = _desc;
+		m_vsync = vsync;
 
 		if (recreateAttachments)
 		{
@@ -8082,25 +8082,25 @@ VK_DESTROY
 					;
 
 				const uint32_t width = bx::clamp<uint32_t>(
-					  m_resolution.width
+					  m_desc.width
 					, surfaceCapabilities.minImageExtent.width
 					, surfaceCapabilities.maxImageExtent.width
 					);
 				const uint32_t height = bx::clamp<uint32_t>(
-					  m_resolution.height
+					  m_desc.height
 					, surfaceCapabilities.minImageExtent.height
 					, surfaceCapabilities.maxImageExtent.height
 					);
 
-				// swapchain can't have size 0
-				// on some platforms this happens when minimized
-				if (width  == 0
-				||  height == 0
+				if (0 == width
+				||  0 == height
 				||  VK_SUCCESS != result
 				||  !surfaceCapsSane)
 				{
 					m_sci.oldSwapchain = VK_NULL_HANDLE;
 					s_renderVK->kick(true);
+
+					m_needToRecreateSwapchain = true;
 					return;
 				}
 
@@ -8161,7 +8161,7 @@ VK_DESTROY
 					sci.sType = VK_STRUCTURE_TYPE_WAYLAND_SURFACE_CREATE_INFO_KHR;
 					sci.pNext = NULL;
 					sci.flags = 0;
-					sci.display = (wl_display*)g_platformData.ndt;
+					sci.display = (wl_display*)m_desc.ndt;
 					sci.surface = (wl_surface*)m_nwh;
 					result = vkCreateWaylandSurfaceKHR(instance, &sci, allocatorCb, &m_surface);
 					BX_WARN(VK_SUCCESS == result, "vkCreateWaylandSurfaceKHR failed %d: %s.", result, getName(result) );
@@ -8178,7 +8178,7 @@ VK_DESTROY
 					sci.sType = VK_STRUCTURE_TYPE_XLIB_SURFACE_CREATE_INFO_KHR;
 					sci.pNext = NULL;
 					sci.flags  = 0;
-					sci.dpy    = (Display*)g_platformData.ndt;
+					sci.dpy    = (Display*)m_desc.ndt;
 					sci.window = (Window)m_nwh;
 					result = vkCreateXlibSurfaceKHR(instance, &sci, allocatorCb, &m_surface);
 					BX_WARN(VK_SUCCESS == result, "vkCreateXlibSurfaceKHR failed %d: %s.", result, getName(result) );
@@ -8203,7 +8203,7 @@ VK_DESTROY
 							sci.sType      = VK_STRUCTURE_TYPE_XCB_SURFACE_CREATE_INFO_KHR;
 							sci.pNext      = NULL;
 							sci.flags      = 0;
-							sci.connection = XGetXCBConnection( (Display*)g_platformData.ndt);
+							sci.connection = XGetXCBConnection( (Display*)m_desc.ndt);
 							if (NULL != sci.connection)
 							{
 								sci.window     = bx::narrowCast<xcb_window_t>(uintptr_t(m_nwh) );
@@ -8243,7 +8243,7 @@ VK_DESTROY
 					return result;
 				}
 
-				if (m_resolution.reset & BGFX_RESET_HIDPI)
+				if (m_desc.flags & BGFX_SWAP_CHAIN_HIDPI)
 				{
 					layer.contentsScale = [window backingScaleFactor];
 				}
@@ -8343,12 +8343,12 @@ VK_DESTROY
 			return VK_ERROR_INITIALIZATION_FAILED;
 		}
 
-		const uint32_t swapBufferCount = bx::clamp<uint32_t>(m_resolution.numBackBuffers, minSwapBufferCount, maxSwapBufferCount);
+		const uint32_t swapBufferCount = bx::clamp<uint32_t>(m_desc.numBackBuffers, minSwapBufferCount, maxSwapBufferCount);
 
 		const VkColorSpaceKHR surfaceColorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
 
-		const bool srgb = !!(m_resolution.reset & BGFX_RESET_SRGB_BACKBUFFER);
-		m_colorFormat = m_resolution.formatColor;
+		const bool srgb = !!(m_desc.flags & BGFX_SWAP_CHAIN_SRGB_BACKBUFFER);
+		m_colorFormat = m_desc.formatColor;
 		m_depthFormat = bgfx::TextureFormat::UnknownDepth;
 
 		if (TextureFormat::Count == m_colorFormat)
@@ -8363,20 +8363,20 @@ VK_DESTROY
 			;
 
 		const uint32_t width = bx::clamp<uint32_t>(
-			  m_resolution.width
+			  m_desc.width
 			, surfaceCapabilities.minImageExtent.width
 			, surfaceCapabilities.maxImageExtent.width
 			);
 		const uint32_t height = bx::clamp<uint32_t>(
-			  m_resolution.height
+			  m_desc.height
 			, surfaceCapabilities.minImageExtent.height
 			, surfaceCapabilities.maxImageExtent.height
 			);
-		if (width != m_resolution.width || height != m_resolution.height)
+		if (width != m_desc.width || height != m_desc.height)
 		{
 			BX_TRACE("Clamped swapchain resolution from %dx%d to %dx%d"
-					, m_resolution.width
-					, m_resolution.height
+					, m_desc.width
+					, m_desc.height
 					, width
 					, height
 					);
@@ -8384,7 +8384,7 @@ VK_DESTROY
 
 		VkCompositeAlphaFlagBitsKHR compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
 
-		if (m_resolution.reset & BGFX_RESET_TRANSPARENT_BACKBUFFER)
+		if (m_desc.flags & BGFX_SWAP_CHAIN_TRANSPARENT_BACKBUFFER)
 		{
 			if (surfaceCapabilities.supportedCompositeAlpha & VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR)
 			{
@@ -8413,7 +8413,7 @@ VK_DESTROY
 		m_presentModeWithVSyncIdx    = findPresentMode(true);
 		m_presentModeWithoutVSyncIdx = findPresentMode(false);
 
-		const bool vsync = !!(m_resolution.reset & BGFX_RESET_VSYNC);
+		const bool vsync = m_vsync;
 		const uint32_t presentModeIdx = vsync
 			? m_presentModeWithVSyncIdx
 			: m_presentModeWithoutVSyncIdx
@@ -8597,7 +8597,7 @@ VK_DESTROY
 
 		VkResult result = VK_SUCCESS;
 
-		const uint32_t samplerIndex = (m_resolution.reset & BGFX_RESET_MSAA_MASK) >> BGFX_RESET_MSAA_SHIFT;
+		const uint32_t samplerIndex = (m_desc.flags & BGFX_SWAP_CHAIN_MSAA_MASK) >> BGFX_SWAP_CHAIN_MSAA_SHIFT;
 		const uint64_t textureFlags = (uint64_t(samplerIndex + 1) << BGFX_TEXTURE_RT_MSAA_SHIFT) | BGFX_TEXTURE_RT | BGFX_TEXTURE_RT_WRITE_ONLY;
 		m_sampler = s_msaa[samplerIndex];
 
@@ -8606,14 +8606,34 @@ VK_DESTROY
 			: BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER
 			;
 
-		if (bimg::isDepth(bimg::TextureFormat::Enum(m_resolution.formatDepthStencil) ) )
+		if (isValid(m_desc.depth) )
+		{
+			TextureVK& texture = s_renderVK->m_textures[m_desc.depth.idx];
+
+			result = texture.createView(0, 1, 0, 1
+				, VK_IMAGE_VIEW_TYPE_2D
+				, texture.m_aspectFlags
+				, true
+				, &m_backBufferDepthStencilImageView
+				);
+
+			if (VK_SUCCESS != result)
+			{
+				BX_TRACE("Create swapchain error: creating shared depth stencil image view failed %d: %s.", result, getName(result) );
+				return result;
+			}
+
+			m_depthStencilFormat = texture.m_format;
+			m_depthStencilAspect = texture.m_aspectFlags;
+		}
+		else if (bimg::isDepth(bimg::TextureFormat::Enum(m_desc.formatDepthStencil) ) )
 		{
 			// the spec guarantees that at least one of D24S8 and D32FS8 is supported
 			VkFormat depthFormat = VK_FORMAT_D32_SFLOAT_S8_UINT;
 
-			if (g_caps.formats[m_resolution.formatDepthStencil] & requiredCaps)
+			if (g_caps.formats[m_desc.formatDepthStencil] & requiredCaps)
 			{
-				depthFormat = s_textureFormat[m_resolution.formatDepthStencil].m_fmtDsv;
+				depthFormat = s_textureFormat[m_desc.formatDepthStencil].m_fmtDsv;
 			}
 			else if (g_caps.formats[TextureFormat::D24S8] & requiredCaps)
 			{
@@ -8647,34 +8667,37 @@ VK_DESTROY
 				return result;
 			}
 
-			if (m_sampler.Count > 1)
-			{
-				result = m_backBufferColorMsaa.create(
-					  _commandBuffer
-					, m_sci.imageExtent.width
-					, m_sci.imageExtent.height
-					, textureFlags
-					, m_sci.imageFormat
-					);
+			m_depthStencilFormat = m_backBufferDepthStencil.m_format;
+			m_depthStencilAspect = m_backBufferDepthStencil.m_aspectFlags;
+		}
 
-				if (VK_SUCCESS != result)
-				{
-					BX_TRACE("Create swapchain error: creating MSAA color image failed %d: %s.", result, getName(result) );
-					return result;
-				}
-
-				result = m_backBufferColorMsaa.createView(0, 1, 0, 1
-					, VK_IMAGE_VIEW_TYPE_2D
-					, m_backBufferColorMsaa.m_aspectFlags
-					, true
-					, &m_backBufferColorMsaaImageView
+		if (m_sampler.Count > 1)
+		{
+			result = m_backBufferColorMsaa.create(
+				  _commandBuffer
+				, m_sci.imageExtent.width
+				, m_sci.imageExtent.height
+				, textureFlags
+				, m_sci.imageFormat
 				);
 
-				if (VK_SUCCESS != result)
-				{
-					BX_TRACE("Create swapchain error: creating MSAA color image view failed %d: %s.", result, getName(result) );
-					return result;
-				}
+			if (VK_SUCCESS != result)
+			{
+				BX_TRACE("Create swapchain error: creating MSAA color image failed %d: %s.", result, getName(result) );
+				return result;
+			}
+
+			result = m_backBufferColorMsaa.createView(0, 1, 0, 1
+				, VK_IMAGE_VIEW_TYPE_2D
+				, m_backBufferColorMsaa.m_aspectFlags
+				, true
+				, &m_backBufferColorMsaaImageView
+			);
+
+			if (VK_SUCCESS != result)
+			{
+				BX_TRACE("Create swapchain error: creating MSAA color image view failed %d: %s.", result, getName(result) );
+				return result;
 			}
 		}
 
@@ -8690,6 +8713,9 @@ VK_DESTROY
 
 		m_backBufferDepthStencil.destroy();
 		m_backBufferColorMsaa.destroy();
+
+		m_depthStencilFormat = VK_FORMAT_UNDEFINED;
+		m_depthStencilAspect = 0;
 	}
 
 	VkResult SwapChainVK::createFrameBuffer()
@@ -8846,7 +8872,7 @@ VK_DESTROY
 				result = vkAcquireNextImageKHR(
 					  device
 					, m_swapChain
-					, _block ? UINT64_MAX : 0
+					, _block ? UINT64_MAX : 1000000
 					, m_lastImageAcquiredSemaphore
 					, VK_NULL_HANDLE
 					, &m_backBufferColorIdx
@@ -8856,9 +8882,6 @@ VK_DESTROY
 			if (!_block
 			&& (VK_NOT_READY == result || VK_TIMEOUT == result) )
 			{
-				// No image available without blocking, e.g. a fully occluded window the
-				// compositor stopped serving; skip this swap chain for this frame instead
-				// of stalling all swap chains. The semaphore was not used, undo the rotation.
 				m_currentSemaphore = (m_currentSemaphore + kMaxBackBuffers - 1) % kMaxBackBuffers;
 				return false;
 			}
@@ -8942,7 +8965,7 @@ VK_DESTROY
 			VkSwapchainPresentModeInfoEXT presentModeInfo;
 			if (s_renderVK->m_swapchainMaintenance1Supported)
 			{
-				const uint32_t presentModeIdx = !!(m_resolution.reset & BGFX_RESET_VSYNC)
+				const uint32_t presentModeIdx = m_vsync
 					? m_presentModeWithVSyncIdx
 					: m_presentModeWithoutVSyncIdx;
 					;
@@ -9045,24 +9068,11 @@ VK_DESTROY
 		postReset();
 	}
 
-	VkResult FrameBufferVK::create(uint16_t _denseIdx, void* _nwh, uint32_t _width, uint32_t _height, TextureFormat::Enum _colorFormat, TextureFormat::Enum _depthFormat)
+	VkResult FrameBufferVK::create(uint16_t _denseIdx, const SwapChain& _desc)
 	{
 		BGFX_PROFILER_SCOPE("FrameBufferVK::create", kColorFrame);
 
-		VkResult result = VK_SUCCESS;
-
-		Resolution resolution = s_renderVK->m_resolution;
-		resolution.formatColor        = TextureFormat::Count == _colorFormat ? resolution.formatColor        : _colorFormat;
-		resolution.formatDepthStencil = TextureFormat::Count == _depthFormat ? resolution.formatDepthStencil : _depthFormat;
-		resolution.width  = _width;
-		resolution.height = _height;
-
-		if (_denseIdx != UINT16_MAX)
-		{
-			resolution.reset &= ~BGFX_RESET_MSAA_MASK;
-		}
-
-		result = m_swapChain.create(s_renderVK->m_commandBuffer, _nwh, resolution);
+		VkResult result = m_swapChain.create(s_renderVK->m_commandBuffer, _desc.nwh, _desc);
 
 		if (VK_SUCCESS != result)
 		{
@@ -9077,7 +9087,7 @@ VK_DESTROY
 		}
 
 		m_denseIdx = _denseIdx;
-		m_nwh      = _nwh;
+		m_nwh      = _desc.nwh;
 		m_width    = m_swapChain.m_sci.imageExtent.width;
 		m_height   = m_swapChain.m_sci.imageExtent.height;
 		m_sampler  = m_swapChain.m_sampler;
@@ -9178,13 +9188,13 @@ VK_DESTROY
 		}
 	}
 
-	void FrameBufferVK::update(VkCommandBuffer _commandBuffer, const Resolution& _resolution)
+	void FrameBufferVK::update(VkCommandBuffer _commandBuffer, const SwapChain& _desc)
 	{
 		BGFX_PROFILER_SCOPE("FrameBufferVK::update", kColorResource);
 
-		m_swapChain.update(_commandBuffer, m_nwh, _resolution);
+		m_swapChain.update(_commandBuffer, m_nwh, _desc);
 		VK_CHECK(s_renderVK->getRenderPass(m_swapChain, 0, &m_renderPass, &m_renderPassHashKey) );
-		// Don't believe the passed Resolution, as the Vulkan driver might have
+		// Don't believe the passed size, as the Vulkan driver might have
 		// specified another resolution, which we had to obey.
 		m_width   = m_swapChain.m_sci.imageExtent.width;
 		m_height  = m_swapChain.m_sci.imageExtent.height;
@@ -9258,14 +9268,12 @@ VK_DESTROY
 		BX_ASSERT(NULL != m_nwh, "FrameBufferVK::acquire is only valid for swap-chain framebuffers.");
 		BGFX_PROFILER_SCOPE("FrameBufferVK::acquire", kColorFrame);
 
-		// Window frame buffers are not recreated by updateResolution like the main back
-		// buffer is, so recreate here when the swap chain was flagged, e.g. with
-		// VK_SUBOPTIMAL_KHR after the window moved to another display.
-		if (this != &s_renderVK->m_backBuffer
-		&&  VK_NULL_HANDLE != m_swapChain.m_swapChain
+		if (    UINT16_MAX != m_denseIdx
+		&&  VK_NULL_HANDLE != m_swapChain.m_surface
 		&& (m_swapChain.m_needToRecreateSwapchain || m_swapChain.m_needToRecreateSurface) )
 		{
-			update(_commandBuffer, m_swapChain.m_resolution);
+			const SwapChain desc = m_swapChain.m_desc;
+			update(_commandBuffer, desc);
 
 			// update may kick the queue and rotate the command buffer, refresh the local handle
 			_commandBuffer = s_renderVK->m_commandBuffer;
@@ -10020,7 +10028,7 @@ VK_DESTROY
 	void RendererContextVK::submit(Frame* _render, const ClearQuad& /*_clearQuad*/, const MipGen& /*_mipGen*/, TextVideoMemBlitter& _textVideoMemBlitter)
 	{
 		if (m_lost
-		||  updateResolution(_render->m_resolution) )
+		||  updateResolution(_render->m_mainSwapChain, _render->m_reset) )
 		{
 			return;
 		}
@@ -10244,10 +10252,7 @@ VK_DESTROY
 
 					profiler.begin(view);
 
-					const FrameBufferVK& fb = isValid(m_fbh)
-						? m_frameBuffers[m_fbh.idx]
-						: m_backBuffer
-						;
+					const FrameBufferVK& fb = getFrameBuffer(m_fbh);
 
 					isFrameBufferValid = fb.isRenderable();
 
@@ -10316,7 +10321,7 @@ VK_DESTROY
 							{
 								numMrt = 1;
 								mrtFormat[0]    = fb.m_swapChain.m_colorFormat;
-								depthAspectMask = fb.m_swapChain.m_backBufferDepthStencil.m_aspectFlags;
+								depthAspectMask = fb.m_swapChain.m_depthStencilAspect;
 							}
 
 							VkClearValue clearValues[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS + 1];
@@ -11209,12 +11214,12 @@ VK_DESTROY
 					, double(presentMax)*toMs
 					);
 
-				const uint32_t msaa = (m_resolution.reset&BGFX_RESET_MSAA_MASK)>>BGFX_RESET_MSAA_SHIFT;
+				const uint32_t msaa = (m_mainSwapChain.flags&BGFX_SWAP_CHAIN_MSAA_MASK)>>BGFX_SWAP_CHAIN_MSAA_SHIFT;
 				tvm.printf(10, pos++, 0x8b, " Reset flags: [%c] vsync, [%c] MSAAx%d, [%c] MaxAnisotropy "
-					, !!(m_resolution.reset&BGFX_RESET_VSYNC) ? '\xfe' : ' '
+					, !!(m_reset&BGFX_RESET_VSYNC) ? '\xfe' : ' '
 					, 0 != msaa ? '\xfe' : ' '
 					, 1<<msaa
-					, !!(m_resolution.reset&BGFX_RESET_MAXANISOTROPY) ? '\xfe' : ' '
+					, !!(m_reset&BGFX_RESET_MAXANISOTROPY) ? '\xfe' : ' '
 					);
 
 				double elapsedCpuMs = double(frameTime)*toMs;
@@ -11287,7 +11292,7 @@ VK_DESTROY
 				presentMax = m_presentElapsed;
 			}
 
-			dbgTextSubmit(this, _textVideoMemBlitter, tvm);
+			dbgTextSubmit(this, _textVideoMemBlitter, tvm, _render->m_debugFrameBuffer, _render->m_debugTextScale);
 
 			BGFX_VK_PROFILER_END();
 		}
@@ -11295,7 +11300,7 @@ VK_DESTROY
 		{
 			BGFX_VK_PROFILER_BEGIN_LITERAL("debugtext", kColorFrame);
 
-			dbgTextSubmit(this, _textVideoMemBlitter, _render->m_textVideoMem);
+			dbgTextSubmit(this, _textVideoMemBlitter, _render->m_textVideoMem, _render->m_debugFrameBuffer, _render->m_debugTextScale);
 
 			BGFX_VK_PROFILER_END();
 		}
@@ -11313,10 +11318,7 @@ VK_DESTROY
 		{
 			for (uint16_t ii = 0; ii < m_numWindows; ++ii)
 			{
-				FrameBufferVK& fb = isValid(m_windows[ii])
-					? m_frameBuffers[m_windows[ii].idx]
-					: m_backBuffer
-					;
+				FrameBufferVK& fb = getFrameBuffer(m_windows[ii]);
 
 				if (fb.m_needPresent)
 				{

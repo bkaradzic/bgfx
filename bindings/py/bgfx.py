@@ -536,6 +536,26 @@ class DebugFlags(enum.IntFlag):
 	Text = 0x8
 	Profiler = 0x10
 
+class SwapChainMsaaFlags(enum.IntFlag):
+	X2 = 0x10
+	X4 = 0x20
+	X8 = 0x30
+	X16 = 0x40
+	Shift = 0x4
+	Mask = 0x70
+
+class SwapChainFlags(enum.IntFlag):
+	None_ = 0x0
+	Fullscreen = 0x1
+	SrgbBackbuffer = 0x8000
+	Hdr10 = 0x10000
+	Hidpi = 0x20000
+	TransparentBackbuffer = 0x100000
+
+class SwapChainFullscreenFlags(enum.IntFlag):
+	Shift = 0x0
+	Mask = 0x1
+
 class CapsFlags(enum.IntFlag):
 	AlphaToCoverage = 0x1
 	BlendIndependent = 0x2
@@ -658,7 +678,7 @@ class InternalData(ctypes.Structure):
 class PlatformData(ctypes.Structure):
 	pass
 
-class Resolution(ctypes.Structure):
+class SwapChain(ctypes.Structure):
 	pass
 
 class InitLimits(ctypes.Structure):
@@ -871,24 +891,22 @@ InternalData._fields_ = [
 ]
 
 PlatformData._fields_ = [
-	("ndt", ctypes.c_void_p),
-	("nwh", ctypes.c_void_p),
 	("context", ctypes.c_void_p),
 	("queue", ctypes.c_void_p),
-	("backBuffer", ctypes.c_void_p),
-	("backBufferDS", ctypes.c_void_p),
 	("type", ctypes.c_int),
 ]
 
-Resolution._fields_ = [
-	("formatColor", ctypes.c_int),
-	("formatDepthStencil", ctypes.c_int),
+SwapChain._fields_ = [
+	("nwh", ctypes.c_void_p),
+	("ndt", ctypes.c_void_p),
 	("width", ctypes.c_uint32),
 	("height", ctypes.c_uint32),
-	("reset", ctypes.c_uint32),
+	("flags", ctypes.c_uint32),
+	("formatColor", ctypes.c_int),
+	("formatDepthStencil", ctypes.c_int),
+	("depth", TextureHandle),
 	("numBackBuffers", ctypes.c_uint8),
 	("maxFrameLatency", ctypes.c_uint8),
-	("debugTextScale", ctypes.c_uint8),
 ]
 
 InitLimits._fields_ = [
@@ -911,7 +929,8 @@ Init._fields_ = [
 	("fallback", ctypes.c_bool),
 	("videoDecode", ctypes.c_bool),
 	("platformData", PlatformData),
-	("resolution", Resolution),
+	("swapChain", SwapChain),
+	("reset", ctypes.c_uint32),
 	("limits", InitLimits),
 	("callback", ctypes.c_void_p),
 	("allocator", ctypes.c_void_p),
@@ -1176,7 +1195,7 @@ def _bind(lib):
 	bgfx_shutdown.restype = None
 	global bgfx_reset
 	bgfx_reset = lib.bgfx_reset
-	bgfx_reset.argtypes = [ctypes.c_uint32, ctypes.c_uint32, ctypes.c_uint32, ctypes.c_int]
+	bgfx_reset.argtypes = [ctypes.c_uint32, ctypes.POINTER(SwapChain)]
 	bgfx_reset.restype = None
 	global bgfx_frame
 	bgfx_frame = lib.bgfx_frame
@@ -1212,7 +1231,7 @@ def _bind(lib):
 	bgfx_make_ref_release.restype = ctypes.POINTER(Memory)
 	global bgfx_set_debug
 	bgfx_set_debug = lib.bgfx_set_debug
-	bgfx_set_debug.argtypes = [ctypes.c_uint32]
+	bgfx_set_debug.argtypes = [ctypes.c_uint32, FrameBufferHandle, ctypes.c_uint8]
 	bgfx_set_debug.restype = None
 	global bgfx_dbg_text_clear
 	bgfx_dbg_text_clear = lib.bgfx_dbg_text_clear
@@ -1442,10 +1461,14 @@ def _bind(lib):
 	bgfx_create_frame_buffer_from_attachment = lib.bgfx_create_frame_buffer_from_attachment
 	bgfx_create_frame_buffer_from_attachment.argtypes = [ctypes.c_uint8, ctypes.POINTER(Attachment), ctypes.c_bool]
 	bgfx_create_frame_buffer_from_attachment.restype = FrameBufferHandle
-	global bgfx_create_frame_buffer_from_nwh
-	bgfx_create_frame_buffer_from_nwh = lib.bgfx_create_frame_buffer_from_nwh
-	bgfx_create_frame_buffer_from_nwh.argtypes = [ctypes.c_void_p, ctypes.c_uint16, ctypes.c_uint16, ctypes.c_int, ctypes.c_int]
-	bgfx_create_frame_buffer_from_nwh.restype = FrameBufferHandle
+	global bgfx_create_frame_buffer_from_swap_chain
+	bgfx_create_frame_buffer_from_swap_chain = lib.bgfx_create_frame_buffer_from_swap_chain
+	bgfx_create_frame_buffer_from_swap_chain.argtypes = [ctypes.POINTER(SwapChain)]
+	bgfx_create_frame_buffer_from_swap_chain.restype = FrameBufferHandle
+	global bgfx_update_swap_chain
+	bgfx_update_swap_chain = lib.bgfx_update_swap_chain
+	bgfx_update_swap_chain.argtypes = [FrameBufferHandle, ctypes.POINTER(SwapChain)]
+	bgfx_update_swap_chain.restype = None
 	global bgfx_set_frame_buffer_name
 	bgfx_set_frame_buffer_name = lib.bgfx_set_frame_buffer_name
 	bgfx_set_frame_buffer_name.argtypes = [FrameBufferHandle, ctypes.c_char_p, ctypes.c_int32]
@@ -1750,22 +1773,10 @@ def _bind(lib):
 	bgfx_render_frame = lib.bgfx_render_frame
 	bgfx_render_frame.argtypes = [ctypes.c_int32]
 	bgfx_render_frame.restype = ctypes.c_int
-	global bgfx_set_platform_data
-	bgfx_set_platform_data = lib.bgfx_set_platform_data
-	bgfx_set_platform_data.argtypes = [ctypes.POINTER(PlatformData)]
-	bgfx_set_platform_data.restype = None
 	global bgfx_get_internal_data
 	bgfx_get_internal_data = lib.bgfx_get_internal_data
 	bgfx_get_internal_data.argtypes = []
 	bgfx_get_internal_data.restype = ctypes.POINTER(InternalData)
-	global bgfx_override_internal_texture_ptr
-	bgfx_override_internal_texture_ptr = lib.bgfx_override_internal_texture_ptr
-	bgfx_override_internal_texture_ptr.argtypes = [TextureHandle, ctypes.c_size_t, ctypes.c_uint16]
-	bgfx_override_internal_texture_ptr.restype = ctypes.c_size_t
-	global bgfx_override_internal_texture
-	bgfx_override_internal_texture = lib.bgfx_override_internal_texture
-	bgfx_override_internal_texture.argtypes = [TextureHandle, ctypes.c_uint16, ctypes.c_uint16, ctypes.c_uint8, ctypes.c_int, ctypes.c_uint64]
-	bgfx_override_internal_texture.restype = ctypes.c_size_t
 	global bgfx_set_marker
 	bgfx_set_marker = lib.bgfx_set_marker
 	bgfx_set_marker.argtypes = [ctypes.c_char_p, ctypes.c_int32]
