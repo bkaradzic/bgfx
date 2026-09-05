@@ -2779,7 +2779,7 @@ namespace bgfx { namespace gl
 					;
 
 				if (BX_ENABLED(BX_PLATFORM_EMSCRIPTEN)
-				||  NULL == glPolygonMode)
+				|| BX_ENABLED(BX_PLATFORM_ANDROID) || NULL == glPolygonMode)
 				{
 					glPolygonMode = stubPolygonMode;
 				}
