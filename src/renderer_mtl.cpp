@@ -5841,12 +5841,12 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 				m_blitCommandEncoder->copyFromTexture(
 					  src.m_ptr
 					, 0
-					, 0
+					, blit.m_srcMip
 					, MTL::Origin::Make(blit.m_srcX, blit.m_srcY, blit.m_srcZ)
 					, MTL::Size::Make(blit.m_width, blit.m_height, bx::max<int32_t>(blit.m_depth, 1) )
 					, dst.m_ptr
 					, 0
-					, 0
+					, blit.m_dstMip
 					, MTL::Origin::Make(blit.m_dstX, blit.m_dstY, blit.m_dstZ)
 					);
 #if BX_PLATFORM_OSX
