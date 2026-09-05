@@ -6953,7 +6953,6 @@ namespace bgfx
 			const uint32_t maskFlags = ~(0
 				| (0 != (g_caps.supported & BGFX_CAPS_TRANSPARENT_BACKBUFFER) ? 0 : BGFX_SWAP_CHAIN_TRANSPARENT_BACKBUFFER)
 				| (0 != (g_caps.supported & BGFX_CAPS_HDR10)                  ? 0 : BGFX_SWAP_CHAIN_HDR10)
-				| (0 != (g_caps.supported & BGFX_CAPS_HIDPI)                  ? 0 : BGFX_SWAP_CHAIN_HIDPI)
 				);
 
 			const uint32_t flags = _flags & maskFlags;
@@ -6965,7 +6964,6 @@ namespace bgfx
 		)
 			WARN_SWAP_CHAIN_CAPS_FLAGS(TRANSPARENT_BACKBUFFER);
 			WARN_SWAP_CHAIN_CAPS_FLAGS(HDR10);
-			WARN_SWAP_CHAIN_CAPS_FLAGS(HIDPI);
 
 #undef WARN_SWAP_CHAIN_CAPS_FLAGS
 

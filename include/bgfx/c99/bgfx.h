@@ -158,7 +158,7 @@ typedef enum bgfx_attrib_type
     BGFX_ATTRIB_TYPE_UINT10,                  /** ( 2) Uint10, availability depends on: `BGFX_CAPS_VERTEX_ATTRIB_UINT10`. */
     BGFX_ATTRIB_TYPE_INT16,                   /** ( 3) Int16                          */
     BGFX_ATTRIB_TYPE_UINT16,                  /** ( 4) Uint16                         */
-    BGFX_ATTRIB_TYPE_HALF,                    /** ( 5) Half, availability depends on: `BGFX_CAPS_VERTEX_ATTRIB_HALF`. */
+    BGFX_ATTRIB_TYPE_HALF,                    /** ( 5) Half.                          */
     BGFX_ATTRIB_TYPE_FLOAT,                   /** ( 6) Float                          */
     BGFX_ATTRIB_TYPE_INT32,                   /** ( 7) Int32                          */
     BGFX_ATTRIB_TYPE_UINT32,                  /** ( 8) Uint32                         */
@@ -2318,8 +2318,7 @@ BGFX_C_API bgfx_texture_handle_t bgfx_create_texture(const bgfx_memory_t* _mem, 
  * @param[in] _width Width.
  * @param[in] _height Height.
  * @param[in] _hasMips Indicates that texture contains full mip-map chain.
- * @param[in] _numLayers Number of layers in texture array. Must be 1 if caps
- *  `BGFX_CAPS_TEXTURE_2D_ARRAY` flag is not set.
+ * @param[in] _numLayers Number of layers in texture array.
  * @param[in] _format Texture format. See: `TextureFormat::Enum`.
  * @param[in] _flags Texture creation (see `BGFX_TEXTURE_*`.), and sampler (see `BGFX_SAMPLER_*`)
  *  flags. Default texture sampling mode is linear, and wrap mode is repeat.
@@ -2343,8 +2342,7 @@ BGFX_C_API bgfx_texture_handle_t bgfx_create_texture_2d(uint16_t _width, uint16_
  *
  * @param[in] _ratio Texture size in respect to back-buffer size. See: `BackbufferRatio::Enum`.
  * @param[in] _hasMips Indicates that texture contains full mip-map chain.
- * @param[in] _numLayers Number of layers in texture array. Must be 1 if caps
- *  `BGFX_CAPS_TEXTURE_2D_ARRAY` flag is not set.
+ * @param[in] _numLayers Number of layers in texture array.
  * @param[in] _format Texture format. See: `TextureFormat::Enum`.
  * @param[in] _flags Texture creation (see `BGFX_TEXTURE_*`.), and sampler (see `BGFX_SAMPLER_*`)
  *  flags. Default texture sampling mode is linear, and wrap mode is repeat.
@@ -2387,8 +2385,7 @@ BGFX_C_API bgfx_texture_handle_t bgfx_create_texture_3d(uint16_t _width, uint16_
  *
  * @param[in] _size Cube side size.
  * @param[in] _hasMips Indicates that texture contains full mip-map chain.
- * @param[in] _numLayers Number of layers in texture array. Must be 1 if caps
- *  `BGFX_CAPS_TEXTURE_2D_ARRAY` flag is not set.
+ * @param[in] _numLayers Number of layers in texture array.
  * @param[in] _format Texture format. See: `TextureFormat::Enum`.
  * @param[in] _flags Texture creation (see `BGFX_TEXTURE_*`.), and sampler (see `BGFX_SAMPLER_*`)
  *  flags. Default texture sampling mode is linear, and wrap mode is repeat.
@@ -2505,7 +2502,6 @@ BGFX_C_API void bgfx_clear_texture(bgfx_texture_handle_t _handle, uint8_t _mip, 
  * @attention Texture must be created with `BGFX_TEXTURE_READ_BACK` flag.
  *            It's a texture for CPU readback, and can't be a GPU resource
  *            at the same time. See `examples/30-picking`.
- * @attention Availability depends on: `BGFX_CAPS_TEXTURE_READ_BACK`.
  *
  * @param[in] _src Source texture region.
  * @param[in] _data Destination buffer.
@@ -3308,8 +3304,6 @@ BGFX_C_API void bgfx_encoder_set_transient_vertex_buffer_with_layout(bgfx_encode
  * Set number of vertices for auto generated vertices use in conjunction
  * with gl_VertexID.
  *
- * @attention Availability depends on: `BGFX_CAPS_VERTEX_ID`.
- *
  * @param[in] _numVertices Number of vertices.
  *
  */
@@ -3348,8 +3342,6 @@ BGFX_C_API void bgfx_encoder_set_instance_data_from_dynamic_vertex_buffer(bgfx_e
 /**
  * Set number of instances for auto generated instances use in conjunction
  * with gl_InstanceID.
- *
- * @attention Availability depends on: `BGFX_CAPS_VERTEX_ID`.
  *
  * @param[in] _numInstances Number of instances.
  *
@@ -3590,7 +3582,6 @@ BGFX_C_API void bgfx_encoder_discard(bgfx_encoder_t* _this, uint8_t _flags);
  *   draw commands are executed after blit and compute commands.
  *
  * @attention Destination texture must be created with `BGFX_TEXTURE_BLIT_DST` flag.
- * @attention Availability depends on: `BGFX_CAPS_TEXTURE_BLIT`.
  *
  * @param[in] _id View id.
  * @param[in] _dst Destination texture region.
@@ -3638,7 +3629,6 @@ BGFX_C_API void bgfx_encoder_blit_buffer(bgfx_encoder_t* _this, bgfx_view_id_t _
  *
  * @attention Destination buffer must be created with `BGFX_BUFFER_COMPUTE_WRITE`, or
  *   `BGFX_BUFFER_DRAW_INDIRECT` flag.
- * @attention Availability depends on: `BGFX_CAPS_TEXTURE_BLIT`.
  *
  * @param[in] _id View id.
  * @param[in] _dst Destination buffer region.
@@ -3662,7 +3652,6 @@ BGFX_C_API void bgfx_encoder_blit_to_buffer(bgfx_encoder_t* _this, bgfx_view_id_
  * @attention Source buffer must be created with one of `BGFX_BUFFER_COMPUTE_*`, or
  *   `BGFX_BUFFER_DRAW_INDIRECT` flags.
  * @attention Destination texture must be created with `BGFX_TEXTURE_BLIT_DST` flag.
- * @attention Availability depends on: `BGFX_CAPS_TEXTURE_BLIT`.
  *
  * @param[in] _id View id.
  * @param[in] _dst Destination texture region.
@@ -3983,8 +3972,6 @@ BGFX_C_API void bgfx_set_transient_vertex_buffer_with_layout(uint8_t _stream, co
  * Set number of vertices for auto generated vertices use in conjunction
  * with gl_VertexID.
  *
- * @attention Availability depends on: `BGFX_CAPS_VERTEX_ID`.
- *
  * @param[in] _numVertices Number of vertices.
  *
  */
@@ -4023,8 +4010,6 @@ BGFX_C_API void bgfx_set_instance_data_from_dynamic_vertex_buffer(bgfx_dynamic_v
 /**
  * Set number of instances for auto generated instances use in conjunction
  * with gl_InstanceID.
- *
- * @attention Availability depends on: `BGFX_CAPS_VERTEX_ID`.
  *
  * @param[in] _numInstances Number of instances.
  *
@@ -4263,7 +4248,6 @@ BGFX_C_API void bgfx_discard(uint8_t _flags);
  *   draw commands are executed after blit and compute commands.
  *
  * @attention Destination texture must be created with `BGFX_TEXTURE_BLIT_DST` flag.
- * @attention Availability depends on: `BGFX_CAPS_TEXTURE_BLIT`.
  *
  * @param[in] _id View id.
  * @param[in] _dst Destination texture region.
@@ -4311,7 +4295,6 @@ BGFX_C_API void bgfx_blit_buffer(bgfx_view_id_t _id, const bgfx_buffer_region_t 
  *
  * @attention Destination buffer must be created with `BGFX_BUFFER_COMPUTE_WRITE`, or
  *   `BGFX_BUFFER_DRAW_INDIRECT` flag.
- * @attention Availability depends on: `BGFX_CAPS_TEXTURE_BLIT`.
  *
  * @param[in] _id View id.
  * @param[in] _dst Destination buffer region.
@@ -4335,7 +4318,6 @@ BGFX_C_API void bgfx_blit_to_buffer(bgfx_view_id_t _id, const bgfx_buffer_region
  * @attention Source buffer must be created with one of `BGFX_BUFFER_COMPUTE_*`, or
  *   `BGFX_BUFFER_DRAW_INDIRECT` flags.
  * @attention Destination texture must be created with `BGFX_TEXTURE_BLIT_DST` flag.
- * @attention Availability depends on: `BGFX_CAPS_TEXTURE_BLIT`.
  *
  * @param[in] _id View id.
  * @param[in] _dst Destination texture region.

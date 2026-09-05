@@ -1,7 +1,7 @@
 -- vim: syntax=lua
 -- bgfx interface
 
-version(158)
+version(159)
 
 typedef "bool"
 typedef "char"
@@ -370,44 +370,28 @@ flag.SwapChainFullscreen { bits = 32, shift = 0, range = 1, base = 1 }
 	()
 
 flag.Caps { bits = 64, base = 1, name = "Caps", section = "Available Caps" }
-	.AlphaToCoverage        --- Alpha to coverage is supported.
 	.BlendIndependent       --- Blend independent is supported.
 	.Compute                --- Compute shaders are supported.
 	.ConservativeRaster     --- Conservative rasterization is supported.
 	.DrawIndirect           --- Draw indirect is supported.
 	.DrawIndirectCount      --- Draw indirect with indirect count is supported.
-	.FragmentDepth          --- Fragment depth is available in fragment shader.
 	.FragmentOrdering       --- Fragment ordering is available in fragment shader.
 	.GraphicsDebugger       --- Graphics debugger is present.
 	.Hdr10                  --- HDR10 rendering is supported.
-	.Hidpi                  --- HiDPI rendering is supported.
 	.ImageRw                --- Image Read/Write is supported.
 	.Index32                --- 32-bit indices are supported.
-	.Instancing             --- Instancing is supported.
-	.OcclusionQuery         --- Occlusion query is supported.
 	.PrimitiveId            --- PrimitiveID is available in fragment shader.
 	.RendererMultithreaded  --- Renderer is on separate thread.
 	.SwapChain              --- Multiple windows are supported.
-	.TextureBlit            --- Texture blit is supported.
-	.TextureCompareLequal   --- Texture compare less equal mode is supported.
-	.TextureCompareReserved
 	.TextureCubeArray       --- Cubemap texture array is supported.
 	.TextureDirectAccess    --- CPU direct access to GPU texture memory.
 	.TextureExternal        --- External texture is supported.
 	.TextureExternalShared  --- External shared texture is supported.
-	.TextureReadBack        --- Read-back texture is supported.
-	.Texture_2dArray        --- 2D texture array is supported.
-	.Texture_3d             --- 3D textures are supported.
 	.TransparentBackbuffer  --- Transparent back buffer supported.
 	.VariableRateShading    --- Variable Rate Shading
-	.VertexAttribHalf       --- Vertex attribute half-float is supported.
 	.VertexAttribUint10     --- Vertex attribute 10_10_10_2 is supported.
-	.VertexId               --- Rendering with VertexID only is supported.
 	.VideoDecode            --- Hardware video decode is supported.
 	.ViewportLayerArray     --- Viewport layer is available in vertex shader.
-
-	.TextureCompareAll      --- All texture compare modes are supported.
-	 { "TextureCompareReserved", "TextureCompareLequal" }
 	()
 
 flag.CapsFormat { bits = 32 }
@@ -568,7 +552,7 @@ enum.AttribType { comment = "Attribute types:", section = "Vertex Buffers" }
 	.Uint10 --- Uint10, availability depends on: `BGFX_CAPS_VERTEX_ATTRIB_UINT10`.
 	.Int16  --- Int16
 	.Uint16 --- Uint16
-	.Half   --- Half, availability depends on: `BGFX_CAPS_VERTEX_ATTRIB_HALF`.
+	.Half   --- Half.
 	.Float  --- Float
 	.Int32  --- Int32
 	.Uint32 --- Uint32
@@ -2039,8 +2023,7 @@ func.createTexture2D { section = "Textures" }
 	.width     "uint16_t"                      --- Width.
 	.height    "uint16_t"                      --- Height.
 	.hasMips   "bool"                          --- Indicates that texture contains full mip-map chain.
-	.numLayers "uint16_t"                      --- Number of layers in texture array. Must be 1 if caps
-	                                           --- `BGFX_CAPS_TEXTURE_2D_ARRAY` flag is not set.
+	.numLayers "uint16_t"                      --- Number of layers in texture array.
 	.format    "TextureFormat::Enum"           --- Texture format. See: `TextureFormat::Enum`.
 	.flags     "uint64_t"                      --- Texture creation (see `BGFX_TEXTURE_*`.), and sampler (see `BGFX_SAMPLER_*`)
 	 { default = "BGFX_TEXTURE_NONE|BGFX_SAMPLER_NONE" } --- flags. Default texture sampling mode is linear, and wrap mode is repeat.
@@ -2060,8 +2043,7 @@ func.createTexture2D { cname = "create_texture_2d_scaled", section = "Textures" 
 	"TextureHandle"                            --- Texture handle.
 	.ratio     "BackbufferRatio::Enum"         --- Texture size in respect to back-buffer size. See: `BackbufferRatio::Enum`.
 	.hasMips   "bool"                          --- Indicates that texture contains full mip-map chain.
-	.numLayers "uint16_t"                      --- Number of layers in texture array. Must be 1 if caps
-	                                           --- `BGFX_CAPS_TEXTURE_2D_ARRAY` flag is not set.
+	.numLayers "uint16_t"                      --- Number of layers in texture array.
 	.format    "TextureFormat::Enum"           --- Texture format. See: `TextureFormat::Enum`.
 	.flags     "uint64_t"                      --- Texture creation (see `BGFX_TEXTURE_*`.), and sampler (see `BGFX_SAMPLER_*`)
 	 { default = "BGFX_TEXTURE_NONE|BGFX_SAMPLER_NONE" }
@@ -2097,8 +2079,7 @@ func.createTextureCube { section = "Textures" }
 	"TextureHandle"                            --- Texture handle.
 	.size      "uint16_t"                      --- Cube side size.
 	.hasMips   "bool"                          --- Indicates that texture contains full mip-map chain.
-	.numLayers "uint16_t"                      --- Number of layers in texture array. Must be 1 if caps
-	                                           --- `BGFX_CAPS_TEXTURE_2D_ARRAY` flag is not set.
+	.numLayers "uint16_t"                      --- Number of layers in texture array.
 	.format    "TextureFormat::Enum"           --- Texture format. See: `TextureFormat::Enum`.
 	.flags     "uint64_t"                      --- Texture creation (see `BGFX_TEXTURE_*`.), and sampler (see `BGFX_SAMPLER_*`)
 	 { default = "BGFX_TEXTURE_NONE|BGFX_SAMPLER_NONE" }
@@ -2210,7 +2191,6 @@ func.clear { cname = "clear_texture", section = "Textures" }
 --- @attention Texture must be created with `BGFX_TEXTURE_READ_BACK` flag.
 ---            It's a texture for CPU readback, and can't be a GPU resource
 ---            at the same time. See `examples/30-picking`.
---- @attention Availability depends on: `BGFX_CAPS_TEXTURE_READ_BACK`.
 ---
 func.read { cname = "read_texture", section = "Textures" }
 	"uint32_t"                    --- Frame number when the result will be available. See: `bgfx::frame`.
@@ -2901,7 +2881,6 @@ func.Encoder.setVertexBuffer { cname = "set_transient_vertex_buffer_with_layout"
 --- Set number of vertices for auto generated vertices use in conjunction
 --- with gl_VertexID.
 ---
---- @attention Availability depends on: `BGFX_CAPS_VERTEX_ID`.
 ---
 func.Encoder.setVertexCount { section = "Draw/Buffers" }
 	"void"
@@ -2936,7 +2915,6 @@ func.Encoder.setInstanceDataBuffer { cname = "set_instance_data_from_dynamic_ver
 --- Set number of instances for auto generated instances use in conjunction
 --- with gl_InstanceID.
 ---
---- @attention Availability depends on: `BGFX_CAPS_VERTEX_ID`.
 ---
 func.Encoder.setInstanceCount { section = "Draw/Buffers" }
 	"void"
@@ -3149,7 +3127,6 @@ func.Encoder.discard { section = "Miscellaneous" }
 ---   draw commands are executed after blit and compute commands.
 ---
 --- @attention Destination texture must be created with `BGFX_TEXTURE_BLIT_DST` flag.
---- @attention Availability depends on: `BGFX_CAPS_TEXTURE_BLIT`.
 ---
 func.Encoder.blit { section = "Blit" }
 	"void"
@@ -3193,7 +3170,6 @@ func.Encoder.blit { cname = "blit_buffer", section = "Blit" }
 ---
 --- @attention Destination buffer must be created with `BGFX_BUFFER_COMPUTE_WRITE`, or
 ---   `BGFX_BUFFER_DRAW_INDIRECT` flag.
---- @attention Availability depends on: `BGFX_CAPS_TEXTURE_BLIT`.
 ---
 func.Encoder.blit { cname = "blit_to_buffer", section = "Blit" }
 	"void"
@@ -3215,7 +3191,6 @@ func.Encoder.blit { cname = "blit_to_buffer", section = "Blit" }
 --- @attention Source buffer must be created with one of `BGFX_BUFFER_COMPUTE_*`, or
 ---   `BGFX_BUFFER_DRAW_INDIRECT` flags.
 --- @attention Destination texture must be created with `BGFX_TEXTURE_BLIT_DST` flag.
---- @attention Availability depends on: `BGFX_CAPS_TEXTURE_BLIT`.
 ---
 func.Encoder.blit { cname = "blit_from_buffer", section = "Blit" }
 	"void"
@@ -3514,7 +3489,6 @@ func.setVertexBuffer { cname = "set_transient_vertex_buffer_with_layout", sectio
 --- Set number of vertices for auto generated vertices use in conjunction
 --- with gl_VertexID.
 ---
---- @attention Availability depends on: `BGFX_CAPS_VERTEX_ID`.
 ---
 func.setVertexCount { section = "Draw/Buffers" }
 	"void"
@@ -3549,7 +3523,6 @@ func.setInstanceDataBuffer { cname = "set_instance_data_from_dynamic_vertex_buff
 --- Set number of instances for auto generated instances use in conjunction
 --- with gl_InstanceID.
 ---
---- @attention Availability depends on: `BGFX_CAPS_VERTEX_ID`.
 ---
 func.setInstanceCount { section = "Draw/Buffers" }
 	"void"
@@ -3760,7 +3733,6 @@ func.discard { section = "Miscellaneous" }
 ---   draw commands are executed after blit and compute commands.
 ---
 --- @attention Destination texture must be created with `BGFX_TEXTURE_BLIT_DST` flag.
---- @attention Availability depends on: `BGFX_CAPS_TEXTURE_BLIT`.
 ---
 func.blit { section = "Blit" }
 	"void"
@@ -3804,7 +3776,6 @@ func.blit { cname = "blit_buffer", section = "Blit" }
 ---
 --- @attention Destination buffer must be created with `BGFX_BUFFER_COMPUTE_WRITE`, or
 ---   `BGFX_BUFFER_DRAW_INDIRECT` flag.
---- @attention Availability depends on: `BGFX_CAPS_TEXTURE_BLIT`.
 ---
 func.blit { cname = "blit_to_buffer", section = "Blit" }
 	"void"
@@ -3826,7 +3797,6 @@ func.blit { cname = "blit_to_buffer", section = "Blit" }
 --- @attention Source buffer must be created with one of `BGFX_BUFFER_COMPUTE_*`, or
 ---   `BGFX_BUFFER_DRAW_INDIRECT` flags.
 --- @attention Destination texture must be created with `BGFX_TEXTURE_BLIT_DST` flag.
---- @attention Availability depends on: `BGFX_CAPS_TEXTURE_BLIT`.
 ---
 func.blit { cname = "blit_from_buffer", section = "Blit" }
 	"void"

@@ -9,7 +9,7 @@ import bindbc.common.types: c_int64, c_uint64, va_list;
 import bindbc.bgfx.config;
 static import bgfx.impl;
 
-enum uint apiVersion = 158;
+enum uint apiVersion = 159;
 
 alias ViewID = ushort;
 
@@ -500,42 +500,28 @@ enum SwapChainFullscreen: SwapChainFullscreen_{
 
 alias CapFlags_ = ulong;
 enum CapFlags: CapFlags_{
-	alphaToCoverage         = 0x0000_0000_0000_0001, ///Alpha to coverage is supported.
-	blendIndependent        = 0x0000_0000_0000_0002, ///Blend independent is supported.
-	compute                 = 0x0000_0000_0000_0004, ///Compute shaders are supported.
-	conservativeRaster      = 0x0000_0000_0000_0008, ///Conservative rasterization is supported.
-	drawIndirect            = 0x0000_0000_0000_0010, ///Draw indirect is supported.
-	drawIndirectCount       = 0x0000_0000_0000_0020, ///Draw indirect with indirect count is supported.
-	fragmentDepth           = 0x0000_0000_0000_0040, ///Fragment depth is available in fragment shader.
-	fragmentOrdering        = 0x0000_0000_0000_0080, ///Fragment ordering is available in fragment shader.
-	graphicsDebugger        = 0x0000_0000_0000_0100, ///Graphics debugger is present.
-	hdr10                   = 0x0000_0000_0000_0200, ///HDR10 rendering is supported.
-	hiDPI                   = 0x0000_0000_0000_0400, ///HiDPI rendering is supported.
-	imageRW                 = 0x0000_0000_0000_0800, ///Image Read/Write is supported.
-	index32                 = 0x0000_0000_0000_1000, ///32-bit indices are supported.
-	instancing              = 0x0000_0000_0000_2000, ///Instancing is supported.
-	occlusionQuery          = 0x0000_0000_0000_4000, ///Occlusion query is supported.
-	primitiveID             = 0x0000_0000_0000_8000, ///PrimitiveID is available in fragment shader.
-	rendererMultithreaded   = 0x0000_0000_0001_0000, ///Renderer is on separate thread.
-	swapChain               = 0x0000_0000_0002_0000, ///Multiple windows are supported.
-	textureBlit             = 0x0000_0000_0004_0000, ///Texture blit is supported.
-	textureCompareLEqual    = 0x0000_0000_0008_0000, ///Texture compare less equal mode is supported.
-	textureCompareReserved  = 0x0000_0000_0010_0000,
-	textureCubeArray        = 0x0000_0000_0020_0000, ///Cubemap texture array is supported.
-	textureDirectAccess     = 0x0000_0000_0040_0000, ///CPU direct access to GPU texture memory.
-	textureExternal         = 0x0000_0000_0080_0000, ///External texture is supported.
-	textureExternalShared   = 0x0000_0000_0100_0000, ///External shared texture is supported.
-	textureReadBack         = 0x0000_0000_0200_0000, ///Read-back texture is supported.
-	texture2DArray          = 0x0000_0000_0400_0000, ///2D texture array is supported.
-	texture3D               = 0x0000_0000_0800_0000, ///3D textures are supported.
-	transparentBackbuffer   = 0x0000_0000_1000_0000, ///Transparent back buffer supported.
-	variableRateShading     = 0x0000_0000_2000_0000, ///Variable Rate Shading
-	vertexAttribHalf        = 0x0000_0000_4000_0000, ///Vertex attribute half-float is supported.
-	vertexAttribUint10      = 0x0000_0000_8000_0000, ///Vertex attribute 10_10_10_2 is supported.
-	vertexID                = 0x0000_0001_0000_0000, ///Rendering with VertexID only is supported.
-	videoDecode             = 0x0000_0002_0000_0000, ///Hardware video decode is supported.
-	viewportLayerArray      = 0x0000_0004_0000_0000, ///Viewport layer is available in vertex shader.
-	textureCompareAll       = 0x0000_0000_0018_0000, ///All texture compare modes are supported.
+	blendIndependent       = 0x0000_0000_0000_0001, ///Blend independent is supported.
+	compute                = 0x0000_0000_0000_0002, ///Compute shaders are supported.
+	conservativeRaster     = 0x0000_0000_0000_0004, ///Conservative rasterization is supported.
+	drawIndirect           = 0x0000_0000_0000_0008, ///Draw indirect is supported.
+	drawIndirectCount      = 0x0000_0000_0000_0010, ///Draw indirect with indirect count is supported.
+	fragmentOrdering       = 0x0000_0000_0000_0020, ///Fragment ordering is available in fragment shader.
+	graphicsDebugger       = 0x0000_0000_0000_0040, ///Graphics debugger is present.
+	hdr10                  = 0x0000_0000_0000_0080, ///HDR10 rendering is supported.
+	imageRW                = 0x0000_0000_0000_0100, ///Image Read/Write is supported.
+	index32                = 0x0000_0000_0000_0200, ///32-bit indices are supported.
+	primitiveID            = 0x0000_0000_0000_0400, ///PrimitiveID is available in fragment shader.
+	rendererMultithreaded  = 0x0000_0000_0000_0800, ///Renderer is on separate thread.
+	swapChain              = 0x0000_0000_0000_1000, ///Multiple windows are supported.
+	textureCubeArray       = 0x0000_0000_0000_2000, ///Cubemap texture array is supported.
+	textureDirectAccess    = 0x0000_0000_0000_4000, ///CPU direct access to GPU texture memory.
+	textureExternal        = 0x0000_0000_0000_8000, ///External texture is supported.
+	textureExternalShared  = 0x0000_0000_0001_0000, ///External shared texture is supported.
+	transparentBackbuffer  = 0x0000_0000_0002_0000, ///Transparent back buffer supported.
+	variableRateShading    = 0x0000_0000_0004_0000, ///Variable Rate Shading
+	vertexAttribUint10     = 0x0000_0000_0008_0000, ///Vertex attribute 10_10_10_2 is supported.
+	videoDecode            = 0x0000_0000_0010_0000, ///Hardware video decode is supported.
+	viewportLayerArray     = 0x0000_0000_0020_0000, ///Viewport layer is available in vertex shader.
 }
 
 alias CapsFormat_ = uint;
@@ -2067,7 +2053,6 @@ extern(C++, "bgfx") struct Encoder{
 			Set number of vertices for auto generated vertices use in conjunction
 			with gl_VertexID.
 			
-			Attention: Availability depends on: `BGFX_CAPS_VERTEX_ID`.
 			
 			Params:
 				numVertices = Number of vertices.
@@ -2112,7 +2097,6 @@ extern(C++, "bgfx") struct Encoder{
 			Set number of instances for auto generated instances use in conjunction
 			with gl_InstanceID.
 			
-			Attention: Availability depends on: `BGFX_CAPS_VERTEX_ID`.
 			
 			Params:
 				numInstances = Number of instances.
@@ -2339,7 +2323,6 @@ extern(C++, "bgfx") struct Encoder{
 			  draw commands are executed after blit and compute commands.
 			
 			Attention: Destination texture must be created with `BGFX_TEXTURE_BLIT_DST` flag.
-			Attention: Availability depends on: `BGFX_CAPS_TEXTURE_BLIT`.
 			
 			Params:
 				id = View id.
@@ -2387,7 +2370,6 @@ extern(C++, "bgfx") struct Encoder{
 			
 			Attention: Destination buffer must be created with `BGFX_BUFFER_COMPUTE_WRITE`, or
 			  `BGFX_BUFFER_DRAW_INDIRECT` flag.
-			Attention: Availability depends on: `BGFX_CAPS_TEXTURE_BLIT`.
 			
 			Params:
 				id = View id.
@@ -2411,7 +2393,6 @@ extern(C++, "bgfx") struct Encoder{
 			Attention: Source buffer must be created with one of `BGFX_BUFFER_COMPUTE_*`, or
 			  `BGFX_BUFFER_DRAW_INDIRECT` flags.
 			Attention: Destination texture must be created with `BGFX_TEXTURE_BLIT_DST` flag.
-			Attention: Availability depends on: `BGFX_CAPS_TEXTURE_BLIT`.
 			
 			Params:
 				id = View id.
@@ -3137,8 +3118,7 @@ mixin(joinFnBinds((){
 			width = Width.
 			height = Height.
 			hasMIPs = Indicates that texture contains full mip-map chain.
-			numLayers = Number of layers in texture array. Must be 1 if caps
-		`BGFX_CAPS_TEXTURE_2D_ARRAY` flag is not set.
+			numLayers = Number of layers in texture array.
 			format = Texture format. See: `TextureFormat::Enum`.
 			flags = Texture creation (see `BGFX_TEXTURE_*`.), and sampler (see `BGFX_SAMPLER_*`)
 		flags. Default texture sampling mode is linear, and wrap mode is repeat.
@@ -3159,8 +3139,7 @@ mixin(joinFnBinds((){
 		Params:
 			ratio = Texture size in respect to back-buffer size. See: `BackbufferRatio::Enum`.
 			hasMIPs = Indicates that texture contains full mip-map chain.
-			numLayers = Number of layers in texture array. Must be 1 if caps
-		`BGFX_CAPS_TEXTURE_2D_ARRAY` flag is not set.
+			numLayers = Number of layers in texture array.
 			format = Texture format. See: `TextureFormat::Enum`.
 			flags = Texture creation (see `BGFX_TEXTURE_*`.), and sampler (see `BGFX_SAMPLER_*`)
 		flags. Default texture sampling mode is linear, and wrap mode is repeat.
@@ -3197,8 +3176,7 @@ mixin(joinFnBinds((){
 		Params:
 			size = Cube side size.
 			hasMIPs = Indicates that texture contains full mip-map chain.
-			numLayers = Number of layers in texture array. Must be 1 if caps
-		`BGFX_CAPS_TEXTURE_2D_ARRAY` flag is not set.
+			numLayers = Number of layers in texture array.
 			format = Texture format. See: `TextureFormat::Enum`.
 			flags = Texture creation (see `BGFX_TEXTURE_*`.), and sampler (see `BGFX_SAMPLER_*`)
 		flags. Default texture sampling mode is linear, and wrap mode is repeat.
@@ -3312,7 +3290,6 @@ mixin(joinFnBinds((){
 		* Attention: Texture must be created with `BGFX_TEXTURE_READ_BACK` flag.
 		*            It's a texture for CPU readback, and can't be a GPU resource
 		*            at the same time. See `examples/30-picking`.
-		* Attention: Availability depends on: `BGFX_CAPS_TEXTURE_READ_BACK`.
 		* 
 		Params:
 			src = Source texture region.
@@ -4126,7 +4103,6 @@ mixin(joinFnBinds((){
 		* Set number of vertices for auto generated vertices use in conjunction
 		* with gl_VertexID.
 		* 
-		* Attention: Availability depends on: `BGFX_CAPS_VERTEX_ID`.
 		* 
 		Params:
 			numVertices = Number of vertices.
@@ -4171,7 +4147,6 @@ mixin(joinFnBinds((){
 		* Set number of instances for auto generated instances use in conjunction
 		* with gl_InstanceID.
 		* 
-		* Attention: Availability depends on: `BGFX_CAPS_VERTEX_ID`.
 		* 
 		Params:
 			numInstances = Number of instances.
@@ -4396,7 +4371,6 @@ mixin(joinFnBinds((){
 		*   draw commands are executed after blit and compute commands.
 		* 
 		* Attention: Destination texture must be created with `BGFX_TEXTURE_BLIT_DST` flag.
-		* Attention: Availability depends on: `BGFX_CAPS_TEXTURE_BLIT`.
 		* 
 		Params:
 			id = View id.
@@ -4444,7 +4418,6 @@ mixin(joinFnBinds((){
 		* 
 		* Attention: Destination buffer must be created with `BGFX_BUFFER_COMPUTE_WRITE`, or
 		*   `BGFX_BUFFER_DRAW_INDIRECT` flag.
-		* Attention: Availability depends on: `BGFX_CAPS_TEXTURE_BLIT`.
 		* 
 		Params:
 			id = View id.
@@ -4468,7 +4441,6 @@ mixin(joinFnBinds((){
 		* Attention: Source buffer must be created with one of `BGFX_BUFFER_COMPUTE_*`, or
 		*   `BGFX_BUFFER_DRAW_INDIRECT` flags.
 		* Attention: Destination texture must be created with `BGFX_TEXTURE_BLIT_DST` flag.
-		* Attention: Availability depends on: `BGFX_CAPS_TEXTURE_BLIT`.
 		* 
 		Params:
 			id = View id.

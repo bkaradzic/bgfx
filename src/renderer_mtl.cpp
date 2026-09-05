@@ -997,22 +997,12 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			g_caps.gpu[0].deviceId = g_caps.deviceId;
 
 			g_caps.supported |= (0
-				| BGFX_CAPS_ALPHA_TO_COVERAGE
 				| BGFX_CAPS_BLEND_INDEPENDENT
 				| BGFX_CAPS_COMPUTE
-				| BGFX_CAPS_FRAGMENT_DEPTH
 				| BGFX_CAPS_INDEX32
-				| BGFX_CAPS_INSTANCING
-				| BGFX_CAPS_OCCLUSION_QUERY
 				| BGFX_CAPS_SWAP_CHAIN
-				| BGFX_CAPS_TEXTURE_2D_ARRAY
-				| BGFX_CAPS_TEXTURE_3D
-				| BGFX_CAPS_TEXTURE_BLIT
 				| BGFX_CAPS_TEXTURE_EXTERNAL
-				| BGFX_CAPS_TEXTURE_READ_BACK
-				| BGFX_CAPS_VERTEX_ATTRIB_HALF
 				| BGFX_CAPS_VERTEX_ATTRIB_UINT10
-				| BGFX_CAPS_VERTEX_ID
 				);
 
 			g_caps.supported |= (m_device->supportsFamily(MTL::GPUFamilyApple7) || m_device->supportsFamily(MTL::GPUFamilyMac2) )
@@ -1033,7 +1023,6 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			g_caps.supported |= (m_device->supportsFamily(MTL::GPUFamilyApple3) || m_device->supportsFamily(MTL::GPUFamilyMac2) )
 				? BGFX_CAPS_DRAW_INDIRECT
 				| BGFX_CAPS_TEXTURE_CUBE_ARRAY
-				| BGFX_CAPS_TEXTURE_COMPARE_ALL
 				: 0
 				;
 
@@ -3524,14 +3513,11 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 						: 1
 					);
 
-				if (0 != (g_caps.supported & BGFX_CAPS_TEXTURE_COMPARE_ALL) )
-				{
-					const uint32_t cmpFunc = (_flags&BGFX_SAMPLER_COMPARE_MASK)>>BGFX_SAMPLER_COMPARE_SHIFT;
-					desc->setCompareFunction(0 == cmpFunc
-						? MTL::CompareFunctionNever
-						: (MTL::CompareFunction)s_cmpFunc[cmpFunc])
-						;
-				}
+				const uint32_t cmpFunc = (_flags&BGFX_SAMPLER_COMPARE_MASK)>>BGFX_SAMPLER_COMPARE_SHIFT;
+				desc->setCompareFunction(0 == cmpFunc
+					? MTL::CompareFunctionNever
+					: (MTL::CompareFunction)s_cmpFunc[cmpFunc])
+					;
 
 				sampler = m_device->newSamplerState(desc);
 				m_samplerStateCache.add(_flags, sampler);

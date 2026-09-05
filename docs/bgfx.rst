@@ -147,42 +147,28 @@ Available Caps
 
 Individual capability flags.
 
-.. doxygendefine:: BGFX_CAPS_ALPHA_TO_COVERAGE
 .. doxygendefine:: BGFX_CAPS_BLEND_INDEPENDENT
 .. doxygendefine:: BGFX_CAPS_COMPUTE
 .. doxygendefine:: BGFX_CAPS_CONSERVATIVE_RASTER
 .. doxygendefine:: BGFX_CAPS_DRAW_INDIRECT
 .. doxygendefine:: BGFX_CAPS_DRAW_INDIRECT_COUNT
-.. doxygendefine:: BGFX_CAPS_FRAGMENT_DEPTH
 .. doxygendefine:: BGFX_CAPS_FRAGMENT_ORDERING
 .. doxygendefine:: BGFX_CAPS_GRAPHICS_DEBUGGER
 .. doxygendefine:: BGFX_CAPS_HDR10
-.. doxygendefine:: BGFX_CAPS_HIDPI
 .. doxygendefine:: BGFX_CAPS_IMAGE_RW
 .. doxygendefine:: BGFX_CAPS_INDEX32
-.. doxygendefine:: BGFX_CAPS_INSTANCING
-.. doxygendefine:: BGFX_CAPS_OCCLUSION_QUERY
 .. doxygendefine:: BGFX_CAPS_PRIMITIVE_ID
 .. doxygendefine:: BGFX_CAPS_RENDERER_MULTITHREADED
 .. doxygendefine:: BGFX_CAPS_SWAP_CHAIN
-.. doxygendefine:: BGFX_CAPS_TEXTURE_BLIT
-.. doxygendefine:: BGFX_CAPS_TEXTURE_COMPARE_LEQUAL
-.. doxygendefine:: BGFX_CAPS_TEXTURE_COMPARE_RESERVED
 .. doxygendefine:: BGFX_CAPS_TEXTURE_CUBE_ARRAY
 .. doxygendefine:: BGFX_CAPS_TEXTURE_DIRECT_ACCESS
 .. doxygendefine:: BGFX_CAPS_TEXTURE_EXTERNAL
 .. doxygendefine:: BGFX_CAPS_TEXTURE_EXTERNAL_SHARED
-.. doxygendefine:: BGFX_CAPS_TEXTURE_READ_BACK
-.. doxygendefine:: BGFX_CAPS_TEXTURE_2D_ARRAY
-.. doxygendefine:: BGFX_CAPS_TEXTURE_3D
 .. doxygendefine:: BGFX_CAPS_TRANSPARENT_BACKBUFFER
 .. doxygendefine:: BGFX_CAPS_VARIABLE_RATE_SHADING
-.. doxygendefine:: BGFX_CAPS_VERTEX_ATTRIB_HALF
 .. doxygendefine:: BGFX_CAPS_VERTEX_ATTRIB_UINT10
-.. doxygendefine:: BGFX_CAPS_VERTEX_ID
 .. doxygendefine:: BGFX_CAPS_VIDEO_DECODE
 .. doxygendefine:: BGFX_CAPS_VIEWPORT_LAYER_ARRAY
-.. doxygendefine:: BGFX_CAPS_TEXTURE_COMPARE_ALL
 
 Statistics
 **********

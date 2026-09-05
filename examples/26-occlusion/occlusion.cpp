@@ -127,8 +127,7 @@ public:
 		// Create program from shaders.
 		m_program = loadProgram("vs_cubes", "fs_cubes");
 
-		const bgfx::Caps* caps = bgfx::getCaps();
-		m_occlusionQuerySupported = !!(caps->supported & BGFX_CAPS_OCCLUSION_QUERY);
+		m_occlusionQuerySupported = true;
 
 		if (m_occlusionQuerySupported)
 		{
