@@ -1,8 +1,6 @@
 // Port of ShaderToHuman-bgfx/examples/Features/Scatter_example.hlsl.
 #include "bgfx_compute.sh"
-#include "s2h_bgfx.sh"
-#include "s2h.hlsl"
-#include "s2h_scatter.hlsl"
+#include "s2h/s2h_scatter.sh"
 
 IMAGE2D_WO(s_scatterColor, rgba8, 0);
 uniform vec4 u_s2hScatterSize;

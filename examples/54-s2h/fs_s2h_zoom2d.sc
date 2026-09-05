@@ -2,14 +2,13 @@ $input v_color0, v_texcoord0
 
 // Adapted from ShaderToHuman-bgfx/examples/Zoom2D/Render.hlsl.
 #include "../common/common.sh"
-#include "s2h_bgfx.sh"
-#include "s2h.hlsl"
+#include "s2h/s2h.sh"
 
 uniform vec4 u_s2hZoom;
 
 float grid(vec2 _position, float _scale)
 {
-	vec2 local = abs(frac(_position / 20.0f) - 0.5f);
+	vec2 local = abs(fract(_position / 20.0f) - 0.5f);
 	float gridLine = 1.0f - smoothstep(0.46f, 0.50f, max(local.x, local.y));
 	return gridLine * saturate((_scale - 2.0f) / 6.0f);
 }
@@ -21,7 +20,7 @@ void main()
 	vec2 zoomedPixel = (pixel + u_s2hZoom.xy) * zoomScale;
 	vec2 snappedPixel = floor(zoomedPixel) + 0.5f;
 	vec3 color = vec3(0.01f, 0.01f, 0.10f);
-	color = lerp(color, vec3(0.22f, 0.25f, 0.35f), grid(zoomedPixel, zoomScale));
+	color = mix(color, vec3(0.22f, 0.25f, 0.35f), grid(zoomedPixel, zoomScale));
 
 	ContextGather ui;
 	s2h_init(ui, snappedPixel);
@@ -32,7 +31,7 @@ void main()
 	s2h_printTxt(ui, _c, _o, _o, _r, _d, _i);
 	s2h_printTxt(ui, _n, _a, _t, _e, _S, _y);
 	s2h_printTxt(ui, _s, _t, _e, _m);
-	color = lerp(color, ui.dstColor.rgb, ui.dstColor.a);
+	color = mix(color, ui.dstColor.rgb, ui.dstColor.a);
 
 	ContextGather overlay;
 	s2h_init(overlay, pixel);
@@ -50,7 +49,7 @@ void main()
 	s2h_printTxt(overlay, _r, _i, _g, _h, _t, _SPACE);
 	s2h_printTxt(overlay, _M, _o, _u, _s, _e, _COLON);
 	s2h_printTxt(overlay, _SPACE, _S, _c, _a, _l, _e);
-	color = lerp(color, overlay.dstColor.rgb, overlay.dstColor.a);
+	color = mix(color, overlay.dstColor.rgb, overlay.dstColor.a);
 
 	gl_FragColor = vec4(color, 1.0f);
 }

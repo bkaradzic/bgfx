@@ -2,8 +2,7 @@ $input v_color0, v_texcoord0
 
 // Port of ShaderToHuman-bgfx/examples/Features/2D_Arrow.hlsl.
 #include "../common/common.sh"
-#include "s2h_bgfx.sh"
-#include "s2h.hlsl"
+#include "s2h/s2h.sh"
 
 uniform vec4 u_s2hMouse;
 
@@ -65,5 +64,5 @@ void main()
 	s2h_drawArrow(ui, screenCenter, screenCenter + oppositeDirection * lineLength, vec4(1.0f, 0.0f, 0.0f, 1.0f), arrowHeadLength, arrowHeadWidth);
 
 	vec4 background = vec4(0.5f, 0.5f, 0.5f, 1.0f);
-	gl_FragColor = lerp(background, vec4(ui.dstColor.rgb, 1.0f), ui.dstColor.a);
+	gl_FragColor = mix(background, vec4(ui.dstColor.rgb, 1.0f), ui.dstColor.a);
 }

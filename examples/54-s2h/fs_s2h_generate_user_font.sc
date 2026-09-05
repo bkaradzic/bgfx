@@ -2,21 +2,20 @@ $input v_color0, v_texcoord0
 
 // Port of ShaderToHuman-bgfx/examples/Features/GenUserFont_example.hlsl.
 #include "../common/common.sh"
-#include "s2h_bgfx.sh"
-#include "s2h.hlsl"
+#include "s2h/s2h.sh"
 
 uniform vec4 u_s2hTime;
 
 vec3 myMod(vec3 _x, vec3 _period)
 {
-	return frac(_x / _period) * _period;
+	return fract(_x / _period) * _period;
 }
 
 vec3 hsb2rgb(vec3 _color)
 {
 	vec3 rgb = saturate(abs(myMod(_color.x * 6.0f + vec3(0.0f, 4.0f, 2.0f), vec3(6.0f, 6.0f, 6.0f)) - 3.0f) - 1.0f);
 	rgb = rgb * rgb * (3.0f - 2.0f * rgb);
-	return _color.z * lerp(vec3(1.0f, 1.0f, 1.0f), rgb, _color.y);
+	return _color.z * mix(vec3(1.0f, 1.0f, 1.0f), rgb, _color.y);
 }
 
 void main()

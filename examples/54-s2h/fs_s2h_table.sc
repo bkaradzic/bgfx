@@ -2,8 +2,7 @@ $input v_color0, v_texcoord0
 
 // Port of ShaderToHuman-bgfx/examples/Features/Table_example.hlsl.
 #include "../common/common.sh"
-#include "s2h_bgfx.sh"
-#include "s2h.hlsl"
+#include "s2h/s2h.sh"
 
 uniform vec4 u_s2hTime;
 
@@ -102,5 +101,5 @@ void main()
 	s2h_printTxt(ui, _y, _COLON, _SPACE); s2h_printFloat(ui, rangeY.x); s2h_printTxt(ui, _SPACE, _PERIOD, _PERIOD, _SPACE); s2h_printFloat(ui, rangeY.y);
 
 	vec4 background = vec4(0.4f, 0.7f, 0.4f, 1.0f);
-	gl_FragColor = lerp(background, vec4(ui.dstColor.rgb, 1.0f), ui.dstColor.a);
+	gl_FragColor = mix(background, vec4(ui.dstColor.rgb, 1.0f), ui.dstColor.a);
 }

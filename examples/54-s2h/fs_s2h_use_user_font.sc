@@ -1,7 +1,7 @@
 $input v_color0, v_texcoord0
 
 #include "../common/common.sh"
-#include "s2h_bgfx.sh"
+#include "s2h/s2h_bgfx.sh"
 
 SAMPLER2D(s_quadPostColor, 0);
 

@@ -2,8 +2,7 @@ $input v_color0, v_texcoord0
 
 // Fragment-renderer port of ShaderToHuman-bgfx/examples/Features/2D_example.hlsl.
 #include "../common/common.sh"
-#include "s2h_bgfx.sh"
-#include "s2h.hlsl"
+#include "s2h/s2h.sh"
 
 uniform vec4 u_s2hTime;
 uniform vec4 u_s2hMouse;
@@ -36,7 +35,7 @@ void drawBlendingExample(inout ContextGather _ui)
 		vec3 color = s2h_indexToColor(uint(peelId));
 		vec2 center = vec2(sin(angle), cos(angle)) * 60.0f + vec2(105.0f, 450.0f);
 		float alpha = saturate(2.0f - length(_ui.pxPos - center) / 25.0f);
-		overColor = lerp(overColor, color, alpha);
+		overColor = mix(overColor, color, alpha);
 		underAccumulator.rgb += color * alpha * (1.0f - underAccumulator.a);
 		underAccumulator.a = 1.0f - (1.0f - alpha) * (1.0f - underAccumulator.a);
 	}
@@ -111,5 +110,5 @@ void main()
 
 	drawBlendingExample(ui);
 	vec4 background = vec4(0.7f, 0.4f, 0.4f, 1.0f);
-	gl_FragColor = lerp(background, vec4(ui.dstColor.rgb, 1.0f), ui.dstColor.a);
+	gl_FragColor = mix(background, vec4(ui.dstColor.rgb, 1.0f), ui.dstColor.a);
 }

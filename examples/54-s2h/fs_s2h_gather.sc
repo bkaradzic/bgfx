@@ -1,11 +1,9 @@
 $input v_color0, v_texcoord0
 
 // Port of ShaderToHuman-bgfx/examples/Features/Gather_example.hlsl.
-// The original compute example stores its widget state in a UAV. This
-// fullscreen version receives the same state from the ImGui host controls.
+// Widget state comes from the ImGui host controls, not a UAV as in the original.
 #include "../common/common.sh"
-#include "s2h_bgfx.sh"
-#include "s2h.hlsl"
+#include "s2h/s2h.sh"
 
 uniform vec4 u_s2hTime;
 uniform vec4 u_s2hUiState;
@@ -76,9 +74,7 @@ void main()
 	vec3 sliderColor = u_s2hColor.rgb;
 
 #if BGFX_SHADER_LANGUAGE_WGSL
-	// shaderc's WGSL backend overflows its compiler stack when all of the
-	// nested S2H widget calls below are emitted together. Keep a compact,
-	// functional presentation for WebGPU; DX11 and GLSL use the full port.
+	// shaderc's WGSL backend overflows its compiler stack on the full port.
 	s2h_printLF(ui);
 	s2h_printLF(ui);
 	s2h_printTxt(ui, _U, _I, _SPACE, _S, _t, _a);
@@ -97,7 +93,7 @@ void main()
 	s2h_printTxt(ui, _SPACE, _c, _h, _e, _c, _k);
 	s2h_printLF(ui);
 	s2h_printTxt(ui, _SPACE, _SPACE);
-	s2h_progress(ui, 5u, frac(u_s2hTime.x));
+	s2h_progress(ui, 5u, fract(u_s2hTime.x));
 	s2h_printLF(ui);
 	s2h_printTxt(ui, _SPACE, _SPACE);
 	s2h_sliderFloat(ui, 8u, sliderAlpha, 0.0f, 1.0f);
@@ -147,7 +143,7 @@ void main()
 	s2h_printLF(ui);
 	s2h_printLF(ui);
 	s2h_printTxt(ui, _SPACE, _SPACE);
-	s2h_progress(ui, 5u, frac(u_s2hTime.x));
+	s2h_progress(ui, 5u, fract(u_s2hTime.x));
 	s2h_printTxt(ui, _SPACE, _s, _2, _h, _UNDERSCORE, _p);
 	s2h_printTxt(ui, _r, _o, _g, _r, _e, _s);
 	s2h_printTxt(ui, _s);
@@ -168,5 +164,5 @@ void main()
 #endif
 
 	vec4 background = vec4(0.4f, 0.7f, 0.4f, 1.0f);
-	gl_FragColor = lerp(background, vec4(ui.dstColor.rgb, 1.0f), ui.dstColor.a);
+	gl_FragColor = mix(background, vec4(ui.dstColor.rgb, 1.0f), ui.dstColor.a);
 }

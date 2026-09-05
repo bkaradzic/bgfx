@@ -2,9 +2,7 @@ $input v_color0, v_texcoord0
 
 // Self-contained fragment-renderer port of Features/Clear_example.hlsl.
 #include "../common/common.sh"
-#include "s2h_bgfx.sh"
-#include "s2h.hlsl"
-#include "s2h_3d.hlsl"
+#include "s2h/s2h_3d.sh"
 
 uniform vec4 u_s2hTime;
 

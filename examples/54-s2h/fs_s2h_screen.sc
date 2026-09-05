@@ -2,8 +2,7 @@ $input v_color0, v_texcoord0
 
 // Port of ShaderToHuman-bgfx/examples/HelloScreenVSPS/HelloWorldPS.hlsl.
 #include "../common/common.sh"
-#include "s2h_bgfx.sh"
-#include "s2h.hlsl"
+#include "s2h/s2h.sh"
 
 void main()
 {
@@ -22,5 +21,5 @@ void main()
 	s2h_drawSRGBRamp(ui, vec2(10.0f, 100.0f));
 
 	vec4 background = vec4(uv.x, uv.y, 0.0f, 1.0f);
-	gl_FragColor = lerp(background, vec4(ui.dstColor.rgb, 1.0f), ui.dstColor.a);
+	gl_FragColor = mix(background, vec4(ui.dstColor.rgb, 1.0f), ui.dstColor.a);
 }

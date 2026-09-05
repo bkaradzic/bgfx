@@ -2,9 +2,7 @@ $input v_color0, v_texcoord0
 
 // Self-contained fragment-renderer port of Features/3D_example.hlsl.
 #include "../common/common.sh"
-#include "s2h_bgfx.sh"
-#include "s2h.hlsl"
-#include "s2h_3d.hlsl"
+#include "s2h/s2h_3d.sh"
 
 uniform vec4 u_s2hTime;
 
@@ -28,9 +26,7 @@ mat4 lookAt(vec3 _eye, vec3 _target, vec3 _up)
 	vec3 zaxis = safeNormalize(_target - _eye);
 	vec3 xaxis = safeNormalize(cross(_up, zaxis));
 	vec3 yaxis = cross(zaxis, xaxis);
-	// HLSL mat4 constructors receive rows, while GLSL mat4 constructors
-	// receive columns. s2h_drawBasis expects world-space basis vectors in the
-	// matrix columns, so only the HLSL path needs the transpose.
+	// HLSL mat4 constructors receive rows, GLSL receives columns.
 #if BGFX_SHADER_LANGUAGE_GLSL
 	return mat4(vec4(xaxis, 0.0f), vec4(yaxis, 0.0f), vec4(zaxis, 0.0f), vec4(_eye, 1.0f));
 #else
@@ -73,7 +69,7 @@ void main()
 	s2h_printFloat(ui, cameraPosition.y); s2h_printTxt(ui, _COMMA);
 	s2h_printFloat(ui, cameraPosition.z);
 
-	vec3 color = lerp(vec3(0.0f, 0.0f, 0.0f), context.dstColor.rgb, context.dstColor.a);
+	vec3 color = mix(vec3(0.0f, 0.0f, 0.0f), context.dstColor.rgb, context.dstColor.a);
 	color = color * (1.0f - ui.dstColor.a) + ui.dstColor.rgb;
 	gl_FragColor = vec4(s2h_accurateLinearToSRGB(color), 1.0f);
 }

@@ -1,10 +1,7 @@
 $input v_color0, v_texcoord0
 
-// The S2H sources are shared with the HLSL integration; this adapter supplies
-// shaderc-compatible definitions for the bgfx backends.
 #include "../common/common.sh"
-#include "s2h_bgfx.sh"
-#include "s2h.hlsl"
+#include "s2h/s2h.sh"
 
 void main()
 {

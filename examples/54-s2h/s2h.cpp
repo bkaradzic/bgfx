@@ -121,34 +121,36 @@ public:
 		{
 			program = BGFX_INVALID_HANDLE;
 		}
-		m_timeUniform    = bgfx::createUniform("u_s2hTime",    bgfx::UniformFreq::View, bgfx::UniformType::Vec4);
-		m_uiStateUniform = bgfx::createUniform("u_s2hUiState", bgfx::UniformFreq::View, bgfx::UniformType::Vec4);
-		m_colorUniform   = bgfx::createUniform("u_s2hColor",   bgfx::UniformFreq::View, bgfx::UniformType::Vec4);
-		m_mouseUniform   = bgfx::createUniform("u_s2hMouse",   bgfx::UniformFreq::View, bgfx::UniformType::Vec4);
-		m_zoomUniform    = bgfx::createUniform("u_s2hZoom",    bgfx::UniformFreq::View, bgfx::UniformType::Vec4);
 
-		m_program[0] = loadProgram("vs_s2h", "fs_s2h_3d");
-		m_program[1] = loadProgram("vs_s2h", "fs_s2h_2d");
-		m_program[2] = loadProgram("vs_s2h", "fs_s2h_gather");
-		m_program[5] = loadProgram("vs_s2h", "fs_s2h_quadvsps");
-		m_program[6] = loadProgram("vs_s2h", "fs_s2h_table");
-		m_program[7] = loadProgram("vs_s2h", "fs_s2h_quadpost_scene");
-		m_program[8] = loadProgram("vs_s2h", "fs_s2h_arrow");
-		m_program[9] = loadProgram("vs_s2h", "fs_s2h_generate_user_font");
+		m_timeUniform        = bgfx::createUniform("u_s2hTime",        bgfx::UniformFreq::Frame, bgfx::UniformType::Vec4);
+		m_uiStateUniform     = bgfx::createUniform("u_s2hUiState",     bgfx::UniformFreq::Frame, bgfx::UniformType::Vec4);
+		m_colorUniform       = bgfx::createUniform("u_s2hColor",       bgfx::UniformFreq::Frame, bgfx::UniformType::Vec4);
+		m_mouseUniform       = bgfx::createUniform("u_s2hMouse",       bgfx::UniformFreq::Frame, bgfx::UniformType::Vec4);
+		m_zoomUniform        = bgfx::createUniform("u_s2hZoom",        bgfx::UniformFreq::Frame, bgfx::UniformType::Vec4);
+		m_scatterSizeUniform = bgfx::createUniform("u_s2hScatterSize", bgfx::UniformFreq::Frame, bgfx::UniformType::Vec4);
+		m_quadPostSampler    = bgfx::createUniform("s_quadPostColor",  bgfx::UniformType::Sampler);
+		m_scatterSampler     = bgfx::createUniform("s_scatterColor",   bgfx::UniformType::Sampler);
+
+		m_program[ 0] = loadProgram("vs_s2h", "fs_s2h_3d");
+		m_program[ 1] = loadProgram("vs_s2h", "fs_s2h_2d");
+		m_program[ 2] = loadProgram("vs_s2h", "fs_s2h_gather");
+		m_program[ 5] = loadProgram("vs_s2h", "fs_s2h_quadvsps");
+		m_program[ 6] = loadProgram("vs_s2h", "fs_s2h_table");
+		m_program[ 7] = loadProgram("vs_s2h", "fs_s2h_quadpost_scene");
+		m_program[ 8] = loadProgram("vs_s2h", "fs_s2h_arrow");
+		m_program[ 9] = loadProgram("vs_s2h", "fs_s2h_generate_user_font");
 		m_program[11] = loadProgram("vs_s2h", "fs_s2h_coordinate_system");
 		m_program[12] = loadProgram("vs_s2h", "fs_s2h");
 		m_program[13] = loadProgram("vs_s2h", "fs_s2h_screen");
 		m_program[14] = loadProgram("vs_s2h", "fs_s2h_clear");
 		m_program[15] = loadProgram("vs_s2h", "fs_s2h_zoom2d");
-		m_quadPostProgram = loadProgram("vs_s2h", "fs_s2h_quadpost");
-		m_userFontProgram = loadProgram("vs_s2h", "fs_s2h_use_user_font");
-		m_debugZoomProgram = loadProgram("vs_s2h", "fs_s2h_debug_zoom");
-		m_scatterClearProgram = loadProgram("cs_s2h_scatter_clear", NULL);
-		m_scatterProgram = loadProgram("cs_s2h_scatter", NULL);
+		m_quadPostProgram       = loadProgram("vs_s2h", "fs_s2h_quadpost");
+		m_userFontProgram       = loadProgram("vs_s2h", "fs_s2h_use_user_font");
+		m_debugZoomProgram      = loadProgram("vs_s2h", "fs_s2h_debug_zoom");
+		m_scatterClearProgram   = loadProgram("cs_s2h_scatter_clear", NULL);
+		m_scatterProgram        = loadProgram("cs_s2h_scatter", NULL);
 		m_scatterDisplayProgram = loadProgram("vs_s2h", "fs_s2h_scatter_display");
-		m_quadPostSampler = bgfx::createUniform("s_quadPostColor", bgfx::UniformType::Sampler);
-		m_scatterSampler = bgfx::createUniform("s_scatterColor", bgfx::UniformType::Sampler);
-		m_scatterSizeUniform = bgfx::createUniform("u_s2hScatterSize", bgfx::UniformFreq::View, bgfx::UniformType::Vec4);
+
 		createQuadPostTarget();
 		createScatterTarget();
 
@@ -159,6 +161,7 @@ public:
 	int shutdown() override
 	{
 		imguiDestroy();
+
 		for (bgfx::ProgramHandle& program : m_program)
 		{
 			if (bgfx::isValid(program) )
@@ -166,6 +169,7 @@ public:
 				bgfx::destroy(program);
 			}
 		}
+
 		bgfx::destroy(m_quadPostProgram);
 		bgfx::destroy(m_userFontProgram);
 		bgfx::destroy(m_debugZoomProgram);
@@ -183,7 +187,9 @@ public:
 		bgfx::destroy(m_colorUniform);
 		bgfx::destroy(m_mouseUniform);
 		bgfx::destroy(m_zoomUniform);
+
 		bgfx::shutdown();
+
 		return 0;
 	}
 
@@ -201,6 +207,7 @@ public:
 			showExampleDialog(this);
 
 			drawSettings();
+
 			if (2 == m_example)
 			{
 				updateGatherControls();
@@ -219,6 +226,7 @@ public:
 				0.0f,
 				0.0f,
 			};
+
 			const float uiState[] =
 			{
 				float(m_gatherRadio),
@@ -226,6 +234,7 @@ public:
 				m_gatherColor[3],
 				0.0f,
 			};
+
 			const float mouse[] =
 			{
 				float(m_mouseState.m_mx),
@@ -233,6 +242,7 @@ public:
 				m_gatherMouseDown ? 1.0f : 0.0f,
 				0.0f,
 			};
+
 			const float zoom[] =
 			{
 				m_zoomPan[0],
@@ -240,18 +250,26 @@ public:
 				m_zoomScale,
 				0.0f,
 			};
+
 			const bool originBottomLeft = bgfx::getCaps()->originBottomLeft;
+
+			const float scatterSize[] = { float(m_width), float(m_height), originBottomLeft ? 1.0f : 0.0f, 0.0f };
+
+			bgfx::setFrameUniform(m_timeUniform, time);
+			bgfx::setFrameUniform(m_uiStateUniform, uiState);
+			bgfx::setFrameUniform(m_colorUniform, m_gatherColor);
+			bgfx::setFrameUniform(m_mouseUniform, mouse);
+			bgfx::setFrameUniform(m_zoomUniform, zoom);
+			bgfx::setFrameUniform(m_scatterSizeUniform, scatterSize);
+
 			if (4 == m_example)
 			{
-				const float scatterSize[] = { float(m_width), float(m_height), originBottomLeft ? 1.0f : 0.0f, 0.0f };
 				const uint32_t dispatchWidth = (m_width  + 7) / 8;
 				const uint32_t dispatchHeight = (m_height + 7) / 8;
 
-				bgfx::setViewUniform(2, m_scatterSizeUniform, scatterSize);
 				bgfx::setImage(0, m_scatterTexture, 0, bgfx::Access::Write, bgfx::TextureFormat::RGBA8);
 				bgfx::dispatch(2, m_scatterClearProgram, uint16_t(dispatchWidth), uint16_t(dispatchHeight) );
 
-				bgfx::setViewUniform(3, m_scatterSizeUniform, scatterSize);
 				bgfx::setImage(0, m_scatterTexture, 0, bgfx::Access::Write, bgfx::TextureFormat::RGBA8);
 				bgfx::dispatch(3, m_scatterProgram, 1, 1);
 
@@ -265,12 +283,10 @@ public:
 				bgfx::setViewFrameBuffer(0, m_quadPostFrameBuffer);
 				bgfx::setViewRect(0, 0, 0, uint16_t(m_width), uint16_t(m_height) );
 				bgfx::setViewClear(0, BGFX_CLEAR_COLOR, 0x101018ff);
-				bgfx::setViewUniform(0, m_timeUniform, time);
 				renderScreenSpaceQuad(0, 10 == m_example ? m_program[9] : m_program[7]);
 
 				bgfx::setViewFrameBuffer(1, BGFX_INVALID_HANDLE);
 				bgfx::setViewRect(1, 0, 0, uint16_t(m_width), uint16_t(m_height) );
-				bgfx::setViewUniform(1, m_mouseUniform, mouse);
 				bgfx::setTexture(0, m_quadPostSampler, m_quadPostTexture);
 				renderScreenSpaceQuad(1, 7 == m_example ? m_quadPostProgram : (10 == m_example ? m_userFontProgram : m_debugZoomProgram), originBottomLeft);
 			}
@@ -278,11 +294,7 @@ public:
 			{
 				bgfx::setViewFrameBuffer(0, BGFX_INVALID_HANDLE);
 				bgfx::setViewRect(0, 0, 0, uint16_t(m_width), uint16_t(m_height) );
-				bgfx::setViewUniform(0, m_timeUniform, time);
-				bgfx::setViewUniform(0, m_uiStateUniform, uiState);
-				bgfx::setViewUniform(0, m_colorUniform, m_gatherColor);
-				bgfx::setViewUniform(0, m_mouseUniform, mouse);
-				bgfx::setViewUniform(0, m_zoomUniform, zoom);
+
 				bgfx::touch(0);
 				renderScreenSpaceQuad(0, m_program[m_example]);
 			}
@@ -417,8 +429,9 @@ public:
 	{
 		const int32_t mouseX = m_mouseState.m_mx;
 		const int32_t mouseY = m_mouseState.m_my;
-		const bool leftDown = m_mouseState.m_buttons[entry::MouseButton::Left];
+		const bool leftDown  = m_mouseState.m_buttons[entry::MouseButton::Left];
 		const bool rightDown = m_mouseState.m_buttons[entry::MouseButton::Right];
+
 		if (ImGui::GetIO().WantCaptureMouse)
 		{
 			m_zoomLastMouseX = mouseX;
@@ -450,6 +463,7 @@ public:
 	uint32_t m_debug;
 	uint32_t m_reset;
 	int m_example = 0;
+
 	bgfx::ProgramHandle m_program[BX_COUNTOF(s_exampleNames)];
 	bgfx::ProgramHandle m_quadPostProgram;
 	bgfx::ProgramHandle m_userFontProgram;
@@ -458,17 +472,21 @@ public:
 	bgfx::ProgramHandle m_scatterProgram;
 	bgfx::ProgramHandle m_scatterDisplayProgram;
 	bgfx::TextureHandle m_quadPostTexture;
+
 	bgfx::FrameBufferHandle m_quadPostFrameBuffer;
-	bgfx::UniformHandle m_quadPostSampler;
 	bgfx::TextureHandle m_scatterTexture;
+
+	bgfx::UniformHandle m_quadPostSampler;
 	bgfx::UniformHandle m_scatterSampler;
 	bgfx::UniformHandle m_scatterSizeUniform;
-	FrameTime m_frameTime;
 	bgfx::UniformHandle m_timeUniform;
 	bgfx::UniformHandle m_uiStateUniform;
 	bgfx::UniformHandle m_colorUniform;
 	bgfx::UniformHandle m_mouseUniform;
 	bgfx::UniformHandle m_zoomUniform;
+
+	FrameTime m_frameTime;
+
 	int m_gatherRadio = 0;
 	bool m_gatherCheckbox = false;
 	bool m_gatherMouseDown = false;

@@ -2,8 +2,7 @@ $input v_color0, v_texcoord0
 
 // Port of ShaderToHuman-bgfx/examples/Features/2D_CoordinateSystem.hlsl.
 #include "../common/common.sh"
-#include "s2h_bgfx.sh"
-#include "s2h.hlsl"
+#include "s2h/s2h.sh"
 
 void main()
 {
@@ -24,5 +23,5 @@ void main()
 	s2h_printTxt(ui, _n, _a, _t, _e, _S, _y);
 	s2h_printTxt(ui, _s, _t, _e, _m);
 
-	gl_FragColor = lerp(background, vec4(ui.dstColor.rgb, 1.0f), ui.dstColor.a);
+	gl_FragColor = mix(background, vec4(ui.dstColor.rgb, 1.0f), ui.dstColor.a);
 }
