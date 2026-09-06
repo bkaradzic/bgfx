@@ -918,14 +918,16 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			{
 				m_device = MTL::CreateSystemDefaultDevice();
 			}
+			else
+			{
+				retain(m_device);
+			}
 
 			if (NULL == m_device)
 			{
 				BX_WARN(NULL != m_device, "Unable to create Metal device.");
 				return false;
 			}
-
-			retain(m_device);
 
 			if (m_device->supportsFamily(MTL::GPUFamilyApple4) )
 			{
@@ -1176,7 +1178,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 				if (NULL == m_mainFrameBuffer.m_swapChain->m_metalLayer)
 				{
-					MTL_RELEASE(m_device, 0);
+					MTL_RELEASE_I(m_device);
 					return false;
 				}
 			}
@@ -1292,7 +1294,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 				m_uniformScratchBuffer.destroy();
 
-				MTL_RELEASE_W(m_device, 0);
+				MTL_RELEASE_I(m_device);
 
 				pool->release();
 			}
