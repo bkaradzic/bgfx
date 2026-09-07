@@ -4487,6 +4487,11 @@ WGPU_IMPORT
 		return m_moduleBgra8;
 	}
 
+	static uint8_t getNumBindGroupEntries(const ShaderBinding& _shaderBinding)
+	{
+		return ShaderBinding::Type::Sampler == _shaderBinding.type ? 2 : 1;
+	}
+
 	void ProgramWGPU::create(const ShaderWGPU* _vsh, const ShaderWGPU* _fsh)
 	{
 		BX_ASSERT(_vsh->m_module, "Vertex shader doesn't exist.");
@@ -4525,7 +4530,7 @@ WGPU_IMPORT
 				{
 					shaderBind = m_vsh->m_shaderBinding[stage];
 					shaderBind.shaderStage = WGPUShaderStage_Compute;
-					numBindings++;
+					numBindings += getNumBindGroupEntries(shaderBind);
 				}
 			}
 		}
@@ -4540,13 +4545,13 @@ WGPU_IMPORT
 				{
 					shaderBind = m_vsh->m_shaderBinding[stage];
 					shaderBind.shaderStage = WGPUShaderStage_Vertex;
-					numBindings++;
+					numBindings += getNumBindGroupEntries(shaderBind);
 				}
 				else if (NULL != m_fsh && isValid(m_fsh->m_shaderBinding[stage].uniformHandle) )
 				{
 					shaderBind = m_fsh->m_shaderBinding[stage];
 					shaderBind.shaderStage = WGPUShaderStage_Fragment;
-					numBindings += 2;
+					numBindings += getNumBindGroupEntries(shaderBind);
 				}
 			}
 		}

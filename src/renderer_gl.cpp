@@ -8485,10 +8485,11 @@ namespace bgfx { namespace gl
 		}
 		PrimInfo prim = s_primInfo[primIndex];
 
-		const bool primitiveRestartSupported = false
-			|| BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES >= 30)
-			|| s_extension[Extension::ARB_ES3_compatibility].m_supported
-			;
+		const bool primitiveRestartSupported = true
+			&& !BX_ENABLED(BX_PLATFORM_EMSCRIPTEN)
+			&& (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES >= 30)
+				|| s_extension[Extension::ARB_ES3_compatibility].m_supported
+				);
 
 		GL_CHECK(glPolygonMode(GL_FRONT_AND_BACK
 			, _render->m_debug&BGFX_DEBUG_WIREFRAME

@@ -3,6 +3,9 @@
  * License: http://www.opensource.org/licenses/BSD-2-Clause
  */
 
+#ifndef ARGS_H_HEADER_GUARD
+#define ARGS_H_HEADER_GUARD
+
 #include <bgfx/bgfx.h>
 #include <bx/commandline.h>
 
@@ -104,3 +107,5 @@ struct Args
 	bgfx::RendererType::Enum m_type;
 	uint16_t m_pciId;
 };
+
+#endif // ARGS_H_HEADER_GUARD
