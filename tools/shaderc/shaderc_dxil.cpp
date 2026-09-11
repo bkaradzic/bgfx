@@ -20,10 +20,13 @@
 #	define _In_bytecount_(size)
 #endif // _In_bytecount_
 
+BX_PRAGMA_DIAGNOSTIC_PUSH()
+BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wattributes") // warning: 'uuid' attribute directive ignored
 #include <unknwnbase.h>
 #include <dxcapi.h>
 #include <winapifamily.h>
 #include <d3d12shader.h>
+BX_PRAGMA_DIAGNOSTIC_POP()
 
 #include "../../src/shader.h"
 
