@@ -449,7 +449,7 @@ public:
 
 		{
 			bgfx::Attachment at;
-			at.init(m_mipRt, bgfx::Access::Write, 0, 1, 0, BGFX_RESOLVE_AUTO_GEN_MIPS);
+			at.init(m_mipRt, bgfx::Access::Write, 0, 1, 0, BGFX_ATTACHMENT_AUTO_GEN_MIPS);
 			m_mipFb = bgfx::createFrameBuffer(1, &at);
 		}
 

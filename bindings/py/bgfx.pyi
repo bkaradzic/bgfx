@@ -903,8 +903,6 @@ class ResetFlags(enum.IntFlag):
 	Hdr10 = 0x10000
 	# Enable HiDPI rendering.
 	Hidpi = 0x20000
-	# Enable depth clamp.
-	DepthClamp = 0x40000
 	# Suspend rendering.
 	Suspend = 0x80000
 	# Transparent backbuffer. Availability depends on: `BGFX_CAPS_TRANSPARENT_BACKBUFFER`.
@@ -1140,11 +1138,16 @@ class VideoDecodeFrameFlags(enum.IntFlag):
 	# the last displayable picture.
 	Loop = 0x8
 
-class ResolveFlags(enum.IntFlag):
-	# No resolve flags.
+class AttachmentFlags(enum.IntFlag):
+	# No attachment flags.
 	None_ = 0x0
 	# Auto-generate mip maps on resolve.
 	AutoGenMips = 0x1
+	# Bind the depth aspect read-only (read-only depth-stencil view) so the
+	# attachment can be sampled as a texture in the same pass.
+	ReadOnlyDepth = 0x2
+	# Bind the stencil aspect read-only.
+	ReadOnlyStencil = 0x4
 
 class PciIdFlags(enum.IntFlag):
 	# Autoselect adapter.
@@ -1654,8 +1657,8 @@ class Attachment(ctypes.Structure):
 	layer: int
 	# Number of texture layer/slice(s) in array to use.
 	numLayers: int
-	# Resolve flags. See: `BGFX_RESOLVE_*`
-	resolve: int
+	# Attachment flags. See: `BGFX_ATTACHMENT_*`
+	flags: int
 
 # Transform data.
 class Transform(ctypes.Structure):
@@ -1913,7 +1916,7 @@ def bgfx_attachment_init(
 	_layer: int,
 	_numLayers: int,
 	_mip: int,
-	_resolve: int,
+	_flags: int,
 	/,
 ) -> None: ...
 
@@ -2550,7 +2553,16 @@ def bgfx_set_palette_color_rgba8(_index: int, _rgba: int, /) -> None: ...
 def bgfx_set_view_name(_id: int, _name: Optional[bytes], _len: int, /) -> None: ...
 
 # Set view rectangle. Draw primitive outside view will be clipped.
-def bgfx_set_view_rect(_id: int, _x: int, _y: int, _width: int, _height: int, /) -> None: ...
+def bgfx_set_view_rect(
+	_id: int,
+	_x: int,
+	_y: int,
+	_width: int,
+	_height: int,
+	_minDepth: float,
+	_maxDepth: float,
+	/,
+) -> None: ...
 
 # Set view rectangle. Draw primitive outside view will be clipped.
 def bgfx_set_view_rect_ratio(_id: int, _x: int, _y: int, _ratio: Union[BackbufferRatio, int], /) -> None: ...
@@ -2558,6 +2570,14 @@ def bgfx_set_view_rect_ratio(_id: int, _x: int, _y: int, _ratio: Union[Backbuffe
 # Set view scissor. Draw primitive outside view will be clipped. When
 # _x, _y, _width and _height are set to 0, scissor will be disabled.
 def bgfx_set_view_scissor(_id: int, _x: int, _y: int, _width: int, _height: int, /) -> None: ...
+
+# Set view depth bias. Applies to all draws in the view unless overridden per-draw
+# with `bgfx::setDepthControl`.
+def bgfx_set_view_depth_bias(_id: int, _constant: int, _slopeScale: float, _clamp: float, /) -> None: ...
+
+# Set view multisample coverage mask. Combined with the per-draw mask set by
+# `bgfx::setSampleMask`, so a draw can narrow the view's mask but not widen it.
+def bgfx_set_view_sample_mask(_id: int, _mask: int, /) -> None: ...
 
 # Set view clear flags.
 def bgfx_set_view_clear(_id: int, _flags: int, _rgba: int, _depth: float, _stencil: int, /) -> None: ...
@@ -2679,6 +2699,11 @@ def bgfx_encoder_set_condition(_this: Optional[Union[Encoder, _Pointer[Encoder],
 # Set stencil test state.
 def bgfx_encoder_set_stencil(_this: Optional[Union[Encoder, _Pointer[Encoder], ctypes.Array]], _fstencil: int, _bstencil: int, /) -> None: ...
 
+# Set multisample coverage mask for draw primitive. Samples whose bit is clear
+# in the mask are never written, regardless of the coverage the rasterizer
+# computes. Only has an effect when rendering to a multisampled target.
+def bgfx_encoder_set_sample_mask(_this: Optional[Union[Encoder, _Pointer[Encoder], ctypes.Array]], _mask: int, /) -> None: ...
+
 # Set scissor for draw primitive.
 # 
 # @remark
@@ -2692,6 +2717,13 @@ def bgfx_encoder_set_scissor(_this: Optional[Union[Encoder, _Pointer[Encoder], c
 #   To scissor for all primitives in view see `bgfx::setViewScissor`.
 # 
 def bgfx_encoder_set_scissor_cached(_this: Optional[Union[Encoder, _Pointer[Encoder], ctypes.Array]], _cache: int, /) -> None: ...
+
+# Set depth control (depth bias and depth clip) for draw primitive. Overrides the
+# view depth bias for this draw.
+def bgfx_encoder_set_depth_control(_this: Optional[Union[Encoder, _Pointer[Encoder], ctypes.Array]], _constant: int, _slopeScale: float, _clamp: float, _depthClamp: bool, /) -> int: ...
+
+# Set depth control from depth-control cache for draw primitive.
+def bgfx_encoder_set_depth_control_cached(_this: Optional[Union[Encoder, _Pointer[Encoder], ctypes.Array]], _cache: int, /) -> None: ...
 
 # Set model matrix for draw primitive. If it is not called,
 # the model will be rendered with an identity model matrix.
@@ -3086,6 +3118,11 @@ def bgfx_set_condition(_handle: OcclusionQueryHandle, _visible: bool, /) -> None
 # Set stencil test state.
 def bgfx_set_stencil(_fstencil: int, _bstencil: int, /) -> None: ...
 
+# Set multisample coverage mask for draw primitive. Samples whose bit is clear
+# in the mask are never written, regardless of the coverage the rasterizer
+# computes. Only has an effect when rendering to a multisampled target.
+def bgfx_set_sample_mask(_mask: int, /) -> None: ...
+
 # Set scissor for draw primitive.
 # 
 # @remark
@@ -3099,6 +3136,13 @@ def bgfx_set_scissor(_x: int, _y: int, _width: int, _height: int, /) -> int: ...
 #   To scissor for all primitives in view see `bgfx::setViewScissor`.
 # 
 def bgfx_set_scissor_cached(_cache: int, /) -> None: ...
+
+# Set depth control (depth bias and depth clip) for draw primitive. Overrides the
+# view depth bias for this draw.
+def bgfx_set_depth_control(_constant: int, _slopeScale: float, _clamp: float, _depthClamp: bool, /) -> int: ...
+
+# Set depth control from depth-control cache for draw primitive.
+def bgfx_set_depth_control_cached(_cache: int, /) -> None: ...
 
 # Set model matrix for draw primitive. If it is not called,
 # the model will be rendered with an identity model matrix.

@@ -492,7 +492,6 @@ class ResetFlags(enum.IntFlag):
 	SrgbBackbuffer = 0x8000
 	Hdr10 = 0x10000
 	Hidpi = 0x20000
-	DepthClamp = 0x40000
 	Suspend = 0x80000
 	TransparentBackbuffer = 0x100000
 	FullscreenShift = 0x0
@@ -621,9 +620,11 @@ class VideoDecodeFrameFlags(enum.IntFlag):
 	Final = 0x4
 	Loop = 0x8
 
-class ResolveFlags(enum.IntFlag):
+class AttachmentFlags(enum.IntFlag):
 	None_ = 0x0
 	AutoGenMips = 0x1
+	ReadOnlyDepth = 0x2
+	ReadOnlyStencil = 0x4
 
 class PciIdFlags(enum.IntFlag):
 	None_ = 0x0
@@ -1019,7 +1020,7 @@ Attachment._fields_ = [
 	("mip", ctypes.c_uint16),
 	("layer", ctypes.c_uint16),
 	("numLayers", ctypes.c_uint16),
-	("resolve", ctypes.c_uint8),
+	("flags", ctypes.c_uint8),
 ]
 
 Transform._fields_ = [
@@ -1513,7 +1514,7 @@ def _bind(lib):
 	bgfx_set_view_name.restype = None
 	global bgfx_set_view_rect
 	bgfx_set_view_rect = lib.bgfx_set_view_rect
-	bgfx_set_view_rect.argtypes = [ctypes.c_uint16, ctypes.c_int16, ctypes.c_int16, ctypes.c_uint16, ctypes.c_uint16]
+	bgfx_set_view_rect.argtypes = [ctypes.c_uint16, ctypes.c_int16, ctypes.c_int16, ctypes.c_uint16, ctypes.c_uint16, ctypes.c_float, ctypes.c_float]
 	bgfx_set_view_rect.restype = None
 	global bgfx_set_view_rect_ratio
 	bgfx_set_view_rect_ratio = lib.bgfx_set_view_rect_ratio
@@ -1523,6 +1524,14 @@ def _bind(lib):
 	bgfx_set_view_scissor = lib.bgfx_set_view_scissor
 	bgfx_set_view_scissor.argtypes = [ctypes.c_uint16, ctypes.c_uint16, ctypes.c_uint16, ctypes.c_uint16, ctypes.c_uint16]
 	bgfx_set_view_scissor.restype = None
+	global bgfx_set_view_depth_bias
+	bgfx_set_view_depth_bias = lib.bgfx_set_view_depth_bias
+	bgfx_set_view_depth_bias.argtypes = [ctypes.c_uint16, ctypes.c_int32, ctypes.c_float, ctypes.c_float]
+	bgfx_set_view_depth_bias.restype = None
+	global bgfx_set_view_sample_mask
+	bgfx_set_view_sample_mask = lib.bgfx_set_view_sample_mask
+	bgfx_set_view_sample_mask.argtypes = [ctypes.c_uint16, ctypes.c_uint32]
+	bgfx_set_view_sample_mask.restype = None
 	global bgfx_set_view_clear
 	bgfx_set_view_clear = lib.bgfx_set_view_clear
 	bgfx_set_view_clear.argtypes = [ctypes.c_uint16, ctypes.c_uint16, ctypes.c_uint32, ctypes.c_float, ctypes.c_uint8]
@@ -1579,6 +1588,10 @@ def _bind(lib):
 	bgfx_encoder_set_stencil = lib.bgfx_encoder_set_stencil
 	bgfx_encoder_set_stencil.argtypes = [ctypes.POINTER(Encoder), ctypes.c_uint32, ctypes.c_uint32]
 	bgfx_encoder_set_stencil.restype = None
+	global bgfx_encoder_set_sample_mask
+	bgfx_encoder_set_sample_mask = lib.bgfx_encoder_set_sample_mask
+	bgfx_encoder_set_sample_mask.argtypes = [ctypes.POINTER(Encoder), ctypes.c_uint32]
+	bgfx_encoder_set_sample_mask.restype = None
 	global bgfx_encoder_set_scissor
 	bgfx_encoder_set_scissor = lib.bgfx_encoder_set_scissor
 	bgfx_encoder_set_scissor.argtypes = [ctypes.POINTER(Encoder), ctypes.c_uint16, ctypes.c_uint16, ctypes.c_uint16, ctypes.c_uint16]
@@ -1587,6 +1600,14 @@ def _bind(lib):
 	bgfx_encoder_set_scissor_cached = lib.bgfx_encoder_set_scissor_cached
 	bgfx_encoder_set_scissor_cached.argtypes = [ctypes.POINTER(Encoder), ctypes.c_uint16]
 	bgfx_encoder_set_scissor_cached.restype = None
+	global bgfx_encoder_set_depth_control
+	bgfx_encoder_set_depth_control = lib.bgfx_encoder_set_depth_control
+	bgfx_encoder_set_depth_control.argtypes = [ctypes.POINTER(Encoder), ctypes.c_int32, ctypes.c_float, ctypes.c_float, ctypes.c_bool]
+	bgfx_encoder_set_depth_control.restype = ctypes.c_uint16
+	global bgfx_encoder_set_depth_control_cached
+	bgfx_encoder_set_depth_control_cached = lib.bgfx_encoder_set_depth_control_cached
+	bgfx_encoder_set_depth_control_cached.argtypes = [ctypes.POINTER(Encoder), ctypes.c_uint16]
+	bgfx_encoder_set_depth_control_cached.restype = None
 	global bgfx_encoder_set_transform
 	bgfx_encoder_set_transform = lib.bgfx_encoder_set_transform
 	bgfx_encoder_set_transform.argtypes = [ctypes.POINTER(Encoder), ctypes.c_void_p, ctypes.c_uint16]
@@ -1779,6 +1800,10 @@ def _bind(lib):
 	bgfx_set_stencil = lib.bgfx_set_stencil
 	bgfx_set_stencil.argtypes = [ctypes.c_uint32, ctypes.c_uint32]
 	bgfx_set_stencil.restype = None
+	global bgfx_set_sample_mask
+	bgfx_set_sample_mask = lib.bgfx_set_sample_mask
+	bgfx_set_sample_mask.argtypes = [ctypes.c_uint32]
+	bgfx_set_sample_mask.restype = None
 	global bgfx_set_scissor
 	bgfx_set_scissor = lib.bgfx_set_scissor
 	bgfx_set_scissor.argtypes = [ctypes.c_uint16, ctypes.c_uint16, ctypes.c_uint16, ctypes.c_uint16]
@@ -1787,6 +1812,14 @@ def _bind(lib):
 	bgfx_set_scissor_cached = lib.bgfx_set_scissor_cached
 	bgfx_set_scissor_cached.argtypes = [ctypes.c_uint16]
 	bgfx_set_scissor_cached.restype = None
+	global bgfx_set_depth_control
+	bgfx_set_depth_control = lib.bgfx_set_depth_control
+	bgfx_set_depth_control.argtypes = [ctypes.c_int32, ctypes.c_float, ctypes.c_float, ctypes.c_bool]
+	bgfx_set_depth_control.restype = ctypes.c_uint16
+	global bgfx_set_depth_control_cached
+	bgfx_set_depth_control_cached = lib.bgfx_set_depth_control_cached
+	bgfx_set_depth_control_cached.argtypes = [ctypes.c_uint16]
+	bgfx_set_depth_control_cached.restype = None
 	global bgfx_set_transform
 	bgfx_set_transform = lib.bgfx_set_transform
 	bgfx_set_transform.argtypes = [ctypes.c_void_p, ctypes.c_uint16]

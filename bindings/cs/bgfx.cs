@@ -939,11 +939,6 @@ public static partial class bgfx
 		Hidpi                  = 0x00020000,
 	
 		/// <summary>
-		/// Enable depth clamp.
-		/// </summary>
-		DepthClamp             = 0x00040000,
-	
-		/// <summary>
 		/// Suspend rendering.
 		/// </summary>
 		Suspend                = 0x00080000,
@@ -1323,10 +1318,10 @@ public static partial class bgfx
 	}
 	
 	[Flags]
-	public enum ResolveFlags : uint
+	public enum AttachmentFlags : uint
 	{
 		/// <summary>
-		/// No resolve flags.
+		/// No attachment flags.
 		/// </summary>
 		None                   = 0x00000000,
 	
@@ -1334,6 +1329,17 @@ public static partial class bgfx
 		/// Auto-generate mip maps on resolve.
 		/// </summary>
 		AutoGenMips            = 0x00000001,
+	
+		/// <summary>
+		/// Bind the depth aspect read-only (read-only depth-stencil view) so the
+		/// attachment can be sampled as a texture in the same pass.
+		/// </summary>
+		ReadOnlyDepth          = 0x00000002,
+	
+		/// <summary>
+		/// Bind the stencil aspect read-only.
+		/// </summary>
+		ReadOnlyStencil        = 0x00000004,
 	}
 	
 	[Flags]
@@ -2771,7 +2777,7 @@ public static partial class bgfx
 		public ushort mip;
 		public ushort layer;
 		public ushort numLayers;
-		public byte resolve;
+		public byte flags;
 	}
 	
 	public unsafe struct Transform
@@ -2970,10 +2976,10 @@ public static partial class bgfx
 	/// <param name="_layer">Cubemap side or depth layer/slice to use.</param>
 	/// <param name="_numLayers">Number of texture layer/slice(s) in array to use.</param>
 	/// <param name="_mip">Mip level.</param>
-	/// <param name="_resolve">Resolve flags. See: `BGFX_RESOLVE_*`</param>
+	/// <param name="_flags">Attachment flags. See: `BGFX_ATTACHMENT_*`</param>
 	///
 	[DllImport(DllName, EntryPoint="bgfx_attachment_init", CallingConvention = CallingConvention.Cdecl)]
-	public static extern unsafe void attachment_init(Attachment* _this, TextureHandle _handle, Access _access, ushort _layer, ushort _numLayers, ushort _mip, byte _resolve);
+	public static extern unsafe void attachment_init(Attachment* _this, TextureHandle _handle, Access _access, ushort _layer, ushort _numLayers, ushort _mip, byte _flags);
 	
 	/// <summary>
 	/// Start VertexLayout.
@@ -4264,9 +4270,11 @@ public static partial class bgfx
 	/// <param name="_y">Position y from the top corner of the window. Can be negative to place view origin outside of the window.</param>
 	/// <param name="_width">Width of view port region.</param>
 	/// <param name="_height">Height of view port region.</param>
+	/// <param name="_minDepth">Viewport minimum depth (maps clip-space z=0).</param>
+	/// <param name="_maxDepth">Viewport maximum depth (maps clip-space z=1).</param>
 	///
 	[DllImport(DllName, EntryPoint="bgfx_set_view_rect", CallingConvention = CallingConvention.Cdecl)]
-	public static extern unsafe void set_view_rect(ushort _id, short _x, short _y, ushort _width, ushort _height);
+	public static extern unsafe void set_view_rect(ushort _id, short _x, short _y, ushort _width, ushort _height, float _minDepth, float _maxDepth);
 	
 	/// <summary>
 	/// Set view rectangle. Draw primitive outside view will be clipped.
@@ -4293,6 +4301,30 @@ public static partial class bgfx
 	///
 	[DllImport(DllName, EntryPoint="bgfx_set_view_scissor", CallingConvention = CallingConvention.Cdecl)]
 	public static extern unsafe void set_view_scissor(ushort _id, ushort _x, ushort _y, ushort _width, ushort _height);
+	
+	/// <summary>
+	/// Set view depth bias. Applies to all draws in the view unless overridden per-draw
+	/// with `bgfx::setDepthControl`.
+	/// </summary>
+	///
+	/// <param name="_id">View id.</param>
+	/// <param name="_constant">Constant depth bias.</param>
+	/// <param name="_slopeScale">Slope-scaled depth bias.</param>
+	/// <param name="_clamp">Depth bias clamp.</param>
+	///
+	[DllImport(DllName, EntryPoint="bgfx_set_view_depth_bias", CallingConvention = CallingConvention.Cdecl)]
+	public static extern unsafe void set_view_depth_bias(ushort _id, int _constant, float _slopeScale, float _clamp);
+	
+	/// <summary>
+	/// Set view multisample coverage mask. Combined with the per-draw mask set by
+	/// `bgfx::setSampleMask`, so a draw can narrow the view's mask but not widen it.
+	/// </summary>
+	///
+	/// <param name="_id">View id.</param>
+	/// <param name="_mask">Sample coverage mask.</param>
+	///
+	[DllImport(DllName, EntryPoint="bgfx_set_view_sample_mask", CallingConvention = CallingConvention.Cdecl)]
+	public static extern unsafe void set_view_sample_mask(ushort _id, uint _mask);
 	
 	/// <summary>
 	/// Set view clear flags.
@@ -4511,6 +4543,17 @@ public static partial class bgfx
 	public static extern unsafe void encoder_set_stencil(Encoder* _this, uint _fstencil, uint _bstencil);
 	
 	/// <summary>
+	/// Set multisample coverage mask for draw primitive. Samples whose bit is clear
+	/// in the mask are never written, regardless of the coverage the rasterizer
+	/// computes. Only has an effect when rendering to a multisampled target.
+	/// </summary>
+	///
+	/// <param name="_mask">Sample coverage mask.</param>
+	///
+	[DllImport(DllName, EntryPoint="bgfx_encoder_set_sample_mask", CallingConvention = CallingConvention.Cdecl)]
+	public static extern unsafe void encoder_set_sample_mask(Encoder* _this, uint _mask);
+	
+	/// <summary>
 	/// Set scissor for draw primitive.
 	/// 
 	/// @remark
@@ -4538,6 +4581,28 @@ public static partial class bgfx
 	///
 	[DllImport(DllName, EntryPoint="bgfx_encoder_set_scissor_cached", CallingConvention = CallingConvention.Cdecl)]
 	public static extern unsafe void encoder_set_scissor_cached(Encoder* _this, ushort _cache);
+	
+	/// <summary>
+	/// Set depth control (depth bias and depth clip) for draw primitive. Overrides the
+	/// view depth bias for this draw.
+	/// </summary>
+	///
+	/// <param name="_constant">Constant depth bias.</param>
+	/// <param name="_slopeScale">Slope-scaled depth bias.</param>
+	/// <param name="_clamp">Depth bias clamp.</param>
+	/// <param name="_depthClamp">Disable depth clipping and clamp NDC depth to the [0,1] range instead.</param>
+	///
+	[DllImport(DllName, EntryPoint="bgfx_encoder_set_depth_control", CallingConvention = CallingConvention.Cdecl)]
+	public static extern unsafe ushort encoder_set_depth_control(Encoder* _this, int _constant, float _slopeScale, float _clamp, bool _depthClamp);
+	
+	/// <summary>
+	/// Set depth control from depth-control cache for draw primitive.
+	/// </summary>
+	///
+	/// <param name="_cache">Index in depth control cache.</param>
+	///
+	[DllImport(DllName, EntryPoint="bgfx_encoder_set_depth_control_cached", CallingConvention = CallingConvention.Cdecl)]
+	public static extern unsafe void encoder_set_depth_control_cached(Encoder* _this, ushort _cache);
 	
 	/// <summary>
 	/// Set model matrix for draw primitive. If it is not called,
@@ -5235,6 +5300,17 @@ public static partial class bgfx
 	public static extern unsafe void set_stencil(uint _fstencil, uint _bstencil);
 	
 	/// <summary>
+	/// Set multisample coverage mask for draw primitive. Samples whose bit is clear
+	/// in the mask are never written, regardless of the coverage the rasterizer
+	/// computes. Only has an effect when rendering to a multisampled target.
+	/// </summary>
+	///
+	/// <param name="_mask">Sample coverage mask.</param>
+	///
+	[DllImport(DllName, EntryPoint="bgfx_set_sample_mask", CallingConvention = CallingConvention.Cdecl)]
+	public static extern unsafe void set_sample_mask(uint _mask);
+	
+	/// <summary>
 	/// Set scissor for draw primitive.
 	/// 
 	/// @remark
@@ -5262,6 +5338,28 @@ public static partial class bgfx
 	///
 	[DllImport(DllName, EntryPoint="bgfx_set_scissor_cached", CallingConvention = CallingConvention.Cdecl)]
 	public static extern unsafe void set_scissor_cached(ushort _cache);
+	
+	/// <summary>
+	/// Set depth control (depth bias and depth clip) for draw primitive. Overrides the
+	/// view depth bias for this draw.
+	/// </summary>
+	///
+	/// <param name="_constant">Constant depth bias.</param>
+	/// <param name="_slopeScale">Slope-scaled depth bias.</param>
+	/// <param name="_clamp">Depth bias clamp.</param>
+	/// <param name="_depthClamp">Disable depth clipping and clamp NDC depth to the [0,1] range instead.</param>
+	///
+	[DllImport(DllName, EntryPoint="bgfx_set_depth_control", CallingConvention = CallingConvention.Cdecl)]
+	public static extern unsafe ushort set_depth_control(int _constant, float _slopeScale, float _clamp, bool _depthClamp);
+	
+	/// <summary>
+	/// Set depth control from depth-control cache for draw primitive.
+	/// </summary>
+	///
+	/// <param name="_cache">Index in depth control cache.</param>
+	///
+	[DllImport(DllName, EntryPoint="bgfx_set_depth_control_cached", CallingConvention = CallingConvention.Cdecl)]
+	public static extern unsafe void set_depth_control_cached(ushort _cache);
 	
 	/// <summary>
 	/// Set model matrix for draw primitive. If it is not called,

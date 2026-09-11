@@ -1187,7 +1187,7 @@ typedef struct bgfx_attachment_s
     uint16_t             mip;                /** Mip level.                               */
     uint16_t             layer;              /** Cubemap side or depth layer/slice to use. */
     uint16_t             numLayers;          /** Number of texture layer/slice(s) in array to use. */
-    uint8_t              resolve;            /** Resolve flags. See: `BGFX_RESOLVE_*`     */
+    uint8_t              flags;              /** Attachment flags. See: `BGFX_ATTACHMENT_*` */
 
 } bgfx_attachment_t;
 
@@ -1362,10 +1362,10 @@ BGFX_C_API void bgfx_buffer_region_init_buffer(bgfx_buffer_region_t* _this, bgfx
  * @param[in] _layer Cubemap side or depth layer/slice to use.
  * @param[in] _numLayers Number of texture layer/slice(s) in array to use.
  * @param[in] _mip Mip level.
- * @param[in] _resolve Resolve flags. See: `BGFX_RESOLVE_*`
+ * @param[in] _flags Attachment flags. See: `BGFX_ATTACHMENT_*`
  *
  */
-BGFX_C_API void bgfx_attachment_init(bgfx_attachment_t* _this, bgfx_texture_handle_t _handle, bgfx_access_t _access, uint16_t _layer, uint16_t _numLayers, uint16_t _mip, uint8_t _resolve);
+BGFX_C_API void bgfx_attachment_init(bgfx_attachment_t* _this, bgfx_texture_handle_t _handle, bgfx_access_t _access, uint16_t _layer, uint16_t _numLayers, uint16_t _mip, uint8_t _flags);
 
 /**
  * Start VertexLayout.
@@ -2849,9 +2849,11 @@ BGFX_C_API void bgfx_set_view_name(bgfx_view_id_t _id, const char* _name, int32_
  *  negative to place view origin outside of the window.
  * @param[in] _width Width of view port region.
  * @param[in] _height Height of view port region.
+ * @param[in] _minDepth Viewport minimum depth (maps clip-space z=0).
+ * @param[in] _maxDepth Viewport maximum depth (maps clip-space z=1).
  *
  */
-BGFX_C_API void bgfx_set_view_rect(bgfx_view_id_t _id, int16_t _x, int16_t _y, uint16_t _width, uint16_t _height);
+BGFX_C_API void bgfx_set_view_rect(bgfx_view_id_t _id, int16_t _x, int16_t _y, uint16_t _width, uint16_t _height, float _minDepth, float _maxDepth);
 
 /**
  * Set view rectangle. Draw primitive outside view will be clipped.
@@ -2879,6 +2881,28 @@ BGFX_C_API void bgfx_set_view_rect_ratio(bgfx_view_id_t _id, int16_t _x, int16_t
  *
  */
 BGFX_C_API void bgfx_set_view_scissor(bgfx_view_id_t _id, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height);
+
+/**
+ * Set view depth bias. Applies to all draws in the view unless overridden per-draw
+ * with `bgfx::setDepthControl`.
+ *
+ * @param[in] _id View id.
+ * @param[in] _constant Constant depth bias.
+ * @param[in] _slopeScale Slope-scaled depth bias.
+ * @param[in] _clamp Depth bias clamp.
+ *
+ */
+BGFX_C_API void bgfx_set_view_depth_bias(bgfx_view_id_t _id, int32_t _constant, float _slopeScale, float _clamp);
+
+/**
+ * Set view multisample coverage mask. Combined with the per-draw mask set by
+ * `bgfx::setSampleMask`, so a draw can narrow the view's mask but not widen it.
+ *
+ * @param[in] _id View id.
+ * @param[in] _mask Sample coverage mask.
+ *
+ */
+BGFX_C_API void bgfx_set_view_sample_mask(bgfx_view_id_t _id, uint32_t _mask);
 
 /**
  * Set view clear flags.
@@ -3096,6 +3120,16 @@ BGFX_C_API void bgfx_encoder_set_condition(bgfx_encoder_t* _this, bgfx_occlusion
 BGFX_C_API void bgfx_encoder_set_stencil(bgfx_encoder_t* _this, uint32_t _fstencil, uint32_t _bstencil);
 
 /**
+ * Set multisample coverage mask for draw primitive. Samples whose bit is clear
+ * in the mask are never written, regardless of the coverage the rasterizer
+ * computes. Only has an effect when rendering to a multisampled target.
+ *
+ * @param[in] _mask Sample coverage mask.
+ *
+ */
+BGFX_C_API void bgfx_encoder_set_sample_mask(bgfx_encoder_t* _this, uint32_t _mask);
+
+/**
  * Set scissor for draw primitive.
  *
  * @remark
@@ -3121,6 +3155,28 @@ BGFX_C_API uint16_t bgfx_encoder_set_scissor(bgfx_encoder_t* _this, uint16_t _x,
  *
  */
 BGFX_C_API void bgfx_encoder_set_scissor_cached(bgfx_encoder_t* _this, uint16_t _cache);
+
+/**
+ * Set depth control (depth bias and depth clip) for draw primitive. Overrides the
+ * view depth bias for this draw.
+ *
+ * @param[in] _constant Constant depth bias.
+ * @param[in] _slopeScale Slope-scaled depth bias.
+ * @param[in] _clamp Depth bias clamp.
+ * @param[in] _depthClamp Disable depth clipping and clamp NDC depth to the [0,1] range instead.
+ *
+ * @returns Depth control cache index.
+ *
+ */
+BGFX_C_API uint16_t bgfx_encoder_set_depth_control(bgfx_encoder_t* _this, int32_t _constant, float _slopeScale, float _clamp, bool _depthClamp);
+
+/**
+ * Set depth control from depth-control cache for draw primitive.
+ *
+ * @param[in] _cache Index in depth control cache.
+ *
+ */
+BGFX_C_API void bgfx_encoder_set_depth_control_cached(bgfx_encoder_t* _this, uint16_t _cache);
 
 /**
  * Set model matrix for draw primitive. If it is not called,
@@ -3791,6 +3847,16 @@ BGFX_C_API void bgfx_set_condition(bgfx_occlusion_query_handle_t _handle, bool _
 BGFX_C_API void bgfx_set_stencil(uint32_t _fstencil, uint32_t _bstencil);
 
 /**
+ * Set multisample coverage mask for draw primitive. Samples whose bit is clear
+ * in the mask are never written, regardless of the coverage the rasterizer
+ * computes. Only has an effect when rendering to a multisampled target.
+ *
+ * @param[in] _mask Sample coverage mask.
+ *
+ */
+BGFX_C_API void bgfx_set_sample_mask(uint32_t _mask);
+
+/**
  * Set scissor for draw primitive.
  *
  * @remark
@@ -3816,6 +3882,28 @@ BGFX_C_API uint16_t bgfx_set_scissor(uint16_t _x, uint16_t _y, uint16_t _width, 
  *
  */
 BGFX_C_API void bgfx_set_scissor_cached(uint16_t _cache);
+
+/**
+ * Set depth control (depth bias and depth clip) for draw primitive. Overrides the
+ * view depth bias for this draw.
+ *
+ * @param[in] _constant Constant depth bias.
+ * @param[in] _slopeScale Slope-scaled depth bias.
+ * @param[in] _clamp Depth bias clamp.
+ * @param[in] _depthClamp Disable depth clipping and clamp NDC depth to the [0,1] range instead.
+ *
+ * @returns Depth control cache index.
+ *
+ */
+BGFX_C_API uint16_t bgfx_set_depth_control(int32_t _constant, float _slopeScale, float _clamp, bool _depthClamp);
+
+/**
+ * Set depth control from depth-control cache for draw primitive.
+ *
+ * @param[in] _cache Index in depth control cache.
+ *
+ */
+BGFX_C_API void bgfx_set_depth_control_cached(uint16_t _cache);
 
 /**
  * Set model matrix for draw primitive. If it is not called,
@@ -4439,6 +4527,8 @@ typedef enum bgfx_function_id
     BGFX_FUNCTION_ID_SET_VIEW_RECT,
     BGFX_FUNCTION_ID_SET_VIEW_RECT_RATIO,
     BGFX_FUNCTION_ID_SET_VIEW_SCISSOR,
+    BGFX_FUNCTION_ID_SET_VIEW_DEPTH_BIAS,
+    BGFX_FUNCTION_ID_SET_VIEW_SAMPLE_MASK,
     BGFX_FUNCTION_ID_SET_VIEW_CLEAR,
     BGFX_FUNCTION_ID_SET_VIEW_CLEAR_MRT,
     BGFX_FUNCTION_ID_SET_VIEW_MODE,
@@ -4453,8 +4543,11 @@ typedef enum bgfx_function_id
     BGFX_FUNCTION_ID_ENCODER_SET_STATE,
     BGFX_FUNCTION_ID_ENCODER_SET_CONDITION,
     BGFX_FUNCTION_ID_ENCODER_SET_STENCIL,
+    BGFX_FUNCTION_ID_ENCODER_SET_SAMPLE_MASK,
     BGFX_FUNCTION_ID_ENCODER_SET_SCISSOR,
     BGFX_FUNCTION_ID_ENCODER_SET_SCISSOR_CACHED,
+    BGFX_FUNCTION_ID_ENCODER_SET_DEPTH_CONTROL,
+    BGFX_FUNCTION_ID_ENCODER_SET_DEPTH_CONTROL_CACHED,
     BGFX_FUNCTION_ID_ENCODER_SET_TRANSFORM,
     BGFX_FUNCTION_ID_ENCODER_SET_TRANSFORM_CACHED,
     BGFX_FUNCTION_ID_ENCODER_ALLOC_TRANSFORM,
@@ -4503,8 +4596,11 @@ typedef enum bgfx_function_id
     BGFX_FUNCTION_ID_SET_STATE,
     BGFX_FUNCTION_ID_SET_CONDITION,
     BGFX_FUNCTION_ID_SET_STENCIL,
+    BGFX_FUNCTION_ID_SET_SAMPLE_MASK,
     BGFX_FUNCTION_ID_SET_SCISSOR,
     BGFX_FUNCTION_ID_SET_SCISSOR_CACHED,
+    BGFX_FUNCTION_ID_SET_DEPTH_CONTROL,
+    BGFX_FUNCTION_ID_SET_DEPTH_CONTROL_CACHED,
     BGFX_FUNCTION_ID_SET_TRANSFORM,
     BGFX_FUNCTION_ID_SET_TRANSFORM_CACHED,
     BGFX_FUNCTION_ID_ALLOC_TRANSFORM,
@@ -4555,7 +4651,7 @@ struct bgfx_interface_vtbl
     void (*texture_region_init)(bgfx_texture_region_t* _this, bgfx_texture_handle_t _handle, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height);
     void (*buffer_region_init_texture)(bgfx_buffer_region_t* _this, const bgfx_texture_region_t * _texture);
     void (*buffer_region_init_buffer)(bgfx_buffer_region_t* _this, bgfx_buffer_handle_t _handle, uint32_t _offset, uint32_t _size);
-    void (*attachment_init)(bgfx_attachment_t* _this, bgfx_texture_handle_t _handle, bgfx_access_t _access, uint16_t _layer, uint16_t _numLayers, uint16_t _mip, uint8_t _resolve);
+    void (*attachment_init)(bgfx_attachment_t* _this, bgfx_texture_handle_t _handle, bgfx_access_t _access, uint16_t _layer, uint16_t _numLayers, uint16_t _mip, uint8_t _flags);
     bgfx_vertex_layout_t* (*vertex_layout_begin)(bgfx_vertex_layout_t* _this, bgfx_renderer_type_t _rendererType);
     bgfx_vertex_layout_t* (*vertex_layout_add)(bgfx_vertex_layout_t* _this, bgfx_attrib_t _attrib, uint8_t _num, bgfx_attrib_type_t _type, bool _normalized, bool _asInt);
     void (*vertex_layout_decode)(const bgfx_vertex_layout_t* _this, bgfx_attrib_t _attrib, uint8_t * _num, bgfx_attrib_type_t * _type, bool * _normalized, bool * _asInt);
@@ -4659,9 +4755,11 @@ struct bgfx_interface_vtbl
     void (*set_palette_color_rgba32f)(uint8_t _index, float _r, float _g, float _b, float _a);
     void (*set_palette_color_rgba8)(uint8_t _index, uint32_t _rgba);
     void (*set_view_name)(bgfx_view_id_t _id, const char* _name, int32_t _len);
-    void (*set_view_rect)(bgfx_view_id_t _id, int16_t _x, int16_t _y, uint16_t _width, uint16_t _height);
+    void (*set_view_rect)(bgfx_view_id_t _id, int16_t _x, int16_t _y, uint16_t _width, uint16_t _height, float _minDepth, float _maxDepth);
     void (*set_view_rect_ratio)(bgfx_view_id_t _id, int16_t _x, int16_t _y, bgfx_backbuffer_ratio_t _ratio);
     void (*set_view_scissor)(bgfx_view_id_t _id, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height);
+    void (*set_view_depth_bias)(bgfx_view_id_t _id, int32_t _constant, float _slopeScale, float _clamp);
+    void (*set_view_sample_mask)(bgfx_view_id_t _id, uint32_t _mask);
     void (*set_view_clear)(bgfx_view_id_t _id, uint16_t _flags, uint32_t _rgba, float _depth, uint8_t _stencil);
     void (*set_view_clear_mrt)(bgfx_view_id_t _id, uint16_t _flags, float _depth, uint8_t _stencil, uint8_t _c0, uint8_t _c1, uint8_t _c2, uint8_t _c3, uint8_t _c4, uint8_t _c5, uint8_t _c6, uint8_t _c7);
     void (*set_view_mode)(bgfx_view_id_t _id, bgfx_view_mode_t _mode);
@@ -4676,8 +4774,11 @@ struct bgfx_interface_vtbl
     void (*encoder_set_state)(bgfx_encoder_t* _this, uint64_t _state, uint32_t _rgba);
     void (*encoder_set_condition)(bgfx_encoder_t* _this, bgfx_occlusion_query_handle_t _handle, bool _visible);
     void (*encoder_set_stencil)(bgfx_encoder_t* _this, uint32_t _fstencil, uint32_t _bstencil);
+    void (*encoder_set_sample_mask)(bgfx_encoder_t* _this, uint32_t _mask);
     uint16_t (*encoder_set_scissor)(bgfx_encoder_t* _this, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height);
     void (*encoder_set_scissor_cached)(bgfx_encoder_t* _this, uint16_t _cache);
+    uint16_t (*encoder_set_depth_control)(bgfx_encoder_t* _this, int32_t _constant, float _slopeScale, float _clamp, bool _depthClamp);
+    void (*encoder_set_depth_control_cached)(bgfx_encoder_t* _this, uint16_t _cache);
     uint32_t (*encoder_set_transform)(bgfx_encoder_t* _this, const void* _mtx, uint16_t _num);
     void (*encoder_set_transform_cached)(bgfx_encoder_t* _this, uint32_t _cache, uint16_t _num);
     uint32_t (*encoder_alloc_transform)(bgfx_encoder_t* _this, bgfx_transform_t* _transform, uint16_t _num);
@@ -4726,8 +4827,11 @@ struct bgfx_interface_vtbl
     void (*set_state)(uint64_t _state, uint32_t _rgba);
     void (*set_condition)(bgfx_occlusion_query_handle_t _handle, bool _visible);
     void (*set_stencil)(uint32_t _fstencil, uint32_t _bstencil);
+    void (*set_sample_mask)(uint32_t _mask);
     uint16_t (*set_scissor)(uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height);
     void (*set_scissor_cached)(uint16_t _cache);
+    uint16_t (*set_depth_control)(int32_t _constant, float _slopeScale, float _clamp, bool _depthClamp);
+    void (*set_depth_control_cached)(uint16_t _cache);
     uint32_t (*set_transform)(const void* _mtx, uint16_t _num);
     void (*set_transform_cached)(uint32_t _cache, uint16_t _num);
     uint32_t (*alloc_transform)(bgfx_transform_t* _transform, uint16_t _num);

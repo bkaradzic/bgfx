@@ -622,6 +622,7 @@ namespace bgfx { namespace gl
 			ANGLE_framebuffer_blit,
 			ANGLE_framebuffer_multisample,
 			ANGLE_instanced_arrays,
+			ANGLE_polygon_mode,
 			ANGLE_texture_compression_dxt1,
 			ANGLE_texture_compression_dxt3,
 			ANGLE_texture_compression_dxt5,
@@ -658,6 +659,7 @@ namespace bgfx { namespace gl
 			ARB_multisample,
 			ARB_occlusion_query,
 			ARB_occlusion_query2,
+			ARB_polygon_offset_clamp,
 			ARB_program_interface_query,
 			ARB_provoking_vertex,
 			ARB_sampler_objects,
@@ -717,6 +719,7 @@ namespace bgfx { namespace gl
 			EXT_multi_draw_indirect,
 			EXT_occlusion_query_boolean,
 			EXT_packed_float,
+			EXT_polygon_offset_clamp,
 			EXT_read_format_bgra,
 			EXT_shader_image_load_store,
 			EXT_shader_texture_lod,
@@ -767,6 +770,7 @@ namespace bgfx { namespace gl
 			NV_draw_instanced,
 			NV_instanced_arrays,
 			NV_occlusion_query,
+			NV_polygon_mode,
 			NV_read_depth,
 			NV_read_depth_stencil,
 			NV_read_stencil,
@@ -851,6 +855,7 @@ namespace bgfx { namespace gl
 		{ "ANGLE_framebuffer_blit",                   false,                                    true  },
 		{ "ANGLE_framebuffer_multisample",            false,                                    false },
 		{ "ANGLE_instanced_arrays",                   false,                                    true  },
+		{ "ANGLE_polygon_mode",                       false,                                    true  },
 		{ "ANGLE_texture_compression_dxt1",           false,                                    true  },
 		{ "ANGLE_texture_compression_dxt3",           false,                                    true  },
 		{ "ANGLE_texture_compression_dxt5",           false,                                    true  },
@@ -887,6 +892,7 @@ namespace bgfx { namespace gl
 		{ "ARB_multisample",                          BGFX_CONFIG_RENDERER_OPENGLES >= 20,      true  },
 		{ "ARB_occlusion_query",                      BGFX_CONFIG_RENDERER_OPENGL >= 33,        true  },
 		{ "ARB_occlusion_query2",                     BGFX_CONFIG_RENDERER_OPENGL >= 33,        true  },
+		{ "ARB_polygon_offset_clamp",                 BGFX_CONFIG_RENDERER_OPENGL >= 46,        true  },
 		{ "ARB_program_interface_query",              BGFX_CONFIG_RENDERER_OPENGL >= 43,        true  },
 		{ "ARB_provoking_vertex",                     BGFX_CONFIG_RENDERER_OPENGL >= 32,        true  },
 		{ "ARB_sampler_objects",                      BGFX_CONFIG_RENDERER_OPENGL >= 33,        true  },
@@ -946,6 +952,7 @@ namespace bgfx { namespace gl
 		{ "EXT_multi_draw_indirect",                  false,                                    true  }, // GLES3.1 extension.
 		{ "EXT_occlusion_query_boolean",              false,                                    true  }, // GLES extension.
 		{ "EXT_packed_float",                         BGFX_CONFIG_RENDERER_OPENGL >= 33,        true  },
+		{ "EXT_polygon_offset_clamp",                 false,                                    true  },
 		{ "EXT_read_format_bgra",                     false,                                    true  },
 		{ "EXT_shader_image_load_store",              false,                                    true  },
 		{ "EXT_shader_texture_lod",                   false,                                    true  }, // GLES extension.
@@ -996,6 +1003,7 @@ namespace bgfx { namespace gl
 		{ "NV_draw_instanced",                        false,                                    true  }, // GLES extension.
 		{ "NV_instanced_arrays",                      false,                                    true  }, // GLES extension.
 		{ "NV_occlusion_query",                       false,                                    true  },
+		{ "NV_polygon_mode",                          false,                                    true  }, // GLES extension.
 		{ "NV_read_depth",                            false,                                    true  }, // GLES extension.
 		{ "NV_read_depth_stencil",                    false,                                    true  }, // GLES extension.
 		{ "NV_read_stencil",                          false,                                    true  }, // GLES extension.
@@ -2768,10 +2776,33 @@ namespace bgfx { namespace gl
 					: 0
 					;
 
+				if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES) )
+				{
+					glPolygonMode = s_extension[Extension::NV_polygon_mode].m_supported
+						? glPolygonModeNV
+						: s_extension[Extension::ANGLE_polygon_mode].m_supported
+						? glPolygonModeANGLE
+						: NULL
+						;
+				}
+
 				if (BX_ENABLED(BX_PLATFORM_EMSCRIPTEN)
 				||  NULL == glPolygonMode)
 				{
 					glPolygonMode = stubPolygonMode;
+				}
+
+				glPolygonOffsetClamp = s_extension[Extension::ARB_polygon_offset_clamp].m_supported
+					? glPolygonOffsetClamp
+					: s_extension[Extension::EXT_polygon_offset_clamp].m_supported
+					? glPolygonOffsetClampEXT
+					: NULL
+					;
+
+				if (!BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES >= 31)
+				&&  !s_extension[Extension::ARB_texture_multisample].m_supported)
+				{
+					glSampleMaski = NULL;
 				}
 
 				if (s_extension[Extension::ARB_copy_image].m_supported
@@ -3951,21 +3982,8 @@ namespace bgfx { namespace gl
 				invalidateCache();
 			}
 
-			if (s_extension[Extension::ARB_depth_clamp].m_supported)
-			{
-				if (!!(_reset & BGFX_RESET_DEPTH_CLAMP) )
-				{
-					GL_CHECK(glEnable(GL_DEPTH_CLAMP) );
-				}
-				else
-				{
-					GL_CHECK(glDisable(GL_DEPTH_CLAMP) );
-				}
-			}
-
 			const uint32_t maskFlags = ~(0
 				| BGFX_RESET_MAXANISOTROPY
-				| BGFX_RESET_DEPTH_CLAMP
 				| BGFX_RESET_SUSPEND
 				);
 
@@ -6816,7 +6834,7 @@ namespace bgfx { namespace gl
 		const bool renderTarget = 0 != (m_flags&BGFX_TEXTURE_RT_MASK);
 		if (renderTarget
 		&&  1 < m_numMips
-		&&  0 != (_resolve & BGFX_RESOLVE_AUTO_GEN_MIPS) )
+		&&  0 != (_resolve & BGFX_ATTACHMENT_AUTO_GEN_MIPS) )
 		{
 			GL_CHECK(glBindTexture(m_target, m_id) );
 			GL_CHECK(glGenerateMipmap(m_target) );
@@ -7748,7 +7766,7 @@ namespace bgfx { namespace gl
 			if (isValid(at.handle) )
 			{
 				const TextureGL& texture = s_renderGL->m_textures[at.handle.idx];
-				texture.resolve(at.resolve);
+				texture.resolve(at.flags);
 			}
 		}
 	}
@@ -8471,12 +8489,17 @@ namespace bgfx { namespace gl
 		SortKey key;
 		uint16_t view = UINT16_MAX;
 		FrameBufferHandle fbh = { BGFX_CONFIG_MAX_FRAME_BUFFERS };
+		bool currentDepthClamp = false; // GL default: depth clipping on (WebGPU unclippedDepth = false).
+		int32_t currentPolygonOffsetConstant = 0;
+		float   currentPolygonOffsetSlope    = 0.0f;
+		float   currentPolygonOffsetClamp    = 0.0f;
 
 		UniformCacheState ucs(_render);
 		BlitState bs(_render);
 
 		int32_t resolutionHeight = _render->m_mainSwapChain.height;
 		uint32_t blendFactor = 0;
+		uint32_t currentSampleMask = UINT32_MAX;
 
 		uint8_t primIndex;
 		{
@@ -8497,13 +8520,15 @@ namespace bgfx { namespace gl
 			: GL_FILL
 			) );
 
-		bool wasCompute = false;
+		bool wasCompute     = false;
 		bool viewHasScissor = false;
+		bool ndcFlipRectY   = true;
 		Rect viewScissorRect;
 		viewScissorRect.clear();
 		uint16_t discardFlags = BGFX_CLEAR_NONE;
-		uint64_t ndcFrontCcw = 0;
-		bool ndcFlipRectY = true;
+		uint64_t ndcFrontCcw  = 0;
+		uint64_t stateMask    = UINT64_MAX;
+		uint64_t stencilMask  = UINT64_MAX;
 
 		const bool blendIndependentSupported = 0 != (g_caps.supported & BGFX_CAPS_BLEND_INDEPENDENT);
 		const bool computeSupported = false
@@ -8574,6 +8599,16 @@ namespace bgfx { namespace gl
 						fbh = _render->m_view[view].m_fbh;
 						resolutionHeight = _render->m_mainSwapChain.height;
 						resolutionHeight = setFrameBuffer(fbh, resolutionHeight, discardFlags);
+
+						stateMask = isValid(fbh)
+							? getAttachmentStateMask(m_frameBuffers[fbh.idx].m_attachment, m_frameBuffers[fbh.idx].m_numTh)
+							: UINT64_MAX
+							;
+
+						stencilMask = isValid(fbh)
+							? getAttachmentStencilMask(m_frameBuffers[fbh.idx].m_attachment, m_frameBuffers[fbh.idx].m_numTh)
+							: UINT64_MAX
+							;
 					}
 
 					setViewType(view, "  ");
@@ -8817,13 +8852,14 @@ namespace bgfx { namespace gl
 					}
 				}
 
-				const uint64_t newFlags = draw.m_stateFlags ^ ndcFrontCcw;
-				uint64_t changedFlags = currentState.m_stateFlags ^ newFlags;
+				const uint64_t newFlags   = (draw.m_stateFlags & stateMask) ^ ndcFrontCcw;
+				const uint32_t sampleMask = _render->m_view[view].m_sampleMask & draw.m_sampleMask;
+				uint64_t changedFlags     = currentState.m_stateFlags ^ newFlags;
 				currentState.m_stateFlags = newFlags;
 
-				const uint64_t newStencil = draw.m_stencil;
-				uint64_t changedStencil = currentState.m_stencil ^ draw.m_stencil;
-				currentState.m_stencil = newStencil;
+				const uint64_t newStencil = draw.m_stencil & stencilMask;
+				uint64_t changedStencil   = currentState.m_stencil ^ newStencil;
+				currentState.m_stencil    = newStencil;
 
 				if (resetState)
 				{
@@ -8917,6 +8953,77 @@ namespace bgfx { namespace gl
 					else
 					{
 						GL_CHECK(glDisable(GL_STENCIL_TEST) );
+					}
+				}
+
+				if (s_extension[Extension::ARB_depth_clamp].m_supported)
+				{
+					const bool depthClamp = (UINT16_MAX != draw.m_depthBias)
+						? _render->m_frameCache.m_depthBiasCache.m_cache[draw.m_depthBias].m_depthClamp
+						: _render->m_view[view].m_depthBias.m_depthClamp
+						;
+					if (currentDepthClamp != depthClamp)
+					{
+						currentDepthClamp = depthClamp;
+						if (depthClamp)
+						{
+							GL_CHECK(glEnable(GL_DEPTH_CLAMP) );
+						}
+						else
+						{
+							GL_CHECK(glDisable(GL_DEPTH_CLAMP) );
+						}
+					}
+				}
+
+				{
+					const DepthControl& depthControl = (UINT16_MAX != draw.m_depthBias)
+						? _render->m_frameCache.m_depthBiasCache.m_cache[draw.m_depthBias]
+						: _render->m_view[view].m_depthBias
+						;
+
+					if (currentPolygonOffsetConstant != depthControl.m_constant
+					||  currentPolygonOffsetSlope    != depthControl.m_slopeScale
+					||  currentPolygonOffsetClamp    != depthControl.m_clamp)
+					{
+						currentPolygonOffsetConstant = depthControl.m_constant;
+						currentPolygonOffsetSlope    = depthControl.m_slopeScale;
+						currentPolygonOffsetClamp    = depthControl.m_clamp;
+
+						if (0 == currentPolygonOffsetConstant
+						&&  0.0f == currentPolygonOffsetSlope)
+						{
+							GL_CHECK(glDisable(GL_POLYGON_OFFSET_FILL) );
+						}
+						else
+						{
+							if (NULL != glPolygonOffsetClamp)
+							{
+								GL_CHECK(glPolygonOffsetClamp(currentPolygonOffsetSlope, float(currentPolygonOffsetConstant), currentPolygonOffsetClamp) );
+							}
+							else
+							{
+								GL_CHECK(glPolygonOffset(currentPolygonOffsetSlope, float(currentPolygonOffsetConstant) ) );
+							}
+
+							GL_CHECK(glEnable(GL_POLYGON_OFFSET_FILL) );
+						}
+					}
+				}
+
+				if (currentSampleMask != sampleMask
+				&&  NULL != glSampleMaski)
+				{
+					currentSampleMask = sampleMask;
+
+					if (UINT32_MAX == currentSampleMask)
+					{
+						GL_CHECK(glDisable(GL_SAMPLE_MASK) );
+					}
+					else
+					{
+						GL_CHECK(glEnable(GL_SAMPLE_MASK) );
+						GL_CHECK(glSampleMaski(0, currentSampleMask) );
 					}
 				}
 

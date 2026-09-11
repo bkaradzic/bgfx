@@ -877,7 +877,6 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			, m_supportsDepthClipMode(false)
 			, m_borderColorSupport(false)
 			, m_colorPalette(NULL)
-			, m_depthClamp(false)
 			, m_screenshotBlitRenderPipelineState(NULL)
 			, m_commandBuffer(NULL)
 			, m_blitCommandEncoder(NULL)
@@ -1985,11 +1984,6 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 				m_renderCommandEncoderFbh = fbh;
 				MTL_RELEASE(renderPassDescriptor, 0);
 
-				if (m_depthClamp)
-				{
-					rce->setDepthClipMode(MTL::DepthClipModeClamp);
-				}
-
 				{
 					MTL::Viewport viewport = { 0.0f, 0.0f, (float)width, (float)height, 0.0f, 1.0f };
 					rce->setViewport(viewport);
@@ -2119,12 +2113,8 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 					;
 			}
 
-			m_depthClamp = m_supportsDepthClipMode
-				&& !!(_reset & BGFX_RESET_DEPTH_CLAMP);
-
 			uint32_t maskFlags = ~(0
 				| BGFX_RESET_MAXANISOTROPY
-				| BGFX_RESET_DEPTH_CLAMP
 				| BGFX_RESET_SUSPEND
 				);
 
@@ -2296,11 +2286,6 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 				setRenderCommandEncoder(m_commandBuffer->renderCommandEncoder(renderPassDescriptor) );
 				MTL_RELEASE(renderPassDescriptor, 0);
-
-				if (m_depthClamp)
-				{
-					m_renderCommandEncoder->setDepthClipMode(MTL::DepthClipModeClamp);
-				}
 			}
 		}
 
@@ -2998,6 +2983,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			, const VertexLayout** _layouts
 			, ProgramHandle _program
 			, uint8_t _numInstanceData
+			, uint32_t _sampleMask = UINT32_MAX
 			)
 		{
 			_state &= (0
@@ -3020,7 +3006,8 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			&&  m_lastPsoState.m_program         == _program.idx
 			&&  m_lastPsoState.m_fbh             == _fbh.idx
 			&&  m_lastPsoState.m_numStreams      == _numStreams
-			&&  m_lastPsoState.m_numInstanceData == _numInstanceData)
+			&&  m_lastPsoState.m_numInstanceData == _numInstanceData
+			&&  m_lastPsoState.m_sampleMask      == _sampleMask)
 			{
 				bool match = true;
 				for (uint8_t ii = 0; ii < _numStreams && match; ++ii)
@@ -3040,6 +3027,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			m_lastPsoState.m_fbh             = _fbh.idx;
 			m_lastPsoState.m_numStreams      = _numStreams;
 			m_lastPsoState.m_numInstanceData = _numInstanceData;
+			m_lastPsoState.m_sampleMask      = _sampleMask;
 			for (uint8_t ii = 0; ii < _numStreams; ++ii)
 			{
 				m_lastPsoState.m_layouts[ii] = _layouts[ii];
@@ -3052,6 +3040,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			murmur.add(_state);
 			murmur.add(rgba);
 			murmur.add(_numInstanceData);
+			murmur.add(_sampleMask);
 
 			if (!isValid(_fbh) )
 			{
@@ -3219,7 +3208,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 				pd->setVertexFunction(program.m_vsh->m_function);
 				pd->setFragmentFunction(program.m_fsh != NULL
-					? program.m_fsh->m_function
+					? program.m_fsh->getFunction(_sampleMask)
 					: NULL
 					);
 
@@ -3613,11 +3602,6 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 				setRenderCommandEncoder(m_commandBuffer->renderCommandEncoder(renderPassDescriptor) );
 				MTL_RELEASE(renderPassDescriptor, 0);
-
-				if (m_depthClamp)
-				{
-					m_renderCommandEncoder->setDepthClipMode(MTL::DepthClipModeClamp);
-				}
 			}
 
 			return m_renderCommandEncoder;
@@ -3696,6 +3680,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			const VertexLayout* m_layouts[BGFX_CONFIG_MAX_VERTEX_STREAMS];
 			uint64_t            m_state;
 			uint32_t            m_rgba;
+			uint32_t            m_sampleMask;
 			uint16_t            m_program;
 			uint16_t            m_fbh;
 			uint8_t             m_numStreams;
@@ -3724,7 +3709,6 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 		bool m_borderColorSupport;
 
 		const float (*m_colorPalette)[4];
-		bool m_depthClamp;
 
 		MTL::RenderPipelineDescriptor* m_renderPipelineDescriptor;
 		MTL::DepthStencilDescriptor*   m_depthStencilDescriptor;
@@ -3907,12 +3891,11 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 		const char* code = (const char*)reader.getDataPtr();
 		bx::skip(&reader, shaderSize+1);
 
-		MTL::Library* lib = newLibraryWithSource(s_renderMtl->m_device, code);
+		m_lib = newLibraryWithSource(s_renderMtl->m_device, code);
 
-		if (NULL != lib)
+		if (NULL != m_lib)
 		{
-			m_function = lib->newFunction(nsstr(SHADER_FUNCTION_NAME) );
-			MTL_RELEASE_W(lib, 0);
+			m_function = getFunction(UINT32_MAX);
 		}
 
 		BGFX_FATAL(NULL != m_function
@@ -3927,6 +3910,41 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 		murmur.add(hashOut);
 		murmur.add(code, shaderSize);
 		m_hash = murmur.end();
+	}
+
+	MTL::Function* ShaderMtl::getFunction(uint32_t _sampleMask) const
+	{
+		if (NULL == m_lib)
+		{
+			return m_function;
+		}
+
+		FunctionMap::const_iterator it = m_functions.find(_sampleMask);
+
+		if (it != m_functions.end() )
+		{
+			return it->second;
+		}
+
+		MTL::FunctionConstantValues* constantValues = MTL::FunctionConstantValues::alloc()->init();
+
+		if (UINT32_MAX != _sampleMask)
+		{
+			constantValues->setConstantValue(&_sampleMask, MTL::DataTypeUInt, NS::UInteger(0) );
+		}
+
+		NS::Error* error = NULL;
+		MTL::Function* function = m_lib->newFunction(nsstr(SHADER_FUNCTION_NAME), constantValues, &error);
+		MTL_RELEASE_W(constantValues, 0);
+
+		if (NULL == function)
+		{
+			return m_function;
+		}
+
+		m_functions[_sampleMask] = function;
+
+		return function;
 	}
 
 	void ProgramMtl::create(const ShaderMtl* _vsh, const ShaderMtl* _fsh)
@@ -5254,7 +5272,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 	{
 		for (uint32_t ii = 0; ii < m_num; ++ii)
 		{
-			if (0 != (m_colorAttachment[ii].resolve & BGFX_RESOLVE_AUTO_GEN_MIPS) )
+			if (0 != (m_colorAttachment[ii].flags & BGFX_ATTACHMENT_AUTO_GEN_MIPS) )
 			{
 				const TextureMtl& texture = s_renderMtl->m_textures[m_colorHandle[ii].idx];
 				const bool isRenderTarget = !!(texture.m_flags & BGFX_TEXTURE_RT_MASK);
@@ -6049,6 +6067,9 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 		Rect viewScissorRect;
 		viewScissorRect.clear();
 
+		uint64_t stateMask   = UINT64_MAX;
+		uint64_t stencilMask = UINT64_MAX;
+
 		uint32_t statsNumPrimsSubmitted[BX_COUNTOF(s_primInfo)] = {};
 		uint32_t statsNumPrimsRendered[BX_COUNTOF(s_primInfo)]  = {};
 		uint32_t statsNumInstances[BX_COUNTOF(s_primInfo)]      = {};
@@ -6166,6 +6187,16 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 							m_gpuTimer.attach(renderPassDescriptor);
 
 							fbh = _render->m_view[view].m_fbh;
+
+							stateMask = isValid(fbh)
+								? getAttachmentStateMask(&m_frameBuffers[fbh.idx].m_depthAttachment, 1)
+								: UINT64_MAX
+								;
+
+							stencilMask = isValid(fbh)
+								? getAttachmentStencilMask(&m_frameBuffers[fbh.idx].m_depthAttachment, 1)
+								: UINT64_MAX
+								;
 
 							clearWithRenderPass = true
 								&& 0      == viewRect.m_x
@@ -6301,11 +6332,6 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 							m_renderCommandEncoderFbh = fbh;
 
 							MTL_RELEASE(renderPassDescriptor, 0);
-
-							if (m_depthClamp)
-							{
-								rce->setDepthClipMode(MTL::DepthClipModeClamp);
-							}
 						}
 						else if (BX_ENABLED(BGFX_CONFIG_DEBUG_ANNOTATION) )
 						{
@@ -6538,13 +6564,13 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 					}
 				}
 
-				const uint64_t newFlags = draw.m_stateFlags;
-				uint64_t changedFlags = currentState.m_stateFlags ^ draw.m_stateFlags;
+				const uint64_t newFlags   = draw.m_stateFlags & stateMask;
+				uint64_t changedFlags     = currentState.m_stateFlags ^ newFlags;
 				currentState.m_stateFlags = newFlags;
 
-				const uint64_t newStencil = draw.m_stencil;
-				uint64_t changedStencil = currentState.m_stencil ^ draw.m_stencil;
-				currentState.m_stencil = newStencil;
+				const uint64_t newStencil = draw.m_stencil & stencilMask;
+				uint64_t changedStencil   = currentState.m_stencil ^ newStencil;
+				currentState.m_stencil    = newStencil;
 
 				if (resetState)
 				{
@@ -6606,6 +6632,20 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 					setDepthStencilState(newFlags, newStencil);
 				}
 
+				{
+					const DepthControl& depthControl = (UINT16_MAX != draw.m_depthBias)
+						? _render->m_frameCache.m_depthBiasCache.m_cache[draw.m_depthBias]
+						: _render->m_view[view].m_depthBias
+						;
+
+					if (m_supportsDepthClipMode)
+					{
+						rce->setDepthClipMode(depthControl.m_depthClamp ? MTL::DepthClipModeClamp : MTL::DepthClipModeClip);
+					}
+
+					rce->setDepthBias(float(depthControl.m_constant), depthControl.m_slopeScale, depthControl.m_clamp);
+				}
+
 				if ( (0
 					 | BGFX_STATE_CULL_MASK
 					 | BGFX_STATE_FRONT_CCW
@@ -6660,8 +6700,11 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 				bool vertexStreamChanged = hasVertexStreamChanged(currentState, draw);
 
+				const uint32_t sampleMask = _render->m_view[view].m_sampleMask & draw.m_sampleMask;
+
 				if (key.m_program.idx != currentProgram.idx
 				||  vertexStreamChanged
+				||  currentState.m_sampleMask != sampleMask
 				|| (0
 				   | BGFX_STATE_BLEND_MASK
 				   | BGFX_STATE_BLEND_EQUATION_MASK
@@ -6676,6 +6719,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 				{
 					currentProgram = key.m_program;
 
+					currentState.m_sampleMask             = sampleMask;
 					currentState.m_streamMask             = draw.m_streamMask;
 					currentState.m_instanceDataBuffer.idx = draw.m_instanceDataBuffer.idx;
 					currentState.m_instanceDataOffset     = draw.m_instanceDataOffset;
@@ -6737,6 +6781,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 							, layouts
 							, currentProgram
 							, draw.m_instanceDataStride/16
+							, sampleMask
 							);
 					}
 
@@ -7228,11 +7273,6 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			rce = m_commandBuffer->renderCommandEncoder(renderPassDescriptor);
 
 			MTL_RELEASE(renderPassDescriptor, 0);
-
-			if (m_depthClamp)
-			{
-				rce->setDepthClipMode(MTL::DepthClipModeClamp);
-			}
 
 			rce->setCullMode( (MTL::CullMode)MTL::CullModeNone);
 

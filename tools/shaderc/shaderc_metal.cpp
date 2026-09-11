@@ -784,6 +784,33 @@ namespace bgfx { namespace metal
 						}
 					}
 
+					if ('f' == _options.shaderType
+					&&  source.find("[[sample_mask]]") == std::string::npos)
+					{
+						const bx::StringView structOut("struct xlatMtlMain_out\n{");
+						const bx::StringView localOut("xlatMtlMain_out out = {};");
+
+						const size_t structPos = source.find(structOut.getPtr() );
+						const size_t localPos  = std::string::npos == structPos
+							? std::string::npos
+							: source.find(localOut.getPtr(), structPos)
+							;
+
+						if (std::string::npos != localPos)
+						{
+							source.insert(localPos + localOut.getLength()
+								, "\n\tif (bgfx_sampleMaskEnabled) { out.bgfx_metal_sampleMask = bgfx_sampleMask; }"
+								);
+							source.insert(structPos + structOut.getLength()
+								, "\n\tuint bgfx_metal_sampleMask [[sample_mask, function_constant(bgfx_sampleMaskEnabled)]];"
+								);
+							source.insert(structPos
+								, "constant uint bgfx_sampleMask [[function_constant(0)]];\n"
+								  "constant bool bgfx_sampleMaskEnabled = is_function_constant_defined(bgfx_sampleMask);\n\n"
+								);
+						}
+					}
+
 					if ('c' == _options.shaderType)
 					{
 						for (int i = 0; i < 3; ++i)

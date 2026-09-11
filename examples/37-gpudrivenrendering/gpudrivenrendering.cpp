@@ -517,7 +517,7 @@ public:
 
 			bgfx::TextureHandle buffer = bgfx::createTexture2D(uint16_t(m_hiZwidth), uint16_t(m_hiZheight), true, 1, bgfx::TextureFormat::R32F, BGFX_TEXTURE_COMPUTE_WRITE | tsFlags);
 			bgfx::Attachment at;
-			at.init(buffer, bgfx::Access::Write, 0, 1, 0, BGFX_RESOLVE_NONE);
+			at.init(buffer, bgfx::Access::Write, 0, 1, 0, BGFX_ATTACHMENT_NONE);
 			m_hiZBuffer = bgfx::createFrameBuffer(1, &at, true);
 
 			//how many mip will the Hi Z buffer have?

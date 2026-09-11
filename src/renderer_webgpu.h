@@ -711,6 +711,8 @@ namespace wgpu {
 		FrameBufferWGPU()
 			: m_depth({ kInvalidHandle })
 			, m_depthStencilView(NULL)
+			, m_readOnlyDepth(false)
+			, m_readOnlyStencil(false)
 			, m_denseIdx(kInvalidHandle)
 			, m_numColorAttachments(0)
 			, m_numAttachments(0)
@@ -745,6 +747,9 @@ namespace wgpu {
 		WGPUTextureView m_resolveView[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
 		WGPUTextureView m_depthStencilView;
 		uint8_t m_formatDepthStencil;
+
+		bool m_readOnlyDepth;
+		bool m_readOnlyStencil;
 
 		uint16_t m_denseIdx;
 		uint8_t m_numColorAttachments;

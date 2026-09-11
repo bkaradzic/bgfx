@@ -2195,7 +2195,6 @@ namespace bgfx
 		BX_TRACE("\t[%c] Capture",                 0 != (reset & BGFX_RESET_CAPTURE)                     ? 'x' : ' ');
 		BX_TRACE("\t[%c] Flush After Render",      0 != (reset & BGFX_RESET_FLUSH_AFTER_RENDER)          ? 'x' : ' ');
 		BX_TRACE("\t[%c] Flip After Render",       0 != (reset & BGFX_RESET_FLIP_AFTER_RENDER)           ? 'x' : ' ');
-		BX_TRACE("\t[%c] Depth Clamp",             0 != (reset & BGFX_RESET_DEPTH_CLAMP)                 ? 'x' : ' ');
 		BX_TRACE("\t[%c] Suspend",                 0 != (reset & BGFX_RESET_SUSPEND)                     ? 'x' : ' ');
 	}
 
@@ -3917,10 +3916,10 @@ namespace bgfx
 					FrameBufferHandle handle;
 					_cmdbuf.read(handle);
 
-					bool window;
-					_cmdbuf.read(window);
+					uint8_t type;
+					_cmdbuf.read(type);
 
-					if (window)
+					if (1 == type) // window (nwh) swap chain
 					{
 						m_renderCtx->createFrameBuffer(handle, readSwapChain(_cmdbuf) );
 					}
@@ -4146,14 +4145,14 @@ namespace bgfx
 		swapChain.numBackBuffers     = 2;
 	}
 
-	void Attachment::init(TextureHandle _handle, Access::Enum _access, uint16_t _layer, uint16_t _numLayers, uint16_t _mip, uint8_t _resolve)
+	void Attachment::init(TextureHandle _handle, Access::Enum _access, uint16_t _layer, uint16_t _numLayers, uint16_t _mip, uint8_t _flags)
 	{
 		access    = _access;
 		handle    = _handle;
 		mip       = _mip;
 		layer     = _layer;
 		numLayers = _numLayers;
-		resolve   = _resolve;
+		flags     = _flags;
 	}
 
 	bool init(const Init& _userInit)
@@ -4360,6 +4359,11 @@ namespace bgfx
 		BGFX_ENCODER(setStencil(_fstencil, _bstencil) );
 	}
 
+	void Encoder::setSampleMask(uint32_t _mask)
+	{
+		BGFX_ENCODER(setSampleMask(_mask) );
+	}
+
 	uint16_t Encoder::setScissor(uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height)
 	{
 		return BGFX_ENCODER(setScissor(_x, _y, _width, _height) );
@@ -4368,6 +4372,16 @@ namespace bgfx
 	void Encoder::setScissor(uint16_t _cache)
 	{
 		BGFX_ENCODER(setScissor(_cache) );
+	}
+
+	uint16_t Encoder::setDepthControl(int32_t _constant, float _slopeScale, float _clamp, bool _depthClamp)
+	{
+		return BGFX_ENCODER(setDepthControl(_constant, _slopeScale, _clamp, _depthClamp) );
+	}
+
+	void Encoder::setDepthControl(uint16_t _cache)
+	{
+		BGFX_ENCODER(setDepthControl(_cache) );
 	}
 
 	uint32_t Encoder::setTransform(const void* _mtx, uint16_t _num)
@@ -5661,13 +5675,13 @@ namespace bgfx
 					);
 
 				BGFX_ERROR_CHECK(
-					0 == (at.resolve & BGFX_RESOLVE_AUTO_GEN_MIPS)
+					0 == (at.flags & BGFX_ATTACHMENT_AUTO_GEN_MIPS)
 					, _err
 					, BGFX_ERROR_FRAME_BUFFER_VALIDATION
-					, "Frame buffer depth attachment cannot use `BGFX_RESOLVE_AUTO_GEN_MIPS`. Depth textures do not support MSAA resolve."
+					, "Frame buffer depth attachment cannot use `BGFX_ATTACHMENT_AUTO_GEN_MIPS`. Depth textures do not support MSAA resolve."
 					, "Attachment %d, resolve flags 0x%02x."
 					, ii
-					, at.resolve
+					, at.flags
 					);
 			}
 			else
@@ -5696,12 +5710,12 @@ namespace bgfx
 				);
 
 			BGFX_ERROR_CHECK(true
-				&& (0 == (at.resolve & BGFX_RESOLVE_AUTO_GEN_MIPS)
+				&& (0 == (at.flags & BGFX_ATTACHMENT_AUTO_GEN_MIPS)
 					|| 1 == tr.m_numMips
 					|| 0 != (g_caps.formats[tr.m_format] & BGFX_CAPS_FORMAT_TEXTURE_MIP_AUTOGEN) )
 				, _err
 				, BGFX_ERROR_FRAME_BUFFER_VALIDATION
-				, "Frame buffer attachment with `BGFX_RESOLVE_AUTO_GEN_MIPS` requires a format supporting `BGFX_CAPS_FORMAT_TEXTURE_MIP_AUTOGEN`."
+				, "Frame buffer attachment with `BGFX_ATTACHMENT_AUTO_GEN_MIPS` requires a format supporting `BGFX_CAPS_FORMAT_TEXTURE_MIP_AUTOGEN`."
 				, "Attachment %d, format %s, num mips %d, format caps 0x%08x."
 				, ii
 				, getName(TextureFormat::Enum(tr.m_format) )
@@ -6435,8 +6449,8 @@ namespace bgfx
 				, 1
 				, 0
 				, !ref.hasMips() || ref.isDepth()
-					? BGFX_RESOLVE_NONE
-					: BGFX_RESOLVE_AUTO_GEN_MIPS
+					? BGFX_ATTACHMENT_NONE
+					: BGFX_ATTACHMENT_AUTO_GEN_MIPS
 				);
 		}
 
@@ -6588,10 +6602,10 @@ namespace bgfx
 		s_ctx->setViewName(_id, bx::StringView(_name, _len) );
 	}
 
-	void setViewRect(ViewId _id, int16_t _x, int16_t _y, uint16_t _width, uint16_t _height)
+	void setViewRect(ViewId _id, int16_t _x, int16_t _y, uint16_t _width, uint16_t _height, float _minDepth, float _maxDepth)
 	{
 		BX_ASSERT(checkView(_id), "Invalid view id: %d", _id);
-		s_ctx->setViewRect(_id, _x, _y, _width, _height);
+		s_ctx->setViewRect(_id, _x, _y, _width, _height, _minDepth, _maxDepth);
 	}
 
 	void setViewRect(ViewId _id, int16_t _x, int16_t _y, BackbufferRatio::Enum _ratio)
@@ -6608,6 +6622,18 @@ namespace bgfx
 	{
 		BX_ASSERT(checkView(_id), "Invalid view id: %d", _id);
 		s_ctx->setViewScissor(_id, _x, _y, _width, _height);
+	}
+
+	void setViewDepthBias(ViewId _id, int32_t _constant, float _slopeScale, float _clamp)
+	{
+		BX_ASSERT(checkView(_id), "Invalid view id: %d", _id);
+		s_ctx->setViewDepthBias(_id, _constant, _slopeScale, _clamp);
+	}
+
+	void setViewSampleMask(ViewId _id, uint32_t _mask)
+	{
+		BX_ASSERT(checkView(_id), "Invalid view id: %d", _id);
+		s_ctx->setViewSampleMask(_id, _mask);
 	}
 
 	void setViewClear(ViewId _id, uint16_t _flags, uint32_t _rgba, float _depth, uint8_t _stencil)
@@ -6687,6 +6713,12 @@ namespace bgfx
 		s_ctx->m_encoder0->setStencil(_fstencil, _bstencil);
 	}
 
+	void setSampleMask(uint32_t _mask)
+	{
+		BGFX_CHECK_ENCODER0();
+		s_ctx->m_encoder0->setSampleMask(_mask);
+	}
+
 	uint16_t setScissor(uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height)
 	{
 		BGFX_CHECK_ENCODER0();
@@ -6697,6 +6729,18 @@ namespace bgfx
 	{
 		BGFX_CHECK_ENCODER0();
 		s_ctx->m_encoder0->setScissor(_cache);
+	}
+
+	uint16_t setDepthControl(int32_t _constant, float _slopeScale, float _clamp, bool _depthClamp)
+	{
+		BGFX_CHECK_ENCODER0();
+		return s_ctx->m_encoder0->setDepthControl(_constant, _slopeScale, _clamp, _depthClamp);
+	}
+
+	void setDepthControl(uint16_t _cache)
+	{
+		BGFX_CHECK_ENCODER0();
+		s_ctx->m_encoder0->setDepthControl(_cache);
 	}
 
 	uint32_t setTransform(const void* _mtx, uint16_t _num)
@@ -7164,7 +7208,6 @@ static_assert(FLAGS_MASK_TEST(0
 		| BGFX_RESET_CAPTURE
 		| BGFX_RESET_FLUSH_AFTER_RENDER
 		| BGFX_RESET_FLIP_AFTER_RENDER
-		| BGFX_RESET_DEPTH_CLAMP
 		| BGFX_RESET_SUSPEND
 		| BGFX_RESET_RESERVED_MASK
 		)

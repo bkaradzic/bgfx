@@ -295,18 +295,33 @@ namespace bgfx { namespace mtl
 	struct ShaderMtl
 	{
 		ShaderMtl()
-			: m_function(NULL)
+			: m_lib(NULL)
+			, m_function(NULL)
 		{
 		}
 
 		void create(const Memory* _mem);
 
+		MTL::Function* getFunction(uint32_t _sampleMask) const;
+
 		void destroy()
 		{
-			MTL_RELEASE_W(m_function, 0);
+			for (FunctionMap::iterator it = m_functions.begin(), itEnd = m_functions.end(); it != itEnd; ++it)
+			{
+				MTL_RELEASE_W(it->second, 0);
+			}
+
+			m_functions.clear();
+			m_function = NULL;
+
+			MTL_RELEASE_W(m_lib, 0);
 		}
 
+		typedef stl::unordered_map<uint32_t, MTL::Function*> FunctionMap;
+
+		MTL::Library*  m_lib;
 		MTL::Function* m_function;
+		mutable FunctionMap m_functions;
 		uint32_t m_hash;
 		uint16_t m_numThreads[3];
 	};

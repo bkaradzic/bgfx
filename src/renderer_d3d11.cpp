@@ -765,7 +765,6 @@ namespace bgfx { namespace d3d11
 			, m_swapEffect(DXGI_SWAP_EFFECT_DISCARD)
 			, m_swapBufferCount(0)
 			, m_maxAnisotropy(1)
-			, m_depthClamp(false)
 			, m_wireframe(false)
 			, m_currentProgram(NULL)
 			, m_vsChanges(0)
@@ -2505,14 +2504,6 @@ namespace bgfx { namespace d3d11
 				m_samplerStateCache.invalidate();
 			}
 
-			bool depthClamp = !!(_reset & BGFX_RESET_DEPTH_CLAMP);
-
-			if (m_depthClamp != depthClamp)
-			{
-				m_depthClamp = depthClamp;
-				m_rasterizerStateCache.invalidate();
-			}
-
 			if (_reset & BGFX_RESET_VSYNC)
 				m_reset |= BGFX_RESET_VSYNC;
 			else
@@ -2520,7 +2511,6 @@ namespace bgfx { namespace d3d11
 
 			const uint32_t maskFlags = ~(0
 				| BGFX_RESET_MAXANISOTROPY
-				| BGFX_RESET_DEPTH_CLAMP
 				| BGFX_RESET_SUSPEND
 				| BGFX_RESET_VSYNC
 				);
@@ -2835,7 +2825,7 @@ namespace bgfx { namespace d3d11
 			setInputLayout(BX_COUNTOF(layouts), layouts, _program, _numInstanceData);
 		}
 
-		void setBlendState(uint64_t _state, uint32_t _rgba = 0)
+		void setBlendState(uint64_t _state, uint32_t _rgba = 0, uint32_t _sampleMask = UINT32_MAX)
 		{
 			_state &= BGFX_D3D11_BLEND_STATE_MASK;
 
@@ -2948,7 +2938,7 @@ namespace bgfx { namespace d3d11
 				blendFactor[3] = ( (_rgba    )&0xff)/255.0f;
 			}
 
-			m_deviceCtx->OMSetBlendState(bs, blendFactor, 0xffffffff);
+			m_deviceCtx->OMSetBlendState(bs, blendFactor, _sampleMask);
 		}
 
 		void setDepthStencilState(uint64_t _state, uint64_t _stencil = 0)
@@ -3012,7 +3002,7 @@ namespace bgfx { namespace d3d11
 			}
 		}
 
-		void setRasterizerState(uint64_t _state, bool _wireframe = false, bool _scissor = false)
+		void setRasterizerState(uint64_t _state, bool _wireframe = false, bool _scissor = false, int32_t _depthBias = 0, float _slopeScale = 0.0f, float _clamp = 0.0f, bool _depthClamp = false)
 		{
 			_state &= 0
 				| BGFX_STATE_CULL_MASK
@@ -3025,7 +3015,22 @@ namespace bgfx { namespace d3d11
 			_state |= _scissor   ? BGFX_STATE_RESERVED_MASK : 0;
 			_state &= ~(m_deviceInterfaceVersion >= 3 ? 0 : BGFX_STATE_CONSERVATIVE_RASTER);
 
-			ID3D11RasterizerState* rs = m_rasterizerStateCache.find(_state);
+			const bool depthClamp = _depthClamp && m_featureLevel > D3D_FEATURE_LEVEL_9_3;
+
+			uint64_t key = _state;
+			if (0 != _depthBias || 0.0f != _slopeScale || 0.0f != _clamp || depthClamp)
+			{
+				bx::HashMurmur2A murmur;
+				murmur.begin();
+				murmur.add(_state);
+				murmur.add(_depthBias);
+				murmur.add(_slopeScale);
+				murmur.add(_clamp);
+				murmur.add(depthClamp);
+				key = (uint64_t(murmur.end() )<<32) | UINT32_MAX; // low 32 bits set: never a raw _state value
+			}
+
+			ID3D11RasterizerState* rs = m_rasterizerStateCache.find(key);
 			if (NULL == rs)
 			{
 				uint32_t cull = (_state&BGFX_STATE_CULL_MASK)>>BGFX_STATE_CULL_SHIFT;
@@ -3037,10 +3042,10 @@ namespace bgfx { namespace d3d11
 					desc.FillMode = _wireframe ? D3D11_FILL_WIREFRAME : D3D11_FILL_SOLID;
 					desc.CullMode = s_cullMode[cull];
 					desc.FrontCounterClockwise = !!(_state&BGFX_STATE_FRONT_CCW);
-					desc.DepthBias             = 0;
-					desc.DepthBiasClamp        = 0.0f;
-					desc.SlopeScaledDepthBias  = 0.0f;
-					desc.DepthClipEnable       = !m_depthClamp;
+					desc.DepthBias             = _depthBias;
+					desc.DepthBiasClamp        = _clamp;
+					desc.SlopeScaledDepthBias  = _slopeScale;
+					desc.DepthClipEnable       = !depthClamp;
 					desc.ScissorEnable         = _scissor;
 					desc.MultisampleEnable     = !!(_state&BGFX_STATE_MSAA);
 					desc.AntialiasedLineEnable = !!(_state&BGFX_STATE_LINEAA);
@@ -3060,10 +3065,10 @@ namespace bgfx { namespace d3d11
 					desc.FillMode = _wireframe ? D3D11_FILL_WIREFRAME : D3D11_FILL_SOLID;
 					desc.CullMode = s_cullMode[cull];
 					desc.FrontCounterClockwise = false;
-					desc.DepthBias             = 0;
-					desc.DepthBiasClamp        = 0.0f;
-					desc.SlopeScaledDepthBias  = 0.0f;
-					desc.DepthClipEnable       = !m_depthClamp;
+					desc.DepthBias             = _depthBias;
+					desc.DepthBiasClamp        = _clamp;
+					desc.SlopeScaledDepthBias  = _slopeScale;
+					desc.DepthClipEnable       = !depthClamp;
 					desc.ScissorEnable         = _scissor;
 					desc.MultisampleEnable     = !!(_state&BGFX_STATE_MSAA);
 					desc.AntialiasedLineEnable = !!(_state&BGFX_STATE_LINEAA);
@@ -3804,7 +3809,6 @@ namespace bgfx { namespace d3d11
 		DXGI_SWAP_EFFECT m_swapEffect;
 		uint32_t m_swapBufferCount;
 		uint32_t m_maxAnisotropy;
-		bool m_depthClamp;
 		bool m_wireframe;
 
 		IndexBufferD3D11 m_indexBuffers[BGFX_CONFIG_MAX_INDEX_BUFFERS];
@@ -5342,7 +5346,7 @@ namespace bgfx { namespace d3d11
 		}
 
 		const bool renderTarget = 0 != (m_flags  & BGFX_TEXTURE_RT_MASK);
-		const bool autoGenMips  = 0 != (_resolve & BGFX_RESOLVE_AUTO_GEN_MIPS);
+		const bool autoGenMips  = 0 != (_resolve & BGFX_ATTACHMENT_AUTO_GEN_MIPS);
 
 		if (autoGenMips
 		&&  renderTarget
@@ -5708,7 +5712,10 @@ namespace bgfx { namespace d3d11
 
 						D3D11_DEPTH_STENCIL_VIEW_DESC dsvDesc;
 						dsvDesc.Format = s_textureFormat[texture.m_textureFormat].m_fmtDsv;
-						dsvDesc.Flags = 0;
+						dsvDesc.Flags = 0
+							| ( (at.flags & BGFX_ATTACHMENT_READ_ONLY_DEPTH)   ? D3D11_DSV_READ_ONLY_DEPTH   : 0)
+							| ( (at.flags & BGFX_ATTACHMENT_READ_ONLY_STENCIL) ? D3D11_DSV_READ_ONLY_STENCIL : 0)
+							;
 
 						switch (texture.m_type)
 						{
@@ -5886,7 +5893,7 @@ namespace bgfx { namespace d3d11
 				if (isValid(at.handle) )
 				{
 					const TextureD3D11& texture = s_renderD3D11->m_textures[at.handle.idx];
-					texture.resolve(at.resolve, at.layer, at.numLayers, at.mip);
+					texture.resolve(at.flags, at.layer, at.numLayers, at.mip);
 				}
 			}
 		}
@@ -6406,7 +6413,7 @@ namespace bgfx { namespace d3d11
 			&&  !srcReadsMsaaRt
 			&&  0 == blit.m_srcMip)
 			{
-				src.resolve(BGFX_RESOLVE_NONE, blit.m_srcZ, 1, 0);
+				src.resolve(BGFX_ATTACHMENT_NONE, blit.m_srcZ, 1, 0);
 			}
 
 			if ( src.isMsaaSurface()
@@ -6582,8 +6589,9 @@ namespace bgfx { namespace d3d11
 		PrimInfo prim = s_primInfo[primIndex];
 		deviceCtx->IASetPrimitiveTopology(prim.m_type);
 
-		bool wasCompute = false;
+		bool wasCompute     = false;
 		bool viewHasScissor = false;
+		uint64_t stateMask  = UINT64_MAX;
 		Rect viewScissorRect;
 		viewScissorRect.clear();
 
@@ -6655,6 +6663,11 @@ namespace bgfx { namespace d3d11
 					{
 						fbh = _render->m_view[view].m_fbh;
 						setFrameBuffer(fbh);
+
+						stateMask = isValid(fbh)
+							? getAttachmentStateMask(m_frameBuffers[fbh.idx].m_attachment, m_frameBuffers[fbh.idx].m_numTh)
+							: UINT64_MAX
+							;
 					}
 
 					viewState.m_rect = _render->m_view[view].m_rect;
@@ -6669,8 +6682,8 @@ namespace bgfx { namespace d3d11
 					vp.TopLeftY = viewState.m_rect.m_y;
 					vp.Width    = viewState.m_rect.m_width;
 					vp.Height   = viewState.m_rect.m_height;
-					vp.MinDepth = 0.0f;
-					vp.MaxDepth = 1.0f;
+					vp.MinDepth = _render->m_view[view].m_minDepth;
+					vp.MaxDepth = _render->m_view[view].m_maxDepth;
 					deviceCtx->RSSetViewports(1, &vp);
 					Clear& clr = _render->m_view[view].m_clear;
 
@@ -6892,9 +6905,11 @@ namespace bgfx { namespace d3d11
 					}
 				}
 
-				const uint64_t newFlags = draw.m_stateFlags;
-				uint64_t changedFlags = currentState.m_stateFlags ^ draw.m_stateFlags;
+				const uint64_t newFlags = draw.m_stateFlags & stateMask;
+				const uint32_t sampleMask = _render->m_view[view].m_sampleMask & draw.m_sampleMask;
+				uint64_t changedFlags = currentState.m_stateFlags ^ newFlags;
 				changedFlags |= currentState.m_rgba != draw.m_rgba ? BGFX_D3D11_BLEND_STATE_MASK : 0;
+				changedFlags |= currentState.m_sampleMask != sampleMask ? BGFX_D3D11_BLEND_STATE_MASK : 0;
 				currentState.m_stateFlags = newFlags;
 
 				const uint64_t newStencil = draw.m_stencil;
@@ -6915,7 +6930,7 @@ namespace bgfx { namespace d3d11
 
 					currentBind.clear();
 
-					setBlendState(newFlags, draw.m_rgba);
+					setBlendState(newFlags, draw.m_rgba, sampleMask);
 					setDepthStencilState(newFlags, packStencil(BGFX_STENCIL_NONE, BGFX_STENCIL_NONE) );
 
 					const uint64_t pt = newFlags&BGFX_STATE_PT_MASK;
@@ -6927,6 +6942,15 @@ namespace bgfx { namespace d3d11
 					prim = s_primInfo[primIndex];
 					deviceCtx->IASetPrimitiveTopology(prim.m_type);
 				}
+
+				// Depth bias: per-draw override (cache index) or the view's default.
+				// Resolved after resetState so currentState.clear() doesn't stomp the
+				// tracked index.
+				const DepthControl& depthBias = (UINT16_MAX != draw.m_depthBias)
+					? _render->m_frameCache.m_depthBiasCache.m_cache[draw.m_depthBias]
+					: _render->m_view[view].m_depthBias;
+				const bool depthBiasChanged = currentState.m_depthBias != draw.m_depthBias;
+				currentState.m_depthBias = draw.m_depthBias;
 
 				uint16_t scissor = draw.m_scissor;
 				if (currentState.m_scissor != scissor)
@@ -6960,7 +6984,7 @@ namespace bgfx { namespace d3d11
 						deviceCtx->RSSetScissorRects(1, &rc);
 					}
 
-					setRasterizerState(newFlags, wireframe, scissorEnabled);
+					setRasterizerState(newFlags, wireframe, scissorEnabled, depthBias.m_constant, depthBias.m_slopeScale, depthBias.m_clamp, depthBias.m_depthClamp);
 				}
 
 				if (BGFX_D3D11_DEPTH_STENCIL_MASK & changedFlags)
@@ -6970,11 +6994,12 @@ namespace bgfx { namespace d3d11
 
 				if (BGFX_D3D11_BLEND_STATE_MASK & changedFlags)
 				{
-					setBlendState(newFlags, draw.m_rgba);
+					setBlendState(newFlags, draw.m_rgba, sampleMask);
 					currentState.m_rgba = draw.m_rgba;
+					currentState.m_sampleMask = sampleMask;
 				}
 
-				if ( (0
+				if ( ( (0
 					 | BGFX_STATE_CULL_MASK
 					 | BGFX_STATE_FRONT_CCW
 					 | BGFX_STATE_ALPHA_REF_MASK
@@ -6983,17 +7008,17 @@ namespace bgfx { namespace d3d11
 					 | BGFX_STATE_MSAA
 					 | BGFX_STATE_LINEAA
 					 | BGFX_STATE_CONSERVATIVE_RASTER
-					 ) & changedFlags)
+					 ) & changedFlags) || depthBiasChanged)
 				{
-					if ( (0
+					if ( ( (0
 						 | BGFX_STATE_CULL_MASK
 						 | BGFX_STATE_FRONT_CCW
 						 | BGFX_STATE_MSAA
 						 | BGFX_STATE_LINEAA
 						 | BGFX_STATE_CONSERVATIVE_RASTER
-						 ) & changedFlags)
+						 ) & changedFlags) || depthBiasChanged)
 					{
-						setRasterizerState(newFlags, wireframe, scissorEnabled);
+						setRasterizerState(newFlags, wireframe, scissorEnabled, depthBias.m_constant, depthBias.m_slopeScale, depthBias.m_clamp, depthBias.m_depthClamp);
 					}
 
 					if (BGFX_STATE_ALPHA_REF_MASK & changedFlags)

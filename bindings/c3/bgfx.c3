@@ -597,9 +597,6 @@ constdef ResetFlags : inline uint
 	// Enable HiDPI rendering.
 	HIDPI                  = 0x00020000,
 
-	// Enable depth clamp.
-	DEPTHCLAMP             = 0x00040000,
-
 	// Suspend rendering.
 	SUSPEND                = 0x00080000,
 
@@ -839,13 +836,20 @@ constdef VideoDecodeFrameFlags : inline uint
 	LOOP                   = 0x00000008,
 }
 
-constdef ResolveFlags : inline uint
+constdef AttachmentFlags : inline uint
 {
-	// No resolve flags.
+	// No attachment flags.
 	NONE                   = 0x00000000,
 
 	// Auto-generate mip maps on resolve.
 	AUTOGENMIPS            = 0x00000001,
+
+	// Bind the depth aspect read-only (read-only depth-stencil view) so the
+	// attachment can be sampled as a texture in the same pass.
+	READONLYDEPTH          = 0x00000002,
+
+	// Bind the stencil aspect read-only.
+	READONLYSTENCIL        = 0x00000004,
 }
 
 constdef PciIdFlags : inline ushort
@@ -2128,8 +2132,8 @@ struct Attachment
 	ushort layer;
 	// Number of texture layer/slice(s) in array to use.
 	ushort numLayers;
-	// Resolve flags. See: `BGFX_RESOLVE_*`
-	char resolve;
+	// Attachment flags. See: `BGFX_ATTACHMENT_*`
+	char flags;
 }
 
 // Transform data.
@@ -2365,8 +2369,8 @@ extern fn void buffer_region_init_buffer(BufferRegion* _this, BufferHandle _hand
 // _layer : `Cubemap side or depth layer/slice to use.`
 // _numLayers : `Number of texture layer/slice(s) in array to use.`
 // _mip : `Mip level.`
-// _resolve : `Resolve flags. See: `BGFX_RESOLVE_*``
-extern fn void attachment_init(Attachment* _this, TextureHandle _handle, Access _access, ushort _layer, ushort _numLayers, ushort _mip, char _resolve) @cname("bgfx_attachment_init");
+// _flags : `Attachment flags. See: `BGFX_ATTACHMENT_*``
+extern fn void attachment_init(Attachment* _this, TextureHandle _handle, Access _access, ushort _layer, ushort _numLayers, ushort _mip, char _flags) @cname("bgfx_attachment_init");
 
 // Start VertexLayout.
 // _rendererType : `Renderer backend type. See: `bgfx::RendererType``
@@ -3160,7 +3164,9 @@ extern fn void set_view_name(ushort _id, ZString _name, int _len) @cname("bgfx_s
 // _y : `Position y from the top corner of the window. Can be negative to place view origin outside of the window.`
 // _width : `Width of view port region.`
 // _height : `Height of view port region.`
-extern fn void set_view_rect(ushort _id, short _x, short _y, ushort _width, ushort _height) @cname("bgfx_set_view_rect");
+// _minDepth : `Viewport minimum depth (maps clip-space z=0).`
+// _maxDepth : `Viewport maximum depth (maps clip-space z=1).`
+extern fn void set_view_rect(ushort _id, short _x, short _y, ushort _width, ushort _height, float _minDepth, float _maxDepth) @cname("bgfx_set_view_rect");
 
 // Set view rectangle. Draw primitive outside view will be clipped.
 // _id : `View id.`
@@ -3177,6 +3183,20 @@ extern fn void set_view_rect_ratio(ushort _id, short _x, short _y, BackbufferRat
 // _width : `Width of view scissor region.`
 // _height : `Height of view scissor region.`
 extern fn void set_view_scissor(ushort _id, ushort _x, ushort _y, ushort _width, ushort _height) @cname("bgfx_set_view_scissor");
+
+// Set view depth bias. Applies to all draws in the view unless overridden per-draw
+// with `bgfx::setDepthControl`.
+// _id : `View id.`
+// _constant : `Constant depth bias.`
+// _slopeScale : `Slope-scaled depth bias.`
+// _clamp : `Depth bias clamp.`
+extern fn void set_view_depth_bias(ushort _id, int _constant, float _slopeScale, float _clamp) @cname("bgfx_set_view_depth_bias");
+
+// Set view multisample coverage mask. Combined with the per-draw mask set by
+// `bgfx::setSampleMask`, so a draw can narrow the view's mask but not widen it.
+// _id : `View id.`
+// _mask : `Sample coverage mask.`
+extern fn void set_view_sample_mask(ushort _id, uint _mask) @cname("bgfx_set_view_sample_mask");
 
 // Set view clear flags.
 // _id : `View id.`
@@ -3324,6 +3344,12 @@ extern fn void encoder_set_condition(Encoder* _this, OcclusionQueryHandle _handl
 // _bstencil : `Back stencil state. If back is set to `BGFX_STENCIL_NONE` _fstencil is applied to both front and back facing primitives.`
 extern fn void encoder_set_stencil(Encoder* _this, uint _fstencil, uint _bstencil) @cname("bgfx_encoder_set_stencil");
 
+// Set multisample coverage mask for draw primitive. Samples whose bit is clear
+// in the mask are never written, regardless of the coverage the rasterizer
+// computes. Only has an effect when rendering to a multisampled target.
+// _mask : `Sample coverage mask.`
+extern fn void encoder_set_sample_mask(Encoder* _this, uint _mask) @cname("bgfx_encoder_set_sample_mask");
+
 // Set scissor for draw primitive.
 // 
 // @remark
@@ -3342,6 +3368,18 @@ extern fn ushort encoder_set_scissor(Encoder* _this, ushort _x, ushort _y, ushor
 // 
 // _cache : `Index in scissor cache.`
 extern fn void encoder_set_scissor_cached(Encoder* _this, ushort _cache) @cname("bgfx_encoder_set_scissor_cached");
+
+// Set depth control (depth bias and depth clip) for draw primitive. Overrides the
+// view depth bias for this draw.
+// _constant : `Constant depth bias.`
+// _slopeScale : `Slope-scaled depth bias.`
+// _clamp : `Depth bias clamp.`
+// _depthClamp : `Disable depth clipping and clamp NDC depth to the [0,1] range instead.`
+extern fn ushort encoder_set_depth_control(Encoder* _this, int _constant, float _slopeScale, float _clamp, bool _depthClamp) @cname("bgfx_encoder_set_depth_control");
+
+// Set depth control from depth-control cache for draw primitive.
+// _cache : `Index in depth control cache.`
+extern fn void encoder_set_depth_control_cached(Encoder* _this, ushort _cache) @cname("bgfx_encoder_set_depth_control_cached");
 
 // Set model matrix for draw primitive. If it is not called,
 // the model will be rendered with an identity model matrix.
@@ -3799,6 +3837,12 @@ extern fn void set_condition(OcclusionQueryHandle _handle, bool _visible) @cname
 // _bstencil : `Back stencil state. If back is set to `BGFX_STENCIL_NONE` _fstencil is applied to both front and back facing primitives.`
 extern fn void set_stencil(uint _fstencil, uint _bstencil) @cname("bgfx_set_stencil");
 
+// Set multisample coverage mask for draw primitive. Samples whose bit is clear
+// in the mask are never written, regardless of the coverage the rasterizer
+// computes. Only has an effect when rendering to a multisampled target.
+// _mask : `Sample coverage mask.`
+extern fn void set_sample_mask(uint _mask) @cname("bgfx_set_sample_mask");
+
 // Set scissor for draw primitive.
 // 
 // @remark
@@ -3817,6 +3861,18 @@ extern fn ushort set_scissor(ushort _x, ushort _y, ushort _width, ushort _height
 // 
 // _cache : `Index in scissor cache.`
 extern fn void set_scissor_cached(ushort _cache) @cname("bgfx_set_scissor_cached");
+
+// Set depth control (depth bias and depth clip) for draw primitive. Overrides the
+// view depth bias for this draw.
+// _constant : `Constant depth bias.`
+// _slopeScale : `Slope-scaled depth bias.`
+// _clamp : `Depth bias clamp.`
+// _depthClamp : `Disable depth clipping and clamp NDC depth to the [0,1] range instead.`
+extern fn ushort set_depth_control(int _constant, float _slopeScale, float _clamp, bool _depthClamp) @cname("bgfx_set_depth_control");
+
+// Set depth control from depth-control cache for draw primitive.
+// _cache : `Index in depth control cache.`
+extern fn void set_depth_control_cached(ushort _cache) @cname("bgfx_set_depth_control_cached");
 
 // Set model matrix for draw primitive. If it is not called,
 // the model will be rendered with an identity model matrix.

@@ -330,7 +330,7 @@ local valSubs = {
 	BGFX_RESET_NONE = "Reset.none",
 	BGFX_SAMPLER_U_CLAMP = "SamplerU.clamp",
 	BGFX_SAMPLER_V_CLAMP = "SamplerV.clamp",
-	BGFX_RESOLVE_AUTO_GEN_MIPS = "Resolve.autoGenMIPs",
+	BGFX_ATTACHMENT_AUTO_GEN_MIPS = "Attachment.autoGenMIPs",
 	["ViewMode::Default"] = "ViewMode.default_",
 }
 local function convVal(arg, type)

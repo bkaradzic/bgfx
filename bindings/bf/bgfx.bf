@@ -940,11 +940,6 @@ public static class bgfx
 		Hidpi                  = 0x00020000,
 	
 		/// <summary>
-		/// Enable depth clamp.
-		/// </summary>
-		DepthClamp             = 0x00040000,
-	
-		/// <summary>
 		/// Suspend rendering.
 		/// </summary>
 		Suspend                = 0x00080000,
@@ -1324,10 +1319,10 @@ public static class bgfx
 	}
 	
 	[AllowDuplicates]
-	public enum ResolveFlags : uint32
+	public enum AttachmentFlags : uint32
 	{
 		/// <summary>
-		/// No resolve flags.
+		/// No attachment flags.
 		/// </summary>
 		None                   = 0x00000000,
 	
@@ -1335,6 +1330,17 @@ public static class bgfx
 		/// Auto-generate mip maps on resolve.
 		/// </summary>
 		AutoGenMips            = 0x00000001,
+	
+		/// <summary>
+		/// Bind the depth aspect read-only (read-only depth-stencil view) so the
+		/// attachment can be sampled as a texture in the same pass.
+		/// </summary>
+		ReadOnlyDepth          = 0x00000002,
+	
+		/// <summary>
+		/// Bind the stencil aspect read-only.
+		/// </summary>
+		ReadOnlyStencil        = 0x00000004,
 	}
 	
 	[AllowDuplicates]
@@ -2810,7 +2816,7 @@ public static class bgfx
 		public uint16 mip;
 		public uint16 layer;
 		public uint16 numLayers;
-		public uint8 resolve;
+		public uint8 flags;
 	}
 	
 	[CRepr]
@@ -3028,10 +3034,10 @@ public static class bgfx
 	/// <param name="_layer">Cubemap side or depth layer/slice to use.</param>
 	/// <param name="_numLayers">Number of texture layer/slice(s) in array to use.</param>
 	/// <param name="_mip">Mip level.</param>
-	/// <param name="_resolve">Resolve flags. See: `BGFX_RESOLVE_*`</param>
+	/// <param name="_flags">Attachment flags. See: `BGFX_ATTACHMENT_*`</param>
 	///
 	[LinkName("bgfx_attachment_init")]
-	public static extern void attachment_init(Attachment* _this, TextureHandle _handle, Access _access, uint16 _layer, uint16 _numLayers, uint16 _mip, uint8 _resolve);
+	public static extern void attachment_init(Attachment* _this, TextureHandle _handle, Access _access, uint16 _layer, uint16 _numLayers, uint16 _mip, uint8 _flags);
 	
 	/// <summary>
 	/// Start VertexLayout.
@@ -4317,9 +4323,11 @@ public static class bgfx
 	/// <param name="_y">Position y from the top corner of the window. Can be negative to place view origin outside of the window.</param>
 	/// <param name="_width">Width of view port region.</param>
 	/// <param name="_height">Height of view port region.</param>
+	/// <param name="_minDepth">Viewport minimum depth (maps clip-space z=0).</param>
+	/// <param name="_maxDepth">Viewport maximum depth (maps clip-space z=1).</param>
 	///
 	[LinkName("bgfx_set_view_rect")]
-	public static extern void set_view_rect(ViewId _id, int16 _x, int16 _y, uint16 _width, uint16 _height);
+	public static extern void set_view_rect(ViewId _id, int16 _x, int16 _y, uint16 _width, uint16 _height, float _minDepth, float _maxDepth);
 	
 	/// <summary>
 	/// Set view rectangle. Draw primitive outside view will be clipped.
@@ -4346,6 +4354,30 @@ public static class bgfx
 	///
 	[LinkName("bgfx_set_view_scissor")]
 	public static extern void set_view_scissor(ViewId _id, uint16 _x, uint16 _y, uint16 _width, uint16 _height);
+	
+	/// <summary>
+	/// Set view depth bias. Applies to all draws in the view unless overridden per-draw
+	/// with `bgfx::setDepthControl`.
+	/// </summary>
+	///
+	/// <param name="_id">View id.</param>
+	/// <param name="_constant">Constant depth bias.</param>
+	/// <param name="_slopeScale">Slope-scaled depth bias.</param>
+	/// <param name="_clamp">Depth bias clamp.</param>
+	///
+	[LinkName("bgfx_set_view_depth_bias")]
+	public static extern void set_view_depth_bias(ViewId _id, int32 _constant, float _slopeScale, float _clamp);
+	
+	/// <summary>
+	/// Set view multisample coverage mask. Combined with the per-draw mask set by
+	/// `bgfx::setSampleMask`, so a draw can narrow the view's mask but not widen it.
+	/// </summary>
+	///
+	/// <param name="_id">View id.</param>
+	/// <param name="_mask">Sample coverage mask.</param>
+	///
+	[LinkName("bgfx_set_view_sample_mask")]
+	public static extern void set_view_sample_mask(ViewId _id, uint32 _mask);
 	
 	/// <summary>
 	/// Set view clear flags.
@@ -4564,6 +4596,17 @@ public static class bgfx
 	public static extern void encoder_set_stencil(Encoder* _this, uint32 _fstencil, uint32 _bstencil);
 	
 	/// <summary>
+	/// Set multisample coverage mask for draw primitive. Samples whose bit is clear
+	/// in the mask are never written, regardless of the coverage the rasterizer
+	/// computes. Only has an effect when rendering to a multisampled target.
+	/// </summary>
+	///
+	/// <param name="_mask">Sample coverage mask.</param>
+	///
+	[LinkName("bgfx_encoder_set_sample_mask")]
+	public static extern void encoder_set_sample_mask(Encoder* _this, uint32 _mask);
+	
+	/// <summary>
 	/// Set scissor for draw primitive.
 	/// 
 	/// @remark
@@ -4591,6 +4634,28 @@ public static class bgfx
 	///
 	[LinkName("bgfx_encoder_set_scissor_cached")]
 	public static extern void encoder_set_scissor_cached(Encoder* _this, uint16 _cache);
+	
+	/// <summary>
+	/// Set depth control (depth bias and depth clip) for draw primitive. Overrides the
+	/// view depth bias for this draw.
+	/// </summary>
+	///
+	/// <param name="_constant">Constant depth bias.</param>
+	/// <param name="_slopeScale">Slope-scaled depth bias.</param>
+	/// <param name="_clamp">Depth bias clamp.</param>
+	/// <param name="_depthClamp">Disable depth clipping and clamp NDC depth to the [0,1] range instead.</param>
+	///
+	[LinkName("bgfx_encoder_set_depth_control")]
+	public static extern uint16 encoder_set_depth_control(Encoder* _this, int32 _constant, float _slopeScale, float _clamp, bool _depthClamp);
+	
+	/// <summary>
+	/// Set depth control from depth-control cache for draw primitive.
+	/// </summary>
+	///
+	/// <param name="_cache">Index in depth control cache.</param>
+	///
+	[LinkName("bgfx_encoder_set_depth_control_cached")]
+	public static extern void encoder_set_depth_control_cached(Encoder* _this, uint16 _cache);
 	
 	/// <summary>
 	/// Set model matrix for draw primitive. If it is not called,
@@ -5288,6 +5353,17 @@ public static class bgfx
 	public static extern void set_stencil(uint32 _fstencil, uint32 _bstencil);
 	
 	/// <summary>
+	/// Set multisample coverage mask for draw primitive. Samples whose bit is clear
+	/// in the mask are never written, regardless of the coverage the rasterizer
+	/// computes. Only has an effect when rendering to a multisampled target.
+	/// </summary>
+	///
+	/// <param name="_mask">Sample coverage mask.</param>
+	///
+	[LinkName("bgfx_set_sample_mask")]
+	public static extern void set_sample_mask(uint32 _mask);
+	
+	/// <summary>
 	/// Set scissor for draw primitive.
 	/// 
 	/// @remark
@@ -5315,6 +5391,28 @@ public static class bgfx
 	///
 	[LinkName("bgfx_set_scissor_cached")]
 	public static extern void set_scissor_cached(uint16 _cache);
+	
+	/// <summary>
+	/// Set depth control (depth bias and depth clip) for draw primitive. Overrides the
+	/// view depth bias for this draw.
+	/// </summary>
+	///
+	/// <param name="_constant">Constant depth bias.</param>
+	/// <param name="_slopeScale">Slope-scaled depth bias.</param>
+	/// <param name="_clamp">Depth bias clamp.</param>
+	/// <param name="_depthClamp">Disable depth clipping and clamp NDC depth to the [0,1] range instead.</param>
+	///
+	[LinkName("bgfx_set_depth_control")]
+	public static extern uint16 set_depth_control(int32 _constant, float _slopeScale, float _clamp, bool _depthClamp);
+	
+	/// <summary>
+	/// Set depth control from depth-control cache for draw primitive.
+	/// </summary>
+	///
+	/// <param name="_cache">Index in depth control cache.</param>
+	///
+	[LinkName("bgfx_set_depth_control_cached")]
+	public static extern void set_depth_control_cached(uint16 _cache);
 	
 	/// <summary>
 	/// Set model matrix for draw primitive. If it is not called,

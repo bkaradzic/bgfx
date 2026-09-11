@@ -879,7 +879,6 @@ WGPU_IMPORT
 			, m_adapter(NULL)
 			, m_device(NULL)
 			, m_maxAnisotropy(1)
-			, m_depthClamp(false)
 			, m_wireframe(false)
 			, m_mipGen(NULL)
 		{
@@ -2702,14 +2701,6 @@ WGPU_IMPORT
 				m_samplerStateCache.invalidate();
 			}
 
-			const bool depthClamp = !!(_reset & BGFX_RESET_DEPTH_CLAMP);
-
-			if (m_depthClamp != depthClamp)
-			{
-				m_depthClamp = depthClamp;
-				m_renderPipelineCache.invalidate();
-			}
-
 			if (!m_backBuffer.isSwapChain() )
 			{
 				if (m_mainSwapChain.width  != _swapChain.width
@@ -2731,7 +2722,6 @@ WGPU_IMPORT
 			uint32_t flags = _reset & ~(0
 				| BGFX_RESET_SUSPEND
 				| BGFX_RESET_MAXANISOTROPY
-				| BGFX_RESET_DEPTH_CLAMP
 				);
 
 			if (false
@@ -3233,6 +3223,11 @@ WGPU_IMPORT
 			, bool _isIndex16
 			, const RenderBind& _renderBind
 			, bool _useDepthAttachment = true
+			, bool _depthClamp = false
+			, int32_t _depthBias = 0
+			, float _slopeScale = 0.0f
+			, float _biasClamp = 0.0f
+			, uint32_t _sampleMask = UINT32_MAX
 			)
 		{
 			const ProgramWGPU& program = m_program[_program.idx];
@@ -3332,6 +3327,11 @@ WGPU_IMPORT
 			murmur.add(_isIndex16);
 			murmur.add(_useDepthAttachment);
 			addAttachmentState(murmur, fb);
+			murmur.add(_depthClamp);
+			murmur.add(_depthBias);
+			murmur.add(_slopeScale);
+			murmur.add(_biasClamp);
+			murmur.add(_sampleMask);
 			const uint32_t hash = murmur.end();
 
 			RenderPipeline* renderPipeline = m_renderPipelineCache.find(hash);
@@ -3487,7 +3487,7 @@ WGPU_IMPORT
 
 			if (NULL != depthStencilTextureView)
 			{
-				setDepthStencilState(depthStencilState, formatDepthStencil, _state, _stencil);
+				setDepthStencilState(depthStencilState, formatDepthStencil, _state, _stencil, _depthBias, _slopeScale, _biasClamp);
 			}
 			else
 			{
@@ -3530,7 +3530,7 @@ WGPU_IMPORT
 					.stripIndexFormat = primInfo.m_stripIndexFormat[!_isIndex16],
 					.frontFace        = !!(_state&BGFX_STATE_FRONT_CCW) ? WGPUFrontFace_CCW : WGPUFrontFace_CW,
 					.cullMode         = s_cullMode[cull],
-					.unclippedDepth   = !m_depthClamp,
+					.unclippedDepth   = _depthClamp,
 				},
 				.depthStencil = WGPUTextureFormat_Undefined == depthStencilState.format
 					? NULL
@@ -3540,7 +3540,7 @@ WGPU_IMPORT
 				{
 					.nextInChain            = NULL,
 					.count                  = _msaaCount,
-					.mask                   = 0xffffffff,
+					.mask                   = _sampleMask,
 					.alphaToCoverageEnabled = 1 < _msaaCount && !!(BGFX_STATE_BLEND_ALPHA_TO_COVERAGE & _state),
 				},
 				.fragment = hasFragmentShader ? &fragmentState : NULL,
@@ -3861,7 +3861,7 @@ WGPU_IMPORT
 			_murmur.add(_fb.m_formatDepthStencil);
 		}
 
-		void setDepthStencilState(WGPUDepthStencilState& _outDepthStencilState, TextureFormat::Enum _format, uint64_t _state, uint64_t _stencil)
+		void setDepthStencilState(WGPUDepthStencilState& _outDepthStencilState, TextureFormat::Enum _format, uint64_t _state, uint64_t _stencil, int32_t _depthBias = 0, float _slopeScale = 0.0f, float _biasClamp = 0.0f)
 		{
 			if (!hasStencil(_format) )
 			{
@@ -3901,9 +3901,9 @@ WGPU_IMPORT
 				},
 				.stencilReadMask     = (fstencil & BGFX_STENCIL_FUNC_RMASK_MASK) >> BGFX_STENCIL_FUNC_RMASK_SHIFT,
 				.stencilWriteMask    = writeMask,
-				.depthBias           = 0,
-				.depthBiasSlopeScale = 0.0f,
-				.depthBiasClamp      = 0.0f,
+				.depthBias           = _depthBias,
+				.depthBiasSlopeScale = _slopeScale,
+				.depthBiasClamp      = _biasClamp,
 			};
 		}
 
@@ -3927,7 +3927,6 @@ WGPU_IMPORT
 		SwapChain m_mainSwapChain;
 		uint32_t  m_reset;
 		uint16_t m_maxAnisotropy;
-		bool m_depthClamp;
 		bool m_wireframe;
 
 		const MipGen*   m_mipGen;
@@ -5753,6 +5752,8 @@ WGPU_IMPORT
 					m_depthStencilView   = attachmentView;
 					m_formatDepthStencil = texture.m_textureFormat;
 					m_depth = at.handle;
+					m_readOnlyDepth      = 0 != (at.flags & BGFX_ATTACHMENT_READ_ONLY_DEPTH);
+					m_readOnlyStencil    = 0 != (at.flags & BGFX_ATTACHMENT_READ_ONLY_STENCIL);
 				}
 				else
 				{
@@ -5796,7 +5797,7 @@ WGPU_IMPORT
 			const Attachment& at = m_attachment[ii];
 
 			if (isValid(at.handle)
-			&&  0 != (at.resolve & BGFX_RESOLVE_AUTO_GEN_MIPS) )
+			&&  0 != (at.flags & BGFX_ATTACHMENT_AUTO_GEN_MIPS) )
 			{
 				TextureWGPU& texture = s_renderWGPU->m_textures[at.handle.idx];
 
@@ -6770,6 +6771,7 @@ WGPU_IMPORT
 		currentState.clear();
 		currentState.m_stateFlags = BGFX_STATE_NONE;
 		currentState.m_stencil    = packStencil(BGFX_STENCIL_NONE, BGFX_STENCIL_NONE);
+		uint64_t stateMask        = UINT64_MAX;
 
 		static ViewState viewState;
 		viewState.reset(_render);
@@ -6824,8 +6826,10 @@ WGPU_IMPORT
 			uint32_t              rgba;
 			uint32_t              streamMask;
 			uint32_t              bindIdx;
+			uint32_t              sampleMask;
 			uint16_t              program;
 			uint16_t              fbh;
+			uint16_t              depthBias;
 			uint8_t               numInstanceData;
 			bool                  valid;
 			bool                  isIndex16;
@@ -6910,6 +6914,11 @@ WGPU_IMPORT
 						}
 
 						fbh = _render->m_view[view].m_fbh;
+
+						stateMask = isValid(fbh)
+							? getAttachmentStateMask(m_frameBuffers[fbh.idx].m_attachment, m_frameBuffers[fbh.idx].m_numAttachments)
+							: UINT64_MAX
+							;
 					}
 				}
 
@@ -7054,8 +7063,8 @@ WGPU_IMPORT
 						}
 					}
 
-					const bool stencilRw = hasStencil(TextureFormat::Enum(fb.m_formatDepthStencil) );
-					const bool depthRw   = hasDepth(TextureFormat::Enum(fb.m_formatDepthStencil) );
+					const bool stencilRw = hasStencil(TextureFormat::Enum(fb.m_formatDepthStencil) ) && !fb.m_readOnlyStencil;
+					const bool depthRw   = hasDepth(TextureFormat::Enum(fb.m_formatDepthStencil) )   && !fb.m_readOnlyDepth;
 
 					WGPURenderPassDepthStencilAttachment depthStencilAttachement =
 					{
@@ -7266,7 +7275,8 @@ WGPU_IMPORT
 				bool constantsChanged = draw.m_uniformBegin < draw.m_uniformEnd;
 				rendererUpdateUniforms(this, _render->m_uniformBuffer[draw.m_uniformIdx], draw.m_uniformBegin, draw.m_uniformEnd);
 
-				const uint64_t state = draw.m_stateFlags;
+				const uint64_t state = draw.m_stateFlags & stateMask;
+				const uint32_t sampleMask = _render->m_view[view].m_sampleMask & draw.m_sampleMask;
 
 				const uint8_t numInstanceData = uint8_t(draw.m_instanceDataStride/16);
 				const bool    drawIsIndex16   = draw.isIndex16();
@@ -7276,24 +7286,32 @@ WGPU_IMPORT
 				&&  pipelineState.program         == key.m_program.idx
 				&&  pipelineState.fbh             == fbh.idx
 				&&  pipelineState.msaaCount       == msaaCount
-				&&  pipelineState.state           == draw.m_stateFlags
+				&&  pipelineState.state           == state
 				&&  pipelineState.rgba            == draw.m_rgba
 				&&  pipelineState.stencil         == draw.m_stencil
 				&&  pipelineState.streamMask      == draw.m_streamMask
 				&&  pipelineState.numInstanceData == numInstanceData
 				&&  pipelineState.isIndex16       == drawIsIndex16
 				&&  pipelineState.bindIdx         == bindIdx
+				&&  pipelineState.depthBias       == draw.m_depthBias
+				&&  pipelineState.sampleMask      == sampleMask
 				&&  0 == bx::memCmp(pipelineState.stream, draw.m_stream, sizeof(pipelineState.stream) ) )
 				{
 					renderPipelinePtr = pipelineState.pipeline;
 				}
 				else
 				{
+					const DepthControl& depthControl = (UINT16_MAX != draw.m_depthBias)
+						? _render->m_frameCache.m_depthBiasCache.m_cache[draw.m_depthBias]
+						: _render->m_view[view].m_depthBias
+						;
+					const bool depthClamp = depthControl.m_depthClamp;
+
 					renderPipelinePtr = getPipeline(
 						  key.m_program
 						, fbh
 						, msaaCount
-						, draw.m_stateFlags
+						, state
 						, draw.m_rgba
 						, draw.m_stencil
 						, draw.m_streamMask
@@ -7301,19 +7319,27 @@ WGPU_IMPORT
 						, numInstanceData
 						, drawIsIndex16
 						, renderBind
+						, true
+						, depthClamp
+						, depthControl.m_constant
+						, depthControl.m_slopeScale
+						, depthControl.m_clamp
+						, sampleMask
 						);
 
 					pipelineState.valid           = true;
 					pipelineState.program         = key.m_program.idx;
 					pipelineState.fbh             = fbh.idx;
 					pipelineState.msaaCount       = msaaCount;
-					pipelineState.state           = draw.m_stateFlags;
+					pipelineState.state           = state;
 					pipelineState.rgba            = draw.m_rgba;
 					pipelineState.stencil         = draw.m_stencil;
 					pipelineState.streamMask      = draw.m_streamMask;
 					pipelineState.numInstanceData = numInstanceData;
 					pipelineState.isIndex16       = drawIsIndex16;
 					pipelineState.bindIdx         = bindIdx;
+					pipelineState.depthBias       = draw.m_depthBias;
+					pipelineState.sampleMask      = sampleMask;
 					bx::memCopy(pipelineState.stream, draw.m_stream, sizeof(pipelineState.stream) );
 					pipelineState.pipeline        = renderPipelinePtr;
 				}

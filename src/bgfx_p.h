@@ -295,6 +295,7 @@ namespace bgfx
 	static constexpr uint32_t kDrawCallBlock = BGFX_CONFIG_DRAW_CALL_BLOCK;
 	static constexpr uint32_t kBlitBlock     = 64;
 	static constexpr uint32_t kRectBlock     = 64;
+	static constexpr uint32_t kDepthControlBlock = 64;
 	static constexpr uint32_t kViewUsedWords = bx::alignUp(BGFX_CONFIG_MAX_VIEWS, 64);
 
 	inline uint32_t alignDrawCalls(uint32_t _num)
@@ -465,6 +466,48 @@ namespace bgfx
 	inline bool isShaderVerLess(uint32_t _magic, uint8_t _version)
 	{
 		return (_magic & BX_MAKEFOURCC(0, 0, 0, 0xff) ) < BX_MAKEFOURCC(0, 0, 0, _version);
+	}
+
+	inline bool hasReadOnlyDepth(const Attachment* _attachment, uint8_t _num)
+	{
+		for (uint8_t ii = 0; ii < _num; ++ii)
+		{
+			if (0 != (_attachment[ii].flags & BGFX_ATTACHMENT_READ_ONLY_DEPTH) )
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	inline bool hasReadOnlyStencil(const Attachment* _attachment, uint8_t _num)
+	{
+		for (uint8_t ii = 0; ii < _num; ++ii)
+		{
+			if (0 != (_attachment[ii].flags & BGFX_ATTACHMENT_READ_ONLY_STENCIL) )
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	inline uint64_t getAttachmentStateMask(const Attachment* _attachment, uint8_t _num)
+	{
+		return hasReadOnlyDepth(_attachment, _num)
+			? ~BGFX_STATE_WRITE_Z
+			: UINT64_MAX
+			;
+	}
+
+	inline uint64_t getAttachmentStencilMask(const Attachment* _attachment, uint8_t _num)
+	{
+		return hasReadOnlyStencil(_attachment, _num)
+			? ~(uint64_t(BGFX_STENCIL_FUNC_RMASK_MASK)<<32)
+			: UINT64_MAX
+			;
 	}
 
 	inline void readRawBindings(bx::ReaderI* _reader, uint32_t& _srvMask, uint32_t& _uavMask, bx::Error* _err)
@@ -2551,7 +2594,9 @@ namespace bgfx
 				m_stateFlags    = BGFX_STATE_DEFAULT;
 				m_stencil       = packStencil(BGFX_STENCIL_NONE, BGFX_STENCIL_NONE);
 				m_rgba          = 0;
+				m_sampleMask    = UINT32_MAX;
 				m_scissor       = UINT16_MAX;
+				m_depthBias     = UINT16_MAX;
 			}
 
 			if (0 != (_flags & BGFX_DISCARD_TRANSFORM) )
@@ -2614,6 +2659,7 @@ namespace bgfx
 		uint64_t m_stateFlags;
 		uint64_t m_stencil;
 		uint32_t m_rgba;
+		uint32_t m_sampleMask;
 		uint32_t m_uniformBegin;
 		uint32_t m_uniformEnd;
 		uint32_t m_startMatrix;
@@ -2638,6 +2684,7 @@ namespace bgfx
 		IndirectBufferHandle m_indirectBuffer;
 		IndexBufferHandle    m_numIndirectBuffer;
 		OcclusionQueryHandle m_occlusionQuery;
+		uint16_t             m_depthBias; // depth-bias cache index (UINT16_MAX = use view)
 	};
 
 	BX_ALIGN_DECL_CACHE_LINE(struct) RenderCompute
@@ -2955,6 +3002,75 @@ namespace bgfx
 		bool m_window;
 	};
 
+	struct DepthControl
+	{
+		int32_t m_constant;
+		float   m_slopeScale;
+		float   m_clamp;
+		bool    m_depthClamp;
+	};
+
+	struct DepthControlCache
+	{
+		static_assert(BGFX_CONFIG_MAX_DEPTH_BIAS_CACHE <= UINT16_MAX
+			, "BGFX_CONFIG_MAX_DEPTH_BIAS_CACHE must leave UINT16_MAX free."
+			);
+
+		DepthControlCache()
+			: m_num(0)
+			, m_max(0)
+		{
+		}
+
+		void create(uint32_t _numMax)
+		{
+			m_max = _numMax;
+			m_cache.create(0, _numMax);
+		}
+
+		void destroy()
+		{
+			m_cache.destroy();
+		}
+
+		void reset()
+		{
+			m_num = 0;
+		}
+
+		void shrink(uint32_t _numItems)
+		{
+			m_cache.shrink(bx::min(m_max, _numItems) );
+		}
+
+		uint32_t add(int32_t _constant, float _slopeScale, float _clamp, bool _depthClamp)
+		{
+			const uint32_t first = bx::atomicFetchAndAddsat<uint32_t>(&m_num, 1, m_max);
+
+			BX_WARN(first < m_max
+				, "Exceeded number of available depth control values per frame. BGFX_CONFIG_MAX_DEPTH_BIAS_CACHE is %d."
+				, BGFX_CONFIG_MAX_DEPTH_BIAS_CACHE
+				);
+
+			if (first >= m_max)
+			{
+				return UINT16_MAX;
+			}
+
+			DepthControl& db = m_cache[first];
+			db.m_constant   = _constant;
+			db.m_slopeScale = _slopeScale;
+			db.m_clamp      = _clamp;
+			db.m_depthClamp = _depthClamp;
+
+			return first;
+		}
+
+		FrameArenaT<DepthControl, kDepthControlBlock> m_cache;
+		uint32_t m_num;
+		uint32_t m_max;
+	};
+
 	BX_ALIGN_DECL_CACHE_LINE(struct) View
 	{
 		void reset()
@@ -2966,18 +3082,32 @@ namespace bgfx
 			setShadingRate(ShadingRate::Rate1x1);
 			setFrameBuffer(BGFX_INVALID_HANDLE);
 			setTransform(NULL, NULL);
+			setDepthBias(0, 0.0f, 0.0f);
+			setSampleMask(UINT32_MAX);
 		}
 
-		void setRect(int16_t _x, int16_t _y, uint16_t _width, uint16_t _height)
+		void setRect(int16_t _x, int16_t _y, uint16_t _width, uint16_t _height, float _minDepth = 0.0f, float _maxDepth = 1.0f)
 		{
 			m_rect.m_x      = _x;
 			m_rect.m_y      = _y;
 			m_rect.m_width  = bx::max<uint16_t>(_width,  1);
 			m_rect.m_height = bx::max<uint16_t>(_height, 1);
+			m_minDepth      = _minDepth;
+			m_maxDepth      = _maxDepth;
+			m_clippedRect   = m_rect;
+		}
 
-			// Frame::sort clips this against the render target. Default to
-			// unclipped, so it's never stale when sort didn't run.
-			m_clippedRect = m_rect;
+		void setSampleMask(uint32_t _mask)
+		{
+			m_sampleMask = _mask;
+		}
+
+		void setDepthBias(int32_t _constant, float _slopeScale, float _clamp)
+		{
+			m_depthBias.m_constant   = _constant;
+			m_depthBias.m_slopeScale = _slopeScale;
+			m_depthBias.m_clamp      = _clamp;
+			m_depthBias.m_depthClamp = false;
 		}
 
 		void setScissor(uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height)
@@ -3048,6 +3178,10 @@ namespace bgfx
 		FrameBufferHandle m_fbh;
 		uint8_t m_mode;
 		uint8_t m_shadingRate;
+		float   m_minDepth = 0.0f;
+		float   m_maxDepth = 1.0f;
+		DepthControl m_depthBias;
+		uint32_t     m_sampleMask;
 	};
 
 	struct UniformCacheKey
@@ -3208,18 +3342,21 @@ namespace bgfx
 		{
 			m_matrixCache.create(_numReservedMatrices, _numMaxMatrices, _numHwmFrames);
 			m_rectCache.create(BGFX_CONFIG_MAX_RECT_CACHE);
+			m_depthBiasCache.create(BGFX_CONFIG_MAX_DEPTH_BIAS_CACHE);
 		}
 
 		void destroy()
 		{
 			m_matrixCache.destroy();
 			m_rectCache.destroy();
+			m_depthBiasCache.destroy();
 		}
 
 		void reset()
 		{
 			m_matrixCache.reset();
 			m_rectCache.reset();
+			m_depthBiasCache.reset();
 		}
 
 		bool isZeroArea(const Rect& _rect, uint16_t _scissor) const
@@ -3236,6 +3373,7 @@ namespace bgfx
 
 		MatrixCache m_matrixCache;
 		RectCache m_rectCache;
+		DepthControlCache m_depthBiasCache;
 	};
 
 	struct ScreenShot
@@ -3256,6 +3394,7 @@ namespace bgfx
 			, m_peak(0)
 			, m_peakBlit(0)
 			, m_peakRect(0)
+			, m_peakDepthBias(0)
 			, m_observe(0)
 			, m_numPeakFrames(0)
 			, m_waitSubmit(0)
@@ -3346,9 +3485,10 @@ namespace bgfx
 				return;
 			}
 
-			m_peak     = bx::max(m_peak, m_numRenderItemsRequested, m_numRenderBinds);
-			m_peakBlit = bx::max(m_peakBlit, m_numBlitItems);
-			m_peakRect = bx::max(m_peakRect, m_frameCache.m_rectCache.m_num);
+			m_peak          = bx::max(m_peak, m_numRenderItemsRequested, m_numRenderBinds);
+			m_peakBlit      = bx::max(m_peakBlit, m_numBlitItems);
+			m_peakRect      = bx::max(m_peakRect, m_frameCache.m_rectCache.m_num);
+			m_peakDepthBias = bx::max(m_peakDepthBias, m_frameCache.m_depthBiasCache.m_num);
 
 			if (++m_observe >= m_numPeakFrames)
 			{
@@ -3358,6 +3498,7 @@ namespace bgfx
 				m_renderBind.shrink(keep);
 				m_blitItem.shrink(m_peakBlit + 1 + kBlitBlock);
 				m_frameCache.m_rectCache.shrink(m_peakRect + 1 + kRectBlock);
+				m_frameCache.m_depthBiasCache.shrink(m_peakDepthBias + 1 + kDepthControlBlock);
 				m_cmdPre.shrink();
 				m_cmdPost.shrink();
 
@@ -3369,10 +3510,11 @@ namespace bgfx
 					}
 				}
 
-				m_peak     = 0;
-				m_peakBlit = 0;
-				m_peakRect = 0;
-				m_observe  = 0;
+				m_peak          = 0;
+				m_peakBlit      = 0;
+				m_peakRect      = 0;
+				m_peakDepthBias = 0;
+				m_observe       = 0;
 			}
 		}
 
@@ -3598,6 +3740,7 @@ namespace bgfx
 		uint32_t         m_peak;
 		uint32_t         m_peakBlit;
 		uint32_t         m_peakRect;
+		uint32_t         m_peakDepthBias;
 		uint32_t         m_observe;
 		uint32_t         m_numPeakFrames;
 
@@ -3909,6 +4052,11 @@ namespace bgfx
 			m_draw.m_stencil = packStencil(_fstencil, _bstencil);
 		}
 
+		void setSampleMask(uint32_t _mask)
+		{
+			m_draw.m_sampleMask = _mask;
+		}
+
 		uint16_t setScissor(uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height)
 		{
 			uint16_t scissor = bx::narrowCast<uint16_t>(m_frame->m_frameCache.m_rectCache.add(_x, _y, _width, _height) );
@@ -3919,6 +4067,18 @@ namespace bgfx
 		void setScissor(uint16_t _cache)
 		{
 			m_draw.m_scissor = _cache;
+		}
+
+		uint16_t setDepthControl(int32_t _constant, float _slopeScale, float _clamp, bool _depthClamp)
+		{
+			uint16_t idx = bx::narrowCast<uint16_t>(m_frame->m_frameCache.m_depthBiasCache.add(_constant, _slopeScale, _clamp, _depthClamp) );
+			m_draw.m_depthBias = idx;
+			return idx;
+		}
+
+		void setDepthControl(uint16_t _cache)
+		{
+			m_draw.m_depthBias = _cache;
 		}
 
 		uint32_t setTransform(const void* _mtx, uint16_t _num)
@@ -6868,7 +7028,7 @@ namespace bgfx
 			{
 				CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::CreateFrameBuffer);
 				cmdbuf.write(handle);
-				cmdbuf.write(false);
+				cmdbuf.write(uint8_t(0) ); // attachment-based
 				cmdbuf.write(_num);
 
 				const TextureRef& firstTexture = m_textureRef[_attachment[0].handle.idx];
@@ -7029,7 +7189,7 @@ namespace bgfx
 
 				CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::CreateFrameBuffer);
 				cmdbuf.write(handle);
-				cmdbuf.write(true);
+				cmdbuf.write(uint8_t(1) ); // window swap chain
 				writeSwapChain(cmdbuf, fbr);
 			}
 
@@ -7348,14 +7508,24 @@ namespace bgfx
 			cmdbuf.write(_name);
 		}
 
-		BGFX_API_FUNC(void setViewRect(ViewId _id, int16_t _x, int16_t _y, uint16_t _width, uint16_t _height) )
+		BGFX_API_FUNC(void setViewRect(ViewId _id, int16_t _x, int16_t _y, uint16_t _width, uint16_t _height, float _minDepth = 0.0f, float _maxDepth = 1.0f) )
 		{
-			m_view[_id].setRect(_x, _y, _width, _height);
+			m_view[_id].setRect(_x, _y, _width, _height, _minDepth, _maxDepth);
 		}
 
 		BGFX_API_FUNC(void setViewScissor(ViewId _id, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height) )
 		{
 			m_view[_id].setScissor(_x, _y, _width, _height);
+		}
+
+		BGFX_API_FUNC(void setViewDepthBias(ViewId _id, int32_t _constant, float _slopeScale, float _clamp) )
+		{
+			m_view[_id].setDepthBias(_constant, _slopeScale, _clamp);
+		}
+
+		BGFX_API_FUNC(void setViewSampleMask(ViewId _id, uint32_t _mask) )
+		{
+			m_view[_id].setSampleMask(_mask);
 		}
 
 		BGFX_API_FUNC(void setViewClear(ViewId _id, uint16_t _flags, uint32_t _rgba, float _depth, uint8_t _stencil) )

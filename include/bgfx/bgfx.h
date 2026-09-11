@@ -1061,7 +1061,7 @@ namespace bgfx
 		/// @param[in] _layer Cubemap side or depth layer/slice to use.
 		/// @param[in] _numLayers Number of texture layer/slice(s) in array to use.
 		/// @param[in] _mip Mip level.
-		/// @param[in] _resolve Resolve flags. See: `BGFX_RESOLVE_*`
+		/// @param[in] _flags Attachment flags. See: `BGFX_ATTACHMENT_*`
 		///
 		/// @attention C99's equivalent binding is `bgfx_attachment_init`.
 		///
@@ -1071,7 +1071,7 @@ namespace bgfx
 			, uint16_t _layer = 0
 			, uint16_t _numLayers = 1
 			, uint16_t _mip = 0
-			, uint8_t _resolve = BGFX_RESOLVE_AUTO_GEN_MIPS
+			, uint8_t _flags = BGFX_ATTACHMENT_AUTO_GEN_MIPS
 			);
 
 		Access::Enum access;  //!< Attachment access. See `Access::Enum`.
@@ -1079,7 +1079,7 @@ namespace bgfx
 		uint16_t mip;         //!< Mip level.
 		uint16_t layer;       //!< Cubemap side or depth layer/slice to use.
 		uint16_t numLayers;   //!< Number of texture layer/slice(s) in array to use.
-		uint8_t resolve;      //!< Resolve flags. See: `BGFX_RESOLVE_*`
+		uint8_t flags;        //!< Attachment flags. See: `BGFX_ATTACHMENT_*`
 	};
 
 	/// Transform data.
@@ -1367,6 +1367,16 @@ namespace bgfx
 			, uint32_t _bstencil = BGFX_STENCIL_NONE
 			);
 
+		/// Set multisample coverage mask for draw primitive. Samples whose bit is clear
+		/// in the mask are never written, regardless of the coverage the rasterizer
+		/// computes. Only has an effect when rendering to a multisampled target.
+		///
+		/// @param[in] _mask Sample coverage mask.
+		///
+		/// @attention C99's equivalent binding is `bgfx_encoder_set_sample_mask`.
+		///
+		void setSampleMask(uint32_t _mask = UINT32_MAX);
+
 		/// Set scissor for draw primitive.
 		///
 		/// @param[in] _x Position x from the left corner of the window.
@@ -1398,6 +1408,33 @@ namespace bgfx
 		/// @attention C99's equivalent binding is `bgfx_encoder_set_scissor_cached`.
 		///
 		void setScissor(uint16_t _cache = UINT16_MAX);
+
+		/// Set depth control (depth bias and depth clip) for draw primitive. Overrides the
+		/// view depth bias for this draw.
+		///
+		/// @param[in] _constant Constant depth bias.
+		/// @param[in] _slopeScale Slope-scaled depth bias.
+		/// @param[in] _clamp Depth bias clamp.
+		/// @param[in] _depthClamp Disable depth clipping and clamp NDC depth to the [0,1] range instead.
+		///
+		/// @returns Depth control cache index.
+		///
+		/// @attention C99's equivalent binding is `bgfx_encoder_set_depth_control`.
+		///
+		uint16_t setDepthControl(
+			  int32_t _constant
+			, float _slopeScale
+			, float _clamp = 0.0f
+			, bool _depthClamp = false
+			);
+
+		/// Set depth control from depth-control cache for draw primitive.
+		///
+		/// @param[in] _cache Index in depth control cache.
+		///
+		/// @attention C99's equivalent binding is `bgfx_encoder_set_depth_control_cached`.
+		///
+		void setDepthControl(uint16_t _cache = UINT16_MAX);
 
 		/// Set model matrix for draw primitive. If it is not called,
 		/// the model will be rendered with an identity model matrix.
@@ -4008,6 +4045,8 @@ namespace bgfx
 	///   negative to place view origin outside of the window.
 	/// @param[in] _width Width of view port region.
 	/// @param[in] _height Height of view port region.
+	/// @param[in] _minDepth Viewport minimum depth (maps clip-space z=0).
+	/// @param[in] _maxDepth Viewport maximum depth (maps clip-space z=1).
 	///
 	/// @attention C99's equivalent binding is `bgfx_set_view_rect`.
 	///
@@ -4017,6 +4056,8 @@ namespace bgfx
 		, int16_t _y
 		, uint16_t _width
 		, uint16_t _height
+		, float _minDepth = 0.0f
+		, float _maxDepth = 1.0f
 		);
 
 	/// Set view rectangle. Draw primitive outside view will be clipped.
@@ -4055,6 +4096,36 @@ namespace bgfx
 		, uint16_t _y = 0
 		, uint16_t _width = 0
 		, uint16_t _height = 0
+		);
+
+	/// Set view depth bias. Applies to all draws in the view unless overridden per-draw
+	/// with `bgfx::setDepthControl`.
+	///
+	/// @param[in] _id View id.
+	/// @param[in] _constant Constant depth bias.
+	/// @param[in] _slopeScale Slope-scaled depth bias.
+	/// @param[in] _clamp Depth bias clamp.
+	///
+	/// @attention C99's equivalent binding is `bgfx_set_view_depth_bias`.
+	///
+	void setViewDepthBias(
+		  ViewId _id
+		, int32_t _constant = 0
+		, float _slopeScale = 0.0f
+		, float _clamp = 0.0f
+		);
+
+	/// Set view multisample coverage mask. Combined with the per-draw mask set by
+	/// `bgfx::setSampleMask`, so a draw can narrow the view's mask but not widen it.
+	///
+	/// @param[in] _id View id.
+	/// @param[in] _mask Sample coverage mask.
+	///
+	/// @attention C99's equivalent binding is `bgfx_set_view_sample_mask`.
+	///
+	void setViewSampleMask(
+		  ViewId _id
+		, uint32_t _mask = UINT32_MAX
 		);
 
 	/// Set view clear flags.
@@ -4433,6 +4504,16 @@ namespace bgfx
 		, uint32_t _bstencil = BGFX_STENCIL_NONE
 		);
 
+	/// Set multisample coverage mask for draw primitive. Samples whose bit is clear
+	/// in the mask are never written, regardless of the coverage the rasterizer
+	/// computes. Only has an effect when rendering to a multisampled target.
+	///
+	/// @param[in] _mask Sample coverage mask.
+	///
+	/// @attention C99's equivalent binding is `bgfx_set_sample_mask`.
+	///
+	void setSampleMask(uint32_t _mask = UINT32_MAX);
+
 	/// Set scissor for draw primitive.
 	///
 	/// @param[in] _x Position x from the left corner of the window.
@@ -4464,6 +4545,33 @@ namespace bgfx
 	/// @attention C99's equivalent binding is `bgfx_set_scissor_cached`.
 	///
 	void setScissor(uint16_t _cache = UINT16_MAX);
+
+	/// Set depth control (depth bias and depth clip) for draw primitive. Overrides the
+	/// view depth bias for this draw.
+	///
+	/// @param[in] _constant Constant depth bias.
+	/// @param[in] _slopeScale Slope-scaled depth bias.
+	/// @param[in] _clamp Depth bias clamp.
+	/// @param[in] _depthClamp Disable depth clipping and clamp NDC depth to the [0,1] range instead.
+	///
+	/// @returns Depth control cache index.
+	///
+	/// @attention C99's equivalent binding is `bgfx_set_depth_control`.
+	///
+	uint16_t setDepthControl(
+		  int32_t _constant
+		, float _slopeScale
+		, float _clamp = 0.0f
+		, bool _depthClamp = false
+		);
+
+	/// Set depth control from depth-control cache for draw primitive.
+	///
+	/// @param[in] _cache Index in depth control cache.
+	///
+	/// @attention C99's equivalent binding is `bgfx_set_depth_control_cached`.
+	///
+	void setDepthControl(uint16_t _cache = UINT16_MAX);
 
 	/// Set model matrix for draw primitive. If it is not called,
 	/// the model will be rendered with an identity model matrix.

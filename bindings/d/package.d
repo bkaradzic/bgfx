@@ -9,7 +9,7 @@ import bindbc.common.types: c_int64, c_uint64, va_list;
 import bindbc.bgfx.config;
 static import bgfx.impl;
 
-enum uint apiVersion = 159;
+enum uint apiVersion = 160;
 
 alias ViewID = ushort;
 
@@ -455,7 +455,6 @@ enum Reset: Reset_{
 	srgbBackbuffer         = 0x0000_8000, ///Enable sRGB backbuffer.
 	hdr10                  = 0x0001_0000, ///Enable HDR10 rendering.
 	hiDPI                  = 0x0002_0000, ///Enable HiDPI rendering.
-	depthClamp             = 0x0004_0000, ///Enable depth clamp.
 	suspend                = 0x0008_0000, ///Suspend rendering.
 	transparentBackbuffer  = 0x0010_0000, ///Transparent backbuffer. Availability depends on: `BGFX_CAPS_TRANSPARENT_BACKBUFFER`.
 }
@@ -601,10 +600,16 @@ enum VideoDecodeFrame: VideoDecodeFrame_{
 	loop    = 0x08,
 }
 
-alias Resolve_ = ubyte;
-enum Resolve: Resolve_{
-	none         = 0x00, ///No resolve flags.
-	autoGenMIPs  = 0x01, ///Auto-generate mip maps on resolve.
+alias Attachment_ = ubyte;
+enum Attachment: Attachment_{
+	none             = 0x00, ///No attachment flags.
+	autoGenMIPs      = 0x01, ///Auto-generate mip maps on resolve.
+	/**
+	Bind the depth aspect read-only (read-only depth-stencil view) so the
+	attachment can be sampled as a texture in the same pass.
+	*/
+	readOnlyDepth    = 0x02,
+	readOnlyStencil  = 0x04, ///Bind the stencil aspect read-only.
 }
 
 alias PCIID_ = ushort;
@@ -1644,7 +1649,7 @@ extern(C++, "bgfx") struct Attachment{
 	ushort mip; ///Mip level.
 	ushort layer; ///Cubemap side or depth layer/slice to use.
 	ushort numLayers; ///Number of texture layer/slice(s) in array to use.
-	ubyte resolve; ///Resolve flags. See: `BGFX_RESOLVE_*`
+	ubyte flags; ///Attachment flags. See: `BGFX_ATTACHMENT_*`
 	extern(D) mixin(joinFnBinds((){
 		FnBind[] ret = [
 			/**
@@ -1655,9 +1660,9 @@ extern(C++, "bgfx") struct Attachment{
 				layer = Cubemap side or depth layer/slice to use.
 				numLayers = Number of texture layer/slice(s) in array to use.
 				mip = Mip level.
-				resolve = Resolve flags. See: `BGFX_RESOLVE_*`
+				flags = Attachment flags. See: `BGFX_ATTACHMENT_*`
 			*/
-			{q{void}, q{init}, q{TextureHandle handle, bgfx.impl.Access.Enum access=Access.write, ushort layer=0, ushort numLayers=1, ushort mip=0, ubyte resolve=Resolve.autoGenMIPs}, ext: `C++`},
+			{q{void}, q{init}, q{TextureHandle handle, bgfx.impl.Access.Enum access=Access.write, ushort layer=0, ushort numLayers=1, ushort mip=0, ubyte flags=Attachment.autoGenMIPs}, ext: `C++`},
 		];
 		return ret;
 	}()));
@@ -1876,6 +1881,15 @@ extern(C++, "bgfx") struct Encoder{
 			{q{void}, q{setStencil}, q{uint fStencil, uint bStencil=Stencil.none}, ext: `C++`},
 			
 			/**
+			Set multisample coverage mask for draw primitive. Samples whose bit is clear
+			in the mask are never written, regardless of the coverage the rasterizer
+			computes. Only has an effect when rendering to a multisampled target.
+			Params:
+				mask = Sample coverage mask.
+			*/
+			{q{void}, q{setSampleMask}, q{uint mask=uint.max}, ext: `C++`},
+			
+			/**
 			Set scissor for draw primitive.
 			
 			Remarks:
@@ -1899,6 +1913,24 @@ extern(C++, "bgfx") struct Encoder{
 				cache = Index in scissor cache.
 			*/
 			{q{void}, q{setScissor}, q{ushort cache=ushort.max}, ext: `C++`},
+			
+			/**
+			Set depth control (depth bias and depth clip) for draw primitive. Overrides the
+			view depth bias for this draw.
+			Params:
+				constant = Constant depth bias.
+				slopeScale = Slope-scaled depth bias.
+				clamp = Depth bias clamp.
+				depthClamp = Disable depth clipping and clamp NDC depth to the [0,1] range instead.
+			*/
+			{q{ushort}, q{setDepthControl}, q{int constant, float slopeScale, float clamp=0.0f, bool depthClamp=false}, ext: `C++`},
+			
+			/**
+			Set depth control from depth-control cache for draw primitive.
+			Params:
+				cache = Index in depth control cache.
+			*/
+			{q{void}, q{setDepthControl}, q{ushort cache=ushort.max}, ext: `C++`},
 			
 			/**
 			Set model matrix for draw primitive. If it is not called,
@@ -3596,8 +3628,10 @@ mixin(joinFnBinds((){
 		negative to place view origin outside of the window.
 			width = Width of view port region.
 			height = Height of view port region.
+			minDepth = Viewport minimum depth (maps clip-space z=0).
+			maxDepth = Viewport maximum depth (maps clip-space z=1).
 		*/
-		{q{void}, q{setViewRect}, q{ViewID id, short x, short y, ushort width, ushort height}, ext: `C++, "bgfx"`},
+		{q{void}, q{setViewRect}, q{ViewID id, short x, short y, ushort width, ushort height, float minDepth=0.0f, float maxDepth=1.0f}, ext: `C++, "bgfx"`},
 		
 		/**
 		* Set view rectangle. Draw primitive outside view will be clipped.
@@ -3623,6 +3657,26 @@ mixin(joinFnBinds((){
 			height = Height of view scissor region.
 		*/
 		{q{void}, q{setViewScissor}, q{ViewID id, ushort x=0, ushort y=0, ushort width=0, ushort height=0}, ext: `C++, "bgfx"`},
+		
+		/**
+		* Set view depth bias. Applies to all draws in the view unless overridden per-draw
+		* with `bgfx::setDepthControl`.
+		Params:
+			id = View id.
+			constant = Constant depth bias.
+			slopeScale = Slope-scaled depth bias.
+			clamp = Depth bias clamp.
+		*/
+		{q{void}, q{setViewDepthBias}, q{ViewID id, int constant=0, float slopeScale=0.0f, float clamp=0.0f}, ext: `C++, "bgfx"`},
+		
+		/**
+		* Set view multisample coverage mask. Combined with the per-draw mask set by
+		* `bgfx::setSampleMask`, so a draw can narrow the view's mask but not widen it.
+		Params:
+			id = View id.
+			mask = Sample coverage mask.
+		*/
+		{q{void}, q{setViewSampleMask}, q{ViewID id, uint mask=uint.max}, ext: `C++, "bgfx"`},
 		
 		/**
 		* Set view clear flags.
@@ -3926,6 +3980,15 @@ mixin(joinFnBinds((){
 		{q{void}, q{setStencil}, q{uint fStencil, uint bStencil=Stencil.none}, ext: `C++, "bgfx"`},
 		
 		/**
+		* Set multisample coverage mask for draw primitive. Samples whose bit is clear
+		* in the mask are never written, regardless of the coverage the rasterizer
+		* computes. Only has an effect when rendering to a multisampled target.
+		Params:
+			mask = Sample coverage mask.
+		*/
+		{q{void}, q{setSampleMask}, q{uint mask=uint.max}, ext: `C++, "bgfx"`},
+		
+		/**
 		* Set scissor for draw primitive.
 		* 
 		* Remarks:
@@ -3949,6 +4012,24 @@ mixin(joinFnBinds((){
 			cache = Index in scissor cache.
 		*/
 		{q{void}, q{setScissor}, q{ushort cache=ushort.max}, ext: `C++, "bgfx"`},
+		
+		/**
+		* Set depth control (depth bias and depth clip) for draw primitive. Overrides the
+		* view depth bias for this draw.
+		Params:
+			constant = Constant depth bias.
+			slopeScale = Slope-scaled depth bias.
+			clamp = Depth bias clamp.
+			depthClamp = Disable depth clipping and clamp NDC depth to the [0,1] range instead.
+		*/
+		{q{ushort}, q{setDepthControl}, q{int constant, float slopeScale, float clamp=0.0f, bool depthClamp=false}, ext: `C++, "bgfx"`},
+		
+		/**
+		* Set depth control from depth-control cache for draw primitive.
+		Params:
+			cache = Index in depth control cache.
+		*/
+		{q{void}, q{setDepthControl}, q{ushort cache=ushort.max}, ext: `C++, "bgfx"`},
 		
 		/**
 		* Set model matrix for draw primitive. If it is not called,

@@ -54,7 +54,6 @@ Reset flags control back-buffer resolution, MSAA, vsync, and other global render
 .. doxygendefine:: BGFX_RESET_SRGB_BACKBUFFER
 .. doxygendefine:: BGFX_RESET_HDR10
 .. doxygendefine:: BGFX_RESET_HIDPI
-.. doxygendefine:: BGFX_RESET_DEPTH_CLAMP
 .. doxygendefine:: BGFX_RESET_SUSPEND
 .. doxygendefine:: BGFX_RESET_TRANSPARENT_BACKBUFFER
 
@@ -251,9 +250,11 @@ A View's state is preserved between frames.
     :members:
 
 .. doxygenfunction:: bgfx::setViewName
-.. doxygenfunction:: bgfx::setViewRect(ViewId _id, int16_t _x, int16_t _y, uint16_t _width, uint16_t _height)
+.. doxygenfunction:: bgfx::setViewRect(ViewId _id, int16_t _x, int16_t _y, uint16_t _width, uint16_t _height, float _minDepth = 0.0f, float _maxDepth = 1.0f)
 .. doxygenfunction:: bgfx::setViewRect(ViewId _id, int16_t _x, int16_t _y, BackbufferRatio::Enum _ratio)
 .. doxygenfunction:: bgfx::setViewScissor
+.. doxygenfunction:: bgfx::setViewDepthBias
+.. doxygenfunction:: bgfx::setViewSampleMask
 .. doxygenfunction:: bgfx::setViewClear(ViewId _id, uint16_t _flags, uint32_t _rgba = 0x000000ff, float _depth = 1.0f, uint8_t _stencil = 0)
 .. doxygenfunction:: bgfx::setViewClear(ViewId _id, uint16_t _flags, float _depth, uint8_t _stencil, uint8_t _c0 = UINT8_MAX, uint8_t _c1 = UINT8_MAX, uint8_t _c2 = UINT8_MAX, uint8_t _c3 = UINT8_MAX, uint8_t _c4 = UINT8_MAX, uint8_t _c5 = UINT8_MAX, uint8_t _c6 = UINT8_MAX, uint8_t _c7 = UINT8_MAX)
 .. doxygenfunction:: bgfx::setViewMode
@@ -298,6 +299,9 @@ State
 Configure render state for draw calls.
 
 .. doxygenfunction:: bgfx::setState
+.. doxygenfunction:: bgfx::setSampleMask
+.. doxygenfunction:: bgfx::setDepthControl(int32_t _constant, float _slopeScale, float _clamp = 0.0f, bool _depthClamp)
+.. doxygenfunction:: bgfx::setDepthControl(uint16_t _cache = UINT16_MAX)
 
 State Flags
 ***********

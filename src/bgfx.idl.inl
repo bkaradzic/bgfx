@@ -73,11 +73,11 @@ BGFX_C_API void bgfx_buffer_region_init_buffer(bgfx_buffer_region_t* _this, bgfx
 	This->init(handle.cpp, _offset, _size);
 }
 
-BGFX_C_API void bgfx_attachment_init(bgfx_attachment_t* _this, bgfx_texture_handle_t _handle, bgfx_access_t _access, uint16_t _layer, uint16_t _numLayers, uint16_t _mip, uint8_t _resolve)
+BGFX_C_API void bgfx_attachment_init(bgfx_attachment_t* _this, bgfx_texture_handle_t _handle, bgfx_access_t _access, uint16_t _layer, uint16_t _numLayers, uint16_t _mip, uint8_t _flags)
 {
 	bgfx::Attachment* This = (bgfx::Attachment*)_this;
 	union { bgfx_texture_handle_t c; bgfx::TextureHandle cpp; } handle = { _handle };
-	This->init(handle.cpp, (bgfx::Access::Enum)_access, _layer, _numLayers, _mip, _resolve);
+	This->init(handle.cpp, (bgfx::Access::Enum)_access, _layer, _numLayers, _mip, _flags);
 }
 
 BGFX_C_API bgfx_vertex_layout_t* bgfx_vertex_layout_begin(bgfx_vertex_layout_t* _this, bgfx_renderer_type_t _rendererType)
@@ -703,9 +703,9 @@ BGFX_C_API void bgfx_set_view_name(bgfx_view_id_t _id, const char* _name, int32_
 	bgfx::setViewName((bgfx::ViewId)_id, _name, _len);
 }
 
-BGFX_C_API void bgfx_set_view_rect(bgfx_view_id_t _id, int16_t _x, int16_t _y, uint16_t _width, uint16_t _height)
+BGFX_C_API void bgfx_set_view_rect(bgfx_view_id_t _id, int16_t _x, int16_t _y, uint16_t _width, uint16_t _height, float _minDepth, float _maxDepth)
 {
-	bgfx::setViewRect((bgfx::ViewId)_id, _x, _y, _width, _height);
+	bgfx::setViewRect((bgfx::ViewId)_id, _x, _y, _width, _height, _minDepth, _maxDepth);
 }
 
 BGFX_C_API void bgfx_set_view_rect_ratio(bgfx_view_id_t _id, int16_t _x, int16_t _y, bgfx_backbuffer_ratio_t _ratio)
@@ -716,6 +716,16 @@ BGFX_C_API void bgfx_set_view_rect_ratio(bgfx_view_id_t _id, int16_t _x, int16_t
 BGFX_C_API void bgfx_set_view_scissor(bgfx_view_id_t _id, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height)
 {
 	bgfx::setViewScissor((bgfx::ViewId)_id, _x, _y, _width, _height);
+}
+
+BGFX_C_API void bgfx_set_view_depth_bias(bgfx_view_id_t _id, int32_t _constant, float _slopeScale, float _clamp)
+{
+	bgfx::setViewDepthBias((bgfx::ViewId)_id, _constant, _slopeScale, _clamp);
+}
+
+BGFX_C_API void bgfx_set_view_sample_mask(bgfx_view_id_t _id, uint32_t _mask)
+{
+	bgfx::setViewSampleMask((bgfx::ViewId)_id, _mask);
 }
 
 BGFX_C_API void bgfx_set_view_clear(bgfx_view_id_t _id, uint16_t _flags, uint32_t _rgba, float _depth, uint8_t _stencil)
@@ -794,6 +804,12 @@ BGFX_C_API void bgfx_encoder_set_stencil(bgfx_encoder_t* _this, uint32_t _fstenc
 	This->setStencil(_fstencil, _bstencil);
 }
 
+BGFX_C_API void bgfx_encoder_set_sample_mask(bgfx_encoder_t* _this, uint32_t _mask)
+{
+	bgfx::Encoder* This = (bgfx::Encoder*)_this;
+	This->setSampleMask(_mask);
+}
+
 BGFX_C_API uint16_t bgfx_encoder_set_scissor(bgfx_encoder_t* _this, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height)
 {
 	bgfx::Encoder* This = (bgfx::Encoder*)_this;
@@ -804,6 +820,18 @@ BGFX_C_API void bgfx_encoder_set_scissor_cached(bgfx_encoder_t* _this, uint16_t 
 {
 	bgfx::Encoder* This = (bgfx::Encoder*)_this;
 	This->setScissor(_cache);
+}
+
+BGFX_C_API uint16_t bgfx_encoder_set_depth_control(bgfx_encoder_t* _this, int32_t _constant, float _slopeScale, float _clamp, bool _depthClamp)
+{
+	bgfx::Encoder* This = (bgfx::Encoder*)_this;
+	return This->setDepthControl(_constant, _slopeScale, _clamp, _depthClamp);
+}
+
+BGFX_C_API void bgfx_encoder_set_depth_control_cached(bgfx_encoder_t* _this, uint16_t _cache)
+{
+	bgfx::Encoder* This = (bgfx::Encoder*)_this;
+	This->setDepthControl(_cache);
 }
 
 BGFX_C_API uint32_t bgfx_encoder_set_transform(bgfx_encoder_t* _this, const void* _mtx, uint16_t _num)
@@ -1131,6 +1159,11 @@ BGFX_C_API void bgfx_set_stencil(uint32_t _fstencil, uint32_t _bstencil)
 	bgfx::setStencil(_fstencil, _bstencil);
 }
 
+BGFX_C_API void bgfx_set_sample_mask(uint32_t _mask)
+{
+	bgfx::setSampleMask(_mask);
+}
+
 BGFX_C_API uint16_t bgfx_set_scissor(uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height)
 {
 	return bgfx::setScissor(_x, _y, _width, _height);
@@ -1139,6 +1172,16 @@ BGFX_C_API uint16_t bgfx_set_scissor(uint16_t _x, uint16_t _y, uint16_t _width, 
 BGFX_C_API void bgfx_set_scissor_cached(uint16_t _cache)
 {
 	bgfx::setScissor(_cache);
+}
+
+BGFX_C_API uint16_t bgfx_set_depth_control(int32_t _constant, float _slopeScale, float _clamp, bool _depthClamp)
+{
+	return bgfx::setDepthControl(_constant, _slopeScale, _clamp, _depthClamp);
+}
+
+BGFX_C_API void bgfx_set_depth_control_cached(uint16_t _cache)
+{
+	bgfx::setDepthControl(_cache);
 }
 
 BGFX_C_API uint32_t bgfx_set_transform(const void* _mtx, uint16_t _num)
@@ -1528,6 +1571,8 @@ BGFX_C_API bgfx_interface_vtbl_t* bgfx_get_interface(uint32_t _version)
 			bgfx_set_view_rect,
 			bgfx_set_view_rect_ratio,
 			bgfx_set_view_scissor,
+			bgfx_set_view_depth_bias,
+			bgfx_set_view_sample_mask,
 			bgfx_set_view_clear,
 			bgfx_set_view_clear_mrt,
 			bgfx_set_view_mode,
@@ -1542,8 +1587,11 @@ BGFX_C_API bgfx_interface_vtbl_t* bgfx_get_interface(uint32_t _version)
 			bgfx_encoder_set_state,
 			bgfx_encoder_set_condition,
 			bgfx_encoder_set_stencil,
+			bgfx_encoder_set_sample_mask,
 			bgfx_encoder_set_scissor,
 			bgfx_encoder_set_scissor_cached,
+			bgfx_encoder_set_depth_control,
+			bgfx_encoder_set_depth_control_cached,
 			bgfx_encoder_set_transform,
 			bgfx_encoder_set_transform_cached,
 			bgfx_encoder_alloc_transform,
@@ -1592,8 +1640,11 @@ BGFX_C_API bgfx_interface_vtbl_t* bgfx_get_interface(uint32_t _version)
 			bgfx_set_state,
 			bgfx_set_condition,
 			bgfx_set_stencil,
+			bgfx_set_sample_mask,
 			bgfx_set_scissor,
 			bgfx_set_scissor_cached,
+			bgfx_set_depth_control,
+			bgfx_set_depth_control_cached,
 			bgfx_set_transform,
 			bgfx_set_transform_cached,
 			bgfx_alloc_transform,

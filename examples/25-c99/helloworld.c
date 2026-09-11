@@ -51,7 +51,7 @@ int32_t _main_(int32_t _argc, char** _argv)
 	while (!entry_process_events(&width, &height, &debug, &reset) )
 	{
 		// Set view 0 default viewport.
-		bgfx_set_view_rect(0, 0, 0, (uint16_t)width, (uint16_t)height);
+		bgfx_set_view_rect(0, 0, 0, (uint16_t)width, (uint16_t)height, 0.0f, 1.0f);
 
 		// This dummy draw call is here to make sure that view 0 is cleared
 		// if no other draw calls are submitted to view 0.

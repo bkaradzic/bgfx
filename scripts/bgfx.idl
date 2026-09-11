@@ -1,7 +1,7 @@
 -- vim: syntax=lua
 -- bgfx interface
 
-version(159)
+version(160)
 
 typedef "bool"
 typedef "char"
@@ -340,7 +340,6 @@ flag.Reset { bits = 32, section = "Reset" }
 	.SrgbBackbuffer           (16) --- Enable sRGB backbuffer.
 	.Hdr10                    (17) --- Enable HDR10 rendering.
 	.Hidpi                    (18) --- Enable HiDPI rendering.
-	.DepthClamp               (19) --- Enable depth clamp.
 	.Suspend                  (20) --- Suspend rendering.
 	.TransparentBackbuffer    (21) --- Transparent backbuffer. Availability depends on: `BGFX_CAPS_TRANSPARENT_BACKBUFFER`.
 	()
@@ -452,9 +451,12 @@ flag.VideoDecodeFrame { bits = 8 }
 	         --- the last displayable picture.
 	()
 
-flag.Resolve { bits = 8 }
-	.None          --- No resolve flags.
-	.AutoGenMips   --- Auto-generate mip maps on resolve.
+flag.Attachment { bits = 8 }
+	.None            --- No attachment flags.
+	.AutoGenMips     --- Auto-generate mip maps on resolve.
+	.ReadOnlyDepth   --- Bind the depth aspect read-only (read-only depth-stencil view) so the
+	                 --- attachment can be sampled as a texture in the same pass.
+	.ReadOnlyStencil --- Bind the stencil aspect read-only.
 	()
 
 flag.PciId { bits = 16, const, section = "Initialization and Shutdown" }
@@ -1174,7 +1176,7 @@ struct.Attachment { shortname, section = "Frame Buffers" }
 	.mip       "uint16_t"      --- Mip level.
 	.layer     "uint16_t"      --- Cubemap side or depth layer/slice to use.
 	.numLayers "uint16_t"      --- Number of texture layer/slice(s) in array to use.
-	.resolve   "uint8_t"       --- Resolve flags. See: `BGFX_RESOLVE_*`
+	.flags     "uint8_t"       --- Attachment flags. See: `BGFX_ATTACHMENT_*`
 
 --- Init attachment.
 func.Attachment.init
@@ -1188,8 +1190,8 @@ func.Attachment.init
 	 { default = 1 }
 	.mip "uint16_t"         --- Mip level.
 	 { default = 0 }
-	.resolve "uint8_t"      --- Resolve flags. See: `BGFX_RESOLVE_*`
-	 { default = "BGFX_RESOLVE_AUTO_GEN_MIPS" }
+	.flags "uint8_t"        --- Attachment flags. See: `BGFX_ATTACHMENT_*`
+	 { default = "BGFX_ATTACHMENT_AUTO_GEN_MIPS" }
 
 --- Transform data.
 struct.Transform
@@ -2461,6 +2463,10 @@ func.setViewRect { section = "Views" }
 	                   --- negative to place view origin outside of the window.
 	.width  "uint16_t" --- Width of view port region.
 	.height "uint16_t" --- Height of view port region.
+	.minDepth "float"  --- Viewport minimum depth (maps clip-space z=0).
+	 { default = "0.0f" }
+	.maxDepth "float"  --- Viewport maximum depth (maps clip-space z=1).
+	 { default = "1.0f" }
 
 --- Set view rectangle. Draw primitive outside view will be clipped.
 func.setViewRect { cname = "set_view_rect_ratio", section = "Views" }
@@ -2486,6 +2492,26 @@ func.setViewScissor { section = "Views" }
 	 { default = 0 }
 	.height "uint16_t" --- Height of view scissor region.
 	 { default = 0 }
+
+--- Set view depth bias. Applies to all draws in the view unless overridden per-draw
+--- with `bgfx::setDepthControl`.
+func.setViewDepthBias { section = "Views" }
+	"void"
+	.id         "ViewId"  --- View id.
+	.constant   "int32_t" --- Constant depth bias.
+	 { default = 0 }
+	.slopeScale "float"   --- Slope-scaled depth bias.
+	 { default = "0.0f" }
+	.clamp      "float"   --- Depth bias clamp.
+	 { default = "0.0f" }
+
+--- Set view multisample coverage mask. Combined with the per-draw mask set by
+--- `bgfx::setSampleMask`, so a draw can narrow the view's mask but not widen it.
+func.setViewSampleMask { section = "Views" }
+	"void"
+	.id   "ViewId"   --- View id.
+	.mask "uint32_t" --- Sample coverage mask.
+	 { default = UINT32_MAX }
 
 --- Set view clear flags.
 func.setViewClear { section = "Views" }
@@ -2683,6 +2709,14 @@ func.Encoder.setStencil { section = "Stencil" }
 	                     --- _fstencil is applied to both front and back facing primitives.
 	 { default = "BGFX_STENCIL_NONE" }
 
+--- Set multisample coverage mask for draw primitive. Samples whose bit is clear
+--- in the mask are never written, regardless of the coverage the rasterizer
+--- computes. Only has an effect when rendering to a multisampled target.
+func.Encoder.setSampleMask { section = "State" }
+	"void"
+	.mask "uint32_t" --- Sample coverage mask.
+	 { default = UINT32_MAX }
+
 --- Set scissor for draw primitive.
 ---
 --- @remark
@@ -2703,6 +2737,23 @@ func.Encoder.setScissor { section = "Scissor" }
 func.Encoder.setScissor { cname = "set_scissor_cached", section = "Scissor" }
 	"void"
 	.cache "uint16_t" --- Index in scissor cache.
+	 { default = UINT16_MAX }
+
+--- Set depth control (depth bias and depth clip) for draw primitive. Overrides the
+--- view depth bias for this draw.
+func.Encoder.setDepthControl { section = "State" }
+	"uint16_t"            --- Depth control cache index.
+	.constant   "int32_t" --- Constant depth bias.
+	.slopeScale "float"   --- Slope-scaled depth bias.
+	.clamp      "float"   --- Depth bias clamp.
+	 { default = "0.0f" }
+	.depthClamp "bool"    --- Disable depth clipping and clamp NDC depth to the [0,1] range instead.
+	 { default = false }
+
+--- Set depth control from depth-control cache for draw primitive.
+func.Encoder.setDepthControl { cname = "set_depth_control_cached", section = "State" }
+	"void"
+	.cache "uint16_t" --- Index in depth control cache.
 	 { default = UINT16_MAX }
 
 --- Set model matrix for draw primitive. If it is not called,
@@ -3315,6 +3366,14 @@ func.setStencil { section = "Stencil" }
 	                     --- _fstencil is applied to both front and back facing primitives.
 	 { default = "BGFX_STENCIL_NONE" }
 
+--- Set multisample coverage mask for draw primitive. Samples whose bit is clear
+--- in the mask are never written, regardless of the coverage the rasterizer
+--- computes. Only has an effect when rendering to a multisampled target.
+func.setSampleMask { section = "State" }
+	"void"
+	.mask "uint32_t" --- Sample coverage mask.
+	 { default = UINT32_MAX }
+
 --- Set scissor for draw primitive.
 ---
 --- @remark
@@ -3335,6 +3394,23 @@ func.setScissor { section = "Scissor" }
 func.setScissor { cname = "set_scissor_cached", section = "Scissor" }
 	"void"
 	.cache "uint16_t" --- Index in scissor cache.
+	 { default = UINT16_MAX }
+
+--- Set depth control (depth bias and depth clip) for draw primitive. Overrides the
+--- view depth bias for this draw.
+func.setDepthControl { section = "State" }
+	"uint16_t"            --- Depth control cache index.
+	.constant   "int32_t" --- Constant depth bias.
+	.slopeScale "float"   --- Slope-scaled depth bias.
+	.clamp      "float"   --- Depth bias clamp.
+	 { default = "0.0f" }
+	.depthClamp "bool"    --- Disable depth clipping and clamp NDC depth to the [0,1] range instead.
+	 { default = false }
+
+--- Set depth control from depth-control cache for draw primitive.
+func.setDepthControl { cname = "set_depth_control_cached", section = "State" }
+	"void"
+	.cache "uint16_t" --- Index in depth control cache.
 	 { default = UINT16_MAX }
 
 --- Set model matrix for draw primitive. If it is not called,

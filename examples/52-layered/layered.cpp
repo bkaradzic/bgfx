@@ -249,16 +249,16 @@ public:
 
 		// Layered framebuffer: color and depth attachments each span all layers.
 		bgfx::Attachment layered[2];
-		layered[0].init(m_texColor, bgfx::Access::Write, 0, kNumLayers, 0, BGFX_RESOLVE_NONE);
-		layered[1].init(m_texDepth, bgfx::Access::Write, 0, kNumLayers, 0, BGFX_RESOLVE_NONE);
+		layered[0].init(m_texColor, bgfx::Access::Write, 0, kNumLayers, 0, BGFX_ATTACHMENT_NONE);
+		layered[1].init(m_texDepth, bgfx::Access::Write, 0, kNumLayers, 0, BGFX_ATTACHMENT_NONE);
 		m_fbLayered = bgfx::createFrameBuffer(BX_COUNTOF(layered), layered);
 
 		// Non-layered framebuffers: one per eye, each bound to a single layer.
 		for (uint16_t ii = 0; ii < kNumLayers; ++ii)
 		{
 			bgfx::Attachment eye[2];
-			eye[0].init(m_texColor, bgfx::Access::Write, ii, 1, 0, BGFX_RESOLVE_NONE);
-			eye[1].init(m_texDepth, bgfx::Access::Write, ii, 1, 0, BGFX_RESOLVE_NONE);
+			eye[0].init(m_texColor, bgfx::Access::Write, ii, 1, 0, BGFX_ATTACHMENT_NONE);
+			eye[1].init(m_texDepth, bgfx::Access::Write, ii, 1, 0, BGFX_ATTACHMENT_NONE);
 			m_fbEye[ii] = bgfx::createFrameBuffer(BX_COUNTOF(eye), eye);
 		}
 	}

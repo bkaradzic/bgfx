@@ -830,7 +830,6 @@ namespace bgfx { namespace d3d12
 			, m_wireframe(false)
 			, m_lost(false)
 			, m_maxAnisotropy(1)
-			, m_depthClamp(false)
 			, m_lastPso(NULL)
 			, m_backBufferColorIdx(0)
 			, m_rtMsaa(false)
@@ -3172,15 +3171,6 @@ namespace bgfx { namespace d3d12
 				m_maxAnisotropy = 1;
 			}
 
-			bool depthClamp = !!(_reset & BGFX_RESET_DEPTH_CLAMP);
-
-			if (m_depthClamp != depthClamp)
-			{
-				m_depthClamp = depthClamp;
-				m_pipelineStateCache.invalidate();
-				m_lastPso = NULL;
-			}
-
 			if (_reset & BGFX_RESET_VSYNC)
 				m_reset |= BGFX_RESET_VSYNC;
 			else
@@ -3188,7 +3178,6 @@ namespace bgfx { namespace d3d12
 
 			const uint32_t maskFlags = ~(0
 				| BGFX_RESET_MAXANISOTROPY
-				| BGFX_RESET_DEPTH_CLAMP
 				| BGFX_RESET_SUSPEND
 				| BGFX_RESET_VSYNC
 				);
@@ -3476,7 +3465,12 @@ namespace bgfx { namespace d3d12
 					if (isValid(frameBuffer.m_depth) )
 					{
 						TextureD3D12& texture = m_textures[frameBuffer.m_depth.idx];
-						texture.setState(m_commandList, D3D12_RESOURCE_STATE_DEPTH_WRITE);
+
+						texture.setState(m_commandList
+							, hasReadOnlyDepth(frameBuffer.m_attachment, frameBuffer.m_numTh)
+							? D3D12_RESOURCE_STATE_DEPTH_READ|D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE
+							: D3D12_RESOURCE_STATE_DEPTH_WRITE
+							);
 					}
 				}
 
@@ -3564,7 +3558,7 @@ namespace bgfx { namespace d3d12
 			}
 		}
 
-		void setRasterizerState(D3D12_RASTERIZER_DESC& _desc, uint64_t _state, bool _wireframe = false)
+		void setRasterizerState(D3D12_RASTERIZER_DESC& _desc, uint64_t _state, bool _wireframe = false, bool _depthClamp = false, int32_t _depthBias = 0, float _slopeScale = 0.0f, float _clamp = 0.0f)
 		{
 			const uint32_t cull = (_state&BGFX_STATE_CULL_MASK) >> BGFX_STATE_CULL_SHIFT;
 
@@ -3574,10 +3568,10 @@ namespace bgfx { namespace d3d12
 				;
 			_desc.CullMode              = s_cullMode[cull];
 			_desc.FrontCounterClockwise = !!(_state&BGFX_STATE_FRONT_CCW);;
-			_desc.DepthBias             = 0;
-			_desc.DepthBiasClamp        = 0.0f;
-			_desc.SlopeScaledDepthBias  = 0.0f;
-			_desc.DepthClipEnable       = !m_depthClamp;
+			_desc.DepthBias             = _depthBias;
+			_desc.DepthBiasClamp        = _clamp;
+			_desc.SlopeScaledDepthBias  = _slopeScale;
+			_desc.DepthClipEnable       = !_depthClamp;
 			_desc.MultisampleEnable     = !!(_state&BGFX_STATE_MSAA);
 			_desc.AntialiasedLineEnable = !!(_state&BGFX_STATE_LINEAA);
 			_desc.ForcedSampleCount     = 0;
@@ -3783,6 +3777,11 @@ namespace bgfx { namespace d3d12
 			, ProgramHandle _program
 			, uint8_t _numInstanceData
 			, bool _index32 = false
+			, bool _depthClamp = false
+			, int32_t _depthBias = 0
+			, float _slopeScale = 0.0f
+			, float _biasClamp = 0.0f
+			, uint32_t _sampleMask = UINT32_MAX
 			)
 		{
 			ProgramD3D12& program = m_program[_program.idx];
@@ -3815,10 +3814,15 @@ namespace bgfx { namespace d3d12
 			&&  m_lastPsoState.state           == _state
 			&&  m_lastPsoState.stencil         == _stencil
 			&&  m_lastPsoState.rgba            == rgba
+			&&  m_lastPsoState.sampleMask      == _sampleMask
 			&&  m_lastPsoState.program         == _program.idx
 			&&  m_lastPsoState.numStreams      == _numStreams
 			&&  m_lastPsoState.numInstanceData == _numInstanceData
 			&&  m_lastPsoState.fbh             == m_fbh.idx
+			&&  m_lastPsoState.depthClamp      == _depthClamp
+			&&  m_lastPsoState.depthBias       == _depthBias
+			&&  m_lastPsoState.slopeScale      == _slopeScale
+			&&  m_lastPsoState.biasClamp       == _biasClamp
 			   )
 			{
 				bool match = true;
@@ -3836,10 +3840,15 @@ namespace bgfx { namespace d3d12
 			m_lastPsoState.state           = _state;
 			m_lastPsoState.stencil         = _stencil;
 			m_lastPsoState.rgba            = rgba;
+			m_lastPsoState.sampleMask      = _sampleMask;
 			m_lastPsoState.program         = _program.idx;
 			m_lastPsoState.numStreams      = _numStreams;
 			m_lastPsoState.numInstanceData = _numInstanceData;
 			m_lastPsoState.fbh             = m_fbh.idx;
+			m_lastPsoState.depthClamp      = _depthClamp;
+			m_lastPsoState.depthBias       = _depthBias;
+			m_lastPsoState.slopeScale      = _slopeScale;
+			m_lastPsoState.biasClamp       = _biasClamp;
 
 			for (uint32_t ii = 0; ii < _numStreams; ++ii)
 			{
@@ -3865,6 +3874,7 @@ namespace bgfx { namespace d3d12
 			murmur.add(_state);
 			murmur.add(rgba);
 			murmur.add(_index32);
+			murmur.add(_sampleMask);
 			murmur.add(_stencil);
 			murmur.add(program.m_vsh->m_hash);
 			murmur.add(program.m_vsh->m_attrMask, sizeof(program.m_vsh->m_attrMask) );
@@ -3923,6 +3933,10 @@ namespace bgfx { namespace d3d12
 			}
 
 			murmur.add(_numInstanceData);
+			murmur.add(_depthClamp);
+			murmur.add(_depthBias);
+			murmur.add(_slopeScale);
+			murmur.add(_biasClamp);
 			const uint32_t hash = murmur.end();
 
 			ID3D12PipelineState* pso = m_pipelineStateCache.find(hash);
@@ -3970,8 +3984,8 @@ namespace bgfx { namespace d3d12
 			desc.StreamOutput.RasterizedStream = 0;
 
 			setBlendState(desc.BlendState, _state, _rgba);
-			desc.SampleMask = UINT32_MAX;
-			setRasterizerState(desc.RasterizerState, _state);
+			desc.SampleMask = _sampleMask;
+			setRasterizerState(desc.RasterizerState, _state, false, _depthClamp, _depthBias, _slopeScale, _biasClamp);
 			setDepthStencilState(desc.DepthStencilState, _state, _stencil);
 
 			D3D12_INPUT_ELEMENT_DESC vertexElements[Attrib::Count + 1 + BGFX_CONFIG_MAX_INSTANCE_DATA_COUNT];
@@ -4435,7 +4449,6 @@ namespace bgfx { namespace d3d12
 
 		DxgiSwapChainDesc m_scd;
 		uint32_t m_maxAnisotropy;
-		bool m_depthClamp;
 
 		BufferD3D12 m_indexBuffers[BGFX_CONFIG_MAX_INDEX_BUFFERS];
 		VertexBufferD3D12 m_vertexBuffers[BGFX_CONFIG_MAX_VERTEX_BUFFERS];
@@ -4455,10 +4468,15 @@ namespace bgfx { namespace d3d12
 			uint64_t state;
 			uint64_t stencil;
 			uint32_t rgba;
+			uint32_t sampleMask;
 			uint16_t program;
 			uint16_t fbh;
 			uint8_t  numStreams;
 			uint8_t  numInstanceData;
+			bool     depthClamp;
+			int32_t  depthBias;
+			float    slopeScale;
+			float    biasClamp;
 			const VertexLayout* layouts[BGFX_CONFIG_MAX_VERTEX_STREAMS];
 		};
 
@@ -7221,7 +7239,7 @@ namespace bgfx { namespace d3d12
 		}
 
 		const bool renderTarget = 0 != (m_flags  & BGFX_TEXTURE_RT_MASK);
-		const bool autoGenMips  = 0 != (_resolve & BGFX_RESOLVE_AUTO_GEN_MIPS);
+		const bool autoGenMips  = 0 != (_resolve & BGFX_ATTACHMENT_AUTO_GEN_MIPS);
 
 		if (autoGenMips
 		&&  renderTarget
@@ -7926,14 +7944,13 @@ namespace bgfx { namespace d3d12
 						dsvDescriptor.ptr += fbhIdx * dsvDescriptorSize;
 
 						const bimg::ImageBlockInfo& blockInfo = bimg::getBlockInfo(bimg::TextureFormat::Enum(texture.m_textureFormat) );
-						BX_UNUSED(blockInfo);
 
 						D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc;
 						bx::memSet(&dsvDesc, 0, sizeof(dsvDesc) );
 						dsvDesc.Format        = s_textureFormat[texture.m_textureFormat].m_fmtDsv;
 						dsvDesc.Flags         = D3D12_DSV_FLAG_NONE
-// 							| (blockInfo.depthBits   > 0 ? D3D12_DSV_FLAG_READ_ONLY_DEPTH   : D3D12_DSV_FLAG_NONE)
-// 							| (blockInfo.stencilBits > 0 ? D3D12_DSV_FLAG_READ_ONLY_STENCIL : D3D12_DSV_FLAG_NONE)
+							| ( (at.flags & BGFX_ATTACHMENT_READ_ONLY_DEPTH)   && blockInfo.depthBits   > 0 ? D3D12_DSV_FLAG_READ_ONLY_DEPTH   : D3D12_DSV_FLAG_NONE)
+							| ( (at.flags & BGFX_ATTACHMENT_READ_ONLY_STENCIL) && blockInfo.stencilBits > 0 ? D3D12_DSV_FLAG_READ_ONLY_STENCIL : D3D12_DSV_FLAG_NONE)
 							;
 
 						switch (texture.m_type)
@@ -8089,7 +8106,7 @@ namespace bgfx { namespace d3d12
 				if (isValid(at.handle) )
 				{
 					TextureD3D12& texture = s_renderD3D12->m_textures[at.handle.idx];
-					texture.resolve(s_renderD3D12->m_commandList, at.resolve, at.layer, at.numLayers, at.mip);
+					texture.resolve(s_renderD3D12->m_commandList, at.flags, at.layer, at.numLayers, at.mip);
 				}
 			}
 		}
@@ -8874,7 +8891,7 @@ namespace bgfx { namespace d3d12
 				&&  !dst.isMultisampled()
 				&&  0 == blit.m_srcMip)
 				{
-					src.resolve(m_commandList, BGFX_RESOLVE_NONE, blit.m_srcZ, 1, 0);
+					src.resolve(m_commandList, BGFX_ATTACHMENT_NONE, blit.m_srcZ, 1, 0);
 				}
 
 				if (D3D12_RESOURCE_STATES(UINT32_MAX) != srcState)
@@ -9165,9 +9182,10 @@ namespace bgfx { namespace d3d12
 		uint8_t primIndex = uint8_t(primType >> BGFX_STATE_PT_SHIFT);
 		PrimInfo prim = s_primInfo[primIndex];
 
-		bool wasCompute = false;
+		bool wasCompute     = false;
 		bool viewHasScissor = false;
 		bool restoreScissor = false;
+		uint64_t stateMask  = UINT64_MAX;
 		Rect viewScissorRect;
 		viewScissorRect.clear();
 
@@ -9306,6 +9324,11 @@ namespace bgfx { namespace d3d12
 					fbh = _render->m_view[view].m_fbh;
 					setFrameBuffer(fbh);
 
+					stateMask = isValid(fbh)
+						? getAttachmentStateMask(m_frameBuffers[fbh.idx].m_attachment, m_frameBuffers[fbh.idx].m_numTh)
+						: UINT64_MAX
+						;
+
 					viewState.m_rect = renderView.m_rect;
 					const Rect& rect        = renderView.m_rect;
 					const Rect& clippedRect = renderView.m_clippedRect;
@@ -9318,8 +9341,8 @@ namespace bgfx { namespace d3d12
 					vp.TopLeftY = rect.m_y;
 					vp.Width    = rect.m_width;
 					vp.Height   = rect.m_height;
-					vp.MinDepth = 0.0f;
-					vp.MaxDepth = 1.0f;
+					vp.MinDepth = renderView.m_minDepth;
+					vp.MaxDepth = renderView.m_maxDepth;
 					m_commandList->RSSetViewports(1, &vp);
 
 					D3D12_RECT rc;
@@ -9680,8 +9703,9 @@ namespace bgfx { namespace d3d12
 
 				if (0 != draw.m_streamMask)
 				{
-					const uint64_t newFlags = draw.m_stateFlags;
-					uint64_t changedFlags = currentState.m_stateFlags ^ draw.m_stateFlags;
+					const uint64_t newFlags = draw.m_stateFlags & stateMask;
+					const uint32_t sampleMask = _render->m_view[view].m_sampleMask & draw.m_sampleMask;
+					uint64_t changedFlags = currentState.m_stateFlags ^ newFlags;
 					currentState.m_stateFlags = newFlags;
 
 					if (0 != (BGFX_STATE_PT_MASK & changedFlags) )
@@ -9773,6 +9797,14 @@ namespace bgfx { namespace d3d12
 						}
 					}
 
+					const DepthControl& depthControl = (UINT16_MAX != draw.m_depthBias)
+						? _render->m_frameCache.m_depthBiasCache.m_cache[draw.m_depthBias]
+						: _render->m_view[view].m_depthBias
+						;
+					const bool depthClamp = depthControl.m_depthClamp;
+
+					
+
 					ID3D12PipelineState* pso = getPipelineState(
 						  state
 						, draw.m_rgba
@@ -9782,6 +9814,11 @@ namespace bgfx { namespace d3d12
 						, key.m_program
 						, uint8_t(draw.m_instanceDataStride/16)
 						, isValid(draw.m_indexBuffer) && !draw.isIndex16()
+						, depthClamp
+						, depthControl.m_constant
+						, depthControl.m_slopeScale
+						, depthControl.m_clamp
+						, sampleMask
 						);
 
 					if (currentBindIdx != bindIdx

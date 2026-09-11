@@ -1124,6 +1124,12 @@ VK_IMPORT_DEVICE
 			srcStageMask = depthStageMask | sampledStageMask;
 			break;
 
+		case VK_IMAGE_LAYOUT_DEPTH_READ_ONLY_STENCIL_ATTACHMENT_OPTIMAL:
+		case VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL:
+			srcStageMask  = depthStageMask | sampledStageMask;
+			srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+			break;
+
 		case VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL:
 			srcStageMask = sampledStageMask;
 			break;
@@ -1154,27 +1160,60 @@ VK_IMPORT_DEVICE
 		{
 		case VK_IMAGE_LAYOUT_GENERAL:
 			dstStageMask  = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
-			dstAccessMask = VK_ACCESS_MEMORY_READ_BIT | VK_ACCESS_MEMORY_WRITE_BIT;
+			dstAccessMask = 0
+				| VK_ACCESS_MEMORY_READ_BIT
+				| VK_ACCESS_MEMORY_WRITE_BIT
+				;
 			break;
 
 		case VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL:
 			dstStageMask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-			dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+			dstAccessMask = 0
+				| VK_ACCESS_COLOR_ATTACHMENT_READ_BIT
+				| VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT
+				;
 			break;
 
 		case VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL:
 			dstStageMask  = depthStageMask;
-			dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+			dstAccessMask = 0
+				| VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT
+				| VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT
+				;
 			break;
 
 		case VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL:
-			dstStageMask  = depthStageMask | sampledStageMask;
-			dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_INPUT_ATTACHMENT_READ_BIT;
+			dstStageMask  = 0
+				| depthStageMask
+				| sampledStageMask
+				;
+			dstAccessMask = 0
+				| VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT
+				| VK_ACCESS_SHADER_READ_BIT
+				| VK_ACCESS_INPUT_ATTACHMENT_READ_BIT
+				;
+			break;
+
+		case VK_IMAGE_LAYOUT_DEPTH_READ_ONLY_STENCIL_ATTACHMENT_OPTIMAL:
+		case VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL:
+			dstStageMask  = 0
+				| depthStageMask
+				| sampledStageMask
+				;
+			dstAccessMask = 0
+				| VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT
+				| VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT
+				| VK_ACCESS_SHADER_READ_BIT
+				| VK_ACCESS_INPUT_ATTACHMENT_READ_BIT
+				;
 			break;
 
 		case VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL:
 			dstStageMask  = sampledStageMask;
-			dstAccessMask = VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_INPUT_ATTACHMENT_READ_BIT;
+			dstAccessMask = 0
+				| VK_ACCESS_SHADER_READ_BIT
+				| VK_ACCESS_INPUT_ATTACHMENT_READ_BIT
+				;
 			break;
 
 		case VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL:
@@ -1237,7 +1276,6 @@ VK_IMPORT_DEVICE
 			, m_renderDocDll(NULL)
 			, m_vulkan1Dll(NULL)
 			, m_maxAnisotropy(1.0f)
-			, m_depthClamp(false)
 			, m_wireframe(false)
 			, m_captureBuffer(VK_NULL_HANDLE)
 			, m_captureMemory()
@@ -1424,7 +1462,14 @@ VK_IMPORT
 					}
 				}
 
-				vulkanApiVersionSelector = bx::max(vulkanApiVersionSelector, VK_API_VERSION_1_0);
+				if (VK_API_VERSION_1_1 > vulkanApiVersionSelector)
+				{
+					BX_TRACE("Init error: Vulkan 1.1 or newer is required, instance reports %d.%d."
+						, VK_API_VERSION_MAJOR(vulkanApiVersionSelector)
+						, VK_API_VERSION_MINOR(vulkanApiVersionSelector)
+						);
+					goto error;
+				}
 
 				VkApplicationInfo appInfo;
 				appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
@@ -1590,7 +1635,11 @@ VK_IMPORT_INSTANCE
 					g_caps.gpu[ii].deviceId = uint16_t(pdp.deviceID);
 					++g_caps.numGPUs;
 
-					if ( (BGFX_PCI_ID_NONE != g_caps.vendorId ||            0 != g_caps.deviceId)
+					if (VK_API_VERSION_1_1 > pdp.apiVersion)
+					{
+						BX_TRACE("\tSkipped: Vulkan 1.1 or newer is required.");
+					}
+					else if ( (BGFX_PCI_ID_NONE != g_caps.vendorId ||            0 != g_caps.deviceId)
 					&&   (BGFX_PCI_ID_NONE == g_caps.vendorId || pdp.vendorID == g_caps.vendorId)
 					&&   (               0 == g_caps.deviceId || pdp.deviceID == g_caps.deviceId) )
 					{
@@ -3193,14 +3242,6 @@ VK_IMPORT_DEVICE
 				m_samplerBorderColorCache.invalidate();
 			}
 
-			bool depthClamp = m_deviceFeatures.depthClamp && !!(_reset & BGFX_RESET_DEPTH_CLAMP);
-
-			if (m_depthClamp != depthClamp)
-			{
-				m_depthClamp = depthClamp;
-				m_pipelineStateCache.invalidate();
-			}
-
 			if (!m_backBuffer.isSwapChain() )
 			{
 				if (m_mainSwapChain.width  != _swapChain.width
@@ -3222,7 +3263,6 @@ VK_IMPORT_DEVICE
 			uint32_t maskFlags = ~(0
 				| BGFX_RESET_SUSPEND
 				| BGFX_RESET_MAXANISOTROPY
-				| BGFX_RESET_DEPTH_CLAMP
 				);
 
 			if (m_swapchainMaintenance1Supported
@@ -3507,14 +3547,14 @@ VK_IMPORT_DEVICE
 			_desc.blendConstants[3] = 0.0f;
 		}
 
-		void setRasterizerState(VkPipelineRasterizationStateCreateInfo& _desc, uint64_t _state, bool _wireframe = false)
+		void setRasterizerState(VkPipelineRasterizationStateCreateInfo& _desc, uint64_t _state, bool _wireframe = false, bool _depthClamp = false, int32_t _depthBias = 0, float _slopeScale = 0.0f, float _clamp = 0.0f)
 		{
 			const uint32_t cull = (_state&BGFX_STATE_CULL_MASK) >> BGFX_STATE_CULL_SHIFT;
 
 			_desc.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
 			_desc.pNext = NULL;
 			_desc.flags = 0;
-			_desc.depthClampEnable = m_deviceFeatures.depthClamp && m_depthClamp;
+			_desc.depthClampEnable = m_deviceFeatures.depthClamp && _depthClamp;
 			_desc.rasterizerDiscardEnable = VK_FALSE;
 			_desc.polygonMode = m_deviceFeatures.fillModeNonSolid && _wireframe
 				? VK_POLYGON_MODE_LINE
@@ -3522,10 +3562,12 @@ VK_IMPORT_DEVICE
 				;
 			_desc.cullMode  = s_cullMode[cull];
 			_desc.frontFace = (_state&BGFX_STATE_FRONT_CCW) ? VK_FRONT_FACE_COUNTER_CLOCKWISE : VK_FRONT_FACE_CLOCKWISE;
-			_desc.depthBiasEnable = VK_FALSE;
-			_desc.depthBiasConstantFactor = 0.0f;
-			_desc.depthBiasClamp          = 0.0f;
-			_desc.depthBiasSlopeFactor    = 0.0f;
+			// WebGPU/D3D-style integer depth bias maps directly onto Vulkan's constant
+			// factor (both are scaled by the implementation's minimum resolvable depth).
+			_desc.depthBiasEnable = (0 != _depthBias || 0.0f != _slopeScale || 0.0f != _clamp) ? VK_TRUE : VK_FALSE;
+			_desc.depthBiasConstantFactor = float(_depthBias);
+			_desc.depthBiasClamp          = _clamp;
+			_desc.depthBiasSlopeFactor    = _slopeScale;
 			_desc.lineWidth               = 1.0f;
 		}
 
@@ -3645,7 +3687,7 @@ VK_IMPORT_DEVICE
 			}
 		}
 
-		VkResult getRenderPass(uint8_t _num, const VkFormat* _formats, const VkImageAspectFlags* _aspects, const bool* _resolve, VkSampleCountFlagBits _samples, uint16_t _clearFlags, ::VkRenderPass* _outRenderPass, uint32_t* _outHashKey)
+		VkResult getRenderPass(uint8_t _num, const VkFormat* _formats, const VkImageAspectFlags* _aspects, const bool* _resolve, VkSampleCountFlagBits _samples, uint16_t _clearFlags, uint8_t _depthFlags, ::VkRenderPass* _outRenderPass, uint32_t* _outHashKey)
 		{
 			VkResult result = VK_SUCCESS;
 
@@ -3659,6 +3701,7 @@ VK_IMPORT_DEVICE
 			hash.add(_samples);
 			hash.add(_formats, sizeof(VkFormat) * _num);
 			hash.add(_clearFlags);
+			hash.add(_depthFlags);
 			if (NULL != _resolve)
 			{
 				hash.add(_resolve, sizeof(bool) * _num);
@@ -3740,14 +3783,33 @@ VK_IMPORT_DEVICE
 				}
 				else if (_aspects[ii] & (VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT) )
 				{
+					const bool hasDepthAspect   = 0 != (_aspects[ii] & VK_IMAGE_ASPECT_DEPTH_BIT);
+					const bool hasStencilAspect = 0 != (_aspects[ii] & VK_IMAGE_ASPECT_STENCIL_BIT);
+
+					const bool readOnlyDepth   = hasDepthAspect   && 0 != (_depthFlags & BGFX_ATTACHMENT_READ_ONLY_DEPTH);
+					const bool readOnlyStencil = hasStencilAspect && 0 != (_depthFlags & BGFX_ATTACHMENT_READ_ONLY_STENCIL);
+
+					const bool allReadOnly = (!hasDepthAspect   || readOnlyDepth)
+						&&                   (!hasStencilAspect || readOnlyStencil)
+						;
+
+					const VkImageLayout layout = allReadOnly
+						? VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL
+						: readOnlyDepth
+						? VK_IMAGE_LAYOUT_DEPTH_READ_ONLY_STENCIL_ATTACHMENT_OPTIMAL
+						: readOnlyStencil
+						? VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL
+						: VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL
+						;
+
 					ad[ii].loadOp         = 0 != (_clearFlags & BGFX_CLEAR_DEPTH)           ? VK_ATTACHMENT_LOAD_OP_CLEAR      : VK_ATTACHMENT_LOAD_OP_LOAD;
 					ad[ii].storeOp        = 0 != (_clearFlags & BGFX_CLEAR_DISCARD_DEPTH)   ? VK_ATTACHMENT_STORE_OP_DONT_CARE : VK_ATTACHMENT_STORE_OP_STORE;
 					ad[ii].stencilLoadOp  = 0 != (_clearFlags & BGFX_CLEAR_STENCIL)         ? VK_ATTACHMENT_LOAD_OP_CLEAR      : VK_ATTACHMENT_LOAD_OP_LOAD;
 					ad[ii].stencilStoreOp = 0 != (_clearFlags & BGFX_CLEAR_DISCARD_STENCIL) ? VK_ATTACHMENT_STORE_OP_DONT_CARE : VK_ATTACHMENT_STORE_OP_STORE;
-					ad[ii].initialLayout  = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-					ad[ii].finalLayout    = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+					ad[ii].initialLayout  = layout;
+					ad[ii].finalLayout    = layout;
 
-					depthAr.layout     = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+					depthAr.layout     = layout;
 					depthAr.attachment = ii;
 				}
 			}
@@ -3828,6 +3890,7 @@ VK_IMPORT_DEVICE
 			VkFormat formats[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
 			VkImageAspectFlags aspects[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
 			VkSampleCountFlagBits samples = VK_SAMPLE_COUNT_1_BIT;
+			uint8_t depthFlags = 0;
 
 			for (uint8_t ii = 0; ii < _num; ++ii)
 			{
@@ -3835,9 +3898,14 @@ VK_IMPORT_DEVICE
 				formats[ii] = texture.m_format;
 				aspects[ii] = texture.m_aspectFlags;
 				samples = texture.m_sampler.Sample;
+
+				if (0 != (texture.m_aspectFlags & (VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT) ) )
+				{
+					depthFlags = _attachments[ii].flags;
+				}
 			}
 
-			return getRenderPass(_num, formats, aspects, NULL, samples, _clearFlags, _outRenderPass, _outHashKey);
+			return getRenderPass(_num, formats, aspects, NULL, samples, _clearFlags, depthFlags, _outRenderPass, _outHashKey);
 		}
 
 		VkResult getRenderPass(const SwapChainVK& swapChain, uint16_t _clearFlags, ::VkRenderPass* _outRenderPass, uint32_t* _outHashKey = NULL)
@@ -3867,7 +3935,7 @@ VK_IMPORT_DEVICE
 				: 1
 				;
 
-			return getRenderPass(num, formats, aspects, resolve, samples, _clearFlags, _outRenderPass, _outHashKey);
+			return getRenderPass(num, formats, aspects, resolve, samples, _clearFlags, 0, _outRenderPass, _outHashKey);
 		}
 
 		VkSampler getSampler(uint32_t _flags, VkFormat _format, const float _palette[][4])
@@ -4058,7 +4126,7 @@ VK_IMPORT_DEVICE
 			return pipeline;
 		}
 
-		VkPipeline getPipeline(uint64_t _state, uint32_t _rgba, uint64_t _stencil, uint8_t _numStreams, const VertexLayout** _layouts, ProgramHandle _program, uint8_t _numInstanceData)
+		VkPipeline getPipeline(uint64_t _state, uint32_t _rgba, uint64_t _stencil, uint8_t _numStreams, const VertexLayout** _layouts, ProgramHandle _program, uint8_t _numInstanceData, bool _depthClamp = false, int32_t _depthBias = 0, float _slopeScale = 0.0f, float _biasClamp = 0.0f, uint32_t _sampleMask = UINT32_MAX)
 		{
 			ProgramVK& program = m_program[_program.idx];
 
@@ -4099,6 +4167,7 @@ VK_IMPORT_DEVICE
 			murmur.begin();
 			murmur.add(_state);
 			murmur.add(!!(BGFX_STATE_BLEND_INDEPENDENT & _state) ? _rgba : 0);
+			murmur.add(_sampleMask);
 			murmur.add(_stencil);
 			murmur.add(program.m_vsh->m_hash);
 			murmur.add(program.m_vsh->m_attrMask, sizeof(program.m_vsh->m_attrMask) );
@@ -4115,6 +4184,10 @@ VK_IMPORT_DEVICE
 
 			murmur.add(layout.m_attributes, sizeof(layout.m_attributes) );
 			murmur.add(_numInstanceData);
+			murmur.add(_depthClamp);
+			murmur.add(_depthBias);
+			murmur.add(_slopeScale);
+			murmur.add(_biasClamp);
 			murmur.add(frameBuffer.m_renderPassHashKey);
 			const uint32_t hash = murmur.end();
 
@@ -4144,7 +4217,7 @@ VK_IMPORT_DEVICE
 				;
 
 			VkPipelineRasterizationStateCreateInfo rasterizationState;
-			setRasterizerState(rasterizationState, _state, m_wireframe);
+			setRasterizerState(rasterizationState, _state, m_wireframe, _depthClamp, _depthBias, _slopeScale, _biasClamp);
 
 			VkBaseInStructure* nextRasterizationState = (VkBaseInStructure*)&rasterizationState;
 
@@ -4231,7 +4304,8 @@ VK_IMPORT_DEVICE
 			multisampleState.rasterizationSamples  = frameBuffer.m_sampler.Sample;
 			multisampleState.sampleShadingEnable   = VK_FALSE;
 			multisampleState.minSampleShading      = 0.0f;
-			multisampleState.pSampleMask           = NULL;
+			const VkSampleMask sampleMask          = _sampleMask;
+			multisampleState.pSampleMask           = UINT32_MAX == _sampleMask ? NULL : &sampleMask;
 			multisampleState.alphaToCoverageEnable = !!(BGFX_STATE_BLEND_ALPHA_TO_COVERAGE & _state);
 			multisampleState.alphaToOneEnable      = VK_FALSE;
 
@@ -5148,7 +5222,6 @@ VK_IMPORT_DEVICE
 		SwapChain m_mainSwapChain;
 		uint32_t  m_reset;
 		float m_maxAnisotropy;
-		bool m_depthClamp;
 		bool m_wireframe;
 
 		VkBuffer m_captureBuffer;
@@ -7441,7 +7514,7 @@ VK_DESTROY
 			&& 0 != (m_flags & BGFX_TEXTURE_RT_MASK)
 			&& 0 == (m_flags & BGFX_TEXTURE_RT_WRITE_ONLY)
 			&& (_mip + 1) < m_numMips
-			&& 0 != (_resolve & BGFX_RESOLVE_AUTO_GEN_MIPS)
+			&& 0 != (_resolve & BGFX_ATTACHMENT_AUTO_GEN_MIPS)
 			;
 
 		const VkImageLayout oldLayout = m_currentImageLayout;
@@ -7489,7 +7562,7 @@ VK_DESTROY
 				);
 
 			const bool autoGenMips = true
-				&& 0 != (_resolve & BGFX_RESOLVE_AUTO_GEN_MIPS)
+				&& 0 != (_resolve & BGFX_ATTACHMENT_AUTO_GEN_MIPS)
 				&& 0 == (m_flags  & BGFX_TEXTURE_RT_WRITE_ONLY)
 				&& (_mip + 1) < m_numMips
 				;
@@ -9208,7 +9281,7 @@ VK_DESTROY
 				if (isValid(at.handle) )
 				{
 					TextureVK& texture = s_renderVK->m_textures[at.handle.idx];
-					texture.resolve(s_renderVK->m_commandBuffer, at.resolve, at.layer, at.numLayers, at.mip);
+					texture.resolve(s_renderVK->m_commandBuffer, at.flags, at.layer, at.numLayers, at.mip);
 				}
 			}
 		}
@@ -9698,7 +9771,7 @@ VK_DESTROY
 			if (blitReadsSingleMsaa(src, dst)
 			&&  0 == blit.m_srcMip)
 			{
-				src.resolve(m_commandBuffer, BGFX_RESOLVE_NONE, blit.m_srcZ, 1, 0);
+				src.resolve(m_commandBuffer, BGFX_ATTACHMENT_NONE, blit.m_srcZ, 1, 0);
 			}
 
 			srcLayouts[item] = blitReadsSingleMsaa(src, dst)
@@ -10061,6 +10134,8 @@ VK_DESTROY
 		currentState.clear();
 		currentState.m_stateFlags = BGFX_STATE_NONE;
 		currentState.m_stencil    = packStencil(BGFX_STENCIL_NONE, BGFX_STENCIL_NONE);
+		uint64_t stateMask   = UINT64_MAX;
+		uint64_t stencilMask = UINT64_MAX;
 
 		static ViewState viewState;
 		viewState.reset(_render);
@@ -10082,8 +10157,10 @@ VK_DESTROY
 			uint64_t            state;
 			uint64_t            stencil;
 			uint32_t            rgba;
+			uint32_t            sampleMask;
 			uint16_t            program;
 			uint16_t            fbh;
+			DepthControl        depthControl;
 			uint8_t             numStreams;
 			uint8_t             numInstanceData;
 			bool                valid;
@@ -10199,6 +10276,16 @@ VK_DESTROY
 
 						fbh = _render->m_view[view].m_fbh;
 						setFrameBuffer(fbh);
+
+						stateMask = isValid(fbh)
+							? getAttachmentStateMask(m_frameBuffers[fbh.idx].m_attachment, m_frameBuffers[fbh.idx].m_numTh)
+							: UINT64_MAX
+							;
+
+						stencilMask = isValid(fbh)
+							? getAttachmentStencilMask(m_frameBuffers[fbh.idx].m_attachment, m_frameBuffers[fbh.idx].m_numTh)
+							: UINT64_MAX
+							;
 					}
 				}
 
@@ -10279,8 +10366,8 @@ VK_DESTROY
 						vp.y        =  float(rect.m_y + rect.m_height);
 						vp.width    =  float(rect.m_width);
 						vp.height   = -float(rect.m_height);
-						vp.minDepth = 0.0f;
-						vp.maxDepth = 1.0f;
+						vp.minDepth = _render->m_view[view].m_minDepth;
+						vp.maxDepth = _render->m_view[view].m_maxDepth;
 						vkCmdSetViewport(m_commandBuffer, 0, 1, &vp);
 
 						VkRect2D rc;
@@ -10586,8 +10673,11 @@ VK_DESTROY
 					}
 				}
 
-				const uint64_t changedFlags = currentState.m_stateFlags ^ draw.m_stateFlags;
-				currentState.m_stateFlags = draw.m_stateFlags;
+				const uint64_t state = draw.m_stateFlags & stateMask;
+				const uint32_t sampleMask = _render->m_view[view].m_sampleMask & draw.m_sampleMask;
+				const uint64_t stencil = draw.m_stencil & stencilMask;
+				const uint64_t changedFlags = currentState.m_stateFlags ^ state;
+				currentState.m_stateFlags = state;
 
 				if (0 != draw.m_streamMask)
 				{
@@ -10662,38 +10752,54 @@ VK_DESTROY
 
 					VkPipeline pipeline;
 
+					const DepthControl& depthControl = (UINT16_MAX != draw.m_depthBias)
+						? _render->m_frameCache.m_depthBiasCache.m_cache[draw.m_depthBias]
+						: _render->m_view[view].m_depthBias
+						;
+
 					if (pipelineState.valid
-					&&  pipelineState.state           == draw.m_stateFlags
+					&&  pipelineState.state           == state
 					&&  pipelineState.rgba            == draw.m_rgba
-					&&  pipelineState.stencil         == draw.m_stencil
+					&&  pipelineState.sampleMask      == sampleMask
+					&&  pipelineState.stencil         == stencil
 					&&  pipelineState.program         == key.m_program.idx
 					&&  pipelineState.fbh             == m_fbh.idx
 					&&  pipelineState.numStreams      == numStreams
 					&&  pipelineState.numInstanceData == numInstanceData
+					&&  0 == bx::memCmp(&pipelineState.depthControl, &depthControl, sizeof(depthControl) )
 					&&  0 == bx::memCmp(pipelineState.layouts, layouts, numStreams*sizeof(layouts[0]) ) )
 					{
 						pipeline = pipelineState.pipeline;
 					}
 					else
 					{
-						pipeline = getPipeline(draw.m_stateFlags
+						const bool depthClamp = depthControl.m_depthClamp;
+
+						pipeline = getPipeline(state
 							, draw.m_rgba
-							, draw.m_stencil
+							, stencil
 							, numStreams
 							, layouts
 							, key.m_program
 							, numInstanceData
+							, depthClamp
+							, depthControl.m_constant
+							, depthControl.m_slopeScale
+							, depthControl.m_clamp
+							, sampleMask
 							);
 
 						bx::memCopy(pipelineState.layouts, layouts, numStreams*sizeof(layouts[0]) );
 						pipelineState.pipeline        = pipeline;
-						pipelineState.state           = draw.m_stateFlags;
-						pipelineState.stencil         = draw.m_stencil;
+						pipelineState.state           = state;
+						pipelineState.stencil         = stencil;
 						pipelineState.rgba            = draw.m_rgba;
+						pipelineState.sampleMask      = sampleMask;
 						pipelineState.program         = key.m_program.idx;
 						pipelineState.fbh             = m_fbh.idx;
 						pipelineState.numStreams      = numStreams;
 						pipelineState.numInstanceData = numInstanceData;
+						pipelineState.depthControl    = depthControl;
 						pipelineState.valid           = true;
 					}
 
@@ -10703,19 +10809,19 @@ VK_DESTROY
 						vkCmdBindPipeline(m_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
 					}
 
-					const bool hasStencil = stencilEnabled(draw.m_stencil);
+					const bool hasStencil = stencilEnabled(stencil);
 
 					if (hasStencil
-					&&  currentState.m_stencil != draw.m_stencil)
+					&&  currentState.m_stencil != stencil)
 					{
-						currentState.m_stencil = draw.m_stencil;
+						currentState.m_stencil = stencil;
 
-						const uint32_t fstencil = unpackStencil(0, draw.m_stencil);
+						const uint32_t fstencil = unpackStencil(0, stencil);
 						const uint32_t ref = (fstencil&BGFX_STENCIL_FUNC_REF_MASK)>>BGFX_STENCIL_FUNC_REF_SHIFT;
 						const uint32_t rmask = (fstencil&BGFX_STENCIL_FUNC_RMASK_MASK)>>BGFX_STENCIL_FUNC_RMASK_SHIFT;
 						vkCmdSetStencilReference(m_commandBuffer, VK_STENCIL_FRONT_AND_BACK, ref);
 						vkCmdSetStencilCompareMask(m_commandBuffer, VK_STENCIL_FRONT_AND_BACK, rmask);
-						vkCmdSetStencilWriteMask(m_commandBuffer, VK_STENCIL_FRONT_AND_BACK, unpackStencilWriteMask(draw.m_stencil) );
+						vkCmdSetStencilWriteMask(m_commandBuffer, VK_STENCIL_FRONT_AND_BACK, unpackStencilWriteMask(stencil) );
 					}
 
 					const bool hasFactor = 0
