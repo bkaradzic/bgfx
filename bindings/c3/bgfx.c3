@@ -431,6 +431,14 @@ constdef TextureFlags : inline ulong
 
 	// Texture is shared with other device or other process.
 	EXTERNALSHARED         = 0x0001000000000000,
+
+	// Texture may be sampled and rendered with either sRGB-ness,
+	// not just the one implied by its format. Every bind and
+	// attachment must then state the encoding it wants (see
+	// `BGFX_SAMPLER_SRGB`, `BGFX_ATTACHMENT_SRGB`). Costs nothing
+	// until used, but may disable texture compression on some
+	// hardware.
+	SRGBMUTABLE            = 0x0040000000000000,
 	RESERVEDSHIFT          = 60,
 	RESERVEDMASK           = 0xf000000000000000,
 
@@ -543,6 +551,12 @@ constdef SamplerFlags : inline uint
 
 	// Sample stencil instead of depth.
 	SAMPLESTENCIL          = 0x00100000,
+
+	// Sample with sRGB conversion; absence of this flag samples
+	// without it. Only affects textures created
+	// `BGFX_TEXTURE_SRGB_MUTABLE`, which must state the encoding
+	// explicitly on every bind; ignored for any other texture.
+	SRGB                   = 0x00200000,
 	POINT                  = 0x00000540,
 	UVWMIRROR              = 0x00000015,
 	UVWCLAMP               = 0x0000002a,
@@ -850,6 +864,12 @@ constdef AttachmentFlags : inline uint
 
 	// Bind the stencil aspect read-only.
 	READONLYSTENCIL        = 0x00000004,
+
+	// Render with sRGB conversion; absence of this flag renders without
+	// it. Only affects textures created `BGFX_TEXTURE_SRGB_MUTABLE`,
+	// which must state the encoding explicitly on every attachment;
+	// ignored for any other texture.
+	SRGB                   = 0x00000008,
 }
 
 constdef PciIdFlags : inline ushort
@@ -3406,6 +3426,15 @@ extern fn uint encoder_alloc_transform(Encoder* _this, Transform* _transform, us
 // _num : `Number of elements. Passing `UINT16_MAX` will use the _num passed on uniform creation.`
 extern fn void encoder_set_uniform(Encoder* _this, UniformHandle _handle, void* _value, ushort _num) @cname("bgfx_encoder_set_uniform");
 
+// Set shader uniform parameter by reference. Unlike `Encoder::setUniform`, the data
+// is not copied immediately; the renderer reads it from `_value` at frame render
+// time. The pointer must remain valid and unchanged until the frame is rendered
+// (up to two `bgfx::frame` calls with multithreaded submission).
+// _handle : `Uniform.`
+// _value : `Pointer to uniform data. Must stay valid until the frame is rendered.`
+// _num : `Number of elements. Passing `UINT16_MAX` will use the _num passed on uniform creation.`
+extern fn void encoder_set_uniform_ref(Encoder* _this, UniformHandle _handle, void* _value, ushort _num) @cname("bgfx_encoder_set_uniform_ref");
+
 // Set shader uniform parameter for view.
 // 
 // @attention Uniform must be created with `bgfx::UniformFreq::View` argument.
@@ -3599,25 +3628,33 @@ extern fn void encoder_submit_indirect_count(Encoder* _this, ushort _id, Program
 // _stage : `Compute stage.`
 // _handle : `Index buffer handle.`
 // _access : `Buffer access. See `Access::Enum`.`
-extern fn void encoder_set_compute_index_buffer(Encoder* _this, char _stage, IndexBufferHandle _handle, Access _access) @cname("bgfx_encoder_set_compute_index_buffer");
+// _offset : `Byte offset the shader's view of the buffer starts at. Must be a multiple of 256 bytes.`
+// _size : `Bytes bound from the offset, `UINT32_MAX` for the rest of the buffer.`
+extern fn void encoder_set_compute_index_buffer(Encoder* _this, char _stage, IndexBufferHandle _handle, Access _access, uint _offset, uint _size) @cname("bgfx_encoder_set_compute_index_buffer");
 
 // Set compute vertex buffer.
 // _stage : `Compute stage.`
 // _handle : `Vertex buffer handle.`
 // _access : `Buffer access. See `Access::Enum`.`
-extern fn void encoder_set_compute_vertex_buffer(Encoder* _this, char _stage, VertexBufferHandle _handle, Access _access) @cname("bgfx_encoder_set_compute_vertex_buffer");
+// _offset : `Byte offset the shader's view of the buffer starts at. Must be a multiple of 256 bytes.`
+// _size : `Bytes bound from the offset, `UINT32_MAX` for the rest of the buffer.`
+extern fn void encoder_set_compute_vertex_buffer(Encoder* _this, char _stage, VertexBufferHandle _handle, Access _access, uint _offset, uint _size) @cname("bgfx_encoder_set_compute_vertex_buffer");
 
 // Set compute dynamic index buffer.
 // _stage : `Compute stage.`
 // _handle : `Dynamic index buffer handle.`
 // _access : `Buffer access. See `Access::Enum`.`
-extern fn void encoder_set_compute_dynamic_index_buffer(Encoder* _this, char _stage, DynamicIndexBufferHandle _handle, Access _access) @cname("bgfx_encoder_set_compute_dynamic_index_buffer");
+// _offset : `Byte offset the shader's view of the buffer starts at. Must be a multiple of 256 bytes.`
+// _size : `Bytes bound from the offset, `UINT32_MAX` for the rest of the buffer.`
+extern fn void encoder_set_compute_dynamic_index_buffer(Encoder* _this, char _stage, DynamicIndexBufferHandle _handle, Access _access, uint _offset, uint _size) @cname("bgfx_encoder_set_compute_dynamic_index_buffer");
 
 // Set compute dynamic vertex buffer.
 // _stage : `Compute stage.`
 // _handle : `Dynamic vertex buffer handle.`
 // _access : `Buffer access. See `Access::Enum`.`
-extern fn void encoder_set_compute_dynamic_vertex_buffer(Encoder* _this, char _stage, DynamicVertexBufferHandle _handle, Access _access) @cname("bgfx_encoder_set_compute_dynamic_vertex_buffer");
+// _offset : `Byte offset the shader's view of the buffer starts at. Must be a multiple of 256 bytes.`
+// _size : `Bytes bound from the offset, `UINT32_MAX` for the rest of the buffer.`
+extern fn void encoder_set_compute_dynamic_vertex_buffer(Encoder* _this, char _stage, DynamicVertexBufferHandle _handle, Access _access, uint _offset, uint _size) @cname("bgfx_encoder_set_compute_dynamic_vertex_buffer");
 
 // Set compute indirect buffer.
 // _stage : `Compute stage.`
@@ -3899,6 +3936,15 @@ extern fn uint alloc_transform(Transform* _transform, ushort _num) @cname("bgfx_
 // _num : `Number of elements. Passing `UINT16_MAX` will use the _num passed on uniform creation.`
 extern fn void set_uniform(UniformHandle _handle, void* _value, ushort _num) @cname("bgfx_set_uniform");
 
+// Set shader uniform parameter by reference. Unlike `bgfx::setUniform`, the data
+// is not copied immediately; the renderer reads it from `_value` at frame render
+// time. The pointer must remain valid and unchanged until the frame is rendered
+// (up to two `bgfx::frame` calls with multithreaded submission).
+// _handle : `Uniform.`
+// _value : `Pointer to uniform data. Must stay valid until the frame is rendered.`
+// _num : `Number of elements. Passing `UINT16_MAX` will use the _num passed on uniform creation.`
+extern fn void set_uniform_ref(UniformHandle _handle, void* _value, ushort _num) @cname("bgfx_set_uniform_ref");
+
 // Set index buffer for draw primitive.
 // _handle : `Index buffer.`
 // _firstIndex : `First index to render.`
@@ -4071,25 +4117,33 @@ extern fn void submit_indirect_count(ushort _id, ProgramHandle _program, Indirec
 // _stage : `Compute stage.`
 // _handle : `Index buffer handle.`
 // _access : `Buffer access. See `Access::Enum`.`
-extern fn void set_compute_index_buffer(char _stage, IndexBufferHandle _handle, Access _access) @cname("bgfx_set_compute_index_buffer");
+// _offset : `Byte offset the shader's view of the buffer starts at. Must be a multiple of 256 bytes.`
+// _size : `Bytes bound from the offset, `UINT32_MAX` for the rest of the buffer.`
+extern fn void set_compute_index_buffer(char _stage, IndexBufferHandle _handle, Access _access, uint _offset, uint _size) @cname("bgfx_set_compute_index_buffer");
 
 // Set compute vertex buffer.
 // _stage : `Compute stage.`
 // _handle : `Vertex buffer handle.`
 // _access : `Buffer access. See `Access::Enum`.`
-extern fn void set_compute_vertex_buffer(char _stage, VertexBufferHandle _handle, Access _access) @cname("bgfx_set_compute_vertex_buffer");
+// _offset : `Byte offset the shader's view of the buffer starts at. Must be a multiple of 256 bytes.`
+// _size : `Bytes bound from the offset, `UINT32_MAX` for the rest of the buffer.`
+extern fn void set_compute_vertex_buffer(char _stage, VertexBufferHandle _handle, Access _access, uint _offset, uint _size) @cname("bgfx_set_compute_vertex_buffer");
 
 // Set compute dynamic index buffer.
 // _stage : `Compute stage.`
 // _handle : `Dynamic index buffer handle.`
 // _access : `Buffer access. See `Access::Enum`.`
-extern fn void set_compute_dynamic_index_buffer(char _stage, DynamicIndexBufferHandle _handle, Access _access) @cname("bgfx_set_compute_dynamic_index_buffer");
+// _offset : `Byte offset the shader's view of the buffer starts at. Must be a multiple of 256 bytes.`
+// _size : `Bytes bound from the offset, `UINT32_MAX` for the rest of the buffer.`
+extern fn void set_compute_dynamic_index_buffer(char _stage, DynamicIndexBufferHandle _handle, Access _access, uint _offset, uint _size) @cname("bgfx_set_compute_dynamic_index_buffer");
 
 // Set compute dynamic vertex buffer.
 // _stage : `Compute stage.`
 // _handle : `Dynamic vertex buffer handle.`
 // _access : `Buffer access. See `Access::Enum`.`
-extern fn void set_compute_dynamic_vertex_buffer(char _stage, DynamicVertexBufferHandle _handle, Access _access) @cname("bgfx_set_compute_dynamic_vertex_buffer");
+// _offset : `Byte offset the shader's view of the buffer starts at. Must be a multiple of 256 bytes.`
+// _size : `Bytes bound from the offset, `UINT32_MAX` for the rest of the buffer.`
+extern fn void set_compute_dynamic_vertex_buffer(char _stage, DynamicVertexBufferHandle _handle, Access _access, uint _offset, uint _size) @cname("bgfx_set_compute_dynamic_vertex_buffer");
 
 // Set compute indirect buffer.
 // _stage : `Compute stage.`

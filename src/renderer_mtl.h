@@ -435,6 +435,8 @@ namespace bgfx { namespace mtl
 			: m_ptr(NULL)
 			, m_ptrMsaa(NULL)
 			, m_ptrStencil(NULL)
+			, m_ptrAlt(NULL)
+			, m_ptrMsaaAlt(NULL)
 			, m_sampler(NULL)
 			, m_videoDecoder(NULL)
 			, m_flags(0)
@@ -472,11 +474,16 @@ namespace bgfx { namespace mtl
 			);
 
 		MTL::Texture* getTextureImage(uint8_t _mip, uint16_t _firstLayer = 0, uint16_t _numLayers = UINT16_MAX);
-		MTL::Texture* getTextureView(uint16_t _firstLayer, uint16_t _numLayers, uint8_t _firstMip, uint8_t _numMips, bool _stencil = false);
+		MTL::Texture* getTextureView(uint16_t _firstLayer, uint16_t _numLayers, uint8_t _firstMip, uint8_t _numMips, bool _stencil = false, bool _alt = false);
+
+		bool useAltFormat(uint32_t _flags, uint32_t _bit) const;
+		MTL::PixelFormat getAttachmentPixelFormat(uint8_t _flags) const;
 
 		MTL::Texture* m_ptr;
 		MTL::Texture* m_ptrMsaa;
 		MTL::Texture* m_ptrStencil; // for emulating packed depth/stencil formats - only for iOS8...
+		MTL::Texture* m_ptrAlt;
+		MTL::Texture* m_ptrMsaaAlt;
 		stl::unordered_map<uint64_t, MTL::Texture*> m_ptrViews;
 		MTL::SamplerState* m_sampler;
 		VideoDecoderMtl*   m_videoDecoder;

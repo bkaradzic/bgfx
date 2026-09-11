@@ -1495,6 +1495,24 @@ namespace bgfx
 			, uint16_t _num = 1
 			);
 
+		/// Set shader uniform parameter by reference. Unlike `Encoder::setUniform`, the data
+		/// is not copied immediately; the renderer reads it from `_value` at frame render
+		/// time. The pointer must remain valid and unchanged until the frame is rendered
+		/// (up to two `bgfx::frame` calls with multithreaded submission).
+		///
+		/// @param[in] _handle Uniform.
+		/// @param[in] _value Pointer to uniform data. Must stay valid until the frame is rendered.
+		/// @param[in] _num Number of elements. Passing `UINT16_MAX` will
+		///   use the _num passed on uniform creation.
+		///
+		/// @attention C99's equivalent binding is `bgfx_encoder_set_uniform_ref`.
+		///
+		void setUniformRef(
+			  UniformHandle _handle
+			, const void* _value
+			, uint16_t _num = UINT16_MAX
+			);
+
 		/// Set index buffer for draw primitive.
 		///
 		/// @param[in] _handle Index buffer.
@@ -1870,6 +1888,9 @@ namespace bgfx
 		/// @param[in] _stage Compute stage.
 		/// @param[in] _handle Index buffer handle.
 		/// @param[in] _access Buffer access. See `Access::Enum`.
+		/// @param[in] _offset Byte offset the shader's view of the buffer starts at.
+		///   Must be a multiple of 256 bytes.
+		/// @param[in] _size Bytes bound from the offset, `UINT32_MAX` for the rest of the buffer.
 		///
 		/// @attention C99's equivalent binding is `bgfx_encoder_set_compute_index_buffer`.
 		///
@@ -1877,6 +1898,8 @@ namespace bgfx
 			  uint8_t _stage
 			, IndexBufferHandle _handle
 			, Access::Enum _access
+			, uint32_t _offset = 0
+			, uint32_t _size = UINT32_MAX
 			);
 
 		/// Set compute vertex buffer.
@@ -1884,6 +1907,9 @@ namespace bgfx
 		/// @param[in] _stage Compute stage.
 		/// @param[in] _handle Vertex buffer handle.
 		/// @param[in] _access Buffer access. See `Access::Enum`.
+		/// @param[in] _offset Byte offset the shader's view of the buffer starts at.
+		///   Must be a multiple of 256 bytes.
+		/// @param[in] _size Bytes bound from the offset, `UINT32_MAX` for the rest of the buffer.
 		///
 		/// @attention C99's equivalent binding is `bgfx_encoder_set_compute_vertex_buffer`.
 		///
@@ -1891,6 +1917,8 @@ namespace bgfx
 			  uint8_t _stage
 			, VertexBufferHandle _handle
 			, Access::Enum _access
+			, uint32_t _offset = 0
+			, uint32_t _size = UINT32_MAX
 			);
 
 		/// Set compute dynamic index buffer.
@@ -1898,6 +1926,9 @@ namespace bgfx
 		/// @param[in] _stage Compute stage.
 		/// @param[in] _handle Dynamic index buffer handle.
 		/// @param[in] _access Buffer access. See `Access::Enum`.
+		/// @param[in] _offset Byte offset the shader's view of the buffer starts at.
+		///   Must be a multiple of 256 bytes.
+		/// @param[in] _size Bytes bound from the offset, `UINT32_MAX` for the rest of the buffer.
 		///
 		/// @attention C99's equivalent binding is `bgfx_encoder_set_compute_dynamic_index_buffer`.
 		///
@@ -1905,6 +1936,8 @@ namespace bgfx
 			  uint8_t _stage
 			, DynamicIndexBufferHandle _handle
 			, Access::Enum _access
+			, uint32_t _offset = 0
+			, uint32_t _size = UINT32_MAX
 			);
 
 		/// Set compute dynamic vertex buffer.
@@ -1912,6 +1945,9 @@ namespace bgfx
 		/// @param[in] _stage Compute stage.
 		/// @param[in] _handle Dynamic vertex buffer handle.
 		/// @param[in] _access Buffer access. See `Access::Enum`.
+		/// @param[in] _offset Byte offset the shader's view of the buffer starts at.
+		///   Must be a multiple of 256 bytes.
+		/// @param[in] _size Bytes bound from the offset, `UINT32_MAX` for the rest of the buffer.
 		///
 		/// @attention C99's equivalent binding is `bgfx_encoder_set_compute_dynamic_vertex_buffer`.
 		///
@@ -1919,6 +1955,8 @@ namespace bgfx
 			  uint8_t _stage
 			, DynamicVertexBufferHandle _handle
 			, Access::Enum _access
+			, uint32_t _offset = 0
+			, uint32_t _size = UINT32_MAX
 			);
 
 		/// Set compute indirect buffer.
@@ -4632,6 +4670,24 @@ namespace bgfx
 		, uint16_t _num = 1
 		);
 
+	/// Set shader uniform parameter by reference. Unlike `bgfx::setUniform`, the data
+	/// is not copied immediately; the renderer reads it from `_value` at frame render
+	/// time. The pointer must remain valid and unchanged until the frame is rendered
+	/// (up to two `bgfx::frame` calls with multithreaded submission).
+	///
+	/// @param[in] _handle Uniform.
+	/// @param[in] _value Pointer to uniform data. Must stay valid until the frame is rendered.
+	/// @param[in] _num Number of elements. Passing `UINT16_MAX` will
+	///   use the _num passed on uniform creation.
+	///
+	/// @attention C99's equivalent binding is `bgfx_set_uniform_ref`.
+	///
+	void setUniformRef(
+		  UniformHandle _handle
+		, const void* _value
+		, uint16_t _num = UINT16_MAX
+		);
+
 	/// Set index buffer for draw primitive.
 	///
 	/// @param[in] _handle Index buffer.
@@ -5005,6 +5061,9 @@ namespace bgfx
 	/// @param[in] _stage Compute stage.
 	/// @param[in] _handle Index buffer handle.
 	/// @param[in] _access Buffer access. See `Access::Enum`.
+	/// @param[in] _offset Byte offset the shader's view of the buffer starts at.
+	///   Must be a multiple of 256 bytes.
+	/// @param[in] _size Bytes bound from the offset, `UINT32_MAX` for the rest of the buffer.
 	///
 	/// @attention C99's equivalent binding is `bgfx_set_compute_index_buffer`.
 	///
@@ -5012,6 +5071,8 @@ namespace bgfx
 		  uint8_t _stage
 		, IndexBufferHandle _handle
 		, Access::Enum _access
+		, uint32_t _offset = 0
+		, uint32_t _size = UINT32_MAX
 		);
 
 	/// Set compute vertex buffer.
@@ -5019,6 +5080,9 @@ namespace bgfx
 	/// @param[in] _stage Compute stage.
 	/// @param[in] _handle Vertex buffer handle.
 	/// @param[in] _access Buffer access. See `Access::Enum`.
+	/// @param[in] _offset Byte offset the shader's view of the buffer starts at.
+	///   Must be a multiple of 256 bytes.
+	/// @param[in] _size Bytes bound from the offset, `UINT32_MAX` for the rest of the buffer.
 	///
 	/// @attention C99's equivalent binding is `bgfx_set_compute_vertex_buffer`.
 	///
@@ -5026,6 +5090,8 @@ namespace bgfx
 		  uint8_t _stage
 		, VertexBufferHandle _handle
 		, Access::Enum _access
+		, uint32_t _offset = 0
+		, uint32_t _size = UINT32_MAX
 		);
 
 	/// Set compute dynamic index buffer.
@@ -5033,6 +5099,9 @@ namespace bgfx
 	/// @param[in] _stage Compute stage.
 	/// @param[in] _handle Dynamic index buffer handle.
 	/// @param[in] _access Buffer access. See `Access::Enum`.
+	/// @param[in] _offset Byte offset the shader's view of the buffer starts at.
+	///   Must be a multiple of 256 bytes.
+	/// @param[in] _size Bytes bound from the offset, `UINT32_MAX` for the rest of the buffer.
 	///
 	/// @attention C99's equivalent binding is `bgfx_set_compute_dynamic_index_buffer`.
 	///
@@ -5040,6 +5109,8 @@ namespace bgfx
 		  uint8_t _stage
 		, DynamicIndexBufferHandle _handle
 		, Access::Enum _access
+		, uint32_t _offset = 0
+		, uint32_t _size = UINT32_MAX
 		);
 
 	/// Set compute dynamic vertex buffer.
@@ -5047,6 +5118,9 @@ namespace bgfx
 	/// @param[in] _stage Compute stage.
 	/// @param[in] _handle Dynamic vertex buffer handle.
 	/// @param[in] _access Buffer access. See `Access::Enum`.
+	/// @param[in] _offset Byte offset the shader's view of the buffer starts at.
+	///   Must be a multiple of 256 bytes.
+	/// @param[in] _size Bytes bound from the offset, `UINT32_MAX` for the rest of the buffer.
 	///
 	/// @attention C99's equivalent binding is `bgfx_set_compute_dynamic_vertex_buffer`.
 	///
@@ -5054,6 +5128,8 @@ namespace bgfx
 		  uint8_t _stage
 		, DynamicVertexBufferHandle _handle
 		, Access::Enum _access
+		, uint32_t _offset = 0
+		, uint32_t _size = UINT32_MAX
 		);
 
 	/// Set compute indirect buffer.

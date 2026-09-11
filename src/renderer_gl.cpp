@@ -738,6 +738,7 @@ namespace bgfx { namespace gl
 			EXT_texture_shared_exponent,
 			EXT_texture_snorm,
 			EXT_texture_sRGB,
+			EXT_texture_sRGB_decode,
 			EXT_texture_storage,
 			EXT_texture_swizzle,
 			EXT_texture_view,
@@ -971,6 +972,7 @@ namespace bgfx { namespace gl
 		{ "EXT_texture_shared_exponent",              false,                                    true  },
 		{ "EXT_texture_snorm",                        BGFX_CONFIG_RENDERER_OPENGL >= 30,        true  },
 		{ "EXT_texture_sRGB",                         false,                                    true  },
+		{ "EXT_texture_sRGB_decode",                  false,                                    true  },
 		{ "EXT_texture_storage",                      false,                                    true  },
 		{ "EXT_texture_swizzle",                      false,                                    true  },
 		{ "EXT_texture_view",                         false,                                    true  },
@@ -2212,6 +2214,24 @@ namespace bgfx { namespace gl
 		bool m_detachShader;
 	};
 
+	static void glBindStorageBuffer(uint32_t _index, GLuint _id, uint32_t _bufferSize, uint32_t _offset, uint32_t _size)
+	{
+		const uint32_t offset = bx::min(_offset, _bufferSize);
+		const uint32_t range  = UINT32_MAX == _size
+			? _bufferSize - offset
+			: bx::min(_size, _bufferSize - offset)
+			;
+
+		if (0 == range
+		|| (0 == offset && range == _bufferSize) )
+		{
+			GL_CHECK(glBindBufferBase(GL_SHADER_STORAGE_BUFFER, _index, _id) );
+			return;
+		}
+
+		GL_CHECK(glBindBufferRange(GL_SHADER_STORAGE_BUFFER, _index, _id, offset, range) );
+	}
+
 	struct RendererContextGL : public RendererContextI
 	{
 		RendererContextGL()
@@ -2234,6 +2254,7 @@ namespace bgfx { namespace gl
 			, m_vaoSupport(false)
 			, m_samplerObjectSupport(false)
 			, m_srgbWriteControlSupport(BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) )
+			, m_srgbDecodeSupport(false)
 			, m_borderColorSupport(BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) )
 			, m_programBinarySupport(false)
 			, m_textureSwizzleSupport(false)
@@ -2969,6 +2990,8 @@ namespace bgfx { namespace gl
 				{
 					GL_CHECK(glGetIntegerv(GL_MAX_SAMPLES, &m_maxMsaa) );
 				}
+
+				m_srgbDecodeSupport = s_extension[Extension::EXT_texture_sRGB_decode].m_supported;
 
 				if (s_extension[Extension::OES_read_format].m_supported
 				&& (s_extension[Extension::IMG_read_format].m_supported	|| s_extension[Extension::EXT_read_format_bgra].m_supported) )
@@ -4032,6 +4055,25 @@ namespace bgfx { namespace gl
 				);
 		}
 
+		bool isPendingResolve(TextureHandle _handle) const
+		{
+			if (isValid(m_fbh)
+			&&  m_rtMsaa)
+			{
+				const FrameBufferGL& frameBuffer = m_frameBuffers[m_fbh.idx];
+
+				for (uint32_t ii = 0; ii < frameBuffer.m_numTh; ++ii)
+				{
+					if (frameBuffer.m_attachment[ii].handle.idx == _handle.idx)
+					{
+						return true;
+					}
+				}
+			}
+
+			return false;
+		}
+
 		void resolveFrameBuffer(FrameBufferHandle _fbh)
 		{
 			if (isValid(m_fbh)
@@ -4118,10 +4160,14 @@ namespace bgfx { namespace gl
 						GL_CHECK(glDisable(GL_FRAMEBUFFER_SRGB) );
 					}
 				}
-				else
+				else if (m_frameBuffers[_fbh.idx].isSrgbWrite() )
 				{
 					// actual sRGB write/blending determined by FBO's color attachments format
 					GL_CHECK(glEnable(GL_FRAMEBUFFER_SRGB) );
+				}
+				else
+				{
+					GL_CHECK(glDisable(GL_FRAMEBUFFER_SRGB) );
 				}
 			}
 
@@ -4435,9 +4481,11 @@ namespace bgfx { namespace gl
 			if (0 == (BGFX_SAMPLER_INTERNAL_DEFAULT & _flags) )
 			{
 				const uint32_t index = (_flags & BGFX_SAMPLER_BORDER_COLOR_MASK) >> BGFX_SAMPLER_BORDER_COLOR_SHIFT;
+				const uint32_t srgb  = _flags & BGFX_SAMPLER_SRGB;
 
 				_flags &= ~BGFX_SAMPLER_RESERVED_MASK;
 				_flags &= BGFX_SAMPLER_BITS_MASK;
+				_flags |= srgb;
 				_flags |= _numMips<<BGFX_SAMPLER_RESERVED_SHIFT;
 
 				GLuint sampler;
@@ -4520,6 +4568,14 @@ namespace bgfx { namespace gl
 					{
 						GL_CHECK(glSamplerParameteri(sampler, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE) );
 						GL_CHECK(glSamplerParameteri(sampler, GL_TEXTURE_COMPARE_FUNC, s_cmpFunc[cmpFunc]) );
+					}
+
+					if (m_srgbDecodeSupport)
+					{
+						GL_CHECK(glSamplerParameteri(sampler
+							, GL_TEXTURE_SRGB_DECODE_EXT
+							, 0 != srgb ? GL_DECODE_EXT : GL_SKIP_DECODE_EXT
+							) );
 					}
 
 					m_samplerStateCache.add(hash, SamplerGL{sampler});
@@ -5145,6 +5201,7 @@ namespace bgfx { namespace gl
 		bool m_vaoSupport;
 		bool m_samplerObjectSupport;
 		bool m_srgbWriteControlSupport;
+		bool m_srgbDecodeSupport;
 		bool m_borderColorSupport;
 		bool m_programBinarySupport;
 		bool m_textureSwizzleSupport;
@@ -6162,6 +6219,21 @@ namespace bgfx { namespace gl
 			m_requestedFormat  = uint8_t(imageContainer.m_format);
 			m_textureFormat    = uint8_t(getViableTextureFormat(imageContainer) );
 
+			if (0 != (_flags & BGFX_TEXTURE_SRGB_MUTABLE) )
+			{
+				if (s_renderGL->m_srgbDecodeSupport
+				&&  s_renderGL->m_srgbWriteControlSupport
+				&&  GL_ZERO != s_textureFormat[m_textureFormat].m_internalFmtSrgb)
+				{
+					_flags |= BGFX_TEXTURE_SRGB;
+				}
+				else
+				{
+					BX_WARN(false, "BGFX_TEXTURE_SRGB_MUTABLE is not supported for texture format %d", m_textureFormat);
+					_flags &= ~BGFX_TEXTURE_SRGB_MUTABLE;
+				}
+			}
+
 			const bool computeWrite = 0 != (_flags&BGFX_TEXTURE_COMPUTE_WRITE);
 			const bool srgb         = 0 != (_flags&BGFX_TEXTURE_SRGB);
 			const bool msaaSample   = 0 != (_flags&BGFX_TEXTURE_MSAA_SAMPLE);
@@ -6585,7 +6657,7 @@ namespace bgfx { namespace gl
 				;
 		}
 
-		const uint32_t flags = (0 != (BGFX_SAMPLER_INTERNAL_DEFAULT & _flags) ? m_flags : _flags) & BGFX_SAMPLER_BITS_MASK;
+		const uint32_t flags = (0 != (BGFX_SAMPLER_INTERNAL_DEFAULT & _flags) ? m_flags : _flags) & (BGFX_SAMPLER_BITS_MASK|BGFX_SAMPLER_SRGB);
 
 		bool hasBorderColor = false;
 		bx::HashMurmur2A murmur;
@@ -6655,6 +6727,19 @@ namespace bgfx { namespace gl
 			{
 				GL_CHECK(glTexParameteri(target, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE) );
 				GL_CHECK(glTexParameteri(target, GL_TEXTURE_COMPARE_FUNC, s_cmpFunc[cmpFunc]) );
+			}
+
+			if (s_renderGL->m_srgbDecodeSupport
+			&&  0 != (m_flags & BGFX_TEXTURE_SRGB) )
+			{
+				const bool decode = 0 == (m_flags & BGFX_TEXTURE_SRGB_MUTABLE)
+					|| 0 != (flags & BGFX_SAMPLER_SRGB)
+					;
+
+				GL_CHECK(glTexParameteri(target
+					, GL_TEXTURE_SRGB_DECODE_EXT
+					, decode ? GL_DECODE_EXT : GL_SKIP_DECODE_EXT
+					) );
 			}
 
 			m_currentSamplerHash = hash;
@@ -6800,13 +6885,18 @@ namespace bgfx { namespace gl
 			}
 		}
 
+		const uint32_t samplerFlags = 0 != (m_flags & BGFX_TEXTURE_SRGB_MUTABLE)
+			? flags
+			: flags | BGFX_SAMPLER_SRGB
+			;
+
 		if (s_renderGL->m_samplerObjectSupport)
 		{
-			s_renderGL->setSamplerState(_stage, m_numMips, flags, _palette[index]);
+			s_renderGL->setSamplerState(_stage, m_numMips, samplerFlags, _palette[index]);
 		}
 		else
 		{
-			setSamplerState(flags, _palette[index]);
+			setSamplerState(samplerFlags, _palette[index]);
 		}
 
 		if (id == m_id
@@ -7681,6 +7771,23 @@ namespace bgfx { namespace gl
 		return denseIdx;
 	}
 
+	bool FrameBufferGL::isSrgbWrite() const
+	{
+		for (uint32_t ii = 0; ii < m_numTh; ++ii)
+		{
+			const Attachment& at = m_attachment[ii];
+
+			if (isValid(at.handle)
+			&&  0 != (s_renderGL->m_textures[at.handle.idx].m_flags & BGFX_TEXTURE_SRGB_MUTABLE)
+			&&  0 == (at.flags & BGFX_ATTACHMENT_SRGB) )
+			{
+				return false;
+			}
+		}
+
+		return true;
+	}
+
 	void FrameBufferGL::resolve()
 	{
 		if (0 != m_fbo[1])
@@ -8325,7 +8432,8 @@ namespace bgfx { namespace gl
 				const bool srcReadsMsaaRbo = 0 != src.m_rbo && dst.isMsaaSurface();
 
 				if (!srcReadsMsaaRbo
-				&&  0 == bi.m_srcMip)
+				&&  0 == bi.m_srcMip
+				&&  isPendingResolve(TextureHandle{bi.m_src.idx}) )
 				{
 					resolveMsaaRbo(src, m_currentFbo);
 				}
@@ -8367,7 +8475,8 @@ namespace bgfx { namespace gl
 					, "Blitting 3D regions is not supported"
 					);
 
-				if (0 == bi.m_srcMip)
+				if (0 == bi.m_srcMip
+				&&  isPendingResolve(TextureHandle{bi.m_src.idx}) )
 				{
 					resolveMsaaRbo(src, m_currentFbo);
 				}
@@ -8734,7 +8843,7 @@ namespace bgfx { namespace gl
 								case Binding::IndexBuffer:
 									{
 										const IndexBufferGL& buffer = m_indexBuffers[bind.m_idx];
-										GL_CHECK(glBindBufferBase(GL_SHADER_STORAGE_BUFFER, ii, buffer.m_id) );
+										glBindStorageBuffer(ii, buffer.m_id, buffer.m_size, bind.m_offset, bind.m_size);
 										barrier |= GL_SHADER_STORAGE_BARRIER_BIT;
 										if (Access::Read != Access::Enum(bind.m_access) )
 										{
@@ -8749,7 +8858,7 @@ namespace bgfx { namespace gl
 								case Binding::VertexBuffer:
 									{
 										const VertexBufferGL& buffer = m_vertexBuffers[bind.m_idx];
-										GL_CHECK(glBindBufferBase(GL_SHADER_STORAGE_BUFFER, ii, buffer.m_id) );
+										glBindStorageBuffer(ii, buffer.m_id, buffer.m_size, bind.m_offset, bind.m_size);
 										barrier |= GL_SHADER_STORAGE_BARRIER_BIT;
 										if (Access::Read != Access::Enum(bind.m_access) )
 										{
@@ -9373,14 +9482,14 @@ namespace bgfx { namespace gl
 									case Binding::IndexBuffer:
 										{
 											const IndexBufferGL& buffer = m_indexBuffers[bind.m_idx];
-											GL_CHECK(glBindBufferBase(GL_SHADER_STORAGE_BUFFER, stage, buffer.m_id) );
+											glBindStorageBuffer(stage, buffer.m_id, buffer.m_size, bind.m_offset, bind.m_size);
 										}
 										break;
 
 									case Binding::VertexBuffer:
 										{
 											const VertexBufferGL& buffer = m_vertexBuffers[bind.m_idx];
-											GL_CHECK(glBindBufferBase(GL_SHADER_STORAGE_BUFFER, stage, buffer.m_id) );
+											glBindStorageBuffer(stage, buffer.m_id, buffer.m_size, bind.m_offset, bind.m_size);
 										}
 										break;
 									}

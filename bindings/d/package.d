@@ -9,7 +9,7 @@ import bindbc.common.types: c_int64, c_uint64, va_list;
 import bindbc.bgfx.config;
 static import bgfx.impl;
 
-enum uint apiVersion = 160;
+enum uint apiVersion = 161;
 
 alias ViewID = ushort;
 
@@ -312,6 +312,15 @@ enum Texture: Texture_{
 	blitDst         = 0x0000_4000_0000_0000, ///Texture will be used as blit destination.
 	readBack        = 0x0000_8000_0000_0000, ///Texture will be used for read back from GPU.
 	externalShared  = 0x0001_0000_0000_0000, ///Texture is shared with other device or other process.
+	/**
+	Texture may be sampled and rendered with either sRGB-ness,
+	not just the one implied by its format. Every bind and
+	attachment must then state the encoding it wants (see
+	`BGFX_SAMPLER_SRGB`, `BGFX_ATTACHMENT_SRGB`). Costs nothing
+	until used, but may disable texture compression on some
+	hardware.
+	*/
+	srgbMutable     = 0x0040_0000_0000_0000,
 }
 
 ///Do not use! Top nibble is reserved for internal texture flags (see bgfx_p.h).
@@ -422,6 +431,13 @@ alias Sampler_ = uint;
 enum Sampler: Sampler_{
 	none           = 0x0000_0000,
 	sampleStencil  = 0x0010_0000, ///Sample stencil instead of depth.
+	/**
+	Sample with sRGB conversion; absence of this flag samples
+	without it. Only affects textures created
+	`BGFX_TEXTURE_SRGB_MUTABLE`, which must state the encoding
+	explicitly on every bind; ignored for any other texture.
+	*/
+	srgb           = 0x0020_0000,
 	point          = SamplerMin.point | SamplerMag.point | SamplerMIP.point,
 	uvwMirror      = SamplerU.mirror | SamplerV.mirror | SamplerW.mirror,
 	uvwClamp       = SamplerU.clamp | SamplerV.clamp | SamplerW.clamp,
@@ -610,6 +626,13 @@ enum Attachment: Attachment_{
 	*/
 	readOnlyDepth    = 0x02,
 	readOnlyStencil  = 0x04, ///Bind the stencil aspect read-only.
+	/**
+	Render with sRGB conversion; absence of this flag renders without
+	it. Only affects textures created `BGFX_TEXTURE_SRGB_MUTABLE`,
+	which must state the encoding explicitly on every attachment;
+	ignored for any other texture.
+	*/
+	srgb             = 0x08,
 }
 
 alias PCIID_ = ushort;
@@ -1971,6 +1994,19 @@ extern(C++, "bgfx") struct Encoder{
 			{q{void}, q{setUniform}, q{UniformHandle handle, const(void)* value, ushort num=1}, ext: `C++`},
 			
 			/**
+			Set shader uniform parameter by reference. Unlike `Encoder::setUniform`, the data
+			is not copied immediately; the renderer reads it from `_value` at frame render
+			time. The pointer must remain valid and unchanged until the frame is rendered
+			(up to two `bgfx::frame` calls with multithreaded submission).
+			Params:
+				handle = Uniform.
+				value = Pointer to uniform data. Must stay valid until the frame is rendered.
+				num = Number of elements. Passing `UINT16_MAX` will
+			use the _num passed on uniform creation.
+			*/
+			{q{void}, q{setUniformRef}, q{UniformHandle handle, const(void)* value, ushort num=ushort.max}, ext: `C++`},
+			
+			/**
 			Set index buffer for draw primitive.
 			Params:
 				handle = Index buffer.
@@ -2248,8 +2284,11 @@ extern(C++, "bgfx") struct Encoder{
 				stage = Compute stage.
 				handle = Index buffer handle.
 				access = Buffer access. See `Access::Enum`.
+				offset = Byte offset the shader's view of the buffer starts at.
+			Must be a multiple of 256 bytes.
+				size = Bytes bound from the offset, `UINT32_MAX` for the rest of the buffer.
 			*/
-			{q{void}, q{setBuffer}, q{ubyte stage, IndexBufferHandle handle, bgfx.impl.Access.Enum access}, ext: `C++`},
+			{q{void}, q{setBuffer}, q{ubyte stage, IndexBufferHandle handle, bgfx.impl.Access.Enum access, uint offset=0, uint size=uint.max}, ext: `C++`},
 			
 			/**
 			Set compute vertex buffer.
@@ -2257,8 +2296,11 @@ extern(C++, "bgfx") struct Encoder{
 				stage = Compute stage.
 				handle = Vertex buffer handle.
 				access = Buffer access. See `Access::Enum`.
+				offset = Byte offset the shader's view of the buffer starts at.
+			Must be a multiple of 256 bytes.
+				size = Bytes bound from the offset, `UINT32_MAX` for the rest of the buffer.
 			*/
-			{q{void}, q{setBuffer}, q{ubyte stage, VertexBufferHandle handle, bgfx.impl.Access.Enum access}, ext: `C++`},
+			{q{void}, q{setBuffer}, q{ubyte stage, VertexBufferHandle handle, bgfx.impl.Access.Enum access, uint offset=0, uint size=uint.max}, ext: `C++`},
 			
 			/**
 			Set compute dynamic index buffer.
@@ -2266,8 +2308,11 @@ extern(C++, "bgfx") struct Encoder{
 				stage = Compute stage.
 				handle = Dynamic index buffer handle.
 				access = Buffer access. See `Access::Enum`.
+				offset = Byte offset the shader's view of the buffer starts at.
+			Must be a multiple of 256 bytes.
+				size = Bytes bound from the offset, `UINT32_MAX` for the rest of the buffer.
 			*/
-			{q{void}, q{setBuffer}, q{ubyte stage, DynamicIndexBufferHandle handle, bgfx.impl.Access.Enum access}, ext: `C++`},
+			{q{void}, q{setBuffer}, q{ubyte stage, DynamicIndexBufferHandle handle, bgfx.impl.Access.Enum access, uint offset=0, uint size=uint.max}, ext: `C++`},
 			
 			/**
 			Set compute dynamic vertex buffer.
@@ -2275,8 +2320,11 @@ extern(C++, "bgfx") struct Encoder{
 				stage = Compute stage.
 				handle = Dynamic vertex buffer handle.
 				access = Buffer access. See `Access::Enum`.
+				offset = Byte offset the shader's view of the buffer starts at.
+			Must be a multiple of 256 bytes.
+				size = Bytes bound from the offset, `UINT32_MAX` for the rest of the buffer.
 			*/
-			{q{void}, q{setBuffer}, q{ubyte stage, DynamicVertexBufferHandle handle, bgfx.impl.Access.Enum access}, ext: `C++`},
+			{q{void}, q{setBuffer}, q{ubyte stage, DynamicVertexBufferHandle handle, bgfx.impl.Access.Enum access, uint offset=0, uint size=uint.max}, ext: `C++`},
 			
 			/**
 			Set compute indirect buffer.
@@ -4070,6 +4118,19 @@ mixin(joinFnBinds((){
 		{q{void}, q{setUniform}, q{UniformHandle handle, const(void)* value, ushort num=1}, ext: `C++, "bgfx"`},
 		
 		/**
+		* Set shader uniform parameter by reference. Unlike `bgfx::setUniform`, the data
+		* is not copied immediately; the renderer reads it from `_value` at frame render
+		* time. The pointer must remain valid and unchanged until the frame is rendered
+		* (up to two `bgfx::frame` calls with multithreaded submission).
+		Params:
+			handle = Uniform.
+			value = Pointer to uniform data. Must stay valid until the frame is rendered.
+			num = Number of elements. Passing `UINT16_MAX` will
+		use the _num passed on uniform creation.
+		*/
+		{q{void}, q{setUniformRef}, q{UniformHandle handle, const(void)* value, ushort num=ushort.max}, ext: `C++, "bgfx"`},
+		
+		/**
 		* Set index buffer for draw primitive.
 		Params:
 			handle = Index buffer.
@@ -4345,8 +4406,11 @@ mixin(joinFnBinds((){
 			stage = Compute stage.
 			handle = Index buffer handle.
 			access = Buffer access. See `Access::Enum`.
+			offset = Byte offset the shader's view of the buffer starts at.
+		Must be a multiple of 256 bytes.
+			size = Bytes bound from the offset, `UINT32_MAX` for the rest of the buffer.
 		*/
-		{q{void}, q{setBuffer}, q{ubyte stage, IndexBufferHandle handle, bgfx.impl.Access.Enum access}, ext: `C++, "bgfx"`},
+		{q{void}, q{setBuffer}, q{ubyte stage, IndexBufferHandle handle, bgfx.impl.Access.Enum access, uint offset=0, uint size=uint.max}, ext: `C++, "bgfx"`},
 		
 		/**
 		* Set compute vertex buffer.
@@ -4354,8 +4418,11 @@ mixin(joinFnBinds((){
 			stage = Compute stage.
 			handle = Vertex buffer handle.
 			access = Buffer access. See `Access::Enum`.
+			offset = Byte offset the shader's view of the buffer starts at.
+		Must be a multiple of 256 bytes.
+			size = Bytes bound from the offset, `UINT32_MAX` for the rest of the buffer.
 		*/
-		{q{void}, q{setBuffer}, q{ubyte stage, VertexBufferHandle handle, bgfx.impl.Access.Enum access}, ext: `C++, "bgfx"`},
+		{q{void}, q{setBuffer}, q{ubyte stage, VertexBufferHandle handle, bgfx.impl.Access.Enum access, uint offset=0, uint size=uint.max}, ext: `C++, "bgfx"`},
 		
 		/**
 		* Set compute dynamic index buffer.
@@ -4363,8 +4430,11 @@ mixin(joinFnBinds((){
 			stage = Compute stage.
 			handle = Dynamic index buffer handle.
 			access = Buffer access. See `Access::Enum`.
+			offset = Byte offset the shader's view of the buffer starts at.
+		Must be a multiple of 256 bytes.
+			size = Bytes bound from the offset, `UINT32_MAX` for the rest of the buffer.
 		*/
-		{q{void}, q{setBuffer}, q{ubyte stage, DynamicIndexBufferHandle handle, bgfx.impl.Access.Enum access}, ext: `C++, "bgfx"`},
+		{q{void}, q{setBuffer}, q{ubyte stage, DynamicIndexBufferHandle handle, bgfx.impl.Access.Enum access, uint offset=0, uint size=uint.max}, ext: `C++, "bgfx"`},
 		
 		/**
 		* Set compute dynamic vertex buffer.
@@ -4372,8 +4442,11 @@ mixin(joinFnBinds((){
 			stage = Compute stage.
 			handle = Dynamic vertex buffer handle.
 			access = Buffer access. See `Access::Enum`.
+			offset = Byte offset the shader's view of the buffer starts at.
+		Must be a multiple of 256 bytes.
+			size = Bytes bound from the offset, `UINT32_MAX` for the rest of the buffer.
 		*/
-		{q{void}, q{setBuffer}, q{ubyte stage, DynamicVertexBufferHandle handle, bgfx.impl.Access.Enum access}, ext: `C++, "bgfx"`},
+		{q{void}, q{setBuffer}, q{ubyte stage, DynamicVertexBufferHandle handle, bgfx.impl.Access.Enum access, uint offset=0, uint size=uint.max}, ext: `C++, "bgfx"`},
 		
 		/**
 		* Set compute indirect buffer.

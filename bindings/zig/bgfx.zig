@@ -419,6 +419,14 @@ pub const TextureFlags_ReadBack: TextureFlags               = 0x0000800000000000
 
 /// Texture is shared with other device or other process.
 pub const TextureFlags_ExternalShared: TextureFlags         = 0x0001000000000000;
+
+/// Texture may be sampled and rendered with either sRGB-ness,
+/// not just the one implied by its format. Every bind and
+/// attachment must then state the encoding it wants (see
+/// `BGFX_SAMPLER_SRGB`, `BGFX_ATTACHMENT_SRGB`). Costs nothing
+/// until used, but may disable texture compression on some
+/// hardware.
+pub const TextureFlags_SrgbMutable: TextureFlags            = 0x0040000000000000;
 pub const TextureFlags_ReservedShift: TextureFlags          = 60;
 pub const TextureFlags_ReservedMask: TextureFlags           = 0xf000000000000000;
 
@@ -529,6 +537,12 @@ pub const SamplerFlags_None: SamplerFlags                   = 0x00000000;
 
 /// Sample stencil instead of depth.
 pub const SamplerFlags_SampleStencil: SamplerFlags          = 0x00100000;
+
+/// Sample with sRGB conversion; absence of this flag samples
+/// without it. Only affects textures created
+/// `BGFX_TEXTURE_SRGB_MUTABLE`, which must state the encoding
+/// explicitly on every bind; ignored for any other texture.
+pub const SamplerFlags_Srgb: SamplerFlags                   = 0x00200000;
 pub const SamplerFlags_Point: SamplerFlags                  = 0x00000540;
 pub const SamplerFlags_UvwMirror: SamplerFlags              = 0x00000015;
 pub const SamplerFlags_UvwClamp: SamplerFlags               = 0x0000002a;
@@ -820,6 +834,12 @@ pub const AttachmentFlags_ReadOnlyDepth: AttachmentFlags          = 0x00000002;
 
 /// Bind the stencil aspect read-only.
 pub const AttachmentFlags_ReadOnlyStencil: AttachmentFlags        = 0x00000004;
+
+/// Render with sRGB conversion; absence of this flag renders without
+/// it. Only affects textures created `BGFX_TEXTURE_SRGB_MUTABLE`,
+/// which must state the encoding explicitly on every attachment;
+/// ignored for any other texture.
+pub const AttachmentFlags_Srgb: AttachmentFlags                   = 0x00000008;
 
 pub const PciIdFlags = u16;
 /// Autoselect adapter.
@@ -2027,6 +2047,16 @@ pub const Init = extern struct {
         pub inline fn setUniform(self: ?*Encoder, _handle: UniformHandle, _value: ?*const anyopaque, _num: u16) void {
             return bgfx_encoder_set_uniform(self, _handle, _value, _num);
         }
+        /// Set shader uniform parameter by reference. Unlike `Encoder::setUniform`, the data
+        /// is not copied immediately; the renderer reads it from `_value` at frame render
+        /// time. The pointer must remain valid and unchanged until the frame is rendered
+        /// (up to two `bgfx::frame` calls with multithreaded submission).
+        /// <param name="_handle">Uniform.</param>
+        /// <param name="_value">Pointer to uniform data. Must stay valid until the frame is rendered.</param>
+        /// <param name="_num">Number of elements. Passing `UINT16_MAX` will use the _num passed on uniform creation.</param>
+        pub inline fn setUniformRef(self: ?*Encoder, _handle: UniformHandle, _value: ?*const anyopaque, _num: u16) void {
+            return bgfx_encoder_set_uniform_ref(self, _handle, _value, _num);
+        }
         /// Set index buffer for draw primitive.
         /// <param name="_handle">Index buffer.</param>
         /// <param name="_firstIndex">First index to render.</param>
@@ -2222,29 +2252,37 @@ pub const Init = extern struct {
         /// <param name="_stage">Compute stage.</param>
         /// <param name="_handle">Index buffer handle.</param>
         /// <param name="_access">Buffer access. See `Access::Enum`.</param>
-        pub inline fn setComputeIndexBuffer(self: ?*Encoder, _stage: u8, _handle: IndexBufferHandle, _access: Access) void {
-            return bgfx_encoder_set_compute_index_buffer(self, _stage, _handle, _access);
+        /// <param name="_offset">Byte offset the shader's view of the buffer starts at. Must be a multiple of 256 bytes.</param>
+        /// <param name="_size">Bytes bound from the offset, `UINT32_MAX` for the rest of the buffer.</param>
+        pub inline fn setComputeIndexBuffer(self: ?*Encoder, _stage: u8, _handle: IndexBufferHandle, _access: Access, _offset: u32, _size: u32) void {
+            return bgfx_encoder_set_compute_index_buffer(self, _stage, _handle, _access, _offset, _size);
         }
         /// Set compute vertex buffer.
         /// <param name="_stage">Compute stage.</param>
         /// <param name="_handle">Vertex buffer handle.</param>
         /// <param name="_access">Buffer access. See `Access::Enum`.</param>
-        pub inline fn setComputeVertexBuffer(self: ?*Encoder, _stage: u8, _handle: VertexBufferHandle, _access: Access) void {
-            return bgfx_encoder_set_compute_vertex_buffer(self, _stage, _handle, _access);
+        /// <param name="_offset">Byte offset the shader's view of the buffer starts at. Must be a multiple of 256 bytes.</param>
+        /// <param name="_size">Bytes bound from the offset, `UINT32_MAX` for the rest of the buffer.</param>
+        pub inline fn setComputeVertexBuffer(self: ?*Encoder, _stage: u8, _handle: VertexBufferHandle, _access: Access, _offset: u32, _size: u32) void {
+            return bgfx_encoder_set_compute_vertex_buffer(self, _stage, _handle, _access, _offset, _size);
         }
         /// Set compute dynamic index buffer.
         /// <param name="_stage">Compute stage.</param>
         /// <param name="_handle">Dynamic index buffer handle.</param>
         /// <param name="_access">Buffer access. See `Access::Enum`.</param>
-        pub inline fn setComputeDynamicIndexBuffer(self: ?*Encoder, _stage: u8, _handle: DynamicIndexBufferHandle, _access: Access) void {
-            return bgfx_encoder_set_compute_dynamic_index_buffer(self, _stage, _handle, _access);
+        /// <param name="_offset">Byte offset the shader's view of the buffer starts at. Must be a multiple of 256 bytes.</param>
+        /// <param name="_size">Bytes bound from the offset, `UINT32_MAX` for the rest of the buffer.</param>
+        pub inline fn setComputeDynamicIndexBuffer(self: ?*Encoder, _stage: u8, _handle: DynamicIndexBufferHandle, _access: Access, _offset: u32, _size: u32) void {
+            return bgfx_encoder_set_compute_dynamic_index_buffer(self, _stage, _handle, _access, _offset, _size);
         }
         /// Set compute dynamic vertex buffer.
         /// <param name="_stage">Compute stage.</param>
         /// <param name="_handle">Dynamic vertex buffer handle.</param>
         /// <param name="_access">Buffer access. See `Access::Enum`.</param>
-        pub inline fn setComputeDynamicVertexBuffer(self: ?*Encoder, _stage: u8, _handle: DynamicVertexBufferHandle, _access: Access) void {
-            return bgfx_encoder_set_compute_dynamic_vertex_buffer(self, _stage, _handle, _access);
+        /// <param name="_offset">Byte offset the shader's view of the buffer starts at. Must be a multiple of 256 bytes.</param>
+        /// <param name="_size">Bytes bound from the offset, `UINT32_MAX` for the rest of the buffer.</param>
+        pub inline fn setComputeDynamicVertexBuffer(self: ?*Encoder, _stage: u8, _handle: DynamicVertexBufferHandle, _access: Access, _offset: u32, _size: u32) void {
+            return bgfx_encoder_set_compute_dynamic_vertex_buffer(self, _stage, _handle, _access, _offset, _size);
         }
         /// Set compute indirect buffer.
         /// <param name="_stage">Compute stage.</param>
@@ -3810,6 +3848,15 @@ extern fn bgfx_encoder_alloc_transform(self: ?*Encoder, _transform: [*c]Transfor
 /// <param name="_num">Number of elements. Passing `UINT16_MAX` will use the _num passed on uniform creation.</param>
 extern fn bgfx_encoder_set_uniform(self: ?*Encoder, _handle: UniformHandle, _value: ?*const anyopaque, _num: u16) void;
 
+/// Set shader uniform parameter by reference. Unlike `Encoder::setUniform`, the data
+/// is not copied immediately; the renderer reads it from `_value` at frame render
+/// time. The pointer must remain valid and unchanged until the frame is rendered
+/// (up to two `bgfx::frame` calls with multithreaded submission).
+/// <param name="_handle">Uniform.</param>
+/// <param name="_value">Pointer to uniform data. Must stay valid until the frame is rendered.</param>
+/// <param name="_num">Number of elements. Passing `UINT16_MAX` will use the _num passed on uniform creation.</param>
+extern fn bgfx_encoder_set_uniform_ref(self: ?*Encoder, _handle: UniformHandle, _value: ?*const anyopaque, _num: u16) void;
+
 /// Set shader uniform parameter for view.
 /// 
 /// @attention Uniform must be created with `bgfx::UniformFreq::View` argument.
@@ -4009,25 +4056,33 @@ extern fn bgfx_encoder_submit_indirect_count(self: ?*Encoder, _id: ViewId, _prog
 /// <param name="_stage">Compute stage.</param>
 /// <param name="_handle">Index buffer handle.</param>
 /// <param name="_access">Buffer access. See `Access::Enum`.</param>
-extern fn bgfx_encoder_set_compute_index_buffer(self: ?*Encoder, _stage: u8, _handle: IndexBufferHandle, _access: Access) void;
+/// <param name="_offset">Byte offset the shader's view of the buffer starts at. Must be a multiple of 256 bytes.</param>
+/// <param name="_size">Bytes bound from the offset, `UINT32_MAX` for the rest of the buffer.</param>
+extern fn bgfx_encoder_set_compute_index_buffer(self: ?*Encoder, _stage: u8, _handle: IndexBufferHandle, _access: Access, _offset: u32, _size: u32) void;
 
 /// Set compute vertex buffer.
 /// <param name="_stage">Compute stage.</param>
 /// <param name="_handle">Vertex buffer handle.</param>
 /// <param name="_access">Buffer access. See `Access::Enum`.</param>
-extern fn bgfx_encoder_set_compute_vertex_buffer(self: ?*Encoder, _stage: u8, _handle: VertexBufferHandle, _access: Access) void;
+/// <param name="_offset">Byte offset the shader's view of the buffer starts at. Must be a multiple of 256 bytes.</param>
+/// <param name="_size">Bytes bound from the offset, `UINT32_MAX` for the rest of the buffer.</param>
+extern fn bgfx_encoder_set_compute_vertex_buffer(self: ?*Encoder, _stage: u8, _handle: VertexBufferHandle, _access: Access, _offset: u32, _size: u32) void;
 
 /// Set compute dynamic index buffer.
 /// <param name="_stage">Compute stage.</param>
 /// <param name="_handle">Dynamic index buffer handle.</param>
 /// <param name="_access">Buffer access. See `Access::Enum`.</param>
-extern fn bgfx_encoder_set_compute_dynamic_index_buffer(self: ?*Encoder, _stage: u8, _handle: DynamicIndexBufferHandle, _access: Access) void;
+/// <param name="_offset">Byte offset the shader's view of the buffer starts at. Must be a multiple of 256 bytes.</param>
+/// <param name="_size">Bytes bound from the offset, `UINT32_MAX` for the rest of the buffer.</param>
+extern fn bgfx_encoder_set_compute_dynamic_index_buffer(self: ?*Encoder, _stage: u8, _handle: DynamicIndexBufferHandle, _access: Access, _offset: u32, _size: u32) void;
 
 /// Set compute dynamic vertex buffer.
 /// <param name="_stage">Compute stage.</param>
 /// <param name="_handle">Dynamic vertex buffer handle.</param>
 /// <param name="_access">Buffer access. See `Access::Enum`.</param>
-extern fn bgfx_encoder_set_compute_dynamic_vertex_buffer(self: ?*Encoder, _stage: u8, _handle: DynamicVertexBufferHandle, _access: Access) void;
+/// <param name="_offset">Byte offset the shader's view of the buffer starts at. Must be a multiple of 256 bytes.</param>
+/// <param name="_size">Bytes bound from the offset, `UINT32_MAX` for the rest of the buffer.</param>
+extern fn bgfx_encoder_set_compute_dynamic_vertex_buffer(self: ?*Encoder, _stage: u8, _handle: DynamicVertexBufferHandle, _access: Access, _offset: u32, _size: u32) void;
 
 /// Set compute indirect buffer.
 /// <param name="_stage">Compute stage.</param>
@@ -4357,6 +4412,18 @@ pub inline fn setUniform(_handle: UniformHandle, _value: ?*const anyopaque, _num
 }
 extern fn bgfx_set_uniform(_handle: UniformHandle, _value: ?*const anyopaque, _num: u16) void;
 
+/// Set shader uniform parameter by reference. Unlike `bgfx::setUniform`, the data
+/// is not copied immediately; the renderer reads it from `_value` at frame render
+/// time. The pointer must remain valid and unchanged until the frame is rendered
+/// (up to two `bgfx::frame` calls with multithreaded submission).
+/// <param name="_handle">Uniform.</param>
+/// <param name="_value">Pointer to uniform data. Must stay valid until the frame is rendered.</param>
+/// <param name="_num">Number of elements. Passing `UINT16_MAX` will use the _num passed on uniform creation.</param>
+pub inline fn setUniformRef(_handle: UniformHandle, _value: ?*const anyopaque, _num: u16) void {
+    return bgfx_set_uniform_ref(_handle, _value, _num);
+}
+extern fn bgfx_set_uniform_ref(_handle: UniformHandle, _value: ?*const anyopaque, _num: u16) void;
+
 /// Set index buffer for draw primitive.
 /// <param name="_handle">Index buffer.</param>
 /// <param name="_firstIndex">First index to render.</param>
@@ -4592,37 +4659,45 @@ extern fn bgfx_submit_indirect_count(_id: ViewId, _program: ProgramHandle, _indi
 /// <param name="_stage">Compute stage.</param>
 /// <param name="_handle">Index buffer handle.</param>
 /// <param name="_access">Buffer access. See `Access::Enum`.</param>
-pub inline fn setComputeIndexBuffer(_stage: u8, _handle: IndexBufferHandle, _access: Access) void {
-    return bgfx_set_compute_index_buffer(_stage, _handle, _access);
+/// <param name="_offset">Byte offset the shader's view of the buffer starts at. Must be a multiple of 256 bytes.</param>
+/// <param name="_size">Bytes bound from the offset, `UINT32_MAX` for the rest of the buffer.</param>
+pub inline fn setComputeIndexBuffer(_stage: u8, _handle: IndexBufferHandle, _access: Access, _offset: u32, _size: u32) void {
+    return bgfx_set_compute_index_buffer(_stage, _handle, _access, _offset, _size);
 }
-extern fn bgfx_set_compute_index_buffer(_stage: u8, _handle: IndexBufferHandle, _access: Access) void;
+extern fn bgfx_set_compute_index_buffer(_stage: u8, _handle: IndexBufferHandle, _access: Access, _offset: u32, _size: u32) void;
 
 /// Set compute vertex buffer.
 /// <param name="_stage">Compute stage.</param>
 /// <param name="_handle">Vertex buffer handle.</param>
 /// <param name="_access">Buffer access. See `Access::Enum`.</param>
-pub inline fn setComputeVertexBuffer(_stage: u8, _handle: VertexBufferHandle, _access: Access) void {
-    return bgfx_set_compute_vertex_buffer(_stage, _handle, _access);
+/// <param name="_offset">Byte offset the shader's view of the buffer starts at. Must be a multiple of 256 bytes.</param>
+/// <param name="_size">Bytes bound from the offset, `UINT32_MAX` for the rest of the buffer.</param>
+pub inline fn setComputeVertexBuffer(_stage: u8, _handle: VertexBufferHandle, _access: Access, _offset: u32, _size: u32) void {
+    return bgfx_set_compute_vertex_buffer(_stage, _handle, _access, _offset, _size);
 }
-extern fn bgfx_set_compute_vertex_buffer(_stage: u8, _handle: VertexBufferHandle, _access: Access) void;
+extern fn bgfx_set_compute_vertex_buffer(_stage: u8, _handle: VertexBufferHandle, _access: Access, _offset: u32, _size: u32) void;
 
 /// Set compute dynamic index buffer.
 /// <param name="_stage">Compute stage.</param>
 /// <param name="_handle">Dynamic index buffer handle.</param>
 /// <param name="_access">Buffer access. See `Access::Enum`.</param>
-pub inline fn setComputeDynamicIndexBuffer(_stage: u8, _handle: DynamicIndexBufferHandle, _access: Access) void {
-    return bgfx_set_compute_dynamic_index_buffer(_stage, _handle, _access);
+/// <param name="_offset">Byte offset the shader's view of the buffer starts at. Must be a multiple of 256 bytes.</param>
+/// <param name="_size">Bytes bound from the offset, `UINT32_MAX` for the rest of the buffer.</param>
+pub inline fn setComputeDynamicIndexBuffer(_stage: u8, _handle: DynamicIndexBufferHandle, _access: Access, _offset: u32, _size: u32) void {
+    return bgfx_set_compute_dynamic_index_buffer(_stage, _handle, _access, _offset, _size);
 }
-extern fn bgfx_set_compute_dynamic_index_buffer(_stage: u8, _handle: DynamicIndexBufferHandle, _access: Access) void;
+extern fn bgfx_set_compute_dynamic_index_buffer(_stage: u8, _handle: DynamicIndexBufferHandle, _access: Access, _offset: u32, _size: u32) void;
 
 /// Set compute dynamic vertex buffer.
 /// <param name="_stage">Compute stage.</param>
 /// <param name="_handle">Dynamic vertex buffer handle.</param>
 /// <param name="_access">Buffer access. See `Access::Enum`.</param>
-pub inline fn setComputeDynamicVertexBuffer(_stage: u8, _handle: DynamicVertexBufferHandle, _access: Access) void {
-    return bgfx_set_compute_dynamic_vertex_buffer(_stage, _handle, _access);
+/// <param name="_offset">Byte offset the shader's view of the buffer starts at. Must be a multiple of 256 bytes.</param>
+/// <param name="_size">Bytes bound from the offset, `UINT32_MAX` for the rest of the buffer.</param>
+pub inline fn setComputeDynamicVertexBuffer(_stage: u8, _handle: DynamicVertexBufferHandle, _access: Access, _offset: u32, _size: u32) void {
+    return bgfx_set_compute_dynamic_vertex_buffer(_stage, _handle, _access, _offset, _size);
 }
-extern fn bgfx_set_compute_dynamic_vertex_buffer(_stage: u8, _handle: DynamicVertexBufferHandle, _access: Access) void;
+extern fn bgfx_set_compute_dynamic_vertex_buffer(_stage: u8, _handle: DynamicVertexBufferHandle, _access: Access, _offset: u32, _size: u32) void;
 
 /// Set compute indirect buffer.
 /// <param name="_stage">Compute stage.</param>

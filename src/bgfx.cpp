@@ -1899,6 +1899,13 @@ namespace bgfx
 		write(_value, g_uniformTypeSize[_type]*_num);
 	}
 
+	void UniformBuffer::writeUniformRef(UniformType::Enum _type, uint16_t _loc, const void* _ptr, uint16_t _num)
+	{
+		const uint32_t opcode = encodeOpcode(uint8_t(_type) | kUniformRefBit, _loc, _num, true);
+		write(opcode);
+		write(&_ptr, sizeof(_ptr) );
+	}
+
 	void UniformBuffer::writeUniformHandle(uint8_t _type, uint16_t _loc, UniformHandle _handle, uint16_t _num)
 	{
 		const uint32_t opcode = encodeOpcode(_type, _loc, _num, false);
@@ -3060,6 +3067,18 @@ namespace bgfx
 			uint16_t num;
 			uint16_t copy;
 			UniformBuffer::decodeOpcode(opcode, type, loc, num, copy);
+
+			if (type & kUniformRefBit)
+			{
+				type &= ~kUniformRefBit;
+				const void* ptr;
+				bx::memCopy(&ptr, _uniformBuffer->read(sizeof(ptr) ), sizeof(ptr) );
+				if (UniformType::Count > type)
+				{
+					_renderCtx->updateUniform(loc, ptr, g_uniformTypeSize[type]*num);
+				}
+				continue;
+			}
 
 			const uint32_t size = g_uniformTypeSize[type]*num;
 			const char* data = _uniformBuffer->read(size);
@@ -4409,6 +4428,16 @@ namespace bgfx
 		BGFX_ENCODER(setUniform(uniform.m_type, _handle, _value, UINT16_MAX != _num ? _num : uniform.m_num) );
 	}
 
+	void Encoder::setUniformRef(UniformHandle _handle, const void* _ptr, uint16_t _num)
+	{
+		BGFX_CHECK_HANDLE("setUniformRef", s_ctx->m_uniformHandle, _handle);
+		const UniformRef& uniform = s_ctx->m_uniformRef[_handle.idx];
+		BX_ASSERT(uniform.m_freq == UniformFreq::Draw, "Setting uniform per draw call, but uniform is created with different bgfx::UniformFreq::Enum!");
+		BX_ASSERT(isValid(_handle) && 0 < uniform.m_refCount, "Setting invalid uniform (handle %3d)!", _handle.idx);
+		BX_ASSERT(_num == UINT16_MAX || uniform.m_num >= _num, "Truncated uniform update. %d (max: %d)", _num, uniform.m_num);
+		BGFX_ENCODER(setUniformRef(uniform.m_type, _handle, _ptr, UINT16_MAX != _num ? _num : uniform.m_num) );
+	}
+
 	void Encoder::setIndexBuffer(IndexBufferHandle _handle)
 	{
 		setIndexBuffer(_handle, 0, UINT32_MAX);
@@ -4625,34 +4654,38 @@ namespace bgfx
 		BGFX_ENCODER(submit(_id, _program, _indirectHandle, _start, _numHandle, _numIndex, _numMax, _depth, _flags) );
 	}
 
-	void Encoder::setBuffer(uint8_t _stage, IndexBufferHandle _handle, Access::Enum _access)
+	void Encoder::setBuffer(uint8_t _stage, IndexBufferHandle _handle, Access::Enum _access, uint32_t _offset, uint32_t _size)
 	{
 		BX_ASSERT(_stage < g_caps.limits.maxComputeBindings, "Invalid stage %d (max %d).", _stage, g_caps.limits.maxComputeBindings);
 		BGFX_CHECK_HANDLE("setBuffer", s_ctx->m_indexBufferHandle, _handle);
-		BGFX_ENCODER(setBuffer(_stage, _handle, _access) );
+		BX_ASSERT(0 == _offset % kBufferBindingOffsetAlign, "Buffer binding offset %d is not a multiple of %d bytes.", _offset, kBufferBindingOffsetAlign);
+		BGFX_ENCODER(setBuffer(_stage, _handle, _access, _offset, _size) );
 	}
 
-	void Encoder::setBuffer(uint8_t _stage, VertexBufferHandle _handle, Access::Enum _access)
+	void Encoder::setBuffer(uint8_t _stage, VertexBufferHandle _handle, Access::Enum _access, uint32_t _offset, uint32_t _size)
 	{
 		BX_ASSERT(_stage < g_caps.limits.maxComputeBindings, "Invalid stage %d (max %d).", _stage, g_caps.limits.maxComputeBindings);
 		BGFX_CHECK_HANDLE("setBuffer", s_ctx->m_vertexBufferHandle, _handle);
-		BGFX_ENCODER(setBuffer(_stage, _handle, _access) );
+		BX_ASSERT(0 == _offset % kBufferBindingOffsetAlign, "Buffer binding offset %d is not a multiple of %d bytes.", _offset, kBufferBindingOffsetAlign);
+		BGFX_ENCODER(setBuffer(_stage, _handle, _access, _offset, _size) );
 	}
 
-	void Encoder::setBuffer(uint8_t _stage, DynamicIndexBufferHandle _handle, Access::Enum _access)
+	void Encoder::setBuffer(uint8_t _stage, DynamicIndexBufferHandle _handle, Access::Enum _access, uint32_t _offset, uint32_t _size)
 	{
 		BX_ASSERT(_stage < g_caps.limits.maxComputeBindings, "Invalid stage %d (max %d).", _stage, g_caps.limits.maxComputeBindings);
 		BGFX_CHECK_HANDLE("setBuffer", s_ctx->m_dynamicIndexBufferHandle, _handle);
+		BX_ASSERT(0 == _offset % kBufferBindingOffsetAlign, "Buffer binding offset %d is not a multiple of %d bytes.", _offset, kBufferBindingOffsetAlign);
 		const DynamicIndexBuffer& dib = s_ctx->m_dynamicIndexBuffers[_handle.idx];
-		BGFX_ENCODER(setBuffer(_stage, dib.m_handle, _access) );
+		BGFX_ENCODER(setBuffer(_stage, dib.m_handle, _access, _offset, _size) );
 	}
 
-	void Encoder::setBuffer(uint8_t _stage, DynamicVertexBufferHandle _handle, Access::Enum _access)
+	void Encoder::setBuffer(uint8_t _stage, DynamicVertexBufferHandle _handle, Access::Enum _access, uint32_t _offset, uint32_t _size)
 	{
 		BX_ASSERT(_stage < g_caps.limits.maxComputeBindings, "Invalid stage %d (max %d).", _stage, g_caps.limits.maxComputeBindings);
 		BGFX_CHECK_HANDLE("setBuffer", s_ctx->m_dynamicVertexBufferHandle, _handle);
+		BX_ASSERT(0 == _offset % kBufferBindingOffsetAlign, "Buffer binding offset %d is not a multiple of %d bytes.", _offset, kBufferBindingOffsetAlign);
 		const DynamicVertexBuffer& dvb = s_ctx->m_dynamicVertexBuffers[_handle.idx];
-		BGFX_ENCODER(setBuffer(_stage, dvb.m_handle, _access) );
+		BGFX_ENCODER(setBuffer(_stage, dvb.m_handle, _access, _offset, _size) );
 	}
 
 	void Encoder::setBuffer(uint8_t _stage, IndirectBufferHandle _handle, Access::Enum _access)
@@ -6767,6 +6800,12 @@ namespace bgfx
 		s_ctx->m_encoder0->setUniform(_handle, _value, _num);
 	}
 
+	void setUniformRef(UniformHandle _handle, const void* _ptr, uint16_t _num)
+	{
+		BGFX_CHECK_ENCODER0();
+		s_ctx->m_encoder0->setUniformRef(_handle, _ptr, _num);
+	}
+
 	void setViewUniform(ViewId _id, UniformHandle _handle, const void* _value, uint16_t _num)
 	{
 		BX_ASSERT(checkView(_id), "Invalid view id: %d", _id);
@@ -6948,28 +6987,28 @@ namespace bgfx
 		s_ctx->m_encoder0->submit(_id, _program, _indirectHandle, _start, _numHandle, _numIndex, _numMax, _depth, _flags);
 	}
 
-	void setBuffer(uint8_t _stage, IndexBufferHandle _handle, Access::Enum _access)
+	void setBuffer(uint8_t _stage, IndexBufferHandle _handle, Access::Enum _access, uint32_t _offset, uint32_t _size)
 	{
 		BGFX_CHECK_ENCODER0();
-		s_ctx->m_encoder0->setBuffer(_stage, _handle, _access);
+		s_ctx->m_encoder0->setBuffer(_stage, _handle, _access, _offset, _size);
 	}
 
-	void setBuffer(uint8_t _stage, VertexBufferHandle _handle, Access::Enum _access)
+	void setBuffer(uint8_t _stage, VertexBufferHandle _handle, Access::Enum _access, uint32_t _offset, uint32_t _size)
 	{
 		BGFX_CHECK_ENCODER0();
-		s_ctx->m_encoder0->setBuffer(_stage, _handle, _access);
+		s_ctx->m_encoder0->setBuffer(_stage, _handle, _access, _offset, _size);
 	}
 
-	void setBuffer(uint8_t _stage, DynamicIndexBufferHandle _handle, Access::Enum _access)
+	void setBuffer(uint8_t _stage, DynamicIndexBufferHandle _handle, Access::Enum _access, uint32_t _offset, uint32_t _size)
 	{
 		BGFX_CHECK_ENCODER0();
-		s_ctx->m_encoder0->setBuffer(_stage, _handle, _access);
+		s_ctx->m_encoder0->setBuffer(_stage, _handle, _access, _offset, _size);
 	}
 
-	void setBuffer(uint8_t _stage, DynamicVertexBufferHandle _handle, Access::Enum _access)
+	void setBuffer(uint8_t _stage, DynamicVertexBufferHandle _handle, Access::Enum _access, uint32_t _offset, uint32_t _size)
 	{
 		BGFX_CHECK_ENCODER0();
-		s_ctx->m_encoder0->setBuffer(_stage, _handle, _access);
+		s_ctx->m_encoder0->setBuffer(_stage, _handle, _access, _offset, _size);
 	}
 
 	void setBuffer(uint8_t _stage, IndirectBufferHandle _handle, Access::Enum _access)

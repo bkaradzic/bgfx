@@ -104,6 +104,16 @@ namespace bgfx { namespace d3d12
 		};
 	};
 
+	struct SrgbSelect
+	{
+		enum Enum
+		{
+			Native,
+			Linear,
+			Srgb,
+		};
+	};
+
 	class ScratchBufferD3D12
 	{
 	public:
@@ -128,13 +138,13 @@ namespace bgfx { namespace d3d12
 
 		void  allocEmpty(D3D12_GPU_DESCRIPTOR_HANDLE& _gpuHandle);
 
-		void  allocSrv(D3D12_GPU_DESCRIPTOR_HANDLE& _gpuHandle, struct TextureD3D12& _texture, uint16_t _firstLayer = 0, uint16_t _numLayers = UINT16_MAX, uint8_t _firstMip = 0, uint8_t _numMips = UINT8_MAX, bool _stencil = false, TextureDimension::Enum _dimension = TextureDimension::Count);
-		void  allocSrv(D3D12_GPU_DESCRIPTOR_HANDLE& _gpuHandle, struct BufferD3D12& _buffer, bool _raw);
+		void  allocSrv(D3D12_GPU_DESCRIPTOR_HANDLE& _gpuHandle, struct TextureD3D12& _texture, uint16_t _firstLayer = 0, uint16_t _numLayers = UINT16_MAX, uint8_t _firstMip = 0, uint8_t _numMips = UINT8_MAX, bool _stencil = false, TextureDimension::Enum _dimension = TextureDimension::Count, SrgbSelect::Enum _srgb = SrgbSelect::Native);
+		void  allocSrv(D3D12_GPU_DESCRIPTOR_HANDLE& _gpuHandle, struct BufferD3D12& _buffer, bool _raw, uint32_t _offset = 0, uint32_t _size = UINT32_MAX);
 
 		void  allocUav(D3D12_GPU_DESCRIPTOR_HANDLE& _gpuHandle, struct TextureD3D12& _texture, uint8_t _mip = 0, uint16_t _firstLayer = 0, uint16_t _numLayers = UINT16_MAX);
 		void  allocSrv(D3D12_GPU_DESCRIPTOR_HANDLE& _gpuHandle, ID3D12Resource* _resource, const D3D12_SHADER_RESOURCE_VIEW_DESC& _desc);
 
-		void  allocUav(D3D12_GPU_DESCRIPTOR_HANDLE& _gpuHandle, struct BufferD3D12& _buffer, bool _raw);
+		void  allocUav(D3D12_GPU_DESCRIPTOR_HANDLE& _gpuHandle, struct BufferD3D12& _buffer, bool _raw, uint32_t _offset = 0, uint32_t _size = UINT32_MAX);
 		void  allocUav(D3D12_GPU_DESCRIPTOR_HANDLE& _gpuHandle, ID3D12Resource* _resource, const D3D12_UNORDERED_ACCESS_VIEW_DESC& _desc);
 
 		void  allocSrvArray(D3D12_GPU_DESCRIPTOR_HANDLE& _gpuHandle, struct TextureD3D12& _texture, uint32_t _numSlices);
@@ -466,6 +476,8 @@ namespace bgfx { namespace d3d12
 		bool isMsaaSurface() const;
 		bool isMultisampled() const;
 
+		DXGI_FORMAT getSrvFormat(SrgbSelect::Enum _srgb = SrgbSelect::Native) const;
+
 		D3D12_SHADER_RESOURCE_VIEW_DESC  m_srvd;
 		D3D12_UNORDERED_ACCESS_VIEW_DESC m_uavd;
 		D3D12_CPU_DESCRIPTOR_HANDLE m_srvHandle;
@@ -531,6 +543,7 @@ namespace bgfx { namespace d3d12
 		}
 
 		TextureHandle m_texture[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
+		DXGI_FORMAT m_rtvFormat[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
 		TextureHandle m_depth;
 		Dxgi::SwapChainI* m_swapChain;
 		DXGI_FORMAT m_swapChainFormat;

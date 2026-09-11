@@ -472,6 +472,7 @@ Set shader uniform parameters for draw calls.
 .. doxygenfunction:: bgfx::setViewUniform
 .. doxygenfunction:: bgfx::setFrameUniform
 .. doxygenfunction:: bgfx::setUniform
+.. doxygenfunction:: bgfx::setUniformRef
 
 Submit
 ******
@@ -497,10 +498,10 @@ Bind buffers to compute stages.
     :members:
 
 .. doxygenfunction:: bgfx::read(const BufferRegion & _src, void* _data)
-.. doxygenfunction:: bgfx::setBuffer(uint8_t _stage, IndexBufferHandle _handle, Access::Enum _access)
-.. doxygenfunction:: bgfx::setBuffer(uint8_t _stage, VertexBufferHandle _handle, Access::Enum _access)
-.. doxygenfunction:: bgfx::setBuffer(uint8_t _stage, DynamicIndexBufferHandle _handle, Access::Enum _access)
-.. doxygenfunction:: bgfx::setBuffer(uint8_t _stage, DynamicVertexBufferHandle _handle, Access::Enum _access)
+.. doxygenfunction:: bgfx::setBuffer(uint8_t _stage, IndexBufferHandle _handle, Access::Enum _access, uint32_t _offset = 0, uint32_t _size = UINT32_MAX)
+.. doxygenfunction:: bgfx::setBuffer(uint8_t _stage, VertexBufferHandle _handle, Access::Enum _access, uint32_t _offset = 0, uint32_t _size = UINT32_MAX)
+.. doxygenfunction:: bgfx::setBuffer(uint8_t _stage, DynamicIndexBufferHandle _handle, Access::Enum _access, uint32_t _offset = 0, uint32_t _size = UINT32_MAX)
+.. doxygenfunction:: bgfx::setBuffer(uint8_t _stage, DynamicVertexBufferHandle _handle, Access::Enum _access, uint32_t _offset = 0, uint32_t _size = UINT32_MAX)
 .. doxygenfunction:: bgfx::setBuffer(uint8_t _stage, IndirectBufferHandle _handle, Access::Enum _access)
 
 Images
@@ -611,6 +612,7 @@ Textures
 .. doxygendefine:: BGFX_TEXTURE_BLIT_DST
 .. doxygendefine:: BGFX_TEXTURE_READ_BACK
 .. doxygendefine:: BGFX_TEXTURE_EXTERNAL_SHARED
+.. doxygendefine:: BGFX_TEXTURE_SRGB_MUTABLE
 
 .. doxygendefine:: BGFX_TEXTURE_RT_WRITE_ONLY
 

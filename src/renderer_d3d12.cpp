@@ -8,6 +8,7 @@
 #if BGFX_CONFIG_RENDERER_DIRECT3D12
 #	include "renderer_d3d12.h"
 #	include "video_d3d12.h"
+#	include <bx/pixelformat.h>
 
 #if !BX_PLATFORM_WINDOWS && !BX_PLATFORM_LINUX
 #	include <inspectable.h>
@@ -319,6 +320,55 @@ namespace bgfx { namespace d3d12
 #undef $A
 	};
 	static_assert(TextureFormat::Count == BX_COUNTOF(s_textureFormat) );
+
+	struct SrgbFormatGroup
+	{
+		DXGI_FORMAT m_typeless;
+		DXGI_FORMAT m_linear;
+		DXGI_FORMAT m_srgb;
+	};
+
+	static const SrgbFormatGroup s_srgbFormatGroup[] =
+	{
+		{ DXGI_FORMAT_R8G8B8A8_TYPELESS, DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM_SRGB },
+		{ DXGI_FORMAT_B8G8R8A8_TYPELESS, DXGI_FORMAT_B8G8R8A8_UNORM, DXGI_FORMAT_B8G8R8A8_UNORM_SRGB },
+		{ DXGI_FORMAT_BC1_TYPELESS,      DXGI_FORMAT_BC1_UNORM,      DXGI_FORMAT_BC1_UNORM_SRGB      },
+		{ DXGI_FORMAT_BC2_TYPELESS,      DXGI_FORMAT_BC2_UNORM,      DXGI_FORMAT_BC2_UNORM_SRGB      },
+		{ DXGI_FORMAT_BC3_TYPELESS,      DXGI_FORMAT_BC3_UNORM,      DXGI_FORMAT_BC3_UNORM_SRGB      },
+		{ DXGI_FORMAT_BC7_TYPELESS,      DXGI_FORMAT_BC7_UNORM,      DXGI_FORMAT_BC7_UNORM_SRGB      },
+	};
+
+	static const SrgbFormatGroup* findSrgbFormatGroup(DXGI_FORMAT _format)
+	{
+		for (uint32_t ii = 0; ii < BX_COUNTOF(s_srgbFormatGroup); ++ii)
+		{
+			const SrgbFormatGroup& sa = s_srgbFormatGroup[ii];
+			if (_format == sa.m_linear
+			||  _format == sa.m_srgb)
+			{
+				return &sa;
+			}
+		}
+
+		return NULL;
+	}
+
+	static DXGI_FORMAT srgbFormat(DXGI_FORMAT _format, bool _srgb)
+	{
+		const SrgbFormatGroup* group = findSrgbFormatGroup(_format);
+		return NULL == group
+			? _format
+			: (_srgb ? group->m_srgb : group->m_linear)
+			;
+	}
+
+	static SrgbSelect::Enum srgbSelect(uint32_t _flags, uint32_t _bit)
+	{
+		return 0 != (_flags & _bit)
+			? SrgbSelect::Srgb
+			: SrgbSelect::Linear
+			;
+	}
 
 	static DXGI_FORMAT getBackBufferDepthStencilFormat(const SwapChain& _swapChain)
 	{
@@ -2220,7 +2270,7 @@ namespace bgfx { namespace d3d12
 				for (const D3D12_AUTO_BREADCRUMB_NODE* node = breadcrumbs.pHeadAutoBreadcrumbNode; NULL != node; node = node->pNext)
 				{
 					const uint32_t last = NULL != node->pLastBreadcrumbValue ? *node->pLastBreadcrumbValue : 0;
-					BX_TRACE("DRED: command list '%s' on queue '%s': %d of %d breadcrumbs completed%s"
+					_BGFX_TRACE("DRED: command list '%s' on queue '%s': %d of %d breadcrumbs completed%s"
 						, NULL != node->pCommandListDebugNameA  ? node->pCommandListDebugNameA  : "?"
 						, NULL != node->pCommandQueueDebugNameA ? node->pCommandQueueDebugNameA : "?"
 						, last
@@ -2235,7 +2285,7 @@ namespace bgfx { namespace d3d12
 						const uint32_t to   = bx::min<uint32_t>(node->BreadcrumbCount, last + 4);
 						for (uint32_t ii = from; ii < to; ++ii)
 						{
-							BX_TRACE("DRED:   [%d] %s%s"
+							_BGFX_TRACE("DRED:   [%d] %s%s"
 								, ii
 								, getBreadcrumbOpName(node->pCommandHistory[ii])
 								, ii == last ? "   <-- executing when the device was removed" : ""
@@ -2249,7 +2299,7 @@ namespace bgfx { namespace d3d12
 
 			if (SUCCEEDED(dred->GetPageFaultAllocationOutput(&pageFault) ) )
 			{
-				BX_TRACE(
+				_BGFX_TRACE(
 					  "DRED: page fault VA 0x%016" PRIx64
 					, uint64_t(pageFault.PageFaultVA)
 					);
@@ -2259,7 +2309,7 @@ namespace bgfx { namespace d3d12
 					; node = node->pNext
 					)
 				{
-					BX_TRACE(
+					_BGFX_TRACE(
 						  "DRED: live allocation type %d '%s'"
 						, node->AllocationType
 						, NULL != node->ObjectNameA ? node->ObjectNameA : "?"
@@ -2271,7 +2321,7 @@ namespace bgfx { namespace d3d12
 					; node = node->pNext
 					)
 				{
-					BX_TRACE(
+					_BGFX_TRACE(
 						  "DRED: recently freed allocation type %d '%s'"
 						, node->AllocationType
 						, NULL != node->ObjectNameA ? node->ObjectNameA : "?"
@@ -2295,6 +2345,7 @@ namespace bgfx { namespace d3d12
 					: S_OK
 					;
 
+				dumpInfoQueue();
 				dumpDeviceRemovedExtendedData();
 
 				BGFX_FATAL(false
@@ -3351,6 +3402,26 @@ namespace bgfx { namespace d3d12
 			}
 		}
 
+		bool findPendingResolve(TextureHandle _handle, uint8_t& _flags) const
+		{
+			if (isValid(m_fbh)
+			&&  m_rtMsaa)
+			{
+				const FrameBufferD3D12& frameBuffer = m_frameBuffers[m_fbh.idx];
+
+				for (uint32_t ii = 0; ii < frameBuffer.m_numTh; ++ii)
+				{
+					if (frameBuffer.m_attachment[ii].handle.idx == _handle.idx)
+					{
+						_flags = frameBuffer.m_attachment[ii].flags;
+						return true;
+					}
+				}
+			}
+
+			return false;
+		}
+
 		void setFrameBuffer(FrameBufferHandle _fbh, bool _msaa = true)
 		{
 			resolveFrameBuffer(_fbh);
@@ -3904,7 +3975,7 @@ namespace bgfx { namespace d3d12
 
 					for (uint8_t ii = 0, num = frameBuffer.m_num; ii < num; ++ii)
 					{
-						murmur.add(m_textures[frameBuffer.m_texture[ii].idx].m_srvd.Format);
+						murmur.add(frameBuffer.m_rtvFormat[ii]);
 					}
 
 					murmur.add(isValid(frameBuffer.m_depth)
@@ -4019,7 +4090,7 @@ namespace bgfx { namespace d3d12
 
 					for (uint8_t ii = 0, num = frameBuffer.m_num; ii < num; ++ii)
 					{
-						desc.RTVFormats[ii] = m_textures[frameBuffer.m_texture[ii].idx].m_srvd.Format;
+						desc.RTVFormats[ii] = frameBuffer.m_rtvFormat[ii];
 					}
 
 					if (isValid(frameBuffer.m_depth) )
@@ -4670,17 +4741,20 @@ namespace bgfx { namespace d3d12
 		alloc(_gpuHandle, cpuHandle);
 	}
 
-	void ScratchBufferD3D12::allocSrv(D3D12_GPU_DESCRIPTOR_HANDLE& _gpuHandle, TextureD3D12& _texture, uint16_t _firstLayer, uint16_t _numLayers, uint8_t _firstMip, uint8_t _numMips, bool _stencil, TextureDimension::Enum _dimension)
+	void ScratchBufferD3D12::allocSrv(D3D12_GPU_DESCRIPTOR_HANDLE& _gpuHandle, TextureD3D12& _texture, uint16_t _firstLayer, uint16_t _numLayers, uint8_t _firstMip, uint8_t _numMips, bool _stencil, TextureDimension::Enum _dimension, SrgbSelect::Enum _srgb)
 	{
 		ID3D12Device* device = s_renderD3D12->m_device;
 
 		const uint8_t  numMips   = bx::min<uint8_t>(_numMips,   uint8_t(_texture.m_numMips   - _firstMip) );
 		const uint16_t numLayers = bx::min<uint16_t>(_numLayers, uint16_t(_texture.m_numLayers - _firstLayer) );
 
+		const bool srgbMutable = 0 != (_texture.m_flags & BGFX_TEXTURE_SRGB_MUTABLE);
+
 		const bool fullRange = 0 == _firstMip
 			&& 0 == _firstLayer
 			&& numMips   >= _texture.m_numMips
 			&& numLayers >= _texture.m_numLayers
+			&& !srgbMutable
 			;
 
 		const bool asArray = TextureD3D12::TextureCube == _texture.m_type
@@ -4712,6 +4786,8 @@ namespace bgfx { namespace d3d12
 		{
 			bx::memCopy(&tmpSrvd, srvd, sizeof(tmpSrvd) );
 			srvd = &tmpSrvd;
+
+			srvd->Format = _texture.getSrvFormat(_srgb);
 
 			switch (_texture.m_srvd.ViewDimension)
 			{
@@ -4945,9 +5021,36 @@ namespace bgfx { namespace d3d12
 		device->CreateShaderResourceView(_resource, &_desc, cpuHandle);
 	}
 
-	void ScratchBufferD3D12::allocSrv(D3D12_GPU_DESCRIPTOR_HANDLE& _gpuHandle, BufferD3D12& _buffer, bool _raw)
+	template<typename Ty>
+	static void bufferViewRange(Ty& _desc, uint32_t _bufferSize, uint32_t _offset, uint32_t _size)
 	{
-		allocSrv(_gpuHandle, _buffer.m_ptr, _raw ? _buffer.m_srvdRaw : _buffer.m_srvd);
+		const uint32_t numElements = uint32_t(_desc.Buffer.NumElements);
+		const uint32_t stride      = 0 != numElements ? bx::max<uint32_t>(1, _bufferSize / numElements) : 1;
+		const uint32_t offset      = bx::min(_offset, _bufferSize);
+		const uint32_t range       = UINT32_MAX == _size
+			? _bufferSize - offset
+			: bx::min(_size, _bufferSize - offset)
+			;
+		BX_ASSERT(0 == offset % stride, "Buffer range offset %u is not a multiple of the view's element size %u.", offset, stride);
+
+		if (0 != range / stride)
+		{
+			_desc.Buffer.FirstElement = offset / stride;
+			_desc.Buffer.NumElements  = range  / stride;
+		}
+	}
+
+	void ScratchBufferD3D12::allocSrv(D3D12_GPU_DESCRIPTOR_HANDLE& _gpuHandle, BufferD3D12& _buffer, bool _raw, uint32_t _offset, uint32_t _size)
+	{
+		if (0 == _offset && UINT32_MAX == _size)
+		{
+			allocSrv(_gpuHandle, _buffer.m_ptr, _raw ? _buffer.m_srvdRaw : _buffer.m_srvd);
+			return;
+		}
+
+		D3D12_SHADER_RESOURCE_VIEW_DESC desc = _raw ? _buffer.m_srvdRaw : _buffer.m_srvd;
+		bufferViewRange(desc, _buffer.m_size, _offset, _size);
+		allocSrv(_gpuHandle, _buffer.m_ptr, desc);
 	}
 
 	void ScratchBufferD3D12::allocUav(D3D12_GPU_DESCRIPTOR_HANDLE& _gpuHandle, ID3D12Resource* _resource, const D3D12_UNORDERED_ACCESS_VIEW_DESC& _desc)
@@ -4963,9 +5066,17 @@ namespace bgfx { namespace d3d12
 		device->CreateUnorderedAccessView(_resource, NULL, &_desc, cpuHandle);
 	}
 
-	void ScratchBufferD3D12::allocUav(D3D12_GPU_DESCRIPTOR_HANDLE& _gpuHandle, BufferD3D12& _buffer, bool _raw)
+	void ScratchBufferD3D12::allocUav(D3D12_GPU_DESCRIPTOR_HANDLE& _gpuHandle, BufferD3D12& _buffer, bool _raw, uint32_t _offset, uint32_t _size)
 	{
-		allocUav(_gpuHandle, _buffer.m_ptr, _raw ? _buffer.m_uavdRaw : _buffer.m_uavd);
+		if (0 == _offset && UINT32_MAX == _size)
+		{
+			allocUav(_gpuHandle, _buffer.m_ptr, _raw ? _buffer.m_uavdRaw : _buffer.m_uavd);
+			return;
+		}
+
+		D3D12_UNORDERED_ACCESS_VIEW_DESC desc = _raw ? _buffer.m_uavdRaw : _buffer.m_uavd;
+		bufferViewRange(desc, _buffer.m_size, _offset, _size);
+		allocUav(_gpuHandle, _buffer.m_ptr, desc);
 	}
 
 	void ChunkedScratchBufferD3D12::createUniform(uint32_t _chunkSize, uint32_t _numChunks)
@@ -6598,6 +6709,20 @@ namespace bgfx { namespace d3d12
 				m_uavd.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 			}
 
+			if (0 != (m_flags & BGFX_TEXTURE_SRGB_MUTABLE) )
+			{
+				const SrgbFormatGroup* group = findSrgbFormatGroup(format);
+				if (NULL != group)
+				{
+					format = group->m_typeless;
+				}
+				else
+				{
+					BX_WARN(false, "BGFX_TEXTURE_SRGB_MUTABLE is not supported for texture format %d", m_textureFormat);
+					m_flags &= ~BGFX_TEXTURE_SRGB_MUTABLE;
+				}
+			}
+
 			ID3D12Device* device = s_renderD3D12->m_device;
 			ID3D12GraphicsCommandList* commandList = s_renderD3D12->m_commandList;
 
@@ -6633,7 +6758,10 @@ namespace bgfx { namespace d3d12
 				state              &= ~D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
 
 				clearValue = (D3D12_CLEAR_VALUE*)BX_STACK_ALLOC(sizeof(D3D12_CLEAR_VALUE) );
-				clearValue->Format = resourceDesc.Format;
+				clearValue->Format = 0 != (m_flags & BGFX_TEXTURE_SRGB_MUTABLE)
+					? m_srvd.Format
+					: resourceDesc.Format
+					;
 				clearValue->Color[0] = 0.0f;
 				clearValue->Color[1] = 0.0f;
 				clearValue->Color[2] = 0.0f;
@@ -7209,7 +7337,12 @@ namespace bgfx { namespace d3d12
 
 	void TextureD3D12::resolve(ID3D12GraphicsCommandList* _commandList, uint8_t _resolve, uint32_t _layer, uint32_t _numLayers, uint32_t _mip)
 	{
-		bool needResolve = NULL != m_singleMsaa;
+		const bx::EncodingType::Enum encoding = bx::EncodingType::Enum(bimg::getBlockInfo(bimg::TextureFormat::Enum(m_textureFormat) ).encoding);
+		const bool resolvable = bx::EncodingType::Int  != encoding
+			&&                  bx::EncodingType::Uint != encoding
+			;
+
+		bool needResolve = NULL != m_singleMsaa && resolvable;
 		if (needResolve)
 		{
 			D3D12_RESOURCE_STATES state = setState(_commandList, D3D12_RESOURCE_STATE_RESOLVE_SOURCE);
@@ -7221,12 +7354,22 @@ namespace bgfx { namespace d3d12
 			);
 
 			const TextureFormatInfo& tfi = s_textureFormat[m_textureFormat];
-			const bool useSrgb = true
-				&& 0 != (m_flags & BGFX_TEXTURE_SRGB)
-				&& !bimg::isDepth(bimg::TextureFormat::Enum(m_textureFormat) )
-				&& DXGI_FORMAT_UNKNOWN != tfi.m_fmtSrgb
-				;
-			const DXGI_FORMAT resolveFormat = useSrgb ? tfi.m_fmtSrgb : tfi.m_fmt;
+			const bool isDepthFormat = bimg::isDepth(bimg::TextureFormat::Enum(m_textureFormat) );
+			DXGI_FORMAT resolveFormat;
+
+			if (0 != (m_flags & BGFX_TEXTURE_SRGB_MUTABLE)
+			&&  !isDepthFormat)
+			{
+				resolveFormat = getSrvFormat(srgbSelect(_resolve, BGFX_ATTACHMENT_SRGB) );
+			}
+			else
+			{
+				const bool useSrgb = 0 != (m_flags & BGFX_TEXTURE_SRGB)
+					&& !isDepthFormat
+					&& DXGI_FORMAT_UNKNOWN != tfi.m_fmtSrgb
+					;
+				resolveFormat = useSrgb ? tfi.m_fmtSrgb : tfi.m_fmt;
+			}
 
 			for (uint32_t ii = _layer, end = _layer + _numLayers; ii < end; ++ii)
 			{
@@ -7313,6 +7456,15 @@ namespace bgfx { namespace d3d12
 	uint32_t TextureD3D12::getNumSubresources() const
 	{
 		return getNumPtrMips() * getNumSlices();
+	}
+
+	DXGI_FORMAT TextureD3D12::getSrvFormat(SrgbSelect::Enum _srgb) const
+	{
+		return SrgbSelect::Native != _srgb
+			&& 0 != (m_flags & BGFX_TEXTURE_SRGB_MUTABLE)
+			? srgbFormat(m_srvd.Format, SrgbSelect::Srgb == _srgb)
+			: m_srvd.Format
+			;
 	}
 
 	D3D12_RESOURCE_STATES TextureD3D12::setState(ID3D12GraphicsCommandList* _commandList, D3D12_RESOURCE_STATES _state)
@@ -8044,7 +8196,8 @@ namespace bgfx { namespace d3d12
 						D3D12_CPU_DESCRIPTOR_HANDLE rtv = { rtvDescriptor.ptr + m_num * rtvDescriptorSize };
 
 						D3D12_RENDER_TARGET_VIEW_DESC desc;
-						desc.Format = texture.m_srvd.Format;
+						desc.Format = texture.getSrvFormat(srgbSelect(at.flags, BGFX_ATTACHMENT_SRGB) );
+						m_rtvFormat[m_num] = desc.Format;
 
 						switch (texture.m_type)
 						{
@@ -8915,11 +9068,14 @@ namespace bgfx { namespace d3d12
 
 			if (currentSrc.idx != blit.m_src.idx)
 			{
+				uint8_t resolveFlags = BGFX_ATTACHMENT_NONE;
+
 				if (NULL != src.m_singleMsaa
 				&&  !dst.isMultisampled()
-				&&  0 == blit.m_srcMip)
+				&&  0 == blit.m_srcMip
+				&&  findPendingResolve(TextureHandle{blit.m_src.idx}, resolveFlags) )
 				{
-					src.resolve(m_commandList, BGFX_ATTACHMENT_NONE, blit.m_srcZ, 1, 0);
+					src.resolve(m_commandList, resolveFlags & BGFX_ATTACHMENT_SRGB, blit.m_srcZ, 1, 0);
 				}
 
 				if (D3D12_RESOURCE_STATES(UINT32_MAX) != srcState)
@@ -9551,6 +9707,7 @@ namespace bgfx { namespace d3d12
 												scratchBuffer.allocSrv(srvHandle[stage], texture, bind.m_firstLayer, bind.m_numLayers, bind.m_firstMip, bind.m_numMips
 													, 0 != (resolvedFlags & BGFX_SAMPLER_SAMPLE_STENCIL)
 													, program.getTextureDimension(uint8_t(stage) )
+													, srgbSelect(resolvedFlags, BGFX_SAMPLER_SRGB)
 													);
 												samplerFlags[stage] = resolvedFlags & (BGFX_SAMPLER_BITS_MASK | BGFX_SAMPLER_BORDER_COLOR_MASK | BGFX_SAMPLER_COMPARE_MASK);
 
@@ -9569,12 +9726,12 @@ namespace bgfx { namespace d3d12
 												if (Access::Read != bind.m_access)
 												{
 													buffer.setState(m_commandList, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
-													scratchBuffer.allocUav(srvHandle[stage], buffer, 0 != (currentRawUavMask & (UINT32_C(1) << stage) ) );
+													scratchBuffer.allocUav(srvHandle[stage], buffer, 0 != (currentRawUavMask & (UINT32_C(1) << stage) ), bind.m_offset, bind.m_size);
 												}
 												else
 												{
 													buffer.setState(m_commandList, D3D12_RESOURCE_STATE_GENERIC_READ);
-													scratchBuffer.allocSrv(srvHandle[stage], buffer, 0 != (currentRawSrvMask & (UINT32_C(1) << stage) ) );
+													scratchBuffer.allocSrv(srvHandle[stage], buffer, 0 != (currentRawSrvMask & (UINT32_C(1) << stage) ), bind.m_offset, bind.m_size);
 												}
 
 												++numSet;
@@ -9928,6 +10085,7 @@ namespace bgfx { namespace d3d12
 												scratchBuffer.allocSrv(srvHandle[stage], texture, bind.m_firstLayer, bind.m_numLayers, bind.m_firstMip, bind.m_numMips
 													, 0 != (resolvedFlags & BGFX_SAMPLER_SAMPLE_STENCIL)
 													, program.getTextureDimension(uint8_t(stage) )
+													, srgbSelect(resolvedFlags, BGFX_SAMPLER_SRGB)
 													);
 												samplerFlags[stage] = resolvedFlags & (BGFX_SAMPLER_BITS_MASK | BGFX_SAMPLER_BORDER_COLOR_MASK | BGFX_SAMPLER_COMPARE_MASK);
 
@@ -9948,12 +10106,12 @@ namespace bgfx { namespace d3d12
 												if (Access::Read != bind.m_access)
 												{
 													buffer.setState(m_commandList, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
-													scratchBuffer.allocUav(srvHandle[stage], buffer, 0 != (currentRawUavMask & (UINT32_C(1) << stage) ) );
+													scratchBuffer.allocUav(srvHandle[stage], buffer, 0 != (currentRawUavMask & (UINT32_C(1) << stage) ), bind.m_offset, bind.m_size);
 												}
 												else
 												{
 													buffer.setState(m_commandList, D3D12_RESOURCE_STATE_GENERIC_READ);
-													scratchBuffer.allocSrv(srvHandle[stage], buffer, 0 != (currentRawSrvMask & (UINT32_C(1) << stage) ) );
+													scratchBuffer.allocSrv(srvHandle[stage], buffer, 0 != (currentRawSrvMask & (UINT32_C(1) << stage) ), bind.m_offset, bind.m_size);
 												}
 
 												++numSet;

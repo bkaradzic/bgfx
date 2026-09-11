@@ -3225,6 +3225,20 @@ BGFX_C_API uint32_t bgfx_encoder_alloc_transform(bgfx_encoder_t* _this, bgfx_tra
 BGFX_C_API void bgfx_encoder_set_uniform(bgfx_encoder_t* _this, bgfx_uniform_handle_t _handle, const void* _value, uint16_t _num);
 
 /**
+ * Set shader uniform parameter by reference. Unlike `Encoder::setUniform`, the data
+ * is not copied immediately; the renderer reads it from `_value` at frame render
+ * time. The pointer must remain valid and unchanged until the frame is rendered
+ * (up to two `bgfx::frame` calls with multithreaded submission).
+ *
+ * @param[in] _handle Uniform.
+ * @param[in] _value Pointer to uniform data. Must stay valid until the frame is rendered.
+ * @param[in] _num Number of elements. Passing `UINT16_MAX` will
+ *  use the _num passed on uniform creation.
+ *
+ */
+BGFX_C_API void bgfx_encoder_set_uniform_ref(bgfx_encoder_t* _this, bgfx_uniform_handle_t _handle, const void* _value, uint16_t _num);
+
+/**
  * Set shader uniform parameter for view.
  *
  * @attention Uniform must be created with `bgfx::UniformFreq::View` argument.
@@ -3521,9 +3535,12 @@ BGFX_C_API void bgfx_encoder_submit_indirect_count(bgfx_encoder_t* _this, bgfx_v
  * @param[in] _stage Compute stage.
  * @param[in] _handle Index buffer handle.
  * @param[in] _access Buffer access. See `Access::Enum`.
+ * @param[in] _offset Byte offset the shader's view of the buffer starts at.
+ *  Must be a multiple of 256 bytes.
+ * @param[in] _size Bytes bound from the offset, `UINT32_MAX` for the rest of the buffer.
  *
  */
-BGFX_C_API void bgfx_encoder_set_compute_index_buffer(bgfx_encoder_t* _this, uint8_t _stage, bgfx_index_buffer_handle_t _handle, bgfx_access_t _access);
+BGFX_C_API void bgfx_encoder_set_compute_index_buffer(bgfx_encoder_t* _this, uint8_t _stage, bgfx_index_buffer_handle_t _handle, bgfx_access_t _access, uint32_t _offset, uint32_t _size);
 
 /**
  * Set compute vertex buffer.
@@ -3531,9 +3548,12 @@ BGFX_C_API void bgfx_encoder_set_compute_index_buffer(bgfx_encoder_t* _this, uin
  * @param[in] _stage Compute stage.
  * @param[in] _handle Vertex buffer handle.
  * @param[in] _access Buffer access. See `Access::Enum`.
+ * @param[in] _offset Byte offset the shader's view of the buffer starts at.
+ *  Must be a multiple of 256 bytes.
+ * @param[in] _size Bytes bound from the offset, `UINT32_MAX` for the rest of the buffer.
  *
  */
-BGFX_C_API void bgfx_encoder_set_compute_vertex_buffer(bgfx_encoder_t* _this, uint8_t _stage, bgfx_vertex_buffer_handle_t _handle, bgfx_access_t _access);
+BGFX_C_API void bgfx_encoder_set_compute_vertex_buffer(bgfx_encoder_t* _this, uint8_t _stage, bgfx_vertex_buffer_handle_t _handle, bgfx_access_t _access, uint32_t _offset, uint32_t _size);
 
 /**
  * Set compute dynamic index buffer.
@@ -3541,9 +3561,12 @@ BGFX_C_API void bgfx_encoder_set_compute_vertex_buffer(bgfx_encoder_t* _this, ui
  * @param[in] _stage Compute stage.
  * @param[in] _handle Dynamic index buffer handle.
  * @param[in] _access Buffer access. See `Access::Enum`.
+ * @param[in] _offset Byte offset the shader's view of the buffer starts at.
+ *  Must be a multiple of 256 bytes.
+ * @param[in] _size Bytes bound from the offset, `UINT32_MAX` for the rest of the buffer.
  *
  */
-BGFX_C_API void bgfx_encoder_set_compute_dynamic_index_buffer(bgfx_encoder_t* _this, uint8_t _stage, bgfx_dynamic_index_buffer_handle_t _handle, bgfx_access_t _access);
+BGFX_C_API void bgfx_encoder_set_compute_dynamic_index_buffer(bgfx_encoder_t* _this, uint8_t _stage, bgfx_dynamic_index_buffer_handle_t _handle, bgfx_access_t _access, uint32_t _offset, uint32_t _size);
 
 /**
  * Set compute dynamic vertex buffer.
@@ -3551,9 +3574,12 @@ BGFX_C_API void bgfx_encoder_set_compute_dynamic_index_buffer(bgfx_encoder_t* _t
  * @param[in] _stage Compute stage.
  * @param[in] _handle Dynamic vertex buffer handle.
  * @param[in] _access Buffer access. See `Access::Enum`.
+ * @param[in] _offset Byte offset the shader's view of the buffer starts at.
+ *  Must be a multiple of 256 bytes.
+ * @param[in] _size Bytes bound from the offset, `UINT32_MAX` for the rest of the buffer.
  *
  */
-BGFX_C_API void bgfx_encoder_set_compute_dynamic_vertex_buffer(bgfx_encoder_t* _this, uint8_t _stage, bgfx_dynamic_vertex_buffer_handle_t _handle, bgfx_access_t _access);
+BGFX_C_API void bgfx_encoder_set_compute_dynamic_vertex_buffer(bgfx_encoder_t* _this, uint8_t _stage, bgfx_dynamic_vertex_buffer_handle_t _handle, bgfx_access_t _access, uint32_t _offset, uint32_t _size);
 
 /**
  * Set compute indirect buffer.
@@ -3952,6 +3978,20 @@ BGFX_C_API uint32_t bgfx_alloc_transform(bgfx_transform_t* _transform, uint16_t 
 BGFX_C_API void bgfx_set_uniform(bgfx_uniform_handle_t _handle, const void* _value, uint16_t _num);
 
 /**
+ * Set shader uniform parameter by reference. Unlike `bgfx::setUniform`, the data
+ * is not copied immediately; the renderer reads it from `_value` at frame render
+ * time. The pointer must remain valid and unchanged until the frame is rendered
+ * (up to two `bgfx::frame` calls with multithreaded submission).
+ *
+ * @param[in] _handle Uniform.
+ * @param[in] _value Pointer to uniform data. Must stay valid until the frame is rendered.
+ * @param[in] _num Number of elements. Passing `UINT16_MAX` will
+ *  use the _num passed on uniform creation.
+ *
+ */
+BGFX_C_API void bgfx_set_uniform_ref(bgfx_uniform_handle_t _handle, const void* _value, uint16_t _num);
+
+/**
  * Set index buffer for draw primitive.
  *
  * @param[in] _handle Index buffer.
@@ -4219,9 +4259,12 @@ BGFX_C_API void bgfx_submit_indirect_count(bgfx_view_id_t _id, bgfx_program_hand
  * @param[in] _stage Compute stage.
  * @param[in] _handle Index buffer handle.
  * @param[in] _access Buffer access. See `Access::Enum`.
+ * @param[in] _offset Byte offset the shader's view of the buffer starts at.
+ *  Must be a multiple of 256 bytes.
+ * @param[in] _size Bytes bound from the offset, `UINT32_MAX` for the rest of the buffer.
  *
  */
-BGFX_C_API void bgfx_set_compute_index_buffer(uint8_t _stage, bgfx_index_buffer_handle_t _handle, bgfx_access_t _access);
+BGFX_C_API void bgfx_set_compute_index_buffer(uint8_t _stage, bgfx_index_buffer_handle_t _handle, bgfx_access_t _access, uint32_t _offset, uint32_t _size);
 
 /**
  * Set compute vertex buffer.
@@ -4229,9 +4272,12 @@ BGFX_C_API void bgfx_set_compute_index_buffer(uint8_t _stage, bgfx_index_buffer_
  * @param[in] _stage Compute stage.
  * @param[in] _handle Vertex buffer handle.
  * @param[in] _access Buffer access. See `Access::Enum`.
+ * @param[in] _offset Byte offset the shader's view of the buffer starts at.
+ *  Must be a multiple of 256 bytes.
+ * @param[in] _size Bytes bound from the offset, `UINT32_MAX` for the rest of the buffer.
  *
  */
-BGFX_C_API void bgfx_set_compute_vertex_buffer(uint8_t _stage, bgfx_vertex_buffer_handle_t _handle, bgfx_access_t _access);
+BGFX_C_API void bgfx_set_compute_vertex_buffer(uint8_t _stage, bgfx_vertex_buffer_handle_t _handle, bgfx_access_t _access, uint32_t _offset, uint32_t _size);
 
 /**
  * Set compute dynamic index buffer.
@@ -4239,9 +4285,12 @@ BGFX_C_API void bgfx_set_compute_vertex_buffer(uint8_t _stage, bgfx_vertex_buffe
  * @param[in] _stage Compute stage.
  * @param[in] _handle Dynamic index buffer handle.
  * @param[in] _access Buffer access. See `Access::Enum`.
+ * @param[in] _offset Byte offset the shader's view of the buffer starts at.
+ *  Must be a multiple of 256 bytes.
+ * @param[in] _size Bytes bound from the offset, `UINT32_MAX` for the rest of the buffer.
  *
  */
-BGFX_C_API void bgfx_set_compute_dynamic_index_buffer(uint8_t _stage, bgfx_dynamic_index_buffer_handle_t _handle, bgfx_access_t _access);
+BGFX_C_API void bgfx_set_compute_dynamic_index_buffer(uint8_t _stage, bgfx_dynamic_index_buffer_handle_t _handle, bgfx_access_t _access, uint32_t _offset, uint32_t _size);
 
 /**
  * Set compute dynamic vertex buffer.
@@ -4249,9 +4298,12 @@ BGFX_C_API void bgfx_set_compute_dynamic_index_buffer(uint8_t _stage, bgfx_dynam
  * @param[in] _stage Compute stage.
  * @param[in] _handle Dynamic vertex buffer handle.
  * @param[in] _access Buffer access. See `Access::Enum`.
+ * @param[in] _offset Byte offset the shader's view of the buffer starts at.
+ *  Must be a multiple of 256 bytes.
+ * @param[in] _size Bytes bound from the offset, `UINT32_MAX` for the rest of the buffer.
  *
  */
-BGFX_C_API void bgfx_set_compute_dynamic_vertex_buffer(uint8_t _stage, bgfx_dynamic_vertex_buffer_handle_t _handle, bgfx_access_t _access);
+BGFX_C_API void bgfx_set_compute_dynamic_vertex_buffer(uint8_t _stage, bgfx_dynamic_vertex_buffer_handle_t _handle, bgfx_access_t _access, uint32_t _offset, uint32_t _size);
 
 /**
  * Set compute indirect buffer.
@@ -4552,6 +4604,7 @@ typedef enum bgfx_function_id
     BGFX_FUNCTION_ID_ENCODER_SET_TRANSFORM_CACHED,
     BGFX_FUNCTION_ID_ENCODER_ALLOC_TRANSFORM,
     BGFX_FUNCTION_ID_ENCODER_SET_UNIFORM,
+    BGFX_FUNCTION_ID_ENCODER_SET_UNIFORM_REF,
     BGFX_FUNCTION_ID_SET_VIEW_UNIFORM,
     BGFX_FUNCTION_ID_SET_FRAME_UNIFORM,
     BGFX_FUNCTION_ID_ENCODER_SET_INDEX_BUFFER,
@@ -4605,6 +4658,7 @@ typedef enum bgfx_function_id
     BGFX_FUNCTION_ID_SET_TRANSFORM_CACHED,
     BGFX_FUNCTION_ID_ALLOC_TRANSFORM,
     BGFX_FUNCTION_ID_SET_UNIFORM,
+    BGFX_FUNCTION_ID_SET_UNIFORM_REF,
     BGFX_FUNCTION_ID_SET_INDEX_BUFFER,
     BGFX_FUNCTION_ID_SET_DYNAMIC_INDEX_BUFFER,
     BGFX_FUNCTION_ID_SET_TRANSIENT_INDEX_BUFFER,
@@ -4783,6 +4837,7 @@ struct bgfx_interface_vtbl
     void (*encoder_set_transform_cached)(bgfx_encoder_t* _this, uint32_t _cache, uint16_t _num);
     uint32_t (*encoder_alloc_transform)(bgfx_encoder_t* _this, bgfx_transform_t* _transform, uint16_t _num);
     void (*encoder_set_uniform)(bgfx_encoder_t* _this, bgfx_uniform_handle_t _handle, const void* _value, uint16_t _num);
+    void (*encoder_set_uniform_ref)(bgfx_encoder_t* _this, bgfx_uniform_handle_t _handle, const void* _value, uint16_t _num);
     void (*set_view_uniform)(bgfx_view_id_t _id, bgfx_uniform_handle_t _handle, const void* _value, uint16_t _num);
     void (*set_frame_uniform)(bgfx_uniform_handle_t _handle, const void* _value, uint16_t _num);
     void (*encoder_set_index_buffer)(bgfx_encoder_t* _this, bgfx_index_buffer_handle_t _handle, uint32_t _firstIndex, uint32_t _numIndices);
@@ -4806,10 +4861,10 @@ struct bgfx_interface_vtbl
     void (*encoder_submit_occlusion_query)(bgfx_encoder_t* _this, bgfx_view_id_t _id, bgfx_program_handle_t _program, bgfx_occlusion_query_handle_t _occlusionQuery, uint32_t _depth, uint8_t _flags);
     void (*encoder_submit_indirect)(bgfx_encoder_t* _this, bgfx_view_id_t _id, bgfx_program_handle_t _program, bgfx_indirect_buffer_handle_t _indirectHandle, uint32_t _start, uint32_t _num, uint32_t _depth, uint8_t _flags);
     void (*encoder_submit_indirect_count)(bgfx_encoder_t* _this, bgfx_view_id_t _id, bgfx_program_handle_t _program, bgfx_indirect_buffer_handle_t _indirectHandle, uint32_t _start, bgfx_index_buffer_handle_t _numHandle, uint32_t _numIndex, uint32_t _numMax, uint32_t _depth, uint8_t _flags);
-    void (*encoder_set_compute_index_buffer)(bgfx_encoder_t* _this, uint8_t _stage, bgfx_index_buffer_handle_t _handle, bgfx_access_t _access);
-    void (*encoder_set_compute_vertex_buffer)(bgfx_encoder_t* _this, uint8_t _stage, bgfx_vertex_buffer_handle_t _handle, bgfx_access_t _access);
-    void (*encoder_set_compute_dynamic_index_buffer)(bgfx_encoder_t* _this, uint8_t _stage, bgfx_dynamic_index_buffer_handle_t _handle, bgfx_access_t _access);
-    void (*encoder_set_compute_dynamic_vertex_buffer)(bgfx_encoder_t* _this, uint8_t _stage, bgfx_dynamic_vertex_buffer_handle_t _handle, bgfx_access_t _access);
+    void (*encoder_set_compute_index_buffer)(bgfx_encoder_t* _this, uint8_t _stage, bgfx_index_buffer_handle_t _handle, bgfx_access_t _access, uint32_t _offset, uint32_t _size);
+    void (*encoder_set_compute_vertex_buffer)(bgfx_encoder_t* _this, uint8_t _stage, bgfx_vertex_buffer_handle_t _handle, bgfx_access_t _access, uint32_t _offset, uint32_t _size);
+    void (*encoder_set_compute_dynamic_index_buffer)(bgfx_encoder_t* _this, uint8_t _stage, bgfx_dynamic_index_buffer_handle_t _handle, bgfx_access_t _access, uint32_t _offset, uint32_t _size);
+    void (*encoder_set_compute_dynamic_vertex_buffer)(bgfx_encoder_t* _this, uint8_t _stage, bgfx_dynamic_vertex_buffer_handle_t _handle, bgfx_access_t _access, uint32_t _offset, uint32_t _size);
     void (*encoder_set_compute_indirect_buffer)(bgfx_encoder_t* _this, uint8_t _stage, bgfx_indirect_buffer_handle_t _handle, bgfx_access_t _access);
     void (*encoder_set_image)(bgfx_encoder_t* _this, uint8_t _stage, bgfx_texture_handle_t _handle, uint8_t _mip, bgfx_access_t _access, bgfx_texture_format_t _format);
     void (*encoder_set_image_view)(bgfx_encoder_t* _this, uint8_t _stage, bgfx_texture_handle_t _handle, uint16_t _firstLayer, uint16_t _numLayers, uint8_t _mip, bgfx_access_t _access, bgfx_texture_format_t _format);
@@ -4836,6 +4891,7 @@ struct bgfx_interface_vtbl
     void (*set_transform_cached)(uint32_t _cache, uint16_t _num);
     uint32_t (*alloc_transform)(bgfx_transform_t* _transform, uint16_t _num);
     void (*set_uniform)(bgfx_uniform_handle_t _handle, const void* _value, uint16_t _num);
+    void (*set_uniform_ref)(bgfx_uniform_handle_t _handle, const void* _value, uint16_t _num);
     void (*set_index_buffer)(bgfx_index_buffer_handle_t _handle, uint32_t _firstIndex, uint32_t _numIndices);
     void (*set_dynamic_index_buffer)(bgfx_dynamic_index_buffer_handle_t _handle, uint32_t _firstIndex, uint32_t _numIndices);
     void (*set_transient_index_buffer)(const bgfx_transient_index_buffer_t* _tib, uint32_t _firstIndex, uint32_t _numIndices);
@@ -4857,10 +4913,10 @@ struct bgfx_interface_vtbl
     void (*submit_occlusion_query)(bgfx_view_id_t _id, bgfx_program_handle_t _program, bgfx_occlusion_query_handle_t _occlusionQuery, uint32_t _depth, uint8_t _flags);
     void (*submit_indirect)(bgfx_view_id_t _id, bgfx_program_handle_t _program, bgfx_indirect_buffer_handle_t _indirectHandle, uint32_t _start, uint32_t _num, uint32_t _depth, uint8_t _flags);
     void (*submit_indirect_count)(bgfx_view_id_t _id, bgfx_program_handle_t _program, bgfx_indirect_buffer_handle_t _indirectHandle, uint32_t _start, bgfx_index_buffer_handle_t _numHandle, uint32_t _numIndex, uint32_t _numMax, uint32_t _depth, uint8_t _flags);
-    void (*set_compute_index_buffer)(uint8_t _stage, bgfx_index_buffer_handle_t _handle, bgfx_access_t _access);
-    void (*set_compute_vertex_buffer)(uint8_t _stage, bgfx_vertex_buffer_handle_t _handle, bgfx_access_t _access);
-    void (*set_compute_dynamic_index_buffer)(uint8_t _stage, bgfx_dynamic_index_buffer_handle_t _handle, bgfx_access_t _access);
-    void (*set_compute_dynamic_vertex_buffer)(uint8_t _stage, bgfx_dynamic_vertex_buffer_handle_t _handle, bgfx_access_t _access);
+    void (*set_compute_index_buffer)(uint8_t _stage, bgfx_index_buffer_handle_t _handle, bgfx_access_t _access, uint32_t _offset, uint32_t _size);
+    void (*set_compute_vertex_buffer)(uint8_t _stage, bgfx_vertex_buffer_handle_t _handle, bgfx_access_t _access, uint32_t _offset, uint32_t _size);
+    void (*set_compute_dynamic_index_buffer)(uint8_t _stage, bgfx_dynamic_index_buffer_handle_t _handle, bgfx_access_t _access, uint32_t _offset, uint32_t _size);
+    void (*set_compute_dynamic_vertex_buffer)(uint8_t _stage, bgfx_dynamic_vertex_buffer_handle_t _handle, bgfx_access_t _access, uint32_t _offset, uint32_t _size);
     void (*set_compute_indirect_buffer)(uint8_t _stage, bgfx_indirect_buffer_handle_t _handle, bgfx_access_t _access);
     void (*set_image)(uint8_t _stage, bgfx_texture_handle_t _handle, uint8_t _mip, bgfx_access_t _access, bgfx_texture_format_t _format);
     void (*set_image_view)(uint8_t _stage, bgfx_texture_handle_t _handle, uint16_t _firstLayer, uint16_t _numLayers, uint8_t _mip, bgfx_access_t _access, bgfx_texture_format_t _format);

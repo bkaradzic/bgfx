@@ -2148,10 +2148,11 @@ namespace bgfx
 	static constexpr uint8_t  kConstantOpcodeCopyShift = 0;
 	static constexpr uint32_t kConstantOpcodeCopyMask  = UINT32_C(0x00000001);
 
-	static constexpr uint8_t kUniformFragmentBit  = 0x10;
-	static constexpr uint8_t kUniformSamplerBit   = 0x20;
-	static constexpr uint8_t kUniformReadOnlyBit  = 0x40;
-	static constexpr uint8_t kUniformCompareBit   = 0x80;
+	static constexpr uint8_t kUniformRefBit      = 0x08;
+	static constexpr uint8_t kUniformFragmentBit = 0x10;
+	static constexpr uint8_t kUniformSamplerBit  = 0x20;
+	static constexpr uint8_t kUniformReadOnlyBit = 0x40;
+	static constexpr uint8_t kUniformCompareBit  = 0x80;
 	static constexpr uint8_t kUniformMask = 0
 		| kUniformFragmentBit
 		| kUniformSamplerBit
@@ -2294,6 +2295,7 @@ namespace bgfx
 		}
 
 		void writeUniform(UniformType::Enum _type, uint16_t _loc, const void* _value, uint16_t _num = 1);
+		void writeUniformRef(UniformType::Enum _type, uint16_t _loc, const void* _ptr, uint16_t _num = 1);
 		void writeUniformHandle(uint8_t _type, uint16_t _loc, UniformHandle _handle, uint16_t _num = 1);
 		void writeMarker(const bx::StringView& _name);
 
@@ -2380,6 +2382,8 @@ namespace bgfx
 		UniformRegInfo m_info[BGFX_CONFIG_MAX_UNIFORMS];
 	};
 
+	static constexpr uint32_t kBufferBindingOffsetAlign = 256;
+
 	struct Binding
 	{
 		enum Enum
@@ -2398,6 +2402,7 @@ namespace bgfx
 			// compares deterministically when used as a bind-state key.
 			bx::memSet(this, 0, sizeof(*this) );
 			m_samplerFlags = BGFX_SAMPLER_NONE;
+			m_size         = UINT32_MAX;
 			m_numLayers    = UINT16_MAX;
 			m_idx          = kInvalidHandle;
 			m_numMips      = UINT8_MAX;
@@ -2406,6 +2411,8 @@ namespace bgfx
 		void setTexture(TextureHandle _handle, uint32_t _samplerFlags, uint8_t _firstMip = 0, uint8_t _numMips = UINT8_MAX)
 		{
 			m_samplerFlags = _samplerFlags;
+			m_offset       = 0;
+			m_size         = UINT32_MAX;
 			m_firstLayer   = 0;
 			m_numLayers    = UINT16_MAX;
 			m_idx      = _handle.idx;
@@ -2420,6 +2427,8 @@ namespace bgfx
 		void setTexture(TextureHandle _handle, uint16_t _firstLayer, uint16_t _numLayers, uint8_t _firstMip, uint8_t _numMips, uint32_t _samplerFlags)
 		{
 			m_samplerFlags = _samplerFlags;
+			m_offset       = 0;
+			m_size         = UINT32_MAX;
 			m_firstLayer   = _firstLayer;
 			m_numLayers    = _numLayers;
 			m_idx      = _handle.idx;
@@ -2431,9 +2440,11 @@ namespace bgfx
 			m_pad      = 0;
 		}
 
-		void setIndexBuffer(IndexBufferHandle _handle, Access::Enum _access)
+		void setIndexBuffer(IndexBufferHandle _handle, Access::Enum _access, uint32_t _offset = 0, uint32_t _size = UINT32_MAX)
 		{
 			m_samplerFlags = BGFX_SAMPLER_NONE;
+			m_offset       = _offset;
+			m_size         = _size;
 			m_firstLayer   = 0;
 			m_numLayers    = UINT16_MAX;
 			m_idx      = _handle.idx;
@@ -2445,9 +2456,11 @@ namespace bgfx
 			m_pad      = 0;
 		}
 
-		void setBuffer(VertexBufferHandle _handle, Access::Enum _access)
+		void setBuffer(VertexBufferHandle _handle, Access::Enum _access, uint32_t _offset = 0, uint32_t _size = UINT32_MAX)
 		{
 			m_samplerFlags = BGFX_SAMPLER_NONE;
+			m_offset       = _offset;
+			m_size         = _size;
 			m_firstLayer   = 0;
 			m_numLayers    = UINT16_MAX;
 			m_idx      = _handle.idx;
@@ -2467,6 +2480,8 @@ namespace bgfx
 		void setImage(TextureHandle _handle, uint16_t _firstLayer, uint16_t _numLayers, uint8_t _mip, Access::Enum _access, TextureFormat::Enum _format)
 		{
 			m_samplerFlags = BGFX_SAMPLER_NONE;
+			m_offset       = 0;
+			m_size         = UINT32_MAX;
 			m_firstLayer   = _firstLayer;
 			m_numLayers    = _numLayers;
 			m_idx      = _handle.idx;
@@ -2484,6 +2499,8 @@ namespace bgfx
 		}
 
 		uint32_t m_samplerFlags;
+		uint32_t m_offset;
+		uint32_t m_size;
 		uint16_t m_firstLayer;
 		uint16_t m_numLayers;
 		uint16_t m_idx;
@@ -2494,7 +2511,7 @@ namespace bgfx
 		uint8_t  m_numMips;
 		uint8_t  m_pad;
 	};
-	static_assert(16 == sizeof(Binding), "Binding size changed. Whole struct must be properly initialized for hashing and comparing!");
+	static_assert(24 == sizeof(Binding), "Binding size changed. Whole struct must be properly initialized for hashing and comparing!");
 	static_assert(bx::hasUniqueObjectRepresentation<Binding>()
 		, "Binding is hashed and compared as bytes, so it must not have padding. Add an explicit member to fill the hole."
 		);
@@ -4013,6 +4030,23 @@ namespace bgfx
 			uniformBuffer->writeUniform(_type, _handle.idx, _value, _num);
 		}
 
+		void setUniformRef(UniformType::Enum _type, UniformHandle _handle, const void* _ptr, uint16_t _num)
+		{
+			if (BX_ENABLED(BGFX_CONFIG_DEBUG_UNIFORM) )
+			{
+				BX_ASSERT(m_uniformSet.end() == m_uniformSet.find(_handle.idx)
+					, "Uniform %d (%s) was already set for this draw call."
+					, _handle.idx
+					, getName(_handle)
+					);
+				m_uniformSet.insert(_handle.idx);
+			}
+
+			UniformBuffer::update(&m_frame->m_uniformBuffer[m_uniformIdx]);
+			UniformBuffer* uniformBuffer = m_frame->m_uniformBuffer[m_uniformIdx];
+			uniformBuffer->writeUniformRef(_type, _handle.idx, _ptr, _num);
+		}
+
 		void setState(uint64_t _state, uint32_t _rgba)
 		{
 			const uint8_t blend =     ( (_state&BGFX_STATE_BLEND_MASK    )>>BGFX_STATE_BLEND_SHIFT    )&0xff;
@@ -4288,17 +4322,17 @@ namespace bgfx
 			}
 		}
 
-		void setBuffer(uint8_t _stage, IndexBufferHandle _handle, Access::Enum _access)
+		void setBuffer(uint8_t _stage, IndexBufferHandle _handle, Access::Enum _access, uint32_t _offset = 0, uint32_t _size = UINT32_MAX)
 		{
 			Binding bind;
-			bind.setIndexBuffer(_handle, _access);
+			bind.setIndexBuffer(_handle, _access, _offset, _size);
 			setBind(_stage, bind);
 		}
 
-		void setBuffer(uint8_t _stage, VertexBufferHandle _handle, Access::Enum _access)
+		void setBuffer(uint8_t _stage, VertexBufferHandle _handle, Access::Enum _access, uint32_t _offset = 0, uint32_t _size = UINT32_MAX)
 		{
 			Binding bind;
-			bind.setBuffer(_handle, _access);
+			bind.setBuffer(_handle, _access, _offset, _size);
 			setBind(_stage, bind);
 		}
 

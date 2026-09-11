@@ -922,6 +922,18 @@ typedef double GLdouble;
 #	define GL_SHADER_STORAGE_BUFFER 0x90D2
 #endif // GL_SHADER_STORAGE_BUFFER
 
+#ifndef GL_TEXTURE_SRGB_DECODE_EXT
+#	define GL_TEXTURE_SRGB_DECODE_EXT 0x8A48
+#endif // GL_TEXTURE_SRGB_DECODE_EXT
+
+#ifndef GL_DECODE_EXT
+#	define GL_DECODE_EXT 0x8A49
+#endif // GL_DECODE_EXT
+
+#ifndef GL_SKIP_DECODE_EXT
+#	define GL_SKIP_DECODE_EXT 0x8A4A
+#endif // GL_SKIP_DECODE_EXT
+
 #ifndef GL_IMAGE_1D
 #	define GL_IMAGE_1D 0x904C
 #endif // GL_IMAGE_1D
@@ -1568,6 +1580,7 @@ namespace bgfx { namespace gl
 		uint16_t destroy();
 		void resolve();
 		void discard(uint16_t _flags);
+		bool isSrgbWrite() const;
 
 		void createSwapChainFbo(const SwapChain& _desc);
 		void destroySwapChainFbo();

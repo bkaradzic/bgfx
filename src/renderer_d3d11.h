@@ -307,6 +307,16 @@ namespace bgfx { namespace d3d11
 		uint32_t size;
 	};
 
+	struct SrgbSelect
+	{
+		enum Enum
+		{
+			Native,
+			Linear,
+			Srgb,
+		};
+	};
+
 	struct DirectAccessResourceD3D11
 	{
 		DirectAccessResourceD3D11()
@@ -358,7 +368,8 @@ namespace bgfx { namespace d3d11
 		void commit(uint8_t _stage, uint32_t _flags, const float _palette[][4], uint16_t _firstLayer = 0, uint16_t _numLayers = UINT16_MAX, uint8_t _firstMip = 0, uint8_t _numMips = UINT8_MAX, TextureDimension::Enum _dimension = TextureDimension::Count);
 		void resolve(uint8_t _resolve, uint32_t _layer, uint32_t _numLayers, uint32_t _mip) const;
 		TextureHandle getHandle() const;
-		DXGI_FORMAT getSrvFormat() const;
+		DXGI_FORMAT getSrvFormat(SrgbSelect::Enum _srgb = SrgbSelect::Native) const;
+		DXGI_FORMAT getUavFormat() const;
 		bool isMsaaSurface() const;
 
 		union

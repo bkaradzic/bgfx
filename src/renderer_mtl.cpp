@@ -864,6 +864,17 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 	struct RendererContextMtl;
 	static RendererContextMtl* s_renderMtl;
 
+	static uint32_t getBufferBindOffset(const Binding& _bind, uint32_t _size)
+	{
+		const uint32_t offset = bx::min(_bind.m_offset, _size);
+		const uint32_t range  = UINT32_MAX == _bind.m_size
+			? _size - offset
+			: bx::min(_bind.m_size, _size - offset)
+			;
+
+		return 0 != range ? offset : 0;
+	}
+
 	struct RendererContextMtl : public RendererContextI
 	{
 		RendererContextMtl()
@@ -2604,12 +2615,17 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 				for (uint32_t ii = 0; ii < frameBuffer.m_num; ++ii)
 				{
 					const TextureMtl& texture = m_textures[frameBuffer.m_colorHandle[ii].idx];
-					_renderPassDescriptor->colorAttachments()->object(ii)->setTexture(texture.m_ptrMsaa
-						? texture.m_ptrMsaa
-						: texture.m_ptr
+					const bool alt = texture.useAltFormat(frameBuffer.m_colorAttachment[ii].flags, BGFX_ATTACHMENT_SRGB);
+
+					MTL::Texture* ptr     = alt ? texture.m_ptrAlt     : texture.m_ptr;
+					MTL::Texture* ptrMsaa = alt ? texture.m_ptrMsaaAlt : texture.m_ptrMsaa;
+
+					_renderPassDescriptor->colorAttachments()->object(ii)->setTexture(ptrMsaa
+						? ptrMsaa
+						: ptr
 						);
-					_renderPassDescriptor->colorAttachments()->object(ii)->setResolveTexture(texture.m_ptrMsaa
-						? texture.m_ptr
+					_renderPassDescriptor->colorAttachments()->object(ii)->setResolveTexture(ptrMsaa
+						? ptr
 						: NULL
 						);
 
@@ -3116,7 +3132,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 							? texture.m_ptrMsaa->sampleCount()
 							: 1
 							);
-						pd->colorAttachments()->object(ii)->setPixelFormat(texture.m_ptr->pixelFormat() );
+						pd->colorAttachments()->object(ii)->setPixelFormat(texture.getAttachmentPixelFormat(frameBuffer.m_colorAttachment[ii].flags) );
 					}
 
 					if (isValid(frameBuffer.m_depthHandle) )
@@ -4259,6 +4275,24 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 				format = tfi.fmt;
 			}
 
+			const bool srgbMutable = true
+				&& 0 != (_flags & BGFX_TEXTURE_SRGB_MUTABLE)
+				&& MTL::PixelFormatInvalid != tfi.fmt
+				&& MTL::PixelFormatInvalid != tfi.fmtSrgb
+				;
+
+			if (0 != (_flags & BGFX_TEXTURE_SRGB_MUTABLE)
+			&&  !srgbMutable)
+			{
+				BX_WARN(false, "BGFX_TEXTURE_SRGB_MUTABLE is not supported for texture format %d", m_textureFormat);
+				m_flags &= ~BGFX_TEXTURE_SRGB_MUTABLE;
+			}
+
+			const MTL::PixelFormat altFormat = format == tfi.fmtSrgb
+				? tfi.fmt
+				: tfi.fmtSrgb
+				;
+
 			desc->setPixelFormat(format);
 			desc->setWidth(ti.width);
 			desc->setHeight(ti.height);
@@ -4291,7 +4325,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 					| (computeWrite    ? MTL::TextureUsageShaderWrite     : 0)
 					| (isVideoDecodeDst? MTL::TextureUsageShaderWrite     : 0)
 					| (renderTarget    ? MTL::TextureUsageRenderTarget    : 0)
-					| (packedDepthStencil ? MTL::TextureUsagePixelFormatView : 0)
+					| (packedDepthStencil || srgbMutable ? MTL::TextureUsagePixelFormatView : 0)
 					;
 
 				desc->setUsage(usage);
@@ -4305,6 +4339,12 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			else
 			{
 				m_ptr = s_renderMtl->m_device->newTexture(desc);
+			}
+
+			if (srgbMutable
+			&&  NULL != m_ptr)
+			{
+				m_ptrAlt = m_ptr->newTextureView(altFormat);
 			}
 
 			if (sampleCount > 1)
@@ -4322,6 +4362,12 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 				}
 
 				m_ptrMsaa = s_renderMtl->m_device->newTexture(desc);
+
+				if (srgbMutable
+				&&  NULL != m_ptrMsaa)
+				{
+					m_ptrMsaaAlt = m_ptrMsaa->newTextureView(altFormat);
+				}
 			}
 
 			if (m_requestedFormat == TextureFormat::D24S8
@@ -4454,6 +4500,8 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 		MTL_RELEASE_W(m_ptrMsaa, 0);
 		MTL_RELEASE_W(m_ptrStencil, 0);
+		MTL_RELEASE_W(m_ptrAlt, 0);
+		MTL_RELEASE_W(m_ptrMsaaAlt, 0);
 
 		for (stl::unordered_map<uint64_t, MTL::Texture*>::iterator it = m_ptrViews.begin(), itEnd = m_ptrViews.end(); it != itEnd; ++it)
 		{
@@ -4606,7 +4654,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 		MTL::Texture* ptr = _mip != UINT8_MAX
 			? getTextureImage(_mip, _firstLayer, _numLayers)
-			: getTextureView(_firstLayer, _numLayers, _firstMip, _numMips, sampleStencil)
+			: getTextureView(_firstLayer, _numLayers, _firstMip, _numMips, sampleStencil, useAltFormat(flags, BGFX_SAMPLER_SRGB) )
 			;
 
 		if (_vertex)
@@ -4632,7 +4680,26 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 		}
 	}
 
-	MTL::Texture* TextureMtl::getTextureView(uint16_t _firstLayer, uint16_t _numLayers, uint8_t _firstMip, uint8_t _numMips, bool _stencil)
+	bool TextureMtl::useAltFormat(uint32_t _flags, uint32_t _bit) const
+	{
+		if (NULL == m_ptrAlt)
+		{
+			return false;
+		}
+
+		const bool srgb = m_ptr->pixelFormat() == s_textureFormat[m_textureFormat].fmtSrgb;
+		return srgb != (0 != (_flags & _bit) );
+	}
+
+	MTL::PixelFormat TextureMtl::getAttachmentPixelFormat(uint8_t _flags) const
+	{
+		return useAltFormat(_flags, BGFX_ATTACHMENT_SRGB)
+			? m_ptrAlt->pixelFormat()
+			: m_ptr->pixelFormat()
+			;
+	}
+
+	MTL::Texture* TextureMtl::getTextureView(uint16_t _firstLayer, uint16_t _numLayers, uint8_t _firstMip, uint8_t _numMips, bool _stencil, bool _alt)
 	{
 		MTL::Texture* ptr = _stencil && NULL != m_ptrStencil
 			? m_ptrStencil
@@ -4644,7 +4711,15 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			return NULL;
 		}
 
-		MTL::PixelFormat format = ptr->pixelFormat();
+		const bool alt = _alt
+			&& !_stencil
+			&& NULL != m_ptrAlt
+			;
+
+		MTL::PixelFormat format = alt
+			? m_ptrAlt->pixelFormat()
+			: ptr->pixelFormat()
+			;
 
 		if (_stencil
 		&&  ptr == m_ptr)
@@ -4678,11 +4753,18 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			return ptr;
 		}
 
+		if (fullRange
+		&&  alt)
+		{
+			return m_ptrAlt;
+		}
+
 		const uint64_t key = 0
 			| uint64_t(firstMip)
 			| (uint64_t(numMips)    <<  8)
 			| (uint64_t(firstLayer) << 16)
 			| (uint64_t(numLayers)  << 32)
+			| (uint64_t(alt)        << 62)
 			| (uint64_t(_stencil)   << 63)
 			;
 
@@ -5175,7 +5257,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 		for (uint32_t ii = 0; ii < m_num; ++ii)
 		{
 			const TextureMtl& texture = s_renderMtl->m_textures[m_colorHandle[ii].idx];
-			murmur.add(uint32_t(texture.m_ptr->pixelFormat() ) );
+			murmur.add(uint32_t(texture.getAttachmentPixelFormat(m_colorAttachment[ii].flags) ) );
 		}
 
 		if (!isValid(m_depthHandle) )
@@ -6484,7 +6566,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 									? m_indexBuffers[bind.m_idx]
 									: m_vertexBuffers[bind.m_idx]
 									;
-									m_computeCommandEncoder->setBuffer(buffer.m_ptr, 0, stage + 1);
+									m_computeCommandEncoder->setBuffer(buffer.m_ptr, getBufferBindOffset(bind, buffer.m_size), stage + 1);
 								}
 								break;
 							}
@@ -6919,14 +7001,16 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 											: m_vertexBuffers[bind.m_idx]
 											;
 
+										const uint32_t offset = getBufferBindOffset(bind, buffer.m_size);
+
 										if (0 != (bindingTypes[stage] & PipelineStateMtl::BindToVertexShader) )
 										{
-											rce->setVertexBuffer(buffer.m_ptr, 0, stage + 1);
+											rce->setVertexBuffer(buffer.m_ptr, offset, stage + 1);
 										}
 
 										if (0 != (bindingTypes[stage] & PipelineStateMtl::BindToFragmentShader) )
 										{
-											rce->setFragmentBuffer(buffer.m_ptr, 0, stage + 1);
+											rce->setFragmentBuffer(buffer.m_ptr, offset, stage + 1);
 										}
 									}
 									break;

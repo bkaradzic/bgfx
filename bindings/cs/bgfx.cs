@@ -686,6 +686,16 @@ public static partial class bgfx
 		/// Texture is shared with other device or other process.
 		/// </summary>
 		ExternalShared         = 0x0001000000000000,
+	
+		/// <summary>
+		/// Texture may be sampled and rendered with either sRGB-ness,
+		/// not just the one implied by its format. Every bind and
+		/// attachment must then state the encoding it wants (see
+		/// `BGFX_SAMPLER_SRGB`, `BGFX_ATTACHMENT_SRGB`). Costs nothing
+		/// until used, but may disable texture compression on some
+		/// hardware.
+		/// </summary>
+		SrgbMutable            = 0x0040000000000000,
 		ReservedShift          = 60,
 		ReservedMask           = 0xf000000000000000,
 	
@@ -855,6 +865,14 @@ public static partial class bgfx
 		/// Sample stencil instead of depth.
 		/// </summary>
 		SampleStencil          = 0x00100000,
+	
+		/// <summary>
+		/// Sample with sRGB conversion; absence of this flag samples
+		/// without it. Only affects textures created
+		/// `BGFX_TEXTURE_SRGB_MUTABLE`, which must state the encoding
+		/// explicitly on every bind; ignored for any other texture.
+		/// </summary>
+		Srgb                   = 0x00200000,
 		Point                  = 0x00000540,
 		UvwMirror              = 0x00000015,
 		UvwClamp               = 0x0000002a,
@@ -1340,6 +1358,14 @@ public static partial class bgfx
 		/// Bind the stencil aspect read-only.
 		/// </summary>
 		ReadOnlyStencil        = 0x00000004,
+	
+		/// <summary>
+		/// Render with sRGB conversion; absence of this flag renders without
+		/// it. Only affects textures created `BGFX_TEXTURE_SRGB_MUTABLE`,
+		/// which must state the encoding explicitly on every attachment;
+		/// ignored for any other texture.
+		/// </summary>
+		Srgb                   = 0x00000008,
 	}
 	
 	[Flags]
@@ -4650,6 +4676,20 @@ public static partial class bgfx
 	public static extern unsafe void encoder_set_uniform(Encoder* _this, UniformHandle _handle, void* _value, ushort _num);
 	
 	/// <summary>
+	/// Set shader uniform parameter by reference. Unlike `Encoder::setUniform`, the data
+	/// is not copied immediately; the renderer reads it from `_value` at frame render
+	/// time. The pointer must remain valid and unchanged until the frame is rendered
+	/// (up to two `bgfx::frame` calls with multithreaded submission).
+	/// </summary>
+	///
+	/// <param name="_handle">Uniform.</param>
+	/// <param name="_value">Pointer to uniform data. Must stay valid until the frame is rendered.</param>
+	/// <param name="_num">Number of elements. Passing `UINT16_MAX` will use the _num passed on uniform creation.</param>
+	///
+	[DllImport(DllName, EntryPoint="bgfx_encoder_set_uniform_ref", CallingConvention = CallingConvention.Cdecl)]
+	public static extern unsafe void encoder_set_uniform_ref(Encoder* _this, UniformHandle _handle, void* _value, ushort _num);
+	
+	/// <summary>
 	/// Set shader uniform parameter for view.
 	/// 
 	/// @attention Uniform must be created with `bgfx::UniformFreq::View` argument.
@@ -4960,9 +5000,11 @@ public static partial class bgfx
 	/// <param name="_stage">Compute stage.</param>
 	/// <param name="_handle">Index buffer handle.</param>
 	/// <param name="_access">Buffer access. See `Access::Enum`.</param>
+	/// <param name="_offset">Byte offset the shader's view of the buffer starts at. Must be a multiple of 256 bytes.</param>
+	/// <param name="_size">Bytes bound from the offset, `UINT32_MAX` for the rest of the buffer.</param>
 	///
 	[DllImport(DllName, EntryPoint="bgfx_encoder_set_compute_index_buffer", CallingConvention = CallingConvention.Cdecl)]
-	public static extern unsafe void encoder_set_compute_index_buffer(Encoder* _this, byte _stage, IndexBufferHandle _handle, Access _access);
+	public static extern unsafe void encoder_set_compute_index_buffer(Encoder* _this, byte _stage, IndexBufferHandle _handle, Access _access, uint _offset, uint _size);
 	
 	/// <summary>
 	/// Set compute vertex buffer.
@@ -4971,9 +5013,11 @@ public static partial class bgfx
 	/// <param name="_stage">Compute stage.</param>
 	/// <param name="_handle">Vertex buffer handle.</param>
 	/// <param name="_access">Buffer access. See `Access::Enum`.</param>
+	/// <param name="_offset">Byte offset the shader's view of the buffer starts at. Must be a multiple of 256 bytes.</param>
+	/// <param name="_size">Bytes bound from the offset, `UINT32_MAX` for the rest of the buffer.</param>
 	///
 	[DllImport(DllName, EntryPoint="bgfx_encoder_set_compute_vertex_buffer", CallingConvention = CallingConvention.Cdecl)]
-	public static extern unsafe void encoder_set_compute_vertex_buffer(Encoder* _this, byte _stage, VertexBufferHandle _handle, Access _access);
+	public static extern unsafe void encoder_set_compute_vertex_buffer(Encoder* _this, byte _stage, VertexBufferHandle _handle, Access _access, uint _offset, uint _size);
 	
 	/// <summary>
 	/// Set compute dynamic index buffer.
@@ -4982,9 +5026,11 @@ public static partial class bgfx
 	/// <param name="_stage">Compute stage.</param>
 	/// <param name="_handle">Dynamic index buffer handle.</param>
 	/// <param name="_access">Buffer access. See `Access::Enum`.</param>
+	/// <param name="_offset">Byte offset the shader's view of the buffer starts at. Must be a multiple of 256 bytes.</param>
+	/// <param name="_size">Bytes bound from the offset, `UINT32_MAX` for the rest of the buffer.</param>
 	///
 	[DllImport(DllName, EntryPoint="bgfx_encoder_set_compute_dynamic_index_buffer", CallingConvention = CallingConvention.Cdecl)]
-	public static extern unsafe void encoder_set_compute_dynamic_index_buffer(Encoder* _this, byte _stage, DynamicIndexBufferHandle _handle, Access _access);
+	public static extern unsafe void encoder_set_compute_dynamic_index_buffer(Encoder* _this, byte _stage, DynamicIndexBufferHandle _handle, Access _access, uint _offset, uint _size);
 	
 	/// <summary>
 	/// Set compute dynamic vertex buffer.
@@ -4993,9 +5039,11 @@ public static partial class bgfx
 	/// <param name="_stage">Compute stage.</param>
 	/// <param name="_handle">Dynamic vertex buffer handle.</param>
 	/// <param name="_access">Buffer access. See `Access::Enum`.</param>
+	/// <param name="_offset">Byte offset the shader's view of the buffer starts at. Must be a multiple of 256 bytes.</param>
+	/// <param name="_size">Bytes bound from the offset, `UINT32_MAX` for the rest of the buffer.</param>
 	///
 	[DllImport(DllName, EntryPoint="bgfx_encoder_set_compute_dynamic_vertex_buffer", CallingConvention = CallingConvention.Cdecl)]
-	public static extern unsafe void encoder_set_compute_dynamic_vertex_buffer(Encoder* _this, byte _stage, DynamicVertexBufferHandle _handle, Access _access);
+	public static extern unsafe void encoder_set_compute_dynamic_vertex_buffer(Encoder* _this, byte _stage, DynamicVertexBufferHandle _handle, Access _access, uint _offset, uint _size);
 	
 	/// <summary>
 	/// Set compute indirect buffer.
@@ -5407,6 +5455,20 @@ public static partial class bgfx
 	public static extern unsafe void set_uniform(UniformHandle _handle, void* _value, ushort _num);
 	
 	/// <summary>
+	/// Set shader uniform parameter by reference. Unlike `bgfx::setUniform`, the data
+	/// is not copied immediately; the renderer reads it from `_value` at frame render
+	/// time. The pointer must remain valid and unchanged until the frame is rendered
+	/// (up to two `bgfx::frame` calls with multithreaded submission).
+	/// </summary>
+	///
+	/// <param name="_handle">Uniform.</param>
+	/// <param name="_value">Pointer to uniform data. Must stay valid until the frame is rendered.</param>
+	/// <param name="_num">Number of elements. Passing `UINT16_MAX` will use the _num passed on uniform creation.</param>
+	///
+	[DllImport(DllName, EntryPoint="bgfx_set_uniform_ref", CallingConvention = CallingConvention.Cdecl)]
+	public static extern unsafe void set_uniform_ref(UniformHandle _handle, void* _value, ushort _num);
+	
+	/// <summary>
 	/// Set index buffer for draw primitive.
 	/// </summary>
 	///
@@ -5686,9 +5748,11 @@ public static partial class bgfx
 	/// <param name="_stage">Compute stage.</param>
 	/// <param name="_handle">Index buffer handle.</param>
 	/// <param name="_access">Buffer access. See `Access::Enum`.</param>
+	/// <param name="_offset">Byte offset the shader's view of the buffer starts at. Must be a multiple of 256 bytes.</param>
+	/// <param name="_size">Bytes bound from the offset, `UINT32_MAX` for the rest of the buffer.</param>
 	///
 	[DllImport(DllName, EntryPoint="bgfx_set_compute_index_buffer", CallingConvention = CallingConvention.Cdecl)]
-	public static extern unsafe void set_compute_index_buffer(byte _stage, IndexBufferHandle _handle, Access _access);
+	public static extern unsafe void set_compute_index_buffer(byte _stage, IndexBufferHandle _handle, Access _access, uint _offset, uint _size);
 	
 	/// <summary>
 	/// Set compute vertex buffer.
@@ -5697,9 +5761,11 @@ public static partial class bgfx
 	/// <param name="_stage">Compute stage.</param>
 	/// <param name="_handle">Vertex buffer handle.</param>
 	/// <param name="_access">Buffer access. See `Access::Enum`.</param>
+	/// <param name="_offset">Byte offset the shader's view of the buffer starts at. Must be a multiple of 256 bytes.</param>
+	/// <param name="_size">Bytes bound from the offset, `UINT32_MAX` for the rest of the buffer.</param>
 	///
 	[DllImport(DllName, EntryPoint="bgfx_set_compute_vertex_buffer", CallingConvention = CallingConvention.Cdecl)]
-	public static extern unsafe void set_compute_vertex_buffer(byte _stage, VertexBufferHandle _handle, Access _access);
+	public static extern unsafe void set_compute_vertex_buffer(byte _stage, VertexBufferHandle _handle, Access _access, uint _offset, uint _size);
 	
 	/// <summary>
 	/// Set compute dynamic index buffer.
@@ -5708,9 +5774,11 @@ public static partial class bgfx
 	/// <param name="_stage">Compute stage.</param>
 	/// <param name="_handle">Dynamic index buffer handle.</param>
 	/// <param name="_access">Buffer access. See `Access::Enum`.</param>
+	/// <param name="_offset">Byte offset the shader's view of the buffer starts at. Must be a multiple of 256 bytes.</param>
+	/// <param name="_size">Bytes bound from the offset, `UINT32_MAX` for the rest of the buffer.</param>
 	///
 	[DllImport(DllName, EntryPoint="bgfx_set_compute_dynamic_index_buffer", CallingConvention = CallingConvention.Cdecl)]
-	public static extern unsafe void set_compute_dynamic_index_buffer(byte _stage, DynamicIndexBufferHandle _handle, Access _access);
+	public static extern unsafe void set_compute_dynamic_index_buffer(byte _stage, DynamicIndexBufferHandle _handle, Access _access, uint _offset, uint _size);
 	
 	/// <summary>
 	/// Set compute dynamic vertex buffer.
@@ -5719,9 +5787,11 @@ public static partial class bgfx
 	/// <param name="_stage">Compute stage.</param>
 	/// <param name="_handle">Dynamic vertex buffer handle.</param>
 	/// <param name="_access">Buffer access. See `Access::Enum`.</param>
+	/// <param name="_offset">Byte offset the shader's view of the buffer starts at. Must be a multiple of 256 bytes.</param>
+	/// <param name="_size">Bytes bound from the offset, `UINT32_MAX` for the rest of the buffer.</param>
 	///
 	[DllImport(DllName, EntryPoint="bgfx_set_compute_dynamic_vertex_buffer", CallingConvention = CallingConvention.Cdecl)]
-	public static extern unsafe void set_compute_dynamic_vertex_buffer(byte _stage, DynamicVertexBufferHandle _handle, Access _access);
+	public static extern unsafe void set_compute_dynamic_vertex_buffer(byte _stage, DynamicVertexBufferHandle _handle, Access _access, uint _offset, uint _size);
 	
 	/// <summary>
 	/// Set compute indirect buffer.

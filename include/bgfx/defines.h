@@ -15,7 +15,7 @@
 #ifndef BGFX_DEFINES_H_HEADER_GUARD
 #define BGFX_DEFINES_H_HEADER_GUARD
 
-#define BGFX_API_VERSION UINT32_C(160)
+#define BGFX_API_VERSION UINT32_C(161)
 
 /**
  * Color RGB/alpha/depth write. When it's not specified write will be disabled.
@@ -294,6 +294,14 @@
 #define BGFX_TEXTURE_READ_BACK                    UINT64_C(0x0000800000000000) //!< Texture will be used for read back from GPU.
 #define BGFX_TEXTURE_EXTERNAL_SHARED              UINT64_C(0x0001000000000000) //!< Texture is shared with other device or other process.
 
+/// Texture may be sampled and rendered with either sRGB-ness,
+/// not just the one implied by its format. Every bind and
+/// attachment must then state the encoding it wants (see
+/// `BGFX_SAMPLER_SRGB`, `BGFX_ATTACHMENT_SRGB`). Costs nothing
+/// until used, but may disable texture compression on some
+/// hardware.
+#define BGFX_TEXTURE_SRGB_MUTABLE                 UINT64_C(0x0040000000000000)
+
 /**
  * Do not use! Top nibble is reserved for internal texture flags (see bgfx_p.h).
  *
@@ -368,6 +376,12 @@
 
 #define BGFX_SAMPLER_NONE                         UINT32_C(0x00000000)
 #define BGFX_SAMPLER_SAMPLE_STENCIL               UINT32_C(0x00100000) //!< Sample stencil instead of depth.
+
+/// Sample with sRGB conversion; absence of this flag samples
+/// without it. Only affects textures created
+/// `BGFX_TEXTURE_SRGB_MUTABLE`, which must state the encoding
+/// explicitly on every bind; ignored for any other texture.
+#define BGFX_SAMPLER_SRGB                         UINT32_C(0x00200000)
 #define BGFX_SAMPLER_POINT (0 \
 	| BGFX_SAMPLER_MIN_POINT \
 	| BGFX_SAMPLER_MAG_POINT \
@@ -545,6 +559,12 @@
 /// attachment can be sampled as a texture in the same pass.
 #define BGFX_ATTACHMENT_READ_ONLY_DEPTH           UINT8_C(0x02)
 #define BGFX_ATTACHMENT_READ_ONLY_STENCIL         UINT8_C(0x04) //!< Bind the stencil aspect read-only.
+
+/// Render with sRGB conversion; absence of this flag renders without
+/// it. Only affects textures created `BGFX_TEXTURE_SRGB_MUTABLE`,
+/// which must state the encoding explicitly on every attachment;
+/// ignored for any other texture.
+#define BGFX_ATTACHMENT_SRGB                      UINT8_C(0x08)
 
 #define BGFX_PCI_ID_NONE                          UINT16_C(0x0000) //!< Autoselect adapter.
 #define BGFX_PCI_ID_SOFTWARE_RASTERIZER           UINT16_C(0x0001) //!< Software rasterizer.

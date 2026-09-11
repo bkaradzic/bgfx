@@ -414,6 +414,7 @@ class TextureFlags(enum.IntFlag):
 	BlitDst = 0x400000000000
 	ReadBack = 0x800000000000
 	ExternalShared = 0x1000000000000
+	SrgbMutable = 0x40000000000000
 	ReservedShift = 0x3c
 	ReservedMask = 0xf000000000000000
 	RtMsaaX2 = 0x2000000000
@@ -469,6 +470,7 @@ class SamplerFlags(enum.IntFlag):
 	ReservedMask = 0xf0000000
 	None_ = 0x0
 	SampleStencil = 0x100000
+	Srgb = 0x200000
 	Point = 0x540
 	UvwMirror = 0x15
 	UvwClamp = 0x2a
@@ -625,6 +627,7 @@ class AttachmentFlags(enum.IntFlag):
 	AutoGenMips = 0x1
 	ReadOnlyDepth = 0x2
 	ReadOnlyStencil = 0x4
+	Srgb = 0x8
 
 class PciIdFlags(enum.IntFlag):
 	None_ = 0x0
@@ -1624,6 +1627,10 @@ def _bind(lib):
 	bgfx_encoder_set_uniform = lib.bgfx_encoder_set_uniform
 	bgfx_encoder_set_uniform.argtypes = [ctypes.POINTER(Encoder), UniformHandle, ctypes.c_void_p, ctypes.c_uint16]
 	bgfx_encoder_set_uniform.restype = None
+	global bgfx_encoder_set_uniform_ref
+	bgfx_encoder_set_uniform_ref = lib.bgfx_encoder_set_uniform_ref
+	bgfx_encoder_set_uniform_ref.argtypes = [ctypes.POINTER(Encoder), UniformHandle, ctypes.c_void_p, ctypes.c_uint16]
+	bgfx_encoder_set_uniform_ref.restype = None
 	global bgfx_set_view_uniform
 	bgfx_set_view_uniform = lib.bgfx_set_view_uniform
 	bgfx_set_view_uniform.argtypes = [ctypes.c_uint16, UniformHandle, ctypes.c_void_p, ctypes.c_uint16]
@@ -1718,19 +1725,19 @@ def _bind(lib):
 	bgfx_encoder_submit_indirect_count.restype = None
 	global bgfx_encoder_set_compute_index_buffer
 	bgfx_encoder_set_compute_index_buffer = lib.bgfx_encoder_set_compute_index_buffer
-	bgfx_encoder_set_compute_index_buffer.argtypes = [ctypes.POINTER(Encoder), ctypes.c_uint8, IndexBufferHandle, ctypes.c_int]
+	bgfx_encoder_set_compute_index_buffer.argtypes = [ctypes.POINTER(Encoder), ctypes.c_uint8, IndexBufferHandle, ctypes.c_int, ctypes.c_uint32, ctypes.c_uint32]
 	bgfx_encoder_set_compute_index_buffer.restype = None
 	global bgfx_encoder_set_compute_vertex_buffer
 	bgfx_encoder_set_compute_vertex_buffer = lib.bgfx_encoder_set_compute_vertex_buffer
-	bgfx_encoder_set_compute_vertex_buffer.argtypes = [ctypes.POINTER(Encoder), ctypes.c_uint8, VertexBufferHandle, ctypes.c_int]
+	bgfx_encoder_set_compute_vertex_buffer.argtypes = [ctypes.POINTER(Encoder), ctypes.c_uint8, VertexBufferHandle, ctypes.c_int, ctypes.c_uint32, ctypes.c_uint32]
 	bgfx_encoder_set_compute_vertex_buffer.restype = None
 	global bgfx_encoder_set_compute_dynamic_index_buffer
 	bgfx_encoder_set_compute_dynamic_index_buffer = lib.bgfx_encoder_set_compute_dynamic_index_buffer
-	bgfx_encoder_set_compute_dynamic_index_buffer.argtypes = [ctypes.POINTER(Encoder), ctypes.c_uint8, DynamicIndexBufferHandle, ctypes.c_int]
+	bgfx_encoder_set_compute_dynamic_index_buffer.argtypes = [ctypes.POINTER(Encoder), ctypes.c_uint8, DynamicIndexBufferHandle, ctypes.c_int, ctypes.c_uint32, ctypes.c_uint32]
 	bgfx_encoder_set_compute_dynamic_index_buffer.restype = None
 	global bgfx_encoder_set_compute_dynamic_vertex_buffer
 	bgfx_encoder_set_compute_dynamic_vertex_buffer = lib.bgfx_encoder_set_compute_dynamic_vertex_buffer
-	bgfx_encoder_set_compute_dynamic_vertex_buffer.argtypes = [ctypes.POINTER(Encoder), ctypes.c_uint8, DynamicVertexBufferHandle, ctypes.c_int]
+	bgfx_encoder_set_compute_dynamic_vertex_buffer.argtypes = [ctypes.POINTER(Encoder), ctypes.c_uint8, DynamicVertexBufferHandle, ctypes.c_int, ctypes.c_uint32, ctypes.c_uint32]
 	bgfx_encoder_set_compute_dynamic_vertex_buffer.restype = None
 	global bgfx_encoder_set_compute_indirect_buffer
 	bgfx_encoder_set_compute_indirect_buffer = lib.bgfx_encoder_set_compute_indirect_buffer
@@ -1836,6 +1843,10 @@ def _bind(lib):
 	bgfx_set_uniform = lib.bgfx_set_uniform
 	bgfx_set_uniform.argtypes = [UniformHandle, ctypes.c_void_p, ctypes.c_uint16]
 	bgfx_set_uniform.restype = None
+	global bgfx_set_uniform_ref
+	bgfx_set_uniform_ref = lib.bgfx_set_uniform_ref
+	bgfx_set_uniform_ref.argtypes = [UniformHandle, ctypes.c_void_p, ctypes.c_uint16]
+	bgfx_set_uniform_ref.restype = None
 	global bgfx_set_index_buffer
 	bgfx_set_index_buffer = lib.bgfx_set_index_buffer
 	bgfx_set_index_buffer.argtypes = [IndexBufferHandle, ctypes.c_uint32, ctypes.c_uint32]
@@ -1922,19 +1933,19 @@ def _bind(lib):
 	bgfx_submit_indirect_count.restype = None
 	global bgfx_set_compute_index_buffer
 	bgfx_set_compute_index_buffer = lib.bgfx_set_compute_index_buffer
-	bgfx_set_compute_index_buffer.argtypes = [ctypes.c_uint8, IndexBufferHandle, ctypes.c_int]
+	bgfx_set_compute_index_buffer.argtypes = [ctypes.c_uint8, IndexBufferHandle, ctypes.c_int, ctypes.c_uint32, ctypes.c_uint32]
 	bgfx_set_compute_index_buffer.restype = None
 	global bgfx_set_compute_vertex_buffer
 	bgfx_set_compute_vertex_buffer = lib.bgfx_set_compute_vertex_buffer
-	bgfx_set_compute_vertex_buffer.argtypes = [ctypes.c_uint8, VertexBufferHandle, ctypes.c_int]
+	bgfx_set_compute_vertex_buffer.argtypes = [ctypes.c_uint8, VertexBufferHandle, ctypes.c_int, ctypes.c_uint32, ctypes.c_uint32]
 	bgfx_set_compute_vertex_buffer.restype = None
 	global bgfx_set_compute_dynamic_index_buffer
 	bgfx_set_compute_dynamic_index_buffer = lib.bgfx_set_compute_dynamic_index_buffer
-	bgfx_set_compute_dynamic_index_buffer.argtypes = [ctypes.c_uint8, DynamicIndexBufferHandle, ctypes.c_int]
+	bgfx_set_compute_dynamic_index_buffer.argtypes = [ctypes.c_uint8, DynamicIndexBufferHandle, ctypes.c_int, ctypes.c_uint32, ctypes.c_uint32]
 	bgfx_set_compute_dynamic_index_buffer.restype = None
 	global bgfx_set_compute_dynamic_vertex_buffer
 	bgfx_set_compute_dynamic_vertex_buffer = lib.bgfx_set_compute_dynamic_vertex_buffer
-	bgfx_set_compute_dynamic_vertex_buffer.argtypes = [ctypes.c_uint8, DynamicVertexBufferHandle, ctypes.c_int]
+	bgfx_set_compute_dynamic_vertex_buffer.argtypes = [ctypes.c_uint8, DynamicVertexBufferHandle, ctypes.c_int, ctypes.c_uint32, ctypes.c_uint32]
 	bgfx_set_compute_dynamic_vertex_buffer.restype = None
 	global bgfx_set_compute_indirect_buffer
 	bgfx_set_compute_indirect_buffer = lib.bgfx_set_compute_indirect_buffer

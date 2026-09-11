@@ -3646,6 +3646,9 @@ WGPU_IMPORT
 									, bind.m_numLayers
 									, viewDimension
 									, sampleStencil
+									, Binding::Texture == bind.m_type
+										? texture.getViewFormat(resolvedFlags, BGFX_SAMPLER_SRGB)
+										: WGPUTextureFormat_Undefined
 									),
 							};
 
@@ -3674,13 +3677,20 @@ WGPU_IMPORT
 								: m_vertexBuffers[bind.m_idx]
 								;
 
+							const uint32_t bufferSize = bx::alignUp(buffer.m_size, 4);
+							const uint32_t offset = bx::min<uint32_t>(bind.m_offset, bufferSize);
+							const uint32_t range  = UINT32_MAX == bind.m_size
+								? bufferSize - offset
+								: bx::min<uint32_t>(bind.m_size, bufferSize - offset)
+								;
+
 							bindGroupEntry[entryCount++] =
 							{
 								.nextInChain = NULL,
 								.binding     = shaderBind.binding,
 								.buffer      = buffer.m_buffer,
-								.offset      = 0,
-								.size        = buffer.m_size,
+								.offset      = 0 != range ? offset : 0,
+								.size        = 0 != range ? range  : bufferSize,
 								.sampler     = NULL,
 								.textureView = NULL,
 							};
@@ -3805,7 +3815,7 @@ WGPU_IMPORT
 			{
 				const WGPUTextureFormat format = isSwapChain
 					? _fb.m_swapChain.m_viewFormat
-					: m_textures[_fb.m_texture[ii].idx].m_fmt
+					: _fb.m_colorFormat[ii]
 					;
 
 				const WGPUBlendState* blend = independentBlendEnable && 0 != ii
@@ -3854,7 +3864,7 @@ WGPU_IMPORT
 
 			for (uint8_t ii = 0; ii < _fb.m_numColorAttachments; ++ii)
 			{
-				_murmur.add(m_textures[_fb.m_texture[ii].idx].m_fmt);
+				_murmur.add(_fb.m_colorFormat[ii]);
 			}
 
 			_murmur.add(NULL != _fb.m_depthStencilView);
@@ -4065,11 +4075,28 @@ WGPU_IMPORT
 		return s_renderWGPU->m_cmd.m_currentFrameInFlight;
 	}
 
+	static void writeBufferAligned(WGPUBuffer _buffer, uint32_t _offset, const void* _data, uint32_t _size)
+	{
+		const uint32_t alignedSize = bx::alignUp(_size, 4);
+
+		if (alignedSize == _size)
+		{
+			s_renderWGPU->m_cmd.writeBuffer(_buffer, _offset, _data, _size);
+			return;
+		}
+
+		uint8_t* temp = (uint8_t*)bx::alloc(g_allocator, alignedSize);
+		bx::memCopy(temp, _data, _size);
+		bx::memSet(&temp[_size], 0, alignedSize - _size);
+		s_renderWGPU->m_cmd.writeBuffer(_buffer, _offset, temp, alignedSize);
+		bx::free(g_allocator, temp);
+	}
+
 	void BufferWGPU::create(uint32_t _size, void* _data, uint16_t _flags, bool _vertex, uint32_t _stride)
 	{
 		BX_UNUSED(_stride);
 
-		m_size  = bx::alignUp(_size, 4);
+		m_size  = _size;
 		m_flags = _flags;
 
 		const bool indirect = !!(m_flags & BGFX_BUFFER_DRAW_INDIRECT);
@@ -4088,7 +4115,7 @@ WGPU_IMPORT
 				  )
 				| WGPUBufferUsage_CopyDst
 				,
-			.size = m_size,
+			.size = bx::alignUp(m_size, 4),
 			.mappedAtCreation = false,
 		};
 
@@ -4096,14 +4123,14 @@ WGPU_IMPORT
 
 		if (NULL != _data)
 		{
-			s_renderWGPU->m_cmd.writeBuffer(m_buffer, 0, _data, m_size);
+			writeBufferAligned(m_buffer, 0, _data, m_size);
 		}
 	}
 
 	void BufferWGPU::update(uint32_t _offset, uint32_t _size, void* _data, bool _discard) const
 	{
 		BX_UNUSED(_discard);
-		s_renderWGPU->m_cmd.writeBuffer(m_buffer, _offset, _data, bx::alignUp(_size, 4) );
+		writeBufferAligned(m_buffer, _offset, _data, _size);
 	}
 
 	void BufferWGPU::destroy()
@@ -4688,6 +4715,25 @@ WGPU_IMPORT
 					: s_textureFormat[m_textureFormat].m_fmt
 				;
 
+			WGPUTextureFormat viewFormat = WGPUTextureFormat_Undefined;
+
+			if (0 != (m_flags & BGFX_TEXTURE_SRGB_MUTABLE) )
+			{
+				const TextureFormatInfo& tfi = s_textureFormat[m_textureFormat];
+
+				if (!swizzle
+				&&  WGPUTextureFormat_Undefined != tfi.m_fmt
+				&&  WGPUTextureFormat_Undefined != tfi.m_fmtSrgb)
+				{
+					viewFormat = srgb ? tfi.m_fmt : tfi.m_fmtSrgb;
+				}
+				else
+				{
+					BX_WARN(false, "BGFX_TEXTURE_SRGB_MUTABLE is not supported for texture format %d", m_textureFormat);
+					m_flags &= ~BGFX_TEXTURE_SRGB_MUTABLE;
+				}
+			}
+
 			const uint32_t sampleCount = needResolve ? 1 : m_msaaCount;
 
 			WGPUTextureDescriptor textureDesc =
@@ -4715,18 +4761,26 @@ WGPU_IMPORT
 				.format          = m_fmt,
 				.mipLevelCount   = 1 < sampleCount ? 1u : uint32_t(m_numMips),
 				.sampleCount     = sampleCount,
-				.viewFormatCount = 0,
-				.viewFormats     = NULL,
+				.viewFormatCount = WGPUTextureFormat_Undefined != viewFormat ? 1u : 0u,
+				.viewFormats     = WGPUTextureFormat_Undefined != viewFormat ? &viewFormat : NULL,
 			};
 
 			m_texture = WGPU_CHECK(wgpuDeviceCreateTexture(s_renderWGPU->m_device, &textureDesc) );
 
 			if (needResolve)
 			{
-				textureDesc.usage         = WGPUTextureUsage_RenderAttachment;
-				textureDesc.mipLevelCount = 1;
-				textureDesc.sampleCount   = m_msaaCount;
+				textureDesc.usage           = WGPUTextureUsage_RenderAttachment;
+				textureDesc.mipLevelCount   = 1;
+				textureDesc.sampleCount     = m_msaaCount;
+				textureDesc.viewFormatCount = 0;
+				textureDesc.viewFormats     = NULL;
 				m_textureMsaa = WGPU_CHECK(wgpuDeviceCreateTexture(s_renderWGPU->m_device, &textureDesc) );
+
+				if (WGPUTextureFormat_Undefined != viewFormat)
+				{
+					textureDesc.format = viewFormat;
+					m_textureMsaaAlt = WGPU_CHECK(wgpuDeviceCreateTexture(s_renderWGPU->m_device, &textureDesc) );
+				}
 			}
 
 			WGPUTexelCopyTextureInfo copyTextureDst =
@@ -4848,6 +4902,7 @@ WGPU_IMPORT
 
 		wgpuDestroy(m_texture);
 		wgpuDestroy(m_textureMsaa);
+		wgpuDestroy(m_textureMsaaAlt);
 	}
 
 	void TextureWGPU::clear(uint8_t _mip, uint8_t _numMips, uint16_t _layer, uint16_t _numLayers)
@@ -5046,8 +5101,36 @@ WGPU_IMPORT
 		return sampler;
 	}
 
-	WGPUTextureView TextureWGPU::getTextureView(uint8_t _baseMipLevel, uint8_t _mipLevelCount, bool _storage, uint16_t _baseArrayLayer, uint16_t _arrayLayerCount, WGPUTextureViewDimension _viewDimension, bool _stencil) const
+	WGPUTextureFormat TextureWGPU::getViewFormat(uint32_t _flags, uint32_t _bit) const
 	{
+		if (0 == (m_flags & BGFX_TEXTURE_SRGB_MUTABLE) )
+		{
+			return m_fmt;
+		}
+
+		const TextureFormatInfo& tfi = s_textureFormat[m_textureFormat];
+		const WGPUTextureFormat format = 0 != (_flags & _bit) ? tfi.m_fmtSrgb : tfi.m_fmt;
+
+		return WGPUTextureFormat_Undefined != format ? format : m_fmt;
+	}
+
+	WGPUTextureView TextureWGPU::getTextureView(uint8_t _baseMipLevel, uint8_t _mipLevelCount, bool _storage, uint16_t _baseArrayLayer, uint16_t _arrayLayerCount, WGPUTextureViewDimension _viewDimension, bool _stencil, WGPUTextureFormat _format) const
+	{
+		const bimg::ImageBlockInfo& blockInfo = bimg::getBlockInfo(bimg::TextureFormat::Enum(m_textureFormat) );
+		const bool depthOnly = !_stencil
+			&& 0 < blockInfo.depthBits
+			&& 0 < blockInfo.stencilBits
+			;
+
+		const WGPUTextureFormat format = _stencil
+			? WGPUTextureFormat_Stencil8
+			: depthOnly
+			? WGPUTextureFormat_Undefined
+			: _storage || WGPUTextureFormat_Undefined == _format
+			? m_fmt
+			: _format
+			;
+
 		bx::HashMurmur3 murmur;
 		murmur.begin();
 		murmur.add(uintptr_t(this) );
@@ -5058,6 +5141,7 @@ WGPU_IMPORT
 		murmur.add(_arrayLayerCount);
 		murmur.add(_viewDimension);
 		murmur.add(_stencil);
+		murmur.add(format);
 		const uint32_t hash = murmur.end();
 
 		WGPUTextureView textureView = s_renderWGPU->m_textureViewStateCache.find(hash);
@@ -5090,10 +5174,7 @@ WGPU_IMPORT
 			{
 				.nextInChain     = NULL,
 				.label           = WGPU_STRING_VIEW_INIT,
-				.format          = _stencil
-					? WGPUTextureFormat_Stencil8
-					: m_fmt
-					,
+				.format          = format,
 				.dimension       = tvd,
 				.baseMipLevel    = _baseMipLevel,
 				.mipLevelCount   = UINT8_MAX == _mipLevelCount ? WGPU_MIP_LEVEL_COUNT_UNDEFINED : _mipLevelCount,
@@ -5101,6 +5182,8 @@ WGPU_IMPORT
 				.arrayLayerCount = arrayLayerCount,
 				.aspect          = _stencil
 					? WGPUTextureAspect_StencilOnly
+					: depthOnly
+					? WGPUTextureAspect_DepthOnly
 					: WGPUTextureAspect_All
 					,
 				.usage           = 0
@@ -5724,12 +5807,13 @@ WGPU_IMPORT
 			{
 				const Attachment& at = m_attachment[ii];
 				const TextureWGPU& texture = s_renderWGPU->m_textures[at.handle.idx];
+				const WGPUTextureFormat viewFormat = texture.getViewFormat(at.flags, BGFX_ATTACHMENT_SRGB);
 
 				WGPUTextureViewDescriptor textureViewDesc =
 				{
 					.nextInChain     = NULL,
 					.label           = WGPU_STRING_VIEW_INIT,
-					.format          = texture.m_fmt,
+					.format          = viewFormat,
 					.dimension       = at.numLayers > 1 ? WGPUTextureViewDimension_2DArray : WGPUTextureViewDimension_2D,
 					.baseMipLevel    = at.mip,
 					.mipLevelCount   = 1,
@@ -5744,7 +5828,10 @@ WGPU_IMPORT
 				WGPUTextureViewDescriptor msaaViewDesc = textureViewDesc;
 				msaaViewDesc.baseMipLevel = 0;
 
-				WGPUTexture attachment = isMsaa ? texture.m_textureMsaa : texture.m_texture;
+				WGPUTexture attachment = isMsaa
+					? (viewFormat != texture.m_fmt && NULL != texture.m_textureMsaaAlt ? texture.m_textureMsaaAlt : texture.m_textureMsaa)
+					: texture.m_texture
+					;
 				WGPUTextureView attachmentView = WGPU_CHECK(wgpuTextureCreateView(attachment, isMsaa ? &msaaViewDesc : &textureViewDesc) );
 
 				if (bimg::isDepth(bimg::TextureFormat::Enum(texture.m_textureFormat) ) )
@@ -5766,6 +5853,7 @@ WGPU_IMPORT
 
 					m_textureView[m_numColorAttachments] = attachmentView;
 					m_resolveView[m_numColorAttachments] = resolveView;
+					m_colorFormat[m_numColorAttachments] = viewFormat;
 					m_texture[m_numColorAttachments] = at.handle;
 					m_numColorAttachments++;
 				}

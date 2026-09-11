@@ -859,6 +859,13 @@ BGFX_C_API void bgfx_encoder_set_uniform(bgfx_encoder_t* _this, bgfx_uniform_han
 	This->setUniform(handle.cpp, _value, _num);
 }
 
+BGFX_C_API void bgfx_encoder_set_uniform_ref(bgfx_encoder_t* _this, bgfx_uniform_handle_t _handle, const void* _value, uint16_t _num)
+{
+	bgfx::Encoder* This = (bgfx::Encoder*)_this;
+	union { bgfx_uniform_handle_t c; bgfx::UniformHandle cpp; } handle = { _handle };
+	This->setUniformRef(handle.cpp, _value, _num);
+}
+
 BGFX_C_API void bgfx_set_view_uniform(bgfx_view_id_t _id, bgfx_uniform_handle_t _handle, const void* _value, uint16_t _num)
 {
 	union { bgfx_uniform_handle_t c; bgfx::UniformHandle cpp; } handle = { _handle };
@@ -1020,32 +1027,32 @@ BGFX_C_API void bgfx_encoder_submit_indirect_count(bgfx_encoder_t* _this, bgfx_v
 	This->submit((bgfx::ViewId)_id, program.cpp, indirectHandle.cpp, _start, numHandle.cpp, _numIndex, _numMax, _depth, _flags);
 }
 
-BGFX_C_API void bgfx_encoder_set_compute_index_buffer(bgfx_encoder_t* _this, uint8_t _stage, bgfx_index_buffer_handle_t _handle, bgfx_access_t _access)
+BGFX_C_API void bgfx_encoder_set_compute_index_buffer(bgfx_encoder_t* _this, uint8_t _stage, bgfx_index_buffer_handle_t _handle, bgfx_access_t _access, uint32_t _offset, uint32_t _size)
 {
 	bgfx::Encoder* This = (bgfx::Encoder*)_this;
 	union { bgfx_index_buffer_handle_t c; bgfx::IndexBufferHandle cpp; } handle = { _handle };
-	This->setBuffer(_stage, handle.cpp, (bgfx::Access::Enum)_access);
+	This->setBuffer(_stage, handle.cpp, (bgfx::Access::Enum)_access, _offset, _size);
 }
 
-BGFX_C_API void bgfx_encoder_set_compute_vertex_buffer(bgfx_encoder_t* _this, uint8_t _stage, bgfx_vertex_buffer_handle_t _handle, bgfx_access_t _access)
+BGFX_C_API void bgfx_encoder_set_compute_vertex_buffer(bgfx_encoder_t* _this, uint8_t _stage, bgfx_vertex_buffer_handle_t _handle, bgfx_access_t _access, uint32_t _offset, uint32_t _size)
 {
 	bgfx::Encoder* This = (bgfx::Encoder*)_this;
 	union { bgfx_vertex_buffer_handle_t c; bgfx::VertexBufferHandle cpp; } handle = { _handle };
-	This->setBuffer(_stage, handle.cpp, (bgfx::Access::Enum)_access);
+	This->setBuffer(_stage, handle.cpp, (bgfx::Access::Enum)_access, _offset, _size);
 }
 
-BGFX_C_API void bgfx_encoder_set_compute_dynamic_index_buffer(bgfx_encoder_t* _this, uint8_t _stage, bgfx_dynamic_index_buffer_handle_t _handle, bgfx_access_t _access)
+BGFX_C_API void bgfx_encoder_set_compute_dynamic_index_buffer(bgfx_encoder_t* _this, uint8_t _stage, bgfx_dynamic_index_buffer_handle_t _handle, bgfx_access_t _access, uint32_t _offset, uint32_t _size)
 {
 	bgfx::Encoder* This = (bgfx::Encoder*)_this;
 	union { bgfx_dynamic_index_buffer_handle_t c; bgfx::DynamicIndexBufferHandle cpp; } handle = { _handle };
-	This->setBuffer(_stage, handle.cpp, (bgfx::Access::Enum)_access);
+	This->setBuffer(_stage, handle.cpp, (bgfx::Access::Enum)_access, _offset, _size);
 }
 
-BGFX_C_API void bgfx_encoder_set_compute_dynamic_vertex_buffer(bgfx_encoder_t* _this, uint8_t _stage, bgfx_dynamic_vertex_buffer_handle_t _handle, bgfx_access_t _access)
+BGFX_C_API void bgfx_encoder_set_compute_dynamic_vertex_buffer(bgfx_encoder_t* _this, uint8_t _stage, bgfx_dynamic_vertex_buffer_handle_t _handle, bgfx_access_t _access, uint32_t _offset, uint32_t _size)
 {
 	bgfx::Encoder* This = (bgfx::Encoder*)_this;
 	union { bgfx_dynamic_vertex_buffer_handle_t c; bgfx::DynamicVertexBufferHandle cpp; } handle = { _handle };
-	This->setBuffer(_stage, handle.cpp, (bgfx::Access::Enum)_access);
+	This->setBuffer(_stage, handle.cpp, (bgfx::Access::Enum)_access, _offset, _size);
 }
 
 BGFX_C_API void bgfx_encoder_set_compute_indirect_buffer(bgfx_encoder_t* _this, uint8_t _stage, bgfx_indirect_buffer_handle_t _handle, bgfx_access_t _access)
@@ -1205,6 +1212,12 @@ BGFX_C_API void bgfx_set_uniform(bgfx_uniform_handle_t _handle, const void* _val
 	bgfx::setUniform(handle.cpp, _value, _num);
 }
 
+BGFX_C_API void bgfx_set_uniform_ref(bgfx_uniform_handle_t _handle, const void* _value, uint16_t _num)
+{
+	union { bgfx_uniform_handle_t c; bgfx::UniformHandle cpp; } handle = { _handle };
+	bgfx::setUniformRef(handle.cpp, _value, _num);
+}
+
 BGFX_C_API void bgfx_set_index_buffer(bgfx_index_buffer_handle_t _handle, uint32_t _firstIndex, uint32_t _numIndices)
 {
 	union { bgfx_index_buffer_handle_t c; bgfx::IndexBufferHandle cpp; } handle = { _handle };
@@ -1333,28 +1346,28 @@ BGFX_C_API void bgfx_submit_indirect_count(bgfx_view_id_t _id, bgfx_program_hand
 	bgfx::submit((bgfx::ViewId)_id, program.cpp, indirectHandle.cpp, _start, numHandle.cpp, _numIndex, _numMax, _depth, _flags);
 }
 
-BGFX_C_API void bgfx_set_compute_index_buffer(uint8_t _stage, bgfx_index_buffer_handle_t _handle, bgfx_access_t _access)
+BGFX_C_API void bgfx_set_compute_index_buffer(uint8_t _stage, bgfx_index_buffer_handle_t _handle, bgfx_access_t _access, uint32_t _offset, uint32_t _size)
 {
 	union { bgfx_index_buffer_handle_t c; bgfx::IndexBufferHandle cpp; } handle = { _handle };
-	bgfx::setBuffer(_stage, handle.cpp, (bgfx::Access::Enum)_access);
+	bgfx::setBuffer(_stage, handle.cpp, (bgfx::Access::Enum)_access, _offset, _size);
 }
 
-BGFX_C_API void bgfx_set_compute_vertex_buffer(uint8_t _stage, bgfx_vertex_buffer_handle_t _handle, bgfx_access_t _access)
+BGFX_C_API void bgfx_set_compute_vertex_buffer(uint8_t _stage, bgfx_vertex_buffer_handle_t _handle, bgfx_access_t _access, uint32_t _offset, uint32_t _size)
 {
 	union { bgfx_vertex_buffer_handle_t c; bgfx::VertexBufferHandle cpp; } handle = { _handle };
-	bgfx::setBuffer(_stage, handle.cpp, (bgfx::Access::Enum)_access);
+	bgfx::setBuffer(_stage, handle.cpp, (bgfx::Access::Enum)_access, _offset, _size);
 }
 
-BGFX_C_API void bgfx_set_compute_dynamic_index_buffer(uint8_t _stage, bgfx_dynamic_index_buffer_handle_t _handle, bgfx_access_t _access)
+BGFX_C_API void bgfx_set_compute_dynamic_index_buffer(uint8_t _stage, bgfx_dynamic_index_buffer_handle_t _handle, bgfx_access_t _access, uint32_t _offset, uint32_t _size)
 {
 	union { bgfx_dynamic_index_buffer_handle_t c; bgfx::DynamicIndexBufferHandle cpp; } handle = { _handle };
-	bgfx::setBuffer(_stage, handle.cpp, (bgfx::Access::Enum)_access);
+	bgfx::setBuffer(_stage, handle.cpp, (bgfx::Access::Enum)_access, _offset, _size);
 }
 
-BGFX_C_API void bgfx_set_compute_dynamic_vertex_buffer(uint8_t _stage, bgfx_dynamic_vertex_buffer_handle_t _handle, bgfx_access_t _access)
+BGFX_C_API void bgfx_set_compute_dynamic_vertex_buffer(uint8_t _stage, bgfx_dynamic_vertex_buffer_handle_t _handle, bgfx_access_t _access, uint32_t _offset, uint32_t _size)
 {
 	union { bgfx_dynamic_vertex_buffer_handle_t c; bgfx::DynamicVertexBufferHandle cpp; } handle = { _handle };
-	bgfx::setBuffer(_stage, handle.cpp, (bgfx::Access::Enum)_access);
+	bgfx::setBuffer(_stage, handle.cpp, (bgfx::Access::Enum)_access, _offset, _size);
 }
 
 BGFX_C_API void bgfx_set_compute_indirect_buffer(uint8_t _stage, bgfx_indirect_buffer_handle_t _handle, bgfx_access_t _access)
@@ -1596,6 +1609,7 @@ BGFX_C_API bgfx_interface_vtbl_t* bgfx_get_interface(uint32_t _version)
 			bgfx_encoder_set_transform_cached,
 			bgfx_encoder_alloc_transform,
 			bgfx_encoder_set_uniform,
+			bgfx_encoder_set_uniform_ref,
 			bgfx_set_view_uniform,
 			bgfx_set_frame_uniform,
 			bgfx_encoder_set_index_buffer,
@@ -1649,6 +1663,7 @@ BGFX_C_API bgfx_interface_vtbl_t* bgfx_get_interface(uint32_t _version)
 			bgfx_set_transform_cached,
 			bgfx_alloc_transform,
 			bgfx_set_uniform,
+			bgfx_set_uniform_ref,
 			bgfx_set_index_buffer,
 			bgfx_set_dynamic_index_buffer,
 			bgfx_set_transient_index_buffer,

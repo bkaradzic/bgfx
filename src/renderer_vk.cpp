@@ -3372,6 +3372,29 @@ VK_IMPORT_DEVICE
 				;
 		}
 
+		bool findPendingResolve(TextureHandle _handle, uint8_t& _flags) const
+		{
+			if (isValid(m_fbh) )
+			{
+				const FrameBufferVK& frameBuffer = m_frameBuffers[m_fbh.idx];
+
+				if (!frameBuffer.isSwapChain()
+				&&  frameBuffer.m_needResolve)
+				{
+					for (uint32_t ii = 0; ii < frameBuffer.m_numTh; ++ii)
+					{
+						if (frameBuffer.m_attachment[ii].handle.idx == _handle.idx)
+						{
+							_flags = frameBuffer.m_attachment[ii].flags;
+							return true;
+						}
+					}
+				}
+			}
+
+			return false;
+		}
+
 		void setFrameBuffer(FrameBufferHandle _fbh)
 		{
 			BGFX_PROFILER_SCOPE("RendererContextVK::setFrameBuffer()", kColorFrame);
@@ -3895,7 +3918,7 @@ VK_IMPORT_DEVICE
 			for (uint8_t ii = 0; ii < _num; ++ii)
 			{
 				const TextureVK& texture = m_textures[_attachments[ii].handle.idx];
-				formats[ii] = texture.m_format;
+				formats[ii] = texture.getViewFormat(_attachments[ii].flags, BGFX_ATTACHMENT_SRGB);
 				aspects[ii] = texture.m_aspectFlags;
 				samples = texture.m_sampler.Sample;
 
@@ -4045,7 +4068,7 @@ VK_IMPORT_DEVICE
 			return sampler;
 		}
 
-		VkImageView getCachedImageView(TextureHandle _handle, uint32_t _mip, uint32_t _numMips, VkImageViewType _type, bool _stencil = false, uint32_t _firstLayer = 0, uint32_t _numLayers = UINT32_MAX)
+		VkImageView getCachedImageView(TextureHandle _handle, uint32_t _mip, uint32_t _numMips, VkImageViewType _type, bool _stencil = false, uint32_t _firstLayer = 0, uint32_t _numLayers = UINT32_MAX, uint32_t _samplerFlags = 0)
 		{
 			const TextureVK& texture = m_textures[_handle.idx];
 
@@ -4056,6 +4079,8 @@ VK_IMPORT_DEVICE
 			const uint32_t firstMip   = bx::min<uint32_t>(_mip,        texture.m_numMips);
 			const uint32_t numMips    = bx::min<uint32_t>(_numMips,    texture.m_numMips - firstMip);
 
+			const VkFormat format = texture.getViewFormat(_samplerFlags, BGFX_SAMPLER_SRGB);
+
 			bx::HashMurmur2A hash;
 			hash.begin();
 			hash.add(_handle.idx);
@@ -4065,6 +4090,7 @@ VK_IMPORT_DEVICE
 			hash.add(_stencil);
 			hash.add(firstLayer);
 			hash.add(numLayers);
+			hash.add(format);
 			uint32_t hashKey = hash.end();
 
 			VkImageView* viewCached = m_imageViewCache.find(hashKey);
@@ -4080,7 +4106,7 @@ VK_IMPORT_DEVICE
 				;
 
 			VkImageView view;
-			VK_CHECK(texture.createView(firstLayer, numLayers, firstMip, numMips, _type, aspectMask, false, &view) );
+			VK_CHECK(texture.createView(firstLayer, numLayers, firstMip, numMips, _type, aspectMask, false, &view, format) );
 			m_imageViewCache.add(hashKey, view, _handle.idx);
 
 			return view;
@@ -4555,9 +4581,15 @@ VK_IMPORT_DEVICE
 								: m_indexBuffers[bind.m_idx]
 								;
 
+							const uint32_t offset = bx::min(bind.m_offset, sb.m_size);
+							const uint32_t range  = UINT32_MAX == bind.m_size
+								? sb.m_size - offset
+								: bx::min(bind.m_size, sb.m_size - offset)
+								;
+
 							bufferInfo[bufferCount].buffer = sb.m_buffer;
-							bufferInfo[bufferCount].offset = 0;
-							bufferInfo[bufferCount].range  = sb.m_size;
+							bufferInfo[bufferCount].offset = 0 != range ? offset : 0;
+							bufferInfo[bufferCount].range  = 0 != range ? range  : sb.m_size;
 							wds[wdsCount].pBufferInfo = &bufferInfo[bufferCount];
 							++bufferCount;
 
@@ -4592,6 +4624,7 @@ VK_IMPORT_DEVICE
 								, sampleStencil
 								, bind.m_firstLayer
 								, bind.m_numLayers
+								, samplerFlags
 								);
 
 							wds[wdsCount].sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -6870,6 +6903,10 @@ VK_DESTROY
 				? VK_IMAGE_CREATE_2D_ARRAY_COMPATIBLE_BIT_KHR
 				: 0
 				)
+			| (0 != (m_flags & BGFX_TEXTURE_SRGB_MUTABLE)
+				? VK_IMAGE_CREATE_MUTABLE_FORMAT_BIT
+				: 0
+				)
 			;
 		ici.pQueueFamilyIndices   = NULL;
 		ici.queueFamilyIndexCount = 0;
@@ -6963,8 +7000,12 @@ VK_DESTROY
 			VkImageCreateInfo ici_resolve = ici;
 			ici_resolve.samples   = s_msaa[0].Sample;
 			ici_resolve.mipLevels = m_numMips;
-			ici_resolve.usage    &= ~VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 			ici_resolve.flags    &= ~VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
+
+			if (0 == (m_flags & BGFX_TEXTURE_SRGB_MUTABLE) )
+			{
+				ici_resolve.usage &= ~VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+			}
 
 			result = vkCreateImage(device, &ici_resolve, allocatorCb, &m_singleMsaaImage);
 			if (VK_SUCCESS != result)
@@ -7529,37 +7570,49 @@ VK_DESTROY
 
 		if (needResolve)
 		{
-			setState(_commandBuffer, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
-			setState(_commandBuffer, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, true);
+			const VkFormat resolveFormat = getViewFormat(_resolve, BGFX_ATTACHMENT_SRGB);
 
-			VkImageResolve resolve;
-			resolve.srcOffset.x = 0;
-			resolve.srcOffset.y = 0;
-			resolve.srcOffset.z = 0;
-			resolve.dstOffset.x = 0;
-			resolve.dstOffset.y = 0;
-			resolve.dstOffset.z = 0;
-			resolve.srcSubresource.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
-			resolve.srcSubresource.mipLevel       = _mip;
-			resolve.srcSubresource.baseArrayLayer = _layer;
-			resolve.srcSubresource.layerCount     = numLayers;
-			resolve.dstSubresource.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
-			resolve.dstSubresource.mipLevel       = _mip;
-			resolve.dstSubresource.baseArrayLayer = _layer;
-			resolve.dstSubresource.layerCount     = numLayers;
-			resolve.extent.width  = m_width;
-			resolve.extent.height = m_height;
-			resolve.extent.depth  = 1;
+			if (resolveFormat != m_format)
+			{
+				resolveRenderPass(_commandBuffer, resolveFormat, _layer, numLayers, _mip);
+				setState(_commandBuffer, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, true);
+			}
+			else
+			{
+				setState(_commandBuffer, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+				setState(_commandBuffer, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, true);
 
-			vkCmdResolveImage(
-				  _commandBuffer
-				, m_textureImage
-				, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL
-				, m_singleMsaaImage
-				, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
-				, 1
-				, &resolve
-				);
+				const VkImageResolve resolve =
+				{
+					.srcSubresource =
+					{
+						.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT,
+						.mipLevel       = _mip,
+						.baseArrayLayer = _layer,
+						.layerCount     = numLayers,
+					},
+					.srcOffset = { .x = 0, .y = 0, .z = 0 },
+					.dstSubresource =
+					{
+						.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT,
+						.mipLevel       = _mip,
+						.baseArrayLayer = _layer,
+						.layerCount     = numLayers,
+					},
+					.dstOffset = { .x = 0, .y = 0, .z = 0 },
+					.extent    = { .width = m_width, .height = m_height, .depth = 1 },
+				};
+
+				vkCmdResolveImage(
+					  _commandBuffer
+					, m_textureImage
+					, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL
+					, m_singleMsaaImage
+					, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
+					, 1
+					, &resolve
+					);
+			}
 
 			const bool autoGenMips = true
 				&& 0 != (_resolve & BGFX_ATTACHMENT_AUTO_GEN_MIPS)
@@ -7722,6 +7775,90 @@ VK_DESTROY
 		setState(_commandBuffer, oldSingleMsaaLayout, true);
 	}
 
+	void TextureVK::resolveRenderPass(VkCommandBuffer _commandBuffer, VkFormat _format, uint32_t _layer, uint32_t _numLayers, uint32_t _mip)
+	{
+		const VkDevice device = s_renderVK->m_device;
+		const VkAllocationCallbacks* allocatorCb = s_renderVK->m_allocatorCb;
+
+		setState(_commandBuffer, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+		setState(_commandBuffer, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, true);
+
+		const VkImageAspectFlags aspect = VK_IMAGE_ASPECT_COLOR_BIT;
+		const bool resolve = true;
+
+		::VkRenderPass renderPass = VK_NULL_HANDLE;
+		VK_CHECK(s_renderVK->getRenderPass(1, &_format, &aspect, &resolve, m_sampler.Sample, BGFX_CLEAR_NONE, 0, &renderPass, NULL) );
+
+		const uint32_t width  = bx::max<uint32_t>(m_width  >> _mip, 1);
+		const uint32_t height = bx::max<uint32_t>(m_height >> _mip, 1);
+
+		for (uint32_t ii = _layer, end = _layer + _numLayers; ii < end; ++ii)
+		{
+			VkImageViewCreateInfo ivci =
+			{
+				.sType      = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+				.pNext      = NULL,
+				.flags      = 0,
+				.image      = m_textureImage,
+				.viewType   = VK_IMAGE_VIEW_TYPE_2D,
+				.format     = _format,
+				.components = { VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY },
+				.subresourceRange =
+				{
+					.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT,
+					.baseMipLevel   = _mip,
+					.levelCount     = 1,
+					.baseArrayLayer = ii,
+					.layerCount     = 1,
+				},
+			};
+
+			VkImageView views[2];
+			VK_CHECK(vkCreateImageView(device, &ivci, allocatorCb, &views[0]) );
+
+			ivci.image = m_singleMsaaImage;
+			VK_CHECK(vkCreateImageView(device, &ivci, allocatorCb, &views[1]) );
+
+			VkFramebufferCreateInfo fci =
+			{
+				.sType           = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
+				.pNext           = NULL,
+				.flags           = 0,
+				.renderPass      = renderPass,
+				.attachmentCount = BX_COUNTOF(views),
+				.pAttachments    = &views[0],
+				.width           = width,
+				.height          = height,
+				.layers          = 1,
+			};
+
+			VkFramebuffer framebuffer;
+			VK_CHECK(vkCreateFramebuffer(device, &fci, allocatorCb, &framebuffer) );
+
+			VkRenderPassBeginInfo rpbi =
+			{
+				.sType       = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
+				.pNext       = NULL,
+				.renderPass  = renderPass,
+				.framebuffer = framebuffer,
+				.renderArea  =
+				{
+					.offset = { .x     = 0,     .y      = 0      },
+					.extent = { .width = width, .height = height },
+				},
+				.clearValueCount = 0,
+				.pClearValues    = NULL,
+			};
+
+			vkCmdBeginRenderPass(_commandBuffer, &rpbi, VK_SUBPASS_CONTENTS_INLINE);
+			vkCmdEndRenderPass(_commandBuffer);
+
+			release(framebuffer);
+			release(views[0]);
+			release(views[1]);
+		}
+	}
+
 	void TextureVK::copyBufferToTexture(VkCommandBuffer _commandBuffer, VkBuffer _stagingBuffer, uint32_t _bufferImageCopyCount, VkBufferImageCopy* _bufferImageCopy)
 	{
 		BGFX_PROFILER_SCOPE("TextureVK::copyBufferToTexture", kColorResource);
@@ -7827,7 +7964,21 @@ VK_DESTROY
 		}
 	}
 
-	VkResult TextureVK::createView(uint32_t _layer, uint32_t _numLayers, uint32_t _mip, uint32_t _numMips, VkImageViewType _type, VkImageAspectFlags _aspectMask, bool _renderTarget, ::VkImageView* _view) const
+	VkFormat TextureVK::getViewFormat(uint32_t _flags, uint32_t _bit) const
+	{
+		if (0 == (m_flags & BGFX_TEXTURE_SRGB_MUTABLE)
+		||  bimg::isDepth(bimg::TextureFormat::Enum(m_textureFormat) ) )
+		{
+			return m_format;
+		}
+
+		const TextureFormatInfo& tfi = s_textureFormat[m_textureFormat];
+		const VkFormat format = 0 != (_flags & _bit) ? tfi.m_fmtSrgb : tfi.m_fmt;
+
+		return VK_FORMAT_UNDEFINED != format ? format : m_format;
+	}
+
+	VkResult TextureVK::createView(uint32_t _layer, uint32_t _numLayers, uint32_t _mip, uint32_t _numMips, VkImageViewType _type, VkImageAspectFlags _aspectMask, bool _renderTarget, ::VkImageView* _view, VkFormat _format) const
 	{
 		VkResult result = VK_SUCCESS;
 
@@ -7859,7 +8010,7 @@ VK_DESTROY
 			: m_textureImage
 			;
 		viewInfo.viewType   = _type;
-		viewInfo.format     = m_format;
+		viewInfo.format     = VK_FORMAT_UNDEFINED != _format ? _format : m_format;
 		viewInfo.components = _renderTarget
 			? VkComponentMapping{ VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY }
 			: m_components
@@ -9215,6 +9366,7 @@ VK_DESTROY
 					, texture.m_aspectFlags
 					, true
 					, &m_textureImageViews[ii]
+					, texture.getViewFormat(at.flags, BGFX_ATTACHMENT_SRGB)
 					) );
 
 				if (texture.m_aspectFlags & VK_IMAGE_ASPECT_COLOR_BIT)
@@ -9768,10 +9920,13 @@ VK_DESTROY
 			TextureVK& src = m_textures[blit.m_src.idx];
 			TextureVK& dst = m_textures[blit.m_dst.idx];
 
+			uint8_t resolveFlags = BGFX_ATTACHMENT_NONE;
+
 			if (blitReadsSingleMsaa(src, dst)
-			&&  0 == blit.m_srcMip)
+			&&  0 == blit.m_srcMip
+			&&  findPendingResolve(TextureHandle{blit.m_src.idx}, resolveFlags) )
 			{
-				src.resolve(m_commandBuffer, BGFX_ATTACHMENT_NONE, blit.m_srcZ, 1, 0);
+				src.resolve(m_commandBuffer, resolveFlags & BGFX_ATTACHMENT_SRGB, blit.m_srcZ, 1, 0);
 			}
 
 			srcLayouts[item] = blitReadsSingleMsaa(src, dst)
@@ -9996,7 +10151,87 @@ VK_DESTROY
 				},
 			};
 
-			if (resolve)
+			const bimg::ImageBlockInfo& srcBlockInfo = bimg::getBlockInfo(bimg::TextureFormat::Enum(src.m_textureFormat) );
+			const bimg::ImageBlockInfo& dstBlockInfo = bimg::getBlockInfo(bimg::TextureFormat::Enum(dst.m_textureFormat) );
+
+			const bool stageCompressed3D = true
+				&& !resolve
+				&& !srcSingleMsaa
+				&& blit.m_src.idx != blit.m_dst.idx
+				&& bimg::isCompressed(bimg::TextureFormat::Enum(src.m_textureFormat) )
+				&& ( (isSrc3D && (0 != srcMipWidth % srcBlockInfo.blockWidth || 0 != srcMipHeight % srcBlockInfo.blockHeight) )
+				||   (isDst3D && (0 != dstMipWidth % dstBlockInfo.blockWidth || 0 != dstMipHeight % dstBlockInfo.blockHeight) ) )
+				;
+
+			if (stageCompressed3D)
+			{
+				const uint32_t numBlocksX = (copyInfo.extent.width  + srcBlockInfo.blockWidth  - 1) / srcBlockInfo.blockWidth;
+				const uint32_t numBlocksY = (copyInfo.extent.height + srcBlockInfo.blockHeight - 1) / srcBlockInfo.blockHeight;
+				const uint32_t size       = numBlocksX * numBlocksY * srcBlockInfo.blockSize * depth;
+
+				StagingBufferVK stagingBuffer = allocFromScratchStagingBuffer(size, srcBlockInfo.blockSize);
+
+				const VkBufferImageCopy toBuffer =
+				{
+					.bufferOffset      = stagingBuffer.m_offset,
+					.bufferRowLength   = 0,
+					.bufferImageHeight = 0,
+					.imageSubresource  = copyInfo.srcSubresource,
+					.imageOffset       = copyInfo.srcOffset,
+					.imageExtent       =
+					{
+						.width  = copyInfo.extent.width,
+						.height = copyInfo.extent.height,
+						.depth  = isSrc3D ? depth : 1,
+					},
+				};
+
+				vkCmdCopyImageToBuffer(
+					  m_commandBuffer
+					, src.m_textureImage
+					, src.m_currentImageLayout
+					, stagingBuffer.m_buffer
+					, 1
+					, &toBuffer
+					);
+
+				setMemoryBarrier(
+					  m_commandBuffer
+					, VK_PIPELINE_STAGE_TRANSFER_BIT
+					, VK_PIPELINE_STAGE_TRANSFER_BIT
+					);
+
+				const VkBufferImageCopy fromBuffer =
+				{
+					.bufferOffset      = stagingBuffer.m_offset,
+					.bufferRowLength   = numBlocksX * srcBlockInfo.blockWidth,
+					.bufferImageHeight = numBlocksY * srcBlockInfo.blockHeight,
+					.imageSubresource  = copyInfo.dstSubresource,
+					.imageOffset       = copyInfo.dstOffset,
+					.imageExtent       =
+					{
+						.width  = bx::min<uint32_t>(numBlocksX * dstBlockInfo.blockWidth,  dstMipWidth  - blit.m_dstX),
+						.height = bx::min<uint32_t>(numBlocksY * dstBlockInfo.blockHeight, dstMipHeight - blit.m_dstY),
+						.depth  = isDst3D ? depth : 1,
+					},
+				};
+
+				vkCmdCopyBufferToImage(
+					  m_commandBuffer
+					, stagingBuffer.m_buffer
+					, dst.m_textureImage
+					, dst.m_currentImageLayout
+					, 1
+					, &fromBuffer
+					);
+
+				if (!stagingBuffer.m_isFromScratch)
+				{
+					release(stagingBuffer.m_buffer);
+					recycleMemory(stagingBuffer.m_deviceMem);
+				}
+			}
+			else if (resolve)
 			{
 				const VkImageResolve resolveInfo =
 				{

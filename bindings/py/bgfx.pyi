@@ -778,6 +778,13 @@ class TextureFlags(enum.IntFlag):
 	ReadBack = 0x800000000000
 	# Texture is shared with other device or other process.
 	ExternalShared = 0x1000000000000
+	# Texture may be sampled and rendered with either sRGB-ness,
+	# not just the one implied by its format. Every bind and
+	# attachment must then state the encoding it wants (see
+	# `BGFX_SAMPLER_SRGB`, `BGFX_ATTACHMENT_SRGB`). Costs nothing
+	# until used, but may disable texture compression on some
+	# hardware.
+	SrgbMutable = 0x40000000000000
 	# Do not use! Top nibble is reserved for internal texture flags (see bgfx_p.h).
 	ReservedShift = 0x3c
 	# Do not use! Top nibble is reserved for internal texture flags (see bgfx_p.h).
@@ -865,6 +872,11 @@ class SamplerFlags(enum.IntFlag):
 	None_ = 0x0
 	# Sample stencil instead of depth.
 	SampleStencil = 0x100000
+	# Sample with sRGB conversion; absence of this flag samples
+	# without it. Only affects textures created
+	# `BGFX_TEXTURE_SRGB_MUTABLE`, which must state the encoding
+	# explicitly on every bind; ignored for any other texture.
+	Srgb = 0x200000
 	Point = 0x540
 	UvwMirror = 0x15
 	UvwClamp = 0x2a
@@ -1148,6 +1160,11 @@ class AttachmentFlags(enum.IntFlag):
 	ReadOnlyDepth = 0x2
 	# Bind the stencil aspect read-only.
 	ReadOnlyStencil = 0x4
+	# Render with sRGB conversion; absence of this flag renders without
+	# it. Only affects textures created `BGFX_TEXTURE_SRGB_MUTABLE`,
+	# which must state the encoding explicitly on every attachment;
+	# ignored for any other texture.
+	Srgb = 0x8
 
 class PciIdFlags(enum.IntFlag):
 	# Autoselect adapter.
@@ -2741,6 +2758,12 @@ def bgfx_encoder_alloc_transform(_this: Optional[Union[Encoder, _Pointer[Encoder
 # Set shader uniform parameter for draw primitive.
 def bgfx_encoder_set_uniform(_this: Optional[Union[Encoder, _Pointer[Encoder], ctypes.Array]], _handle: UniformHandle, _value: Any, _num: int, /) -> None: ...
 
+# Set shader uniform parameter by reference. Unlike `Encoder::setUniform`, the data
+# is not copied immediately; the renderer reads it from `_value` at frame render
+# time. The pointer must remain valid and unchanged until the frame is rendered
+# (up to two `bgfx::frame` calls with multithreaded submission).
+def bgfx_encoder_set_uniform_ref(_this: Optional[Union[Encoder, _Pointer[Encoder], ctypes.Array]], _handle: UniformHandle, _value: Any, _num: int, /) -> None: ...
+
 # Set shader uniform parameter for view.
 # 
 # @attention Uniform must be created with `bgfx::UniformFreq::View` argument.
@@ -2904,16 +2927,48 @@ def bgfx_encoder_submit_indirect_count(
 ) -> None: ...
 
 # Set compute index buffer.
-def bgfx_encoder_set_compute_index_buffer(_this: Optional[Union[Encoder, _Pointer[Encoder], ctypes.Array]], _stage: int, _handle: IndexBufferHandle, _access: Union[Access, int], /) -> None: ...
+def bgfx_encoder_set_compute_index_buffer(
+	_this: Optional[Union[Encoder, _Pointer[Encoder], ctypes.Array]],
+	_stage: int,
+	_handle: IndexBufferHandle,
+	_access: Union[Access, int],
+	_offset: int,
+	_size: int,
+	/,
+) -> None: ...
 
 # Set compute vertex buffer.
-def bgfx_encoder_set_compute_vertex_buffer(_this: Optional[Union[Encoder, _Pointer[Encoder], ctypes.Array]], _stage: int, _handle: VertexBufferHandle, _access: Union[Access, int], /) -> None: ...
+def bgfx_encoder_set_compute_vertex_buffer(
+	_this: Optional[Union[Encoder, _Pointer[Encoder], ctypes.Array]],
+	_stage: int,
+	_handle: VertexBufferHandle,
+	_access: Union[Access, int],
+	_offset: int,
+	_size: int,
+	/,
+) -> None: ...
 
 # Set compute dynamic index buffer.
-def bgfx_encoder_set_compute_dynamic_index_buffer(_this: Optional[Union[Encoder, _Pointer[Encoder], ctypes.Array]], _stage: int, _handle: DynamicIndexBufferHandle, _access: Union[Access, int], /) -> None: ...
+def bgfx_encoder_set_compute_dynamic_index_buffer(
+	_this: Optional[Union[Encoder, _Pointer[Encoder], ctypes.Array]],
+	_stage: int,
+	_handle: DynamicIndexBufferHandle,
+	_access: Union[Access, int],
+	_offset: int,
+	_size: int,
+	/,
+) -> None: ...
 
 # Set compute dynamic vertex buffer.
-def bgfx_encoder_set_compute_dynamic_vertex_buffer(_this: Optional[Union[Encoder, _Pointer[Encoder], ctypes.Array]], _stage: int, _handle: DynamicVertexBufferHandle, _access: Union[Access, int], /) -> None: ...
+def bgfx_encoder_set_compute_dynamic_vertex_buffer(
+	_this: Optional[Union[Encoder, _Pointer[Encoder], ctypes.Array]],
+	_stage: int,
+	_handle: DynamicVertexBufferHandle,
+	_access: Union[Access, int],
+	_offset: int,
+	_size: int,
+	/,
+) -> None: ...
 
 # Set compute indirect buffer.
 def bgfx_encoder_set_compute_indirect_buffer(_this: Optional[Union[Encoder, _Pointer[Encoder], ctypes.Array]], _stage: int, _handle: IndirectBufferHandle, _access: Union[Access, int], /) -> None: ...
@@ -3160,6 +3215,12 @@ def bgfx_alloc_transform(_transform: Optional[Union[Transform, _Pointer[Transfor
 # Set shader uniform parameter for draw primitive.
 def bgfx_set_uniform(_handle: UniformHandle, _value: Any, _num: int, /) -> None: ...
 
+# Set shader uniform parameter by reference. Unlike `bgfx::setUniform`, the data
+# is not copied immediately; the renderer reads it from `_value` at frame render
+# time. The pointer must remain valid and unchanged until the frame is rendered
+# (up to two `bgfx::frame` calls with multithreaded submission).
+def bgfx_set_uniform_ref(_handle: UniformHandle, _value: Any, _num: int, /) -> None: ...
+
 # Set index buffer for draw primitive.
 def bgfx_set_index_buffer(_handle: IndexBufferHandle, _firstIndex: int, _numIndices: int, /) -> None: ...
 
@@ -3274,16 +3335,16 @@ def bgfx_submit_indirect_count(
 ) -> None: ...
 
 # Set compute index buffer.
-def bgfx_set_compute_index_buffer(_stage: int, _handle: IndexBufferHandle, _access: Union[Access, int], /) -> None: ...
+def bgfx_set_compute_index_buffer(_stage: int, _handle: IndexBufferHandle, _access: Union[Access, int], _offset: int, _size: int, /) -> None: ...
 
 # Set compute vertex buffer.
-def bgfx_set_compute_vertex_buffer(_stage: int, _handle: VertexBufferHandle, _access: Union[Access, int], /) -> None: ...
+def bgfx_set_compute_vertex_buffer(_stage: int, _handle: VertexBufferHandle, _access: Union[Access, int], _offset: int, _size: int, /) -> None: ...
 
 # Set compute dynamic index buffer.
-def bgfx_set_compute_dynamic_index_buffer(_stage: int, _handle: DynamicIndexBufferHandle, _access: Union[Access, int], /) -> None: ...
+def bgfx_set_compute_dynamic_index_buffer(_stage: int, _handle: DynamicIndexBufferHandle, _access: Union[Access, int], _offset: int, _size: int, /) -> None: ...
 
 # Set compute dynamic vertex buffer.
-def bgfx_set_compute_dynamic_vertex_buffer(_stage: int, _handle: DynamicVertexBufferHandle, _access: Union[Access, int], /) -> None: ...
+def bgfx_set_compute_dynamic_vertex_buffer(_stage: int, _handle: DynamicVertexBufferHandle, _access: Union[Access, int], _offset: int, _size: int, /) -> None: ...
 
 # Set compute indirect buffer.
 def bgfx_set_compute_indirect_buffer(_stage: int, _handle: IndirectBufferHandle, _access: Union[Access, int], /) -> None: ...

@@ -1,7 +1,7 @@
 -- vim: syntax=lua
 -- bgfx interface
 
-version(160)
+version(161)
 
 typedef "bool"
 typedef "char"
@@ -241,6 +241,12 @@ flag.Texture { bits = 64, section = "Textures" }
 	.BlitDst          (47) --- Texture will be used as blit destination.
 	.ReadBack         (48) --- Texture will be used for read back from GPU.
 	.ExternalShared   (49) --- Texture is shared with other device or other process.
+	.SrgbMutable      (55) --- Texture may be sampled and rendered with either sRGB-ness,
+	                       --- not just the one implied by its format. Every bind and
+	                       --- attachment must then state the encoding it wants (see
+	                       --- `BGFX_SAMPLER_SRGB`, `BGFX_ATTACHMENT_SRGB`). Costs nothing
+	                       --- until used, but may disable texture compression on some
+	                       --- hardware.
 	()
 
 --- Do not use! Top nibble is reserved for internal texture flags (see bgfx_p.h).
@@ -306,6 +312,10 @@ flag.SamplerReserved { bits = 32, shift = 28, range = 4 }
 flag.Sampler { bits = 32 }
 	.None
 	.SampleStencil (21)  --- Sample stencil instead of depth.
+	.Srgb          (22)  --- Sample with sRGB conversion; absence of this flag samples
+	                     --- without it. Only affects textures created
+	                     --- `BGFX_TEXTURE_SRGB_MUTABLE`, which must state the encoding
+	                     --- explicitly on every bind; ignored for any other texture.
 	.Point     { "MinPoint", "MagPoint", "MipPoint" }
 	.UvwMirror { "UMirror",  "VMirror",  "WMirror"  }
 	.UvwClamp  { "UClamp",   "VClamp",   "WClamp"   }
@@ -457,6 +467,10 @@ flag.Attachment { bits = 8 }
 	.ReadOnlyDepth   --- Bind the depth aspect read-only (read-only depth-stencil view) so the
 	                 --- attachment can be sampled as a texture in the same pass.
 	.ReadOnlyStencil --- Bind the stencil aspect read-only.
+	.Srgb            --- Render with sRGB conversion; absence of this flag renders without
+	                 --- it. Only affects textures created `BGFX_TEXTURE_SRGB_MUTABLE`,
+	                 --- which must state the encoding explicitly on every attachment;
+	                 --- ignored for any other texture.
 	()
 
 flag.PciId { bits = 16, const, section = "Initialization and Shutdown" }
@@ -2790,6 +2804,18 @@ func.Encoder.setUniform { section = "Draw/Uniforms" }
 	                        --- use the _num passed on uniform creation.
 	 { default = 1 }
 
+--- Set shader uniform parameter by reference. Unlike `Encoder::setUniform`, the data
+--- is not copied immediately; the renderer reads it from `_value` at frame render
+--- time. The pointer must remain valid and unchanged until the frame is rendered
+--- (up to two `bgfx::frame` calls with multithreaded submission).
+func.Encoder.setUniformRef { section = "Draw/Uniforms" }
+	"void"
+	.handle "UniformHandle" --- Uniform.
+	.value  "const void*"   --- Pointer to uniform data. Must stay valid until the frame is rendered.
+	.num    "uint16_t"      --- Number of elements. Passing `UINT16_MAX` will
+	                        --- use the _num passed on uniform creation.
+	 { default = "UINT16_MAX" }
+
 --- Set shader uniform parameter for view.
 ---
 --- @attention Uniform must be created with `bgfx::UniformFreq::View` argument.
@@ -3082,6 +3108,11 @@ func.Encoder.setBuffer { cname = "set_compute_index_buffer", section = "Compute/
 	.stage  "uint8_t"           --- Compute stage.
 	.handle "IndexBufferHandle" --- Index buffer handle.
 	.access "Access::Enum"      --- Buffer access. See `Access::Enum`.
+	.offset "uint32_t"          --- Byte offset the shader's view of the buffer starts at.
+	                            --- Must be a multiple of 256 bytes.
+		{ default = 0 }
+	.size   "uint32_t"          --- Bytes bound from the offset, `UINT32_MAX` for the rest of the buffer.
+		{ default = UINT32_MAX }
 
 --- Set compute vertex buffer.
 func.Encoder.setBuffer { cname = "set_compute_vertex_buffer", section = "Compute/Buffers" }
@@ -3089,6 +3120,11 @@ func.Encoder.setBuffer { cname = "set_compute_vertex_buffer", section = "Compute
 	.stage  "uint8_t"            --- Compute stage.
 	.handle "VertexBufferHandle" --- Vertex buffer handle.
 	.access "Access::Enum"       --- Buffer access. See `Access::Enum`.
+	.offset "uint32_t"           --- Byte offset the shader's view of the buffer starts at.
+	                             --- Must be a multiple of 256 bytes.
+		{ default = 0 }
+	.size   "uint32_t"           --- Bytes bound from the offset, `UINT32_MAX` for the rest of the buffer.
+		{ default = UINT32_MAX }
 
 --- Set compute dynamic index buffer.
 func.Encoder.setBuffer { cname = "set_compute_dynamic_index_buffer", section = "Compute/Buffers" }
@@ -3096,6 +3132,11 @@ func.Encoder.setBuffer { cname = "set_compute_dynamic_index_buffer", section = "
 	.stage  "uint8_t"                  --- Compute stage.
 	.handle "DynamicIndexBufferHandle" --- Dynamic index buffer handle.
 	.access "Access::Enum"             --- Buffer access. See `Access::Enum`.
+	.offset "uint32_t"                 --- Byte offset the shader's view of the buffer starts at.
+	                                   --- Must be a multiple of 256 bytes.
+		{ default = 0 }
+	.size   "uint32_t"                 --- Bytes bound from the offset, `UINT32_MAX` for the rest of the buffer.
+		{ default = UINT32_MAX }
 
 --- Set compute dynamic vertex buffer.
 func.Encoder.setBuffer { cname = "set_compute_dynamic_vertex_buffer", section = "Compute/Buffers" }
@@ -3103,6 +3144,11 @@ func.Encoder.setBuffer { cname = "set_compute_dynamic_vertex_buffer", section = 
 	.stage  "uint8_t"                   --- Compute stage.
 	.handle "DynamicVertexBufferHandle" --- Dynamic vertex buffer handle.
 	.access "Access::Enum"              --- Buffer access. See `Access::Enum`.
+	.offset "uint32_t"                  --- Byte offset the shader's view of the buffer starts at.
+	                                    --- Must be a multiple of 256 bytes.
+		{ default = 0 }
+	.size   "uint32_t"                  --- Bytes bound from the offset, `UINT32_MAX` for the rest of the buffer.
+		{ default = UINT32_MAX }
 
 --- Set compute indirect buffer.
 func.Encoder.setBuffer { cname = "set_compute_indirect_buffer", section = "Compute/Buffers" }
@@ -3447,6 +3493,18 @@ func.setUniform { section = "Draw/Uniforms" }
 	                        --- use the _num passed on uniform creation.
 	 { default = 1 }
 
+--- Set shader uniform parameter by reference. Unlike `bgfx::setUniform`, the data
+--- is not copied immediately; the renderer reads it from `_value` at frame render
+--- time. The pointer must remain valid and unchanged until the frame is rendered
+--- (up to two `bgfx::frame` calls with multithreaded submission).
+func.setUniformRef { section = "Draw/Uniforms" }
+	"void"
+	.handle "UniformHandle" --- Uniform.
+	.value  "const void*"   --- Pointer to uniform data. Must stay valid until the frame is rendered.
+	.num    "uint16_t"      --- Number of elements. Passing `UINT16_MAX` will
+	                        --- use the _num passed on uniform creation.
+	 { default = "UINT16_MAX" }
+
 --- Set index buffer for draw primitive.
 func.setIndexBuffer { cpponly, section = "Draw/Buffers" }
 	"void"
@@ -3713,6 +3771,11 @@ func.setBuffer { cname = "set_compute_index_buffer", section = "Compute/Buffers"
 	.stage  "uint8_t"           --- Compute stage.
 	.handle "IndexBufferHandle" --- Index buffer handle.
 	.access "Access::Enum"      --- Buffer access. See `Access::Enum`.
+	.offset "uint32_t"          --- Byte offset the shader's view of the buffer starts at.
+	                            --- Must be a multiple of 256 bytes.
+		{ default = 0 }
+	.size   "uint32_t"          --- Bytes bound from the offset, `UINT32_MAX` for the rest of the buffer.
+		{ default = UINT32_MAX }
 
 --- Set compute vertex buffer.
 func.setBuffer { cname = "set_compute_vertex_buffer", section = "Compute/Buffers" }
@@ -3720,6 +3783,11 @@ func.setBuffer { cname = "set_compute_vertex_buffer", section = "Compute/Buffers
 	.stage  "uint8_t"            --- Compute stage.
 	.handle "VertexBufferHandle" --- Vertex buffer handle.
 	.access "Access::Enum"       --- Buffer access. See `Access::Enum`.
+	.offset "uint32_t"           --- Byte offset the shader's view of the buffer starts at.
+	                             --- Must be a multiple of 256 bytes.
+		{ default = 0 }
+	.size   "uint32_t"           --- Bytes bound from the offset, `UINT32_MAX` for the rest of the buffer.
+		{ default = UINT32_MAX }
 
 --- Set compute dynamic index buffer.
 func.setBuffer { cname = "set_compute_dynamic_index_buffer", section = "Compute/Buffers" }
@@ -3727,6 +3795,11 @@ func.setBuffer { cname = "set_compute_dynamic_index_buffer", section = "Compute/
 	.stage  "uint8_t"                  --- Compute stage.
 	.handle "DynamicIndexBufferHandle" --- Dynamic index buffer handle.
 	.access "Access::Enum"             --- Buffer access. See `Access::Enum`.
+	.offset "uint32_t"                 --- Byte offset the shader's view of the buffer starts at.
+	                                   --- Must be a multiple of 256 bytes.
+		{ default = 0 }
+	.size   "uint32_t"                 --- Bytes bound from the offset, `UINT32_MAX` for the rest of the buffer.
+		{ default = UINT32_MAX }
 
 --- Set compute dynamic vertex buffer.
 func.setBuffer { cname = "set_compute_dynamic_vertex_buffer", section = "Compute/Buffers" }
@@ -3734,6 +3807,11 @@ func.setBuffer { cname = "set_compute_dynamic_vertex_buffer", section = "Compute
 	.stage  "uint8_t"                   --- Compute stage.
 	.handle "DynamicVertexBufferHandle" --- Dynamic vertex buffer handle.
 	.access "Access::Enum"              --- Buffer access. See `Access::Enum`.
+	.offset "uint32_t"                  --- Byte offset the shader's view of the buffer starts at.
+	                                    --- Must be a multiple of 256 bytes.
+		{ default = 0 }
+	.size   "uint32_t"                  --- Bytes bound from the offset, `UINT32_MAX` for the rest of the buffer.
+		{ default = UINT32_MAX }
 
 --- Set compute indirect buffer.
 func.setBuffer { cname = "set_compute_indirect_buffer", section = "Compute/Buffers" }
