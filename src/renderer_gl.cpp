@@ -2297,7 +2297,6 @@ namespace bgfx { namespace gl
 			}
 
 			m_fbh = BGFX_INVALID_HANDLE;
-			bx::memSet(m_uniforms, 0, sizeof(m_uniforms) );
 			bx::memSet(&m_mainSwapChain, 0, sizeof(m_mainSwapChain) );
 
 			m_reset = _init.reset & ~BGFX_RESET_INTERNAL_FORCE;
@@ -3711,27 +3710,6 @@ namespace bgfx { namespace gl
 			}
 		}
 
-		void createUniform(UniformHandle _handle, UniformType::Enum _type, uint16_t _num, const char* _name) override
-		{
-			if (NULL != m_uniforms[_handle.idx])
-			{
-				bx::free(g_allocator, m_uniforms[_handle.idx]);
-			}
-
-			const uint32_t size = bx::alignUp(g_uniformTypeSize[_type]*_num, 16);
-			void* data = bx::alloc(g_allocator, size);
-			bx::memSet(data, 0, size);
-			m_uniforms[_handle.idx] = data;
-			m_uniformReg.add(_handle, _name);
-		}
-
-		void destroyUniform(UniformHandle _handle) override
-		{
-			bx::free(g_allocator, m_uniforms[_handle.idx]);
-			m_uniforms[_handle.idx] = NULL;
-			m_uniformReg.remove(_handle);
-		}
-
 		void requestScreenShot(FrameBufferHandle _handle, const char* _filePath) override
 		{
 			SwapChainGL* swapChain = NULL;
@@ -3812,11 +3790,6 @@ namespace bgfx { namespace gl
 				, BX_COUNTOF(s_viewName[0])-BGFX_CONFIG_MAX_VIEW_NAME_RESERVED
 				, _name
 				);
-		}
-
-		void updateUniform(uint16_t _loc, const void* _data, uint32_t _size) override
-		{
-			bx::memCopy(m_uniforms[_loc], _data, _size);
 		}
 
 		void invalidateOcclusionQuery(OcclusionQueryHandle _handle) override
@@ -5166,8 +5139,6 @@ namespace bgfx { namespace gl
 		TextureGL m_textures[BGFX_CONFIG_MAX_TEXTURES];
 		VertexLayout m_vertexLayouts[BGFX_CONFIG_MAX_VERTEX_LAYOUTS];
 		FrameBufferGL m_frameBuffers[BGFX_CONFIG_MAX_FRAME_BUFFERS];
-		UniformRegistry m_uniformReg;
-		void* m_uniforms[BGFX_CONFIG_MAX_UNIFORMS];
 
 		TimerQueryGL m_gpuTimer;
 		OcclusionQueryGL m_occlusionQuery;

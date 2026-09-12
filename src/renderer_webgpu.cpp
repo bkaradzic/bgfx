@@ -1004,7 +1004,6 @@ WGPU_IMPORT
 			ErrorState::Enum errorState = ErrorState::Default;
 
 //			m_fbh = BGFX_INVALID_HANDLE;
-			bx::memSet(m_uniforms, 0, sizeof(m_uniforms) );
 			bx::memSet(&m_mainSwapChain, 0, sizeof(m_mainSwapChain) );
 
 			if (_init.debug
@@ -1616,12 +1615,6 @@ WGPU_IMPORT
 				m_textures[ii].destroy();
 			}
 
-			for (uint32_t ii = 0; ii < BX_COUNTOF(m_uniforms); ++ii)
-			{
-				bx::free(g_allocator, m_uniforms[ii]);
-				m_uniforms[ii] = NULL;
-			}
-
 			m_backBuffer.destroy();
 
 			m_gpuTimer.shutdown();
@@ -2196,27 +2189,6 @@ WGPU_IMPORT
 			}
 		}
 
-		void createUniform(UniformHandle _handle, UniformType::Enum _type, uint16_t _num, const char* _name) override
-		{
-			if (NULL != m_uniforms[_handle.idx])
-			{
-				bx::free(g_allocator, m_uniforms[_handle.idx]);
-			}
-
-			const uint32_t size = bx::alignUp(g_uniformTypeSize[_type]*_num, 16);
-			void* data = bx::alloc(g_allocator, size);
-			bx::memSet(data, 0, size);
-			m_uniforms[_handle.idx] = data;
-			m_uniformReg.add(_handle, _name);
-		}
-
-		void destroyUniform(UniformHandle _handle) override
-		{
-			bx::free(g_allocator, m_uniforms[_handle.idx]);
-			m_uniforms[_handle.idx] = NULL;
-			m_uniformReg.remove(_handle);
-		}
-
 		FrameBufferWGPU& getFrameBuffer(FrameBufferHandle _fbh)
 		{
 			return isValid(_fbh)
@@ -2357,11 +2329,6 @@ WGPU_IMPORT
 				, BX_COUNTOF(s_viewName[0])-BGFX_CONFIG_MAX_VIEW_NAME_RESERVED
 				, _name
 				);
-		}
-
-		void updateUniform(uint16_t _loc, const void* _data, uint32_t _size) override
-		{
-			bx::memCopy(m_uniforms[_loc], _data, _size);
 		}
 
 		void invalidateOcclusionQuery(OcclusionQueryHandle _handle) override
@@ -3959,9 +3926,7 @@ WGPU_IMPORT
 		typedef stl::unordered_map<uint32_t, BindGroup> BindGroupMap;
 		BindGroupMap m_bindGroupMap;
 
-		void* m_uniforms[BGFX_CONFIG_MAX_UNIFORMS];
 		Matrix4 m_predefinedUniforms[PredefinedUniform::Count];
-		UniformRegistry m_uniformReg;
 
 		FrameBufferWGPU m_backBuffer;
 

@@ -2267,9 +2267,7 @@ namespace bgfx
 
 		uint32_t read()
 		{
-			uint32_t result;
-			bx::memCopy(&result, read(sizeof(uint32_t) ), sizeof(uint32_t) );
-			return result;
+			return bx::loadUnaligned<uint32_t>(read(sizeof(uint32_t) ) );
 		}
 
 		bool isEmpty() const
@@ -2398,14 +2396,18 @@ namespace bgfx
 
 		void reset()
 		{
-			// Zero the whole struct, including any trailing padding, so it hashes and
-			// compares deterministically when used as a bind-state key.
-			bx::memSet(this, 0, sizeof(*this) );
 			m_samplerFlags = BGFX_SAMPLER_NONE;
+			m_offset       = 0;
 			m_size         = UINT32_MAX;
+			m_firstLayer   = 0;
 			m_numLayers    = UINT16_MAX;
-			m_idx          = kInvalidHandle;
-			m_numMips      = UINT8_MAX;
+			m_idx      = kInvalidHandle;
+			m_type     = 0;
+			m_format   = 0;
+			m_access   = 0;
+			m_firstMip = 0;
+			m_numMips  = UINT8_MAX;
+			m_pad      = 0;
 		}
 
 		void setTexture(TextureHandle _handle, uint32_t _samplerFlags, uint8_t _firstMip = 0, uint8_t _numMips = UINT8_MAX)
@@ -2497,6 +2499,8 @@ namespace bgfx
 		{
 			return kInvalidHandle != m_idx;
 		}
+
+		bool operator==(const Binding& _rhs) const = default;
 
 		uint32_t m_samplerFlags;
 		uint32_t m_offset;
@@ -2590,6 +2594,18 @@ namespace bgfx
 				for (uint32_t ii = 0; ii < BGFX_CONFIG_MAX_TEXTURE_SAMPLERS; ++ii)
 				{
 					Binding& bind = m_bind[ii];
+					bind.reset();
+				}
+			}
+		};
+
+		void clear(uint8_t _flags, uint32_t _mask)
+		{
+			if (0 != (_flags & BGFX_DISCARD_BINDINGS) )
+			{
+				for (BitMaskToIndexIteratorT<uint32_t> it(_mask); !it.isDone(); it.next() )
+				{
+					Binding& bind = m_bind[it.idx];
 					bind.reset();
 				}
 			}
@@ -3889,6 +3905,7 @@ namespace bgfx
 			m_draw.clear(BGFX_DISCARD_ALL);
 			m_compute.clear(BGFX_DISCARD_ALL);
 			m_bind.clear(BGFX_DISCARD_ALL);
+			m_bindMask = 0;
 		}
 
 		void begin(Frame* _frame, uint8_t _idx)
@@ -3985,10 +4002,12 @@ namespace bgfx
 
 		void clearBind(uint8_t _flags)
 		{
-			m_bind.clear(_flags);
+			m_bind.clear(_flags, m_bindMask);
 
 			if (0 != (_flags & BGFX_DISCARD_BINDINGS) )
 			{
+				m_bindMask = 0;
+
 				if (UINT32_MAX == m_bindEmptyIdx)
 				{
 					m_bindEmptyIdx = bindStateIndex();
@@ -4275,10 +4294,11 @@ namespace bgfx
 		void setBind(uint8_t _stage, const Binding& _bind)
 		{
 			Binding& dst = m_bind.m_bind[_stage];
-			if (0 != bx::memCmp(&dst, &_bind, sizeof(Binding) ) )
+			if (dst != _bind)
 			{
 				dst = _bind;
-				m_bindDirty = true;
+				m_bindDirty  = true;
+				m_bindMask  |= UINT32_C(1)<<_stage;
 			}
 		}
 
@@ -4425,6 +4445,7 @@ namespace bgfx
 		BindHashMap m_bindHashMap;
 		uint32_t    m_bindLlastIdx;
 		uint32_t    m_bindEmptyIdx;
+		uint32_t    m_bindMask;
 		bool        m_bindDirty;
 
 		int64_t m_cpuTimeBegin;
@@ -5028,6 +5049,11 @@ namespace bgfx
 
 	struct BX_NO_VTABLE RendererContextI
 	{
+		RendererContextI()
+		{
+			bx::memSet(m_uniforms, 0, sizeof(m_uniforms) );
+		}
+
 		virtual ~RendererContextI() = 0;
 		virtual RendererType::Enum getRendererType() const = 0;
 		virtual const char* getRendererName() const = 0;
@@ -5058,23 +5084,7 @@ namespace bgfx
 		virtual uintptr_t getInternal(TextureHandle _handle) = 0;
 		virtual void destroyTexture(TextureHandle _handle) = 0;
 		virtual void createFrameBuffer(FrameBufferHandle _handle, uint8_t _num, const Attachment* _attachment) = 0;
-		virtual void createFrameBuffer(FrameBufferHandle _handle, void* _nwh, uint32_t _width, uint32_t _height, TextureFormat::Enum _format, TextureFormat::Enum _depthFormat)
-		{
-			BX_UNUSED(_handle, _nwh, _width, _height, _format, _depthFormat);
-			BX_ASSERT(false, "Not implemented!");
-		}
-
-		virtual void createFrameBuffer(FrameBufferHandle _handle, const SwapChain& _desc)
-		{
-			createFrameBuffer(
-				  _handle
-				, _desc.nwh
-				, _desc.width
-				, _desc.height
-				, _desc.formatColor
-				, _desc.formatDepthStencil
-				);
-		}
+		virtual void createFrameBuffer(FrameBufferHandle _handle, const SwapChain& _desc) = 0;
 
 		virtual void resizeFrameBuffer(FrameBufferHandle _handle, const SwapChain& _desc)
 		{
@@ -5083,11 +5093,8 @@ namespace bgfx
 		}
 
 		virtual void destroyFrameBuffer(FrameBufferHandle _handle) = 0;
-		virtual void createUniform(UniformHandle _handle, UniformType::Enum _type, uint16_t _num, const char* _name) = 0;
-		virtual void destroyUniform(UniformHandle _handle) = 0;
 		virtual void requestScreenShot(FrameBufferHandle _handle, const char* _filePath) = 0;
 		virtual void updateViewName(ViewId _id, const char* _name) = 0;
-		virtual void updateUniform(uint16_t _loc, const void* _data, uint32_t _size) = 0;
 		virtual void invalidateOcclusionQuery(OcclusionQueryHandle _handle) = 0;
 		virtual void setMarker(const char* _name, uint16_t _len) = 0;
 		virtual void setName(Handle _handle, const char* _name, uint16_t _len) = 0;
@@ -5095,10 +5102,44 @@ namespace bgfx
 		virtual void dbgTextRenderBegin(TextVideoMemBlitter& _blitter, FrameBufferHandle _handle) = 0;
 		virtual void dbgTextRender(TextVideoMemBlitter& _blitter, uint32_t _numIndices) = 0;
 		virtual void dbgTextRenderEnd(TextVideoMemBlitter& _blitter) = 0;
+
+		void createUniform(UniformHandle _handle, UniformType::Enum _type, uint16_t _num, const char* _name)
+		{
+			if (NULL != m_uniforms[_handle.idx])
+			{
+				bx::free(g_allocator, m_uniforms[_handle.idx]);
+			}
+
+			const uint32_t size = bx::alignUp(g_uniformTypeSize[_type]*_num, 16);
+			void* data = bx::alloc(g_allocator, size);
+			bx::memSet(data, 0, size);
+			m_uniforms[_handle.idx] = data;
+			m_uniformReg.add(_handle, _name);
+		}
+
+		void destroyUniform(UniformHandle _handle)
+		{
+			bx::free(g_allocator, m_uniforms[_handle.idx]);
+			m_uniforms[_handle.idx] = NULL;
+			m_uniformReg.remove(_handle);
+		}
+
+		void updateUniform(uint16_t _loc, const void* _data, uint32_t _size)
+		{
+			bx::memCopy(m_uniforms[_loc], _data, _size);
+		}
+
+		UniformRegistry m_uniformReg;
+		void* m_uniforms[BGFX_CONFIG_MAX_UNIFORMS];
 	};
 
 	inline RendererContextI::~RendererContextI()
 	{
+		for (uint32_t ii = 0; ii < BX_COUNTOF(m_uniforms); ++ii)
+		{
+			bx::free(g_allocator, m_uniforms[ii]);
+			m_uniforms[ii] = NULL;
+		}
 	}
 
 	void rendererUpdateUniforms(RendererContextI* _renderCtx, UniformBuffer* _uniformBuffer, uint32_t _begin, uint32_t _end);

@@ -3071,8 +3071,7 @@ namespace bgfx
 			if (type & kUniformRefBit)
 			{
 				type &= ~kUniformRefBit;
-				const void* ptr;
-				bx::memCopy(&ptr, _uniformBuffer->read(sizeof(ptr) ), sizeof(ptr) );
+				const void* ptr = bx::loadUnaligned<const void*>(_uniformBuffer->read(sizeof(ptr) ) );
 				if (UniformType::Count > type)
 				{
 					_renderCtx->updateUniform(loc, ptr, g_uniformTypeSize[type]*num);

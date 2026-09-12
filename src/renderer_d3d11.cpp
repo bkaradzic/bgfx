@@ -852,7 +852,6 @@ namespace bgfx { namespace d3d11
 			}
 
 			m_fbh = BGFX_INVALID_HANDLE;
-			bx::memSet(m_uniforms, 0, sizeof(m_uniforms) );
 			bx::memSet(&m_mainSwapChain, 0, sizeof(m_mainSwapChain) );
 
 			m_ags = NULL;
@@ -1760,12 +1759,6 @@ namespace bgfx { namespace d3d11
 				m_textures[ii].destroy();
 			}
 
-			for (uint32_t ii = 0; ii < BX_COUNTOF(m_uniforms); ++ii)
-			{
-				bx::free(g_allocator, m_uniforms[ii]);
-				m_uniforms[ii] = NULL;
-			}
-
 			DX_RELEASE(m_annotation, 1);
 			dumpInfoQueue();
 			DX_RELEASE_W(m_infoQueue, 0);
@@ -2083,27 +2076,6 @@ namespace bgfx { namespace d3d11
 			}
 		}
 
-		void createUniform(UniformHandle _handle, UniformType::Enum _type, uint16_t _num, const char* _name) override
-		{
-			if (NULL != m_uniforms[_handle.idx])
-			{
-				bx::free(g_allocator, m_uniforms[_handle.idx]);
-			}
-
-			const uint32_t size = bx::alignUp(g_uniformTypeSize[_type]*_num, 16);
-			void* data = bx::alloc(g_allocator, size);
-			bx::memSet(data, 0, size);
-			m_uniforms[_handle.idx] = data;
-			m_uniformReg.add(_handle, _name);
-		}
-
-		void destroyUniform(UniformHandle _handle) override
-		{
-			bx::free(g_allocator, m_uniforms[_handle.idx]);
-			m_uniforms[_handle.idx] = NULL;
-			m_uniformReg.remove(_handle);
-		}
-
 		void requestScreenShot(FrameBufferHandle _handle, const char* _filePath) override
 		{
 			FrameBufferD3D11& frameBuffer = getFrameBuffer(_handle);
@@ -2221,11 +2193,6 @@ namespace bgfx { namespace d3d11
 				, BX_COUNTOF(s_viewName[0]) - BGFX_CONFIG_MAX_VIEW_NAME_RESERVED
 				, _name
 				);
-		}
-
-		void updateUniform(uint16_t _loc, const void* _data, uint32_t _size) override
-		{
-			bx::memCopy(m_uniforms[_loc], _data, _size);
 		}
 
 		void invalidateOcclusionQuery(OcclusionQueryHandle _handle) override
@@ -3997,9 +3964,8 @@ namespace bgfx { namespace d3d11
 		ProgramD3D11 m_program[BGFX_CONFIG_MAX_PROGRAMS];
 		TextureD3D11 m_textures[BGFX_CONFIG_MAX_TEXTURES];
 		VertexLayout m_vertexLayouts[BGFX_CONFIG_MAX_VERTEX_LAYOUTS];
-		FrameBufferD3D11 m_frameBuffers[BGFX_CONFIG_MAX_FRAME_BUFFERS+1];		void* m_uniforms[BGFX_CONFIG_MAX_UNIFORMS];
+		FrameBufferD3D11 m_frameBuffers[BGFX_CONFIG_MAX_FRAME_BUFFERS+1];
 		Matrix4 m_predefinedUniforms[PredefinedUniform::Count];
-		UniformRegistry m_uniformReg;
 
 		StateCacheT<ID3D11BlendState*> m_blendStateCache;
 		StateCacheT<ID3D11DepthStencilState*> m_depthStencilStateCache;

@@ -198,23 +198,11 @@ namespace bgfx { namespace noop
 		{
 		}
 
-		void createUniform(UniformHandle /*_handle*/, UniformType::Enum /*_type*/, uint16_t /*_num*/, const char* /*_name*/) override
-		{
-		}
-
-		void destroyUniform(UniformHandle /*_handle*/) override
-		{
-		}
-
 		void requestScreenShot(FrameBufferHandle /*_handle*/, const char* /*_filePath*/) override
 		{
 		}
 
 		void updateViewName(ViewId /*_id*/, const char* /*_name*/) override
-		{
-		}
-
-		void updateUniform(uint16_t /*_loc*/, const void* /*_data*/, uint32_t /*_size*/) override
 		{
 		}
 
