@@ -724,6 +724,12 @@ mobile platforms.
 
 ![Harbi2 screenshot](https://h2mb.b-cdn.net/image.webp)
 
+## Metal Gear Solid 4 : Guns of the patriots
+
+https://store.steampowered.com/app/2492670/METAL_GEAR_SOLID_4_Guns_of_the_Patriots__Master_Collection_Version/ 2026 remaster of the 2008 action-adventure stealth video game.
+
+<img width="1800" height="1013" alt="mgs4_cover" src="https://github.com/user-attachments/assets/cea9ec8a-f71b-4bf9-b826-0be898ca8658" />
+
 [License (BSD 2-clause)](https://bkaradzic.github.io/bgfx/license.html)
 -----------------------------------------------------------------------
 
