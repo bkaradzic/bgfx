@@ -5223,6 +5223,16 @@ namespace bgfx { namespace d3d12
 	{
 		finish(UINT64_MAX, true);
 
+		for (uint32_t ii = 0; ii < kMaxCommandLists; ++ii)
+		{
+			ResourceArray& ra = m_release[ii];
+			for (ResourceArray::iterator it = ra.begin(), itEnd = ra.end(); it != itEnd; ++it)
+			{
+				DX_RELEASE(*it, 0);
+			}
+			ra.clear();
+		}
+
 		DX_RELEASE(m_fence, 0);
 
 		for (uint32_t ii = 0; ii < kMaxCommandLists; ++ii)
@@ -6070,6 +6080,7 @@ namespace bgfx { namespace d3d12
 		if (NULL != m_ptr)
 		{
 			s_renderD3D12->m_cmd.release(m_ptr);
+			m_ptr     = NULL;
 			m_dynamic = false;
 			m_state   = D3D12_RESOURCE_STATE_COMMON;
 		}
@@ -7812,7 +7823,7 @@ namespace bgfx { namespace d3d12
 #endif // BX_PLATFORM_WINDOWS
 	}
 
-	void FrameBufferD3D12::destroySwapChainViews()
+	void FrameBufferD3D12::destroySwapChainViews(bool _defer)
 	{
 #if BX_PLATFORM_WINDOWS
 		const uint32_t num = getSwapChainDesc().bufferCount;
@@ -7829,8 +7840,25 @@ namespace bgfx { namespace d3d12
 			}
 		}
 
-		DX_RELEASE(m_backBufferDepthStencil, 0);
-		DX_RELEASE(m_msaaRt, 0);
+		if (_defer)
+		{
+			if (NULL != m_backBufferDepthStencil)
+			{
+				s_renderD3D12->m_cmd.release(m_backBufferDepthStencil);
+				m_backBufferDepthStencil = NULL;
+			}
+
+			if (NULL != m_msaaRt)
+			{
+				s_renderD3D12->m_cmd.release(m_msaaRt);
+				m_msaaRt = NULL;
+			}
+		}
+		else
+		{
+			DX_RELEASE(m_backBufferDepthStencil, 0);
+			DX_RELEASE(m_msaaRt, 0);
+		}
 #endif // BX_PLATFORM_WINDOWS
 	}
 
@@ -7890,7 +7918,7 @@ namespace bgfx { namespace d3d12
 	{
 		if (isSwapChain() )
 		{
-			destroySwapChainViews();
+			destroySwapChainViews(true);
 			m_needPresent = false;
 		}
 	}

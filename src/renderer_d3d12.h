@@ -516,7 +516,7 @@ namespace bgfx { namespace d3d12
 		void update(const SwapChain& _desc);
 		DxgiSwapChainDesc getSwapChainDesc() const;
 		void createSwapChainViews();
-		void destroySwapChainViews();
+		void destroySwapChainViews(bool _defer = false);
 		uint16_t destroy();
 		HRESULT present(uint32_t _syncInterval, uint32_t _flags);
 		void preReset();
