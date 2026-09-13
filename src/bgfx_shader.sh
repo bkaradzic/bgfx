@@ -182,6 +182,12 @@ struct BgfxSamplerCube
 	TextureCube m_texture;
 };
 
+struct BgfxSamplerCubeArray
+{
+	SamplerState m_sampler;
+	TextureCubeArray m_texture;
+};
+
 struct BgfxSamplerCubeShadow
 {
 	SamplerComparisonState m_sampler;
@@ -310,6 +316,16 @@ vec4 bgfxTextureCube(BgfxSamplerCube _sampler, vec3 _coord)
 vec4 bgfxTextureCubeBias(BgfxSamplerCube _sampler, vec3 _coord, float _bias)
 {
 	return _sampler.m_texture.SampleBias(_sampler.m_sampler, _coord, _bias);
+}
+
+vec4 bgfxTextureCubeArray(BgfxSamplerCubeArray _sampler, vec4 _coord)
+{
+	return _sampler.m_texture.Sample(_sampler.m_sampler, _coord);
+}
+
+vec4 bgfxTextureCubeArrayLod(BgfxSamplerCubeArray _sampler, vec4 _coord, float _level)
+{
+	return _sampler.m_texture.SampleLevel(_sampler.m_sampler, _coord, _level);
 }
 
 vec4 bgfxTextureCubeLod(BgfxSamplerCube _sampler, vec3 _coord, float _level)
@@ -519,6 +535,14 @@ vec3 bgfxTextureSize(BgfxSampler3D _sampler, int _lod)
 #		define textureCubeBias(_sampler, _coord, _bias) bgfxTextureCubeBias(_sampler, _coord, _bias)
 #		define textureCubeLod(_sampler, _coord, _level) bgfxTextureCubeLod(_sampler, _coord, _level)
 
+#		define SAMPLERCUBEARRAY(_name, _reg) \
+			uniform SamplerState _name ## Sampler : REGISTER(s, _reg); \
+			uniform TextureCubeArray _name ## Texture : REGISTER(t, _reg); \
+			static BgfxSamplerCubeArray _name = { _name ## Sampler, _name ## Texture }
+#		define samplerCubeArray BgfxSamplerCubeArray
+#		define textureCubeArray(_sampler, _coord) bgfxTextureCubeArray(_sampler, _coord)
+#		define textureCubeArrayLod(_sampler, _coord, _level) bgfxTextureCubeArrayLod(_sampler, _coord, _level)
+
 #		define SAMPLERCUBESHADOW(_name, _reg) \
 			uniform SamplerComparisonState _name ## SamplerComparison : REGISTER(s, _reg); \
 			uniform TextureCube _name ## Texture : REGISTER(t, _reg); \
@@ -650,6 +674,7 @@ vec4  mod(vec4  _a, vec4  _b) { return _a - _b * floor(_a / _b); }
 #	define texture2DArray(_sampler, _coord) texture(_sampler, _coord)
 #	define texture3D(_sampler, _coord)      texture(_sampler, _coord)
 #	define textureCube(_sampler, _coord)    texture(_sampler, _coord)
+#	define textureCubeArray(_sampler, _coord) texture(_sampler, _coord)
 #	define texture2DLod(_sampler, _coord, _lod)                     textureLod(_sampler, _coord, _lod)
 #	define texture2DLodOffset(_sampler, _coord, _lod, _offset)      textureLodOffset(_sampler, _coord, _lod, _offset)
 #	define texture2DArrayLod(_sampler, _coord, _lod)                textureLod(_sampler, _coord, _lod)
@@ -657,6 +682,7 @@ vec4  mod(vec4  _a, vec4  _b) { return _a - _b * floor(_a / _b); }
 #	define texture3DLod(_sampler, _coord, _lod)                     textureLod(_sampler, _coord, _lod)
 #	define texture3DLodOffset(_sampler, _coord, _lod, _offset)      textureLodOffset(_sampler, _coord, _lod, _offset)
 #	define textureCubeLod(_sampler, _coord, _lod)                   textureLod(_sampler, _coord, _lod)
+#	define textureCubeArrayLod(_sampler, _coord, _lod)              textureLod(_sampler, _coord, _lod)
 #	define texture2DGrad(_sampler, _coord, _dPdx, _dPdy)            textureGrad(_sampler, _coord, _dPdx, _dPdy)
 #	define texture3DGrad(_sampler, _coord, _dPdx, _dPdy)            textureGrad(_sampler, _coord, _dPdx, _dPdy)
 #	define textureCubeGrad(_sampler, _coord, _dPdx, _dPdy)          textureGrad(_sampler, _coord, _dPdx, _dPdy)

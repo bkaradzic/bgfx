@@ -4787,7 +4787,7 @@ namespace bgfx { namespace d3d12
 			case D3D12_SRV_DIMENSION_TEXTURECUBEARRAY:
 				srvd->TextureCubeArray.MostDetailedMip     = _firstMip;
 				srvd->TextureCubeArray.MipLevels           = numMips;
-				srvd->TextureCubeArray.First2DArrayFace    = _firstLayer;
+				srvd->TextureCubeArray.First2DArrayFace    = _firstLayer * 6;
 				srvd->TextureCubeArray.NumCubes            = numLayers;
 				srvd->TextureCubeArray.ResourceMinLODClamp = 0;
 				break;
