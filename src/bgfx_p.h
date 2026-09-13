@@ -293,6 +293,7 @@ namespace bgfx
 #endif // BGFX_CONFIG_MAX_DRAW_CALLS < (64<<10)
 
 	static constexpr uint32_t kDrawCallBlock = BGFX_CONFIG_DRAW_CALL_BLOCK;
+	static constexpr uint16_t kMatrixBlock   = 64;
 	static constexpr uint32_t kBlitBlock     = 64;
 	static constexpr uint32_t kRectBlock     = 64;
 	static constexpr uint32_t kDepthControlBlock = 64;
@@ -2531,21 +2532,29 @@ namespace bgfx
 		return mask;
 	}
 
-	inline uint32_t hashBindings(const Binding _bind[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS])
+	inline uint32_t hashBindings(const Binding _bind[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS], uint32_t _mask)
 	{
+		BX_ASSERT(_mask == bindingsMask(_bind), "Bind occupancy mask 0x%08x is stale (expected 0x%08x)."
+			, _mask
+			, bindingsMask(_bind)
+			);
+
 		bx::HashMurmur3 murmur;
 		murmur.begin();
 
-		const uint32_t mask = bindingsMask(_bind);
+		murmur.add(_mask);
 
-		murmur.add(mask);
-
-		for (BitMaskToIndexIteratorT<uint32_t> it(mask); !it.isDone(); it.next() )
+		for (BitMaskToIndexIteratorT<uint32_t> it(_mask); !it.isDone(); it.next() )
 		{
 			murmur.add(_bind[it.idx]);
 		}
 
 		return murmur.end();
+	}
+
+	inline uint32_t hashBindings(const Binding _bind[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS])
+	{
+		return hashBindings(_bind, bindingsMask(_bind) );
 	}
 
 	inline bool bindingsEqual(
@@ -3905,7 +3914,11 @@ namespace bgfx
 			m_draw.clear(BGFX_DISCARD_ALL);
 			m_compute.clear(BGFX_DISCARD_ALL);
 			m_bind.clear(BGFX_DISCARD_ALL);
-			m_bindMask = 0;
+			m_bindMask     = 0;
+			m_bindOccupied = 0;
+
+			m_matrixBlockFirst = 0;
+			m_matrixBlockNum   = 0;
 		}
 
 		void begin(Frame* _frame, uint8_t _idx)
@@ -3928,6 +3941,9 @@ namespace bgfx
 			m_bindLlastIdx  = 0;
 			m_bindEmptyIdx = UINT32_MAX;
 			m_bindDirty    = true;
+
+			m_matrixBlockFirst = 0;
+			m_matrixBlockNum   = 0;
 
 			bx::memSet(m_viewUsed, 0, sizeof(m_viewUsed) );
 		}
@@ -3960,7 +3976,7 @@ namespace bgfx
 
 		uint32_t bindStateIndex()
 		{
-			const uint32_t hash = hashBindings(m_bind.m_bind);
+			const uint32_t hash = hashBindings(m_bind.m_bind, m_bindOccupied);
 
 			BindHashMap::const_iterator it = m_bindHashMap.find(hash);
 			if (it != m_bindHashMap.end() )
@@ -4006,7 +4022,8 @@ namespace bgfx
 
 			if (0 != (_flags & BGFX_DISCARD_BINDINGS) )
 			{
-				m_bindMask = 0;
+				m_bindMask     = 0;
+				m_bindOccupied = 0;
 
 				if (UINT32_MAX == m_bindEmptyIdx)
 				{
@@ -4136,7 +4153,33 @@ namespace bgfx
 
 		uint32_t setTransform(const void* _mtx, uint16_t _num)
 		{
-			m_draw.m_startMatrix = m_frame->m_frameCache.m_matrixCache.add(_mtx, &_num);
+			MatrixCache& matrixCache = m_frame->m_frameCache.m_matrixCache;
+
+			if (NULL != _mtx
+			&&  1    == _num)
+			{
+				if (0 == m_matrixBlockNum)
+				{
+					uint16_t num = kMatrixBlock;
+					m_matrixBlockFirst = matrixCache.reserve(&num);
+					m_matrixBlockNum   = num;
+				}
+
+				if (0 != m_matrixBlockNum)
+				{
+					const uint32_t first = m_matrixBlockFirst++;
+					--m_matrixBlockNum;
+
+					bx::memCopy(&matrixCache.at(first), _mtx, sizeof(Matrix4) );
+
+					m_draw.m_startMatrix = first;
+					m_draw.m_numMatrices = 1;
+
+					return first;
+				}
+			}
+
+			m_draw.m_startMatrix = matrixCache.add(_mtx, &_num);
 
 			m_draw.m_numMatrices = bx::max<uint16_t>(_num, 1);
 
@@ -4296,9 +4339,15 @@ namespace bgfx
 			Binding& dst = m_bind.m_bind[_stage];
 			if (dst != _bind)
 			{
+				const uint32_t bit = UINT32_C(1)<<_stage;
+
 				dst = _bind;
-				m_bindDirty  = true;
-				m_bindMask  |= UINT32_C(1)<<_stage;
+				m_bindDirty     = true;
+				m_bindMask     |= bit;
+				m_bindOccupied  = _bind.isOccupied()
+					? m_bindOccupied |  bit
+					: m_bindOccupied & ~bit
+					;
 			}
 		}
 
@@ -4446,6 +4495,9 @@ namespace bgfx
 		uint32_t    m_bindLlastIdx;
 		uint32_t    m_bindEmptyIdx;
 		uint32_t    m_bindMask;
+		uint32_t    m_bindOccupied;
+		uint32_t    m_matrixBlockFirst;
+		uint16_t    m_matrixBlockNum;
 		bool        m_bindDirty;
 
 		int64_t m_cpuTimeBegin;
