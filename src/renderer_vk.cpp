@@ -1065,6 +1065,38 @@ VK_IMPORT_DEVICE
 			);
 	}
 
+	VkImageLayout getDepthAttachmentLayout(VkImageAspectFlags _aspects, uint8_t _flags)
+	{
+		const bool hasDepthAspect   = 0 != (_aspects & VK_IMAGE_ASPECT_DEPTH_BIT);
+		const bool hasStencilAspect = 0 != (_aspects & VK_IMAGE_ASPECT_STENCIL_BIT);
+
+		const bool readOnlyDepth   = hasDepthAspect   && 0 != (_flags & BGFX_ATTACHMENT_READ_ONLY_DEPTH);
+		const bool readOnlyStencil = hasStencilAspect && 0 != (_flags & BGFX_ATTACHMENT_READ_ONLY_STENCIL);
+
+		const bool allReadOnly = true
+			&& (!hasDepthAspect   || readOnlyDepth  )
+			&& (!hasStencilAspect || readOnlyStencil)
+			;
+
+		return allReadOnly
+			? VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL
+			: readOnlyDepth
+				? VK_IMAGE_LAYOUT_DEPTH_READ_ONLY_STENCIL_ATTACHMENT_OPTIMAL
+				: readOnlyStencil
+					? VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL
+					: VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL
+					;
+	}
+
+	bool isReadOnlyDepthStencilLayout(VkImageLayout _layout)
+	{
+		return false
+			|| VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL            == _layout
+			|| VK_IMAGE_LAYOUT_DEPTH_READ_ONLY_STENCIL_ATTACHMENT_OPTIMAL == _layout
+			|| VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL == _layout
+			;
+	}
+
 	void setImageMemoryBarrier(
 		  VkCommandBuffer _commandBuffer
 		, VkImage _image
@@ -1317,6 +1349,7 @@ VK_IMPORT_DEVICE
 			VkPhysicalDeviceSwapchainMaintenance1FeaturesEXT swapchainMaintenance1Features = {};
 
 			m_fbh = BGFX_INVALID_HANDLE;
+			m_readOnlyDepthLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 			bx::memSet(&m_mainSwapChain, 0, sizeof(m_mainSwapChain) );
 
 			bool imported = true;
@@ -2871,6 +2904,7 @@ VK_IMPORT_DEVICE
 			if (m_fbh.idx == _handle.idx)
 			{
 				m_fbh = BGFX_INVALID_HANDLE;
+				m_readOnlyDepthLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 			}
 
 			uint16_t denseIdx = frameBuffer.destroy();
@@ -3396,6 +3430,8 @@ VK_IMPORT_DEVICE
 				}
 			}
 
+			m_readOnlyDepthLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+
 			if (!newFrameBuffer.isSwapChain() )
 			{
 				if (0 == newFrameBuffer.m_num
@@ -3417,10 +3453,17 @@ VK_IMPORT_DEVICE
 				if (isValid(newFrameBuffer.m_depth) )
 				{
 					TextureVK& texture = m_textures[newFrameBuffer.m_depth.idx];
-					texture.setState(
-						  m_commandBuffer
-						, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL
+					const VkImageLayout layout = getDepthAttachmentLayout(
+						  texture.m_aspectFlags
+						, newFrameBuffer.m_attachment[newFrameBuffer.m_num].flags
 						);
+
+					texture.setState(m_commandBuffer, layout);
+
+					if (isReadOnlyDepthStencilLayout(layout) )
+					{
+						m_readOnlyDepthLayout = layout;
+					}
 				}
 			}
 			else
@@ -3774,24 +3817,7 @@ VK_IMPORT_DEVICE
 				}
 				else if (_aspects[ii] & (VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT) )
 				{
-					const bool hasDepthAspect   = 0 != (_aspects[ii] & VK_IMAGE_ASPECT_DEPTH_BIT);
-					const bool hasStencilAspect = 0 != (_aspects[ii] & VK_IMAGE_ASPECT_STENCIL_BIT);
-
-					const bool readOnlyDepth   = hasDepthAspect   && 0 != (_depthFlags & BGFX_ATTACHMENT_READ_ONLY_DEPTH);
-					const bool readOnlyStencil = hasStencilAspect && 0 != (_depthFlags & BGFX_ATTACHMENT_READ_ONLY_STENCIL);
-
-					const bool allReadOnly = (!hasDepthAspect   || readOnlyDepth)
-						&&                   (!hasStencilAspect || readOnlyStencil)
-						;
-
-					const VkImageLayout layout = allReadOnly
-						? VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL
-						: readOnlyDepth
-						? VK_IMAGE_LAYOUT_DEPTH_READ_ONLY_STENCIL_ATTACHMENT_OPTIMAL
-						: readOnlyStencil
-						? VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL
-						: VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL
-						;
+					const VkImageLayout layout = getDepthAttachmentLayout(_aspects[ii], _depthFlags);
 
 					ad[ii].loadOp         = 0 != (_clearFlags & BGFX_CLEAR_DEPTH)           ? VK_ATTACHMENT_LOAD_OP_CLEAR      : VK_ATTACHMENT_LOAD_OP_LOAD;
 					ad[ii].storeOp        = 0 != (_clearFlags & BGFX_CLEAR_DISCARD_DEPTH)   ? VK_ATTACHMENT_STORE_OP_DONT_CARE : VK_ATTACHMENT_STORE_OP_STORE;
@@ -4510,9 +4536,14 @@ VK_IMPORT_DEVICE
 								type = VK_IMAGE_VIEW_TYPE_2D_ARRAY;
 							}
 
-							texture.setState(m_commandBuffer, texture.m_sampledLayout);
+							const VkImageLayout layout = isReadOnlyDepthStencilLayout(texture.m_currentImageLayout)
+								? texture.m_currentImageLayout
+								: texture.m_sampledLayout
+								;
 
-							imageInfo[imageCount].imageLayout = texture.m_sampledLayout;
+							texture.setState(m_commandBuffer, layout);
+
+							imageInfo[imageCount].imageLayout = layout;
 							imageInfo[imageCount].sampler     = VK_NULL_HANDLE;
 							imageInfo[imageCount].imageView   = getCachedImageView(
 								  { bind.m_idx }
@@ -4580,9 +4611,14 @@ VK_IMPORT_DEVICE
 								: _program.m_textures[bindInfo.index].type
 								;
 
-							texture.setState(m_commandBuffer, texture.m_sampledLayout);
+							const VkImageLayout layout = isReadOnlyDepthStencilLayout(texture.m_currentImageLayout)
+								? texture.m_currentImageLayout
+								: texture.m_sampledLayout
+								;
 
-							imageInfo[imageCount].imageLayout = texture.m_sampledLayout;
+							texture.setState(m_commandBuffer, layout);
+
+							imageInfo[imageCount].imageLayout = layout;
 							imageInfo[imageCount].sampler     = sampler;
 							imageInfo[imageCount].imageView   = getCachedImageView(
 								  { bind.m_idx }
@@ -5235,6 +5271,7 @@ VK_IMPORT_DEVICE
 		uint8_t m_vsScratch[64<<10];
 
 		FrameBufferHandle m_fbh;
+		VkImageLayout     m_readOnlyDepthLayout;
 	};
 
 	static RendererContextVK* s_renderVK;
@@ -10790,6 +10827,12 @@ VK_DESTROY
 						hash.add(sbo.buffer);
 						hash.add(vsSize);
 						hash.add(0);
+
+						if (VK_IMAGE_LAYOUT_UNDEFINED != m_readOnlyDepthLayout)
+						{
+							hash.add(m_readOnlyDepthLayout);
+						}
+
 						const uint32_t bindHash = hash.end();
 
 						if (currentBindHash != bindHash)
@@ -11144,6 +11187,12 @@ VK_DESTROY
 						hash.add(sbo.buffer);
 						hash.add(vsSize);
 						hash.add(fsSize);
+
+						if (VK_IMAGE_LAYOUT_UNDEFINED != m_readOnlyDepthLayout)
+						{
+							hash.add(m_readOnlyDepthLayout);
+						}
+
 						const uint32_t bindHash = hash.end();
 
 						if (currentBindHash != bindHash)
