@@ -7931,7 +7931,9 @@ namespace bgfx { namespace d3d12
 			setResourceBarrier(s_renderD3D12->m_commandList
 				, m_msaaRt
 				, D3D12_RESOURCE_STATE_COMMON
-				, D3D12_RESOURCE_STATE_RESOLVE_SOURCE
+				, fbh.idx == kMainFrameBufferIdx
+					? D3D12_RESOURCE_STATE_RESOLVE_SOURCE
+					: D3D12_RESOURCE_STATE_RENDER_TARGET
 				);
 		}
 

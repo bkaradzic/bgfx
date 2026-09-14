@@ -2020,6 +2020,28 @@ namespace bgfx { namespace gl
 		return GL_DEPTH_STENCIL_ATTACHMENT;
 	}
 
+	static void framebufferAttachSlice(GLenum _attachment, const TextureGL& _texture, uint8_t _mip, uint16_t _slice)
+	{
+		const bool layered = false
+			|| GL_TEXTURE_3D             == _texture.m_target
+			|| GL_TEXTURE_2D_ARRAY       == _texture.m_target
+			|| GL_TEXTURE_CUBE_MAP_ARRAY == _texture.m_target
+			;
+
+		if (layered)
+		{
+			GL_CHECK(glFramebufferTextureLayer(GL_FRAMEBUFFER, _attachment, _texture.m_id, _mip, GLint(_slice) ) );
+		}
+		else if (GL_TEXTURE_CUBE_MAP == _texture.m_target)
+		{
+			GL_CHECK(glFramebufferTexture2D(GL_FRAMEBUFFER, _attachment, GL_TEXTURE_CUBE_MAP_POSITIVE_X + _slice, _texture.m_id, _mip) );
+		}
+		else
+		{
+			GL_CHECK(glFramebufferTexture2D(GL_FRAMEBUFFER, _attachment, _texture.m_target, _texture.m_id, _mip) );
+		}
+	}
+
 	static bool isReadPixelsSupported(TextureFormat::Enum _format)
 	{
 		if (!bimg::isDepth(bimg::TextureFormat::Enum(_format) )
@@ -2824,6 +2846,7 @@ namespace bgfx { namespace gl
 				{
 					glSampleMaski = NULL;
 				}
+
 
 				if (s_extension[Extension::ARB_copy_image].m_supported
 				||  s_extension[Extension::EXT_copy_image].m_supported
@@ -6137,11 +6160,6 @@ namespace bgfx { namespace gl
 
 	void TextureGL::clear(uint8_t _mip, uint8_t _numMips, uint16_t _layer, uint16_t _numLayers)
 	{
-		if (NULL == glClearTexSubImage)
-		{
-			return;
-		}
-
 		const bool     is3D     = GL_TEXTURE_3D == m_target;
 		const uint32_t numSides = m_numLayers * (isCubeMap() ? 6 : 1);
 
@@ -6150,6 +6168,12 @@ namespace bgfx { namespace gl
 			? m_numMips
 			: bx::min<uint8_t>(m_numMips, uint8_t(_mip + _numMips) )
 			;
+
+		if (NULL == glClearTexSubImage)
+		{
+			clearAttached(mipBeg, mipEnd, _layer, _numLayers);
+			return;
+		}
 
 		for (uint8_t lod = mipBeg; lod < mipEnd; ++lod)
 		{
@@ -6164,6 +6188,111 @@ namespace bgfx { namespace gl
 
 			GL_CHECK(glClearTexSubImage(m_id, lod, 0, 0, zoffset, mipW, mipH, depth, m_fmt, m_type, NULL) );
 		}
+	}
+
+	void TextureGL::clearAttached(uint8_t _mipBeg, uint8_t _mipEnd, uint16_t _layer, uint16_t _numLayers)
+	{
+		const bimg::TextureFormat::Enum format = bimg::TextureFormat::Enum(m_textureFormat);
+
+		if (bimg::isCompressed(format) )
+		{
+			return;
+		}
+
+		const bool     is3D     = GL_TEXTURE_3D == m_target;
+		const uint32_t numSides = m_numLayers * (isCubeMap() ? 6 : 1);
+
+		const GLenum attachment = attachmentFor(TextureFormat::Enum(m_textureFormat) );
+		const bx::EncodingType::Enum encoding = bx::EncodingType::Enum(bimg::getBlockInfo(format).encoding);
+
+		GLuint fbo = 0;
+		GL_CHECK(glGenFramebuffers(1, &fbo) );
+		GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, fbo) );
+
+		GLboolean colorMask[4];
+		GLboolean depthMask;
+		GLint stencilMask;
+		GL_CHECK(glGetBooleanv(GL_COLOR_WRITEMASK, colorMask) );
+		GL_CHECK(glGetBooleanv(GL_DEPTH_WRITEMASK, &depthMask) );
+		GL_CHECK(glGetIntegerv(GL_STENCIL_WRITEMASK, &stencilMask) );
+		const GLboolean scissor = glIsEnabled(GL_SCISSOR_TEST);
+
+		GL_CHECK(glDisable(GL_SCISSOR_TEST) );
+		GL_CHECK(glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE) );
+		GL_CHECK(glDepthMask(GL_TRUE) );
+		GL_CHECK(glStencilMask(0xff) );
+
+		for (uint8_t lod = _mipBeg; lod < _mipEnd; ++lod)
+		{
+			const uint32_t first = is3D ? 0 : _layer;
+			const uint32_t num   = is3D
+				? bx::max<uint32_t>(1, m_depth >> lod)
+				: ( (UINT16_MAX == _numLayers) ? numSides - _layer : _numLayers)
+				;
+
+			for (uint32_t ii = 0; ii < num; ++ii)
+			{
+				const uint32_t slice = first + ii;
+
+				framebufferAttachSlice(attachment, *this, lod, uint16_t(slice) );
+
+				if (GL_FRAMEBUFFER_COMPLETE != glCheckFramebufferStatus(GL_FRAMEBUFFER) )
+				{
+					continue;
+				}
+
+				switch (attachment)
+				{
+				case GL_DEPTH_STENCIL_ATTACHMENT:
+					GL_CHECK(glClearBufferfi(GL_DEPTH_STENCIL, 0, 0.0f, 0) );
+					break;
+
+				case GL_DEPTH_ATTACHMENT:
+					{
+						const GLfloat zero = 0.0f;
+						GL_CHECK(glClearBufferfv(GL_DEPTH, 0, &zero) );
+					}
+					break;
+
+				case GL_STENCIL_ATTACHMENT:
+					{
+						const GLint zero = 0;
+						GL_CHECK(glClearBufferiv(GL_STENCIL, 0, &zero) );
+					}
+					break;
+
+				default:
+					if (bx::EncodingType::Uint == encoding)
+					{
+						const GLuint zero[4] = {};
+						GL_CHECK(glClearBufferuiv(GL_COLOR, 0, zero) );
+					}
+					else if (bx::EncodingType::Int == encoding)
+					{
+						const GLint zero[4] = {};
+						GL_CHECK(glClearBufferiv(GL_COLOR, 0, zero) );
+					}
+					else
+					{
+						const GLfloat zero[4] = {};
+						GL_CHECK(glClearBufferfv(GL_COLOR, 0, zero) );
+					}
+					break;
+				}
+			}
+		}
+
+		GL_CHECK(glColorMask(colorMask[0], colorMask[1], colorMask[2], colorMask[3]) );
+		GL_CHECK(glDepthMask(depthMask) );
+		GL_CHECK(glStencilMask(stencilMask) );
+
+		if (scissor)
+		{
+			GL_CHECK(glEnable(GL_SCISSOR_TEST) );
+		}
+
+		GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, s_renderGL->m_currentFbo) );
+		GL_CHECK(glDeleteFramebuffers(1, &fbo) );
 	}
 
 	void TextureGL::create(const Memory* _mem, uint64_t _flags, uint8_t _skip, uint64_t _external)
@@ -8443,10 +8572,6 @@ namespace bgfx { namespace gl
 				const TextureGL& src = m_textures[bi.m_src.idx];
 				const TextureGL& dst = m_textures[bi.m_dst.idx];
 
-				BX_ASSERT(0 == bi.m_srcZ && 0 == bi.m_dstZ && 1 >= bi.m_depth
-					, "Blitting 3D regions is not supported"
-					);
-
 				if (0 == bi.m_srcMip
 				&&  isPendingResolve(TextureHandle{bi.m_src.idx}) )
 				{
@@ -8458,29 +8583,56 @@ namespace bgfx { namespace gl
 
 				GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, fbo) );
 
-				GL_CHECK(glFramebufferTexture2D(GL_FRAMEBUFFER
-					, GL_COLOR_ATTACHMENT0
-					, GL_TEXTURE_2D
-					, src.m_id
-					, bi.m_srcMip
-					) );
-
-				GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-				BX_ASSERT(GL_FRAMEBUFFER_COMPLETE == status, "glCheckFramebufferStatus failed 0x%08x", status);
-				BX_UNUSED(status);
+				const uint32_t numSlices = bx::max<uint32_t>(bi.m_depth, 1);
 
 				GL_CHECK(glActiveTexture(GL_TEXTURE0) );
-				GL_CHECK(glBindTexture(GL_TEXTURE_2D, dst.m_id) );
+				GL_CHECK(glBindTexture(dst.m_target, dst.m_id) );
 
-				GL_CHECK(glCopyTexSubImage2D(GL_TEXTURE_2D
-					, bi.m_dstMip
-					, bi.m_dstX
-					, bi.m_dstY
-					, bi.m_srcX
-					, bi.m_srcY
-					, bi.m_width
-					, bi.m_height
-					) );
+				const bool dstLayered = false
+					|| GL_TEXTURE_3D             == dst.m_target
+					|| GL_TEXTURE_2D_ARRAY       == dst.m_target
+					|| GL_TEXTURE_CUBE_MAP_ARRAY == dst.m_target
+					;
+
+				for (uint32_t ii = 0; ii < numSlices; ++ii)
+				{
+					framebufferAttachSlice(GL_COLOR_ATTACHMENT0, src, bi.m_srcMip, uint16_t(bi.m_srcZ + ii) );
+
+					GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+					BX_ASSERT(GL_FRAMEBUFFER_COMPLETE == status, "glCheckFramebufferStatus failed 0x%08x", status);
+					BX_UNUSED(status);
+
+					if (dstLayered)
+					{
+						GL_CHECK(glCopyTexSubImage3D(dst.m_target
+							, bi.m_dstMip
+							, bi.m_dstX
+							, bi.m_dstY
+							, bi.m_dstZ + ii
+							, bi.m_srcX
+							, bi.m_srcY
+							, bi.m_width
+							, bi.m_height
+							) );
+					}
+					else
+					{
+						const GLenum target = GL_TEXTURE_CUBE_MAP == dst.m_target
+							? GL_TEXTURE_CUBE_MAP_POSITIVE_X + bi.m_dstZ + ii
+							: dst.m_target
+							;
+
+						GL_CHECK(glCopyTexSubImage2D(target
+							, bi.m_dstMip
+							, bi.m_dstX
+							, bi.m_dstY
+							, bi.m_srcX
+							, bi.m_srcY
+							, bi.m_width
+							, bi.m_height
+							) );
+					}
+				}
 
 				GL_CHECK(glDeleteFramebuffers(1, &fbo) );
 				GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, m_currentFbo) );
