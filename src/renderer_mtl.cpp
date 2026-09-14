@@ -4705,12 +4705,17 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			}
 		}
 
-		const uint32_t totalLayers = uint32_t(ptr->arrayLength() * (TextureCube == m_type ? 6 : 1) );
+		const bool     isCube      = TextureCube == m_type;
+		const uint32_t rangeScale  = isCube ? 6 : 1;
+		const uint32_t totalUnits  = uint32_t(ptr->arrayLength() );
+		const uint32_t totalLayers = totalUnits * rangeScale;
 
 		const uint8_t  firstMip   = bx::min<uint8_t>(_firstMip, uint8_t(m_numMips - 1) );
 		const uint8_t  numMips    = bx::min<uint8_t>(_numMips,  uint8_t(m_numMips - firstMip) );
-		const uint32_t firstLayer = bx::min<uint32_t>(_firstLayer, totalLayers - 1);
-		const uint32_t numLayers  = bx::min<uint32_t>(_numLayers,  totalLayers - firstLayer);
+		const uint32_t firstUnit  = bx::min<uint32_t>(_firstLayer, totalUnits - 1);
+		const uint32_t numUnits   = bx::min<uint32_t>(_numLayers,  totalUnits - firstUnit);
+		const uint32_t firstLayer = firstUnit * rangeScale;
+		const uint32_t numLayers  = numUnits  * rangeScale;
 
 		const bool fullRange = 0 == firstMip
 			&& 0 == firstLayer
@@ -4747,9 +4752,12 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 		MTL::TextureType type = ptr->textureType();
 
-		if (TextureCube == m_type)
+		if (isCube)
 		{
-			type = (MTL::TextureType)MTL::TextureType2DArray;
+			type = 1 == numUnits
+				? (MTL::TextureType)MTL::TextureTypeCube
+				: (MTL::TextureType)MTL::TextureTypeCubeArray
+				;
 		}
 		else if (MTL::TextureType2DArray == type
 		     &&  1 == numLayers)

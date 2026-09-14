@@ -5135,6 +5135,19 @@ WGPU_IMPORT
 				arrayLayerCount = 1;
 			}
 
+			uint32_t baseArrayLayer = _baseArrayLayer;
+
+			if (WGPUTextureViewDimension_Cube      == tvd
+			||  WGPUTextureViewDimension_CubeArray == tvd)
+			{
+				baseArrayLayer *= 6;
+
+				if (WGPU_ARRAY_LAYER_COUNT_UNDEFINED != arrayLayerCount)
+				{
+					arrayLayerCount *= 6;
+				}
+			}
+
 			WGPUTextureViewDescriptor textureViewDesc =
 			{
 				.nextInChain     = NULL,
@@ -5143,7 +5156,7 @@ WGPU_IMPORT
 				.dimension       = tvd,
 				.baseMipLevel    = _baseMipLevel,
 				.mipLevelCount   = UINT8_MAX == _mipLevelCount ? WGPU_MIP_LEVEL_COUNT_UNDEFINED : _mipLevelCount,
-				.baseArrayLayer  = _baseArrayLayer,
+				.baseArrayLayer  = baseArrayLayer,
 				.arrayLayerCount = arrayLayerCount,
 				.aspect          = _stencil
 					? WGPUTextureAspect_StencilOnly

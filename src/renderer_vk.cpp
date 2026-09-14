@@ -4068,8 +4068,12 @@ VK_IMPORT_DEVICE
 
 			_stencil = _stencil && !!(texture.m_aspectFlags & VK_IMAGE_ASPECT_STENCIL_BIT);
 
-			const uint32_t firstLayer = bx::min<uint32_t>(_firstLayer, texture.m_numSides);
-			const uint32_t numLayers  = bx::min<uint32_t>(_numLayers,  texture.m_numSides - firstLayer);
+			const uint32_t units = (VK_IMAGE_VIEW_TYPE_CUBE == _type || VK_IMAGE_VIEW_TYPE_CUBE_ARRAY == _type)
+				? bx::max<uint32_t>(1, texture.m_numSides / 6)
+				: texture.m_numSides
+				;
+			const uint32_t firstLayer = bx::min<uint32_t>(_firstLayer, units);
+			const uint32_t numLayers  = bx::min<uint32_t>(_numLayers,  units - firstLayer);
 			const uint32_t firstMip   = bx::min<uint32_t>(_mip,        texture.m_numMips);
 			const uint32_t numMips    = bx::min<uint32_t>(_numMips,    texture.m_numMips - firstMip);
 
@@ -8018,10 +8022,13 @@ VK_DESTROY
 			? VkComponentMapping{ VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY }
 			: m_components
 			;
+		const bool cubeView = VK_IMAGE_VIEW_TYPE_CUBE       == _type
+						   || VK_IMAGE_VIEW_TYPE_CUBE_ARRAY == _type
+							;
 		viewInfo.subresourceRange.aspectMask     = m_aspectFlags & _aspectMask;
 		viewInfo.subresourceRange.baseMipLevel   = _mip;
 		viewInfo.subresourceRange.levelCount     = _numMips;
-		viewInfo.subresourceRange.baseArrayLayer = _layer;
+		viewInfo.subresourceRange.baseArrayLayer = cubeView ? _layer * 6 : _layer;
 		viewInfo.subresourceRange.layerCount     = 1;
 
 		if (VK_IMAGE_VIEW_TYPE_2D != _type
@@ -8029,7 +8036,7 @@ VK_DESTROY
 		{
 			viewInfo.subresourceRange.layerCount = VK_IMAGE_VIEW_TYPE_CUBE == _type
 				? 6
-				: _numLayers
+				: cubeView ? _numLayers * 6 : _numLayers
 				;
 		}
 

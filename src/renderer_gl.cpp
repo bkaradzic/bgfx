@@ -6754,11 +6754,12 @@ namespace bgfx { namespace gl
 	GLuint TextureGL::getViewId(uint8_t _firstMip, uint8_t _numMips, uint16_t _firstLayer, uint16_t _numLayers, GLenum* _target, bool _layered)
 	{
 		const uint16_t facesPerLayer = isCubeMap() ? 6 : 1;
+		const uint32_t rangeScale    = isCubeMap() && !_layered ? 6 : 1;
 		const uint8_t  firstMip      = bx::min<uint8_t>(_firstMip, uint8_t(m_numMips - 1) );
 		const uint8_t  numMips       = bx::min<uint8_t>(_numMips, uint8_t(m_numMips - firstMip) );
 		const uint16_t numLayers0    = uint16_t(bx::max<uint32_t>(m_numLayers, 1) * facesPerLayer);
-		const uint16_t firstLayer    = bx::min<uint16_t>(_firstLayer, uint16_t(numLayers0 - 1) );
-		const uint16_t numLayers     = bx::min<uint16_t>(_numLayers, uint16_t(numLayers0 - firstLayer) );
+		const uint16_t firstLayer    = uint16_t(bx::min<uint32_t>(uint32_t(_firstLayer) * rangeScale, numLayers0 - 1) );
+		const uint16_t numLayers     = uint16_t(bx::min<uint32_t>(uint32_t(_numLayers) * rangeScale, numLayers0 - firstLayer) );
 
 		const bool fullRange = 0 == firstMip
 			&& numMips   >= m_numMips
