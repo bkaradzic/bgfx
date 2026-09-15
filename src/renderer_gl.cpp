@@ -1761,6 +1761,10 @@ namespace bgfx { namespace gl
 			case TextureFormat::ETC2:
 			case TextureFormat::ETC2A:
 			case TextureFormat::ETC2A1:
+			case TextureFormat::EACR11:
+			case TextureFormat::EACR11S:
+			case TextureFormat::EACRG11:
+			case TextureFormat::EACRG11S:
 				return emscripten_webgl_enable_extension(ctx, "WEBGL_compressed_texture_etc");
 
 			case TextureFormat::ASTC4x4:
