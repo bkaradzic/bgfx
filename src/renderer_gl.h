@@ -1489,6 +1489,7 @@ namespace bgfx { namespace gl
 		void destroy();
 		void update(uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem);
 		void clear(uint8_t _mip, uint8_t _numMips, uint16_t _layer, uint16_t _numLayers);
+		void clearAttached(uint8_t _mipBeg, uint8_t _mipEnd, uint16_t _layer, uint16_t _numLayers);
 		void setSamplerState(uint32_t _flags, const float _rgba[4]);
 		void commit(uint32_t _stage, uint32_t _flags, const float _palette[][4], uint8_t _firstMip, uint8_t _numMips, uint16_t _firstLayer, uint16_t _numLayers);
 		GLenum getViewTarget(uint16_t _numLayers, bool _layered = false) const;
