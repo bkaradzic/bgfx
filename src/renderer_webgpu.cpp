@@ -3125,11 +3125,15 @@ WGPU_IMPORT
 				},
 			};
 
+			const WGPUComputePipeline pipeline = wgpuDeviceCreateComputePipeline(m_device, &computePipelineDesc);
+
+			BGFX_FATAL(NULL != pipeline, Fatal::InvalidShader, "Failed to create compute PSO!");
+
 			computePipeline = m_computePipelineCache.add(
 				  hash
 				, {
 					.bindGroupLayout = bindGroupLayout,
-					.pipeline        = wgpuDeviceCreateComputePipeline(m_device, &computePipelineDesc),
+					.pipeline        = pipeline,
 				}
 				, 0
 				);
@@ -3508,11 +3512,15 @@ WGPU_IMPORT
 				.fragment = hasFragmentShader ? &fragmentState : NULL,
 			};
 
+			const WGPURenderPipeline pipeline = wgpuDeviceCreateRenderPipeline(m_device, &renderPipelineDesc);
+
+			BGFX_FATAL(NULL != pipeline, Fatal::InvalidShader, "Failed to create graphics PSO!");
+
 			renderPipeline = m_renderPipelineCache.add(
 				  hash
 				, {
 					.bindGroupLayout = bindGroupLayout,
-					.pipeline        = wgpuDeviceCreateRenderPipeline(m_device, &renderPipelineDesc),
+					.pipeline        = pipeline,
 				}
 				, 0
 				);
@@ -5460,7 +5468,9 @@ WGPU_IMPORT
 		wgpuRelease(m_textureView);
 		wgpuRelease(m_msaaTextureView);
 		wgpuRelease(m_depthStencilView);
-		configure(_desc);
+
+		m_descPending             = _desc;
+		m_needToRecreateSwapChain = !configure(_desc);
 	}
 
 #if BX_PLATFORM_OSX || BX_PLATFORM_IOS || BX_PLATFORM_VISIONOS
@@ -6799,6 +6809,16 @@ WGPU_IMPORT
 		if (_render->m_capture)
 		{
 			renderDocTriggerCapture();
+		}
+
+		for (uint32_t ii = 1, num = m_numWindows; ii < num; ++ii)
+		{
+			FrameBufferWGPU& frameBuffer = getFrameBuffer(m_windows[ii]);
+
+			if (frameBuffer.m_swapChain.m_needToRecreateSwapChain)
+			{
+				frameBuffer.update(frameBuffer.m_swapChain.m_descPending);
+			}
 		}
 
 		BGFX_WGPU_PROFILER_BEGIN_LITERAL("rendererSubmit", kColorFrame);

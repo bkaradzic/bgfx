@@ -3323,6 +3323,8 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 					MTL::RenderPipelineReflection* reflection = NULL;
 					pso->m_rps = newRenderPipelineStateWithDescriptor(m_device, pd, MTL::PipelineOptionBufferTypeInfo, &reflection);
 
+					BGFX_FATAL(NULL != pso->m_rps, Fatal::InvalidShader, "Failed to create graphics PSO!");
+
 					if (NULL != reflection)
 					{
 						if (m_usesMTLBindings)
@@ -3380,6 +3382,8 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 					, MTL::PipelineOptionBufferTypeInfo
 					, &reflection
 					);
+
+				BGFX_FATAL(NULL != pso->m_cps, Fatal::InvalidShader, "Failed to create compute PSO!");
 
 				if (m_usesMTLBindings)
 				{
