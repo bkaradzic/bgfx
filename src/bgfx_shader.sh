@@ -199,6 +199,11 @@ struct BgfxSampler2DMS
 	Texture2DMS<vec4> m_texture;
 };
 
+struct BgfxSampler2DMSArray
+{
+	Texture2DMSArray<vec4> m_texture;
+};
+
 vec4 bgfxTexture2D(BgfxSampler2D _sampler, vec2 _coord)
 {
 	return _sampler.m_texture.Sample(_sampler.m_sampler, _coord);
@@ -251,6 +256,14 @@ vec4 bgfxTexture2DArrayLodOffset(BgfxSampler2DArray _sampler, vec3 _coord, float
 	return _sampler.m_texture.SampleLevel(_sampler.m_sampler, _coord, _level, _offset);
 }
 
+vec3 bgfxTextureSize(BgfxSampler2DArray _sampler, int _lod)
+{
+	vec3 result;
+	float numberOfMipMapLevels;
+	_sampler.m_texture.GetDimensions(_lod, result.x, result.y, result.z, numberOfMipMapLevels);
+	return result;
+}
+
 float bgfxShadow2D(BgfxSampler2DShadow _sampler, vec3 _coord)
 {
 	return _sampler.m_texture.SampleCmpLevelZero(_sampler.m_sampler, _coord.xy, _coord.z);
@@ -270,17 +283,16 @@ vec2 bgfxTextureSize(BgfxSampler2DShadow _sampler, int _lod)
 	return result;
 }
 
-vec4 bgfxShadow2DArray(BgfxSampler2DArrayShadow _sampler, vec4 _coord)
+float bgfxShadow2DArray(BgfxSampler2DArrayShadow _sampler, vec4 _coord)
 {
 	return _sampler.m_texture.SampleCmpLevelZero(_sampler.m_sampler, _coord.xyz, _coord.w);
 }
 
-vec2 bgfxTextureSize(BgfxSampler2DArrayShadow _sampler, int _lod)
+vec3 bgfxTextureSize(BgfxSampler2DArrayShadow _sampler, int _lod)
 {
-	vec2 result;
+	vec3 result;
 	float numberOfMipMapLevels;
-	float numberOfElements;
-	_sampler.m_texture.GetDimensions(_lod, result.x, result.y, numberOfElements, numberOfMipMapLevels);
+	_sampler.m_texture.GetDimensions(_lod, result.x, result.y, result.z, numberOfMipMapLevels);
 	return result;
 }
 
@@ -331,6 +343,35 @@ vec4 bgfxTextureCubeArrayLod(BgfxSamplerCubeArray _sampler, vec4 _coord, float _
 vec4 bgfxTextureCubeLod(BgfxSamplerCube _sampler, vec3 _coord, float _level)
 {
 	return _sampler.m_texture.SampleLevel(_sampler.m_sampler, _coord, _level);
+}
+
+vec4 bgfxTextureCubeGrad(BgfxSamplerCube _sampler, vec3 _coord, vec3 _dPdx, vec3 _dPdy)
+{
+	return _sampler.m_texture.SampleGrad(_sampler.m_sampler, _coord, _dPdx, _dPdy);
+}
+
+vec2 bgfxTextureSize(BgfxSamplerCube _sampler, int _lod)
+{
+	vec2 result;
+	float numberOfMipMapLevels;
+	_sampler.m_texture.GetDimensions(_lod, result.x, result.y, numberOfMipMapLevels);
+	return result;
+}
+
+vec3 bgfxTextureSize(BgfxSamplerCubeArray _sampler, int _lod)
+{
+	vec3 result;
+	float numberOfMipMapLevels;
+	_sampler.m_texture.GetDimensions(_lod, result.x, result.y, result.z, numberOfMipMapLevels);
+	return result;
+}
+
+vec2 bgfxTextureSize(BgfxSamplerCubeShadow _sampler, int _lod)
+{
+	vec2 result;
+	float numberOfMipMapLevels;
+	_sampler.m_texture.GetDimensions(_lod, result.x, result.y, numberOfMipMapLevels);
+	return result;
 }
 
 float bgfxShadowCube(BgfxSamplerCubeShadow _sampler, vec4 _coord)
@@ -447,6 +488,11 @@ vec4 bgfxTexelFetch(BgfxSampler2DMS _sampler, ivec2 _coord, int _sampleIdx)
 	return _sampler.m_texture.Load(_coord, _sampleIdx);
 }
 
+vec4 bgfxTexelFetch(BgfxSampler2DMSArray _sampler, ivec3 _coord, int _sampleIdx)
+{
+	return _sampler.m_texture.Load(_coord, _sampleIdx);
+}
+
 vec4 bgfxTexelFetch(BgfxSampler2DArray _sampler, ivec3 _coord, int _lod)
 {
 	return _sampler.m_texture.Load(ivec4(_coord, _lod) );
@@ -457,12 +503,48 @@ vec4 bgfxTexelFetch(BgfxSampler3D _sampler, ivec3 _coord, int _lod)
 	return _sampler.m_texture.Load(ivec4(_coord, _lod) );
 }
 
+ivec4 bgfxTexelFetch(BgfxISampler3D _sampler, ivec3 _coord, int _lod)
+{
+	return _sampler.m_texture.Load(ivec4(_coord, _lod) );
+}
+
+uvec4 bgfxTexelFetch(BgfxUSampler3D _sampler, ivec3 _coord, int _lod)
+{
+	return _sampler.m_texture.Load(ivec4(_coord, _lod) );
+}
+
 vec3 bgfxTextureSize(BgfxSampler3D _sampler, int _lod)
 {
 	vec3 result;
 	float numberOfMipMapLevels;
 	_sampler.m_texture.GetDimensions(_lod, result.x, result.y, result.z, numberOfMipMapLevels);
 	return result;
+}
+
+vec3 bgfxTextureSize(BgfxISampler3D _sampler, int _lod)
+{
+	vec3 result;
+	float numberOfMipMapLevels;
+	_sampler.m_texture.GetDimensions(_lod, result.x, result.y, result.z, numberOfMipMapLevels);
+	return result;
+}
+
+vec3 bgfxTextureSize(BgfxUSampler3D _sampler, int _lod)
+{
+	vec3 result;
+	float numberOfMipMapLevels;
+	_sampler.m_texture.GetDimensions(_lod, result.x, result.y, result.z, numberOfMipMapLevels);
+	return result;
+}
+
+vec4 bgfxTexture3DGrad(BgfxSampler3D _sampler, vec3 _coord, vec3 _dPdx, vec3 _dPdy)
+{
+	return _sampler.m_texture.SampleGrad(_sampler.m_sampler, _coord, _dPdx, _dPdy);
+}
+
+vec4 bgfxTexture3DLodOffset(BgfxSampler3D _sampler, vec3 _coord, float _level, ivec3 _offset)
+{
+	return _sampler.m_texture.SampleLevel(_sampler.m_sampler, _coord, _level, _offset);
 }
 
 #		define SAMPLER2D(_name, _reg) \
@@ -491,6 +573,11 @@ vec3 bgfxTextureSize(BgfxSampler3D _sampler, int _lod)
 #		define texture2DArray(_sampler, _coord) bgfxTexture2DArray(_sampler, _coord)
 #		define texture2DArrayLod(_sampler, _coord, _lod) bgfxTexture2DArrayLod(_sampler, _coord, _lod)
 #		define texture2DArrayLodOffset(_sampler, _coord, _level, _offset) bgfxTexture2DArrayLodOffset(_sampler, _coord, _level, _offset)
+
+#		define SAMPLER2DMSARRAY(_name, _reg) \
+			uniform Texture2DMSArray<vec4> _name ## Texture : REGISTER(t, _reg); \
+			static BgfxSampler2DMSArray _name = { _name ## Texture }
+#		define sampler2DMSArray BgfxSampler2DMSArray
 
 #		define SAMPLER2DMS(_name, _reg) \
 			uniform Texture2DMS<vec4> _name ## Texture : REGISTER(t, _reg); \
@@ -525,6 +612,8 @@ vec3 bgfxTextureSize(BgfxSampler3D _sampler, int _lod)
 #		define sampler3D BgfxSampler3D
 #		define texture3D(_sampler, _coord) bgfxTexture3D(_sampler, _coord)
 #		define texture3DLod(_sampler, _coord, _level) bgfxTexture3DLod(_sampler, _coord, _level)
+#		define texture3DLodOffset(_sampler, _coord, _level, _offset) bgfxTexture3DLodOffset(_sampler, _coord, _level, _offset)
+#		define texture3DGrad(_sampler, _coord, _dPdx, _dPdy) bgfxTexture3DGrad(_sampler, _coord, _dPdx, _dPdy)
 
 #		define SAMPLERCUBE(_name, _reg) \
 			uniform SamplerState _name ## Sampler : REGISTER(s, _reg); \
@@ -534,6 +623,7 @@ vec3 bgfxTextureSize(BgfxSampler3D _sampler, int _lod)
 #		define textureCube(_sampler, _coord) bgfxTextureCube(_sampler, _coord)
 #		define textureCubeBias(_sampler, _coord, _bias) bgfxTextureCubeBias(_sampler, _coord, _bias)
 #		define textureCubeLod(_sampler, _coord, _level) bgfxTextureCubeLod(_sampler, _coord, _level)
+#		define textureCubeGrad(_sampler, _coord, _dPdx, _dPdy) bgfxTextureCubeGrad(_sampler, _coord, _dPdx, _dPdy)
 
 #		define SAMPLERCUBEARRAY(_name, _reg) \
 			uniform SamplerState _name ## Sampler : REGISTER(s, _reg); \
@@ -664,6 +754,7 @@ vec4  mod(vec4  _a, vec4  _b) { return _a - _b * floor(_a / _b); }
 #	define SAMPLER2DMSARRAY(_name, _reg)     uniform sampler2DMSArray _name
 #	define SAMPLERCUBEARRAY(_name, _reg)     uniform samplerCubeArray _name
 #	define SAMPLER2DARRAYSHADOW(_name, _reg) uniform sampler2DArrayShadow _name
+#	define SAMPLERCUBESHADOW(_name, _reg)    uniform samplerCubeShadow _name
 
 #	define ISAMPLER2D(_name, _reg) uniform isampler2D _name
 #	define USAMPLER2D(_name, _reg) uniform usampler2D _name
@@ -671,7 +762,10 @@ vec4  mod(vec4  _a, vec4  _b) { return _a - _b * floor(_a / _b); }
 #	define USAMPLER3D(_name, _reg) uniform usampler3D _name
 
 #	define texture2D(_sampler, _coord)      texture(_sampler, _coord)
+#	define texture2DProj(_sampler, _coord)  textureProj(_sampler, _coord)
 #	define texture2DArray(_sampler, _coord) texture(_sampler, _coord)
+#	define shadow2DArray(_sampler, _coord)  texture(_sampler, _coord)
+#	define shadowCube(_sampler, _coord)     texture(_sampler, _coord)
 #	define texture3D(_sampler, _coord)      texture(_sampler, _coord)
 #	define textureCube(_sampler, _coord)    texture(_sampler, _coord)
 #	define textureCubeArray(_sampler, _coord) texture(_sampler, _coord)
