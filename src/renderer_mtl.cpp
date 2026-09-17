@@ -2131,6 +2131,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			||  m_mainSwapChain.height           !=  _swapChain.height
 			||  m_mainSwapChain.nwh              !=  _swapChain.nwh
 			||  m_mainSwapChain.ndt              !=  _swapChain.ndt
+			||  m_mainSwapChain.flags            !=  _swapChain.flags
 			|| (m_reset&maskFlags) != (_reset&maskFlags) )
 			{
 				m_mainSwapChain = _swapChain;

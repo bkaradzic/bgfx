@@ -2541,6 +2541,7 @@ namespace bgfx { namespace d3d11
 			||  m_mainSwapChain.formatDepthStencil != _swapChain.formatDepthStencil
 			||  m_mainSwapChain.nwh                != _swapChain.nwh
 			||  m_mainSwapChain.ndt                != _swapChain.ndt
+			||  m_mainSwapChain.flags              != _swapChain.flags
 			|| (m_reset&maskFlags)   != (_reset&maskFlags)
 			   )
 			{
