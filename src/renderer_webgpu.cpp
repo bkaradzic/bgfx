@@ -2176,16 +2176,14 @@ WGPU_IMPORT
 			if (UINT16_MAX != denseIdx)
 			{
 				--m_numWindows;
-				if (m_numWindows > 1)
+				if (m_numWindows != denseIdx)
 				{
 					FrameBufferHandle handle = m_windows[m_numWindows];
-					m_windows[m_numWindows]  = {kInvalidHandle};
-					if (m_numWindows != denseIdx)
-					{
-						m_windows[denseIdx] = handle;
-						m_frameBuffers[handle.idx].m_denseIdx = denseIdx;
-					}
+					m_windows[denseIdx] = handle;
+					m_frameBuffers[handle.idx].m_denseIdx = denseIdx;
 				}
+
+				m_windows[m_numWindows] = {kInvalidHandle};
 			}
 		}
 
@@ -3442,10 +3440,7 @@ WGPU_IMPORT
 				: NULL
 				;
 
-			const TextureFormat::Enum formatDepthStencil = fb.isSwapChain()
-				? fb.m_swapChain.m_desc.formatDepthStencil
-				: TextureFormat::Enum(fb.m_formatDepthStencil)
-				;
+			const TextureFormat::Enum formatDepthStencil = TextureFormat::Enum(fb.m_formatDepthStencil);
 
 			const bool hasFragmentShader = NULL != program.m_fsh;
 			const bool bgra8Storage = hasBgra8Storage(entries, entryCount);
@@ -3822,7 +3817,7 @@ WGPU_IMPORT
 			{
 				_murmur.add(_fb.m_swapChain.m_viewFormat);
 				_murmur.add(_fb.m_swapChain.m_desc.formatColor);
-				_murmur.add(_fb.m_swapChain.m_desc.formatDepthStencil);
+				_murmur.add(_fb.m_swapChain.m_formatDepthStencil);
 
 				return;
 			}
@@ -5338,6 +5333,8 @@ WGPU_IMPORT
 
 		wgpuRelease(m_depthStencilView);
 		wgpuRelease(m_msaaTextureView);
+
+		m_formatDepthStencil = uint8_t(TextureFormat::Count);
 
 		if (isValid(m_desc.depth) )
 		{

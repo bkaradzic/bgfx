@@ -1787,17 +1787,14 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			{
 				--m_numWindows;
 
-				if (m_numWindows > 1)
+				if (m_numWindows != denseIdx)
 				{
 					FrameBufferHandle handle = m_windows[m_numWindows];
-					m_windows[m_numWindows]  = {kInvalidHandle};
-
-					if (m_numWindows != denseIdx)
-					{
-						m_windows[denseIdx] = handle;
-						m_frameBuffers[handle.idx].m_denseIdx = denseIdx;
-					}
+					m_windows[denseIdx] = handle;
+					m_frameBuffers[handle.idx].m_denseIdx = denseIdx;
 				}
+
+				m_windows[m_numWindows] = {kInvalidHandle};
 			}
 		}
 
@@ -5139,6 +5136,8 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 		murmur.add(m_metalLayer->pixelFormat() );
 		murmur.add(formatColor);
 		murmur.add(formatDepthStencil);
+		murmur.add(NULL != m_backBufferDepth   ? m_backBufferDepth->pixelFormat()   : MTL::PixelFormatInvalid);
+		murmur.add(NULL != m_backBufferStencil ? m_backBufferStencil->pixelFormat() : MTL::PixelFormatInvalid);
 		murmur.add(sampleCount);
 
 		return murmur.end();
@@ -6015,17 +6014,18 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 				continue;
 			}
 
-			const uint16_t fbhIdx = 0 == ii ? kInvalidHandle : m_windows[ii].idx;
+			const bool     isMainWindow = !isValid(m_windows[ii]);
+			const uint16_t fbhIdx = isMainWindow ? kInvalidHandle : m_windows[ii].idx;
 
-			bool needScreenshot = 0 == ii && NULL != m_capture;
+			bool needScreenshot = isMainWindow && NULL != m_capture;
 
 			for (uint8_t jj = 0, numShots = _render->m_numScreenShots; jj < numShots && !needScreenshot; ++jj)
 			{
 				needScreenshot = _render->m_screenShot[jj].handle.idx == fbhIdx;
 			}
 
-			const uint32_t width  = 0 == ii ? m_mainSwapChain.width  : frameBuffer.m_width;
-			const uint32_t height = 0 == ii ? m_mainSwapChain.height : frameBuffer.m_height;
+			const uint32_t width  = isMainWindow ? m_mainSwapChain.width  : frameBuffer.m_width;
+			const uint32_t height = isMainWindow ? m_mainSwapChain.height : frameBuffer.m_height;
 
 			if (needScreenshot)
 			{
