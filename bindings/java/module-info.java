@@ -6,8 +6,9 @@
  */
 module io.github.bkaradzic.bgfx {
 	requires static transitive org.jspecify;
+    requires jdk.jdi;
 
-	exports io.github.bkaradzic.bgfx;
+    exports io.github.bkaradzic.bgfx;
 	exports io.github.bkaradzic.bgfx.caps;
 	exports io.github.bkaradzic.bgfx.init;
 	exports io.github.bkaradzic.bgfx.util;

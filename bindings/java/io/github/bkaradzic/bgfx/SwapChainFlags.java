@@ -33,49 +33,39 @@ import static io.github.bkaradzic.bgfx.Bgfx.*;
 import static io.github.bkaradzic.bgfx.util.FFMUtil.*;
 
 /**
- * Constants for PciId flags.
+ * Constants for SwapChain flags.
  */
 @NullMarked
-public final class PciIdFlags {
-	private PciIdFlags() {
+public final class SwapChainFlags {
+	private SwapChainFlags() {
 	}
 	/**
-	 * Autoselect adapter.
+	 * No swap chain flags.
 	 */
-	public static final short None = (short) 0x0000;
+	public static final int None = 0x00000000;
 
 	/**
-	 * Software rasterizer.
+	 * Not supported yet.
 	 */
-	public static final short SoftwareRasterizer = (short) 0x0001;
+	public static final int Fullscreen = 0x00000001;
 
 	/**
-	 * AMD adapter.
+	 * Enable sRGB backbuffer.
 	 */
-	public static final short Amd = (short) 0x1002;
+	public static final int SrgbBackbuffer = 0x00008000;
 
 	/**
-	 * Apple adapter.
+	 * Enable HDR10 rendering.
 	 */
-	public static final short Apple = (short) 0x106b;
+	public static final int Hdr10 = 0x00010000;
 
 	/**
-	 * Intel adapter.
+	 * Enable HiDPI rendering.
 	 */
-	public static final short Intel = (short) 0x8086;
+	public static final int Hidpi = 0x00020000;
 
 	/**
-	 * NVIDIA adapter.
+	 * Transparent backbuffer. Availability depends on: {@code BGFX_CAPS_TRANSPARENT_BACKBUFFER}.
 	 */
-	public static final short Nvidia = (short) 0x10de;
-
-	/**
-	 * Microsoft adapter.
-	 */
-	public static final short Microsoft = (short) 0x1414;
-
-	/**
-	 * ARM adapter.
-	 */
-	public static final short Arm = (short) 0x13b5;
+	public static final int TransparentBackbuffer = 0x00100000;
 }

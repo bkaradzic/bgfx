@@ -58,7 +58,7 @@ public enum AttribType {
 	 */
 	UINT16,
 	/**
-	 * Half, availability depends on: {@code BGFX_CAPS_VERTEX_ATTRIB_HALF}.
+	 * Half.
 	 */
 	HALF,
 	/**

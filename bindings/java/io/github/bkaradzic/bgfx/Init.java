@@ -50,7 +50,8 @@ public final class Init extends NativeObject {
 		ValueLayout.JAVA_BOOLEAN.withName("fallback"),
 		ValueLayout.JAVA_BOOLEAN.withName("videoDecode"),
 		PlatformData.LAYOUT.withName("platformData"),
-		Resolution.LAYOUT.withName("resolution"),
+		SwapChain.LAYOUT.withName("swapChain"),
+		ValueLayout.JAVA_INT.withName("reset"),
 		io.github.bkaradzic.bgfx.init.Limits.LAYOUT.withName("limits"),
 		ValueLayout.ADDRESS.withName("callback"),
 		ValueLayout.ADDRESS.withName("allocator"));
@@ -72,8 +73,10 @@ public final class Init extends NativeObject {
 		MemoryLayout.PathElement.groupElement("videoDecode"));
 	private static final MethodHandle MH_PLATFORMDATA = LAYOUT.sliceHandle(
 		MemoryLayout.PathElement.groupElement("platformData"));
-	private static final MethodHandle MH_RESOLUTION = LAYOUT.sliceHandle(
-		MemoryLayout.PathElement.groupElement("resolution"));
+	private static final MethodHandle MH_SWAPCHAIN = LAYOUT.sliceHandle(
+		MemoryLayout.PathElement.groupElement("swapChain"));
+	private static final VarHandle VH_RESET = LAYOUT.varHandle(
+		MemoryLayout.PathElement.groupElement("reset"));
 	private static final MethodHandle MH_LIMITS = LAYOUT.sliceHandle(
 		MemoryLayout.PathElement.groupElement("limits"));
 	private static final VarHandle VH_CALLBACK = LAYOUT.varHandle(
@@ -277,19 +280,39 @@ public final class Init extends NativeObject {
 	}
 
 	/**
-	 * Backbuffer resolution and reset parameters. See: {@code Resolution}.
+	 * Swap chain for the window bgfx creates its device on.
+	 * See: {@code SwapChain}.
 	 * @return the field value
 	 */
-	public Resolution resolution() {
-		return new Resolution(slice(MH_RESOLUTION, segment()));
+	public SwapChain swapChain() {
+		return new SwapChain(slice(MH_SWAPCHAIN, segment()));
 	}
 
 	/**
-	 * Sets the native {@code resolution} field and returns {@code this}.
+	 * Sets the native {@code swapChain} field and returns {@code this}.
 	 * @param value the new field value
 	 */
-	public Init resolution(Resolution value) {
-		slice(MH_RESOLUTION, segment()).copyFrom(value.segment());
+	public Init swapChain(SwapChain value) {
+		slice(MH_SWAPCHAIN, segment()).copyFrom(value.segment());
+		return this;
+	}
+
+	/**
+	 * Device and frame global settings. Anything that is a
+	 * property of one surface belongs in {@code swapChain} instead.
+	 * See: {@code BGFX_RESET_*}.
+	 * @return the field value
+	 */
+	public @Unsigned int reset() {
+		return (@Unsigned int) VH_RESET.get(segment(), 0L);
+	}
+
+	/**
+	 * Sets the native {@code reset} field and returns {@code this}.
+	 * @param value the new field value
+	 */
+	public Init reset(@Unsigned int value) {
+		VH_RESET.set(segment(), 0L, value);
 		return this;
 	}
 

@@ -34,31 +34,37 @@ import static io.github.bkaradzic.bgfx.util.FFMUtil.*;
 
 /**
  * Backbuffer ratio enum.
+ * <p>
+ * The ratio is always relative to the window bgfx was initialized with, and is
+ * re-resolved by {@code reset}. It is not relative to whichever window a texture
+ * happens to be rendered to, so on a second window a ratio texture is not
+ * meaningfully sized. For that reason a ratio texture cannot be used as
+ * {@code SwapChain.depth}.
  */
 @NullMarked
 public enum BackbufferRatio {
 	/**
-	 * Equal to backbuffer.
+	 * Equal to the main window's backbuffer.
 	 */
 	EQUAL,
 	/**
-	 * One half size of backbuffer.
+	 * One half size of the main window's backbuffer.
 	 */
 	HALF,
 	/**
-	 * One quarter size of backbuffer.
+	 * One quarter size of the main window's backbuffer.
 	 */
 	QUARTER,
 	/**
-	 * One eighth size of backbuffer.
+	 * One eighth size of the main window's backbuffer.
 	 */
 	EIGHTH,
 	/**
-	 * One sixteenth size of backbuffer.
+	 * One sixteenth size of the main window's backbuffer.
 	 */
 	SIXTEENTH,
 	/**
-	 * Double size of backbuffer.
+	 * Double size of the main window's backbuffer.
 	 */
 	DOUBLE,
 

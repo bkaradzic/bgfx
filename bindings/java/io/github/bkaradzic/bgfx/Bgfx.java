@@ -93,7 +93,7 @@ public final class Bgfx {
 	static final MethodHandle MH_SHUTDOWN = downcall(
 		"bgfx_shutdown", FunctionDescriptor.ofVoid());
 	static final MethodHandle MH_RESET = downcall(
-		"bgfx_reset", FunctionDescriptor.ofVoid(ValueLayout.JAVA_INT, ValueLayout.JAVA_INT, ValueLayout.JAVA_INT, ValueLayout.JAVA_INT));
+		"bgfx_reset", FunctionDescriptor.ofVoid(ValueLayout.JAVA_INT, ValueLayout.ADDRESS));
 	static final MethodHandle MH_FRAME = downcall(
 		"bgfx_frame", FunctionDescriptor.of(ValueLayout.JAVA_INT, ValueLayout.JAVA_BYTE));
 	static final MethodHandle MH_GET_RENDERER_TYPE = downcall(
@@ -111,7 +111,7 @@ public final class Bgfx {
 	static final MethodHandle MH_MAKE_REF_RELEASE = downcall(
 		"bgfx_make_ref_release", FunctionDescriptor.of(ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.JAVA_INT, ValueLayout.ADDRESS, ValueLayout.ADDRESS));
 	static final MethodHandle MH_SET_DEBUG = downcall(
-		"bgfx_set_debug", FunctionDescriptor.ofVoid(ValueLayout.JAVA_INT));
+		"bgfx_set_debug", FunctionDescriptor.ofVoid(ValueLayout.JAVA_INT, FrameBufferHandle.LAYOUT, ValueLayout.JAVA_BYTE));
 	static final MethodHandle MH_DBG_TEXT_CLEAR = downcall(
 		"bgfx_dbg_text_clear", FunctionDescriptor.ofVoid(ValueLayout.JAVA_BYTE, ValueLayout.JAVA_BOOLEAN));
 	static final MethodHandle MH_DBG_TEXT_VPRINTF = downcall(
@@ -226,8 +226,10 @@ public final class Bgfx {
 		"bgfx_create_frame_buffer_from_handles", FunctionDescriptor.of(FrameBufferHandle.LAYOUT, ValueLayout.JAVA_BYTE, ValueLayout.ADDRESS, ValueLayout.JAVA_BOOLEAN));
 	static final MethodHandle MH_CREATE_FRAME_BUFFER_FROM_ATTACHMENT = downcall(
 		"bgfx_create_frame_buffer_from_attachment", FunctionDescriptor.of(FrameBufferHandle.LAYOUT, ValueLayout.JAVA_BYTE, ValueLayout.ADDRESS, ValueLayout.JAVA_BOOLEAN));
-	static final MethodHandle MH_CREATE_FRAME_BUFFER_FROM_NWH = downcall(
-		"bgfx_create_frame_buffer_from_nwh", FunctionDescriptor.of(FrameBufferHandle.LAYOUT, ValueLayout.ADDRESS, ValueLayout.JAVA_SHORT, ValueLayout.JAVA_SHORT, ValueLayout.JAVA_INT, ValueLayout.JAVA_INT));
+	static final MethodHandle MH_CREATE_FRAME_BUFFER_FROM_SWAP_CHAIN = downcall(
+		"bgfx_create_frame_buffer_from_swap_chain", FunctionDescriptor.of(FrameBufferHandle.LAYOUT, ValueLayout.ADDRESS));
+	static final MethodHandle MH_UPDATE_SWAP_CHAIN = downcall(
+		"bgfx_update_swap_chain", FunctionDescriptor.ofVoid(FrameBufferHandle.LAYOUT, ValueLayout.ADDRESS));
 	static final MethodHandle MH_SET_FRAME_BUFFER_NAME = downcall(
 		"bgfx_set_frame_buffer_name", FunctionDescriptor.ofVoid(FrameBufferHandle.LAYOUT, ValueLayout.ADDRESS, ValueLayout.JAVA_INT));
 	static final MethodHandle MH_GET_TEXTURE = downcall(
@@ -380,14 +382,8 @@ public final class Bgfx {
 		"bgfx_request_screen_shot", FunctionDescriptor.ofVoid(FrameBufferHandle.LAYOUT, ValueLayout.ADDRESS));
 	static final MethodHandle MH_RENDER_FRAME = downcall(
 		"bgfx_render_frame", FunctionDescriptor.of(ValueLayout.JAVA_INT, ValueLayout.JAVA_INT));
-	static final MethodHandle MH_SET_PLATFORM_DATA = downcall(
-		"bgfx_set_platform_data", FunctionDescriptor.ofVoid(ValueLayout.ADDRESS));
 	static final MethodHandle MH_GET_INTERNAL_DATA = downcall(
 		"bgfx_get_internal_data", FunctionDescriptor.of(ValueLayout.ADDRESS));
-	static final MethodHandle MH_OVERRIDE_INTERNAL_TEXTURE_PTR = downcall(
-		"bgfx_override_internal_texture_ptr", FunctionDescriptor.of(C_UINTPTR_T, TextureHandle.LAYOUT, C_UINTPTR_T, ValueLayout.JAVA_SHORT));
-	static final MethodHandle MH_OVERRIDE_INTERNAL_TEXTURE = downcall(
-		"bgfx_override_internal_texture", FunctionDescriptor.of(C_UINTPTR_T, TextureHandle.LAYOUT, ValueLayout.JAVA_SHORT, ValueLayout.JAVA_SHORT, ValueLayout.JAVA_BYTE, ValueLayout.JAVA_INT, ValueLayout.JAVA_LONG));
 	static final MethodHandle MH_SET_MARKER = downcall(
 		"bgfx_set_marker", FunctionDescriptor.ofVoid(ValueLayout.ADDRESS, ValueLayout.JAVA_INT));
 	static final MethodHandle MH_SET_STATE = downcall(
@@ -481,31 +477,6 @@ public final class Bgfx {
 	static final MethodHandle VS_DBG_TEXT_PRINTF = variadicSymbol("bgfx_dbg_text_printf");
 
 	/**
-	 * Loads a bgfx shared library and eagerly links all native entry points.
-	 * @param library path to the bgfx shared library
-	 */
-	public static void load(Path library) {
-		FFMUtil.load(library);
-	}
-
-	/**
-	 * Loads a bgfx shared library by platform-dependent name and eagerly links
-	 * all native entry points.
-	 * @param library platform-dependent library name
-	 */
-	public static void load(String library) {
-		FFMUtil.load(library);
-	}
-
-	/**
-	 * Eagerly links all native entry points from libraries already made visible
-	 * through {@link System#load} or {@link System#loadLibrary}.
-	 */
-	public static void link() {
-		FFMUtil.link();
-	}
-
-	/**
 	 * Pack vertex attribute into vertex stream format.
 	 * @param _input Value to be packed into vertex stream.
 	 * @param _inputNormalized {@code true} if input value is already normalized.
@@ -514,7 +485,7 @@ public final class Bgfx {
 	 * @param _data Destination vertex stream where data will be packed.
 	 * @param _index Vertex index that will be modified.
 	 */
-	public static final void vertexPack(MemorySegment _input, boolean _inputNormalized, Attrib _attr, VertexLayout _layout, MemorySegment _data, @Unsigned int _index) {
+	public static void vertexPack(MemorySegment _input, boolean _inputNormalized, Attrib _attr, VertexLayout _layout, MemorySegment _data, @Unsigned int _index) {
 		try {
 			MH_VERTEX_PACK.invokeExact(address(_input), _inputNormalized, _attr.ordinal(), address(_layout), address(_data), _index);
 		} catch (Throwable ex) {
@@ -530,7 +501,7 @@ public final class Bgfx {
 	 * @param _data Source vertex stream from where data will be unpacked.
 	 * @param _index Vertex index that will be unpacked.
 	 */
-	public static final void vertexUnpack(MemorySegment _output, Attrib _attr, VertexLayout _layout, MemorySegment _data, @Unsigned int _index) {
+	public static void vertexUnpack(MemorySegment _output, Attrib _attr, VertexLayout _layout, MemorySegment _data, @Unsigned int _index) {
 		try {
 			MH_VERTEX_UNPACK.invokeExact(address(_output), _attr.ordinal(), address(_layout), address(_data), _index);
 		} catch (Throwable ex) {
@@ -546,7 +517,7 @@ public final class Bgfx {
 	 * @param _srcData Source vertex stream data.
 	 * @param _num Number of vertices to convert from source to destination.
 	 */
-	public static final void vertexConvert(VertexLayout _dstLayout, MemorySegment _dstData, VertexLayout _srcLayout, MemorySegment _srcData, @Unsigned int _num) {
+	public static void vertexConvert(VertexLayout _dstLayout, MemorySegment _dstData, VertexLayout _srcLayout, MemorySegment _srcData, @Unsigned int _num) {
 		try {
 			MH_VERTEX_CONVERT.invokeExact(address(_dstLayout), address(_dstData), address(_srcLayout), address(_srcData), _num);
 		} catch (Throwable ex) {
@@ -564,7 +535,7 @@ public final class Bgfx {
 	 * @param _index32 Set to {@code true} if input indices are 32-bit.
 	 * @return Number of output indices after conversion.
 	 */
-	public static final @Unsigned int topologyConvert(TopologyConvert _conversion, MemorySegment _dst, @Unsigned int _dstSize, MemorySegment _indices, @Unsigned int _numIndices, boolean _index32) {
+	public static @Unsigned int topologyConvert(TopologyConvert _conversion, MemorySegment _dst, @Unsigned int _dstSize, MemorySegment _indices, @Unsigned int _numIndices, boolean _index32) {
 		try {
 			return (@Unsigned int) MH_TOPOLOGY_CONVERT.invokeExact(_conversion.ordinal(), address(_dst), _dstSize, address(_indices), _numIndices, _index32);
 		} catch (Throwable ex) {
@@ -585,7 +556,7 @@ public final class Bgfx {
 	 * @param _numIndices Number of input indices.
 	 * @param _index32 Set to {@code true} if input indices are 32-bit.
 	 */
-	public static final void topologySortTriList(TopologySort _sort, MemorySegment _dst, @Unsigned int _dstSize, MemorySegment _dir, MemorySegment _pos, MemorySegment _vertices, @Unsigned int _stride, MemorySegment _indices, @Unsigned int _numIndices, boolean _index32) {
+	public static void topologySortTriList(TopologySort _sort, MemorySegment _dst, @Unsigned int _dstSize, MemorySegment _dir, MemorySegment _pos, MemorySegment _vertices, @Unsigned int _stride, MemorySegment _indices, @Unsigned int _numIndices, boolean _index32) {
 		try {
 			MH_TOPOLOGY_SORT_TRI_LIST.invokeExact(_sort.ordinal(), address(_dst), _dstSize, address(_dir), address(_pos), address(_vertices), _stride, address(_indices), _numIndices, _index32);
 		} catch (Throwable ex) {
@@ -599,7 +570,7 @@ public final class Bgfx {
 	 * @param _enum Array where supported renderers will be written.
 	 * @return Number of supported renderers.
 	 */
-	public static final @Unsigned byte getSupportedRenderers(@Unsigned byte _max, @Nullable MemorySegment _enum) {
+	public static @Unsigned byte getSupportedRenderers(@Unsigned byte _max, @Nullable MemorySegment _enum) {
 		try {
 			return (@Unsigned byte) MH_GET_SUPPORTED_RENDERERS.invokeExact(_max, address(_enum));
 		} catch (Throwable ex) {
@@ -612,7 +583,7 @@ public final class Bgfx {
 	 * @param _type Renderer backend type. See: {@code RendererType}
 	 * @return Name of renderer.
 	 */
-	public static final @Nullable String getRendererName(RendererType _type) {
+	public static @Nullable String getRendererName(RendererType _type) {
 		try {
 			return readString((MemorySegment) MH_GET_RENDERER_NAME.invokeExact(_type.ordinal()));
 		} catch (Throwable ex) {
@@ -624,7 +595,7 @@ public final class Bgfx {
 	 * Fill Init struct with default values, before using it to initialize the library.
 	 * @param _init Pointer to structure to be initialized. See: {@code Init} for more info.
 	 */
-	public static final void initCtor(Init _init) {
+	public static void initCtor(Init _init) {
 		try {
 			MH_INIT_CTOR.invokeExact(address(_init));
 		} catch (Throwable ex) {
@@ -637,7 +608,7 @@ public final class Bgfx {
 	 * @param _init Initialization parameters. See: {@code Init} for more info.
 	 * @return {@code true} if initialization was successful.
 	 */
-	public static final boolean init(Init _init) {
+	public static boolean init(Init _init) {
 		try {
 			return (boolean) MH_INIT.invokeExact(address(_init));
 		} catch (Throwable ex) {
@@ -648,7 +619,7 @@ public final class Bgfx {
 	/**
 	 * Shutdown bgfx library.
 	 */
-	public static final void shutdown() {
+	public static void shutdown() {
 		try {
 			MH_SHUTDOWN.invokeExact();
 		} catch (Throwable ex) {
@@ -661,14 +632,12 @@ public final class Bgfx {
 	 * <p>
 	 * <strong>Attention:</strong> This call doesn’t change the window size, it just resizes
 	 *   the back-buffer. Your windowing code controls the window size.
-	 * @param _width Back-buffer width.
-	 * @param _height Back-buffer height.
-	 * @param _flags See: {@code BGFX_RESET_*} for more info.   - {@code BGFX_RESET_NONE} - No reset flags.   - {@code BGFX_RESET_FULLSCREEN} - Not supported yet.   - {@code BGFX_RESET_MSAA_X[2/4/8/16]} - Enable 2, 4, 8 or 16 x MSAA.   - {@code BGFX_RESET_VSYNC} - Enable V-Sync.   - {@code BGFX_RESET_MAXANISOTROPY} - Turn on/off max anisotropy.   - {@code BGFX_RESET_CAPTURE} - Begin screen capture.   - {@code BGFX_RESET_FLUSH_AFTER_RENDER} - Flush rendering after submitting to GPU.   - {@code BGFX_RESET_FLIP_AFTER_RENDER} - This flag  specifies where flip     occurs. Default behaviour is that flip occurs before rendering new     frame. This flag only has effect when {@code BGFX_CONFIG_MULTITHREADED=0}.   - {@code BGFX_RESET_SRGB_BACKBUFFER} - Enable sRGB back-buffer.
-	 * @param _format Texture format. See: {@code TextureFormat}.
+	 * @param _flags See: {@code BGFX_RESET_*} for more info.   - {@code BGFX_RESET_NONE} - No reset flags.   - {@code BGFX_RESET_VSYNC} - Enable V-Sync.   - {@code BGFX_RESET_MAXANISOTROPY} - Turn on/off max anisotropy.   - {@code BGFX_RESET_CAPTURE} - Begin screen capture.   - {@code BGFX_RESET_FLUSH_AFTER_RENDER} - Flush rendering after submitting to GPU.   - {@code BGFX_RESET_FLIP_AFTER_RENDER} - This flag  specifies where flip     occurs. Default behaviour is that flip occurs before rendering new     frame. This flag only has effect when {@code BGFX_CONFIG_MULTITHREADED=0}. Per-surface settings are not here. {@code BGFX_SWAP_CHAIN_*} flags belong on {@code SwapChain.flags}, and are ignored if passed here.
+	 * @param _swapChain Main window swap chain. When {@code NULL} the main window is left untouched and only the device and frame globals above are applied, which is what an application driving its own swap chains wants. Otherwise the main window takes on this description: resize it, change its format, or change its per-surface flags. Fields left neutral keep their current value, and {@code nwh}/{@code ndt} are ignored -- main's are bgfx's own. Must be {@code NULL} when {@code init} created no main window.
 	 */
-	public static final void reset(@Unsigned int _width, @Unsigned int _height, @Unsigned int _flags, TextureFormat _format) {
+	public static void reset(@Unsigned int _flags, @Nullable SwapChain _swapChain) {
 		try {
-			MH_RESET.invokeExact(_width, _height, _flags, _format.ordinal());
+			MH_RESET.invokeExact(_flags, address(_swapChain));
 		} catch (Throwable ex) {
 			throw invocationFailure(ex);
 		}
@@ -701,7 +670,7 @@ public final class Bgfx {
 	 * @param _flags Frame flags. See: {@code BGFX_FRAME_*} for more info.   - {@code BGFX_FRAME_NONE} - No frame flag.   - {@code BGFX_FRAME_DEBUG_CAPTURE} - Capture frame with graphics debugger.   - {@code BGFX_FRAME_DISCARD} - Discard all draw calls.   - {@code BGFX_FRAME_FLUSH} - Execute all rendering commands     without presenting the backbuffer.
 	 * @return Current frame number. This might be used in conjunction with double/multi buffering data outside the library and passing it to library via {@code makeRef} calls.
 	 */
-	public static final @Unsigned int frame(@Unsigned byte _flags) {
+	public static @Unsigned int frame(@Unsigned byte _flags) {
 		try {
 			return (@Unsigned int) MH_FRAME.invokeExact(_flags);
 		} catch (Throwable ex) {
@@ -716,7 +685,7 @@ public final class Bgfx {
 	 *   Library must be initialized.
 	 * @return Renderer backend type. See: {@code RendererType}
 	 */
-	public static final RendererType getRendererType() {
+	public static RendererType getRendererType() {
 		try {
 			return RendererType.fromValue((int) MH_GET_RENDERER_TYPE.invokeExact());
 		} catch (Throwable ex) {
@@ -731,7 +700,7 @@ public final class Bgfx {
 	 *   Library must be initialized.
 	 * @return Pointer to static {@code Caps} structure.
 	 */
-	public static final Caps getCaps() {
+	public static Caps getCaps() {
 		try {
 			return new Caps((MemorySegment) MH_GET_CAPS.invokeExact());
 		} catch (Throwable ex) {
@@ -745,7 +714,7 @@ public final class Bgfx {
 	 * <strong>Attention:</strong> Pointer returned is valid until {@code frame} is called.
 	 * @return Performance counters.
 	 */
-	public static final Stats getStats() {
+	public static Stats getStats() {
 		try {
 			return new Stats((MemorySegment) MH_GET_STATS.invokeExact());
 		} catch (Throwable ex) {
@@ -758,7 +727,7 @@ public final class Bgfx {
 	 * @param _size Size to allocate.
 	 * @return Allocated memory.
 	 */
-	public static final Memory alloc(@Unsigned int _size) {
+	public static Memory alloc(@Unsigned int _size) {
 		try {
 			return new Memory((MemorySegment) MH_ALLOC.invokeExact(_size));
 		} catch (Throwable ex) {
@@ -772,7 +741,7 @@ public final class Bgfx {
 	 * @param _size Size of data to be copied.
 	 * @return Allocated memory.
 	 */
-	public static final Memory copy(MemorySegment _data, @Unsigned int _size) {
+	public static Memory copy(MemorySegment _data, @Unsigned int _size) {
 		try {
 			return new Memory((MemorySegment) MH_COPY.invokeExact(address(_data), _size));
 		} catch (Throwable ex) {
@@ -793,7 +762,7 @@ public final class Bgfx {
 	 * @param _size Size of data.
 	 * @return Referenced memory.
 	 */
-	public static final Memory makeRef(MemorySegment _data, @Unsigned int _size) {
+	public static Memory makeRef(MemorySegment _data, @Unsigned int _size) {
 		try {
 			return new Memory((MemorySegment) MH_MAKE_REF.invokeExact(address(_data), _size));
 		} catch (Throwable ex) {
@@ -816,7 +785,7 @@ public final class Bgfx {
 	 * @param _userData User data to be passed to callback function.
 	 * @return Referenced memory.
 	 */
-	public static final Memory makeRefRelease(MemorySegment _data, @Unsigned int _size, @Nullable MemorySegment _releaseFn, @Nullable MemorySegment _userData) {
+	public static Memory makeRefRelease(MemorySegment _data, @Unsigned int _size, @Nullable MemorySegment _releaseFn, @Nullable MemorySegment _userData) {
 		try {
 			return new Memory((MemorySegment) MH_MAKE_REF_RELEASE.invokeExact(address(_data), _size, address(_releaseFn), address(_userData)));
 		} catch (Throwable ex) {
@@ -827,10 +796,14 @@ public final class Bgfx {
 	/**
 	 * Set debug flags.
 	 * @param _debug Available flags:   - {@code BGFX_DEBUG_IFH} - Infinitely fast hardware. When this flag is set     all rendering calls will be skipped. This is useful when profiling     to quickly assess potential bottlenecks between CPU and GPU.   - {@code BGFX_DEBUG_PROFILER} - Enable profiler.   - {@code BGFX_DEBUG_STATS} - Display internal statistics.   - {@code BGFX_DEBUG_TEXT} - Display debug text.   - {@code BGFX_DEBUG_WIREFRAME} - Wireframe rendering. All rendering     primitives will be rendered as lines.
+	 * @param _handle Frame buffer the debug text and statistics are drawn on. Invalid handle selects the window bgfx was initialized with.
+	 * @param _scale Debug text scale factor. 0 is the same as 1.
 	 */
-	public static final void setDebug(@Unsigned int _debug) {
+	public static void setDebug(@Unsigned int _debug, FrameBufferHandle _handle, @Unsigned byte _scale) {
 		try {
-			MH_SET_DEBUG.invokeExact(_debug);
+			try (Arena arena = Arena.ofConfined()) {
+				MH_SET_DEBUG.invokeExact(_debug, _handle.allocate(arena), _scale);
+			}
 		} catch (Throwable ex) {
 			throw invocationFailure(ex);
 		}
@@ -841,7 +814,7 @@ public final class Bgfx {
 	 * @param _attr Background color.
 	 * @param _small Default 8x16 or 8x8 font.
 	 */
-	public static final void dbgTextClear(@Unsigned byte _attr, boolean _small) {
+	public static void dbgTextClear(@Unsigned byte _attr, boolean _small) {
 		try {
 			MH_DBG_TEXT_CLEAR.invokeExact(_attr, _small);
 		} catch (Throwable ex) {
@@ -876,7 +849,7 @@ public final class Bgfx {
 	 * @param _format {@code printf} style format.
 	 * @param _argList Variable arguments list for format string.
 	 */
-	public static final void dbgTextVprintf(@Unsigned short _x, @Unsigned short _y, @Unsigned byte _attr, String _format, MemorySegment _argList) {
+	public static void dbgTextVprintf(@Unsigned short _x, @Unsigned short _y, @Unsigned byte _attr, String _format, MemorySegment _argList) {
 		try {
 			try (Arena arena = Arena.ofConfined()) {
 				MH_DBG_TEXT_VPRINTF.invokeExact(_x, _y, _attr, cString(arena, _format), address(_argList));
@@ -895,7 +868,7 @@ public final class Bgfx {
 	 * @param _data Raw image data (character/attribute raw encoding).
 	 * @param _pitch Image pitch in bytes.
 	 */
-	public static final void dbgTextImage(@Unsigned short _x, @Unsigned short _y, @Unsigned short _width, @Unsigned short _height, MemorySegment _data, @Unsigned short _pitch) {
+	public static void dbgTextImage(@Unsigned short _x, @Unsigned short _y, @Unsigned short _width, @Unsigned short _height, MemorySegment _data, @Unsigned short _pitch) {
 		try {
 			MH_DBG_TEXT_IMAGE.invokeExact(_x, _y, _width, _height, address(_data), _pitch);
 		} catch (Throwable ex) {
@@ -909,7 +882,7 @@ public final class Bgfx {
 	 * @param _flags Buffer creation flags.   - {@code BGFX_BUFFER_NONE} - No flags.   - {@code BGFX_BUFFER_COMPUTE_READ} - Buffer will be read from by compute shader.   - {@code BGFX_BUFFER_COMPUTE_WRITE} - Buffer will be written into by compute shader. When buffer       is created with {@code BGFX_BUFFER_COMPUTE_WRITE} flag it cannot be updated from CPU.   - {@code BGFX_BUFFER_COMPUTE_READ_WRITE} - Buffer will be used for read/write by compute shader.   - {@code BGFX_BUFFER_ALLOW_RESIZE} - Buffer will resize on buffer update if a different amount of       data is passed. If this flag is not specified, and more data is passed on update, the buffer       will be trimmed to fit the existing buffer size. This flag has effect only on dynamic       buffers.   - {@code BGFX_BUFFER_INDEX32} - Buffer is using 32-bit indices. This flag has effect only on       index buffers.
 	 * @return the native function result
 	 */
-	public static final IndexBufferHandle createIndexBuffer(Memory _mem, @Unsigned short _flags) {
+	public static IndexBufferHandle createIndexBuffer(Memory _mem, @Unsigned short _flags) {
 		try {
 			try (Arena arena = Arena.ofConfined()) {
 				return IndexBufferHandle.read((MemorySegment) MH_CREATE_INDEX_BUFFER.invokeExact((SegmentAllocator) arena, address(_mem), _flags));
@@ -937,7 +910,7 @@ public final class Bgfx {
 	 * @param _data Destination buffer.
 	 * @return Frame number when the result will be available. See: {@code frame}.
 	 */
-	public static final @Unsigned int readBuffer(BufferRegion _src, MemorySegment _data) {
+	public static @Unsigned int readBuffer(BufferRegion _src, MemorySegment _data) {
 		try {
 			return (@Unsigned int) MH_READ_BUFFER.invokeExact(address(_src), address(_data));
 		} catch (Throwable ex) {
@@ -951,7 +924,7 @@ public final class Bgfx {
 	 * @param _name Static index buffer name.
 	 * @param _len Static index buffer name length (if length is INT32_MAX, it's expected that _name is zero terminated string.
 	 */
-	public static final void setIndexBufferName(IndexBufferHandle _handle, String _name, int _len) {
+	public static void setIndexBufferName(IndexBufferHandle _handle, String _name, int _len) {
 		try {
 			try (Arena arena = Arena.ofConfined()) {
 				MH_SET_INDEX_BUFFER_NAME.invokeExact(_handle.allocate(arena), cString(arena, _name), _len);
@@ -965,7 +938,7 @@ public final class Bgfx {
 	 * Destroy static index buffer.
 	 * @param _handle Static index buffer handle.
 	 */
-	public static final void destroyIndexBuffer(IndexBufferHandle _handle) {
+	public static void destroyIndexBuffer(IndexBufferHandle _handle) {
 		try {
 			try (Arena arena = Arena.ofConfined()) {
 				MH_DESTROY_INDEX_BUFFER.invokeExact(_handle.allocate(arena));
@@ -980,7 +953,7 @@ public final class Bgfx {
 	 * @param _layout Vertex layout.
 	 * @return the native function result
 	 */
-	public static final VertexLayoutHandle createVertexLayout(VertexLayout _layout) {
+	public static VertexLayoutHandle createVertexLayout(VertexLayout _layout) {
 		try {
 			try (Arena arena = Arena.ofConfined()) {
 				return VertexLayoutHandle.read((MemorySegment) MH_CREATE_VERTEX_LAYOUT.invokeExact((SegmentAllocator) arena, address(_layout)));
@@ -994,7 +967,7 @@ public final class Bgfx {
 	 * Destroy vertex layout.
 	 * @param _layoutHandle Vertex layout handle.
 	 */
-	public static final void destroyVertexLayout(VertexLayoutHandle _layoutHandle) {
+	public static void destroyVertexLayout(VertexLayoutHandle _layoutHandle) {
 		try {
 			try (Arena arena = Arena.ofConfined()) {
 				MH_DESTROY_VERTEX_LAYOUT.invokeExact(_layoutHandle.allocate(arena));
@@ -1011,7 +984,7 @@ public final class Bgfx {
 	 * @param _flags Buffer creation flags.  - {@code BGFX_BUFFER_NONE} - No flags.  - {@code BGFX_BUFFER_COMPUTE_READ} - Buffer will be read from by compute shader.  - {@code BGFX_BUFFER_COMPUTE_WRITE} - Buffer will be written into by compute shader. When buffer      is created with {@code BGFX_BUFFER_COMPUTE_WRITE} flag it cannot be updated from CPU.  - {@code BGFX_BUFFER_COMPUTE_READ_WRITE} - Buffer will be used for read/write by compute shader.  - {@code BGFX_BUFFER_ALLOW_RESIZE} - Buffer will resize on buffer update if a different amount of      data is passed. If this flag is not specified, and more data is passed on update, the buffer      will be trimmed to fit the existing buffer size. This flag has effect only on dynamic buffers.  - {@code BGFX_BUFFER_INDEX32} - Buffer is using 32-bit indices. This flag has effect only on index buffers.
 	 * @return Static vertex buffer handle.
 	 */
-	public static final VertexBufferHandle createVertexBuffer(Memory _mem, VertexLayout _layout, @Unsigned short _flags) {
+	public static VertexBufferHandle createVertexBuffer(Memory _mem, VertexLayout _layout, @Unsigned short _flags) {
 		try {
 			try (Arena arena = Arena.ofConfined()) {
 				return VertexBufferHandle.read((MemorySegment) MH_CREATE_VERTEX_BUFFER.invokeExact((SegmentAllocator) arena, address(_mem), address(_layout), _flags));
@@ -1027,7 +1000,7 @@ public final class Bgfx {
 	 * @param _name Static vertex buffer name.
 	 * @param _len Static vertex buffer name length (if length is INT32_MAX, it's expected that _name is zero terminated string.
 	 */
-	public static final void setVertexBufferName(VertexBufferHandle _handle, String _name, int _len) {
+	public static void setVertexBufferName(VertexBufferHandle _handle, String _name, int _len) {
 		try {
 			try (Arena arena = Arena.ofConfined()) {
 				MH_SET_VERTEX_BUFFER_NAME.invokeExact(_handle.allocate(arena), cString(arena, _name), _len);
@@ -1041,7 +1014,7 @@ public final class Bgfx {
 	 * Destroy static vertex buffer.
 	 * @param _handle Static vertex buffer handle.
 	 */
-	public static final void destroyVertexBuffer(VertexBufferHandle _handle) {
+	public static void destroyVertexBuffer(VertexBufferHandle _handle) {
 		try {
 			try (Arena arena = Arena.ofConfined()) {
 				MH_DESTROY_VERTEX_BUFFER.invokeExact(_handle.allocate(arena));
@@ -1057,7 +1030,7 @@ public final class Bgfx {
 	 * @param _flags Buffer creation flags.   - {@code BGFX_BUFFER_NONE} - No flags.   - {@code BGFX_BUFFER_COMPUTE_READ} - Buffer will be read from by compute shader.   - {@code BGFX_BUFFER_COMPUTE_WRITE} - Buffer will be written into by compute shader. When buffer       is created with {@code BGFX_BUFFER_COMPUTE_WRITE} flag it cannot be updated from CPU.   - {@code BGFX_BUFFER_COMPUTE_READ_WRITE} - Buffer will be used for read/write by compute shader.   - {@code BGFX_BUFFER_ALLOW_RESIZE} - Buffer will resize on buffer update if a different amount of       data is passed. If this flag is not specified, and more data is passed on update, the buffer       will be trimmed to fit the existing buffer size. This flag has effect only on dynamic       buffers.   - {@code BGFX_BUFFER_INDEX32} - Buffer is using 32-bit indices. This flag has effect only on       index buffers.
 	 * @return Dynamic index buffer handle.
 	 */
-	public static final DynamicIndexBufferHandle createDynamicIndexBuffer(@Unsigned int _num, @Unsigned short _flags) {
+	public static DynamicIndexBufferHandle createDynamicIndexBuffer(@Unsigned int _num, @Unsigned short _flags) {
 		try {
 			try (Arena arena = Arena.ofConfined()) {
 				return DynamicIndexBufferHandle.read((MemorySegment) MH_CREATE_DYNAMIC_INDEX_BUFFER.invokeExact((SegmentAllocator) arena, _num, _flags));
@@ -1073,7 +1046,7 @@ public final class Bgfx {
 	 * @param _flags Buffer creation flags.   - {@code BGFX_BUFFER_NONE} - No flags.   - {@code BGFX_BUFFER_COMPUTE_READ} - Buffer will be read from by compute shader.   - {@code BGFX_BUFFER_COMPUTE_WRITE} - Buffer will be written into by compute shader. When buffer       is created with {@code BGFX_BUFFER_COMPUTE_WRITE} flag it cannot be updated from CPU.   - {@code BGFX_BUFFER_COMPUTE_READ_WRITE} - Buffer will be used for read/write by compute shader.   - {@code BGFX_BUFFER_ALLOW_RESIZE} - Buffer will resize on buffer update if a different amount of       data is passed. If this flag is not specified, and more data is passed on update, the buffer       will be trimmed to fit the existing buffer size. This flag has effect only on dynamic       buffers.   - {@code BGFX_BUFFER_INDEX32} - Buffer is using 32-bit indices. This flag has effect only on       index buffers.
 	 * @return Dynamic index buffer handle.
 	 */
-	public static final DynamicIndexBufferHandle createDynamicIndexBufferMem(Memory _mem, @Unsigned short _flags) {
+	public static DynamicIndexBufferHandle createDynamicIndexBufferMem(Memory _mem, @Unsigned short _flags) {
 		try {
 			try (Arena arena = Arena.ofConfined()) {
 				return DynamicIndexBufferHandle.read((MemorySegment) MH_CREATE_DYNAMIC_INDEX_BUFFER_MEM.invokeExact((SegmentAllocator) arena, address(_mem), _flags));
@@ -1089,7 +1062,7 @@ public final class Bgfx {
 	 * @param _startIndex Start index.
 	 * @param _mem Index buffer data.
 	 */
-	public static final void updateDynamicIndexBuffer(DynamicIndexBufferHandle _handle, @Unsigned int _startIndex, Memory _mem) {
+	public static void updateDynamicIndexBuffer(DynamicIndexBufferHandle _handle, @Unsigned int _startIndex, Memory _mem) {
 		try {
 			try (Arena arena = Arena.ofConfined()) {
 				MH_UPDATE_DYNAMIC_INDEX_BUFFER.invokeExact(_handle.allocate(arena), _startIndex, address(_mem));
@@ -1103,7 +1076,7 @@ public final class Bgfx {
 	 * Destroy dynamic index buffer.
 	 * @param _handle Dynamic index buffer handle.
 	 */
-	public static final void destroyDynamicIndexBuffer(DynamicIndexBufferHandle _handle) {
+	public static void destroyDynamicIndexBuffer(DynamicIndexBufferHandle _handle) {
 		try {
 			try (Arena arena = Arena.ofConfined()) {
 				MH_DESTROY_DYNAMIC_INDEX_BUFFER.invokeExact(_handle.allocate(arena));
@@ -1120,7 +1093,7 @@ public final class Bgfx {
 	 * @param _flags Buffer creation flags.   - {@code BGFX_BUFFER_NONE} - No flags.   - {@code BGFX_BUFFER_COMPUTE_READ} - Buffer will be read from by compute shader.   - {@code BGFX_BUFFER_COMPUTE_WRITE} - Buffer will be written into by compute shader. When buffer       is created with {@code BGFX_BUFFER_COMPUTE_WRITE} flag it cannot be updated from CPU.   - {@code BGFX_BUFFER_COMPUTE_READ_WRITE} - Buffer will be used for read/write by compute shader.   - {@code BGFX_BUFFER_ALLOW_RESIZE} - Buffer will resize on buffer update if a different amount of       data is passed. If this flag is not specified, and more data is passed on update, the buffer       will be trimmed to fit the existing buffer size. This flag has effect only on dynamic       buffers.   - {@code BGFX_BUFFER_INDEX32} - Buffer is using 32-bit indices. This flag has effect only on       index buffers.
 	 * @return Dynamic vertex buffer handle.
 	 */
-	public static final DynamicVertexBufferHandle createDynamicVertexBuffer(@Unsigned int _num, VertexLayout _layout, @Unsigned short _flags) {
+	public static DynamicVertexBufferHandle createDynamicVertexBuffer(@Unsigned int _num, VertexLayout _layout, @Unsigned short _flags) {
 		try {
 			try (Arena arena = Arena.ofConfined()) {
 				return DynamicVertexBufferHandle.read((MemorySegment) MH_CREATE_DYNAMIC_VERTEX_BUFFER.invokeExact((SegmentAllocator) arena, _num, address(_layout), _flags));
@@ -1137,7 +1110,7 @@ public final class Bgfx {
 	 * @param _flags Buffer creation flags.   - {@code BGFX_BUFFER_NONE} - No flags.   - {@code BGFX_BUFFER_COMPUTE_READ} - Buffer will be read from by compute shader.   - {@code BGFX_BUFFER_COMPUTE_WRITE} - Buffer will be written into by compute shader. When buffer       is created with {@code BGFX_BUFFER_COMPUTE_WRITE} flag it cannot be updated from CPU.   - {@code BGFX_BUFFER_COMPUTE_READ_WRITE} - Buffer will be used for read/write by compute shader.   - {@code BGFX_BUFFER_ALLOW_RESIZE} - Buffer will resize on buffer update if a different amount of       data is passed. If this flag is not specified, and more data is passed on update, the buffer       will be trimmed to fit the existing buffer size. This flag has effect only on dynamic       buffers.   - {@code BGFX_BUFFER_INDEX32} - Buffer is using 32-bit indices. This flag has effect only on       index buffers.
 	 * @return Dynamic vertex buffer handle.
 	 */
-	public static final DynamicVertexBufferHandle createDynamicVertexBufferMem(Memory _mem, VertexLayout _layout, @Unsigned short _flags) {
+	public static DynamicVertexBufferHandle createDynamicVertexBufferMem(Memory _mem, VertexLayout _layout, @Unsigned short _flags) {
 		try {
 			try (Arena arena = Arena.ofConfined()) {
 				return DynamicVertexBufferHandle.read((MemorySegment) MH_CREATE_DYNAMIC_VERTEX_BUFFER_MEM.invokeExact((SegmentAllocator) arena, address(_mem), address(_layout), _flags));
@@ -1153,7 +1126,7 @@ public final class Bgfx {
 	 * @param _startVertex Start vertex.
 	 * @param _mem Vertex buffer data.
 	 */
-	public static final void updateDynamicVertexBuffer(DynamicVertexBufferHandle _handle, @Unsigned int _startVertex, Memory _mem) {
+	public static void updateDynamicVertexBuffer(DynamicVertexBufferHandle _handle, @Unsigned int _startVertex, Memory _mem) {
 		try {
 			try (Arena arena = Arena.ofConfined()) {
 				MH_UPDATE_DYNAMIC_VERTEX_BUFFER.invokeExact(_handle.allocate(arena), _startVertex, address(_mem));
@@ -1167,7 +1140,7 @@ public final class Bgfx {
 	 * Destroy dynamic vertex buffer.
 	 * @param _handle Dynamic vertex buffer handle.
 	 */
-	public static final void destroyDynamicVertexBuffer(DynamicVertexBufferHandle _handle) {
+	public static void destroyDynamicVertexBuffer(DynamicVertexBufferHandle _handle) {
 		try {
 			try (Arena arena = Arena.ofConfined()) {
 				MH_DESTROY_DYNAMIC_VERTEX_BUFFER.invokeExact(_handle.allocate(arena));
@@ -1183,7 +1156,7 @@ public final class Bgfx {
 	 * @param _index32 Set to {@code true} if input indices will be 32-bit.
 	 * @return Number of requested or maximum available indices.
 	 */
-	public static final @Unsigned int getAvailTransientIndexBuffer(@Unsigned int _num, boolean _index32) {
+	public static @Unsigned int getAvailTransientIndexBuffer(@Unsigned int _num, boolean _index32) {
 		try {
 			return (@Unsigned int) MH_GET_AVAIL_TRANSIENT_INDEX_BUFFER.invokeExact(_num, _index32);
 		} catch (Throwable ex) {
@@ -1197,7 +1170,7 @@ public final class Bgfx {
 	 * @param _layout Vertex layout.
 	 * @return Number of requested or maximum available vertices.
 	 */
-	public static final @Unsigned int getAvailTransientVertexBuffer(@Unsigned int _num, VertexLayout _layout) {
+	public static @Unsigned int getAvailTransientVertexBuffer(@Unsigned int _num, VertexLayout _layout) {
 		try {
 			return (@Unsigned int) MH_GET_AVAIL_TRANSIENT_VERTEX_BUFFER.invokeExact(_num, address(_layout));
 		} catch (Throwable ex) {
@@ -1211,7 +1184,7 @@ public final class Bgfx {
 	 * @param _stride Stride per instance.
 	 * @return Number of requested or maximum available instance buffer slots.
 	 */
-	public static final @Unsigned int getAvailInstanceDataBuffer(@Unsigned int _num, @Unsigned short _stride) {
+	public static @Unsigned int getAvailInstanceDataBuffer(@Unsigned int _num, @Unsigned short _stride) {
 		try {
 			return (@Unsigned int) MH_GET_AVAIL_INSTANCE_DATA_BUFFER.invokeExact(_num, _stride);
 		} catch (Throwable ex) {
@@ -1225,7 +1198,7 @@ public final class Bgfx {
 	 * @param _num Number of indices to allocate.
 	 * @param _index32 Set to {@code true} if input indices will be 32-bit.
 	 */
-	public static final void allocTransientIndexBuffer(TransientIndexBuffer _tib, @Unsigned int _num, boolean _index32) {
+	public static void allocTransientIndexBuffer(TransientIndexBuffer _tib, @Unsigned int _num, boolean _index32) {
 		try {
 			MH_ALLOC_TRANSIENT_INDEX_BUFFER.invokeExact(address(_tib), _num, _index32);
 		} catch (Throwable ex) {
@@ -1239,7 +1212,7 @@ public final class Bgfx {
 	 * @param _num Number of vertices to allocate.
 	 * @param _layout Vertex layout.
 	 */
-	public static final void allocTransientVertexBuffer(TransientVertexBuffer _tvb, @Unsigned int _num, VertexLayout _layout) {
+	public static void allocTransientVertexBuffer(TransientVertexBuffer _tvb, @Unsigned int _num, VertexLayout _layout) {
 		try {
 			MH_ALLOC_TRANSIENT_VERTEX_BUFFER.invokeExact(address(_tvb), _num, address(_layout));
 		} catch (Throwable ex) {
@@ -1259,7 +1232,7 @@ public final class Bgfx {
 	 * @param _index32 Set to {@code true} if input indices will be 32-bit.
 	 * @return the native function result
 	 */
-	public static final boolean allocTransientBuffers(TransientVertexBuffer _tvb, VertexLayout _layout, @Unsigned int _numVertices, TransientIndexBuffer _tib, @Unsigned int _numIndices, boolean _index32) {
+	public static boolean allocTransientBuffers(TransientVertexBuffer _tvb, VertexLayout _layout, @Unsigned int _numVertices, TransientIndexBuffer _tib, @Unsigned int _numIndices, boolean _index32) {
 		try {
 			return (boolean) MH_ALLOC_TRANSIENT_BUFFERS.invokeExact(address(_tvb), address(_layout), _numVertices, address(_tib), _numIndices, _index32);
 		} catch (Throwable ex) {
@@ -1273,7 +1246,7 @@ public final class Bgfx {
 	 * @param _num Number of instances.
 	 * @param _stride Instance stride. Must be multiple of 16.
 	 */
-	public static final void allocInstanceDataBuffer(InstanceDataBuffer _idb, @Unsigned int _num, @Unsigned short _stride) {
+	public static void allocInstanceDataBuffer(InstanceDataBuffer _idb, @Unsigned int _num, @Unsigned short _stride) {
 		try {
 			MH_ALLOC_INSTANCE_DATA_BUFFER.invokeExact(address(_idb), _num, _stride);
 		} catch (Throwable ex) {
@@ -1286,7 +1259,7 @@ public final class Bgfx {
 	 * @param _num Number of indirect calls.
 	 * @return Indirect buffer handle.
 	 */
-	public static final IndirectBufferHandle createIndirectBuffer(@Unsigned int _num) {
+	public static IndirectBufferHandle createIndirectBuffer(@Unsigned int _num) {
 		try {
 			try (Arena arena = Arena.ofConfined()) {
 				return IndirectBufferHandle.read((MemorySegment) MH_CREATE_INDIRECT_BUFFER.invokeExact((SegmentAllocator) arena, _num));
@@ -1300,7 +1273,7 @@ public final class Bgfx {
 	 * Destroy draw indirect buffer.
 	 * @param _handle Indirect buffer handle.
 	 */
-	public static final void destroyIndirectBuffer(IndirectBufferHandle _handle) {
+	public static void destroyIndirectBuffer(IndirectBufferHandle _handle) {
 		try {
 			try (Arena arena = Arena.ofConfined()) {
 				MH_DESTROY_INDIRECT_BUFFER.invokeExact(_handle.allocate(arena));
@@ -1318,7 +1291,7 @@ public final class Bgfx {
 	 * @param _mem Shader binary.
 	 * @return Shader handle.
 	 */
-	public static final ShaderHandle createShader(Memory _mem) {
+	public static ShaderHandle createShader(Memory _mem) {
 		try {
 			try (Arena arena = Arena.ofConfined()) {
 				return ShaderHandle.read((MemorySegment) MH_CREATE_SHADER.invokeExact((SegmentAllocator) arena, address(_mem)));
@@ -1338,7 +1311,7 @@ public final class Bgfx {
 	 * @param _max Maximum capacity of array.
 	 * @return Number of uniforms used by shader.
 	 */
-	public static final @Unsigned short getShaderUniforms(ShaderHandle _handle, @Nullable MemorySegment _uniforms, @Unsigned short _max) {
+	public static @Unsigned short getShaderUniforms(ShaderHandle _handle, @Nullable MemorySegment _uniforms, @Unsigned short _max) {
 		try {
 			try (Arena arena = Arena.ofConfined()) {
 				return (@Unsigned short) MH_GET_SHADER_UNIFORMS.invokeExact(_handle.allocate(arena), address(_uniforms), _max);
@@ -1354,7 +1327,7 @@ public final class Bgfx {
 	 * @param _name Shader name.
 	 * @param _len Shader name length (if length is INT32_MAX, it's expected that _name is zero terminated string).
 	 */
-	public static final void setShaderName(ShaderHandle _handle, String _name, int _len) {
+	public static void setShaderName(ShaderHandle _handle, String _name, int _len) {
 		try {
 			try (Arena arena = Arena.ofConfined()) {
 				MH_SET_SHADER_NAME.invokeExact(_handle.allocate(arena), cString(arena, _name), _len);
@@ -1371,7 +1344,7 @@ public final class Bgfx {
 	 *   it is safe to destroy that shader.
 	 * @param _handle Shader handle.
 	 */
-	public static final void destroyShader(ShaderHandle _handle) {
+	public static void destroyShader(ShaderHandle _handle) {
 		try {
 			try (Arena arena = Arena.ofConfined()) {
 				MH_DESTROY_SHADER.invokeExact(_handle.allocate(arena));
@@ -1388,7 +1361,7 @@ public final class Bgfx {
 	 * @param _destroyShaders If true, shaders will be destroyed when program is destroyed.
 	 * @return Program handle if vertex shader output and fragment shader input are matching, otherwise returns invalid program handle.
 	 */
-	public static final ProgramHandle createProgram(ShaderHandle _vsh, ShaderHandle _fsh, boolean _destroyShaders) {
+	public static ProgramHandle createProgram(ShaderHandle _vsh, ShaderHandle _fsh, boolean _destroyShaders) {
 		try {
 			try (Arena arena = Arena.ofConfined()) {
 				return ProgramHandle.read((MemorySegment) MH_CREATE_PROGRAM.invokeExact((SegmentAllocator) arena, _vsh.allocate(arena), _fsh.allocate(arena), _destroyShaders));
@@ -1404,7 +1377,7 @@ public final class Bgfx {
 	 * @param _destroyShaders If true, shaders will be destroyed when program is destroyed.
 	 * @return Program handle.
 	 */
-	public static final ProgramHandle createComputeProgram(ShaderHandle _csh, boolean _destroyShaders) {
+	public static ProgramHandle createComputeProgram(ShaderHandle _csh, boolean _destroyShaders) {
 		try {
 			try (Arena arena = Arena.ofConfined()) {
 				return ProgramHandle.read((MemorySegment) MH_CREATE_COMPUTE_PROGRAM.invokeExact((SegmentAllocator) arena, _csh.allocate(arena), _destroyShaders));
@@ -1418,7 +1391,7 @@ public final class Bgfx {
 	 * Destroy program.
 	 * @param _handle Program handle.
 	 */
-	public static final void destroyProgram(ProgramHandle _handle) {
+	public static void destroyProgram(ProgramHandle _handle) {
 		try {
 			try (Arena arena = Arena.ofConfined()) {
 				MH_DESTROY_PROGRAM.invokeExact(_handle.allocate(arena));
@@ -1437,7 +1410,7 @@ public final class Bgfx {
 	 * @param _flags Texture flags. See {@code BGFX_TEXTURE_*}.
 	 * @return True if a texture with the same parameters can be created.
 	 */
-	public static final boolean isTextureValid(@Unsigned short _depth, boolean _cubeMap, @Unsigned short _numLayers, TextureFormat _format, @Unsigned long _flags) {
+	public static boolean isTextureValid(@Unsigned short _depth, boolean _cubeMap, @Unsigned short _numLayers, TextureFormat _format, @Unsigned long _flags) {
 		try {
 			return (boolean) MH_IS_TEXTURE_VALID.invokeExact(_depth, _cubeMap, _numLayers, _format.ordinal(), _flags);
 		} catch (Throwable ex) {
@@ -1459,7 +1432,7 @@ public final class Bgfx {
 	 * @param _maxActiveReferences Maximum number of reference frames active at once.
 	 * @return True if a video decoder with the same parameters can be created.
 	 */
-	public static final boolean isVideoCodecValid(VideoCodec _codec, @Unsigned byte _chroma, @Unsigned byte _bitDepth, @Unsigned short _codedWidth, @Unsigned short _codedHeight, @Unsigned byte _maxDpbSlots, @Unsigned byte _maxActiveReferences) {
+	public static boolean isVideoCodecValid(VideoCodec _codec, @Unsigned byte _chroma, @Unsigned byte _bitDepth, @Unsigned short _codedWidth, @Unsigned short _codedHeight, @Unsigned byte _maxDpbSlots, @Unsigned byte _maxActiveReferences) {
 		try {
 			return (boolean) MH_IS_VIDEO_CODEC_VALID.invokeExact(_codec.ordinal(), _chroma, _bitDepth, _codedWidth, _codedHeight, _maxDpbSlots, _maxActiveReferences);
 		} catch (Throwable ex) {
@@ -1473,7 +1446,7 @@ public final class Bgfx {
 	 * @param _attachment Attachment texture info. See: {@code Attachment}.
 	 * @return True if a frame buffer with the same parameters can be created.
 	 */
-	public static final boolean isFrameBufferValid(@Unsigned byte _num, Attachment _attachment) {
+	public static boolean isFrameBufferValid(@Unsigned byte _num, Attachment _attachment) {
 		try {
 			return (boolean) MH_IS_FRAME_BUFFER_VALID.invokeExact(_num, address(_attachment));
 		} catch (Throwable ex) {
@@ -1492,7 +1465,7 @@ public final class Bgfx {
 	 * @param _numLayers Number of layers in texture array.
 	 * @param _format Texture format. See: {@code TextureFormat}.
 	 */
-	public static final void calcTextureSize(TextureInfo _info, @Unsigned short _width, @Unsigned short _height, @Unsigned short _depth, boolean _cubeMap, boolean _hasMips, @Unsigned short _numLayers, TextureFormat _format) {
+	public static void calcTextureSize(TextureInfo _info, @Unsigned short _width, @Unsigned short _height, @Unsigned short _depth, boolean _cubeMap, boolean _hasMips, @Unsigned short _numLayers, TextureFormat _format) {
 		try {
 			MH_CALC_TEXTURE_SIZE.invokeExact(address(_info), _width, _height, _depth, _cubeMap, _hasMips, _numLayers, _format.ordinal());
 		} catch (Throwable ex) {
@@ -1508,7 +1481,7 @@ public final class Bgfx {
 	 * @param _info When non-{@code NULL} is specified it returns parsed texture information.
 	 * @return Texture handle.
 	 */
-	public static final TextureHandle createTexture(Memory _mem, @Unsigned long _flags, @Unsigned byte _skip, @Nullable TextureInfo _info) {
+	public static TextureHandle createTexture(Memory _mem, @Unsigned long _flags, @Unsigned byte _skip, @Nullable TextureInfo _info) {
 		try {
 			try (Arena arena = Arena.ofConfined()) {
 				return TextureHandle.read((MemorySegment) MH_CREATE_TEXTURE.invokeExact((SegmentAllocator) arena, address(_mem), _flags, _skip, address(_info)));
@@ -1523,14 +1496,14 @@ public final class Bgfx {
 	 * @param _width Width.
 	 * @param _height Height.
 	 * @param _hasMips Indicates that texture contains full mip-map chain.
-	 * @param _numLayers Number of layers in texture array. Must be 1 if caps {@code BGFX_CAPS_TEXTURE_2D_ARRAY} flag is not set.
+	 * @param _numLayers Number of layers in texture array.
 	 * @param _format Texture format. See: {@code TextureFormat}.
 	 * @param _flags Texture creation (see {@code BGFX_TEXTURE_*}.), and sampler (see {@code BGFX_SAMPLER_*}) flags. Default texture sampling mode is linear, and wrap mode is repeat. - {@code BGFX_SAMPLER_[U/V/W]_[MIRROR/CLAMP]} - Mirror or clamp to edge wrap   mode. - {@code BGFX_SAMPLER_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]} - Point or anisotropic   sampling.
 	 * @param _mem Texture data. If {@code _mem} is non-NULL, created texture will be immutable. If {@code _mem} is NULL content of the texture is uninitialized. When {@code _numLayers} is more than 1, expected memory layout is texture and all mips together for each array element.
 	 * @param _external Native API pointer to texture.
 	 * @return Texture handle.
 	 */
-	public static final TextureHandle createTexture2D(@Unsigned short _width, @Unsigned short _height, boolean _hasMips, @Unsigned short _numLayers, TextureFormat _format, @Unsigned long _flags, @Nullable Memory _mem, @Unsigned long _external) {
+	public static TextureHandle createTexture2D(@Unsigned short _width, @Unsigned short _height, boolean _hasMips, @Unsigned short _numLayers, TextureFormat _format, @Unsigned long _flags, @Nullable Memory _mem, @Unsigned long _external) {
 		try {
 			try (Arena arena = Arena.ofConfined()) {
 				return TextureHandle.read((MemorySegment) MH_CREATE_TEXTURE_2D.invokeExact((SegmentAllocator) arena, _width, _height, _hasMips, _numLayers, _format.ordinal(), _flags, address(_mem), _external));
@@ -1545,12 +1518,12 @@ public final class Bgfx {
 	 * if back buffer resolution changes.
 	 * @param _ratio Texture size in respect to back-buffer size. See: {@code BackbufferRatio}.
 	 * @param _hasMips Indicates that texture contains full mip-map chain.
-	 * @param _numLayers Number of layers in texture array. Must be 1 if caps {@code BGFX_CAPS_TEXTURE_2D_ARRAY} flag is not set.
+	 * @param _numLayers Number of layers in texture array.
 	 * @param _format Texture format. See: {@code TextureFormat}.
 	 * @param _flags Texture creation (see {@code BGFX_TEXTURE_*}.), and sampler (see {@code BGFX_SAMPLER_*}) flags. Default texture sampling mode is linear, and wrap mode is repeat. - {@code BGFX_SAMPLER_[U/V/W]_[MIRROR/CLAMP]} - Mirror or clamp to edge wrap   mode. - {@code BGFX_SAMPLER_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]} - Point or anisotropic   sampling.
 	 * @return Texture handle.
 	 */
-	public static final TextureHandle createTexture2DScaled(BackbufferRatio _ratio, boolean _hasMips, @Unsigned short _numLayers, TextureFormat _format, @Unsigned long _flags) {
+	public static TextureHandle createTexture2DScaled(BackbufferRatio _ratio, boolean _hasMips, @Unsigned short _numLayers, TextureFormat _format, @Unsigned long _flags) {
 		try {
 			try (Arena arena = Arena.ofConfined()) {
 				return TextureHandle.read((MemorySegment) MH_CREATE_TEXTURE_2D_SCALED.invokeExact((SegmentAllocator) arena, _ratio.ordinal(), _hasMips, _numLayers, _format.ordinal(), _flags));
@@ -1572,7 +1545,7 @@ public final class Bgfx {
 	 * @param _external Native API pointer to texture.
 	 * @return Texture handle.
 	 */
-	public static final TextureHandle createTexture3D(@Unsigned short _width, @Unsigned short _height, @Unsigned short _depth, boolean _hasMips, TextureFormat _format, @Unsigned long _flags, @Nullable Memory _mem, @Unsigned long _external) {
+	public static TextureHandle createTexture3D(@Unsigned short _width, @Unsigned short _height, @Unsigned short _depth, boolean _hasMips, TextureFormat _format, @Unsigned long _flags, @Nullable Memory _mem, @Unsigned long _external) {
 		try {
 			try (Arena arena = Arena.ofConfined()) {
 				return TextureHandle.read((MemorySegment) MH_CREATE_TEXTURE_3D.invokeExact((SegmentAllocator) arena, _width, _height, _depth, _hasMips, _format.ordinal(), _flags, address(_mem), _external));
@@ -1586,14 +1559,14 @@ public final class Bgfx {
 	 * Create Cube texture.
 	 * @param _size Cube side size.
 	 * @param _hasMips Indicates that texture contains full mip-map chain.
-	 * @param _numLayers Number of layers in texture array. Must be 1 if caps {@code BGFX_CAPS_TEXTURE_2D_ARRAY} flag is not set.
+	 * @param _numLayers Number of layers in texture array.
 	 * @param _format Texture format. See: {@code TextureFormat}.
 	 * @param _flags Texture creation (see {@code BGFX_TEXTURE_*}.), and sampler (see {@code BGFX_SAMPLER_*}) flags. Default texture sampling mode is linear, and wrap mode is repeat. - {@code BGFX_SAMPLER_[U/V/W]_[MIRROR/CLAMP]} - Mirror or clamp to edge wrap   mode. - {@code BGFX_SAMPLER_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]} - Point or anisotropic   sampling.
 	 * @param _mem Texture data. If {@code _mem} is non-NULL, created texture will be immutable. If {@code _mem} is NULL content of the texture is uninitialized. When {@code _numLayers} is more than
 	 * @param _external Native API pointer to texture.
 	 * @return Texture handle.
 	 */
-	public static final TextureHandle createTextureCube(@Unsigned short _size, boolean _hasMips, @Unsigned short _numLayers, TextureFormat _format, @Unsigned long _flags, @Nullable Memory _mem, @Unsigned long _external) {
+	public static TextureHandle createTextureCube(@Unsigned short _size, boolean _hasMips, @Unsigned short _numLayers, TextureFormat _format, @Unsigned long _flags, @Nullable Memory _mem, @Unsigned long _external) {
 		try {
 			try (Arena arena = Arena.ofConfined()) {
 				return TextureHandle.read((MemorySegment) MH_CREATE_TEXTURE_CUBE.invokeExact((SegmentAllocator) arena, _size, _hasMips, _numLayers, _format.ordinal(), _flags, address(_mem), _external));
@@ -1617,7 +1590,7 @@ public final class Bgfx {
 	 * @param _mem Texture update data.
 	 * @param _pitch Pitch of input image (bytes). When _pitch is set to UINT16_MAX, it will be calculated internally based on _width.
 	 */
-	public static final void updateTexture2D(TextureHandle _handle, @Unsigned short _layer, @Unsigned byte _mip, @Unsigned short _x, @Unsigned short _y, @Unsigned short _width, @Unsigned short _height, Memory _mem, @Unsigned short _pitch) {
+	public static void updateTexture2D(TextureHandle _handle, @Unsigned short _layer, @Unsigned byte _mip, @Unsigned short _x, @Unsigned short _y, @Unsigned short _width, @Unsigned short _height, Memory _mem, @Unsigned short _pitch) {
 		try {
 			try (Arena arena = Arena.ofConfined()) {
 				MH_UPDATE_TEXTURE_2D.invokeExact(_handle.allocate(arena), _layer, _mip, _x, _y, _width, _height, address(_mem), _pitch);
@@ -1641,7 +1614,7 @@ public final class Bgfx {
 	 * @param _depth Depth of texture block.
 	 * @param _mem Texture update data.
 	 */
-	public static final void updateTexture3D(TextureHandle _handle, @Unsigned byte _mip, @Unsigned short _x, @Unsigned short _y, @Unsigned short _z, @Unsigned short _width, @Unsigned short _height, @Unsigned short _depth, Memory _mem) {
+	public static void updateTexture3D(TextureHandle _handle, @Unsigned byte _mip, @Unsigned short _x, @Unsigned short _y, @Unsigned short _z, @Unsigned short _width, @Unsigned short _height, @Unsigned short _depth, Memory _mem) {
 		try {
 			try (Arena arena = Arena.ofConfined()) {
 				MH_UPDATE_TEXTURE_3D.invokeExact(_handle.allocate(arena), _mip, _x, _y, _z, _width, _height, _depth, address(_mem));
@@ -1666,7 +1639,7 @@ public final class Bgfx {
 	 * @param _mem Texture update data.
 	 * @param _pitch Pitch of input image (bytes). When _pitch is set to UINT16_MAX, it will be calculated internally based on _width.
 	 */
-	public static final void updateTextureCube(TextureHandle _handle, @Unsigned short _layer, @Unsigned byte _side, @Unsigned byte _mip, @Unsigned short _x, @Unsigned short _y, @Unsigned short _width, @Unsigned short _height, Memory _mem, @Unsigned short _pitch) {
+	public static void updateTextureCube(TextureHandle _handle, @Unsigned short _layer, @Unsigned byte _side, @Unsigned byte _mip, @Unsigned short _x, @Unsigned short _y, @Unsigned short _width, @Unsigned short _height, Memory _mem, @Unsigned short _pitch) {
 		try {
 			try (Arena arena = Arena.ofConfined()) {
 				MH_UPDATE_TEXTURE_CUBE.invokeExact(_handle.allocate(arena), _layer, _side, _mip, _x, _y, _width, _height, address(_mem), _pitch);
@@ -1684,7 +1657,7 @@ public final class Bgfx {
 	 * @param _layer First array layer (or 3D depth slice base).
 	 * @param _numLayers Number of layers.
 	 */
-	public static final void clearTexture(TextureHandle _handle, @Unsigned byte _mip, @Unsigned byte _numMips, @Unsigned short _layer, @Unsigned short _numLayers) {
+	public static void clearTexture(TextureHandle _handle, @Unsigned byte _mip, @Unsigned byte _numMips, @Unsigned short _layer, @Unsigned short _numLayers) {
 		try {
 			try (Arena arena = Arena.ofConfined()) {
 				MH_CLEAR_TEXTURE.invokeExact(_handle.allocate(arena), _mip, _numMips, _layer, _numLayers);
@@ -1708,12 +1681,11 @@ public final class Bgfx {
 	 * <strong>Attention:</strong> Texture must be created with {@code BGFX_TEXTURE_READ_BACK} flag.
 	 *            It's a texture for CPU readback, and can't be a GPU resource
 	 *            at the same time. See {@code examples/30-picking}.
-	 * <strong>Attention:</strong> Availability depends on: {@code BGFX_CAPS_TEXTURE_READ_BACK}.
 	 * @param _src Source texture region.
 	 * @param _data Destination buffer.
 	 * @return Frame number when the result will be available. See: {@code frame}.
 	 */
-	public static final @Unsigned int readTexture(TextureRegion _src, MemorySegment _data) {
+	public static @Unsigned int readTexture(TextureRegion _src, MemorySegment _data) {
 		try {
 			return (@Unsigned int) MH_READ_TEXTURE.invokeExact(address(_src), address(_data));
 		} catch (Throwable ex) {
@@ -1727,7 +1699,7 @@ public final class Bgfx {
 	 * @param _name Texture name.
 	 * @param _len Texture name length (if length is INT32_MAX, it's expected that _name is zero terminated string.
 	 */
-	public static final void setTextureName(TextureHandle _handle, String _name, int _len) {
+	public static void setTextureName(TextureHandle _handle, String _name, int _len) {
 		try {
 			try (Arena arena = Arena.ofConfined()) {
 				MH_SET_TEXTURE_NAME.invokeExact(_handle.allocate(arena), cString(arena, _name), _len);
@@ -1745,7 +1717,7 @@ public final class Bgfx {
 	 * @param _handle Texture handle.
 	 * @return Pointer to texture memory. If returned pointer is {@code NULL} direct access is not available for this texture. If pointer is {@code UINTPTR_MAX} sentinel value it means texture is pending creation. Pointer returned can be cached and it will be valid until texture is destroyed.
 	 */
-	public static final MemorySegment getDirectAccessPtr(TextureHandle _handle) {
+	public static MemorySegment getDirectAccessPtr(TextureHandle _handle) {
 		try {
 			try (Arena arena = Arena.ofConfined()) {
 				return address((MemorySegment) MH_GET_DIRECT_ACCESS_PTR.invokeExact(_handle.allocate(arena)));
@@ -1759,7 +1731,7 @@ public final class Bgfx {
 	 * Destroy texture.
 	 * @param _handle Texture handle.
 	 */
-	public static final void destroyTexture(TextureHandle _handle) {
+	public static void destroyTexture(TextureHandle _handle) {
 		try {
 			try (Arena arena = Arena.ofConfined()) {
 				MH_DESTROY_TEXTURE.invokeExact(_handle.allocate(arena));
@@ -1777,7 +1749,7 @@ public final class Bgfx {
 	 * @param _textureFlags Texture creation (see {@code BGFX_TEXTURE_*}.), and sampler (see {@code BGFX_SAMPLER_*}) flags. Default texture sampling mode is linear, and wrap mode is repeat. - {@code BGFX_SAMPLER_[U/V/W]_[MIRROR/CLAMP]} - Mirror or clamp to edge wrap   mode. - {@code BGFX_SAMPLER_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]} - Point or anisotropic   sampling.
 	 * @return Frame buffer handle.
 	 */
-	public static final FrameBufferHandle createFrameBuffer(@Unsigned short _width, @Unsigned short _height, TextureFormat _format, @Unsigned long _textureFlags) {
+	public static FrameBufferHandle createFrameBuffer(@Unsigned short _width, @Unsigned short _height, TextureFormat _format, @Unsigned long _textureFlags) {
 		try {
 			try (Arena arena = Arena.ofConfined()) {
 				return FrameBufferHandle.read((MemorySegment) MH_CREATE_FRAME_BUFFER.invokeExact((SegmentAllocator) arena, _width, _height, _format.ordinal(), _textureFlags));
@@ -1795,7 +1767,7 @@ public final class Bgfx {
 	 * @param _textureFlags Texture creation (see {@code BGFX_TEXTURE_*}.), and sampler (see {@code BGFX_SAMPLER_*}) flags. Default texture sampling mode is linear, and wrap mode is repeat. - {@code BGFX_SAMPLER_[U/V/W]_[MIRROR/CLAMP]} - Mirror or clamp to edge wrap   mode. - {@code BGFX_SAMPLER_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]} - Point or anisotropic   sampling.
 	 * @return Frame buffer handle.
 	 */
-	public static final FrameBufferHandle createFrameBufferScaled(BackbufferRatio _ratio, TextureFormat _format, @Unsigned long _textureFlags) {
+	public static FrameBufferHandle createFrameBufferScaled(BackbufferRatio _ratio, TextureFormat _format, @Unsigned long _textureFlags) {
 		try {
 			try (Arena arena = Arena.ofConfined()) {
 				return FrameBufferHandle.read((MemorySegment) MH_CREATE_FRAME_BUFFER_SCALED.invokeExact((SegmentAllocator) arena, _ratio.ordinal(), _format.ordinal(), _textureFlags));
@@ -1812,7 +1784,7 @@ public final class Bgfx {
 	 * @param _destroyTexture If true, textures will be destroyed when frame buffer is destroyed.
 	 * @return Frame buffer handle.
 	 */
-	public static final FrameBufferHandle createFrameBufferFromHandles(@Unsigned byte _num, MemorySegment _handles, boolean _destroyTexture) {
+	public static FrameBufferHandle createFrameBufferFromHandles(@Unsigned byte _num, MemorySegment _handles, boolean _destroyTexture) {
 		try {
 			try (Arena arena = Arena.ofConfined()) {
 				return FrameBufferHandle.read((MemorySegment) MH_CREATE_FRAME_BUFFER_FROM_HANDLES.invokeExact((SegmentAllocator) arena, _num, address(_handles), _destroyTexture));
@@ -1830,7 +1802,7 @@ public final class Bgfx {
 	 * @param _destroyTexture If true, textures will be destroyed when frame buffer is destroyed.
 	 * @return Frame buffer handle.
 	 */
-	public static final FrameBufferHandle createFrameBufferFromAttachment(@Unsigned byte _num, Attachment _attachment, boolean _destroyTexture) {
+	public static FrameBufferHandle createFrameBufferFromAttachment(@Unsigned byte _num, Attachment _attachment, boolean _destroyTexture) {
 		try {
 			try (Arena arena = Arena.ofConfined()) {
 				return FrameBufferHandle.read((MemorySegment) MH_CREATE_FRAME_BUFFER_FROM_ATTACHMENT.invokeExact((SegmentAllocator) arena, _num, address(_attachment), _destroyTexture));
@@ -1841,23 +1813,40 @@ public final class Bgfx {
 	}
 
 	/**
-	 * Create frame buffer for multiple window rendering.
+	 * Create a frame buffer for a window, from a full swap chain description.
 	 * <p>
 	 * <strong>Remarks:</strong> 
 	 *   Frame buffer cannot be used for sampling.
 	 * <p>
 	 * <strong>Attention:</strong> Availability depends on: {@code BGFX_CAPS_SWAP_CHAIN}.
-	 * @param _nwh OS' target native window handle.
-	 * @param _width Window back buffer width.
-	 * @param _height Window back buffer height.
-	 * @param _format Window back buffer color format.
-	 * @param _depthFormat Window back buffer depth format.
+	 * @param _desc Swap chain description. See: {@code SwapChain}.
 	 * @return Frame buffer handle.
 	 */
-	public static final FrameBufferHandle createFrameBufferFromNwh(MemorySegment _nwh, @Unsigned short _width, @Unsigned short _height, TextureFormat _format, TextureFormat _depthFormat) {
+	public static FrameBufferHandle createFrameBufferFromSwapChain(SwapChain _desc) {
 		try {
 			try (Arena arena = Arena.ofConfined()) {
-				return FrameBufferHandle.read((MemorySegment) MH_CREATE_FRAME_BUFFER_FROM_NWH.invokeExact((SegmentAllocator) arena, address(_nwh), _width, _height, _format.ordinal(), _depthFormat.ordinal()));
+				return FrameBufferHandle.read((MemorySegment) MH_CREATE_FRAME_BUFFER_FROM_SWAP_CHAIN.invokeExact((SegmentAllocator) arena, address(_desc)));
+			}
+		} catch (Throwable ex) {
+			throw invocationFailure(ex);
+		}
+	}
+
+	/**
+	 * Change a swap chain's size, format or per-surface flags, in place.
+	 * <p>
+	 * The frame buffer handle stays valid, so nothing that refers to it has to be
+	 * rebuilt. Pass {@code BGFX_INVALID_HANDLE} to address the window bgfx was
+	 * initialized with.
+	 * <p>
+	 * <strong>Attention:</strong> Availability depends on: {@code BGFX_CAPS_SWAP_CHAIN}.
+	 * @param _handle Window frame buffer handle. The window bgfx was initialized with is not addressed here; it is {@code reset}'s swap chain.
+	 * @param _desc Swap chain description. See: {@code SwapChain}.
+	 */
+	public static void updateSwapChain(FrameBufferHandle _handle, SwapChain _desc) {
+		try {
+			try (Arena arena = Arena.ofConfined()) {
+				MH_UPDATE_SWAP_CHAIN.invokeExact(_handle.allocate(arena), address(_desc));
 			}
 		} catch (Throwable ex) {
 			throw invocationFailure(ex);
@@ -1870,7 +1859,7 @@ public final class Bgfx {
 	 * @param _name Frame buffer name.
 	 * @param _len Frame buffer name length (if length is INT32_MAX, it's expected that _name is zero terminated string.
 	 */
-	public static final void setFrameBufferName(FrameBufferHandle _handle, String _name, int _len) {
+	public static void setFrameBufferName(FrameBufferHandle _handle, String _name, int _len) {
 		try {
 			try (Arena arena = Arena.ofConfined()) {
 				MH_SET_FRAME_BUFFER_NAME.invokeExact(_handle.allocate(arena), cString(arena, _name), _len);
@@ -1886,7 +1875,7 @@ public final class Bgfx {
 	 * @param _attachment native function argument
 	 * @return the native function result
 	 */
-	public static final TextureHandle getTexture(FrameBufferHandle _handle, @Unsigned byte _attachment) {
+	public static TextureHandle getTexture(FrameBufferHandle _handle, @Unsigned byte _attachment) {
 		try {
 			try (Arena arena = Arena.ofConfined()) {
 				return TextureHandle.read((MemorySegment) MH_GET_TEXTURE.invokeExact((SegmentAllocator) arena, _handle.allocate(arena), _attachment));
@@ -1900,7 +1889,7 @@ public final class Bgfx {
 	 * Destroy frame buffer.
 	 * @param _handle Frame buffer handle.
 	 */
-	public static final void destroyFrameBuffer(FrameBufferHandle _handle) {
+	public static void destroyFrameBuffer(FrameBufferHandle _handle) {
 		try {
 			try (Arena arena = Arena.ofConfined()) {
 				MH_DESTROY_FRAME_BUFFER.invokeExact(_handle.allocate(arena));
@@ -1942,7 +1931,7 @@ public final class Bgfx {
 	 * @param _num Number of elements in array.
 	 * @return Handle to uniform object.
 	 */
-	public static final UniformHandle createUniform(String _name, UniformType _type, @Unsigned short _num) {
+	public static UniformHandle createUniform(String _name, UniformType _type, @Unsigned short _num) {
 		try {
 			try (Arena arena = Arena.ofConfined()) {
 				return UniformHandle.read((MemorySegment) MH_CREATE_UNIFORM.invokeExact((SegmentAllocator) arena, cString(arena, _name), _type.ordinal(), _num));
@@ -1985,7 +1974,7 @@ public final class Bgfx {
 	 * @param _num Number of elements in array.
 	 * @return Handle to uniform object.
 	 */
-	public static final UniformHandle createUniformWithFreq(String _name, UniformFreq _freq, UniformType _type, @Unsigned short _num) {
+	public static UniformHandle createUniformWithFreq(String _name, UniformFreq _freq, UniformType _type, @Unsigned short _num) {
 		try {
 			try (Arena arena = Arena.ofConfined()) {
 				return UniformHandle.read((MemorySegment) MH_CREATE_UNIFORM_WITH_FREQ.invokeExact((SegmentAllocator) arena, cString(arena, _name), _freq.ordinal(), _type.ordinal(), _num));
@@ -2000,7 +1989,7 @@ public final class Bgfx {
 	 * @param _handle Handle to uniform object.
 	 * @param _info Uniform info.
 	 */
-	public static final void getUniformInfo(UniformHandle _handle, UniformInfo _info) {
+	public static void getUniformInfo(UniformHandle _handle, UniformInfo _info) {
 		try {
 			try (Arena arena = Arena.ofConfined()) {
 				MH_GET_UNIFORM_INFO.invokeExact(_handle.allocate(arena), address(_info));
@@ -2014,7 +2003,7 @@ public final class Bgfx {
 	 * Destroy shader uniform parameter.
 	 * @param _handle Handle to uniform object.
 	 */
-	public static final void destroyUniform(UniformHandle _handle) {
+	public static void destroyUniform(UniformHandle _handle) {
 		try {
 			try (Arena arena = Arena.ofConfined()) {
 				MH_DESTROY_UNIFORM.invokeExact(_handle.allocate(arena));
@@ -2029,7 +2018,7 @@ public final class Bgfx {
 	 * if any pixels passed the depth test.
 	 * @return Handle to occlusion query object.
 	 */
-	public static final OcclusionQueryHandle createOcclusionQuery() {
+	public static OcclusionQueryHandle createOcclusionQuery() {
 		try {
 			try (Arena arena = Arena.ofConfined()) {
 				return OcclusionQueryHandle.read((MemorySegment) MH_CREATE_OCCLUSION_QUERY.invokeExact((SegmentAllocator) arena));
@@ -2045,7 +2034,7 @@ public final class Bgfx {
 	 * @param _result Number of pixels that passed test. This argument can be {@code NULL} if result of occlusion query is not needed.
 	 * @return Occlusion query result.
 	 */
-	public static final OcclusionQueryResult getResult(OcclusionQueryHandle _handle, @Nullable MemorySegment _result) {
+	public static OcclusionQueryResult getResult(OcclusionQueryHandle _handle, @Nullable MemorySegment _result) {
 		try {
 			try (Arena arena = Arena.ofConfined()) {
 				return OcclusionQueryResult.fromValue((int) MH_GET_RESULT.invokeExact(_handle.allocate(arena), address(_result)));
@@ -2059,7 +2048,7 @@ public final class Bgfx {
 	 * Destroy occlusion query.
 	 * @param _handle Handle to occlusion query object.
 	 */
-	public static final void destroyOcclusionQuery(OcclusionQueryHandle _handle) {
+	public static void destroyOcclusionQuery(OcclusionQueryHandle _handle) {
 		try {
 			try (Arena arena = Arena.ofConfined()) {
 				MH_DESTROY_OCCLUSION_QUERY.invokeExact(_handle.allocate(arena));
@@ -2074,7 +2063,7 @@ public final class Bgfx {
 	 * @param _index Index into palette.
 	 * @param _rgba RGBA floating point values.
 	 */
-	public static final void setPaletteColor(@Unsigned byte _index, MemorySegment _rgba) {
+	public static void setPaletteColor(@Unsigned byte _index, MemorySegment _rgba) {
 		try {
 			MH_SET_PALETTE_COLOR.invokeExact(_index, address(_rgba));
 		} catch (Throwable ex) {
@@ -2090,7 +2079,7 @@ public final class Bgfx {
 	 * @param _b Blue value (RGBA floating point values)
 	 * @param _a Alpha value (RGBA floating point values)
 	 */
-	public static final void setPaletteColorRgba32f(@Unsigned byte _index, float _r, float _g, float _b, float _a) {
+	public static void setPaletteColorRgba32f(@Unsigned byte _index, float _r, float _g, float _b, float _a) {
 		try {
 			MH_SET_PALETTE_COLOR_RGBA32F.invokeExact(_index, _r, _g, _b, _a);
 		} catch (Throwable ex) {
@@ -2103,7 +2092,7 @@ public final class Bgfx {
 	 * @param _index Index into palette.
 	 * @param _rgba Packed 32-bit RGBA value.
 	 */
-	public static final void setPaletteColorRgba8(@Unsigned byte _index, @Unsigned int _rgba) {
+	public static void setPaletteColorRgba8(@Unsigned byte _index, @Unsigned int _rgba) {
 		try {
 			MH_SET_PALETTE_COLOR_RGBA8.invokeExact(_index, _rgba);
 		} catch (Throwable ex) {
@@ -2127,7 +2116,7 @@ public final class Bgfx {
 	 * @param _name View name.
 	 * @param _len View name length (if length is INT32_MAX, it's expected that _name is zero terminated string.
 	 */
-	public static final void setViewName(short _id, String _name, int _len) {
+	public static void setViewName(short _id, String _name, int _len) {
 		try {
 			try (Arena arena = Arena.ofConfined()) {
 				MH_SET_VIEW_NAME.invokeExact(_id, cString(arena, _name), _len);
@@ -2145,7 +2134,7 @@ public final class Bgfx {
 	 * @param _width Width of view port region.
 	 * @param _height Height of view port region.
 	 */
-	public static final void setViewRect(short _id, short _x, short _y, @Unsigned short _width, @Unsigned short _height) {
+	public static void setViewRect(short _id, short _x, short _y, @Unsigned short _width, @Unsigned short _height) {
 		try {
 			MH_SET_VIEW_RECT.invokeExact(_id, _x, _y, _width, _height);
 		} catch (Throwable ex) {
@@ -2160,7 +2149,7 @@ public final class Bgfx {
 	 * @param _y Position y from the top corner of the window. Can be negative to place view origin outside of the window.
 	 * @param _ratio Width and height will be set in respect to back-buffer size. See: {@code BackbufferRatio}.
 	 */
-	public static final void setViewRectRatio(short _id, short _x, short _y, BackbufferRatio _ratio) {
+	public static void setViewRectRatio(short _id, short _x, short _y, BackbufferRatio _ratio) {
 		try {
 			MH_SET_VIEW_RECT_RATIO.invokeExact(_id, _x, _y, _ratio.ordinal());
 		} catch (Throwable ex) {
@@ -2177,7 +2166,7 @@ public final class Bgfx {
 	 * @param _width Width of view scissor region.
 	 * @param _height Height of view scissor region.
 	 */
-	public static final void setViewScissor(short _id, @Unsigned short _x, @Unsigned short _y, @Unsigned short _width, @Unsigned short _height) {
+	public static void setViewScissor(short _id, @Unsigned short _x, @Unsigned short _y, @Unsigned short _width, @Unsigned short _height) {
 		try {
 			MH_SET_VIEW_SCISSOR.invokeExact(_id, _x, _y, _width, _height);
 		} catch (Throwable ex) {
@@ -2193,7 +2182,7 @@ public final class Bgfx {
 	 * @param _depth Depth clear value.
 	 * @param _stencil Stencil clear value.
 	 */
-	public static final void setViewClear(short _id, @Unsigned short _flags, @Unsigned int _rgba, float _depth, @Unsigned byte _stencil) {
+	public static void setViewClear(short _id, @Unsigned short _flags, @Unsigned int _rgba, float _depth, @Unsigned byte _stencil) {
 		try {
 			MH_SET_VIEW_CLEAR.invokeExact(_id, _flags, _rgba, _depth, _stencil);
 		} catch (Throwable ex) {
@@ -2218,7 +2207,7 @@ public final class Bgfx {
 	 * @param _c6 Palette index for frame buffer attachment 6.
 	 * @param _c7 Palette index for frame buffer attachment 7.
 	 */
-	public static final void setViewClearMrt(short _id, @Unsigned short _flags, float _depth, @Unsigned byte _stencil, @Unsigned byte _c0, @Unsigned byte _c1, @Unsigned byte _c2, @Unsigned byte _c3, @Unsigned byte _c4, @Unsigned byte _c5, @Unsigned byte _c6, @Unsigned byte _c7) {
+	public static void setViewClearMrt(short _id, @Unsigned short _flags, float _depth, @Unsigned byte _stencil, @Unsigned byte _c0, @Unsigned byte _c1, @Unsigned byte _c2, @Unsigned byte _c3, @Unsigned byte _c4, @Unsigned byte _c5, @Unsigned byte _c6, @Unsigned byte _c7) {
 		try {
 			MH_SET_VIEW_CLEAR_MRT.invokeExact(_id, _flags, _depth, _stencil, _c0, _c1, _c2, _c3, _c4, _c5, _c6, _c7);
 		} catch (Throwable ex) {
@@ -2234,7 +2223,7 @@ public final class Bgfx {
 	 * @param _id View id.
 	 * @param _mode View sort mode. See {@code ViewMode}.
 	 */
-	public static final void setViewMode(short _id, ViewMode _mode) {
+	public static void setViewMode(short _id, ViewMode _mode) {
 		try {
 			MH_SET_VIEW_MODE.invokeExact(_id, _mode.ordinal());
 		} catch (Throwable ex) {
@@ -2250,7 +2239,7 @@ public final class Bgfx {
 	 * @param _id View id.
 	 * @param _handle Frame buffer handle. Passing {@code BGFX_INVALID_HANDLE} as frame buffer handle will draw primitives from this view into default back buffer.
 	 */
-	public static final void setViewFrameBuffer(short _id, FrameBufferHandle _handle) {
+	public static void setViewFrameBuffer(short _id, FrameBufferHandle _handle) {
 		try {
 			try (Arena arena = Arena.ofConfined()) {
 				MH_SET_VIEW_FRAME_BUFFER.invokeExact(_id, _handle.allocate(arena));
@@ -2267,7 +2256,7 @@ public final class Bgfx {
 	 * @param _view View matrix.
 	 * @param _proj Projection matrix.
 	 */
-	public static final void setViewTransform(short _id, MemorySegment _view, MemorySegment _proj) {
+	public static void setViewTransform(short _id, MemorySegment _view, MemorySegment _proj) {
 		try {
 			MH_SET_VIEW_TRANSFORM.invokeExact(_id, address(_view), address(_proj));
 		} catch (Throwable ex) {
@@ -2281,7 +2270,7 @@ public final class Bgfx {
 	 * @param _num Number of views to remap.
 	 * @param _order View remap id table. Passing {@code NULL} will reset view ids to default state.
 	 */
-	public static final void setViewOrder(short _id, @Unsigned short _num, @Nullable MemorySegment _order) {
+	public static void setViewOrder(short _id, @Unsigned short _num, @Nullable MemorySegment _order) {
 		try {
 			MH_SET_VIEW_ORDER.invokeExact(_id, _num, address(_order));
 		} catch (Throwable ex) {
@@ -2296,7 +2285,7 @@ public final class Bgfx {
 	 * @param _id View id.
 	 * @param _shadingRate Shading rate.
 	 */
-	public static final void setViewShadingRate(short _id, ShadingRate _shadingRate) {
+	public static void setViewShadingRate(short _id, ShadingRate _shadingRate) {
 		try {
 			MH_SET_VIEW_SHADING_RATE.invokeExact(_id, _shadingRate.ordinal());
 		} catch (Throwable ex) {
@@ -2308,7 +2297,7 @@ public final class Bgfx {
 	 * Reset all view settings to default.
 	 * @param _id _id View id.
 	 */
-	public static final void resetView(short _id) {
+	public static void resetView(short _id) {
 		try {
 			MH_RESET_VIEW.invokeExact(_id);
 		} catch (Throwable ex) {
@@ -2343,7 +2332,7 @@ public final class Bgfx {
 	 * @param _forceNewEncoder Force allocation of a new encoder from the pool, even when called from the API thread.
 	 * @return Encoder.
 	 */
-	public static final Encoder encoderBegin(boolean _forceNewEncoder) {
+	public static Encoder encoderBegin(boolean _forceNewEncoder) {
 		try {
 			return new Encoder((MemorySegment) MH_ENCODER_BEGIN.invokeExact(_forceNewEncoder));
 		} catch (Throwable ex) {
@@ -2368,7 +2357,7 @@ public final class Bgfx {
 	 *   See also: {@code begin}, {@code frame}.
 	 * @param _encoder Encoder.
 	 */
-	public static final void encoderEnd(Encoder _encoder) {
+	public static void encoderEnd(Encoder _encoder) {
 		try {
 			MH_ENCODER_END.invokeExact(address(_encoder));
 		} catch (Throwable ex) {
@@ -2385,7 +2374,7 @@ public final class Bgfx {
 	 * @param _value Pointer to uniform data.
 	 * @param _num Number of elements. Passing {@code UINT16_MAX} will use the _num passed on uniform creation.
 	 */
-	public static final void setViewUniform(short _id, UniformHandle _handle, MemorySegment _value, @Unsigned short _num) {
+	public static void setViewUniform(short _id, UniformHandle _handle, MemorySegment _value, @Unsigned short _num) {
 		try {
 			try (Arena arena = Arena.ofConfined()) {
 				MH_SET_VIEW_UNIFORM.invokeExact(_id, _handle.allocate(arena), address(_value), _num);
@@ -2403,7 +2392,7 @@ public final class Bgfx {
 	 * @param _value Pointer to uniform data.
 	 * @param _num Number of elements. Passing {@code UINT16_MAX} will use the _num passed on uniform creation.
 	 */
-	public static final void setFrameUniform(UniformHandle _handle, MemorySegment _value, @Unsigned short _num) {
+	public static void setFrameUniform(UniformHandle _handle, MemorySegment _value, @Unsigned short _num) {
 		try {
 			try (Arena arena = Arena.ofConfined()) {
 				MH_SET_FRAME_UNIFORM.invokeExact(_handle.allocate(arena), address(_value), _num);
@@ -2422,7 +2411,7 @@ public final class Bgfx {
 	 * @param _handle Frame buffer handle. If handle is {@code BGFX_INVALID_HANDLE} request will be made for main window back buffer.
 	 * @param _filePath Will be passed to {@code CallbackI.screenShot} callback.
 	 */
-	public static final void requestScreenShot(FrameBufferHandle _handle, String _filePath) {
+	public static void requestScreenShot(FrameBufferHandle _handle, String _filePath) {
 		try {
 			try (Arena arena = Arena.ofConfined()) {
 				MH_REQUEST_SCREEN_SHOT.invokeExact(_handle.allocate(arena), cString(arena, _filePath));
@@ -2473,23 +2462,9 @@ public final class Bgfx {
 	 * @param _msecs Timeout in milliseconds.
 	 * @return Current renderer context state. See: {@code RenderFrame}.
 	 */
-	public static final RenderFrame renderFrame(int _msecs) {
+	public static RenderFrame renderFrame(int _msecs) {
 		try {
 			return RenderFrame.fromValue((int) MH_RENDER_FRAME.invokeExact(_msecs));
-		} catch (Throwable ex) {
-			throw invocationFailure(ex);
-		}
-	}
-
-	/**
-	 * Set platform data.
-	 * <p>
-	 * <strong>Warning:</strong> Must be called before {@code init}.
-	 * @param _data Platform data.
-	 */
-	public static final void setPlatformData(PlatformData _data) {
-		try {
-			MH_SET_PLATFORM_DATA.invokeExact(address(_data));
 		} catch (Throwable ex) {
 			throw invocationFailure(ex);
 		}
@@ -2504,55 +2479,11 @@ public final class Bgfx {
 	 * <strong>Warning:</strong> Must be called only on render thread.
 	 * @return Internal data.
 	 */
-	public static final InternalData getInternalData() {
+	public static InternalData getInternalData() {
 		try {
 			return new InternalData((MemorySegment) MH_GET_INTERNAL_DATA.invokeExact());
 		} catch (Throwable ex) {
 			throw invocationFailure(ex);
-		}
-	}
-
-	/**
-	 * Override internal texture with externally created texture. Previously
-	 * created internal texture will released.
-	 * <p>
-	 * <strong>Attention:</strong> It's expected you understand some bgfx internals before you
-	 *   use this call.
-	 * <p>
-	 * <strong>Warning:</strong> Must be called only on render thread.
-	 * @param _handle Texture handle.
-	 * @param _ptr Native API pointer to texture.
-	 * @param _layerIndex Layer index for texture arrays (only implemented for D3D11).
-	 * @return Native API pointer to texture. If result is 0, texture is not created yet from the main thread.
-	 */
-	public static final @Unsigned long overrideInternalTexturePtr(TextureHandle _handle, @Unsigned long _ptr, @Unsigned short _layerIndex) {
-		try (Arena arena = Arena.ofConfined()) {
-			return javaUintptr(invoke(MH_OVERRIDE_INTERNAL_TEXTURE_PTR, _handle.allocate(arena), nativeUintptr(_ptr), _layerIndex));
-		}
-	}
-
-	/**
-	 * Override internal texture by creating new texture. Previously created
-	 * internal texture will released.
-	 * <p>
-	 * <strong>Attention:</strong> It's expected you understand some bgfx internals before you
-	 *   use this call.
-	 * <p>
-	 * <strong>Returns:</strong> Native API pointer to texture. If result is 0, texture is not created yet from the
-	 *   main thread.
-	 * <p>
-	 * <strong>Warning:</strong> Must be called only on render thread.
-	 * @param _handle Texture handle.
-	 * @param _width Width.
-	 * @param _height Height.
-	 * @param _numMips Number of mip-maps.
-	 * @param _format Texture format. See: {@code TextureFormat}.
-	 * @param _flags Texture creation (see {@code BGFX_TEXTURE_*}.), and sampler (see {@code BGFX_SAMPLER_*}) flags. Default texture sampling mode is linear, and wrap mode is repeat. - {@code BGFX_SAMPLER_[U/V/W]_[MIRROR/CLAMP]} - Mirror or clamp to edge wrap   mode. - {@code BGFX_SAMPLER_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]} - Point or anisotropic   sampling.
-	 * @return Native API pointer to texture. If result is 0, texture is not created yet from the main thread.
-	 */
-	public static final @Unsigned long overrideInternalTexture(TextureHandle _handle, @Unsigned short _width, @Unsigned short _height, @Unsigned byte _numMips, TextureFormat _format, @Unsigned long _flags) {
-		try (Arena arena = Arena.ofConfined()) {
-			return javaUintptr(invoke(MH_OVERRIDE_INTERNAL_TEXTURE, _handle.allocate(arena), _width, _height, _numMips, _format.ordinal(), _flags));
 		}
 	}
 
@@ -2562,7 +2493,7 @@ public final class Bgfx {
 	 * @param _name Marker name.
 	 * @param _len Marker name length (if length is INT32_MAX, it's expected that _name is zero terminated string.
 	 */
-	public static final void setMarker(String _name, int _len) {
+	public static void setMarker(String _name, int _len) {
 		try {
 			try (Arena arena = Arena.ofConfined()) {
 				MH_SET_MARKER.invokeExact(cString(arena, _name), _len);
@@ -2588,7 +2519,7 @@ public final class Bgfx {
 	 * @param _state State flags. Default state for primitive type is   triangles. See: {@code BGFX_STATE_DEFAULT}.   - {@code BGFX_STATE_DEPTH_TEST_*} - Depth test function.   - {@code BGFX_STATE_BLEND_*} - See remark 1 about BGFX_STATE_BLEND_FUNC.   - {@code BGFX_STATE_BLEND_EQUATION_*} - See remark 2.   - {@code BGFX_STATE_CULL_*} - Backface culling mode.   - {@code BGFX_STATE_WRITE_*} - Enable R, G, B, A or Z write.   - {@code BGFX_STATE_MSAA} - Enable hardware multisample antialiasing.   - {@code BGFX_STATE_PT_[TRISTRIP/LINES/POINTS]} - Primitive type.
 	 * @param _rgba Sets blend factor used by {@code BGFX_STATE_BLEND_FACTOR} and   {@code BGFX_STATE_BLEND_INV_FACTOR} blend modes.
 	 */
-	public static final void setState(@Unsigned long _state, @Unsigned int _rgba) {
+	public static void setState(@Unsigned long _state, @Unsigned int _rgba) {
 		try {
 			MH_SET_STATE.invokeExact(_state, _rgba);
 		} catch (Throwable ex) {
@@ -2601,7 +2532,7 @@ public final class Bgfx {
 	 * @param _handle Occlusion query handle.
 	 * @param _visible Render if occlusion query is visible.
 	 */
-	public static final void setCondition(OcclusionQueryHandle _handle, boolean _visible) {
+	public static void setCondition(OcclusionQueryHandle _handle, boolean _visible) {
 		try {
 			try (Arena arena = Arena.ofConfined()) {
 				MH_SET_CONDITION.invokeExact(_handle.allocate(arena), _visible);
@@ -2616,7 +2547,7 @@ public final class Bgfx {
 	 * @param _fstencil Front stencil state.
 	 * @param _bstencil Back stencil state. If back is set to {@code BGFX_STENCIL_NONE} _fstencil is applied to both front and back facing primitives.
 	 */
-	public static final void setStencil(@Unsigned int _fstencil, @Unsigned int _bstencil) {
+	public static void setStencil(@Unsigned int _fstencil, @Unsigned int _bstencil) {
 		try {
 			MH_SET_STENCIL.invokeExact(_fstencil, _bstencil);
 		} catch (Throwable ex) {
@@ -2635,7 +2566,7 @@ public final class Bgfx {
 	 * @param _height Height of view scissor region.
 	 * @return Scissor cache index.
 	 */
-	public static final @Unsigned short setScissor(@Unsigned short _x, @Unsigned short _y, @Unsigned short _width, @Unsigned short _height) {
+	public static @Unsigned short setScissor(@Unsigned short _x, @Unsigned short _y, @Unsigned short _width, @Unsigned short _height) {
 		try {
 			return (@Unsigned short) MH_SET_SCISSOR.invokeExact(_x, _y, _width, _height);
 		} catch (Throwable ex) {
@@ -2650,7 +2581,7 @@ public final class Bgfx {
 	 *   To scissor for all primitives in view see {@code setViewScissor}.
 	 * @param _cache Index in scissor cache.
 	 */
-	public static final void setScissorCached(@Unsigned short _cache) {
+	public static void setScissorCached(@Unsigned short _cache) {
 		try {
 			MH_SET_SCISSOR_CACHED.invokeExact(_cache);
 		} catch (Throwable ex) {
@@ -2665,7 +2596,7 @@ public final class Bgfx {
 	 * @param _num Number of matrices in array.
 	 * @return Index into matrix cache in case the same model matrix has to be used for other draw primitive call.
 	 */
-	public static final @Unsigned int setTransform(MemorySegment _mtx, @Unsigned short _num) {
+	public static @Unsigned int setTransform(MemorySegment _mtx, @Unsigned short _num) {
 		try {
 			return (@Unsigned int) MH_SET_TRANSFORM.invokeExact(address(_mtx), _num);
 		} catch (Throwable ex) {
@@ -2678,7 +2609,7 @@ public final class Bgfx {
 	 * @param _cache Index in matrix cache.
 	 * @param _num Number of matrices from cache.
 	 */
-	public static final void setTransformCached(@Unsigned int _cache, @Unsigned short _num) {
+	public static void setTransformCached(@Unsigned int _cache, @Unsigned short _num) {
 		try {
 			MH_SET_TRANSFORM_CACHED.invokeExact(_cache, _num);
 		} catch (Throwable ex) {
@@ -2694,7 +2625,7 @@ public final class Bgfx {
 	 * @param _num Number of matrices.
 	 * @return Index in matrix cache.
 	 */
-	public static final @Unsigned int allocTransform(Transform _transform, @Unsigned short _num) {
+	public static @Unsigned int allocTransform(Transform _transform, @Unsigned short _num) {
 		try {
 			return (@Unsigned int) MH_ALLOC_TRANSFORM.invokeExact(address(_transform), _num);
 		} catch (Throwable ex) {
@@ -2708,7 +2639,7 @@ public final class Bgfx {
 	 * @param _value Pointer to uniform data.
 	 * @param _num Number of elements. Passing {@code UINT16_MAX} will use the _num passed on uniform creation.
 	 */
-	public static final void setUniform(UniformHandle _handle, MemorySegment _value, @Unsigned short _num) {
+	public static void setUniform(UniformHandle _handle, MemorySegment _value, @Unsigned short _num) {
 		try {
 			try (Arena arena = Arena.ofConfined()) {
 				MH_SET_UNIFORM.invokeExact(_handle.allocate(arena), address(_value), _num);
@@ -2724,7 +2655,7 @@ public final class Bgfx {
 	 * @param _firstIndex First index to render.
 	 * @param _numIndices Number of indices to render.
 	 */
-	public static final void setIndexBuffer(IndexBufferHandle _handle, @Unsigned int _firstIndex, @Unsigned int _numIndices) {
+	public static void setIndexBuffer(IndexBufferHandle _handle, @Unsigned int _firstIndex, @Unsigned int _numIndices) {
 		try {
 			try (Arena arena = Arena.ofConfined()) {
 				MH_SET_INDEX_BUFFER.invokeExact(_handle.allocate(arena), _firstIndex, _numIndices);
@@ -2740,7 +2671,7 @@ public final class Bgfx {
 	 * @param _firstIndex First index to render.
 	 * @param _numIndices Number of indices to render.
 	 */
-	public static final void setDynamicIndexBuffer(DynamicIndexBufferHandle _handle, @Unsigned int _firstIndex, @Unsigned int _numIndices) {
+	public static void setDynamicIndexBuffer(DynamicIndexBufferHandle _handle, @Unsigned int _firstIndex, @Unsigned int _numIndices) {
 		try {
 			try (Arena arena = Arena.ofConfined()) {
 				MH_SET_DYNAMIC_INDEX_BUFFER.invokeExact(_handle.allocate(arena), _firstIndex, _numIndices);
@@ -2756,7 +2687,7 @@ public final class Bgfx {
 	 * @param _firstIndex First index to render.
 	 * @param _numIndices Number of indices to render.
 	 */
-	public static final void setTransientIndexBuffer(TransientIndexBuffer _tib, @Unsigned int _firstIndex, @Unsigned int _numIndices) {
+	public static void setTransientIndexBuffer(TransientIndexBuffer _tib, @Unsigned int _firstIndex, @Unsigned int _numIndices) {
 		try {
 			MH_SET_TRANSIENT_INDEX_BUFFER.invokeExact(address(_tib), _firstIndex, _numIndices);
 		} catch (Throwable ex) {
@@ -2771,7 +2702,7 @@ public final class Bgfx {
 	 * @param _startVertex First vertex to render.
 	 * @param _numVertices Number of vertices to render.
 	 */
-	public static final void setVertexBuffer(@Unsigned byte _stream, VertexBufferHandle _handle, @Unsigned int _startVertex, @Unsigned int _numVertices) {
+	public static void setVertexBuffer(@Unsigned byte _stream, VertexBufferHandle _handle, @Unsigned int _startVertex, @Unsigned int _numVertices) {
 		try {
 			try (Arena arena = Arena.ofConfined()) {
 				MH_SET_VERTEX_BUFFER.invokeExact(_stream, _handle.allocate(arena), _startVertex, _numVertices);
@@ -2789,7 +2720,7 @@ public final class Bgfx {
 	 * @param _numVertices Number of vertices to render.
 	 * @param _layoutHandle Vertex layout for aliasing vertex buffer. If invalid handle is used, vertex layout used for creation of vertex buffer will be used.
 	 */
-	public static final void setVertexBufferWithLayout(@Unsigned byte _stream, VertexBufferHandle _handle, @Unsigned int _startVertex, @Unsigned int _numVertices, VertexLayoutHandle _layoutHandle) {
+	public static void setVertexBufferWithLayout(@Unsigned byte _stream, VertexBufferHandle _handle, @Unsigned int _startVertex, @Unsigned int _numVertices, VertexLayoutHandle _layoutHandle) {
 		try {
 			try (Arena arena = Arena.ofConfined()) {
 				MH_SET_VERTEX_BUFFER_WITH_LAYOUT.invokeExact(_stream, _handle.allocate(arena), _startVertex, _numVertices, _layoutHandle.allocate(arena));
@@ -2806,7 +2737,7 @@ public final class Bgfx {
 	 * @param _startVertex First vertex to render.
 	 * @param _numVertices Number of vertices to render.
 	 */
-	public static final void setDynamicVertexBuffer(@Unsigned byte _stream, DynamicVertexBufferHandle _handle, @Unsigned int _startVertex, @Unsigned int _numVertices) {
+	public static void setDynamicVertexBuffer(@Unsigned byte _stream, DynamicVertexBufferHandle _handle, @Unsigned int _startVertex, @Unsigned int _numVertices) {
 		try {
 			try (Arena arena = Arena.ofConfined()) {
 				MH_SET_DYNAMIC_VERTEX_BUFFER.invokeExact(_stream, _handle.allocate(arena), _startVertex, _numVertices);
@@ -2824,7 +2755,7 @@ public final class Bgfx {
 	 * @param _numVertices Number of vertices to render.
 	 * @param _layoutHandle Vertex layout for aliasing vertex buffer. If invalid handle is used, vertex layout used for creation of vertex buffer will be used.
 	 */
-	public static final void setDynamicVertexBufferWithLayout(@Unsigned byte _stream, DynamicVertexBufferHandle _handle, @Unsigned int _startVertex, @Unsigned int _numVertices, VertexLayoutHandle _layoutHandle) {
+	public static void setDynamicVertexBufferWithLayout(@Unsigned byte _stream, DynamicVertexBufferHandle _handle, @Unsigned int _startVertex, @Unsigned int _numVertices, VertexLayoutHandle _layoutHandle) {
 		try {
 			try (Arena arena = Arena.ofConfined()) {
 				MH_SET_DYNAMIC_VERTEX_BUFFER_WITH_LAYOUT.invokeExact(_stream, _handle.allocate(arena), _startVertex, _numVertices, _layoutHandle.allocate(arena));
@@ -2841,7 +2772,7 @@ public final class Bgfx {
 	 * @param _startVertex First vertex to render.
 	 * @param _numVertices Number of vertices to render.
 	 */
-	public static final void setTransientVertexBuffer(@Unsigned byte _stream, TransientVertexBuffer _tvb, @Unsigned int _startVertex, @Unsigned int _numVertices) {
+	public static void setTransientVertexBuffer(@Unsigned byte _stream, TransientVertexBuffer _tvb, @Unsigned int _startVertex, @Unsigned int _numVertices) {
 		try {
 			MH_SET_TRANSIENT_VERTEX_BUFFER.invokeExact(_stream, address(_tvb), _startVertex, _numVertices);
 		} catch (Throwable ex) {
@@ -2857,7 +2788,7 @@ public final class Bgfx {
 	 * @param _numVertices Number of vertices to render.
 	 * @param _layoutHandle Vertex layout for aliasing vertex buffer. If invalid handle is used, vertex layout used for creation of vertex buffer will be used.
 	 */
-	public static final void setTransientVertexBufferWithLayout(@Unsigned byte _stream, TransientVertexBuffer _tvb, @Unsigned int _startVertex, @Unsigned int _numVertices, VertexLayoutHandle _layoutHandle) {
+	public static void setTransientVertexBufferWithLayout(@Unsigned byte _stream, TransientVertexBuffer _tvb, @Unsigned int _startVertex, @Unsigned int _numVertices, VertexLayoutHandle _layoutHandle) {
 		try {
 			try (Arena arena = Arena.ofConfined()) {
 				MH_SET_TRANSIENT_VERTEX_BUFFER_WITH_LAYOUT.invokeExact(_stream, address(_tvb), _startVertex, _numVertices, _layoutHandle.allocate(arena));
@@ -2870,11 +2801,9 @@ public final class Bgfx {
 	/**
 	 * Set number of vertices for auto generated vertices use in conjunction
 	 * with gl_VertexID.
-	 * <p>
-	 * <strong>Attention:</strong> Availability depends on: {@code BGFX_CAPS_VERTEX_ID}.
 	 * @param _numVertices Number of vertices.
 	 */
-	public static final void setVertexCount(@Unsigned int _numVertices) {
+	public static void setVertexCount(@Unsigned int _numVertices) {
 		try {
 			MH_SET_VERTEX_COUNT.invokeExact(_numVertices);
 		} catch (Throwable ex) {
@@ -2888,7 +2817,7 @@ public final class Bgfx {
 	 * @param _start First instance data.
 	 * @param _num Number of data instances.
 	 */
-	public static final void setInstanceDataBuffer(InstanceDataBuffer _idb, @Unsigned int _start, @Unsigned int _num) {
+	public static void setInstanceDataBuffer(InstanceDataBuffer _idb, @Unsigned int _start, @Unsigned int _num) {
 		try {
 			MH_SET_INSTANCE_DATA_BUFFER.invokeExact(address(_idb), _start, _num);
 		} catch (Throwable ex) {
@@ -2902,7 +2831,7 @@ public final class Bgfx {
 	 * @param _startVertex First instance data.
 	 * @param _num Number of data instances.
 	 */
-	public static final void setInstanceDataFromVertexBuffer(VertexBufferHandle _handle, @Unsigned int _startVertex, @Unsigned int _num) {
+	public static void setInstanceDataFromVertexBuffer(VertexBufferHandle _handle, @Unsigned int _startVertex, @Unsigned int _num) {
 		try {
 			try (Arena arena = Arena.ofConfined()) {
 				MH_SET_INSTANCE_DATA_FROM_VERTEX_BUFFER.invokeExact(_handle.allocate(arena), _startVertex, _num);
@@ -2918,7 +2847,7 @@ public final class Bgfx {
 	 * @param _startVertex First instance data.
 	 * @param _num Number of data instances.
 	 */
-	public static final void setInstanceDataFromDynamicVertexBuffer(DynamicVertexBufferHandle _handle, @Unsigned int _startVertex, @Unsigned int _num) {
+	public static void setInstanceDataFromDynamicVertexBuffer(DynamicVertexBufferHandle _handle, @Unsigned int _startVertex, @Unsigned int _num) {
 		try {
 			try (Arena arena = Arena.ofConfined()) {
 				MH_SET_INSTANCE_DATA_FROM_DYNAMIC_VERTEX_BUFFER.invokeExact(_handle.allocate(arena), _startVertex, _num);
@@ -2931,11 +2860,9 @@ public final class Bgfx {
 	/**
 	 * Set number of instances for auto generated instances use in conjunction
 	 * with gl_InstanceID.
-	 * <p>
-	 * <strong>Attention:</strong> Availability depends on: {@code BGFX_CAPS_VERTEX_ID}.
 	 * @param _numInstances Number of instances.
 	 */
-	public static final void setInstanceCount(@Unsigned int _numInstances) {
+	public static void setInstanceCount(@Unsigned int _numInstances) {
 		try {
 			MH_SET_INSTANCE_COUNT.invokeExact(_numInstances);
 		} catch (Throwable ex) {
@@ -2950,7 +2877,7 @@ public final class Bgfx {
 	 * @param _handle Texture handle.
 	 * @param _flags Texture sampling mode. Default value UINT32_MAX uses   texture sampling settings from the texture.   - {@code BGFX_SAMPLER_[U/V/W]_[MIRROR/CLAMP]} - Mirror or clamp to edge wrap     mode.   - {@code BGFX_SAMPLER_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]} - Point or anisotropic     sampling.
 	 */
-	public static final void setTexture(@Unsigned byte _stage, UniformHandle _sampler, TextureHandle _handle, @Unsigned int _flags) {
+	public static void setTexture(@Unsigned byte _stage, UniformHandle _sampler, TextureHandle _handle, @Unsigned int _flags) {
 		try {
 			try (Arena arena = Arena.ofConfined()) {
 				MH_SET_TEXTURE.invokeExact(_stage, _sampler.allocate(arena), _handle.allocate(arena), _flags);
@@ -2972,7 +2899,7 @@ public final class Bgfx {
 	 * @param _numMips Number of mip levels.
 	 * @param _flags Texture sampling mode. Default value UINT32_MAX uses   texture sampling settings from the texture.   - {@code BGFX_SAMPLER_[U/V/W]_[MIRROR/CLAMP]} - Mirror or clamp to edge wrap     mode.   - {@code BGFX_SAMPLER_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]} - Point or anisotropic     sampling.
 	 */
-	public static final void setTextureView(@Unsigned byte _stage, UniformHandle _sampler, TextureHandle _handle, @Unsigned short _firstLayer, @Unsigned short _numLayers, @Unsigned byte _firstMip, @Unsigned byte _numMips, @Unsigned int _flags) {
+	public static void setTextureView(@Unsigned byte _stage, UniformHandle _sampler, TextureHandle _handle, @Unsigned short _firstLayer, @Unsigned short _numLayers, @Unsigned byte _firstMip, @Unsigned byte _numMips, @Unsigned int _flags) {
 		try {
 			try (Arena arena = Arena.ofConfined()) {
 				MH_SET_TEXTURE_VIEW.invokeExact(_stage, _sampler.allocate(arena), _handle.allocate(arena), _firstLayer, _numLayers, _firstMip, _numMips, _flags);
@@ -2990,7 +2917,7 @@ public final class Bgfx {
 	 *   These empty draw calls will sort before ordinary draw calls.
 	 * @param _id View id.
 	 */
-	public static final void touch(short _id) {
+	public static void touch(short _id) {
 		try {
 			MH_TOUCH.invokeExact(_id);
 		} catch (Throwable ex) {
@@ -3005,7 +2932,7 @@ public final class Bgfx {
 	 * @param _depth Depth for sorting.
 	 * @param _flags Which states to discard for next draw. See {@code BGFX_DISCARD_*}.
 	 */
-	public static final void submit(short _id, ProgramHandle _program, @Unsigned int _depth, @Unsigned byte _flags) {
+	public static void submit(short _id, ProgramHandle _program, @Unsigned int _depth, @Unsigned byte _flags) {
 		try {
 			try (Arena arena = Arena.ofConfined()) {
 				MH_SUBMIT.invokeExact(_id, _program.allocate(arena), _depth, _flags);
@@ -3023,7 +2950,7 @@ public final class Bgfx {
 	 * @param _depth Depth for sorting.
 	 * @param _flags Which states to discard for next draw. See {@code BGFX_DISCARD_*}.
 	 */
-	public static final void submitOcclusionQuery(short _id, ProgramHandle _program, OcclusionQueryHandle _occlusionQuery, @Unsigned int _depth, @Unsigned byte _flags) {
+	public static void submitOcclusionQuery(short _id, ProgramHandle _program, OcclusionQueryHandle _occlusionQuery, @Unsigned int _depth, @Unsigned byte _flags) {
 		try {
 			try (Arena arena = Arena.ofConfined()) {
 				MH_SUBMIT_OCCLUSION_QUERY.invokeExact(_id, _program.allocate(arena), _occlusionQuery.allocate(arena), _depth, _flags);
@@ -3046,7 +2973,7 @@ public final class Bgfx {
 	 * @param _depth Depth for sorting.
 	 * @param _flags Which states to discard for next draw. See {@code BGFX_DISCARD_*}.
 	 */
-	public static final void submitIndirect(short _id, ProgramHandle _program, IndirectBufferHandle _indirectHandle, @Unsigned int _start, @Unsigned int _num, @Unsigned int _depth, @Unsigned byte _flags) {
+	public static void submitIndirect(short _id, ProgramHandle _program, IndirectBufferHandle _indirectHandle, @Unsigned int _start, @Unsigned int _num, @Unsigned int _depth, @Unsigned byte _flags) {
 		try {
 			try (Arena arena = Arena.ofConfined()) {
 				MH_SUBMIT_INDIRECT.invokeExact(_id, _program.allocate(arena), _indirectHandle.allocate(arena), _start, _num, _depth, _flags);
@@ -3071,7 +2998,7 @@ public final class Bgfx {
 	 * @param _depth Depth for sorting.
 	 * @param _flags Which states to discard for next draw. See {@code BGFX_DISCARD_*}.
 	 */
-	public static final void submitIndirectCount(short _id, ProgramHandle _program, IndirectBufferHandle _indirectHandle, @Unsigned int _start, IndexBufferHandle _numHandle, @Unsigned int _numIndex, @Unsigned int _numMax, @Unsigned int _depth, @Unsigned byte _flags) {
+	public static void submitIndirectCount(short _id, ProgramHandle _program, IndirectBufferHandle _indirectHandle, @Unsigned int _start, IndexBufferHandle _numHandle, @Unsigned int _numIndex, @Unsigned int _numMax, @Unsigned int _depth, @Unsigned byte _flags) {
 		try {
 			try (Arena arena = Arena.ofConfined()) {
 				MH_SUBMIT_INDIRECT_COUNT.invokeExact(_id, _program.allocate(arena), _indirectHandle.allocate(arena), _start, _numHandle.allocate(arena), _numIndex, _numMax, _depth, _flags);
@@ -3087,7 +3014,7 @@ public final class Bgfx {
 	 * @param _handle Index buffer handle.
 	 * @param _access Buffer access. See {@code Access}.
 	 */
-	public static final void setComputeIndexBuffer(@Unsigned byte _stage, IndexBufferHandle _handle, Access _access) {
+	public static void setComputeIndexBuffer(@Unsigned byte _stage, IndexBufferHandle _handle, Access _access) {
 		try {
 			try (Arena arena = Arena.ofConfined()) {
 				MH_SET_COMPUTE_INDEX_BUFFER.invokeExact(_stage, _handle.allocate(arena), _access.ordinal());
@@ -3103,7 +3030,7 @@ public final class Bgfx {
 	 * @param _handle Vertex buffer handle.
 	 * @param _access Buffer access. See {@code Access}.
 	 */
-	public static final void setComputeVertexBuffer(@Unsigned byte _stage, VertexBufferHandle _handle, Access _access) {
+	public static void setComputeVertexBuffer(@Unsigned byte _stage, VertexBufferHandle _handle, Access _access) {
 		try {
 			try (Arena arena = Arena.ofConfined()) {
 				MH_SET_COMPUTE_VERTEX_BUFFER.invokeExact(_stage, _handle.allocate(arena), _access.ordinal());
@@ -3119,7 +3046,7 @@ public final class Bgfx {
 	 * @param _handle Dynamic index buffer handle.
 	 * @param _access Buffer access. See {@code Access}.
 	 */
-	public static final void setComputeDynamicIndexBuffer(@Unsigned byte _stage, DynamicIndexBufferHandle _handle, Access _access) {
+	public static void setComputeDynamicIndexBuffer(@Unsigned byte _stage, DynamicIndexBufferHandle _handle, Access _access) {
 		try {
 			try (Arena arena = Arena.ofConfined()) {
 				MH_SET_COMPUTE_DYNAMIC_INDEX_BUFFER.invokeExact(_stage, _handle.allocate(arena), _access.ordinal());
@@ -3135,7 +3062,7 @@ public final class Bgfx {
 	 * @param _handle Dynamic vertex buffer handle.
 	 * @param _access Buffer access. See {@code Access}.
 	 */
-	public static final void setComputeDynamicVertexBuffer(@Unsigned byte _stage, DynamicVertexBufferHandle _handle, Access _access) {
+	public static void setComputeDynamicVertexBuffer(@Unsigned byte _stage, DynamicVertexBufferHandle _handle, Access _access) {
 		try {
 			try (Arena arena = Arena.ofConfined()) {
 				MH_SET_COMPUTE_DYNAMIC_VERTEX_BUFFER.invokeExact(_stage, _handle.allocate(arena), _access.ordinal());
@@ -3151,7 +3078,7 @@ public final class Bgfx {
 	 * @param _handle Indirect buffer handle.
 	 * @param _access Buffer access. See {@code Access}.
 	 */
-	public static final void setComputeIndirectBuffer(@Unsigned byte _stage, IndirectBufferHandle _handle, Access _access) {
+	public static void setComputeIndirectBuffer(@Unsigned byte _stage, IndirectBufferHandle _handle, Access _access) {
 		try {
 			try (Arena arena = Arena.ofConfined()) {
 				MH_SET_COMPUTE_INDIRECT_BUFFER.invokeExact(_stage, _handle.allocate(arena), _access.ordinal());
@@ -3169,7 +3096,7 @@ public final class Bgfx {
 	 * @param _access Image access. See {@code Access}.
 	 * @param _format Texture format. See: {@code TextureFormat}.
 	 */
-	public static final void setImage(@Unsigned byte _stage, TextureHandle _handle, @Unsigned byte _mip, Access _access, TextureFormat _format) {
+	public static void setImage(@Unsigned byte _stage, TextureHandle _handle, @Unsigned byte _mip, Access _access, TextureFormat _format) {
 		try {
 			try (Arena arena = Arena.ofConfined()) {
 				MH_SET_IMAGE.invokeExact(_stage, _handle.allocate(arena), _mip, _access.ordinal(), _format.ordinal());
@@ -3190,7 +3117,7 @@ public final class Bgfx {
 	 * @param _access Image access. See {@code Access}.
 	 * @param _format Texture format. See: {@code TextureFormat}.
 	 */
-	public static final void setImageView(@Unsigned byte _stage, TextureHandle _handle, @Unsigned short _firstLayer, @Unsigned short _numLayers, @Unsigned byte _mip, Access _access, TextureFormat _format) {
+	public static void setImageView(@Unsigned byte _stage, TextureHandle _handle, @Unsigned short _firstLayer, @Unsigned short _numLayers, @Unsigned byte _mip, Access _access, TextureFormat _format) {
 		try {
 			try (Arena arena = Arena.ofConfined()) {
 				MH_SET_IMAGE_VIEW.invokeExact(_stage, _handle.allocate(arena), _firstLayer, _numLayers, _mip, _access.ordinal(), _format.ordinal());
@@ -3209,7 +3136,7 @@ public final class Bgfx {
 	 * @param _numZ Number of groups Z.
 	 * @param _flags Discard or preserve states. See {@code BGFX_DISCARD_*}.
 	 */
-	public static final void dispatch(short _id, ProgramHandle _program, @Unsigned int _numX, @Unsigned int _numY, @Unsigned int _numZ, @Unsigned byte _flags) {
+	public static void dispatch(short _id, ProgramHandle _program, @Unsigned int _numX, @Unsigned int _numY, @Unsigned int _numZ, @Unsigned byte _flags) {
 		try {
 			try (Arena arena = Arena.ofConfined()) {
 				MH_DISPATCH.invokeExact(_id, _program.allocate(arena), _numX, _numY, _numZ, _flags);
@@ -3228,7 +3155,7 @@ public final class Bgfx {
 	 * @param _num Number of dispatches.
 	 * @param _flags Discard or preserve states. See {@code BGFX_DISCARD_*}.
 	 */
-	public static final void dispatchIndirect(short _id, ProgramHandle _program, IndirectBufferHandle _indirectHandle, @Unsigned int _start, @Unsigned int _num, @Unsigned byte _flags) {
+	public static void dispatchIndirect(short _id, ProgramHandle _program, IndirectBufferHandle _indirectHandle, @Unsigned int _start, @Unsigned int _num, @Unsigned byte _flags) {
 		try {
 			try (Arena arena = Arena.ofConfined()) {
 				MH_DISPATCH_INDIRECT.invokeExact(_id, _program.allocate(arena), _indirectHandle.allocate(arena), _start, _num, _flags);
@@ -3242,7 +3169,7 @@ public final class Bgfx {
 	 * Discard previously set state for draw or compute call.
 	 * @param _flags Draw/compute states to discard.
 	 */
-	public static final void discard(@Unsigned byte _flags) {
+	public static void discard(@Unsigned byte _flags) {
 		try {
 			MH_DISCARD.invokeExact(_flags);
 		} catch (Throwable ex) {
@@ -3262,12 +3189,11 @@ public final class Bgfx {
 	 *   draw commands are executed after blit and compute commands.
 	 * <p>
 	 * <strong>Attention:</strong> Destination texture must be created with {@code BGFX_TEXTURE_BLIT_DST} flag.
-	 * <strong>Attention:</strong> Availability depends on: {@code BGFX_CAPS_TEXTURE_BLIT}.
 	 * @param _id View id.
 	 * @param _dst Destination texture region.
 	 * @param _src Source texture region.
 	 */
-	public static final void blit(short _id, TextureRegion _dst, TextureRegion _src) {
+	public static void blit(short _id, TextureRegion _dst, TextureRegion _src) {
 		try {
 			MH_BLIT.invokeExact(_id, address(_dst), address(_src));
 		} catch (Throwable ex) {
@@ -3296,7 +3222,7 @@ public final class Bgfx {
 	 * @param _dst Destination buffer region.
 	 * @param _src Source buffer region.
 	 */
-	public static final void blitBuffer(short _id, BufferRegion _dst, BufferRegion _src) {
+	public static void blitBuffer(short _id, BufferRegion _dst, BufferRegion _src) {
 		try {
 			MH_BLIT_BUFFER.invokeExact(_id, address(_dst), address(_src));
 		} catch (Throwable ex) {
@@ -3318,12 +3244,11 @@ public final class Bgfx {
 	 * <p>
 	 * <strong>Attention:</strong> Destination buffer must be created with {@code BGFX_BUFFER_COMPUTE_WRITE}, or
 	 *   {@code BGFX_BUFFER_DRAW_INDIRECT} flag.
-	 * <strong>Attention:</strong> Availability depends on: {@code BGFX_CAPS_TEXTURE_BLIT}.
 	 * @param _id View id.
 	 * @param _dst Destination buffer region.
 	 * @param _src Source texture region.
 	 */
-	public static final void blitToBuffer(short _id, BufferRegion _dst, TextureRegion _src) {
+	public static void blitToBuffer(short _id, BufferRegion _dst, TextureRegion _src) {
 		try {
 			MH_BLIT_TO_BUFFER.invokeExact(_id, address(_dst), address(_src));
 		} catch (Throwable ex) {
@@ -3346,12 +3271,11 @@ public final class Bgfx {
 	 * <strong>Attention:</strong> Source buffer must be created with one of {@code BGFX_BUFFER_COMPUTE_*}, or
 	 *   {@code BGFX_BUFFER_DRAW_INDIRECT} flags.
 	 * <strong>Attention:</strong> Destination texture must be created with {@code BGFX_TEXTURE_BLIT_DST} flag.
-	 * <strong>Attention:</strong> Availability depends on: {@code BGFX_CAPS_TEXTURE_BLIT}.
 	 * @param _id View id.
 	 * @param _dst Destination texture region.
 	 * @param _src Source buffer region.
 	 */
-	public static final void blitFromBuffer(short _id, TextureRegion _dst, BufferRegion _src) {
+	public static void blitFromBuffer(short _id, TextureRegion _dst, BufferRegion _src) {
 		try {
 			MH_BLIT_FROM_BUFFER.invokeExact(_id, address(_dst), address(_src));
 		} catch (Throwable ex) {

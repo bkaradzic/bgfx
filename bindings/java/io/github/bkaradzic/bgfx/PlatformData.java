@@ -41,25 +41,13 @@ public final class PlatformData extends NativeObject {
 	 * Native C structure layout.
 	 */
 	public static final StructLayout LAYOUT = cStruct("bgfx_platform_data_t",
-		ValueLayout.ADDRESS.withName("ndt"),
-		ValueLayout.ADDRESS.withName("nwh"),
 		ValueLayout.ADDRESS.withName("context"),
 		ValueLayout.ADDRESS.withName("queue"),
-		ValueLayout.ADDRESS.withName("backBuffer"),
-		ValueLayout.ADDRESS.withName("backBufferDS"),
 		ValueLayout.JAVA_INT.withName("type"));
-	private static final VarHandle VH_NDT = LAYOUT.varHandle(
-		MemoryLayout.PathElement.groupElement("ndt"));
-	private static final VarHandle VH_NWH = LAYOUT.varHandle(
-		MemoryLayout.PathElement.groupElement("nwh"));
 	private static final VarHandle VH_CONTEXT = LAYOUT.varHandle(
 		MemoryLayout.PathElement.groupElement("context"));
 	private static final VarHandle VH_QUEUE = LAYOUT.varHandle(
 		MemoryLayout.PathElement.groupElement("queue"));
-	private static final VarHandle VH_BACKBUFFER = LAYOUT.varHandle(
-		MemoryLayout.PathElement.groupElement("backBuffer"));
-	private static final VarHandle VH_BACKBUFFERDS = LAYOUT.varHandle(
-		MemoryLayout.PathElement.groupElement("backBufferDS"));
 	private static final VarHandle VH_TYPE = LAYOUT.varHandle(
 		MemoryLayout.PathElement.groupElement("type"));
 	/**
@@ -76,41 +64,6 @@ public final class PlatformData extends NativeObject {
 	 */
 	public PlatformData(SegmentAllocator allocator) {
 		super(allocator, LAYOUT);
-	}
-
-	/**
-	 * Native display type (*nix specific).
-	 * @return the field value
-	 */
-	public MemorySegment ndt() {
-		return address((MemorySegment) VH_NDT.get(segment(), 0L));
-	}
-
-	/**
-	 * Sets the native {@code ndt} field and returns {@code this}.
-	 * @param value the new field value
-	 */
-	public PlatformData ndt(MemorySegment value) {
-		VH_NDT.set(segment(), 0L, address(value));
-		return this;
-	}
-
-	/**
-	 * Native window handle. If {@code NULL}, bgfx will create a headless
-	 * context/device, provided the rendering API supports it.
-	 * @return the field value
-	 */
-	public MemorySegment nwh() {
-		return address((MemorySegment) VH_NWH.get(segment(), 0L));
-	}
-
-	/**
-	 * Sets the native {@code nwh} field and returns {@code this}.
-	 * @param value the new field value
-	 */
-	public PlatformData nwh(MemorySegment value) {
-		VH_NWH.set(segment(), 0L, address(value));
-		return this;
 	}
 
 	/**
@@ -145,42 +98,6 @@ public final class PlatformData extends NativeObject {
 	 */
 	public PlatformData queue(MemorySegment value) {
 		VH_QUEUE.set(segment(), 0L, address(value));
-		return this;
-	}
-
-	/**
-	 * GL back-buffer, or D3D render target view. If {@code NULL} bgfx will
-	 * create back-buffer color surface.
-	 * @return the field value
-	 */
-	public MemorySegment backBuffer() {
-		return address((MemorySegment) VH_BACKBUFFER.get(segment(), 0L));
-	}
-
-	/**
-	 * Sets the native {@code backBuffer} field and returns {@code this}.
-	 * @param value the new field value
-	 */
-	public PlatformData backBuffer(MemorySegment value) {
-		VH_BACKBUFFER.set(segment(), 0L, address(value));
-		return this;
-	}
-
-	/**
-	 * Backbuffer depth/stencil. If {@code NULL}, bgfx will create a back-buffer
-	 * depth/stencil surface.
-	 * @return the field value
-	 */
-	public MemorySegment backBufferDS() {
-		return address((MemorySegment) VH_BACKBUFFERDS.get(segment(), 0L));
-	}
-
-	/**
-	 * Sets the native {@code backBufferDS} field and returns {@code this}.
-	 * @param value the new field value
-	 */
-	public PlatformData backBufferDS(MemorySegment value) {
-		VH_BACKBUFFERDS.set(segment(), 0L, address(value));
 		return this;
 	}
 

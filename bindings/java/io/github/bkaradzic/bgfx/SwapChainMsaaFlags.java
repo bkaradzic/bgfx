@@ -33,49 +33,37 @@ import static io.github.bkaradzic.bgfx.Bgfx.*;
 import static io.github.bkaradzic.bgfx.util.FFMUtil.*;
 
 /**
- * Constants for PciId flags.
+ * Constants for SwapChainMsaa flags.
  */
 @NullMarked
-public final class PciIdFlags {
-	private PciIdFlags() {
+public final class SwapChainMsaaFlags {
+	private SwapChainMsaaFlags() {
 	}
 	/**
-	 * Autoselect adapter.
+	 * Enable 2x MSAA.
 	 */
-	public static final short None = (short) 0x0000;
+	public static final int X2 = 0x00000010;
 
 	/**
-	 * Software rasterizer.
+	 * Enable 4x MSAA.
 	 */
-	public static final short SoftwareRasterizer = (short) 0x0001;
+	public static final int X4 = 0x00000020;
 
 	/**
-	 * AMD adapter.
+	 * Enable 8x MSAA.
 	 */
-	public static final short Amd = (short) 0x1002;
+	public static final int X8 = 0x00000030;
 
 	/**
-	 * Apple adapter.
+	 * Enable 16x MSAA.
 	 */
-	public static final short Apple = (short) 0x106b;
-
+	public static final int X16 = 0x00000040;
 	/**
-	 * Intel adapter.
+	 * Bit shift for this flag group.
 	 */
-	public static final short Intel = (short) 0x8086;
-
+	public static final int Shift = 4;
 	/**
-	 * NVIDIA adapter.
+	 * Bit mask for this flag group.
 	 */
-	public static final short Nvidia = (short) 0x10de;
-
-	/**
-	 * Microsoft adapter.
-	 */
-	public static final short Microsoft = (short) 0x1414;
-
-	/**
-	 * ARM adapter.
-	 */
-	public static final short Arm = (short) 0x13b5;
+	public static final int Mask = 0x00000070;
 }

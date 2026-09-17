@@ -33,49 +33,18 @@ import static io.github.bkaradzic.bgfx.Bgfx.*;
 import static io.github.bkaradzic.bgfx.util.FFMUtil.*;
 
 /**
- * Constants for PciId flags.
+ * Constants for SwapChainFullscreen flags.
  */
 @NullMarked
-public final class PciIdFlags {
-	private PciIdFlags() {
+public final class SwapChainFullscreenFlags {
+	private SwapChainFullscreenFlags() {
 	}
 	/**
-	 * Autoselect adapter.
+	 * Bit shift for this flag group.
 	 */
-	public static final short None = (short) 0x0000;
-
+	public static final int Shift = 0;
 	/**
-	 * Software rasterizer.
+	 * Bit mask for this flag group.
 	 */
-	public static final short SoftwareRasterizer = (short) 0x0001;
-
-	/**
-	 * AMD adapter.
-	 */
-	public static final short Amd = (short) 0x1002;
-
-	/**
-	 * Apple adapter.
-	 */
-	public static final short Apple = (short) 0x106b;
-
-	/**
-	 * Intel adapter.
-	 */
-	public static final short Intel = (short) 0x8086;
-
-	/**
-	 * NVIDIA adapter.
-	 */
-	public static final short Nvidia = (short) 0x10de;
-
-	/**
-	 * Microsoft adapter.
-	 */
-	public static final short Microsoft = (short) 0x1414;
-
-	/**
-	 * ARM adapter.
-	 */
-	public static final short Arm = (short) 0x13b5;
+	public static final int Mask = 0x00000001;
 }

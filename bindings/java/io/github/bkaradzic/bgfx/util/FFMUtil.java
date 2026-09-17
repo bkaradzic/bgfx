@@ -3,20 +3,11 @@
 
 package io.github.bkaradzic.bgfx.util;
 
-import java.lang.foreign.Arena;
-import java.lang.foreign.FunctionDescriptor;
-import java.lang.foreign.Linker;
-import java.lang.foreign.MemoryLayout;
-import java.lang.foreign.MemorySegment;
-import java.lang.foreign.SegmentAllocator;
-import java.lang.foreign.StructLayout;
-import java.lang.foreign.SymbolLookup;
-import java.lang.foreign.ValueLayout;
+import java.lang.foreign.*;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.invoke.MutableCallSite;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -25,165 +16,92 @@ import java.util.Objects;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
-/** Shared Java FFM support used by the generated bgfx binding. */
+/**
+ * Shared Java FFM support used by the generated bgfx binding.
+ */
 @NullMarked
 @SuppressWarnings("restricted")
 public final class FFMUtil {
-	/** Native linker used for bgfx downcalls and callback upcalls. */
+	/**
+	 * Native linker used for bgfx downcalls and callback upcalls.
+	 */
 	public static final Linker LINKER = Linker.nativeLinker();
+	private static final SymbolLookup LIBRARY_LOOKUP = SymbolLookup.loaderLookup();
 
-	/** Platform-native layout of C {@code uintptr_t}. */
+
+	/**
+	 * Platform-native layout of C {@code uintptr_t}.
+	 */
 	public static final ValueLayout C_UINTPTR_T =
 		(ValueLayout) LINKER.canonicalLayouts().get("size_t");
 
-	private static final List<String> pendingDowncallNames = new ArrayList<>();
-	private static final List<FunctionDescriptor> pendingDowncallDescriptors = new ArrayList<>();
-	private static final List<MutableCallSite> pendingDowncallSites = new ArrayList<>();
-	private static final List<String> pendingVariadicNames = new ArrayList<>();
-	private static final List<MutableCallSite> pendingVariadicSites = new ArrayList<>();
-	private static @Nullable SymbolLookup libraryLookup;
-	private static @Nullable Arena libraryArena;
+	private FFMUtil() {}
 
-	private FFMUtil() {
+	private static MemorySegment symbol(String name) {
+		return FFMUtil.LIBRARY_LOOKUP.find(name).orElseThrow(() -> new UnsatisfiedLinkError("Unable to find native symbol " + name));
 	}
 
+
+
 	/**
-	 * Registers a fixed-arity native entry point for eager linking.
+	 * Creates a fixed-arity native handle that links on its first invocation.
 	 * @param name native symbol name
 	 * @param descriptor native function descriptor
-	 * @return a stable handle that becomes callable after linking
+	 * @return a stable handle that resolves its native target on first use
 	 */
-	public static synchronized MethodHandle downcall(
-		String name, FunctionDescriptor descriptor) {
+	public static synchronized MethodHandle downcall(String name, FunctionDescriptor descriptor) {
 		Objects.requireNonNull(name, "name");
 		Objects.requireNonNull(descriptor, "descriptor");
-		if (libraryLookup != null) {
-			return LINKER.downcallHandle(symbol(libraryLookup, name), descriptor);
+		MethodType type = descriptor.toMethodType();
+		if(descriptor.returnLayout().orElse(null) instanceof GroupLayout) {
+			type = type.insertParameterTypes(0, SegmentAllocator.class);
 		}
-		MethodType type = LINKER.downcallHandle(descriptor)
-			.type()
-			.dropParameterTypes(0, 1);
 		MutableCallSite site = new MutableCallSite(type);
-		site.setTarget(unlinkedTarget(type, name));
-		pendingDowncallNames.add(name);
-		pendingDowncallDescriptors.add(descriptor);
-		pendingDowncallSites.add(site);
+		try {
+			MethodHandle resolver = MethodHandles.lookup().findStatic(FFMUtil.class, "linkDowncall",
+				MethodType.methodType(MethodHandle.class, MutableCallSite.class, String.class, FunctionDescriptor.class));
+			resolver = MethodHandles.insertArguments(resolver, 0, site, name, descriptor);
+			site.setTarget(MethodHandles.collectArguments(MethodHandles.exactInvoker(type), 0, resolver));
+		} catch(NoSuchMethodException | IllegalAccessException ex) {
+			throw new ExceptionInInitializerError(ex);
+		}
 		return site.dynamicInvoker();
 	}
 
+	private static MethodHandle linkDowncall(MutableCallSite site, String name, FunctionDescriptor descriptor) {
+		MethodHandle target = LINKER.downcallHandle(symbol(name), descriptor);
+		site.setTarget(target);
+		MutableCallSite.syncAll(new MutableCallSite[] {site});
+		return target;
+	}
+
 	/**
-	 * Registers a C variadic symbol for eager linking.
+	 * Creates a zero-argument handle that resolves a variadic symbol on first use.
 	 * @param name native symbol name
-	 * @return a stable zero-argument handle returning the symbol address
+	 * @return a stable handle returning the native symbol address
 	 */
 	public static synchronized MethodHandle variadicSymbol(String name) {
 		Objects.requireNonNull(name, "name");
-		if (libraryLookup != null) {
-			return MethodHandles.constant(
-				MemorySegment.class, symbol(libraryLookup, name));
+		MutableCallSite site = new MutableCallSite(MethodType.methodType(MemorySegment.class));
+		try {
+			MethodHandle resolver = MethodHandles.lookup().findStatic(FFMUtil.class, "linkVariadicSymbol",
+				MethodType.methodType(MemorySegment.class, MutableCallSite.class, String.class));
+			site.setTarget(MethodHandles.insertArguments(resolver, 0, site, name));
+		} catch(NoSuchMethodException | IllegalAccessException ex) {
+			throw new ExceptionInInitializerError(ex);
 		}
-		MethodType type = MethodType.methodType(MemorySegment.class);
-		MutableCallSite site = new MutableCallSite(type);
-		site.setTarget(unlinkedTarget(type, name));
-		pendingVariadicNames.add(name);
-		pendingVariadicSites.add(site);
 		return site.dynamicInvoker();
 	}
 
-	private static MethodHandle unlinkedTarget(MethodType type, String name) {
-		MethodHandle target = MethodHandles.throwException(
-			type.returnType(), IllegalStateException.class);
-		target = MethodHandles.insertArguments(target, 0,
-			new IllegalStateException("Native symbol is not linked: " + name));
-		return MethodHandles.dropArguments(target, 0, type.parameterList());
+	private static MemorySegment linkVariadicSymbol(MutableCallSite site, String name) {
+		MemorySegment address = symbol(name);
+		site.setTarget(MethodHandles.constant(MemorySegment.class, address));
+		MutableCallSite.syncAll(new MutableCallSite[] {site});
+		return address;
 	}
 
-	/**
-	 * Loads a shared library and eagerly links every registered native entry point.
-	 * @param library shared-library path
-	 */
-	public static synchronized void load(Path library) {
-		Objects.requireNonNull(library, "library");
-		Arena arena = newLibraryArena();
-		try {
-			installLibrary(SymbolLookup.libraryLookup(library, arena), arena);
-		} catch (RuntimeException | Error ex) {
-			arena.close();
-			throw ex;
-		}
-	}
-
-	/**
-	 * Loads a shared library by platform-dependent name and eagerly links every
-	 * registered native entry point.
-	 * @param library platform-dependent shared-library name
-	 */
-	public static synchronized void load(String library) {
-		Objects.requireNonNull(library, "library");
-		Arena arena = newLibraryArena();
-		try {
-			installLibrary(SymbolLookup.libraryLookup(library, arena), arena);
-		} catch (RuntimeException | Error ex) {
-			arena.close();
-			throw ex;
-		}
-	}
-
-	/**
-	 * Eagerly links every registered native entry point from libraries already
-	 * visible to the process.
-	 */
 	public static synchronized void link() {
-		ensureUnlinked();
-		installLibrary(SymbolLookup.loaderLookup().or(LINKER.defaultLookup()), null);
-	}
-
-	private static Arena newLibraryArena() {
-		ensureUnlinked();
-		return Arena.ofShared();
-	}
-
-	private static void ensureUnlinked() {
-		if (libraryLookup != null || libraryArena != null) {
-			throw new IllegalStateException("Native calls are already linked");
-		}
-	}
-
-	private static void installLibrary(SymbolLookup library, @Nullable Arena arena) {
-		SymbolLookup lookup = library
-			.or(SymbolLookup.loaderLookup())
-			.or(LINKER.defaultLookup());
-		MethodHandle[] handles = new MethodHandle[pendingDowncallSites.size()];
-		for (int index = 0; index < handles.length; ++index) {
-			handles[index] = LINKER.downcallHandle(
-				symbol(lookup, pendingDowncallNames.get(index)),
-				pendingDowncallDescriptors.get(index));
-		}
-		MemorySegment[] variadics = new MemorySegment[pendingVariadicSites.size()];
-		for (int index = 0; index < variadics.length; ++index) {
-			variadics[index] = symbol(lookup, pendingVariadicNames.get(index));
-		}
-		for (int index = 0; index < handles.length; ++index) {
-			pendingDowncallSites.get(index).setTarget(handles[index]);
-		}
-		for (int index = 0; index < variadics.length; ++index) {
-			pendingVariadicSites.get(index).setTarget(
-				MethodHandles.constant(MemorySegment.class, variadics[index]));
-		}
-		MutableCallSite.syncAll(pendingDowncallSites.toArray(MutableCallSite[]::new));
-		MutableCallSite.syncAll(pendingVariadicSites.toArray(MutableCallSite[]::new));
-		pendingDowncallNames.clear();
-		pendingDowncallDescriptors.clear();
-		pendingDowncallSites.clear();
-		pendingVariadicNames.clear();
-		pendingVariadicSites.clear();
-		libraryArena = arena;
-		libraryLookup = lookup;
-	}
-
-	private static MemorySegment symbol(SymbolLookup lookup, String name) {
-		return lookup.find(name).orElseThrow(
-			() -> new UnsatisfiedLinkError("Unable to find native symbol " + name));
+		throw new UnsupportedOperationException();
 	}
 
 	/**
@@ -191,151 +109,127 @@ public final class FFMUtil {
 	 * from its Java value and applying C default argument promotions.
 	 * Byte, short, character, boolean, integer, long, float, double, string,
 	 * memory segment, native object, and enum values are supported.
+	 *
 	 * @param symbolHandle linked zero-argument symbol-address handle
-	 * @param descriptor descriptor of the fixed arguments and return value
-	 * @param fixedArgs converted fixed native arguments
+	 * @param descriptor   descriptor of the fixed arguments and return value
+	 * @param fixedArgs    converted fixed native arguments
 	 * @param variadicArgs Java values to convert to promoted variadic arguments
 	 * @return the native result, or {@code null} for {@code void}
 	 */
-	public static @Nullable Object invokeVariadic(
-		MethodHandle symbolHandle,
-		FunctionDescriptor descriptor,
-		Object[] fixedArgs,
-		Object[] variadicArgs) {
+	public static @Nullable Object invokeVariadic(MethodHandle symbolHandle, FunctionDescriptor descriptor, Object[] fixedArgs, Object[] variadicArgs) {
 		Objects.requireNonNull(descriptor, "descriptor");
 		Objects.requireNonNull(symbolHandle, "symbolHandle");
 		Objects.requireNonNull(fixedArgs, "fixedArgs");
 		Objects.requireNonNull(variadicArgs, "variadicArgs");
 		MemoryLayout[] layouts = new MemoryLayout[variadicArgs.length];
-		Object[] nativeArgs = Arrays.copyOf(
-			fixedArgs, fixedArgs.length + variadicArgs.length);
-		try (Arena arena = Arena.ofConfined()) {
-			for (int index = 0; index < variadicArgs.length; ++index) {
-				Object argument = Objects.requireNonNull(
-					variadicArgs[index], "variadicArgs[" + index + "]");
-				Object value;
-				if (argument instanceof Byte number) {
-					layouts[index] = ValueLayout.JAVA_INT;
-					value = number.intValue();
-				} else if (argument instanceof Short number) {
-					layouts[index] = ValueLayout.JAVA_INT;
-					value = number.intValue();
-				} else if (argument instanceof Character character) {
-					layouts[index] = ValueLayout.JAVA_INT;
-					value = (int) character;
-				} else if (argument instanceof Boolean bool) {
-					layouts[index] = ValueLayout.JAVA_INT;
-					value = bool ? 1 : 0;
-				} else if (argument instanceof Integer) {
-					layouts[index] = ValueLayout.JAVA_INT;
-					value = argument;
-				} else if (argument instanceof Long) {
-					layouts[index] = ValueLayout.JAVA_LONG;
-					value = argument;
-				} else if (argument instanceof Float number) {
-					layouts[index] = ValueLayout.JAVA_DOUBLE;
-					value = number.doubleValue();
-				} else if (argument instanceof Double) {
-					layouts[index] = ValueLayout.JAVA_DOUBLE;
-					value = argument;
-				} else if (argument instanceof String string) {
-					layouts[index] = ValueLayout.ADDRESS;
-					value = cString(arena, string);
-				} else if (argument instanceof MemorySegment segment) {
-					layouts[index] = ValueLayout.ADDRESS;
-					value = address(segment);
-				} else if (argument instanceof NativeObject object) {
-					layouts[index] = ValueLayout.ADDRESS;
-					value = address(object);
-				} else if (argument instanceof Enum<?> enumValue) {
-					layouts[index] = ValueLayout.JAVA_INT;
-					value = enumValue.ordinal();
-				} else {
-					throw new IllegalArgumentException(
-						"Unsupported C variadic argument type: "
-							+ argument.getClass().getName());
-				}
-				nativeArgs[fixedArgs.length + index] = value;
+		Object[] nativeArgs = Arrays.copyOf(fixedArgs, fixedArgs.length + variadicArgs.length);
+		try(Arena arena = Arena.ofConfined()) {
+			for(int i = 0; i < variadicArgs.length; ++i) {
+				Object argument = Objects.requireNonNull(variadicArgs[i], "variadicArgs[" + i + "]");
+				VarArgValue value = VarArgValue.of(argument, arena);
+				layouts[i] = value.layout();
+				nativeArgs[fixedArgs.length + i] = value.value();
 			}
-			FunctionDescriptor variadicDescriptor =
-				descriptor.appendArgumentLayouts(layouts);
+			FunctionDescriptor variadicDescriptor = descriptor.appendArgumentLayouts(layouts);
 			MemorySegment symbol;
 			try {
 				symbol = (MemorySegment) symbolHandle.invokeExact();
-			} catch (Throwable ex) {
+			} catch(Throwable ex) {
 				throw invocationFailure(ex);
 			}
-			MethodHandle handle = LINKER.downcallHandle(
-				symbol,
-				variadicDescriptor,
-				Linker.Option.firstVariadicArg(fixedArgs.length));
+			MethodHandle handle = LINKER.downcallHandle(symbol, variadicDescriptor, Linker.Option.firstVariadicArg(fixedArgs.length));
 			return invoke(handle, nativeArgs);
+		}
+	}
+
+	private record VarArgValue(ValueLayout layout, Object value) {
+		private static VarArgValue of(Object argument, Arena arena) {
+			return switch(argument) {
+				case Byte number -> new VarArgValue(ValueLayout.JAVA_INT, number.intValue());
+				case Short number -> new VarArgValue(ValueLayout.JAVA_INT, number.intValue());
+				case Character character -> new VarArgValue(ValueLayout.JAVA_INT, (int) character);
+				case Boolean bool -> new VarArgValue(ValueLayout.JAVA_INT, bool ? 1 : 0);
+				case Integer i -> new VarArgValue(ValueLayout.JAVA_INT, i);
+				case Long l -> new VarArgValue(ValueLayout.JAVA_LONG, l);
+				case Float number -> new VarArgValue(ValueLayout.JAVA_DOUBLE, number.doubleValue());
+				case Double v -> new VarArgValue(ValueLayout.JAVA_DOUBLE, v);
+				case String string -> new VarArgValue(ValueLayout.ADDRESS, cString(arena, string));
+				case MemorySegment segment -> new VarArgValue(ValueLayout.ADDRESS, address(segment));
+				case NativeObject object -> new VarArgValue(ValueLayout.ADDRESS, address(object));
+				case Enum<?> enumValue -> new VarArgValue(ValueLayout.JAVA_INT, enumValue.ordinal());
+				default -> throw new IllegalArgumentException("Unsupported C variadic argument type: " + argument.getClass().getName());
+			};
 		}
 	}
 
 	/**
 	 * Resolves a virtual Java callback method for an upcall stub.
+	 *
 	 * @param owner callback interface
-	 * @param name callback method name
-	 * @param type callback method type
+	 * @param name  callback method name
+	 * @param type  callback method type
 	 * @return the resolved callback target
 	 */
 	public static MethodHandle upcallTarget(Class<?> owner, String name, MethodType type) {
 		try {
 			return MethodHandles.lookup().findVirtual(owner, name, type);
-		} catch (NoSuchMethodException | IllegalAccessException ex) {
+		} catch(NoSuchMethodException | IllegalAccessException ex) {
 			throw new ExceptionInInitializerError(ex);
 		}
 	}
 
 	/**
 	 * Invokes a native handle with dynamically supplied arguments.
+	 *
 	 * @param handle native method handle
-	 * @param args native arguments
+	 * @param args   native arguments
 	 * @return the native result, or {@code null} for {@code void}
 	 */
 	public static @Nullable Object invoke(MethodHandle handle, Object... args) {
 		try {
 			return handle.invokeWithArguments(args);
-		} catch (Throwable ex) {
+		} catch(Throwable ex) {
 			throw invocationFailure(ex);
 		}
 	}
 
 	/**
 	 * Converts an unexpected method-handle failure to an unchecked exception.
+	 *
 	 * @param exception invocation failure
 	 * @return the unchecked failure
 	 */
 	public static RuntimeException invocationFailure(Throwable exception) {
-		if (exception instanceof RuntimeException runtime) {
+		if(exception instanceof RuntimeException runtime) {
 			return runtime;
 		}
-		if (exception instanceof Error error) {
+		if(exception instanceof Error error) {
 			throw error;
 		}
-		throw new AssertionError("Unexpected native invocation failure", exception);
+		throw new NativeInvocationFailureException("Failed to invoke", exception);
 	}
 
 	/**
 	 * Invokes a layout slice handle at offset zero.
-	 * @param handle layout slice handle
+	 *
+	 * @param handle  layout slice handle
 	 * @param segment containing segment
 	 * @return the selected member segment
 	 */
 	public static MemorySegment slice(MethodHandle handle, MemorySegment segment) {
 		try {
 			return (MemorySegment) handle.invokeExact(segment, 0L);
-		} catch (RuntimeException | Error ex) {
+		} catch(RuntimeException | Error ex) {
 			throw ex;
-		} catch (Throwable ex) {
+		} catch(Throwable ex) {
 			throw new AssertionError("Unexpected layout slice failure", ex);
 		}
 	}
 
 	/**
 	 * Creates a C-compatible structure layout with explicit ABI padding.
-	 * @param name native structure name
+	 *
+	 * @param name    native structure name
 	 * @param members structure members in declaration order
 	 * @return the padded structure layout
 	 */
@@ -343,10 +237,10 @@ public final class FFMUtil {
 		List<MemoryLayout> elements = new ArrayList<>();
 		long offset = 0;
 		long alignment = 1;
-		for (MemoryLayout member : members) {
+		for(MemoryLayout member : members) {
 			long memberAlignment = member.byteAlignment();
 			long padding = (memberAlignment - offset % memberAlignment) % memberAlignment;
-			if (padding != 0) {
+			if(padding != 0) {
 				elements.add(MemoryLayout.paddingLayout(padding));
 				offset += padding;
 			}
@@ -355,7 +249,7 @@ public final class FFMUtil {
 			alignment = Math.max(alignment, memberAlignment);
 		}
 		long padding = (alignment - offset % alignment) % alignment;
-		if (padding != 0) {
+		if(padding != 0) {
 			elements.add(MemoryLayout.paddingLayout(padding));
 		}
 		return MemoryLayout.structLayout(elements.toArray(MemoryLayout[]::new))
@@ -365,19 +259,20 @@ public final class FFMUtil {
 
 	/**
 	 * Returns a segment view sized for the supplied native layout.
+	 *
 	 * @param segment source segment
-	 * @param layout required native layout
+	 * @param layout  required native layout
 	 * @return a segment view with the layout size
 	 */
 	public static MemorySegment view(MemorySegment segment, MemoryLayout layout) {
 		Objects.requireNonNull(segment, "segment");
-		if (segment.address() == 0) {
+		if(segment.address() == 0) {
 			return MemorySegment.NULL;
 		}
-		if (segment.byteSize() == 0) {
+		if(segment.byteSize() == 0) {
 			return segment.reinterpret(layout.byteSize());
 		}
-		if (segment.byteSize() < layout.byteSize()) {
+		if(segment.byteSize() < layout.byteSize()) {
 			throw new IllegalArgumentException("Segment is smaller than " + layout);
 		}
 		return segment.asSlice(0, layout.byteSize());
@@ -385,6 +280,7 @@ public final class FFMUtil {
 
 	/**
 	 * Converts a nullable or zero-address segment to a canonical native address.
+	 *
 	 * @param segment nullable segment
 	 * @return the segment, or {@link MemorySegment#NULL} when its address is zero
 	 */
@@ -396,6 +292,7 @@ public final class FFMUtil {
 
 	/**
 	 * Converts a nullable or zero-address native object to a canonical address.
+	 *
 	 * @param object nullable native object
 	 * @return the object's segment, or {@link MemorySegment#NULL} when its address is zero
 	 */
@@ -405,8 +302,9 @@ public final class FFMUtil {
 
 	/**
 	 * Allocates a nullable UTF-8 C string.
+	 *
 	 * @param allocator destination allocator
-	 * @param value nullable Java string
+	 * @param value     nullable Java string
 	 * @return the allocated C string or {@link MemorySegment#NULL}
 	 */
 	public static MemorySegment cString(SegmentAllocator allocator, @Nullable String value) {
@@ -415,6 +313,7 @@ public final class FFMUtil {
 
 	/**
 	 * Reads a nullable UTF-8 C string.
+	 *
 	 * @param address nullable C string address
 	 * @return the Java string, or {@code null}
 	 */
@@ -424,6 +323,7 @@ public final class FFMUtil {
 
 	/**
 	 * Converts a Java {@code long} to the platform-native {@code uintptr_t} carrier.
+	 *
 	 * @param value Java value
 	 * @return the platform-native carrier value
 	 */
@@ -433,6 +333,7 @@ public final class FFMUtil {
 
 	/**
 	 * Converts the platform-native {@code uintptr_t} carrier to a Java {@code long}.
+	 *
 	 * @param value platform-native carrier value
 	 * @return the Java value
 	 */

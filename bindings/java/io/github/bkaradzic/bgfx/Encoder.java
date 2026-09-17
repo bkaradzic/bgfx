@@ -360,8 +360,6 @@ public final class Encoder extends NativeObject {
 	/**
 	 * Set number of vertices for auto generated vertices use in conjunction
 	 * with gl_VertexID.
-	 * <p>
-	 * <strong>Attention:</strong> Availability depends on: {@code BGFX_CAPS_VERTEX_ID}.
 	 * @param _numVertices Number of vertices.
 	 */
 	public final void setVertexCount(@Unsigned int _numVertices) {
@@ -421,8 +419,6 @@ public final class Encoder extends NativeObject {
 	/**
 	 * Set number of instances for auto generated instances use in conjunction
 	 * with gl_InstanceID.
-	 * <p>
-	 * <strong>Attention:</strong> Availability depends on: {@code BGFX_CAPS_VERTEX_ID}.
 	 * @param _numInstances Number of instances.
 	 */
 	public final void setInstanceCount(@Unsigned int _numInstances) {
@@ -754,7 +750,6 @@ public final class Encoder extends NativeObject {
 	 *   draw commands are executed after blit and compute commands.
 	 * <p>
 	 * <strong>Attention:</strong> Destination texture must be created with {@code BGFX_TEXTURE_BLIT_DST} flag.
-	 * <strong>Attention:</strong> Availability depends on: {@code BGFX_CAPS_TEXTURE_BLIT}.
 	 * @param _id View id.
 	 * @param _dst Destination texture region.
 	 * @param _src Source texture region.
@@ -810,7 +805,6 @@ public final class Encoder extends NativeObject {
 	 * <p>
 	 * <strong>Attention:</strong> Destination buffer must be created with {@code BGFX_BUFFER_COMPUTE_WRITE}, or
 	 *   {@code BGFX_BUFFER_DRAW_INDIRECT} flag.
-	 * <strong>Attention:</strong> Availability depends on: {@code BGFX_CAPS_TEXTURE_BLIT}.
 	 * @param _id View id.
 	 * @param _dst Destination buffer region.
 	 * @param _src Source texture region.
@@ -838,7 +832,6 @@ public final class Encoder extends NativeObject {
 	 * <strong>Attention:</strong> Source buffer must be created with one of {@code BGFX_BUFFER_COMPUTE_*}, or
 	 *   {@code BGFX_BUFFER_DRAW_INDIRECT} flags.
 	 * <strong>Attention:</strong> Destination texture must be created with {@code BGFX_TEXTURE_BLIT_DST} flag.
-	 * <strong>Attention:</strong> Availability depends on: {@code BGFX_CAPS_TEXTURE_BLIT}.
 	 * @param _id View id.
 	 * @param _dst Destination texture region.
 	 * @param _src Source buffer region.

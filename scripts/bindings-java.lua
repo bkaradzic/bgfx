@@ -61,31 +61,6 @@ public final class Bgfx {
 
 $native
 
-	/**
-	 * Loads a bgfx shared library and eagerly links all native entry points.
-	 * @param library path to the bgfx shared library
-	 */
-	public static void load(Path library) {
-		FFMUtil.load(library);
-	}
-
-	/**
-	 * Loads a bgfx shared library by platform-dependent name and eagerly links
-	 * all native entry points.
-	 * @param library platform-dependent library name
-	 */
-	public static void load(String library) {
-		FFMUtil.load(library);
-	}
-
-	/**
-	 * Eagerly links all native entry points from libraries already made visible
-	 * through {@link System#load} or {@link System#loadLibrary}.
-	 */
-	public static void link() {
-		FFMUtil.link();
-	}
-
 $funcs
 
 }
@@ -1064,7 +1039,7 @@ end
 
 local function emit_regular_wrapper(func, func_indent, as_method)
 	emit_comments(func, func_indent)
-	local modifier = as_method and "public final " or "public static final "
+	local modifier = as_method and "public final " or "public static "
 	local name = as_method and method_name(func) or camel_name(func.cname)
 	yield(func_indent .. modifier .. java_type(func.ret, "return") .. " " .. name
 		.. "(" .. public_parameters(func, false) .. ") {")
