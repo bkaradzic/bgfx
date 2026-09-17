@@ -418,11 +418,13 @@ namespace bgfx { namespace d3d11
 			, m_numTh(0)
 			, m_numUav(0)
 			, m_needPresent(false)
+			, m_needToRecreateSwapChain(false)
 			, m_needsQuadClear(false)
 			, m_needsQuadClearZero(false)
 			, m_intColor(false)
 		{
 			bx::memSet(&m_desc, 0, sizeof(m_desc) );
+			bx::memSet(&m_descPending, 0, sizeof(m_descPending) );
 			bx::memSet(m_rtv, 0, sizeof(m_rtv) );
 			bx::memSet(m_uav, 0, sizeof(m_uav) );
 			bx::memSet(m_srv, 0, sizeof(m_srv) );
@@ -454,6 +456,7 @@ namespace bgfx { namespace d3d11
 		Dxgi::SwapChainI* m_swapChain;
 		ID3D11Texture2D*  m_msaaRt;
 		SwapChain m_desc;
+		SwapChain m_descPending;
 		void* m_nwh;
 		uint32_t m_width;
 		uint32_t m_height;
@@ -464,6 +467,7 @@ namespace bgfx { namespace d3d11
 		uint8_t m_numTh;
 		uint8_t m_numUav;
 		bool m_needPresent;
+		bool m_needToRecreateSwapChain;
 		bool m_needsQuadClear;
 		bool m_needsQuadClearZero;
 		bool m_intColor;

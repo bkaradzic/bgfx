@@ -5700,6 +5700,8 @@ namespace bgfx { namespace d3d11
 			return;
 		}
 
+		const SwapChain prev = m_desc;
+
 		m_desc = _desc;
 		m_nwh  = _desc.nwh;
 
@@ -5713,10 +5715,19 @@ namespace bgfx { namespace d3d11
 		if (FAILED(hr) )
 		{
 			BX_TRACE("Failed to resize swap chain, hr 0x%08x.", hr);
-			DX_RELEASE(m_swapChain, 0);
-			m_num = 0;
+
+			m_descPending             = _desc;
+			m_needToRecreateSwapChain = true;
+
+			m_desc       = prev;
+			m_desc.depth = _desc.depth;
+
+			createSwapChainViews();
+
 			return;
 		}
+
+		m_needToRecreateSwapChain = false;
 
 		createSwapChainViews();
 	}
@@ -6770,6 +6781,16 @@ namespace bgfx { namespace d3d11
 		if (_render->m_capture)
 		{
 			renderDocTriggerCapture();
+		}
+
+		for (uint32_t ii = 1, num = m_numWindows; ii < num; ++ii)
+		{
+			FrameBufferD3D11& frameBuffer = m_frameBuffers[m_windows[ii].idx];
+
+			if (frameBuffer.m_needToRecreateSwapChain)
+			{
+				frameBuffer.update(frameBuffer.m_descPending);
+			}
 		}
 
 		BGFX_D3D11_PROFILER_BEGIN_LITERAL("rendererSubmit", kColorView);

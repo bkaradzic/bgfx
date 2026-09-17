@@ -516,10 +516,12 @@ namespace bgfx { namespace d3d12
 			, m_numTh(0)
 			, m_state(D3D12_RESOURCE_STATE_PRESENT)
 			, m_needPresent(false)
+			, m_needToRecreateSwapChain(false)
 			, m_frameLatencyWaitableObject(NULL)
 		{
 			m_depth.idx = bgfx::kInvalidHandle;
 			bx::memSet(&m_desc, 0, sizeof(m_desc) );
+			bx::memSet(&m_descPending, 0, sizeof(m_descPending) );
 			bx::memSet(m_backBufferColor, 0, sizeof(m_backBufferColor) );
 		}
 
@@ -548,6 +550,7 @@ namespace bgfx { namespace d3d12
 		Dxgi::SwapChainI* m_swapChain;
 		DXGI_FORMAT m_swapChainFormat;
 		SwapChain m_desc;
+		SwapChain m_descPending;
 		ID3D12Resource* m_backBufferColor[BGFX_CONFIG_MAX_BACK_BUFFERS];
 		ID3D12Resource* m_msaaRt;
 		ID3D12Resource* m_backBufferDepthStencil;
@@ -561,6 +564,7 @@ namespace bgfx { namespace d3d12
 		Attachment m_attachment[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
 		D3D12_RESOURCE_STATES m_state;
 		bool m_needPresent;
+		bool m_needToRecreateSwapChain;
 		void* m_frameLatencyWaitableObject;
 	};
 

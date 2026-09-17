@@ -681,7 +681,9 @@ namespace wgpu {
 			, m_viewFormat(WGPUTextureFormat_Undefined)
 			, m_formatDepthStencil(uint8_t(TextureFormat::Count) )
 			, m_readable(false)
+			, m_needToRecreateSwapChain(false)
 		{
+			bx::memSet(&m_descPending, 0, sizeof(m_descPending) );
 		}
 
 		bool create(void* _nwh, const SwapChain& _desc);
@@ -696,6 +698,7 @@ namespace wgpu {
 
 		void* m_nwh;
 		SwapChain m_desc;
+		SwapChain m_descPending;
 		WGPUSurfaceConfiguration m_surfaceConfig;
 
 		WGPUSurface m_surface;
@@ -708,6 +711,7 @@ namespace wgpu {
 
 		uint8_t m_formatDepthStencil;
 		bool m_readable;
+		bool m_needToRecreateSwapChain;
 	};
 
 	struct FrameBufferWGPU

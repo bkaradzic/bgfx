@@ -3784,6 +3784,8 @@ namespace bgfx { namespace d3d12
 					) );
 			}
 
+			BGFX_FATAL(NULL != pso, Fatal::InvalidShader, "Failed to create compute PSO!");
+
 			m_pipelineStateCache.add(hash, pso);
 
 			ID3DBlob* blob;
@@ -7734,6 +7736,8 @@ namespace bgfx { namespace d3d12
 			return;
 		}
 
+		const SwapChain prev = m_desc;
+
 		m_desc = _desc;
 		m_nwh  = _desc.nwh;
 
@@ -7760,19 +7764,21 @@ namespace bgfx { namespace d3d12
 		{
 			BX_TRACE("Failed to resize swap chain, hr 0x%08x.", hr);
 
-#if !BX_PLATFORM_LINUX
-			if (NULL != m_frameLatencyWaitableObject)
-			{
-				CloseHandle( (HANDLE)m_frameLatencyWaitableObject);
-				m_frameLatencyWaitableObject = NULL;
-			}
-#endif // !BX_PLATFORM_LINUX
+			m_descPending             = _desc;
+			m_needToRecreateSwapChain = true;
 
-			DX_RELEASE(m_swapChain, 0);
-			m_swapChainFormat = DXGI_FORMAT_UNKNOWN;
-			m_num = 0;
+			m_desc       = prev;
+			m_desc.depth = _desc.depth;
+
+			m_state           = D3D12_RESOURCE_STATE_PRESENT;
+			m_swapChainFormat = getSwapChainDesc().format;
+
+			createSwapChainViews();
+
 			return;
 		}
+
+		m_needToRecreateSwapChain = false;
 
 		m_state           = D3D12_RESOURCE_STATE_PRESENT;
 		m_swapChainFormat = scd.format;
@@ -9275,6 +9281,18 @@ namespace bgfx { namespace d3d12
 		{
 			renderDocTriggerCapture();
 		}
+
+#if BX_PLATFORM_WINDOWS
+		for (uint32_t ii = 1, num = m_numWindows; ii < num; ++ii)
+		{
+			FrameBufferD3D12& frameBuffer = m_frameBuffers[m_windows[ii].idx];
+
+			if (frameBuffer.m_needToRecreateSwapChain)
+			{
+				frameBuffer.update(frameBuffer.m_descPending);
+			}
+		}
+#endif // BX_PLATFORM_WINDOWS
 
 		BGFX_D3D12_PROFILER_BEGIN_LITERAL("rendererSubmit", kColorFrame);
 
