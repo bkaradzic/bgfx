@@ -679,6 +679,7 @@ namespace wgpu {
 			, m_msaaTextureView(NULL)
 			, m_depthStencilView(NULL)
 			, m_viewFormat(WGPUTextureFormat_Undefined)
+			, m_formatDepthStencil(uint8_t(TextureFormat::Count) )
 			, m_readable(false)
 		{
 		}
