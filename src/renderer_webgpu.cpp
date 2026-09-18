@@ -2696,6 +2696,7 @@ WGPU_IMPORT
 			||  m_mainSwapChain.height             != _swapChain.height
 			||  m_mainSwapChain.nwh                != _swapChain.nwh
 			||  m_mainSwapChain.ndt                != _swapChain.ndt
+			||  m_mainSwapChain.flags              != _swapChain.flags
 			||  m_reset              != flags
 				)
 			{
