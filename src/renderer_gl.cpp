@@ -4141,7 +4141,8 @@ namespace bgfx { namespace gl
 
 			if (m_srgbWriteControlSupport)
 			{
-				if (0 == m_currentFbo)
+				if (0 == m_currentFbo
+				|| !isValid(_fbh) )
 				{
 					const uint32_t surfaceFlags = isValid(_fbh)
 						? m_frameBuffers[_fbh.idx].m_desc.flags
