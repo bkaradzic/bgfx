@@ -7220,6 +7220,13 @@ WGPU_IMPORT
 
 				if (isCompute)
 				{
+					if (viewChanged
+					&&  NULL != computePassEncoder)
+					{
+						WGPU_CHECK(wgpuComputePassEncoderEnd(computePassEncoder) );
+						wgpuRelease(computePassEncoder);
+					}
+
 					if (NULL == computePassEncoder)
 					{
 						BGFX_WGPU_PROFILER_END();
@@ -7230,6 +7237,12 @@ WGPU_IMPORT
 						{
 							WGPU_CHECK(wgpuRenderPassEncoderEnd(renderPassEncoder) );
 							wgpuRelease(renderPassEncoder);
+						}
+
+						if (viewChanged)
+						{
+							submitUniformCache(ucs, view);
+							submitBlit(bs, view);
 						}
 
 						WGPUCommandEncoder cmdEncoder = m_cmd.alloc();

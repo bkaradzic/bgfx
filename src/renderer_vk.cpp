@@ -3476,8 +3476,12 @@ VK_IMPORT_DEVICE
 						);
 				}
 
+				const bool block = !isValid(_fbh)
+					|| NULL == m_backBuffer.m_swapChain.m_nwh
+					;
+
 				int64_t start = bx::getHPCounter();
-				newFrameBuffer.acquire(m_commandBuffer, !isValid(_fbh) );
+				newFrameBuffer.acquire(m_commandBuffer, block);
 				m_presentElapsed += bx::getHPCounter() - start;
 			}
 
@@ -10776,6 +10780,12 @@ VK_DESTROY
 							vkCmdEndRenderPass(m_commandBuffer);
 							beginRenderPass = false;
 						}
+					}
+
+					if (viewChanged)
+					{
+						submitUniformCache(ucs, view);
+						submitBlit(bs, view);
 					}
 
 					// renderpass external subpass dependencies handle graphics -> compute and compute -> graphics
