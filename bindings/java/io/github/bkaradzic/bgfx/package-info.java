@@ -2,24 +2,28 @@
 // License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
 
 /**
- * Modern Java Foreign Function and Memory API bindings for the bgfx C99 API.
+ * Java Foreign Function and Memory API bindings for the bgfx C99 API.
  * <p>
- * Native entry points are exposed as static methods on {@link io.github.bkaradzic.bgfx.BGFX}.
- * Call {@link io.github.bkaradzic.bgfx.BGFX#load(java.nio.file.Path)},
- * {@link io.github.bkaradzic.bgfx.BGFX#load(String)}, or
- * {@link io.github.bkaradzic.bgfx.BGFX#link()} before invoking them.
+ * Native entry points are exposed through {@link io.github.bkaradzic.bgfx.Bgfx}
+ * and instance methods on native wrappers such as
+ * {@link io.github.bkaradzic.bgfx.Encoder}. Load a compatible bgfx native library
+ * before invoking native methods; symbols are resolved lazily on first use.
  * <p>
  * Native structures can be allocated with
  * constructors accepting a {@link java.lang.foreign.SegmentAllocator}. Their
- * lifetime is governed by the allocator used to create them. Handles are
- * immutable Java records.
+ * backing memory must remain alive for as long as native code uses it. Wrapping
+ * an existing {@link java.lang.foreign.MemorySegment} does not transfer ownership
+ * or extend its lifetime. Handles are immutable Java records; their native
+ * resources have separate lifetimes managed through the bgfx API.
  * <p>
- * This package is null-marked. Java {@code null} is accepted only where a
- * type use is explicitly annotated with
- * {@link org.jspecify.annotations.Nullable}; a native null pointer represented
- * by {@link java.lang.foreign.MemorySegment#NULL} is still a non-null Java value.
+ * A native null pointer represented by
+ * {@link java.lang.foreign.MemorySegment#NULL} is a non-null Java value.
+ * Whether a native argument permits a null pointer is determined by the bgfx
+ * API contract. The IDL does not provide complete nullability metadata, so Java
+ * nullability annotations alone do not establish native pointer requirements.
  */
-@NullMarked
+@NullUnmarked
 package io.github.bkaradzic.bgfx;
 
 import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.NullUnmarked;

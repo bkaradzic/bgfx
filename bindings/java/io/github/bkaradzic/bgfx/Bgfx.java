@@ -23,23 +23,19 @@ import java.nio.file.Path;
 import java.util.Objects;
 
 import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.NullUnmarked;
 import org.jspecify.annotations.Nullable;
 
 import io.github.bkaradzic.bgfx.*;
-import io.github.bkaradzic.bgfx.util.FFMUtil;
-import io.github.bkaradzic.bgfx.util.NativeObject;
-import io.github.bkaradzic.bgfx.util.Unsigned;
+import io.github.bkaradzic.bgfx.util.*;
 import static io.github.bkaradzic.bgfx.Bgfx.*;
 import static io.github.bkaradzic.bgfx.util.FFMUtil.*;
 
 
 /**
  * Java FFM bindings for the bgfx C99 API.
- * <p>
- * Call {@link #load(Path)}, {@link #load(String)}, or {@link #link()} before
- * invoking a native method. Linking resolves every native entry point eagerly.
  */
-@NullMarked
+@NullUnmarked
 @SuppressWarnings("restricted")
 public final class Bgfx {
 

@@ -20,12 +20,11 @@ import java.nio.file.Path;
 import java.util.Objects;
 
 import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.NullUnmarked;
 import org.jspecify.annotations.Nullable;
 
 import ]] .. java_package .. [[.*;
-import ]] .. java_package .. [[.util.FFMUtil;
-import ]] .. java_package .. [[.util.NativeObject;
-import ]] .. java_package .. [[.util.Unsigned;
+import ]] .. java_package .. [[.util.*;
 import static ]] .. java_package .. [[.Bgfx.*;
 import static ]] .. java_package .. [[.util.FFMUtil.*;
 ]]
@@ -48,11 +47,8 @@ package ]] .. java_package .. [[;
 
 /**
  * Java FFM bindings for the bgfx C99 API.
- * <p>
- * Call {@link #load(Path)}, {@link #load(String)}, or {@link #link()} before
- * invoking a native method. Linking resolves every native entry point eagerly.
  */
-@NullMarked
+@NullUnmarked
 @SuppressWarnings("restricted")
 public final class Bgfx {
 
@@ -426,7 +422,7 @@ local function FlagBlock(typ, root_indent)
 			if idx ~= 1 then
 				yield("")
 			end
-			
+
 			emit_javadoc(flag.comment, body_indent)
 		else
 			yield("")

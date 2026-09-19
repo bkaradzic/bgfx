@@ -12,6 +12,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.FutureTask;
 
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
@@ -35,52 +37,81 @@ public final class FFMUtil {
 	public static final ValueLayout C_UINTPTR_T =
 		(ValueLayout) LINKER.canonicalLayouts().get("size_t");
 
-	private FFMUtil() {}
+	private FFMUtil() {
+	}
 
 	private static MemorySegment symbol(String name) {
 		return FFMUtil.LIBRARY_LOOKUP.find(name).orElseThrow(() -> new UnsatisfiedLinkError("Unable to find native symbol " + name));
 	}
 
-
-
 	/**
 	 * Creates a fixed-arity native handle that links on its first invocation.
-	 * @param name native symbol name
+	 *
+	 * @param name       native symbol name
 	 * @param descriptor native function descriptor
 	 * @return a stable handle that resolves its native target on first use
 	 */
-	public static synchronized MethodHandle downcall(String name, FunctionDescriptor descriptor) {
+	public static MethodHandle downcall(String name, FunctionDescriptor descriptor) {
 		Objects.requireNonNull(name, "name");
 		Objects.requireNonNull(descriptor, "descriptor");
+
 		MethodType type = descriptor.toMethodType();
 		if(descriptor.returnLayout().orElse(null) instanceof GroupLayout) {
 			type = type.insertParameterTypes(0, SegmentAllocator.class);
 		}
+
 		MutableCallSite site = new MutableCallSite(type);
+
+		FutureTask<MethodHandle> linkTask = new FutureTask<>(() -> {
+			MethodHandle target = LINKER.downcallHandle(symbol(name), descriptor);
+			site.setTarget(target);
+			MutableCallSite.syncAll(new MutableCallSite[]{site});
+			return target;
+		});
+
 		try {
-			MethodHandle resolver = MethodHandles.lookup().findStatic(FFMUtil.class, "linkDowncall",
-				MethodType.methodType(MethodHandle.class, MutableCallSite.class, String.class, FunctionDescriptor.class));
-			resolver = MethodHandles.insertArguments(resolver, 0, site, name, descriptor);
-			site.setTarget(MethodHandles.collectArguments(MethodHandles.exactInvoker(type), 0, resolver));
+			MethodHandle resolver = MethodHandles.lookup().findStatic(
+				FFMUtil.class,
+				"linkDowncall",
+				MethodType.methodType(MethodHandle.class, FutureTask.class)
+			);
+
+			resolver = MethodHandles.insertArguments(resolver, 0, linkTask);
+
+			site.setTarget(
+				MethodHandles.collectArguments(
+					MethodHandles.exactInvoker(type),
+					0,
+					resolver
+				)
+			);
 		} catch(NoSuchMethodException | IllegalAccessException ex) {
 			throw new ExceptionInInitializerError(ex);
 		}
+
 		return site.dynamicInvoker();
 	}
 
-	private static MethodHandle linkDowncall(MutableCallSite site, String name, FunctionDescriptor descriptor) {
-		MethodHandle target = LINKER.downcallHandle(symbol(name), descriptor);
-		site.setTarget(target);
-		MutableCallSite.syncAll(new MutableCallSite[] {site});
-		return target;
+	private static MethodHandle linkDowncall(FutureTask<MethodHandle> task) throws Throwable {
+		task.run();
+
+		try {
+			return task.get();
+		} catch(InterruptedException ex) {
+			Thread.currentThread().interrupt();
+			throw ex;
+		} catch(ExecutionException ex) {
+			throw ex.getCause();
+		}
 	}
 
 	/**
 	 * Creates a zero-argument handle that resolves a variadic symbol on first use.
+	 *
 	 * @param name native symbol name
 	 * @return a stable handle returning the native symbol address
 	 */
-	public static synchronized MethodHandle variadicSymbol(String name) {
+	public static MethodHandle variadicSymbol(String name) {
 		Objects.requireNonNull(name, "name");
 		MutableCallSite site = new MutableCallSite(MethodType.methodType(MemorySegment.class));
 		try {
@@ -96,12 +127,8 @@ public final class FFMUtil {
 	private static MemorySegment linkVariadicSymbol(MutableCallSite site, String name) {
 		MemorySegment address = symbol(name);
 		site.setTarget(MethodHandles.constant(MemorySegment.class, address));
-		MutableCallSite.syncAll(new MutableCallSite[] {site});
+		MutableCallSite.syncAll(new MutableCallSite[]{site});
 		return address;
-	}
-
-	public static synchronized void link() {
-		throw new UnsupportedOperationException();
 	}
 
 	/**
@@ -154,10 +181,13 @@ public final class FFMUtil {
 				case Float number -> new VarArgValue(ValueLayout.JAVA_DOUBLE, number.doubleValue());
 				case Double v -> new VarArgValue(ValueLayout.JAVA_DOUBLE, v);
 				case String string -> new VarArgValue(ValueLayout.ADDRESS, cString(arena, string));
-				case MemorySegment segment -> new VarArgValue(ValueLayout.ADDRESS, address(segment));
+				case MemorySegment segment ->
+					new VarArgValue(ValueLayout.ADDRESS, address(segment));
 				case NativeObject object -> new VarArgValue(ValueLayout.ADDRESS, address(object));
-				case Enum<?> enumValue -> new VarArgValue(ValueLayout.JAVA_INT, enumValue.ordinal());
-				default -> throw new IllegalArgumentException("Unsupported C variadic argument type: " + argument.getClass().getName());
+				case Enum<?> enumValue ->
+					new VarArgValue(ValueLayout.JAVA_INT, enumValue.ordinal());
+				default ->
+					throw new IllegalArgumentException("Unsupported C variadic argument type: " + argument.getClass().getName());
 			};
 		}
 	}
@@ -301,14 +331,15 @@ public final class FFMUtil {
 	}
 
 	/**
-	 * Allocates a nullable UTF-8 C string.
+	 * Allocates a UTF-8 C string.
 	 *
 	 * @param allocator destination allocator
 	 * @param value     nullable Java string
-	 * @return the allocated C string or {@link MemorySegment#NULL}
+	 * @return the argument {@code value} converted into a UTF-8-encoded, null-terminated {@link MemorySegment}
 	 */
-	public static MemorySegment cString(SegmentAllocator allocator, @Nullable String value) {
-		return value == null ? MemorySegment.NULL : allocator.allocateFrom(value);
+	public static MemorySegment cString(SegmentAllocator allocator, String value) {
+		Objects.requireNonNull(value, "value");
+		return allocator.allocateFrom(value);
 	}
 
 	/**
