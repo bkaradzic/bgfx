@@ -468,9 +468,11 @@ namespace bgfx { namespace d3d12
 		D3D12_RESOURCE_STATES setState(ID3D12GraphicsCommandList* _commandList, D3D12_RESOURCE_STATES _state);
 
 		void setState(ID3D12GraphicsCommandList* _commandList, D3D12_RESOURCE_STATES _state, uint16_t _firstMip, uint16_t _numMips, uint16_t _firstSlice, uint16_t _numSlices);
+		void setPlaneStates(ID3D12GraphicsCommandList* _commandList, D3D12_RESOURCE_STATES _depthState, D3D12_RESOURCE_STATES _stencilState);
 
 		uint32_t getNumSlices() const;
 		uint32_t getNumPtrMips() const;
+		uint32_t getNumPlanes() const;
 		uint32_t getNumSubresources() const;
 
 		bool isMsaaSurface() const;
