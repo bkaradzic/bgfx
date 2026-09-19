@@ -1687,7 +1687,10 @@ namespace bgfx { namespace gl
 		{
 			while (0 == m_control.reserve(1) )
 			{
-				update();
+				if (!update() )
+				{
+					GL_CHECK(glFinish() );
+				}
 			}
 
 			Result& result = m_result[_resultIdx];
@@ -1720,6 +1723,11 @@ namespace bgfx { namespace gl
 			while (update() )
 			{
 			}
+		}
+
+		bool hasPending() const
+		{
+			return 0 != m_control.getNumUsed();
 		}
 
 		bool update()

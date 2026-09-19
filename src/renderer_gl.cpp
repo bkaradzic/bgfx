@@ -3247,6 +3247,17 @@ namespace bgfx { namespace gl
 					m_needPresent = false;
 				}
 			}
+
+			if (m_needPresent)
+			{
+				return;
+			}
+
+			if (m_timerQuerySupport
+			&&  m_gpuTimer.hasPending() )
+			{
+				GL_CHECK(glFinish() );
+			}
 		}
 
 		void createIndexBuffer(IndexBufferHandle _handle, const Memory* _mem, uint16_t _flags) override
