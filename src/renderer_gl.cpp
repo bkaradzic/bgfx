@@ -6008,6 +6008,7 @@ namespace bgfx { namespace gl
 		m_currentSamplerHash = UINT32_MAX;
 		m_baseLevel = 0;
 		m_maxLevel  = -1;
+		m_immutableStorage = false;
 
 		const bool writeOnly    = 0 != (m_flags&BGFX_TEXTURE_RT_WRITE_ONLY);
 		const bool computeWrite = 0 != (m_flags&BGFX_TEXTURE_COMPUTE_WRITE );
@@ -6513,7 +6514,8 @@ namespace bgfx { namespace gl
 								) );
 						}
 					}
-					else if (!computeWrite)
+					else if (!computeWrite
+					     &&  !m_immutableStorage)
 					{
 						if (compressed
 						&& !convert)
