@@ -2905,6 +2905,12 @@ namespace bgfx
 
 		bx::swap(m_render, m_submit);
 
+		for (uint16_t ii = 0, num = m_numNewOcclusionQueryHandles; ii < num; ++ii)
+		{
+			m_submit->m_occlusion[m_newOcclusionQueryHandle[ii].idx] = INT32_MIN;
+		}
+		m_numNewOcclusionQueryHandles = 0;
+
 		bx::memCopy(m_render->m_occlusion, m_submit->m_occlusion, sizeof(m_submit->m_occlusion) );
 
 		if (!BX_ENABLED(BGFX_CONFIG_MULTITHREADED)

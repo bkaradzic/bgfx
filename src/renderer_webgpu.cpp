@@ -3821,6 +3821,8 @@ WGPU_IMPORT
 			const bool isSwapChain = _fb.isSwapChain();
 
 			_murmur.add(isSwapChain);
+			_murmur.add(_fb.m_readOnlyDepth);
+			_murmur.add(_fb.m_readOnlyStencil);
 
 			if (isSwapChain)
 			{
@@ -3840,8 +3842,6 @@ WGPU_IMPORT
 
 			_murmur.add(NULL != _fb.m_depthStencilView);
 			_murmur.add(_fb.m_formatDepthStencil);
-			_murmur.add(_fb.m_readOnlyDepth);
-			_murmur.add(_fb.m_readOnlyStencil);
 		}
 
 		void setDepthStencilState(WGPUDepthStencilState& _outDepthStencilState, TextureFormat::Enum _format, uint64_t _state, uint64_t _stencil, bool _readOnlyDepth, bool _readOnlyStencil, int32_t _depthBias = 0, float _slopeScale = 0.0f, float _biasClamp = 0.0f)
@@ -5738,6 +5738,9 @@ WGPU_IMPORT
 	{
 		m_width  = bx::max(_desc.width,  1);
 		m_height = bx::max(_desc.height, 1);
+
+		m_readOnlyDepth   = false;
+		m_readOnlyStencil = false;
 
 		const bool result = m_swapChain.create(_desc.nwh, _desc);
 		m_formatDepthStencil = m_swapChain.m_formatDepthStencil;
