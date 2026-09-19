@@ -724,8 +724,11 @@ namespace wgpu {
 			, m_denseIdx(kInvalidHandle)
 			, m_numColorAttachments(0)
 			, m_numAttachments(0)
+			, m_width(0)
+			, m_height(0)
 			, m_msaaCount(1)
 			, m_needPresent(false)
+			, m_needResolve(false)
 		{
 		}
 
