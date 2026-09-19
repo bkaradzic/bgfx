@@ -3454,7 +3454,7 @@ WGPU_IMPORT
 
 			if (NULL != depthStencilTextureView)
 			{
-				setDepthStencilState(depthStencilState, formatDepthStencil, _state, _stencil, _depthBias, _slopeScale, _biasClamp);
+				setDepthStencilState(depthStencilState, formatDepthStencil, _state, _stencil, fb.m_readOnlyDepth, fb.m_readOnlyStencil, _depthBias, _slopeScale, _biasClamp);
 			}
 			else
 			{
@@ -3840,9 +3840,11 @@ WGPU_IMPORT
 
 			_murmur.add(NULL != _fb.m_depthStencilView);
 			_murmur.add(_fb.m_formatDepthStencil);
+			_murmur.add(_fb.m_readOnlyDepth);
+			_murmur.add(_fb.m_readOnlyStencil);
 		}
 
-		void setDepthStencilState(WGPUDepthStencilState& _outDepthStencilState, TextureFormat::Enum _format, uint64_t _state, uint64_t _stencil, int32_t _depthBias = 0, float _slopeScale = 0.0f, float _biasClamp = 0.0f)
+		void setDepthStencilState(WGPUDepthStencilState& _outDepthStencilState, TextureFormat::Enum _format, uint64_t _state, uint64_t _stencil, bool _readOnlyDepth, bool _readOnlyStencil, int32_t _depthBias = 0, float _slopeScale = 0.0f, float _biasClamp = 0.0f)
 		{
 			if (!hasStencil(_format) )
 			{
@@ -3851,7 +3853,7 @@ WGPU_IMPORT
 
 			_stencil = !stencilEnabled(_stencil) ? kStencilDisabled : _stencil;
 
-			const uint8_t  writeMask = unpackStencilWriteMask(_stencil);
+			const uint8_t  writeMask = _readOnlyStencil ? 0 : unpackStencilWriteMask(_stencil);
 			const uint32_t fstencil = unpackStencil(0, _stencil);
 			const uint32_t frontAndBack = stencilFrontAndBack(_stencil);
 			      uint32_t bstencil = frontAndBack ? unpackStencil(1, _stencil) : fstencil;
@@ -3864,7 +3866,7 @@ WGPU_IMPORT
 			{
 				.nextInChain       = NULL,
 				.format            = s_textureFormat[_format].m_fmt,
-				.depthWriteEnabled = WGPUOptionalBool(depthRw && !!(BGFX_STATE_WRITE_Z & _state) ),
+				.depthWriteEnabled = WGPUOptionalBool(depthRw && !_readOnlyDepth && !!(BGFX_STATE_WRITE_Z & _state) ),
 				.depthCompare      = depthRw ? s_cmpFunc[func] : WGPUCompareFunction_Always,
 				.stencilFront =
 				{

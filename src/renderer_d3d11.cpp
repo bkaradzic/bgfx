@@ -5555,7 +5555,12 @@ namespace bgfx { namespace d3d11
 	{
 		ID3D11DeviceContext* deviceCtx = s_renderD3D11->m_deviceCtx;
 
-		const bool needResolve = NULL != m_rt;
+		const bx::EncodingType::Enum encoding = bx::EncodingType::Enum(bimg::getBlockInfo(bimg::TextureFormat::Enum(m_textureFormat) ).encoding);
+		const bool resolvable = bx::EncodingType::Int  != encoding
+			&&                  bx::EncodingType::Uint != encoding
+			;
+
+		const bool needResolve = NULL != m_rt && resolvable;
 		if (needResolve)
 		{
 			const DXGI_FORMAT resolveFormat = bimg::isDepth(bimg::TextureFormat::Enum(m_textureFormat) )
