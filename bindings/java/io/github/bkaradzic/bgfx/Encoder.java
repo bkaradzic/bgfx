@@ -114,6 +114,20 @@ public final class Encoder extends NativeObject {
 	}
 
 	/**
+	 * Set multisample coverage mask for draw primitive. Samples whose bit is clear
+	 * in the mask are never written, regardless of the coverage the rasterizer
+	 * computes. Only has an effect when rendering to a multisampled target.
+	 * @param _mask Sample coverage mask.
+	 */
+	public final void setSampleMask(@Unsigned int _mask) {
+		try {
+			MH_ENCODER_SET_SAMPLE_MASK.invokeExact(segment(), _mask);
+		} catch (Throwable ex) {
+			throw invocationFailure(ex);
+		}
+	}
+
+	/**
 	 * Set scissor for draw primitive.
 	 * <p>
 	 * <strong>Remarks:</strong> 
@@ -142,6 +156,35 @@ public final class Encoder extends NativeObject {
 	public final void setScissorCached(@Unsigned short _cache) {
 		try {
 			MH_ENCODER_SET_SCISSOR_CACHED.invokeExact(segment(), _cache);
+		} catch (Throwable ex) {
+			throw invocationFailure(ex);
+		}
+	}
+
+	/**
+	 * Set depth control (depth bias and depth clip) for draw primitive. Overrides the
+	 * view depth bias for this draw.
+	 * @param _constant Constant depth bias.
+	 * @param _slopeScale Slope-scaled depth bias.
+	 * @param _clamp Depth bias clamp.
+	 * @param _depthClamp Disable depth clipping and clamp NDC depth to the [0,1] range instead.
+	 * @return Depth control cache index.
+	 */
+	public final @Unsigned short setDepthControl(int _constant, float _slopeScale, float _clamp, boolean _depthClamp) {
+		try {
+			return (@Unsigned short) MH_ENCODER_SET_DEPTH_CONTROL.invokeExact(segment(), _constant, _slopeScale, _clamp, _depthClamp);
+		} catch (Throwable ex) {
+			throw invocationFailure(ex);
+		}
+	}
+
+	/**
+	 * Set depth control from depth-control cache for draw primitive.
+	 * @param _cache Index in depth control cache.
+	 */
+	public final void setDepthControlCached(@Unsigned short _cache) {
+		try {
+			MH_ENCODER_SET_DEPTH_CONTROL_CACHED.invokeExact(segment(), _cache);
 		} catch (Throwable ex) {
 			throw invocationFailure(ex);
 		}
@@ -201,6 +244,25 @@ public final class Encoder extends NativeObject {
 		try {
 			try (Arena arena = Arena.ofConfined()) {
 				MH_ENCODER_SET_UNIFORM.invokeExact(segment(), _handle.allocate(arena), address(_value), _num);
+			}
+		} catch (Throwable ex) {
+			throw invocationFailure(ex);
+		}
+	}
+
+	/**
+	 * Set shader uniform parameter by reference. Unlike {@code Encoder.setUniform}, the data
+	 * is not copied immediately; the renderer reads it from {@code _value} at frame render
+	 * time. The pointer must remain valid and unchanged until the frame is rendered
+	 * (up to two {@code frame} calls with multithreaded submission).
+	 * @param _handle Uniform.
+	 * @param _value Pointer to uniform data. Must stay valid until the frame is rendered.
+	 * @param _num Number of elements. Passing {@code UINT16_MAX} will use the _num passed on uniform creation.
+	 */
+	public final void setUniformRef(UniformHandle _handle, MemorySegment _value, @Unsigned short _num) {
+		try {
+			try (Arena arena = Arena.ofConfined()) {
+				MH_ENCODER_SET_UNIFORM_REF.invokeExact(segment(), _handle.allocate(arena), address(_value), _num);
 			}
 		} catch (Throwable ex) {
 			throw invocationFailure(ex);
@@ -573,11 +635,13 @@ public final class Encoder extends NativeObject {
 	 * @param _stage Compute stage.
 	 * @param _handle Index buffer handle.
 	 * @param _access Buffer access. See {@code Access}.
+	 * @param _offset Byte offset the shader's view of the buffer starts at. Must be a multiple of 256 bytes.
+	 * @param _size Bytes bound from the offset, {@code UINT32_MAX} for the rest of the buffer.
 	 */
-	public final void setComputeIndexBuffer(@Unsigned byte _stage, IndexBufferHandle _handle, Access _access) {
+	public final void setComputeIndexBuffer(@Unsigned byte _stage, IndexBufferHandle _handle, Access _access, @Unsigned int _offset, @Unsigned int _size) {
 		try {
 			try (Arena arena = Arena.ofConfined()) {
-				MH_ENCODER_SET_COMPUTE_INDEX_BUFFER.invokeExact(segment(), _stage, _handle.allocate(arena), _access.ordinal());
+				MH_ENCODER_SET_COMPUTE_INDEX_BUFFER.invokeExact(segment(), _stage, _handle.allocate(arena), _access.ordinal(), _offset, _size);
 			}
 		} catch (Throwable ex) {
 			throw invocationFailure(ex);
@@ -589,11 +653,13 @@ public final class Encoder extends NativeObject {
 	 * @param _stage Compute stage.
 	 * @param _handle Vertex buffer handle.
 	 * @param _access Buffer access. See {@code Access}.
+	 * @param _offset Byte offset the shader's view of the buffer starts at. Must be a multiple of 256 bytes.
+	 * @param _size Bytes bound from the offset, {@code UINT32_MAX} for the rest of the buffer.
 	 */
-	public final void setComputeVertexBuffer(@Unsigned byte _stage, VertexBufferHandle _handle, Access _access) {
+	public final void setComputeVertexBuffer(@Unsigned byte _stage, VertexBufferHandle _handle, Access _access, @Unsigned int _offset, @Unsigned int _size) {
 		try {
 			try (Arena arena = Arena.ofConfined()) {
-				MH_ENCODER_SET_COMPUTE_VERTEX_BUFFER.invokeExact(segment(), _stage, _handle.allocate(arena), _access.ordinal());
+				MH_ENCODER_SET_COMPUTE_VERTEX_BUFFER.invokeExact(segment(), _stage, _handle.allocate(arena), _access.ordinal(), _offset, _size);
 			}
 		} catch (Throwable ex) {
 			throw invocationFailure(ex);
@@ -605,11 +671,13 @@ public final class Encoder extends NativeObject {
 	 * @param _stage Compute stage.
 	 * @param _handle Dynamic index buffer handle.
 	 * @param _access Buffer access. See {@code Access}.
+	 * @param _offset Byte offset the shader's view of the buffer starts at. Must be a multiple of 256 bytes.
+	 * @param _size Bytes bound from the offset, {@code UINT32_MAX} for the rest of the buffer.
 	 */
-	public final void setComputeDynamicIndexBuffer(@Unsigned byte _stage, DynamicIndexBufferHandle _handle, Access _access) {
+	public final void setComputeDynamicIndexBuffer(@Unsigned byte _stage, DynamicIndexBufferHandle _handle, Access _access, @Unsigned int _offset, @Unsigned int _size) {
 		try {
 			try (Arena arena = Arena.ofConfined()) {
-				MH_ENCODER_SET_COMPUTE_DYNAMIC_INDEX_BUFFER.invokeExact(segment(), _stage, _handle.allocate(arena), _access.ordinal());
+				MH_ENCODER_SET_COMPUTE_DYNAMIC_INDEX_BUFFER.invokeExact(segment(), _stage, _handle.allocate(arena), _access.ordinal(), _offset, _size);
 			}
 		} catch (Throwable ex) {
 			throw invocationFailure(ex);
@@ -621,11 +689,13 @@ public final class Encoder extends NativeObject {
 	 * @param _stage Compute stage.
 	 * @param _handle Dynamic vertex buffer handle.
 	 * @param _access Buffer access. See {@code Access}.
+	 * @param _offset Byte offset the shader's view of the buffer starts at. Must be a multiple of 256 bytes.
+	 * @param _size Bytes bound from the offset, {@code UINT32_MAX} for the rest of the buffer.
 	 */
-	public final void setComputeDynamicVertexBuffer(@Unsigned byte _stage, DynamicVertexBufferHandle _handle, Access _access) {
+	public final void setComputeDynamicVertexBuffer(@Unsigned byte _stage, DynamicVertexBufferHandle _handle, Access _access, @Unsigned int _offset, @Unsigned int _size) {
 		try {
 			try (Arena arena = Arena.ofConfined()) {
-				MH_ENCODER_SET_COMPUTE_DYNAMIC_VERTEX_BUFFER.invokeExact(segment(), _stage, _handle.allocate(arena), _access.ordinal());
+				MH_ENCODER_SET_COMPUTE_DYNAMIC_VERTEX_BUFFER.invokeExact(segment(), _stage, _handle.allocate(arena), _access.ordinal(), _offset, _size);
 			}
 		} catch (Throwable ex) {
 			throw invocationFailure(ex);

@@ -32,14 +32,14 @@ import static io.github.bkaradzic.bgfx.Bgfx.*;
 import static io.github.bkaradzic.bgfx.util.FFMUtil.*;
 
 /**
- * Constants for Resolve flags.
+ * Constants for Attachment flags.
  */
 @NullMarked
-public final class ResolveFlags {
-	private ResolveFlags() {
+public final class AttachmentFlags {
+	private AttachmentFlags() {
 	}
 	/**
-	 * No resolve flags.
+	 * No attachment flags.
 	 */
 	public static final int None = 0x00000000;
 
@@ -47,4 +47,23 @@ public final class ResolveFlags {
 	 * Auto-generate mip maps on resolve.
 	 */
 	public static final int AutoGenMips = 0x00000001;
+
+	/**
+	 * Bind the depth aspect read-only (read-only depth-stencil view) so the
+	 * attachment can be sampled as a texture in the same pass.
+	 */
+	public static final int ReadOnlyDepth = 0x00000002;
+
+	/**
+	 * Bind the stencil aspect read-only.
+	 */
+	public static final int ReadOnlyStencil = 0x00000004;
+
+	/**
+	 * Render with sRGB conversion; absence of this flag renders without
+	 * it. Only affects textures created {@code BGFX_TEXTURE_SRGB_MUTABLE},
+	 * which must state the encoding explicitly on every attachment;
+	 * ignored for any other texture.
+	 */
+	public static final int Srgb = 0x00000008;
 }

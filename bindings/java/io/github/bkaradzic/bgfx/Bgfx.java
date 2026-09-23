@@ -255,11 +255,15 @@ public final class Bgfx {
 	static final MethodHandle MH_SET_VIEW_NAME = downcall(
 		"bgfx_set_view_name", FunctionDescriptor.ofVoid(ValueLayout.JAVA_SHORT, ValueLayout.ADDRESS, ValueLayout.JAVA_INT));
 	static final MethodHandle MH_SET_VIEW_RECT = downcall(
-		"bgfx_set_view_rect", FunctionDescriptor.ofVoid(ValueLayout.JAVA_SHORT, ValueLayout.JAVA_SHORT, ValueLayout.JAVA_SHORT, ValueLayout.JAVA_SHORT, ValueLayout.JAVA_SHORT));
+		"bgfx_set_view_rect", FunctionDescriptor.ofVoid(ValueLayout.JAVA_SHORT, ValueLayout.JAVA_SHORT, ValueLayout.JAVA_SHORT, ValueLayout.JAVA_SHORT, ValueLayout.JAVA_SHORT, ValueLayout.JAVA_FLOAT, ValueLayout.JAVA_FLOAT));
 	static final MethodHandle MH_SET_VIEW_RECT_RATIO = downcall(
 		"bgfx_set_view_rect_ratio", FunctionDescriptor.ofVoid(ValueLayout.JAVA_SHORT, ValueLayout.JAVA_SHORT, ValueLayout.JAVA_SHORT, ValueLayout.JAVA_INT));
 	static final MethodHandle MH_SET_VIEW_SCISSOR = downcall(
 		"bgfx_set_view_scissor", FunctionDescriptor.ofVoid(ValueLayout.JAVA_SHORT, ValueLayout.JAVA_SHORT, ValueLayout.JAVA_SHORT, ValueLayout.JAVA_SHORT, ValueLayout.JAVA_SHORT));
+	static final MethodHandle MH_SET_VIEW_DEPTH_BIAS = downcall(
+		"bgfx_set_view_depth_bias", FunctionDescriptor.ofVoid(ValueLayout.JAVA_SHORT, ValueLayout.JAVA_INT, ValueLayout.JAVA_FLOAT, ValueLayout.JAVA_FLOAT));
+	static final MethodHandle MH_SET_VIEW_SAMPLE_MASK = downcall(
+		"bgfx_set_view_sample_mask", FunctionDescriptor.ofVoid(ValueLayout.JAVA_SHORT, ValueLayout.JAVA_INT));
 	static final MethodHandle MH_SET_VIEW_CLEAR = downcall(
 		"bgfx_set_view_clear", FunctionDescriptor.ofVoid(ValueLayout.JAVA_SHORT, ValueLayout.JAVA_SHORT, ValueLayout.JAVA_INT, ValueLayout.JAVA_FLOAT, ValueLayout.JAVA_BYTE));
 	static final MethodHandle MH_SET_VIEW_CLEAR_MRT = downcall(
@@ -288,10 +292,16 @@ public final class Bgfx {
 		"bgfx_encoder_set_condition", FunctionDescriptor.ofVoid(ValueLayout.ADDRESS, OcclusionQueryHandle.LAYOUT, ValueLayout.JAVA_BOOLEAN));
 	static final MethodHandle MH_ENCODER_SET_STENCIL = downcall(
 		"bgfx_encoder_set_stencil", FunctionDescriptor.ofVoid(ValueLayout.ADDRESS, ValueLayout.JAVA_INT, ValueLayout.JAVA_INT));
+	static final MethodHandle MH_ENCODER_SET_SAMPLE_MASK = downcall(
+		"bgfx_encoder_set_sample_mask", FunctionDescriptor.ofVoid(ValueLayout.ADDRESS, ValueLayout.JAVA_INT));
 	static final MethodHandle MH_ENCODER_SET_SCISSOR = downcall(
 		"bgfx_encoder_set_scissor", FunctionDescriptor.of(ValueLayout.JAVA_SHORT, ValueLayout.ADDRESS, ValueLayout.JAVA_SHORT, ValueLayout.JAVA_SHORT, ValueLayout.JAVA_SHORT, ValueLayout.JAVA_SHORT));
 	static final MethodHandle MH_ENCODER_SET_SCISSOR_CACHED = downcall(
 		"bgfx_encoder_set_scissor_cached", FunctionDescriptor.ofVoid(ValueLayout.ADDRESS, ValueLayout.JAVA_SHORT));
+	static final MethodHandle MH_ENCODER_SET_DEPTH_CONTROL = downcall(
+		"bgfx_encoder_set_depth_control", FunctionDescriptor.of(ValueLayout.JAVA_SHORT, ValueLayout.ADDRESS, ValueLayout.JAVA_INT, ValueLayout.JAVA_FLOAT, ValueLayout.JAVA_FLOAT, ValueLayout.JAVA_BOOLEAN));
+	static final MethodHandle MH_ENCODER_SET_DEPTH_CONTROL_CACHED = downcall(
+		"bgfx_encoder_set_depth_control_cached", FunctionDescriptor.ofVoid(ValueLayout.ADDRESS, ValueLayout.JAVA_SHORT));
 	static final MethodHandle MH_ENCODER_SET_TRANSFORM = downcall(
 		"bgfx_encoder_set_transform", FunctionDescriptor.of(ValueLayout.JAVA_INT, ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.JAVA_SHORT));
 	static final MethodHandle MH_ENCODER_SET_TRANSFORM_CACHED = downcall(
@@ -300,6 +310,8 @@ public final class Bgfx {
 		"bgfx_encoder_alloc_transform", FunctionDescriptor.of(ValueLayout.JAVA_INT, ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.JAVA_SHORT));
 	static final MethodHandle MH_ENCODER_SET_UNIFORM = downcall(
 		"bgfx_encoder_set_uniform", FunctionDescriptor.ofVoid(ValueLayout.ADDRESS, UniformHandle.LAYOUT, ValueLayout.ADDRESS, ValueLayout.JAVA_SHORT));
+	static final MethodHandle MH_ENCODER_SET_UNIFORM_REF = downcall(
+		"bgfx_encoder_set_uniform_ref", FunctionDescriptor.ofVoid(ValueLayout.ADDRESS, UniformHandle.LAYOUT, ValueLayout.ADDRESS, ValueLayout.JAVA_SHORT));
 	static final MethodHandle MH_SET_VIEW_UNIFORM = downcall(
 		"bgfx_set_view_uniform", FunctionDescriptor.ofVoid(ValueLayout.JAVA_SHORT, UniformHandle.LAYOUT, ValueLayout.ADDRESS, ValueLayout.JAVA_SHORT));
 	static final MethodHandle MH_SET_FRAME_UNIFORM = downcall(
@@ -347,13 +359,13 @@ public final class Bgfx {
 	static final MethodHandle MH_ENCODER_SUBMIT_INDIRECT_COUNT = downcall(
 		"bgfx_encoder_submit_indirect_count", FunctionDescriptor.ofVoid(ValueLayout.ADDRESS, ValueLayout.JAVA_SHORT, ProgramHandle.LAYOUT, IndirectBufferHandle.LAYOUT, ValueLayout.JAVA_INT, IndexBufferHandle.LAYOUT, ValueLayout.JAVA_INT, ValueLayout.JAVA_INT, ValueLayout.JAVA_INT, ValueLayout.JAVA_BYTE));
 	static final MethodHandle MH_ENCODER_SET_COMPUTE_INDEX_BUFFER = downcall(
-		"bgfx_encoder_set_compute_index_buffer", FunctionDescriptor.ofVoid(ValueLayout.ADDRESS, ValueLayout.JAVA_BYTE, IndexBufferHandle.LAYOUT, ValueLayout.JAVA_INT));
+		"bgfx_encoder_set_compute_index_buffer", FunctionDescriptor.ofVoid(ValueLayout.ADDRESS, ValueLayout.JAVA_BYTE, IndexBufferHandle.LAYOUT, ValueLayout.JAVA_INT, ValueLayout.JAVA_INT, ValueLayout.JAVA_INT));
 	static final MethodHandle MH_ENCODER_SET_COMPUTE_VERTEX_BUFFER = downcall(
-		"bgfx_encoder_set_compute_vertex_buffer", FunctionDescriptor.ofVoid(ValueLayout.ADDRESS, ValueLayout.JAVA_BYTE, VertexBufferHandle.LAYOUT, ValueLayout.JAVA_INT));
+		"bgfx_encoder_set_compute_vertex_buffer", FunctionDescriptor.ofVoid(ValueLayout.ADDRESS, ValueLayout.JAVA_BYTE, VertexBufferHandle.LAYOUT, ValueLayout.JAVA_INT, ValueLayout.JAVA_INT, ValueLayout.JAVA_INT));
 	static final MethodHandle MH_ENCODER_SET_COMPUTE_DYNAMIC_INDEX_BUFFER = downcall(
-		"bgfx_encoder_set_compute_dynamic_index_buffer", FunctionDescriptor.ofVoid(ValueLayout.ADDRESS, ValueLayout.JAVA_BYTE, DynamicIndexBufferHandle.LAYOUT, ValueLayout.JAVA_INT));
+		"bgfx_encoder_set_compute_dynamic_index_buffer", FunctionDescriptor.ofVoid(ValueLayout.ADDRESS, ValueLayout.JAVA_BYTE, DynamicIndexBufferHandle.LAYOUT, ValueLayout.JAVA_INT, ValueLayout.JAVA_INT, ValueLayout.JAVA_INT));
 	static final MethodHandle MH_ENCODER_SET_COMPUTE_DYNAMIC_VERTEX_BUFFER = downcall(
-		"bgfx_encoder_set_compute_dynamic_vertex_buffer", FunctionDescriptor.ofVoid(ValueLayout.ADDRESS, ValueLayout.JAVA_BYTE, DynamicVertexBufferHandle.LAYOUT, ValueLayout.JAVA_INT));
+		"bgfx_encoder_set_compute_dynamic_vertex_buffer", FunctionDescriptor.ofVoid(ValueLayout.ADDRESS, ValueLayout.JAVA_BYTE, DynamicVertexBufferHandle.LAYOUT, ValueLayout.JAVA_INT, ValueLayout.JAVA_INT, ValueLayout.JAVA_INT));
 	static final MethodHandle MH_ENCODER_SET_COMPUTE_INDIRECT_BUFFER = downcall(
 		"bgfx_encoder_set_compute_indirect_buffer", FunctionDescriptor.ofVoid(ValueLayout.ADDRESS, ValueLayout.JAVA_BYTE, IndirectBufferHandle.LAYOUT, ValueLayout.JAVA_INT));
 	static final MethodHandle MH_ENCODER_SET_IMAGE = downcall(
@@ -388,10 +400,16 @@ public final class Bgfx {
 		"bgfx_set_condition", FunctionDescriptor.ofVoid(OcclusionQueryHandle.LAYOUT, ValueLayout.JAVA_BOOLEAN));
 	static final MethodHandle MH_SET_STENCIL = downcall(
 		"bgfx_set_stencil", FunctionDescriptor.ofVoid(ValueLayout.JAVA_INT, ValueLayout.JAVA_INT));
+	static final MethodHandle MH_SET_SAMPLE_MASK = downcall(
+		"bgfx_set_sample_mask", FunctionDescriptor.ofVoid(ValueLayout.JAVA_INT));
 	static final MethodHandle MH_SET_SCISSOR = downcall(
 		"bgfx_set_scissor", FunctionDescriptor.of(ValueLayout.JAVA_SHORT, ValueLayout.JAVA_SHORT, ValueLayout.JAVA_SHORT, ValueLayout.JAVA_SHORT, ValueLayout.JAVA_SHORT));
 	static final MethodHandle MH_SET_SCISSOR_CACHED = downcall(
 		"bgfx_set_scissor_cached", FunctionDescriptor.ofVoid(ValueLayout.JAVA_SHORT));
+	static final MethodHandle MH_SET_DEPTH_CONTROL = downcall(
+		"bgfx_set_depth_control", FunctionDescriptor.of(ValueLayout.JAVA_SHORT, ValueLayout.JAVA_INT, ValueLayout.JAVA_FLOAT, ValueLayout.JAVA_FLOAT, ValueLayout.JAVA_BOOLEAN));
+	static final MethodHandle MH_SET_DEPTH_CONTROL_CACHED = downcall(
+		"bgfx_set_depth_control_cached", FunctionDescriptor.ofVoid(ValueLayout.JAVA_SHORT));
 	static final MethodHandle MH_SET_TRANSFORM = downcall(
 		"bgfx_set_transform", FunctionDescriptor.of(ValueLayout.JAVA_INT, ValueLayout.ADDRESS, ValueLayout.JAVA_SHORT));
 	static final MethodHandle MH_SET_TRANSFORM_CACHED = downcall(
@@ -400,6 +418,8 @@ public final class Bgfx {
 		"bgfx_alloc_transform", FunctionDescriptor.of(ValueLayout.JAVA_INT, ValueLayout.ADDRESS, ValueLayout.JAVA_SHORT));
 	static final MethodHandle MH_SET_UNIFORM = downcall(
 		"bgfx_set_uniform", FunctionDescriptor.ofVoid(UniformHandle.LAYOUT, ValueLayout.ADDRESS, ValueLayout.JAVA_SHORT));
+	static final MethodHandle MH_SET_UNIFORM_REF = downcall(
+		"bgfx_set_uniform_ref", FunctionDescriptor.ofVoid(UniformHandle.LAYOUT, ValueLayout.ADDRESS, ValueLayout.JAVA_SHORT));
 	static final MethodHandle MH_SET_INDEX_BUFFER = downcall(
 		"bgfx_set_index_buffer", FunctionDescriptor.ofVoid(IndexBufferHandle.LAYOUT, ValueLayout.JAVA_INT, ValueLayout.JAVA_INT));
 	static final MethodHandle MH_SET_DYNAMIC_INDEX_BUFFER = downcall(
@@ -443,13 +463,13 @@ public final class Bgfx {
 	static final MethodHandle MH_SUBMIT_INDIRECT_COUNT = downcall(
 		"bgfx_submit_indirect_count", FunctionDescriptor.ofVoid(ValueLayout.JAVA_SHORT, ProgramHandle.LAYOUT, IndirectBufferHandle.LAYOUT, ValueLayout.JAVA_INT, IndexBufferHandle.LAYOUT, ValueLayout.JAVA_INT, ValueLayout.JAVA_INT, ValueLayout.JAVA_INT, ValueLayout.JAVA_BYTE));
 	static final MethodHandle MH_SET_COMPUTE_INDEX_BUFFER = downcall(
-		"bgfx_set_compute_index_buffer", FunctionDescriptor.ofVoid(ValueLayout.JAVA_BYTE, IndexBufferHandle.LAYOUT, ValueLayout.JAVA_INT));
+		"bgfx_set_compute_index_buffer", FunctionDescriptor.ofVoid(ValueLayout.JAVA_BYTE, IndexBufferHandle.LAYOUT, ValueLayout.JAVA_INT, ValueLayout.JAVA_INT, ValueLayout.JAVA_INT));
 	static final MethodHandle MH_SET_COMPUTE_VERTEX_BUFFER = downcall(
-		"bgfx_set_compute_vertex_buffer", FunctionDescriptor.ofVoid(ValueLayout.JAVA_BYTE, VertexBufferHandle.LAYOUT, ValueLayout.JAVA_INT));
+		"bgfx_set_compute_vertex_buffer", FunctionDescriptor.ofVoid(ValueLayout.JAVA_BYTE, VertexBufferHandle.LAYOUT, ValueLayout.JAVA_INT, ValueLayout.JAVA_INT, ValueLayout.JAVA_INT));
 	static final MethodHandle MH_SET_COMPUTE_DYNAMIC_INDEX_BUFFER = downcall(
-		"bgfx_set_compute_dynamic_index_buffer", FunctionDescriptor.ofVoid(ValueLayout.JAVA_BYTE, DynamicIndexBufferHandle.LAYOUT, ValueLayout.JAVA_INT));
+		"bgfx_set_compute_dynamic_index_buffer", FunctionDescriptor.ofVoid(ValueLayout.JAVA_BYTE, DynamicIndexBufferHandle.LAYOUT, ValueLayout.JAVA_INT, ValueLayout.JAVA_INT, ValueLayout.JAVA_INT));
 	static final MethodHandle MH_SET_COMPUTE_DYNAMIC_VERTEX_BUFFER = downcall(
-		"bgfx_set_compute_dynamic_vertex_buffer", FunctionDescriptor.ofVoid(ValueLayout.JAVA_BYTE, DynamicVertexBufferHandle.LAYOUT, ValueLayout.JAVA_INT));
+		"bgfx_set_compute_dynamic_vertex_buffer", FunctionDescriptor.ofVoid(ValueLayout.JAVA_BYTE, DynamicVertexBufferHandle.LAYOUT, ValueLayout.JAVA_INT, ValueLayout.JAVA_INT, ValueLayout.JAVA_INT));
 	static final MethodHandle MH_SET_COMPUTE_INDIRECT_BUFFER = downcall(
 		"bgfx_set_compute_indirect_buffer", FunctionDescriptor.ofVoid(ValueLayout.JAVA_BYTE, IndirectBufferHandle.LAYOUT, ValueLayout.JAVA_INT));
 	static final MethodHandle MH_SET_IMAGE = downcall(
@@ -2129,10 +2149,12 @@ public final class Bgfx {
 	 * @param _y Position y from the top corner of the window. Can be negative to place view origin outside of the window.
 	 * @param _width Width of view port region.
 	 * @param _height Height of view port region.
+	 * @param _minDepth Viewport minimum depth (maps clip-space z=0).
+	 * @param _maxDepth Viewport maximum depth (maps clip-space z=1).
 	 */
-	public static void setViewRect(short _id, short _x, short _y, @Unsigned short _width, @Unsigned short _height) {
+	public static void setViewRect(short _id, short _x, short _y, @Unsigned short _width, @Unsigned short _height, float _minDepth, float _maxDepth) {
 		try {
-			MH_SET_VIEW_RECT.invokeExact(_id, _x, _y, _width, _height);
+			MH_SET_VIEW_RECT.invokeExact(_id, _x, _y, _width, _height, _minDepth, _maxDepth);
 		} catch (Throwable ex) {
 			throw invocationFailure(ex);
 		}
@@ -2165,6 +2187,36 @@ public final class Bgfx {
 	public static void setViewScissor(short _id, @Unsigned short _x, @Unsigned short _y, @Unsigned short _width, @Unsigned short _height) {
 		try {
 			MH_SET_VIEW_SCISSOR.invokeExact(_id, _x, _y, _width, _height);
+		} catch (Throwable ex) {
+			throw invocationFailure(ex);
+		}
+	}
+
+	/**
+	 * Set view depth bias. Applies to all draws in the view unless overridden per-draw
+	 * with {@code setDepthControl}.
+	 * @param _id View id.
+	 * @param _constant Constant depth bias.
+	 * @param _slopeScale Slope-scaled depth bias.
+	 * @param _clamp Depth bias clamp.
+	 */
+	public static void setViewDepthBias(short _id, int _constant, float _slopeScale, float _clamp) {
+		try {
+			MH_SET_VIEW_DEPTH_BIAS.invokeExact(_id, _constant, _slopeScale, _clamp);
+		} catch (Throwable ex) {
+			throw invocationFailure(ex);
+		}
+	}
+
+	/**
+	 * Set view multisample coverage mask. Combined with the per-draw mask set by
+	 * {@code setSampleMask}, so a draw can narrow the view's mask but not widen it.
+	 * @param _id View id.
+	 * @param _mask Sample coverage mask.
+	 */
+	public static void setViewSampleMask(short _id, @Unsigned int _mask) {
+		try {
+			MH_SET_VIEW_SAMPLE_MASK.invokeExact(_id, _mask);
 		} catch (Throwable ex) {
 			throw invocationFailure(ex);
 		}
@@ -2552,6 +2604,20 @@ public final class Bgfx {
 	}
 
 	/**
+	 * Set multisample coverage mask for draw primitive. Samples whose bit is clear
+	 * in the mask are never written, regardless of the coverage the rasterizer
+	 * computes. Only has an effect when rendering to a multisampled target.
+	 * @param _mask Sample coverage mask.
+	 */
+	public static void setSampleMask(@Unsigned int _mask) {
+		try {
+			MH_SET_SAMPLE_MASK.invokeExact(_mask);
+		} catch (Throwable ex) {
+			throw invocationFailure(ex);
+		}
+	}
+
+	/**
 	 * Set scissor for draw primitive.
 	 * <p>
 	 * <strong>Remarks:</strong> 
@@ -2580,6 +2646,35 @@ public final class Bgfx {
 	public static void setScissorCached(@Unsigned short _cache) {
 		try {
 			MH_SET_SCISSOR_CACHED.invokeExact(_cache);
+		} catch (Throwable ex) {
+			throw invocationFailure(ex);
+		}
+	}
+
+	/**
+	 * Set depth control (depth bias and depth clip) for draw primitive. Overrides the
+	 * view depth bias for this draw.
+	 * @param _constant Constant depth bias.
+	 * @param _slopeScale Slope-scaled depth bias.
+	 * @param _clamp Depth bias clamp.
+	 * @param _depthClamp Disable depth clipping and clamp NDC depth to the [0,1] range instead.
+	 * @return Depth control cache index.
+	 */
+	public static @Unsigned short setDepthControl(int _constant, float _slopeScale, float _clamp, boolean _depthClamp) {
+		try {
+			return (@Unsigned short) MH_SET_DEPTH_CONTROL.invokeExact(_constant, _slopeScale, _clamp, _depthClamp);
+		} catch (Throwable ex) {
+			throw invocationFailure(ex);
+		}
+	}
+
+	/**
+	 * Set depth control from depth-control cache for draw primitive.
+	 * @param _cache Index in depth control cache.
+	 */
+	public static void setDepthControlCached(@Unsigned short _cache) {
+		try {
+			MH_SET_DEPTH_CONTROL_CACHED.invokeExact(_cache);
 		} catch (Throwable ex) {
 			throw invocationFailure(ex);
 		}
@@ -2639,6 +2734,25 @@ public final class Bgfx {
 		try {
 			try (Arena arena = Arena.ofConfined()) {
 				MH_SET_UNIFORM.invokeExact(_handle.allocate(arena), address(_value), _num);
+			}
+		} catch (Throwable ex) {
+			throw invocationFailure(ex);
+		}
+	}
+
+	/**
+	 * Set shader uniform parameter by reference. Unlike {@code setUniform}, the data
+	 * is not copied immediately; the renderer reads it from {@code _value} at frame render
+	 * time. The pointer must remain valid and unchanged until the frame is rendered
+	 * (up to two {@code frame} calls with multithreaded submission).
+	 * @param _handle Uniform.
+	 * @param _value Pointer to uniform data. Must stay valid until the frame is rendered.
+	 * @param _num Number of elements. Passing {@code UINT16_MAX} will use the _num passed on uniform creation.
+	 */
+	public static void setUniformRef(UniformHandle _handle, MemorySegment _value, @Unsigned short _num) {
+		try {
+			try (Arena arena = Arena.ofConfined()) {
+				MH_SET_UNIFORM_REF.invokeExact(_handle.allocate(arena), address(_value), _num);
 			}
 		} catch (Throwable ex) {
 			throw invocationFailure(ex);
@@ -3009,11 +3123,13 @@ public final class Bgfx {
 	 * @param _stage Compute stage.
 	 * @param _handle Index buffer handle.
 	 * @param _access Buffer access. See {@code Access}.
+	 * @param _offset Byte offset the shader's view of the buffer starts at. Must be a multiple of 256 bytes.
+	 * @param _size Bytes bound from the offset, {@code UINT32_MAX} for the rest of the buffer.
 	 */
-	public static void setComputeIndexBuffer(@Unsigned byte _stage, IndexBufferHandle _handle, Access _access) {
+	public static void setComputeIndexBuffer(@Unsigned byte _stage, IndexBufferHandle _handle, Access _access, @Unsigned int _offset, @Unsigned int _size) {
 		try {
 			try (Arena arena = Arena.ofConfined()) {
-				MH_SET_COMPUTE_INDEX_BUFFER.invokeExact(_stage, _handle.allocate(arena), _access.ordinal());
+				MH_SET_COMPUTE_INDEX_BUFFER.invokeExact(_stage, _handle.allocate(arena), _access.ordinal(), _offset, _size);
 			}
 		} catch (Throwable ex) {
 			throw invocationFailure(ex);
@@ -3025,11 +3141,13 @@ public final class Bgfx {
 	 * @param _stage Compute stage.
 	 * @param _handle Vertex buffer handle.
 	 * @param _access Buffer access. See {@code Access}.
+	 * @param _offset Byte offset the shader's view of the buffer starts at. Must be a multiple of 256 bytes.
+	 * @param _size Bytes bound from the offset, {@code UINT32_MAX} for the rest of the buffer.
 	 */
-	public static void setComputeVertexBuffer(@Unsigned byte _stage, VertexBufferHandle _handle, Access _access) {
+	public static void setComputeVertexBuffer(@Unsigned byte _stage, VertexBufferHandle _handle, Access _access, @Unsigned int _offset, @Unsigned int _size) {
 		try {
 			try (Arena arena = Arena.ofConfined()) {
-				MH_SET_COMPUTE_VERTEX_BUFFER.invokeExact(_stage, _handle.allocate(arena), _access.ordinal());
+				MH_SET_COMPUTE_VERTEX_BUFFER.invokeExact(_stage, _handle.allocate(arena), _access.ordinal(), _offset, _size);
 			}
 		} catch (Throwable ex) {
 			throw invocationFailure(ex);
@@ -3041,11 +3159,13 @@ public final class Bgfx {
 	 * @param _stage Compute stage.
 	 * @param _handle Dynamic index buffer handle.
 	 * @param _access Buffer access. See {@code Access}.
+	 * @param _offset Byte offset the shader's view of the buffer starts at. Must be a multiple of 256 bytes.
+	 * @param _size Bytes bound from the offset, {@code UINT32_MAX} for the rest of the buffer.
 	 */
-	public static void setComputeDynamicIndexBuffer(@Unsigned byte _stage, DynamicIndexBufferHandle _handle, Access _access) {
+	public static void setComputeDynamicIndexBuffer(@Unsigned byte _stage, DynamicIndexBufferHandle _handle, Access _access, @Unsigned int _offset, @Unsigned int _size) {
 		try {
 			try (Arena arena = Arena.ofConfined()) {
-				MH_SET_COMPUTE_DYNAMIC_INDEX_BUFFER.invokeExact(_stage, _handle.allocate(arena), _access.ordinal());
+				MH_SET_COMPUTE_DYNAMIC_INDEX_BUFFER.invokeExact(_stage, _handle.allocate(arena), _access.ordinal(), _offset, _size);
 			}
 		} catch (Throwable ex) {
 			throw invocationFailure(ex);
@@ -3057,11 +3177,13 @@ public final class Bgfx {
 	 * @param _stage Compute stage.
 	 * @param _handle Dynamic vertex buffer handle.
 	 * @param _access Buffer access. See {@code Access}.
+	 * @param _offset Byte offset the shader's view of the buffer starts at. Must be a multiple of 256 bytes.
+	 * @param _size Bytes bound from the offset, {@code UINT32_MAX} for the rest of the buffer.
 	 */
-	public static void setComputeDynamicVertexBuffer(@Unsigned byte _stage, DynamicVertexBufferHandle _handle, Access _access) {
+	public static void setComputeDynamicVertexBuffer(@Unsigned byte _stage, DynamicVertexBufferHandle _handle, Access _access, @Unsigned int _offset, @Unsigned int _size) {
 		try {
 			try (Arena arena = Arena.ofConfined()) {
-				MH_SET_COMPUTE_DYNAMIC_VERTEX_BUFFER.invokeExact(_stage, _handle.allocate(arena), _access.ordinal());
+				MH_SET_COMPUTE_DYNAMIC_VERTEX_BUFFER.invokeExact(_stage, _handle.allocate(arena), _access.ordinal(), _offset, _size);
 			}
 		} catch (Throwable ex) {
 			throw invocationFailure(ex);

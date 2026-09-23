@@ -249,6 +249,14 @@ public final class SamplerFlags {
 	public static final int SampleStencil = 0x00100000;
 
 	/**
+	 * Sample with sRGB conversion; absence of this flag samples
+	 * without it. Only affects textures created
+	 * {@code BGFX_TEXTURE_SRGB_MUTABLE}, which must state the encoding
+	 * explicitly on every bind; ignored for any other texture.
+	 */
+	public static final int Srgb = 0x00200000;
+
+	/**
 	 * Sampler flag value {@code Point}.
 	 */
 	public static final int Point = 0x00000540;

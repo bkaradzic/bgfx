@@ -80,6 +80,16 @@ public final class TextureFlags {
 	public static final long ExternalShared = 0x0001000000000000L;
 
 	/**
+	 * Texture may be sampled and rendered with either sRGB-ness,
+	 * not just the one implied by its format. Every bind and
+	 * attachment must then state the encoding it wants (see
+	 * {@code BGFX_SAMPLER_SRGB}, {@code BGFX_ATTACHMENT_SRGB}). Costs nothing
+	 * until used, but may disable texture compression on some
+	 * hardware.
+	 */
+	public static final long SrgbMutable = 0x0040000000000000L;
+
+	/**
 	 * Texture flag value {@code ReservedShift}.
 	 */
 	public static final long ReservedShift = 60;

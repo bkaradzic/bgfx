@@ -45,7 +45,7 @@ public final class Attachment extends NativeObject {
 		ValueLayout.JAVA_SHORT.withName("mip"),
 		ValueLayout.JAVA_SHORT.withName("layer"),
 		ValueLayout.JAVA_SHORT.withName("numLayers"),
-		ValueLayout.JAVA_BYTE.withName("resolve"));
+		ValueLayout.JAVA_BYTE.withName("flags"));
 	private static final VarHandle VH_ACCESS = LAYOUT.varHandle(
 		MemoryLayout.PathElement.groupElement("access"));
 	private static final MethodHandle MH_HANDLE = LAYOUT.sliceHandle(
@@ -56,8 +56,8 @@ public final class Attachment extends NativeObject {
 		MemoryLayout.PathElement.groupElement("layer"));
 	private static final VarHandle VH_NUMLAYERS = LAYOUT.varHandle(
 		MemoryLayout.PathElement.groupElement("numLayers"));
-	private static final VarHandle VH_RESOLVE = LAYOUT.varHandle(
-		MemoryLayout.PathElement.groupElement("resolve"));
+	private static final VarHandle VH_FLAGS = LAYOUT.varHandle(
+		MemoryLayout.PathElement.groupElement("flags"));
 	/**
 	 * Wraps an existing native structure.
 	 * @param segment native memory segment
@@ -184,28 +184,28 @@ public final class Attachment extends NativeObject {
 	}
 
 	/**
-	 * Resolve flags. See: {@code BGFX_RESOLVE_*}
+	 * Attachment flags. See: {@code BGFX_ATTACHMENT_*}
 	 * @return the field value
 	 */
-	public @Unsigned byte resolve() {
-		return (@Unsigned byte) VH_RESOLVE.get(segment(), 0L);
+	public @Unsigned byte flags() {
+		return (@Unsigned byte) VH_FLAGS.get(segment(), 0L);
 	}
 
 	/**
-	 * Sets the native {@code resolve} field and returns {@code this}.
+	 * Sets the native {@code flags} field and returns {@code this}.
 	 * @param value the new field value
 	 */
-	public Attachment resolve(@Unsigned byte value) {
-		VH_RESOLVE.set(segment(), 0L, value);
+	public Attachment flags(@Unsigned byte value) {
+		VH_FLAGS.set(segment(), 0L, value);
 		return this;
 	}
 
 	/**
-	 * Sets the native {@code resolve} field and returns {@code this}.
+	 * Sets the native {@code flags} field and returns {@code this}.
 	 * @param value the new field value
 	 */
-	public Attachment resolve(int value) {
-		return resolve(NativeObject.toUnsignedByte(value));
+	public Attachment flags(int value) {
+		return flags(NativeObject.toUnsignedByte(value));
 	}
 
 	/**
@@ -215,12 +215,12 @@ public final class Attachment extends NativeObject {
 	 * @param _layer Cubemap side or depth layer/slice to use.
 	 * @param _numLayers Number of texture layer/slice(s) in array to use.
 	 * @param _mip Mip level.
-	 * @param _resolve Resolve flags. See: {@code BGFX_RESOLVE_*}
+	 * @param _flags Attachment flags. See: {@code BGFX_ATTACHMENT_*}
 	 */
-	public final void init(TextureHandle _handle, Access _access, @Unsigned short _layer, @Unsigned short _numLayers, @Unsigned short _mip, @Unsigned byte _resolve) {
+	public final void init(TextureHandle _handle, Access _access, @Unsigned short _layer, @Unsigned short _numLayers, @Unsigned short _mip, @Unsigned byte _flags) {
 		try {
 			try (Arena arena = Arena.ofConfined()) {
-				MH_ATTACHMENT_INIT.invokeExact(segment(), _handle.allocate(arena), _access.ordinal(), _layer, _numLayers, _mip, _resolve);
+				MH_ATTACHMENT_INIT.invokeExact(segment(), _handle.allocate(arena), _access.ordinal(), _layer, _numLayers, _mip, _flags);
 			}
 		} catch (Throwable ex) {
 			throw invocationFailure(ex);

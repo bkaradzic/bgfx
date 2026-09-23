@@ -120,11 +120,6 @@ public final class ResetFlags {
 	public static final int Hidpi = 0x00020000;
 
 	/**
-	 * Enable depth clamp.
-	 */
-	public static final int DepthClamp = 0x00040000;
-
-	/**
 	 * Suspend rendering.
 	 */
 	public static final int Suspend = 0x00080000;
