@@ -123,14 +123,6 @@ public final class VideoDecoderFrame extends NativeObject {
 	}
 
 	/**
-	 * Sets the native {@code bitstream} field and returns {@code this}.
-	 * @param value the new field value
-	 */
-	public VideoDecoderFrame bitstream(int value) {
-		return bitstream(NativeObject.toUnsignedByte(value));
-	}
-
-	/**
 	 * Per-AU size and PTS array. NULL when {@code numAus == 0}.
 	 * @return the field value
 	 */

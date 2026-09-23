@@ -132,14 +132,6 @@ public final class VideoDecoderInit extends NativeObject {
 	}
 
 	/**
-	 * Sets the native {@code parameterSets} field and returns {@code this}.
-	 * @param value the new field value
-	 */
-	public VideoDecoderInit parameterSets(int value) {
-		return parameterSets(NativeObject.toUnsignedByte(value));
-	}
-
-	/**
 	 * Parameter sets size in bytes.
 	 * @return the field value
 	 */

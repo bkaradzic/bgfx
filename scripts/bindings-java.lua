@@ -802,7 +802,8 @@ local function emit_member_accessor(typ, member, body_indent)
 	yield(body_indent .. "\treturn this;")
 	yield(body_indent .. "}")
 
-	if primitive and (primitive.plain == "byte" or primitive.plain == "short") then
+	if details.pointers == 0 and primitive
+		and (primitive.plain == "byte" or primitive.plain == "short") then
 		yield("")
 		emit_javadoc(setter_javadoc, body_indent,
 			{ { name = "value", text = "the new field value" } })

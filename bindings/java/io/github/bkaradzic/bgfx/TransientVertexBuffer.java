@@ -92,14 +92,6 @@ public final class TransientVertexBuffer extends NativeObject {
 	}
 
 	/**
-	 * Sets the native {@code data} field and returns {@code this}.
-	 * @param value the new field value
-	 */
-	public TransientVertexBuffer data(int value) {
-		return data(NativeObject.toUnsignedByte(value));
-	}
-
-	/**
 	 * Data size.
 	 * @return the field value
 	 */
