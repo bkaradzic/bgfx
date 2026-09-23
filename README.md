@@ -451,11 +451,11 @@ their codenames. Simple to explain, easy to understand, challenging gameplay.
 
 ## PeakFinder
 
-https://www.peakfinder.org/ - PeakFinder shows the names of all mountains and
-peaks with a 360° panorama display. More than 850'000 peaks - from Mount Everest
+https://www.peakfinder.com/ - PeakFinder shows the names of all mountains and
+peaks with a 360° panorama display. More than 1.000'000 peaks - from Mount Everest
 to the little hill around the corner.
 
-![PeakFinder screenshot](https://pfweb-c125.kxcdn.com/videos/mobile/manual/v4/light/en/peakfinder-trecime.jpg)
+![PeakFinder screenshot](https://www.peakfinder.com/images/v1/peakfinder-trecime.jpg)
 
 ## Ember Sword
 
@@ -723,6 +723,12 @@ visual identity of the original Harbi2 while bringing the game to desktop and
 mobile platforms.
 
 ![Harbi2 screenshot](https://h2mb.b-cdn.net/image.webp)
+
+## METAL GEAR SOLID 4: Guns of the Patriots
+
+https://store.steampowered.com/app/2492670/METAL_GEAR_SOLID_4_Guns_of_the_Patriots__Master_Collection_Version/ 2026 remaster of the 2008 action-adventure stealth video game.
+
+<img width="1800" height="1013" alt="mgs4_cover" src="https://github.com/user-attachments/assets/cea9ec8a-f71b-4bf9-b826-0be898ca8658" />
 
 [License (BSD 2-clause)](https://bkaradzic.github.io/bgfx/license.html)
 -----------------------------------------------------------------------

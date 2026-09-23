@@ -148,6 +148,10 @@ namespace bgfx
 						float frect[4];
 						frect[0] = 1.0f/float(m_rect.m_width);
 						frect[1] = 1.0f/float(m_rect.m_height);
+						// .zw = the view's viewport depth range [minDepth, maxDepth], for
+						// shaders that clamp a written depth (WebGPU @builtin(frag_depth)).
+						frect[2] = _frame->m_view[_view].m_minDepth;
+						frect[3] = _frame->m_view[_view].m_maxDepth;
 
 						_renderer->setShaderUniform4f(flags
 							, predefined.m_loc

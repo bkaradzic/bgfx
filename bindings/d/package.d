@@ -9,7 +9,7 @@ import bindbc.common.types: c_int64, c_uint64, va_list;
 import bindbc.bgfx.config;
 static import bgfx.impl;
 
-enum uint apiVersion = 159;
+enum uint apiVersion = 161;
 
 alias ViewID = ushort;
 
@@ -312,6 +312,15 @@ enum Texture: Texture_{
 	blitDst         = 0x0000_4000_0000_0000, ///Texture will be used as blit destination.
 	readBack        = 0x0000_8000_0000_0000, ///Texture will be used for read back from GPU.
 	externalShared  = 0x0001_0000_0000_0000, ///Texture is shared with other device or other process.
+	/**
+	Texture may be sampled and rendered with either sRGB-ness,
+	not just the one implied by its format. Every bind and
+	attachment must then state the encoding it wants (see
+	`BGFX_SAMPLER_SRGB`, `BGFX_ATTACHMENT_SRGB`). Costs nothing
+	until used, but may disable texture compression on some
+	hardware.
+	*/
+	srgbMutable     = 0x0040_0000_0000_0000,
 }
 
 ///Do not use! Top nibble is reserved for internal texture flags (see bgfx_p.h).
@@ -422,6 +431,13 @@ alias Sampler_ = uint;
 enum Sampler: Sampler_{
 	none           = 0x0000_0000,
 	sampleStencil  = 0x0010_0000, ///Sample stencil instead of depth.
+	/**
+	Sample with sRGB conversion; absence of this flag samples
+	without it. Only affects textures created
+	`BGFX_TEXTURE_SRGB_MUTABLE`, which must state the encoding
+	explicitly on every bind; ignored for any other texture.
+	*/
+	srgb           = 0x0020_0000,
 	point          = SamplerMin.point | SamplerMag.point | SamplerMIP.point,
 	uvwMirror      = SamplerU.mirror | SamplerV.mirror | SamplerW.mirror,
 	uvwClamp       = SamplerU.clamp | SamplerV.clamp | SamplerW.clamp,
@@ -455,7 +471,6 @@ enum Reset: Reset_{
 	srgbBackbuffer         = 0x0000_8000, ///Enable sRGB backbuffer.
 	hdr10                  = 0x0001_0000, ///Enable HDR10 rendering.
 	hiDPI                  = 0x0002_0000, ///Enable HiDPI rendering.
-	depthClamp             = 0x0004_0000, ///Enable depth clamp.
 	suspend                = 0x0008_0000, ///Suspend rendering.
 	transparentBackbuffer  = 0x0010_0000, ///Transparent backbuffer. Availability depends on: `BGFX_CAPS_TRANSPARENT_BACKBUFFER`.
 }
@@ -601,10 +616,23 @@ enum VideoDecodeFrame: VideoDecodeFrame_{
 	loop    = 0x08,
 }
 
-alias Resolve_ = ubyte;
-enum Resolve: Resolve_{
-	none         = 0x00, ///No resolve flags.
-	autoGenMIPs  = 0x01, ///Auto-generate mip maps on resolve.
+alias Attachment_ = ubyte;
+enum Attachment: Attachment_{
+	none             = 0x00, ///No attachment flags.
+	autoGenMIPs      = 0x01, ///Auto-generate mip maps on resolve.
+	/**
+	Bind the depth aspect read-only (read-only depth-stencil view) so the
+	attachment can be sampled as a texture in the same pass.
+	*/
+	readOnlyDepth    = 0x02,
+	readOnlyStencil  = 0x04, ///Bind the stencil aspect read-only.
+	/**
+	Render with sRGB conversion; absence of this flag renders without
+	it. Only affects textures created `BGFX_TEXTURE_SRGB_MUTABLE`,
+	which must state the encoding explicitly on every attachment;
+	ignored for any other texture.
+	*/
+	srgb             = 0x08,
 }
 
 alias PCIID_ = ushort;
@@ -1644,7 +1672,7 @@ extern(C++, "bgfx") struct Attachment{
 	ushort mip; ///Mip level.
 	ushort layer; ///Cubemap side or depth layer/slice to use.
 	ushort numLayers; ///Number of texture layer/slice(s) in array to use.
-	ubyte resolve; ///Resolve flags. See: `BGFX_RESOLVE_*`
+	ubyte flags; ///Attachment flags. See: `BGFX_ATTACHMENT_*`
 	extern(D) mixin(joinFnBinds((){
 		FnBind[] ret = [
 			/**
@@ -1655,9 +1683,9 @@ extern(C++, "bgfx") struct Attachment{
 				layer = Cubemap side or depth layer/slice to use.
 				numLayers = Number of texture layer/slice(s) in array to use.
 				mip = Mip level.
-				resolve = Resolve flags. See: `BGFX_RESOLVE_*`
+				flags = Attachment flags. See: `BGFX_ATTACHMENT_*`
 			*/
-			{q{void}, q{init}, q{TextureHandle handle, bgfx.impl.Access.Enum access=Access.write, ushort layer=0, ushort numLayers=1, ushort mip=0, ubyte resolve=Resolve.autoGenMIPs}, ext: `C++`},
+			{q{void}, q{init}, q{TextureHandle handle, bgfx.impl.Access.Enum access=Access.write, ushort layer=0, ushort numLayers=1, ushort mip=0, ubyte flags=Attachment.autoGenMIPs}, ext: `C++`},
 		];
 		return ret;
 	}()));
@@ -1876,6 +1904,15 @@ extern(C++, "bgfx") struct Encoder{
 			{q{void}, q{setStencil}, q{uint fStencil, uint bStencil=Stencil.none}, ext: `C++`},
 			
 			/**
+			Set multisample coverage mask for draw primitive. Samples whose bit is clear
+			in the mask are never written, regardless of the coverage the rasterizer
+			computes. Only has an effect when rendering to a multisampled target.
+			Params:
+				mask = Sample coverage mask.
+			*/
+			{q{void}, q{setSampleMask}, q{uint mask=uint.max}, ext: `C++`},
+			
+			/**
 			Set scissor for draw primitive.
 			
 			Remarks:
@@ -1899,6 +1936,24 @@ extern(C++, "bgfx") struct Encoder{
 				cache = Index in scissor cache.
 			*/
 			{q{void}, q{setScissor}, q{ushort cache=ushort.max}, ext: `C++`},
+			
+			/**
+			Set depth control (depth bias and depth clip) for draw primitive. Overrides the
+			view depth bias for this draw.
+			Params:
+				constant = Constant depth bias.
+				slopeScale = Slope-scaled depth bias.
+				clamp = Depth bias clamp.
+				depthClamp = Disable depth clipping and clamp NDC depth to the [0,1] range instead.
+			*/
+			{q{ushort}, q{setDepthControl}, q{int constant, float slopeScale, float clamp=0.0f, bool depthClamp=false}, ext: `C++`},
+			
+			/**
+			Set depth control from depth-control cache for draw primitive.
+			Params:
+				cache = Index in depth control cache.
+			*/
+			{q{void}, q{setDepthControl}, q{ushort cache=ushort.max}, ext: `C++`},
 			
 			/**
 			Set model matrix for draw primitive. If it is not called,
@@ -1937,6 +1992,19 @@ extern(C++, "bgfx") struct Encoder{
 			use the _num passed on uniform creation.
 			*/
 			{q{void}, q{setUniform}, q{UniformHandle handle, const(void)* value, ushort num=1}, ext: `C++`},
+			
+			/**
+			Set shader uniform parameter by reference. Unlike `Encoder::setUniform`, the data
+			is not copied immediately; the renderer reads it from `_value` at frame render
+			time. The pointer must remain valid and unchanged until the frame is rendered
+			(up to two `bgfx::frame` calls with multithreaded submission).
+			Params:
+				handle = Uniform.
+				value = Pointer to uniform data. Must stay valid until the frame is rendered.
+				num = Number of elements. Passing `UINT16_MAX` will
+			use the _num passed on uniform creation.
+			*/
+			{q{void}, q{setUniformRef}, q{UniformHandle handle, const(void)* value, ushort num=ushort.max}, ext: `C++`},
 			
 			/**
 			Set index buffer for draw primitive.
@@ -2216,8 +2284,11 @@ extern(C++, "bgfx") struct Encoder{
 				stage = Compute stage.
 				handle = Index buffer handle.
 				access = Buffer access. See `Access::Enum`.
+				offset = Byte offset the shader's view of the buffer starts at.
+			Must be a multiple of 256 bytes.
+				size = Bytes bound from the offset, `UINT32_MAX` for the rest of the buffer.
 			*/
-			{q{void}, q{setBuffer}, q{ubyte stage, IndexBufferHandle handle, bgfx.impl.Access.Enum access}, ext: `C++`},
+			{q{void}, q{setBuffer}, q{ubyte stage, IndexBufferHandle handle, bgfx.impl.Access.Enum access, uint offset=0, uint size=uint.max}, ext: `C++`},
 			
 			/**
 			Set compute vertex buffer.
@@ -2225,8 +2296,11 @@ extern(C++, "bgfx") struct Encoder{
 				stage = Compute stage.
 				handle = Vertex buffer handle.
 				access = Buffer access. See `Access::Enum`.
+				offset = Byte offset the shader's view of the buffer starts at.
+			Must be a multiple of 256 bytes.
+				size = Bytes bound from the offset, `UINT32_MAX` for the rest of the buffer.
 			*/
-			{q{void}, q{setBuffer}, q{ubyte stage, VertexBufferHandle handle, bgfx.impl.Access.Enum access}, ext: `C++`},
+			{q{void}, q{setBuffer}, q{ubyte stage, VertexBufferHandle handle, bgfx.impl.Access.Enum access, uint offset=0, uint size=uint.max}, ext: `C++`},
 			
 			/**
 			Set compute dynamic index buffer.
@@ -2234,8 +2308,11 @@ extern(C++, "bgfx") struct Encoder{
 				stage = Compute stage.
 				handle = Dynamic index buffer handle.
 				access = Buffer access. See `Access::Enum`.
+				offset = Byte offset the shader's view of the buffer starts at.
+			Must be a multiple of 256 bytes.
+				size = Bytes bound from the offset, `UINT32_MAX` for the rest of the buffer.
 			*/
-			{q{void}, q{setBuffer}, q{ubyte stage, DynamicIndexBufferHandle handle, bgfx.impl.Access.Enum access}, ext: `C++`},
+			{q{void}, q{setBuffer}, q{ubyte stage, DynamicIndexBufferHandle handle, bgfx.impl.Access.Enum access, uint offset=0, uint size=uint.max}, ext: `C++`},
 			
 			/**
 			Set compute dynamic vertex buffer.
@@ -2243,8 +2320,11 @@ extern(C++, "bgfx") struct Encoder{
 				stage = Compute stage.
 				handle = Dynamic vertex buffer handle.
 				access = Buffer access. See `Access::Enum`.
+				offset = Byte offset the shader's view of the buffer starts at.
+			Must be a multiple of 256 bytes.
+				size = Bytes bound from the offset, `UINT32_MAX` for the rest of the buffer.
 			*/
-			{q{void}, q{setBuffer}, q{ubyte stage, DynamicVertexBufferHandle handle, bgfx.impl.Access.Enum access}, ext: `C++`},
+			{q{void}, q{setBuffer}, q{ubyte stage, DynamicVertexBufferHandle handle, bgfx.impl.Access.Enum access, uint offset=0, uint size=uint.max}, ext: `C++`},
 			
 			/**
 			Set compute indirect buffer.
@@ -3596,8 +3676,10 @@ mixin(joinFnBinds((){
 		negative to place view origin outside of the window.
 			width = Width of view port region.
 			height = Height of view port region.
+			minDepth = Viewport minimum depth (maps clip-space z=0).
+			maxDepth = Viewport maximum depth (maps clip-space z=1).
 		*/
-		{q{void}, q{setViewRect}, q{ViewID id, short x, short y, ushort width, ushort height}, ext: `C++, "bgfx"`},
+		{q{void}, q{setViewRect}, q{ViewID id, short x, short y, ushort width, ushort height, float minDepth=0.0f, float maxDepth=1.0f}, ext: `C++, "bgfx"`},
 		
 		/**
 		* Set view rectangle. Draw primitive outside view will be clipped.
@@ -3623,6 +3705,26 @@ mixin(joinFnBinds((){
 			height = Height of view scissor region.
 		*/
 		{q{void}, q{setViewScissor}, q{ViewID id, ushort x=0, ushort y=0, ushort width=0, ushort height=0}, ext: `C++, "bgfx"`},
+		
+		/**
+		* Set view depth bias. Applies to all draws in the view unless overridden per-draw
+		* with `bgfx::setDepthControl`.
+		Params:
+			id = View id.
+			constant = Constant depth bias.
+			slopeScale = Slope-scaled depth bias.
+			clamp = Depth bias clamp.
+		*/
+		{q{void}, q{setViewDepthBias}, q{ViewID id, int constant=0, float slopeScale=0.0f, float clamp=0.0f}, ext: `C++, "bgfx"`},
+		
+		/**
+		* Set view multisample coverage mask. Combined with the per-draw mask set by
+		* `bgfx::setSampleMask`, so a draw can narrow the view's mask but not widen it.
+		Params:
+			id = View id.
+			mask = Sample coverage mask.
+		*/
+		{q{void}, q{setViewSampleMask}, q{ViewID id, uint mask=uint.max}, ext: `C++, "bgfx"`},
 		
 		/**
 		* Set view clear flags.
@@ -3926,6 +4028,15 @@ mixin(joinFnBinds((){
 		{q{void}, q{setStencil}, q{uint fStencil, uint bStencil=Stencil.none}, ext: `C++, "bgfx"`},
 		
 		/**
+		* Set multisample coverage mask for draw primitive. Samples whose bit is clear
+		* in the mask are never written, regardless of the coverage the rasterizer
+		* computes. Only has an effect when rendering to a multisampled target.
+		Params:
+			mask = Sample coverage mask.
+		*/
+		{q{void}, q{setSampleMask}, q{uint mask=uint.max}, ext: `C++, "bgfx"`},
+		
+		/**
 		* Set scissor for draw primitive.
 		* 
 		* Remarks:
@@ -3949,6 +4060,24 @@ mixin(joinFnBinds((){
 			cache = Index in scissor cache.
 		*/
 		{q{void}, q{setScissor}, q{ushort cache=ushort.max}, ext: `C++, "bgfx"`},
+		
+		/**
+		* Set depth control (depth bias and depth clip) for draw primitive. Overrides the
+		* view depth bias for this draw.
+		Params:
+			constant = Constant depth bias.
+			slopeScale = Slope-scaled depth bias.
+			clamp = Depth bias clamp.
+			depthClamp = Disable depth clipping and clamp NDC depth to the [0,1] range instead.
+		*/
+		{q{ushort}, q{setDepthControl}, q{int constant, float slopeScale, float clamp=0.0f, bool depthClamp=false}, ext: `C++, "bgfx"`},
+		
+		/**
+		* Set depth control from depth-control cache for draw primitive.
+		Params:
+			cache = Index in depth control cache.
+		*/
+		{q{void}, q{setDepthControl}, q{ushort cache=ushort.max}, ext: `C++, "bgfx"`},
 		
 		/**
 		* Set model matrix for draw primitive. If it is not called,
@@ -3987,6 +4116,19 @@ mixin(joinFnBinds((){
 		use the _num passed on uniform creation.
 		*/
 		{q{void}, q{setUniform}, q{UniformHandle handle, const(void)* value, ushort num=1}, ext: `C++, "bgfx"`},
+		
+		/**
+		* Set shader uniform parameter by reference. Unlike `bgfx::setUniform`, the data
+		* is not copied immediately; the renderer reads it from `_value` at frame render
+		* time. The pointer must remain valid and unchanged until the frame is rendered
+		* (up to two `bgfx::frame` calls with multithreaded submission).
+		Params:
+			handle = Uniform.
+			value = Pointer to uniform data. Must stay valid until the frame is rendered.
+			num = Number of elements. Passing `UINT16_MAX` will
+		use the _num passed on uniform creation.
+		*/
+		{q{void}, q{setUniformRef}, q{UniformHandle handle, const(void)* value, ushort num=ushort.max}, ext: `C++, "bgfx"`},
 		
 		/**
 		* Set index buffer for draw primitive.
@@ -4264,8 +4406,11 @@ mixin(joinFnBinds((){
 			stage = Compute stage.
 			handle = Index buffer handle.
 			access = Buffer access. See `Access::Enum`.
+			offset = Byte offset the shader's view of the buffer starts at.
+		Must be a multiple of 256 bytes.
+			size = Bytes bound from the offset, `UINT32_MAX` for the rest of the buffer.
 		*/
-		{q{void}, q{setBuffer}, q{ubyte stage, IndexBufferHandle handle, bgfx.impl.Access.Enum access}, ext: `C++, "bgfx"`},
+		{q{void}, q{setBuffer}, q{ubyte stage, IndexBufferHandle handle, bgfx.impl.Access.Enum access, uint offset=0, uint size=uint.max}, ext: `C++, "bgfx"`},
 		
 		/**
 		* Set compute vertex buffer.
@@ -4273,8 +4418,11 @@ mixin(joinFnBinds((){
 			stage = Compute stage.
 			handle = Vertex buffer handle.
 			access = Buffer access. See `Access::Enum`.
+			offset = Byte offset the shader's view of the buffer starts at.
+		Must be a multiple of 256 bytes.
+			size = Bytes bound from the offset, `UINT32_MAX` for the rest of the buffer.
 		*/
-		{q{void}, q{setBuffer}, q{ubyte stage, VertexBufferHandle handle, bgfx.impl.Access.Enum access}, ext: `C++, "bgfx"`},
+		{q{void}, q{setBuffer}, q{ubyte stage, VertexBufferHandle handle, bgfx.impl.Access.Enum access, uint offset=0, uint size=uint.max}, ext: `C++, "bgfx"`},
 		
 		/**
 		* Set compute dynamic index buffer.
@@ -4282,8 +4430,11 @@ mixin(joinFnBinds((){
 			stage = Compute stage.
 			handle = Dynamic index buffer handle.
 			access = Buffer access. See `Access::Enum`.
+			offset = Byte offset the shader's view of the buffer starts at.
+		Must be a multiple of 256 bytes.
+			size = Bytes bound from the offset, `UINT32_MAX` for the rest of the buffer.
 		*/
-		{q{void}, q{setBuffer}, q{ubyte stage, DynamicIndexBufferHandle handle, bgfx.impl.Access.Enum access}, ext: `C++, "bgfx"`},
+		{q{void}, q{setBuffer}, q{ubyte stage, DynamicIndexBufferHandle handle, bgfx.impl.Access.Enum access, uint offset=0, uint size=uint.max}, ext: `C++, "bgfx"`},
 		
 		/**
 		* Set compute dynamic vertex buffer.
@@ -4291,8 +4442,11 @@ mixin(joinFnBinds((){
 			stage = Compute stage.
 			handle = Dynamic vertex buffer handle.
 			access = Buffer access. See `Access::Enum`.
+			offset = Byte offset the shader's view of the buffer starts at.
+		Must be a multiple of 256 bytes.
+			size = Bytes bound from the offset, `UINT32_MAX` for the rest of the buffer.
 		*/
-		{q{void}, q{setBuffer}, q{ubyte stage, DynamicVertexBufferHandle handle, bgfx.impl.Access.Enum access}, ext: `C++, "bgfx"`},
+		{q{void}, q{setBuffer}, q{ubyte stage, DynamicVertexBufferHandle handle, bgfx.impl.Access.Enum access, uint offset=0, uint size=uint.max}, ext: `C++, "bgfx"`},
 		
 		/**
 		* Set compute indirect buffer.

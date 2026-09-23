@@ -635,6 +635,7 @@ namespace wgpu {
 		TextureWGPU()
 			: m_texture(NULL)
 			, m_textureMsaa(NULL)
+			, m_textureMsaaAlt(NULL)
 			, m_msaaCount(1)
 			, m_type(Texture2D)
 		{
@@ -646,10 +647,12 @@ namespace wgpu {
 		void clear(uint8_t _mip, uint8_t _numMips, uint16_t _layer, uint16_t _numLayers);
 
 		WGPUSampler getSamplerState(uint32_t _samplerFlags) const;
-		WGPUTextureView getTextureView(uint8_t _baseMipLevel, uint8_t _mipLevelCount, bool _storage, uint16_t _baseArrayLayer = 0, uint16_t _arrayLayerCount = UINT16_MAX, WGPUTextureViewDimension _viewDimension = WGPUTextureViewDimension_Undefined, bool _stencil = false) const;
+		WGPUTextureView getTextureView(uint8_t _baseMipLevel, uint8_t _mipLevelCount, bool _storage, uint16_t _baseArrayLayer = 0, uint16_t _arrayLayerCount = UINT16_MAX, WGPUTextureViewDimension _viewDimension = WGPUTextureViewDimension_Undefined, bool _stencil = false, WGPUTextureFormat _format = WGPUTextureFormat_Undefined) const;
+		WGPUTextureFormat getViewFormat(uint32_t _flags, uint32_t _bit) const;
 
 		WGPUTexture m_texture;
 		WGPUTexture m_textureMsaa;
+		WGPUTexture m_textureMsaaAlt;
 		WGPUTextureViewDimension m_viewDimension;
 		WGPUTextureFormat m_fmt;
 
@@ -676,8 +679,11 @@ namespace wgpu {
 			, m_msaaTextureView(NULL)
 			, m_depthStencilView(NULL)
 			, m_viewFormat(WGPUTextureFormat_Undefined)
+			, m_formatDepthStencil(uint8_t(TextureFormat::Count) )
 			, m_readable(false)
+			, m_needToRecreateSwapChain(false)
 		{
+			bx::memSet(&m_descPending, 0, sizeof(m_descPending) );
 		}
 
 		bool create(void* _nwh, const SwapChain& _desc);
@@ -692,6 +698,7 @@ namespace wgpu {
 
 		void* m_nwh;
 		SwapChain m_desc;
+		SwapChain m_descPending;
 		WGPUSurfaceConfiguration m_surfaceConfig;
 
 		WGPUSurface m_surface;
@@ -704,6 +711,7 @@ namespace wgpu {
 
 		uint8_t m_formatDepthStencil;
 		bool m_readable;
+		bool m_needToRecreateSwapChain;
 	};
 
 	struct FrameBufferWGPU
@@ -711,11 +719,16 @@ namespace wgpu {
 		FrameBufferWGPU()
 			: m_depth({ kInvalidHandle })
 			, m_depthStencilView(NULL)
+			, m_readOnlyDepth(false)
+			, m_readOnlyStencil(false)
 			, m_denseIdx(kInvalidHandle)
 			, m_numColorAttachments(0)
 			, m_numAttachments(0)
+			, m_width(0)
+			, m_height(0)
 			, m_msaaCount(1)
 			, m_needPresent(false)
+			, m_needResolve(false)
 		{
 		}
 
@@ -743,8 +756,12 @@ namespace wgpu {
 		Attachment      m_attachment[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
 		WGPUTextureView m_textureView[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
 		WGPUTextureView m_resolveView[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
+		WGPUTextureFormat m_colorFormat[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
 		WGPUTextureView m_depthStencilView;
 		uint8_t m_formatDepthStencil;
+
+		bool m_readOnlyDepth;
+		bool m_readOnlyStencil;
 
 		uint16_t m_denseIdx;
 		uint8_t m_numColorAttachments;

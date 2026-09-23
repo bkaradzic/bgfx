@@ -295,18 +295,33 @@ namespace bgfx { namespace mtl
 	struct ShaderMtl
 	{
 		ShaderMtl()
-			: m_function(NULL)
+			: m_lib(NULL)
+			, m_function(NULL)
 		{
 		}
 
 		void create(const Memory* _mem);
 
+		MTL::Function* getFunction(uint32_t _sampleMask) const;
+
 		void destroy()
 		{
-			MTL_RELEASE_W(m_function, 0);
+			for (FunctionMap::iterator it = m_functions.begin(), itEnd = m_functions.end(); it != itEnd; ++it)
+			{
+				MTL_RELEASE_W(it->second, 0);
+			}
+
+			m_functions.clear();
+			m_function = NULL;
+
+			MTL_RELEASE_W(m_lib, 0);
 		}
 
+		typedef stl::unordered_map<uint32_t, MTL::Function*> FunctionMap;
+
+		MTL::Library*  m_lib;
 		MTL::Function* m_function;
+		mutable FunctionMap m_functions;
 		uint32_t m_hash;
 		uint16_t m_numThreads[3];
 	};
@@ -420,6 +435,8 @@ namespace bgfx { namespace mtl
 			: m_ptr(NULL)
 			, m_ptrMsaa(NULL)
 			, m_ptrStencil(NULL)
+			, m_ptrAlt(NULL)
+			, m_ptrMsaaAlt(NULL)
 			, m_sampler(NULL)
 			, m_videoDecoder(NULL)
 			, m_flags(0)
@@ -457,11 +474,16 @@ namespace bgfx { namespace mtl
 			);
 
 		MTL::Texture* getTextureImage(uint8_t _mip, uint16_t _firstLayer = 0, uint16_t _numLayers = UINT16_MAX);
-		MTL::Texture* getTextureView(uint16_t _firstLayer, uint16_t _numLayers, uint8_t _firstMip, uint8_t _numMips, bool _stencil = false);
+		MTL::Texture* getTextureView(uint16_t _firstLayer, uint16_t _numLayers, uint8_t _firstMip, uint8_t _numMips, bool _stencil = false, bool _alt = false);
+
+		bool useAltFormat(uint32_t _flags, uint32_t _bit) const;
+		MTL::PixelFormat getAttachmentPixelFormat(uint8_t _flags) const;
 
 		MTL::Texture* m_ptr;
 		MTL::Texture* m_ptrMsaa;
 		MTL::Texture* m_ptrStencil; // for emulating packed depth/stencil formats - only for iOS8...
+		MTL::Texture* m_ptrAlt;
+		MTL::Texture* m_ptrMsaaAlt;
 		stl::unordered_map<uint64_t, MTL::Texture*> m_ptrViews;
 		MTL::SamplerState* m_sampler;
 		VideoDecoderMtl*   m_videoDecoder;

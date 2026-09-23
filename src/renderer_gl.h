@@ -922,6 +922,18 @@ typedef double GLdouble;
 #	define GL_SHADER_STORAGE_BUFFER 0x90D2
 #endif // GL_SHADER_STORAGE_BUFFER
 
+#ifndef GL_TEXTURE_SRGB_DECODE_EXT
+#	define GL_TEXTURE_SRGB_DECODE_EXT 0x8A48
+#endif // GL_TEXTURE_SRGB_DECODE_EXT
+
+#ifndef GL_DECODE_EXT
+#	define GL_DECODE_EXT 0x8A49
+#endif // GL_DECODE_EXT
+
+#ifndef GL_SKIP_DECODE_EXT
+#	define GL_SKIP_DECODE_EXT 0x8A4A
+#endif // GL_SKIP_DECODE_EXT
+
 #ifndef GL_IMAGE_1D
 #	define GL_IMAGE_1D 0x904C
 #endif // GL_IMAGE_1D
@@ -1041,6 +1053,10 @@ typedef double GLdouble;
 #ifndef GL_SAMPLE_ALPHA_TO_COVERAGE
 #	define GL_SAMPLE_ALPHA_TO_COVERAGE 0x809E
 #endif // GL_SAMPLE_ALPHA_TO_COVERAGE
+
+#ifndef GL_SAMPLE_MASK
+#	define GL_SAMPLE_MASK 0x8E51
+#endif // GL_SAMPLE_MASK
 
 #ifndef GL_CONSERVATIVE_RASTERIZATION_NV
 #	define GL_CONSERVATIVE_RASTERIZATION_NV 0x9346
@@ -1473,6 +1489,7 @@ namespace bgfx { namespace gl
 		void destroy();
 		void update(uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem);
 		void clear(uint8_t _mip, uint8_t _numMips, uint16_t _layer, uint16_t _numLayers);
+		void clearAttached(uint8_t _mipBeg, uint8_t _mipEnd, uint16_t _layer, uint16_t _numLayers);
 		void setSamplerState(uint32_t _flags, const float _rgba[4]);
 		void commit(uint32_t _stage, uint32_t _flags, const float _palette[][4], uint8_t _firstMip, uint8_t _numMips, uint16_t _firstLayer, uint16_t _numLayers);
 		GLenum getViewTarget(uint16_t _numLayers, bool _layered = false) const;
@@ -1564,6 +1581,7 @@ namespace bgfx { namespace gl
 		uint16_t destroy();
 		void resolve();
 		void discard(uint16_t _flags);
+		bool isSrgbWrite() const;
 
 		void createSwapChainFbo(const SwapChain& _desc);
 		void destroySwapChainFbo();
@@ -1669,7 +1687,10 @@ namespace bgfx { namespace gl
 		{
 			while (0 == m_control.reserve(1) )
 			{
-				update();
+				if (!update() )
+				{
+					GL_CHECK(glFinish() );
+				}
 			}
 
 			Result& result = m_result[_resultIdx];
@@ -1702,6 +1723,11 @@ namespace bgfx { namespace gl
 			while (update() )
 			{
 			}
+		}
+
+		bool hasPending() const
+		{
+			return 0 != m_control.getNumUsed();
 		}
 
 		bool update()

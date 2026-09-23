@@ -320,8 +320,12 @@ WL_EGL_IMPORT
 
 			const bool headless = EGLNativeWindowType(0) == nwh;
 
-			const bimg::ImageBlockInfo& colorBlockInfo       = bimg::getBlockInfo(bimg::TextureFormat::Enum(_swapChain.formatColor) );
-			const bimg::ImageBlockInfo& depthStecilBlockInfo = bimg::getBlockInfo(bimg::TextureFormat::Enum(_swapChain.formatDepthStencil) );
+			const bimg::ImageBlockInfo& colorBlockInfo = bimg::getBlockInfo(bimg::TextureFormat::Enum(_swapChain.formatColor) );
+			const bimg::ImageBlockInfo noDepth = {};
+			const bimg::ImageBlockInfo& depthStecilBlockInfo = TextureFormat::Count == _swapChain.formatDepthStencil
+				? noDepth
+				: bimg::getBlockInfo(bimg::TextureFormat::Enum(_swapChain.formatDepthStencil) )
+				;
 
 			EGLint numConfigs = 0;
 			EGLConfig configs[256];
@@ -484,14 +488,17 @@ WL_EGL_IMPORT
 			m_msaaContext = 1 < msaaSamples;
 
 #	if BX_PLATFORM_ANDROID
-			EGLint format;
-			eglGetConfigAttrib(m_display, m_config, EGL_NATIVE_VISUAL_ID, &format);
-			ANativeWindow_setBuffersGeometry(
-				  (ANativeWindow*)m_nwh
-				, _swapChain.width
-				, _swapChain.height
-				, format
-				);
+			if (!headless)
+			{
+				EGLint format;
+				eglGetConfigAttrib(m_display, m_config, EGL_NATIVE_VISUAL_ID, &format);
+				ANativeWindow_setBuffersGeometry(
+					  (ANativeWindow*)m_nwh
+					, _swapChain.width
+					, _swapChain.height
+					, format
+					);
+			}
 
 #	elif BX_PLATFORM_RPI
 			DISPMANX_DISPLAY_HANDLE_T dispmanDisplay = vc_dispmanx_display_open(0);
@@ -811,7 +818,8 @@ WL_EGL_IMPORT
 
 #	if BX_PLATFORM_ANDROID
 		if (m_ownsContext
-		&&  NULL != m_display)
+		&&  NULL != m_display
+		&&  NULL != m_nwh)
 		{
 			EGLNativeWindowType nwh = (EGLNativeWindowType )m_nwh;
 			eglMakeCurrent(m_display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
