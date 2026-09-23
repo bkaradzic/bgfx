@@ -202,6 +202,9 @@ local function java_type(arg, context)
 end
 
 local function java_parameter_type(arg)
+	if arg.ctype == "uint8_t" and arg.default == "BGFX_DISCARD_ALL" then
+		return "@Unsigned int"
+	end
 	local java = java_type(arg, "arg")
 	if arg.default == "NULL" then
 		return "@Nullable " .. java
@@ -925,7 +928,9 @@ local function native_argument(arg, name)
 		return "address(" .. name .. ")"
 	end
 	local primitive = assert(details.primitive, "Unsupported native argument: " .. arg.ctype)
-	if primitive.uintptr then
+	if arg.ctype == "uint8_t" and arg.default == "BGFX_DISCARD_ALL" then
+		return "NativeObject.toUnsignedByte(" .. name .. ")"
+	elseif primitive.uintptr then
 		return "nativeUintptr(" .. name .. ")"
 	elseif primitive.opaque then
 		return "address(" .. name .. ")"

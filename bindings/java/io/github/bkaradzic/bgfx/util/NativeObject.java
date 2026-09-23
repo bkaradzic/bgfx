@@ -87,7 +87,7 @@ public abstract class NativeObject {
 		return (short) value;
 	}
 
-	protected static @Unsigned byte toUnsignedByte(int value) {
+	public static @Unsigned byte toUnsignedByte(int value) {
 		if ((value & ~0xff) != 0) {
 			throw new IllegalArgumentException("value out of range: " + value);
 		}

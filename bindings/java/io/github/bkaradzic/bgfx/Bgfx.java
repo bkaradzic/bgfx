@@ -3042,10 +3042,10 @@ public final class Bgfx {
 	 * @param _depth Depth for sorting.
 	 * @param _flags Which states to discard for next draw. See {@code BGFX_DISCARD_*}.
 	 */
-	public static void submit(short _id, ProgramHandle _program, @Unsigned int _depth, @Unsigned byte _flags) {
+	public static void submit(short _id, ProgramHandle _program, @Unsigned int _depth, @Unsigned int _flags) {
 		try {
 			try (Arena arena = Arena.ofConfined()) {
-				MH_SUBMIT.invokeExact(_id, _program.allocate(arena), _depth, _flags);
+				MH_SUBMIT.invokeExact(_id, _program.allocate(arena), _depth, NativeObject.toUnsignedByte(_flags));
 			}
 		} catch (Throwable ex) {
 			throw invocationFailure(ex);
@@ -3060,10 +3060,10 @@ public final class Bgfx {
 	 * @param _depth Depth for sorting.
 	 * @param _flags Which states to discard for next draw. See {@code BGFX_DISCARD_*}.
 	 */
-	public static void submitOcclusionQuery(short _id, ProgramHandle _program, OcclusionQueryHandle _occlusionQuery, @Unsigned int _depth, @Unsigned byte _flags) {
+	public static void submitOcclusionQuery(short _id, ProgramHandle _program, OcclusionQueryHandle _occlusionQuery, @Unsigned int _depth, @Unsigned int _flags) {
 		try {
 			try (Arena arena = Arena.ofConfined()) {
-				MH_SUBMIT_OCCLUSION_QUERY.invokeExact(_id, _program.allocate(arena), _occlusionQuery.allocate(arena), _depth, _flags);
+				MH_SUBMIT_OCCLUSION_QUERY.invokeExact(_id, _program.allocate(arena), _occlusionQuery.allocate(arena), _depth, NativeObject.toUnsignedByte(_flags));
 			}
 		} catch (Throwable ex) {
 			throw invocationFailure(ex);
@@ -3083,10 +3083,10 @@ public final class Bgfx {
 	 * @param _depth Depth for sorting.
 	 * @param _flags Which states to discard for next draw. See {@code BGFX_DISCARD_*}.
 	 */
-	public static void submitIndirect(short _id, ProgramHandle _program, IndirectBufferHandle _indirectHandle, @Unsigned int _start, @Unsigned int _num, @Unsigned int _depth, @Unsigned byte _flags) {
+	public static void submitIndirect(short _id, ProgramHandle _program, IndirectBufferHandle _indirectHandle, @Unsigned int _start, @Unsigned int _num, @Unsigned int _depth, @Unsigned int _flags) {
 		try {
 			try (Arena arena = Arena.ofConfined()) {
-				MH_SUBMIT_INDIRECT.invokeExact(_id, _program.allocate(arena), _indirectHandle.allocate(arena), _start, _num, _depth, _flags);
+				MH_SUBMIT_INDIRECT.invokeExact(_id, _program.allocate(arena), _indirectHandle.allocate(arena), _start, _num, _depth, NativeObject.toUnsignedByte(_flags));
 			}
 		} catch (Throwable ex) {
 			throw invocationFailure(ex);
@@ -3108,10 +3108,10 @@ public final class Bgfx {
 	 * @param _depth Depth for sorting.
 	 * @param _flags Which states to discard for next draw. See {@code BGFX_DISCARD_*}.
 	 */
-	public static void submitIndirectCount(short _id, ProgramHandle _program, IndirectBufferHandle _indirectHandle, @Unsigned int _start, IndexBufferHandle _numHandle, @Unsigned int _numIndex, @Unsigned int _numMax, @Unsigned int _depth, @Unsigned byte _flags) {
+	public static void submitIndirectCount(short _id, ProgramHandle _program, IndirectBufferHandle _indirectHandle, @Unsigned int _start, IndexBufferHandle _numHandle, @Unsigned int _numIndex, @Unsigned int _numMax, @Unsigned int _depth, @Unsigned int _flags) {
 		try {
 			try (Arena arena = Arena.ofConfined()) {
-				MH_SUBMIT_INDIRECT_COUNT.invokeExact(_id, _program.allocate(arena), _indirectHandle.allocate(arena), _start, _numHandle.allocate(arena), _numIndex, _numMax, _depth, _flags);
+				MH_SUBMIT_INDIRECT_COUNT.invokeExact(_id, _program.allocate(arena), _indirectHandle.allocate(arena), _start, _numHandle.allocate(arena), _numIndex, _numMax, _depth, NativeObject.toUnsignedByte(_flags));
 			}
 		} catch (Throwable ex) {
 			throw invocationFailure(ex);
@@ -3254,10 +3254,10 @@ public final class Bgfx {
 	 * @param _numZ Number of groups Z.
 	 * @param _flags Discard or preserve states. See {@code BGFX_DISCARD_*}.
 	 */
-	public static void dispatch(short _id, ProgramHandle _program, @Unsigned int _numX, @Unsigned int _numY, @Unsigned int _numZ, @Unsigned byte _flags) {
+	public static void dispatch(short _id, ProgramHandle _program, @Unsigned int _numX, @Unsigned int _numY, @Unsigned int _numZ, @Unsigned int _flags) {
 		try {
 			try (Arena arena = Arena.ofConfined()) {
-				MH_DISPATCH.invokeExact(_id, _program.allocate(arena), _numX, _numY, _numZ, _flags);
+				MH_DISPATCH.invokeExact(_id, _program.allocate(arena), _numX, _numY, _numZ, NativeObject.toUnsignedByte(_flags));
 			}
 		} catch (Throwable ex) {
 			throw invocationFailure(ex);
@@ -3273,10 +3273,10 @@ public final class Bgfx {
 	 * @param _num Number of dispatches.
 	 * @param _flags Discard or preserve states. See {@code BGFX_DISCARD_*}.
 	 */
-	public static void dispatchIndirect(short _id, ProgramHandle _program, IndirectBufferHandle _indirectHandle, @Unsigned int _start, @Unsigned int _num, @Unsigned byte _flags) {
+	public static void dispatchIndirect(short _id, ProgramHandle _program, IndirectBufferHandle _indirectHandle, @Unsigned int _start, @Unsigned int _num, @Unsigned int _flags) {
 		try {
 			try (Arena arena = Arena.ofConfined()) {
-				MH_DISPATCH_INDIRECT.invokeExact(_id, _program.allocate(arena), _indirectHandle.allocate(arena), _start, _num, _flags);
+				MH_DISPATCH_INDIRECT.invokeExact(_id, _program.allocate(arena), _indirectHandle.allocate(arena), _start, _num, NativeObject.toUnsignedByte(_flags));
 			}
 		} catch (Throwable ex) {
 			throw invocationFailure(ex);
@@ -3287,9 +3287,9 @@ public final class Bgfx {
 	 * Discard previously set state for draw or compute call.
 	 * @param _flags Draw/compute states to discard.
 	 */
-	public static void discard(@Unsigned byte _flags) {
+	public static void discard(@Unsigned int _flags) {
 		try {
-			MH_DISCARD.invokeExact(_flags);
+			MH_DISCARD.invokeExact(NativeObject.toUnsignedByte(_flags));
 		} catch (Throwable ex) {
 			throw invocationFailure(ex);
 		}

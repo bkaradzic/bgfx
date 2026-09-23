@@ -554,10 +554,10 @@ public final class Encoder extends NativeObject {
 	 * @param _depth Depth for sorting.
 	 * @param _flags Discard or preserve states. See {@code BGFX_DISCARD_*}.
 	 */
-	public final void submit(short _id, ProgramHandle _program, @Unsigned int _depth, @Unsigned byte _flags) {
+	public final void submit(short _id, ProgramHandle _program, @Unsigned int _depth, @Unsigned int _flags) {
 		try {
 			try (Arena arena = Arena.ofConfined()) {
-				MH_ENCODER_SUBMIT.invokeExact(segment(), _id, _program.allocate(arena), _depth, _flags);
+				MH_ENCODER_SUBMIT.invokeExact(segment(), _id, _program.allocate(arena), _depth, NativeObject.toUnsignedByte(_flags));
 			}
 		} catch (Throwable ex) {
 			throw invocationFailure(ex);
@@ -572,10 +572,10 @@ public final class Encoder extends NativeObject {
 	 * @param _depth Depth for sorting.
 	 * @param _flags Discard or preserve states. See {@code BGFX_DISCARD_*}.
 	 */
-	public final void submitOcclusionQuery(short _id, ProgramHandle _program, OcclusionQueryHandle _occlusionQuery, @Unsigned int _depth, @Unsigned byte _flags) {
+	public final void submitOcclusionQuery(short _id, ProgramHandle _program, OcclusionQueryHandle _occlusionQuery, @Unsigned int _depth, @Unsigned int _flags) {
 		try {
 			try (Arena arena = Arena.ofConfined()) {
-				MH_ENCODER_SUBMIT_OCCLUSION_QUERY.invokeExact(segment(), _id, _program.allocate(arena), _occlusionQuery.allocate(arena), _depth, _flags);
+				MH_ENCODER_SUBMIT_OCCLUSION_QUERY.invokeExact(segment(), _id, _program.allocate(arena), _occlusionQuery.allocate(arena), _depth, NativeObject.toUnsignedByte(_flags));
 			}
 		} catch (Throwable ex) {
 			throw invocationFailure(ex);
@@ -595,10 +595,10 @@ public final class Encoder extends NativeObject {
 	 * @param _depth Depth for sorting.
 	 * @param _flags Discard or preserve states. See {@code BGFX_DISCARD_*}.
 	 */
-	public final void submitIndirect(short _id, ProgramHandle _program, IndirectBufferHandle _indirectHandle, @Unsigned int _start, @Unsigned int _num, @Unsigned int _depth, @Unsigned byte _flags) {
+	public final void submitIndirect(short _id, ProgramHandle _program, IndirectBufferHandle _indirectHandle, @Unsigned int _start, @Unsigned int _num, @Unsigned int _depth, @Unsigned int _flags) {
 		try {
 			try (Arena arena = Arena.ofConfined()) {
-				MH_ENCODER_SUBMIT_INDIRECT.invokeExact(segment(), _id, _program.allocate(arena), _indirectHandle.allocate(arena), _start, _num, _depth, _flags);
+				MH_ENCODER_SUBMIT_INDIRECT.invokeExact(segment(), _id, _program.allocate(arena), _indirectHandle.allocate(arena), _start, _num, _depth, NativeObject.toUnsignedByte(_flags));
 			}
 		} catch (Throwable ex) {
 			throw invocationFailure(ex);
@@ -620,10 +620,10 @@ public final class Encoder extends NativeObject {
 	 * @param _depth Depth for sorting.
 	 * @param _flags Discard or preserve states. See {@code BGFX_DISCARD_*}.
 	 */
-	public final void submitIndirectCount(short _id, ProgramHandle _program, IndirectBufferHandle _indirectHandle, @Unsigned int _start, IndexBufferHandle _numHandle, @Unsigned int _numIndex, @Unsigned int _numMax, @Unsigned int _depth, @Unsigned byte _flags) {
+	public final void submitIndirectCount(short _id, ProgramHandle _program, IndirectBufferHandle _indirectHandle, @Unsigned int _start, IndexBufferHandle _numHandle, @Unsigned int _numIndex, @Unsigned int _numMax, @Unsigned int _depth, @Unsigned int _flags) {
 		try {
 			try (Arena arena = Arena.ofConfined()) {
-				MH_ENCODER_SUBMIT_INDIRECT_COUNT.invokeExact(segment(), _id, _program.allocate(arena), _indirectHandle.allocate(arena), _start, _numHandle.allocate(arena), _numIndex, _numMax, _depth, _flags);
+				MH_ENCODER_SUBMIT_INDIRECT_COUNT.invokeExact(segment(), _id, _program.allocate(arena), _indirectHandle.allocate(arena), _start, _numHandle.allocate(arena), _numIndex, _numMax, _depth, NativeObject.toUnsignedByte(_flags));
 			}
 		} catch (Throwable ex) {
 			throw invocationFailure(ex);
@@ -766,10 +766,10 @@ public final class Encoder extends NativeObject {
 	 * @param _numZ Number of groups Z.
 	 * @param _flags Discard or preserve states. See {@code BGFX_DISCARD_*}.
 	 */
-	public final void dispatch(short _id, ProgramHandle _program, @Unsigned int _numX, @Unsigned int _numY, @Unsigned int _numZ, @Unsigned byte _flags) {
+	public final void dispatch(short _id, ProgramHandle _program, @Unsigned int _numX, @Unsigned int _numY, @Unsigned int _numZ, @Unsigned int _flags) {
 		try {
 			try (Arena arena = Arena.ofConfined()) {
-				MH_ENCODER_DISPATCH.invokeExact(segment(), _id, _program.allocate(arena), _numX, _numY, _numZ, _flags);
+				MH_ENCODER_DISPATCH.invokeExact(segment(), _id, _program.allocate(arena), _numX, _numY, _numZ, NativeObject.toUnsignedByte(_flags));
 			}
 		} catch (Throwable ex) {
 			throw invocationFailure(ex);
@@ -785,10 +785,10 @@ public final class Encoder extends NativeObject {
 	 * @param _num Number of dispatches.
 	 * @param _flags Discard or preserve states. See {@code BGFX_DISCARD_*}.
 	 */
-	public final void dispatchIndirect(short _id, ProgramHandle _program, IndirectBufferHandle _indirectHandle, @Unsigned int _start, @Unsigned int _num, @Unsigned byte _flags) {
+	public final void dispatchIndirect(short _id, ProgramHandle _program, IndirectBufferHandle _indirectHandle, @Unsigned int _start, @Unsigned int _num, @Unsigned int _flags) {
 		try {
 			try (Arena arena = Arena.ofConfined()) {
-				MH_ENCODER_DISPATCH_INDIRECT.invokeExact(segment(), _id, _program.allocate(arena), _indirectHandle.allocate(arena), _start, _num, _flags);
+				MH_ENCODER_DISPATCH_INDIRECT.invokeExact(segment(), _id, _program.allocate(arena), _indirectHandle.allocate(arena), _start, _num, NativeObject.toUnsignedByte(_flags));
 			}
 		} catch (Throwable ex) {
 			throw invocationFailure(ex);
@@ -799,9 +799,9 @@ public final class Encoder extends NativeObject {
 	 * Discard previously set state for draw or compute call.
 	 * @param _flags Discard or preserve states. See {@code BGFX_DISCARD_*}.
 	 */
-	public final void discard(@Unsigned byte _flags) {
+	public final void discard(@Unsigned int _flags) {
 		try {
-			MH_ENCODER_DISCARD.invokeExact(segment(), _flags);
+			MH_ENCODER_DISCARD.invokeExact(segment(), NativeObject.toUnsignedByte(_flags));
 		} catch (Throwable ex) {
 			throw invocationFailure(ex);
 		}
