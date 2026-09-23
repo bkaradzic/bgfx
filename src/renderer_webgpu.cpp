@@ -5317,7 +5317,7 @@ WGPU_IMPORT
 				,
 			.width           = m_desc.width,
 			.height          = m_desc.height,
-			.viewFormatCount = format != m_viewFormat ? 1ull : 0ull,
+			.viewFormatCount = format != m_viewFormat ? 1u : 0u,
 			.viewFormats     = format != m_viewFormat ? &m_viewFormat : NULL,
 			.alphaMode       = WGPUCompositeAlphaMode_Auto,
 			.presentMode     = WGPUPresentMode_Fifo,
