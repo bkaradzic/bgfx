@@ -709,8 +709,9 @@ namespace bgfx
 	{
 		PlatformData();
 
-		void* context;                     //!< GL context, D3D device, or Vulkan device. If `NULL`, bgfx
-		                                   ///  will create context/device.
+		void* context;                     //!< GL context, D3D device, Metal device, Vulkan device, or WebGPU device.
+		                                   ///  If `NULL`, bgfx will create context/device. A native WebGPU device's lost
+		                                   ///  callback must use `WGPUCallbackMode_AllowSpontaneous`.
 		void* queue;                       //!< D3D12 Queue. If `NULL` bgfx will create queue.
 		NativeWindowHandleType::Enum type; //!< Handle type. Needed for platforms having more than one option.
 	};

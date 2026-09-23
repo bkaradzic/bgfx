@@ -788,8 +788,9 @@ typedef struct bgfx_platform_data_s
 {
     
     /**
-     * GL context, D3D device, or Vulkan device. If `NULL`, bgfx
-     * will create context/device.
+     * GL context, D3D device, Metal device, Vulkan device, or WebGPU device.
+     * If `NULL`, bgfx will create context/device. A native WebGPU device's lost
+     * callback must use `WGPUCallbackMode_AllowSpontaneous`.
      */
     void*                context;
     void*                queue;              /** D3D12 Queue. If `NULL` bgfx will create queue. */

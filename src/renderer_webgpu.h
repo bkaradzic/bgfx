@@ -39,10 +39,10 @@
 		WGPU_IMPORT_FUNC(false, GetProcAddress);                                    \
 		/* adapter */                                                               \
 		WGPU_IGNORE_____(false, AdapterCreateDevice);                               \
-		WGPU_IMPORT_FUNC(false, AdapterGetFeatures);                                \
+		WGPU_IGNORE_____(false, AdapterGetFeatures);                                \
 		WGPU_IGNORE_____(false, AdapterGetFormatCapabilities);                      \
-		WGPU_IMPORT_FUNC(false, AdapterGetInfo);                                    \
-		WGPU_IGNORE_____(false, AdapterGetInstance);                                \
+		WGPU_IGNORE_____(false, AdapterGetInfo);                                    \
+		WGPU_IMPORT_FUNC(false, AdapterGetInstance);                                \
 		WGPU_IMPORT_FUNC(false, AdapterGetLimits);                                  \
 		WGPU_IMPORT_FUNC(false, AdapterHasFeature);                                 \
 		WGPU_IMPORT_FUNC(false, AdapterRequestDevice);                              \
@@ -137,7 +137,7 @@
 		WGPU_IMPORT_FUNC(false, DeviceCreateTexture);                               \
 		WGPU_IMPORT_FUNC(false, DeviceDestroy);                                     \
 		WGPU_IGNORE_____(false, DeviceForceLoss);                                   \
-		WGPU_IGNORE_____(false, DeviceGetAdapter);                                  \
+		WGPU_IMPORT_FUNC(false, DeviceGetAdapter);                                  \
 		WGPU_IMPORT_FUNC(false, DeviceGetAdapterInfo);                              \
 		WGPU_IGNORE_____(false, DeviceGetAHardwareBufferProperties);                \
 		WGPU_IMPORT_FUNC(false, DeviceGetFeatures);                                 \
@@ -155,7 +155,7 @@
 		WGPU_IGNORE_____(false, DeviceSetLoggingCallback);                          \
 		WGPU_IGNORE_____(false, DeviceTick);                                        \
 		WGPU_IGNORE_____(false, DeviceValidateTextureDescriptor);                   \
-		WGPU_IGNORE_____(false, DeviceAddRef);                                      \
+		WGPU_IMPORT_FUNC(false, DeviceAddRef);                                      \
 		WGPU_IMPORT_FUNC(false, DeviceRelease);                                     \
 		/* */                                                                       \
 		WGPU_IGNORE_____(false, ExternalTextureDestroy);                            \
@@ -784,7 +784,6 @@ namespace wgpu {
 		CommandQueueWGPU()
 			: m_queue(NULL)
 			, m_commandEncoder(NULL)
-			, m_counter(0)
 			, m_numPasses(0)
 		{
 		}
@@ -808,7 +807,6 @@ namespace wgpu {
 		WGPUQueue m_queue;
 		WGPUCommandEncoder m_commandEncoder;
 		uint32_t m_currentFrameInFlight;
-		uint32_t m_counter;
 		uint32_t m_numPasses;
 
 		static constexpr uint32_t kPassesPerKick = 64;
@@ -827,7 +825,7 @@ namespace wgpu {
 			, m_resolvedFrameNum(0)
 			, m_supported(false)
 			, m_resolved(false)
-			, m_mapPending(false)
+			, m_mapFuture(WGPU_FUTURE_INIT)
 		{
 		}
 
@@ -890,7 +888,8 @@ namespace wgpu {
 
 		bool m_supported;
 		bool m_resolved;
-		bool m_mapPending;
+
+		WGPUFuture m_mapFuture;
 	};
 
 	struct OcclusionQueryWGPU
@@ -900,6 +899,7 @@ namespace wgpu {
 			, m_resolve(NULL)
 			, m_readback(NULL)
 			, m_control(BX_COUNTOF(m_handle) )
+			, m_mapFuture(WGPU_FUTURE_INIT)
 		{
 		}
 
@@ -918,6 +918,8 @@ namespace wgpu {
 
 		OcclusionQueryHandle m_handle[BGFX_CONFIG_MAX_OCCLUSION_QUERIES];
 		bx::RingBufferControl m_control;
+
+		WGPUFuture m_mapFuture;
 	};
 
 } /* namespace bgfx */ } // namespace wgpu

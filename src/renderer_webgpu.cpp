@@ -13,6 +13,27 @@
 #	include <bx/pixelformat.h>
 #	include "renderer_webgpu.h"
 
+#	if BX_PLATFORM_EMSCRIPTEN
+#		include <emscripten/em_js.h>
+
+EM_JS(WGPUDevice, bgfxWgpuImportDevice, (WGPUDevice _device, WGPUInstance _instance, uint32_t* _generation, uint32_t* _lost), {
+	const device     = WebGPU.getJsObject(_device);
+	const generation = HEAPU32[_generation >> 2];
+
+	device.lost.then(() => {
+		if (HEAPU32[_generation >> 2] === generation) {
+			HEAPU32[_lost >> 2] = 1;
+		}
+	});
+
+	return WebGPU.importJsDevice(device, _instance);
+});
+
+EM_JS(bool, bgfxWgpuHasAdapterInfo, (WGPUDevice _device), {
+	return undefined !== WebGPU.getJsObject(_device).adapterInfo;
+});
+#	endif // BX_PLATFORM_EMSCRIPTEN
+
 namespace bgfx { namespace wgpu
 {
 	struct PrimInfo
@@ -378,8 +399,6 @@ namespace bgfx { namespace wgpu
 	{
 		Ty featureName;
 		const char* name;
-		bool optional;
-		bool supported;
 
 		static int32_t cmpFn(const void* _lhs, const void* _rhs)
 		{
@@ -395,24 +414,24 @@ namespace bgfx { namespace wgpu
 	{
 #define LANGUAGE_FEATURE(_name) WGPUWGSLLanguageFeatureName_##_name, #_name
 
-		{ LANGUAGE_FEATURE(ReadonlyAndReadwriteStorageTextures),  true, false },
-		{ LANGUAGE_FEATURE(Packed4x8IntegerDotProduct),           true, false },
-		{ LANGUAGE_FEATURE(UnrestrictedPointerParameters),        true, false },
-		{ LANGUAGE_FEATURE(PointerCompositeAccess),               true, false },
-		{ LANGUAGE_FEATURE(UniformBufferStandardLayout),          true, false },
-		{ LANGUAGE_FEATURE(SubgroupId),                           true, false },
-		{ LANGUAGE_FEATURE(TextureAndSamplerLet),                 true, false },
-		{ LANGUAGE_FEATURE(SubgroupUniformity),                   true, false },
-		{ LANGUAGE_FEATURE(ImmediateAddressSpace),                true, false },
-		{ LANGUAGE_FEATURE(ChromiumTestingUnimplemented),         true, false },
-		{ LANGUAGE_FEATURE(ChromiumTestingUnsafeExperimental),    true, false },
-		{ LANGUAGE_FEATURE(ChromiumTestingExperimental),          true, false },
-		{ LANGUAGE_FEATURE(ChromiumTestingShippedWithKillswitch), true, false },
-		{ LANGUAGE_FEATURE(ChromiumTestingShipped),               true, false },
-		{ LANGUAGE_FEATURE(SizedBindingArray),                    true, false },
-		{ LANGUAGE_FEATURE(TexelBuffers),                         true, false },
-		{ LANGUAGE_FEATURE(ChromiumPrint),                        true, false },
-		{ LANGUAGE_FEATURE(FragmentDepth),                        true, false },
+		{ LANGUAGE_FEATURE(ReadonlyAndReadwriteStorageTextures) },
+		{ LANGUAGE_FEATURE(Packed4x8IntegerDotProduct) },
+		{ LANGUAGE_FEATURE(UnrestrictedPointerParameters) },
+		{ LANGUAGE_FEATURE(PointerCompositeAccess) },
+		{ LANGUAGE_FEATURE(UniformBufferStandardLayout) },
+		{ LANGUAGE_FEATURE(SubgroupId) },
+		{ LANGUAGE_FEATURE(TextureAndSamplerLet) },
+		{ LANGUAGE_FEATURE(SubgroupUniformity) },
+		{ LANGUAGE_FEATURE(ImmediateAddressSpace) },
+		{ LANGUAGE_FEATURE(ChromiumTestingUnimplemented) },
+		{ LANGUAGE_FEATURE(ChromiumTestingUnsafeExperimental) },
+		{ LANGUAGE_FEATURE(ChromiumTestingExperimental) },
+		{ LANGUAGE_FEATURE(ChromiumTestingShippedWithKillswitch) },
+		{ LANGUAGE_FEATURE(ChromiumTestingShipped) },
+		{ LANGUAGE_FEATURE(SizedBindingArray) },
+		{ LANGUAGE_FEATURE(TexelBuffers) },
+		{ LANGUAGE_FEATURE(ChromiumPrint) },
+		{ LANGUAGE_FEATURE(FragmentDepth) },
 
 #undef LANGUAGE_FEATURE
 	};
@@ -423,99 +442,87 @@ namespace bgfx { namespace wgpu
 	{
 #define FEATURE(_name) WGPUFeatureName_##_name, #_name
 
-		{ FEATURE(CoreFeaturesAndLimits),                                true, false },
-		{ FEATURE(DepthClipControl),                                     true, false },
-		{ FEATURE(Depth32FloatStencil8),                                 true, false },
-		{ FEATURE(TextureCompressionBC),                                 true, false },
-		{ FEATURE(TextureCompressionBCSliced3D),                         true, false },
-		{ FEATURE(TextureCompressionETC2),                               true, false },
-		{ FEATURE(TextureCompressionASTC),                               true, false },
-		{ FEATURE(TextureCompressionASTCSliced3D),                       true, false },
-		{ FEATURE(TimestampQuery),                                       true, false },
-		{ FEATURE(IndirectFirstInstance),                                true, false },
-		{ FEATURE(ShaderF16),                                            true, false },
-		{ FEATURE(RG11B10UfloatRenderable),                              true, false },
-		{ FEATURE(BGRA8UnormStorage),                                    true, false },
-		{ FEATURE(Float32Filterable),                                    true, false },
-		{ FEATURE(Float32Blendable),                                     true, false },
-		{ FEATURE(ClipDistances),                                        true, false },
-		{ FEATURE(DualSourceBlending),                                   true, false },
-		{ FEATURE(Subgroups),                                            true, false },
-		{ FEATURE(TextureFormatsTier1),                                  true, false },
-		{ FEATURE(TextureFormatsTier2),                                  true, false },
-		{ FEATURE(PrimitiveIndex),                                       true, false },
-		{ FEATURE(TextureComponentSwizzle),                              true, false },
-		{ FEATURE(DawnInternalUsages),                                   true, false },
-		{ FEATURE(DawnMultiPlanarFormats),                               true, false },
-		{ FEATURE(DawnNative),                                           true, false },
-		{ FEATURE(ChromiumExperimentalTimestampQueryInsidePasses),       true, false },
-		{ FEATURE(ImplicitDeviceSynchronization),                        true, false },
-		{ FEATURE(TransientAttachments),                                 true, false },
-		{ FEATURE(MSAARenderToSingleSampled),                            true, false },
-		{ FEATURE(D3D11MultithreadProtected),                            true, false },
-		{ FEATURE(ANGLETextureSharing),                                  true, false },
-		{ FEATURE(PixelLocalStorageCoherent),                            true, false },
-		{ FEATURE(PixelLocalStorageNonCoherent),                         true, false },
-		{ FEATURE(Unorm16TextureFormats),                                true, false },
-		{ FEATURE(MultiPlanarFormatExtendedUsages),                      true, false },
-		{ FEATURE(MultiPlanarFormatP010),                                true, false },
-		{ FEATURE(HostMappedPointer),                                    true, false },
-		{ FEATURE(MultiPlanarRenderTargets),                             true, false },
-		{ FEATURE(MultiPlanarFormatNv12a),                               true, false },
-		{ FEATURE(FramebufferFetch),                                     true, false },
-		{ FEATURE(BufferMapExtendedUsages),                              true, false },
-		{ FEATURE(AdapterPropertiesMemoryHeaps),                         true, false },
-		{ FEATURE(AdapterPropertiesD3D),                                 true, false },
-		{ FEATURE(AdapterPropertiesVk),                                  true, false },
-		{ FEATURE(DawnFormatCapabilities),                               true, false },
-		{ FEATURE(DawnDrmFormatCapabilities),                            true, false },
-		{ FEATURE(MultiPlanarFormatNv16),                                true, false },
-		{ FEATURE(MultiPlanarFormatNv24),                                true, false },
-		{ FEATURE(MultiPlanarFormatP210),                                true, false },
-		{ FEATURE(MultiPlanarFormatP410),                                true, false },
-		{ FEATURE(SharedTextureMemoryVkDedicatedAllocation),             true, false },
-		{ FEATURE(SharedTextureMemoryAHardwareBuffer),                   true, false },
-		{ FEATURE(SharedTextureMemoryDmaBuf),                            true, false },
-		{ FEATURE(SharedTextureMemoryOpaqueFD),                          true, false },
-		{ FEATURE(SharedTextureMemoryZirconHandle),                      true, false },
-		{ FEATURE(SharedTextureMemoryDXGISharedHandle),                  true, false },
-		{ FEATURE(SharedTextureMemoryD3D11Texture2D),                    true, false },
-		{ FEATURE(SharedTextureMemoryIOSurface),                         true, false },
-		{ FEATURE(SharedTextureMemoryEGLImage),                          true, false },
-		{ FEATURE(SharedFenceVkSemaphoreOpaqueFD),                       true, false },
-		{ FEATURE(SharedFenceSyncFD),                                    true, false },
-		{ FEATURE(SharedFenceVkSemaphoreZirconHandle),                   true, false },
-		{ FEATURE(SharedFenceDXGISharedHandle),                          true, false },
-		{ FEATURE(SharedFenceMTLSharedEvent),                            true, false },
-		{ FEATURE(SharedBufferMemoryD3D12Resource),                      true, false },
-		{ FEATURE(StaticSamplers),                                       true, false },
-		{ FEATURE(YCbCrVulkanSamplers),                                  true, false },
-		{ FEATURE(ShaderModuleCompilationOptions),                       true, false },
-		{ FEATURE(DawnLoadResolveTexture),                               true, false },
-		{ FEATURE(DawnPartialLoadResolveTexture),                        true, false },
-		{ FEATURE(MultiDrawIndirect),                                    true, false },
-		{ FEATURE(DawnTexelCopyBufferRowAlignment),                      true, false },
-		{ FEATURE(FlexibleTextureViews),                                 true, false },
-		{ FEATURE(ChromiumExperimentalSubgroupMatrix),                   true, false },
-		{ FEATURE(SharedFenceEGLSync),                                   true, false },
-		{ FEATURE(DawnDeviceAllocatorControl),                           true, false },
-		{ FEATURE(AdapterPropertiesWGPU),                                true, false },
-		{ FEATURE(SharedBufferMemoryD3D12SharedMemoryFileMappingHandle), true, false },
+		{ FEATURE(CoreFeaturesAndLimits) },
+		{ FEATURE(DepthClipControl) },
+		{ FEATURE(Depth32FloatStencil8) },
+		{ FEATURE(TextureCompressionBC) },
+		{ FEATURE(TextureCompressionBCSliced3D) },
+		{ FEATURE(TextureCompressionETC2) },
+		{ FEATURE(TextureCompressionASTC) },
+		{ FEATURE(TextureCompressionASTCSliced3D) },
+		{ FEATURE(TimestampQuery) },
+		{ FEATURE(IndirectFirstInstance) },
+		{ FEATURE(ShaderF16) },
+		{ FEATURE(RG11B10UfloatRenderable) },
+		{ FEATURE(BGRA8UnormStorage) },
+		{ FEATURE(Float32Filterable) },
+		{ FEATURE(Float32Blendable) },
+		{ FEATURE(ClipDistances) },
+		{ FEATURE(DualSourceBlending) },
+		{ FEATURE(Subgroups) },
+		{ FEATURE(TextureFormatsTier1) },
+		{ FEATURE(TextureFormatsTier2) },
+		{ FEATURE(PrimitiveIndex) },
+		{ FEATURE(TextureComponentSwizzle) },
+		{ FEATURE(DawnInternalUsages) },
+		{ FEATURE(DawnMultiPlanarFormats) },
+		{ FEATURE(DawnNative) },
+		{ FEATURE(ChromiumExperimentalTimestampQueryInsidePasses) },
+		{ FEATURE(ImplicitDeviceSynchronization) },
+		{ FEATURE(TransientAttachments) },
+		{ FEATURE(MSAARenderToSingleSampled) },
+		{ FEATURE(D3D11MultithreadProtected) },
+		{ FEATURE(ANGLETextureSharing) },
+		{ FEATURE(PixelLocalStorageCoherent) },
+		{ FEATURE(PixelLocalStorageNonCoherent) },
+		{ FEATURE(Unorm16TextureFormats) },
+		{ FEATURE(MultiPlanarFormatExtendedUsages) },
+		{ FEATURE(MultiPlanarFormatP010) },
+		{ FEATURE(HostMappedPointer) },
+		{ FEATURE(MultiPlanarRenderTargets) },
+		{ FEATURE(MultiPlanarFormatNv12a) },
+		{ FEATURE(FramebufferFetch) },
+		{ FEATURE(BufferMapExtendedUsages) },
+		{ FEATURE(AdapterPropertiesMemoryHeaps) },
+		{ FEATURE(AdapterPropertiesD3D) },
+		{ FEATURE(AdapterPropertiesVk) },
+		{ FEATURE(DawnFormatCapabilities) },
+		{ FEATURE(DawnDrmFormatCapabilities) },
+		{ FEATURE(MultiPlanarFormatNv16) },
+		{ FEATURE(MultiPlanarFormatNv24) },
+		{ FEATURE(MultiPlanarFormatP210) },
+		{ FEATURE(MultiPlanarFormatP410) },
+		{ FEATURE(SharedTextureMemoryVkDedicatedAllocation) },
+		{ FEATURE(SharedTextureMemoryAHardwareBuffer) },
+		{ FEATURE(SharedTextureMemoryDmaBuf) },
+		{ FEATURE(SharedTextureMemoryOpaqueFD) },
+		{ FEATURE(SharedTextureMemoryZirconHandle) },
+		{ FEATURE(SharedTextureMemoryDXGISharedHandle) },
+		{ FEATURE(SharedTextureMemoryD3D11Texture2D) },
+		{ FEATURE(SharedTextureMemoryIOSurface) },
+		{ FEATURE(SharedTextureMemoryEGLImage) },
+		{ FEATURE(SharedFenceVkSemaphoreOpaqueFD) },
+		{ FEATURE(SharedFenceSyncFD) },
+		{ FEATURE(SharedFenceVkSemaphoreZirconHandle) },
+		{ FEATURE(SharedFenceDXGISharedHandle) },
+		{ FEATURE(SharedFenceMTLSharedEvent) },
+		{ FEATURE(SharedBufferMemoryD3D12Resource) },
+		{ FEATURE(StaticSamplers) },
+		{ FEATURE(YCbCrVulkanSamplers) },
+		{ FEATURE(ShaderModuleCompilationOptions) },
+		{ FEATURE(DawnLoadResolveTexture) },
+		{ FEATURE(DawnPartialLoadResolveTexture) },
+		{ FEATURE(MultiDrawIndirect) },
+		{ FEATURE(DawnTexelCopyBufferRowAlignment) },
+		{ FEATURE(FlexibleTextureViews) },
+		{ FEATURE(ChromiumExperimentalSubgroupMatrix) },
+		{ FEATURE(SharedFenceEGLSync) },
+		{ FEATURE(DawnDeviceAllocatorControl) },
+		{ FEATURE(AdapterPropertiesWGPU) },
+		{ FEATURE(SharedBufferMemoryD3D12SharedMemoryFileMappingHandle) },
 
 #undef FEATURE
 	};
-
-	static WGPUFeatureName ifSupported(WGPUFeatureName _featureName)
-	{
-		const int32_t idx = bx::binarySearch(_featureName, s_feature, BX_COUNTOF(s_feature), sizeof(Feature), Feature::cmpFn);
-
-		if (s_feature[idx].supported)
-		{
-			return _featureName;
-		}
-
-		return WGPUFeatureName_Force32;
-	}
 
 	static bool isResolvable(WGPUTextureFormat _fmt)
 	{
@@ -541,27 +548,31 @@ namespace bgfx { namespace wgpu
 		return false;
 	}
 
-	static bool isFeatureSupported(WGPUFeatureName _featureName)
-	{
-		const int32_t idx = bx::binarySearch(_featureName, s_feature, BX_COUNTOF(s_feature), sizeof(Feature), Feature::cmpFn);
-		return 0 <= idx && s_feature[idx].supported;
-	}
+#	if USE_WEBGPU_DYNAMIC_LIB
+
+#	define WGPU_IGNORE_____(_optional, _func)
+#	define WGPU_IMPORT_FUNC(_optional, _func) WGPUProc##_func wgpu##_func
+WGPU_IMPORT
+#	undef WGPU_IGNORE_____
+#	undef WGPU_IMPORT_FUNC
+
+#	endif // USE_WEBGPU_DYNAMIC_LIB
 
 	struct TextureFormatCaps
 	{
-		TextureFormatCaps()
+		TextureFormatCaps(WGPUDevice _device)
 		{
-			m_core          = isFeatureSupported(WGPUFeatureName_CoreFeaturesAndLimits);
-			m_tier1         = isFeatureSupported(WGPUFeatureName_TextureFormatsTier1);
-			m_rg11b10Rend   = m_tier1 || isFeatureSupported(WGPUFeatureName_RG11B10UfloatRenderable);
-			m_unorm16       = m_tier1 || isFeatureSupported(WGPUFeatureName_Unorm16TextureFormats);
-			m_bgra8Storage  = isFeatureSupported(WGPUFeatureName_BGRA8UnormStorage);
-			m_bc            = isFeatureSupported(WGPUFeatureName_TextureCompressionBC);
-			m_etc2          = isFeatureSupported(WGPUFeatureName_TextureCompressionETC2);
-			m_astc          = isFeatureSupported(WGPUFeatureName_TextureCompressionASTC);
-			m_bcSliced3D    = isFeatureSupported(WGPUFeatureName_TextureCompressionBCSliced3D);
-			m_astcSliced3D  = isFeatureSupported(WGPUFeatureName_TextureCompressionASTCSliced3D);
-			m_d32fs8        = isFeatureSupported(WGPUFeatureName_Depth32FloatStencil8);
+			m_core          = wgpuDeviceHasFeature(_device, WGPUFeatureName_CoreFeaturesAndLimits);
+			m_tier1         = wgpuDeviceHasFeature(_device, WGPUFeatureName_TextureFormatsTier1);
+			m_rg11b10Rend   = m_tier1 || wgpuDeviceHasFeature(_device, WGPUFeatureName_RG11B10UfloatRenderable);
+			m_unorm16       = m_tier1 || wgpuDeviceHasFeature(_device, WGPUFeatureName_Unorm16TextureFormats);
+			m_bgra8Storage  = wgpuDeviceHasFeature(_device, WGPUFeatureName_BGRA8UnormStorage);
+			m_bc            = wgpuDeviceHasFeature(_device, WGPUFeatureName_TextureCompressionBC);
+			m_etc2          = wgpuDeviceHasFeature(_device, WGPUFeatureName_TextureCompressionETC2);
+			m_astc          = wgpuDeviceHasFeature(_device, WGPUFeatureName_TextureCompressionASTC);
+			m_bcSliced3D    = wgpuDeviceHasFeature(_device, WGPUFeatureName_TextureCompressionBCSliced3D);
+			m_astcSliced3D  = wgpuDeviceHasFeature(_device, WGPUFeatureName_TextureCompressionASTCSliced3D);
+			m_d32fs8        = wgpuDeviceHasFeature(_device, WGPUFeatureName_Depth32FloatStencil8);
 
 			if (m_d32fs8)
 			{
@@ -756,16 +767,6 @@ namespace bgfx { namespace wgpu
 		bool m_d32fs8;
 	};
 
-#	if USE_WEBGPU_DYNAMIC_LIB
-
-#	define WGPU_IGNORE_____(_optional, _func)
-#	define WGPU_IMPORT_FUNC(_optional, _func) WGPUProc##_func wgpu##_func
-WGPU_IMPORT
-#	undef WGPU_IGNORE_____
-#	undef WGPU_IMPORT_FUNC
-
-#	endif // USE_WEBGPU_DYNAMIC_LIB
-
 #define WGPU_RELEASE_FUNC(_name)               \
 	inline void wgpuRelease(WGPU##_name& _obj) \
 	{                                          \
@@ -810,6 +811,12 @@ WGPU_IMPORT
 	}
 
 	static uint32_t s_uncapturedError = 0;
+
+#if BX_PLATFORM_EMSCRIPTEN
+	// Static, not members: device.lost can resolve after the renderer is deleted.
+	static uint32_t s_importedDeviceGeneration = 0;
+	static uint32_t s_importedDeviceLost       = 0;
+#endif // BX_PLATFORM_EMSCRIPTEN
 
 	static bool wgpuErrorCheck()
 	{
@@ -971,10 +978,68 @@ WGPU_IMPORT
 				);
 		}
 
-		WGPUWaitStatus waitForFuture(WGPUFutureWaitInfo& _fwi)
+		bool canWait() const
 		{
-			wgpuInstanceProcessEvents(m_instance);
-			return wgpuInstanceWaitAny(m_instance, 1, &_fwi, UINT64_MAX);
+#if BX_PLATFORM_EMSCRIPTEN
+			return m_timedWaitAny;
+#else
+			return true;
+#endif // BX_PLATFORM_EMSCRIPTEN
+		}
+
+		WGPUWaitStatus waitForFuture(WGPUFuture _future)
+		{
+			BX_ASSERT(canWait(), "Waiting would never yield to the browser.");
+
+			WGPUFutureWaitInfo fwi =
+			{
+				.future    = _future,
+				.completed = false,
+			};
+
+			// Bounded slices: loss leaves pending work incomplete until the device is destroyed.
+			const uint64_t timeout = m_timedWaitAny ? UINT64_C(100000000) : 0;
+
+			WGPUWaitStatus status;
+
+			do
+			{
+				status = wgpuInstanceWaitAny(m_instance, 1, &fwi, timeout);
+				pollDeviceLost();
+			}
+			while (WGPUWaitStatus_TimedOut == status
+			&&     0 == m_lost);
+
+			return status;
+		}
+
+		void pollFuture(WGPUFuture& _future)
+		{
+			if (0 == _future.id)
+			{
+				return;
+			}
+
+			WGPUFutureWaitInfo fwi =
+			{
+				.future    = _future,
+				.completed = false,
+			};
+
+			wgpuInstanceWaitAny(m_instance, 1, &fwi, 0);
+
+			if (fwi.completed)
+			{
+				_future = WGPU_FUTURE_INIT;
+			}
+		}
+
+		void processEvents()
+		{
+			if (!m_sharedInstance)
+			{
+				wgpuInstanceProcessEvents(m_instance);
+			}
 		}
 
 		bool init(const Init& _init)
@@ -1063,103 +1128,277 @@ WGPU_IMPORT
 #else // BX_PLATFORM_EMSCRIPTEN
 			BX_TRACE("Emscripten: Using statically linked WebGPU.");
 			m_webgpuDll = NULL;
+			++s_importedDeviceGeneration;
+			s_importedDeviceLost = 0;
 			errorState = ErrorState::LoadedWebGPU;
 
 #endif // !BX_PLATFORM_EMSCRIPTEN
 
 			{
+				BX_ASSERT(bx::isSorted(s_languageFeature, BX_COUNTOF(s_languageFeature), LanguageFeature::cmpFn), "Feature table must be sorted!");
+				BX_ASSERT(bx::isSorted(s_feature, BX_COUNTOF(s_feature), Feature::cmpFn), "Feature table must be sorted!");
+
+				if (NULL != g_platformData.context)
 				{
-					WGPUInstanceFeatureName requiredFeatures[] =
-					{
-						WGPUInstanceFeatureName_TimedWaitAny,
-#if !BX_PLATFORM_EMSCRIPTEN
-						WGPUInstanceFeatureName_ShaderSourceSPIRV,
-#endif // !BX_PLATFORM_EMSCRIPTEN
-					};
+#if BX_PLATFORM_EMSCRIPTEN
+					m_instance = wgpuCreateInstance(NULL);
+					m_device   = bgfxWgpuImportDevice( (WGPUDevice)g_platformData.context, m_instance, &s_importedDeviceGeneration, &s_importedDeviceLost);
+#else
+					m_device   = (WGPUDevice)g_platformData.context;
+					wgpuDeviceAddRef(m_device);
+					m_adapter  = wgpuDeviceGetAdapter(m_device);
+					m_instance = wgpuAdapterGetInstance(m_adapter);
+					m_sharedInstance = true;
+#endif // BX_PLATFORM_EMSCRIPTEN
 
-					WGPUInstanceDescriptor instanceDesc =
-					{
-						.nextInChain          = NULL,
-						.requiredFeatureCount = BX_COUNTOF(requiredFeatures),
-						.requiredFeatures     = requiredFeatures,
-						.requiredLimits       = NULL,
-					};
+					errorState = ErrorState::DeviceCreated;
 
-					m_instance = wgpuCreateInstance(&instanceDesc);
-
-					if (NULL == m_instance)
+					if (NULL == m_instance
+					||  NULL == m_device)
 					{
-						BX_TRACE("Failed to create instance!");
+						BX_TRACE("Init error: Failed to use external device.");
 						goto error;
 					}
-
-					errorState = ErrorState::InstanceCreated;
 				}
-
+				else
 				{
-					WGPURequestAdapterOptions rao =
 					{
-						.nextInChain          = NULL,
-						.featureLevel         = WGPUFeatureLevel_Undefined,
-						.powerPreference      = WGPUPowerPreference_HighPerformance,
-						.forceFallbackAdapter = false,
-						.backendType          = WGPUBackendType_Undefined,
-						.compatibleSurface    = NULL,
-					};
+						WGPUInstanceFeatureName requiredFeatures[] =
+						{
+							WGPUInstanceFeatureName_TimedWaitAny,
+#if !BX_PLATFORM_EMSCRIPTEN
+							WGPUInstanceFeatureName_ShaderSourceSPIRV,
+#endif // !BX_PLATFORM_EMSCRIPTEN
+						};
 
-					WGPUFutureWaitInfo fwi =
+						WGPUInstanceDescriptor instanceDesc =
+						{
+							.nextInChain          = NULL,
+							.requiredFeatureCount = BX_COUNTOF(requiredFeatures),
+							.requiredFeatures     = requiredFeatures,
+							.requiredLimits       = NULL,
+						};
+
+						m_instance = wgpuCreateInstance(&instanceDesc);
+
+						if (NULL == m_instance)
+						{
+							BX_TRACE("Failed to create instance!");
+							goto error;
+						}
+
+						m_timedWaitAny = true;
+
+						errorState = ErrorState::InstanceCreated;
+					}
+
 					{
-						.future = wgpuInstanceRequestAdapter(m_instance, &rao,
+						WGPURequestAdapterOptions rao =
+						{
+							.nextInChain          = NULL,
+							.featureLevel         = WGPUFeatureLevel_Undefined,
+							.powerPreference      = WGPUPowerPreference_HighPerformance,
+							.forceFallbackAdapter = false,
+							.backendType          = WGPUBackendType_Undefined,
+							.compatibleSurface    = NULL,
+						};
+
+						const WGPUWaitStatus waitStatus = waitForFuture(wgpuInstanceRequestAdapter(m_instance, &rao,
 							{
 								.nextInChain = NULL,
 								.mode        = WGPUCallbackMode_WaitAnyOnly,
 								.callback    = requestAdapterCb,
 								.userdata1   = this,
 								.userdata2   = NULL,
-							}),
-						.completed = false,
-					};
+							}) );
 
-					WGPUWaitStatus waitStatus = waitForFuture(fwi);
+						if (WGPUWaitStatus_Success != waitStatus
+						||  NULL == m_adapter)
+						{
+							goto error;
+						}
 
-					if (WGPUWaitStatus_Success != waitStatus
-					||  NULL == m_adapter)
-					{
-						goto error;
+						errorState = ErrorState::AdapterCreated;
 					}
 
-					errorState = ErrorState::AdapterCreated;
+					{
+						const WGPUFeatureName requestedFeatures[] =
+						{
+							WGPUFeatureName_TimestampQuery,
+
+							WGPUFeatureName_DepthClipControl,
+
+							WGPUFeatureName_IndirectFirstInstance,
+
+							WGPUFeatureName_Unorm16TextureFormats,
+							WGPUFeatureName_BGRA8UnormStorage,
+
+							WGPUFeatureName_TextureComponentSwizzle,
+							WGPUFeatureName_TextureFormatsTier1,
+							WGPUFeatureName_TextureFormatsTier2,
+
+							WGPUFeatureName_TextureCompressionBC,
+							WGPUFeatureName_TextureCompressionBCSliced3D,
+							WGPUFeatureName_TextureCompressionETC2,
+							WGPUFeatureName_TextureCompressionASTC,
+							WGPUFeatureName_TextureCompressionASTCSliced3D,
+
+							WGPUFeatureName_RG11B10UfloatRenderable,
+
+							WGPUFeatureName_Depth32FloatStencil8,
+
+							WGPUFeatureName_ShaderF16,
+						};
+
+						WGPUFeatureName requiredFeatures[BX_COUNTOF(requestedFeatures)];
+						uint32_t requiredFeatureCount = 0;
+
+						for (uint32_t ii = 0; ii < BX_COUNTOF(requestedFeatures); ++ii)
+						{
+							if (wgpuAdapterHasFeature(m_adapter, requestedFeatures[ii]) )
+							{
+								requiredFeatures[requiredFeatureCount++] = requestedFeatures[ii];
+							}
+						}
+
+						BX_TRACE("Required features (%d / %d):", requiredFeatureCount, BX_COUNTOF(requestedFeatures) );
+
+						for (uint32_t ii = 0; ii < requiredFeatureCount; ++ii)
+						{
+							const WGPUFeatureName featureName = requiredFeatures[ii];
+							const int32_t idx = bx::binarySearch(featureName, s_feature, BX_COUNTOF(s_feature), sizeof(Feature), Feature::cmpFn);
+							BX_ASSERT(0 <= idx, "Feature listed in required features must be present in s_feature table!");
+							BX_TRACE("\t%5x - %s", featureName, s_feature[idx].name);
+							BX_UNUSED(idx);
+						}
+
+						BX_TRACE("");
+
+						WGPULimits requiredLimits = WGPU_LIMITS_INIT;
+						WGPUStatus status = wgpuAdapterGetLimits(m_adapter, &requiredLimits);
+
+						if (WGPUStatus_Success == status)
+						{
+#if !BX_PLATFORM_EMSCRIPTEN
+							requiredLimits.maxComputeWorkgroupSizeX = 1024;
+							requiredLimits.maxComputeWorkgroupSizeY = 1024;
+							requiredLimits.maxComputeWorkgroupSizeZ = 64;
+#endif // !BX_PLATFORM_EMSCRIPTEN
+						}
+
+						static constexpr uint32_t kMaxEnabledTogles = 10;
+						const char* enabledToggles[kMaxEnabledTogles];
+						uint32_t enabledTogglesCount = 0;
+
+#if !BX_PLATFORM_EMSCRIPTEN
+						enabledToggles[enabledTogglesCount++] = "allow_unsafe_apis"; // TimestampWrite requires this.
+
+						if (_init.debug)
+						{
+//						bx::setEnv("DAWN_DEBUG_BREAK_ON_ERROR", "1");
+
+							enabledToggles[enabledTogglesCount++] = "dump_shaders_on_failure";
+							enabledToggles[enabledTogglesCount++] = "use_user_defined_labels_in_backend";
+//						enabledToggles[enabledTogglesCount++] = "dump_shaders";
+						}
+						else
+						{
+							enabledToggles[enabledTogglesCount++] = "disable_robustness";
+							enabledToggles[enabledTogglesCount++] = "lazy_clear_resource_on_first_use";
+							enabledToggles[enabledTogglesCount++] = "disable_lazy_clear_for_mapped_at_creation_buffer";
+							enabledToggles[enabledTogglesCount++] = "skip_validation";
+						}
+
+						BX_ASSERT(enabledTogglesCount < kMaxEnabledTogles, "");
+
+						BX_TRACE("Dawn enabled toggles (%d):", enabledTogglesCount);
+
+						for (uint32_t ii = 0; ii < enabledTogglesCount; ++ii)
+						{
+							BX_TRACE("\t%d: %s", ii, enabledToggles[ii]);
+						}
+
+						BX_TRACE("");
+
+						const char* disabledToggles[] =
+						{
+							"timestamp_quantization",
+						};
+
+						WGPUDawnTogglesDescriptor dawnTogglesDescriptor =
+						{
+							.chain =
+							{
+								.next  = NULL,
+								.sType = WGPUSType_DawnTogglesDescriptor,
+							},
+							.enabledToggleCount  = enabledTogglesCount,
+							.enabledToggles      = enabledToggles,
+							.disabledToggleCount = BX_COUNTOF(disabledToggles),
+							.disabledToggles     = disabledToggles,
+						};
+#endif // !BX_PLATFORM_EMSCRIPTEN
+
+						WGPUDeviceDescriptor deviceDesc =
+						{
+#if BX_PLATFORM_EMSCRIPTEN
+							.nextInChain            = NULL,
+#else
+							.nextInChain            = &dawnTogglesDescriptor.chain,
+#endif // BX_PLATFORM_EMSCRIPTEN
+							.label                  = WGPU_STRING_VIEW_INIT,
+							.requiredFeatureCount   = requiredFeatureCount,
+							.requiredFeatures       = requiredFeatures,
+							.requiredLimits         = &requiredLimits,
+							.defaultQueue           = WGPU_QUEUE_DESCRIPTOR_INIT,
+							.deviceLostCallbackInfo =
+								{
+									.nextInChain = NULL,
+									.mode        = WGPUCallbackMode_AllowSpontaneous,
+									.callback    = deviceLostCb,
+									.userdata1   = this,
+									.userdata2   = NULL,
+								},
+							.uncapturedErrorCallbackInfo
+								{
+									.nextInChain = NULL,
+									.callback    = uncapturedErrorCb,
+									.userdata1   = this,
+									.userdata2   = NULL,
+								},
+						};
+
+						const WGPUWaitStatus waitStatus = waitForFuture(wgpuAdapterRequestDevice(m_adapter, &deviceDesc,
+							{
+								.nextInChain = NULL,
+								.mode        = WGPUCallbackMode_WaitAnyOnly,
+								.callback    = requestDeviceCb,
+								.userdata1   = this,
+								.userdata2   = NULL,
+							}) );
+
+						if (WGPUWaitStatus_Success != waitStatus
+						||  NULL == m_device)
+						{
+							goto error;
+						}
+
+						errorState = ErrorState::DeviceCreated;
+					}
 				}
 
 				{
 					WGPUSupportedWGSLLanguageFeatures supportedWGSLLanguageFeatures;
 					wgpuInstanceGetWGSLLanguageFeatures(m_instance, &supportedWGSLLanguageFeatures);
 
-					BX_ASSERT(bx::isSorted(s_languageFeature, BX_COUNTOF(s_languageFeature), LanguageFeature::cmpFn), "Feature table must be sorted!");
-
 					BX_TRACE("Supported WGSL language features (%d):", supportedWGSLLanguageFeatures.featureCount);
-
-					for (uint32_t ii = 0; ii < BX_COUNTOF(s_languageFeature); ++ii)
-					{
-						LanguageFeature& feature = s_languageFeature[ii];
-						feature.supported = false;
-					}
 
 					for (uint32_t ii = 0; ii < uint32_t(supportedWGSLLanguageFeatures.featureCount); ++ii)
 					{
 						const WGPUWGSLLanguageFeatureName featureName = supportedWGSLLanguageFeatures.features[ii];
 						const int32_t idx = bx::binarySearch(featureName, s_languageFeature, BX_COUNTOF(s_languageFeature), sizeof(LanguageFeature), LanguageFeature::cmpFn);
-
-						if (0 <= idx)
-						{
-							LanguageFeature& feature = s_languageFeature[idx];
-							BX_TRACE("\t%5x - %s", featureName, feature.name);
-							feature.supported = true;
-						}
-						else
-						{
-							BX_TRACE("\t%5x - ** Unknown?! **", featureName);
-						}
+						BX_TRACE("\t%5x - %s", featureName, 0 <= idx ? s_languageFeature[idx].name : "** Unknown?! **");
+						BX_UNUSED(idx);
 					}
 
 					wgpuSupportedWGSLLanguageFeaturesFreeMembers(supportedWGSLLanguageFeatures);
@@ -1167,218 +1406,35 @@ WGPU_IMPORT
 					BX_TRACE("");
 
 					WGPUSupportedFeatures supportedFeatures;
-					wgpuAdapterGetFeatures(m_adapter, &supportedFeatures);
+					wgpuDeviceGetFeatures(m_device, &supportedFeatures);
 
-					BX_TRACE("Supported features (%d):", supportedFeatures.featureCount);
-
-					BX_ASSERT(bx::isSorted(s_feature, BX_COUNTOF(s_feature), Feature::cmpFn), "Feature table must be sorted!");
-
-					for (uint32_t ii = 0; ii < BX_COUNTOF(s_feature); ++ii)
-					{
-						Feature& feature = s_feature[ii];
-						feature.supported = false;
-					}
+					BX_TRACE("Device features (%d):", supportedFeatures.featureCount);
 
 					for (uint32_t ii = 0; ii < uint32_t(supportedFeatures.featureCount); ++ii)
 					{
 						const WGPUFeatureName featureName = supportedFeatures.features[ii];
 						const int32_t idx = bx::binarySearch(featureName, s_feature, BX_COUNTOF(s_feature), sizeof(Feature), Feature::cmpFn);
-
-						if (0 <= idx)
-						{
-							Feature& feature = s_feature[idx];
-							BX_TRACE("\t%5x - %s", featureName, feature.name);
-							feature.supported = true;
-						}
-						else
-						{
-							BX_TRACE("\t%5x - ** Unknown?! **", featureName);
-						}
+						BX_TRACE("\t%5x - %s", featureName, 0 <= idx ? s_feature[idx].name : "** Unknown?! **");
+						BX_UNUSED(idx);
 					}
 
 					BX_TRACE("");
 
 					wgpuSupportedFeaturesFreeMembers(supportedFeatures);
-
-					WGPUFeatureName requiredFeatures[] =
-					{
-						ifSupported(WGPUFeatureName_TimestampQuery),
-
-						ifSupported(WGPUFeatureName_DepthClipControl),
-
-						WGPUFeatureName_IndirectFirstInstance,
-
-						ifSupported(WGPUFeatureName_Unorm16TextureFormats),
-						ifSupported(WGPUFeatureName_BGRA8UnormStorage),
-
-						ifSupported(WGPUFeatureName_TextureComponentSwizzle),
-						ifSupported(WGPUFeatureName_TextureFormatsTier1),
-						ifSupported(WGPUFeatureName_TextureFormatsTier2),
-
-						ifSupported(WGPUFeatureName_TextureCompressionBC),
-						ifSupported(WGPUFeatureName_TextureCompressionBCSliced3D),
-						ifSupported(WGPUFeatureName_TextureCompressionETC2),
-						ifSupported(WGPUFeatureName_TextureCompressionASTC),
-						ifSupported(WGPUFeatureName_TextureCompressionASTCSliced3D),
-
-						ifSupported(WGPUFeatureName_RG11B10UfloatRenderable),
-
-						ifSupported(WGPUFeatureName_Depth32FloatStencil8),
-
-						ifSupported(WGPUFeatureName_ShaderF16),
-					};
-
-					bx::quickSort(requiredFeatures, BX_COUNTOF(requiredFeatures) );
-
-					uint32_t requiredFeatureCount = BX_COUNTOF(requiredFeatures);
-					for (uint32_t ii = 0; ii < BX_COUNTOF(requiredFeatures); ++ii)
-					{
-						if (WGPUFeatureName_Force32 == requiredFeatures[ii])
-						{
-							requiredFeatureCount = ii;
-							break;
-						}
-					}
-
-					BX_TRACE("Required features (%d / %d):", requiredFeatureCount, BX_COUNTOF(requiredFeatures) );
-
-					for (uint32_t ii = 0; ii < requiredFeatureCount; ++ii)
-					{
-						const WGPUFeatureName featureName = requiredFeatures[ii];
-
-						const int32_t idx = bx::binarySearch(featureName, s_feature, BX_COUNTOF(s_feature), sizeof(Feature), Feature::cmpFn);
-						BX_ASSERT(0 <= idx, "Feature listed in required features must be present in s_feature table!");
-
-						const Feature& feature = s_feature[idx];
-						BX_TRACE("\t%5x - %s%s", featureName, feature.name, feature.supported ? "" : " <- this feature is not optional, and it's not supported by WebGPU implementation!");
-						BX_UNUSED(feature);
-					}
-
-					BX_TRACE("");
-
-					WGPULimits requiredLimits = WGPU_LIMITS_INIT;
-					WGPUStatus status = wgpuAdapterGetLimits(m_adapter, &requiredLimits);
-
-					if (WGPUStatus_Success == status)
-					{
-#if !BX_PLATFORM_EMSCRIPTEN
-						requiredLimits.maxComputeWorkgroupSizeX = 1024;
-						requiredLimits.maxComputeWorkgroupSizeY = 1024;
-						requiredLimits.maxComputeWorkgroupSizeZ = 64;
-#endif // !BX_PLATFORM_EMSCRIPTEN
-					}
-
-					static constexpr uint32_t kMaxEnabledTogles = 10;
-					const char* enabledToggles[kMaxEnabledTogles];
-					uint32_t enabledTogglesCount = 0;
-
-#if !BX_PLATFORM_EMSCRIPTEN
-					enabledToggles[enabledTogglesCount++] = "allow_unsafe_apis"; // TimestampWrite requires this.
-
-					if (_init.debug)
-					{
-//						bx::setEnv("DAWN_DEBUG_BREAK_ON_ERROR", "1");
-
-						enabledToggles[enabledTogglesCount++] = "dump_shaders_on_failure";
-						enabledToggles[enabledTogglesCount++] = "use_user_defined_labels_in_backend";
-//						enabledToggles[enabledTogglesCount++] = "dump_shaders";
-					}
-					else
-					{
-						enabledToggles[enabledTogglesCount++] = "disable_robustness";
-						enabledToggles[enabledTogglesCount++] = "lazy_clear_resource_on_first_use";
-						enabledToggles[enabledTogglesCount++] = "disable_lazy_clear_for_mapped_at_creation_buffer";
-						enabledToggles[enabledTogglesCount++] = "skip_validation";
-					}
-
-					BX_ASSERT(enabledTogglesCount < kMaxEnabledTogles, "");
-
-					BX_TRACE("Dawn enabled toggles (%d):", enabledTogglesCount);
-
-					for (uint32_t ii = 0; ii < enabledTogglesCount; ++ii)
-					{
-						BX_TRACE("\t%d: %s", ii, enabledToggles[ii]);
-					}
-
-					BX_TRACE("");
-
-					const char* disabledToggles[] =
-					{
-						"timestamp_quantization",
-					};
-
-					WGPUDawnTogglesDescriptor dawnTogglesDescriptor =
-					{
-						.chain =
-						{
-							.next  = NULL,
-							.sType = WGPUSType_DawnTogglesDescriptor,
-						},
-						.enabledToggleCount  = enabledTogglesCount,
-						.enabledToggles      = enabledToggles,
-						.disabledToggleCount = BX_COUNTOF(disabledToggles),
-						.disabledToggles     = disabledToggles,
-					};
-#endif // !BX_PLATFORM_EMSCRIPTEN
-
-					WGPUDeviceDescriptor deviceDesc =
-					{
-#if BX_PLATFORM_EMSCRIPTEN
-						.nextInChain            = NULL,
-#else
-						.nextInChain            = &dawnTogglesDescriptor.chain,
-#endif // BX_PLATFORM_EMSCRIPTEN
-						.label                  = WGPU_STRING_VIEW_INIT,
-						.requiredFeatureCount   = requiredFeatureCount,
-						.requiredFeatures       = requiredFeatures,
-						.requiredLimits         = &requiredLimits,
-						.defaultQueue           = WGPU_QUEUE_DESCRIPTOR_INIT,
-						.deviceLostCallbackInfo =
-							{
-								.nextInChain = NULL,
-								.mode        = WGPUCallbackMode_AllowSpontaneous,
-								.callback    = deviceLostCb,
-								.userdata1   = this,
-								.userdata2   = NULL,
-							},
-						.uncapturedErrorCallbackInfo
-							{
-								.nextInChain = NULL,
-								.callback    = uncapturedErrorCb,
-								.userdata1   = this,
-								.userdata2   = NULL,
-							},
-					};
-
-					WGPUFutureWaitInfo fwi =
-					{
-						.future = wgpuAdapterRequestDevice(m_adapter, &deviceDesc,
-							{
-								.nextInChain = NULL,
-								.mode        = WGPUCallbackMode_WaitAnyOnly,
-								.callback    = requestDeviceCb,
-								.userdata1   = this,
-								.userdata2   = NULL,
-							}),
-						.completed = false,
-					};
-
-					WGPUWaitStatus waitStatus = waitForFuture(fwi);
-
-					if (WGPUWaitStatus_Success != waitStatus
-					||  NULL == m_device)
-					{
-						goto error;
-					}
-
-					errorState = ErrorState::DeviceCreated;
 				}
 
 				{
 					WGPUStatus status;
 
 					WGPUAdapterInfo adapterInfo = WGPU_ADAPTER_INFO_INIT;
-					status = wgpuAdapterGetInfo(m_adapter, &adapterInfo);
+#if BX_PLATFORM_EMSCRIPTEN
+					status = bgfxWgpuHasAdapterInfo(m_device)
+						? wgpuDeviceGetAdapterInfo(m_device, &adapterInfo)
+						: WGPUStatus_Error
+						;
+#else
+					status = wgpuDeviceGetAdapterInfo(m_device, &adapterInfo);
+#endif // BX_PLATFORM_EMSCRIPTEN
 
 					if (WGPUStatus_Success == status)
 					{
@@ -1414,7 +1470,7 @@ WGPU_IMPORT
 					BX_TRACE("");
 
 					m_limits = WGPU_LIMITS_INIT;
-					status = wgpuAdapterGetLimits(m_adapter, &m_limits);
+					status = wgpuDeviceGetLimits(m_device, &m_limits);
 
 					if (WGPUStatus_Success == status)
 					{
@@ -1467,17 +1523,17 @@ WGPU_IMPORT
 						g_caps.supported = 0
 							| BGFX_CAPS_BLEND_INDEPENDENT
 							| BGFX_CAPS_COMPUTE
-							| BGFX_CAPS_DRAW_INDIRECT
 							| BGFX_CAPS_IMAGE_RW
 							| BGFX_CAPS_INDEX32
 							| BGFX_CAPS_PRIMITIVE_ID
 							| BGFX_CAPS_RENDERER_MULTITHREADED
 							| BGFX_CAPS_SWAP_CHAIN
 							| BGFX_CAPS_TEXTURE_CUBE_ARRAY
-							| (isFeatureSupported(WGPUFeatureName_ShaderF16) ? BGFX_CAPS_SHADER_F16 : 0)
+							| (wgpuDeviceHasFeature(m_device, WGPUFeatureName_IndirectFirstInstance) ? BGFX_CAPS_DRAW_INDIRECT : 0)
+							| (wgpuDeviceHasFeature(m_device, WGPUFeatureName_ShaderF16)             ? BGFX_CAPS_SHADER_F16    : 0)
 							;
 
-						TextureFormatCaps textureFormatCaps;
+						TextureFormatCaps textureFormatCaps(m_device);
 
 						for (uint32_t formatIdx = 0; formatIdx < TextureFormat::Count; ++formatIdx)
 						{
@@ -1634,8 +1690,37 @@ WGPU_IMPORT
 			return 0 != m_lost;
 		}
 
+		void pollDeviceLost()
+		{
+			if (NULL == m_device)
+			{
+				return;
+			}
+
+#if BX_PLATFORM_EMSCRIPTEN
+			if (0 != s_importedDeviceLost)
+			{
+				handleDeviceLost(toWGPUStringView("Imported device is lost.") );
+			}
+#else
+			WGPUFutureWaitInfo fwi =
+			{
+				.future    = wgpuDeviceGetLostFuture(m_device),
+				.completed = false,
+			};
+
+			if (WGPUWaitStatus_Success == wgpuInstanceWaitAny(m_instance, 1, &fwi, 0)
+			&&  fwi.completed)
+			{
+				handleDeviceLost(toWGPUStringView("Device lost future completed.") );
+			}
+#endif // BX_PLATFORM_EMSCRIPTEN
+		}
+
 		void flip() override
 		{
+			pollDeviceLost();
+
 			if (0 != m_lost)
 			{
 				return;
@@ -1764,8 +1849,6 @@ WGPU_IMPORT
 			m_textures[_handle.idx].clear(_mip, _numMips, _layer, _numLayers);
 		}
 
-		bool s_done;
-
 		struct ReadTexture
 		{
 			WGPUBuffer buffer;
@@ -1822,7 +1905,7 @@ WGPU_IMPORT
 
 		static void readTextureCb(WGPUMapAsyncStatus _status, WGPUStringView _message, void* _userdata1, void* _userdata2)
 		{
-			ReadTexture& readTexture = *(ReadTexture*)_userdata1;
+			BX_UNUSED(_userdata2);
 
 			if (WGPUMapAsyncStatus_Success != _status)
 			{
@@ -1831,6 +1914,8 @@ WGPU_IMPORT
 			}
 			else
 			{
+				const ReadTexture& readTexture = *(const ReadTexture*)_userdata1;
+
 				const void* result = (const void*)WGPU_CHECK(wgpuBufferGetConstMappedRange(
 					  readTexture.buffer
 					, 0
@@ -1854,10 +1939,6 @@ WGPU_IMPORT
 
 				WGPU_CHECK(wgpuBufferUnmap(readTexture.buffer) );
 			}
-
-			wgpuRelease(readTexture.buffer);
-
-			*(bool*)(_userdata2) = true;
 		}
 
 		struct ReadBuffer
@@ -1869,7 +1950,7 @@ WGPU_IMPORT
 
 		static void readBufferCb(WGPUMapAsyncStatus _status, WGPUStringView _message, void* _userdata1, void* _userdata2)
 		{
-			ReadBuffer& readBuffer = *(ReadBuffer*)_userdata1;
+			BX_UNUSED(_userdata2);
 
 			if (WGPUMapAsyncStatus_Success != _status)
 			{
@@ -1878,6 +1959,8 @@ WGPU_IMPORT
 			}
 			else
 			{
+				const ReadBuffer& readBuffer = *(const ReadBuffer*)_userdata1;
+
 				const void* result = (const void*)WGPU_CHECK(wgpuBufferGetConstMappedRange(
 					  readBuffer.buffer
 					, 0
@@ -1888,14 +1971,16 @@ WGPU_IMPORT
 
 				WGPU_CHECK(wgpuBufferUnmap(readBuffer.buffer) );
 			}
-
-			wgpuRelease(readBuffer.buffer);
-
-			*(bool*)(_userdata2) = true;
 		}
 
 		void readTexture(TextureHandle _handle, void* _data, uint16_t _layer, uint8_t _mip) override
 		{
+			if (!canWait() )
+			{
+				BX_TRACE("readTexture: blocking readback needs TimedWaitAny.");
+				return;
+			}
+
 			const TextureWGPU& texture = m_textures[_handle.idx];
 
 			const bimg::TextureFormat::Enum format = bimg::TextureFormat::Enum(texture.m_textureFormat);
@@ -1939,8 +2024,6 @@ WGPU_IMPORT
 			};
 
 			WGPUBuffer readTextureBuffer = WGPU_CHECK(wgpuDeviceCreateBuffer(m_device, &readTextureBufferDesc) );
-
-			s_done = false;
 
 			m_cmd.copyTextureToBuffer(
 				{
@@ -2021,23 +2104,21 @@ WGPU_IMPORT
 				.texelSize     = blockInfo.blockSize,
 			};
 
-			WGPU_CHECK(wgpuBufferMapAsync(
+			const WGPUFuture future = WGPU_CHECK(wgpuBufferMapAsync(
 				  readTextureBuffer
 				, WGPUMapMode_Read
 				, 0
 				, copySize
 				, {
 					.nextInChain = NULL,
-					.mode        = WGPUCallbackMode_AllowProcessEvents,
+					.mode        = WGPUCallbackMode_WaitAnyOnly,
 					.callback    = readTextureCb,
 					.userdata1   = &readTexture,
-					.userdata2   = &s_done,
+					.userdata2   = NULL,
 				}) );
+			waitForFuture(future);
 
-			while (!s_done)
-			{
-				wgpuInstanceProcessEvents(m_instance);
-			}
+			wgpuRelease(readTextureBuffer);
 		}
 
 		BufferWGPU& getBuffer(Handle _handle)
@@ -2052,6 +2133,12 @@ WGPU_IMPORT
 
 		void readBuffer(Handle _handle, void* _data, uint32_t _offset, uint32_t _size) override
 		{
+			if (!canWait() )
+			{
+				BX_TRACE("readBuffer: blocking readback needs TimedWaitAny.");
+				return;
+			}
+
 			const BufferWGPU& buffer = getBuffer(_handle);
 
 			WGPUBufferDescriptor readBufferDesc =
@@ -2068,8 +2155,6 @@ WGPU_IMPORT
 
 			WGPUBuffer readBufferDst = WGPU_CHECK(wgpuDeviceCreateBuffer(m_device, &readBufferDesc) );
 
-			s_done = false;
-
 			m_cmd.copyBufferToBuffer(buffer.m_buffer, _offset, readBufferDst, 0, _size);
 
 			m_cmd.kick();
@@ -2081,23 +2166,21 @@ WGPU_IMPORT
 				.data   = _data,
 			};
 
-			WGPU_CHECK(wgpuBufferMapAsync(
+			const WGPUFuture future = WGPU_CHECK(wgpuBufferMapAsync(
 				  readBufferDst
 				, WGPUMapMode_Read
 				, 0
 				, _size
 				, {
 					.nextInChain = NULL,
-					.mode        = WGPUCallbackMode_AllowProcessEvents,
+					.mode        = WGPUCallbackMode_WaitAnyOnly,
 					.callback    = readBufferCb,
 					.userdata1   = &readBuffer,
-					.userdata2   = &s_done,
+					.userdata2   = NULL,
 				}) );
+			waitForFuture(future);
 
-			while (!s_done)
-			{
-				wgpuInstanceProcessEvents(m_instance);
-			}
+			wgpuRelease(readBufferDst);
 		}
 
 		void resizeTexture(TextureHandle _handle, uint16_t _width, uint16_t _height, uint8_t _numMips, uint16_t _numLayers) override
@@ -2207,6 +2290,12 @@ WGPU_IMPORT
 
 		void requestScreenShot(FrameBufferHandle _handle, const char* _filePath) override
 		{
+			if (!canWait() )
+			{
+				BX_TRACE("requestScreenShot: blocking readback needs TimedWaitAny.");
+				return;
+			}
+
 			const FrameBufferWGPU& frameBuffer = getFrameBuffer(_handle);
 			const SwapChainWGPU& swapChain = frameBuffer.m_swapChain;
 
@@ -2242,8 +2331,6 @@ WGPU_IMPORT
 			WGPUBuffer readTextureBuffer = WGPU_CHECK(wgpuDeviceCreateBuffer(m_device, &readTextureBufferDesc) );
 
 			void* data = bx::alloc(g_allocator, dstPitch*height);
-
-			s_done = false;
 
 			m_cmd.copyTextureToBuffer(
 				{
@@ -2290,23 +2377,21 @@ WGPU_IMPORT
 				.texelSize     = uint32_t(bpp/8),
 			};
 
-			WGPU_CHECK(wgpuBufferMapAsync(
+			const WGPUFuture future = WGPU_CHECK(wgpuBufferMapAsync(
 				  readTextureBuffer
 				, WGPUMapMode_Read
 				, 0
 				, copySize
 				, {
 					.nextInChain = NULL,
-					.mode        = WGPUCallbackMode_AllowProcessEvents,
+					.mode        = WGPUCallbackMode_WaitAnyOnly,
 					.callback    = readTextureCb,
 					.userdata1   = &readTexture,
-					.userdata2   = &s_done,
+					.userdata2   = NULL,
 				}) );
+			waitForFuture(future);
 
-			while (!s_done)
-			{
-				wgpuInstanceProcessEvents(m_instance);
-			}
+			wgpuRelease(readTextureBuffer);
 
 			g_callback->screenShot(
 				  _filePath
@@ -4527,6 +4612,9 @@ WGPU_IMPORT
 		uint8_t m_vsScratch[64<<10];
 
 		uint32_t m_lost = 0;
+
+		bool m_timedWaitAny   = false;
+		bool m_sharedInstance = false;
 	};
 
 	static RendererContextWGPU* s_renderWGPU;
@@ -5907,7 +5995,7 @@ WGPU_IMPORT
 		s_renderWGPU->m_cmd.kick();
 		s_renderWGPU->m_cmd.wait();
 
-		wgpuInstanceProcessEvents(s_renderWGPU->m_instance);
+		s_renderWGPU->processEvents();
 
 		m_nwh = NULL;
 	}
@@ -6599,6 +6687,7 @@ WGPU_IMPORT
 		wgpuRelease(m_queue);
 	}
 
+#if !BX_PLATFORM_EMSCRIPTEN
 	static void queueWorkDoneCb(
 		  WGPUQueueWorkDoneStatus _status
 		, WGPUStringView _message
@@ -6606,10 +6695,9 @@ WGPU_IMPORT
 		, void* _userdata2
 		)
 	{
-//		BX_ASSERT(WGPUQueueWorkDoneStatus_Success == _status, "%d", _status);
 		BX_UNUSED(_status, _message, _userdata1, _userdata2);
-		s_renderWGPU->m_cmd.m_counter--;
 	}
+#endif // !BX_PLATFORM_EMSCRIPTEN
 
 	WGPUCommandEncoder CommandQueueWGPU::alloc()
 	{
@@ -6633,36 +6721,26 @@ WGPU_IMPORT
 		WGPUCommandBuffer commandBuffer = WGPU_CHECK(wgpuCommandEncoderFinish(m_commandEncoder, NULL) );
 
 		WGPU_CHECK(wgpuQueueSubmit(m_queue, 1, &commandBuffer) );
-		WGPU_CHECK(wgpuQueueOnSubmittedWorkDone(
-			  m_queue
-			, {
-				.nextInChain = NULL,
-				.mode        = WGPUCallbackMode_AllowProcessEvents,
-				.callback    = queueWorkDoneCb,
-				.userdata1   = (void*)uintptr_t(m_counter),
-				.userdata2   = NULL,
-			}) );
 		wgpuRelease(commandBuffer);
 		wgpuRelease(m_commandEncoder);
-		++m_counter;
-
-	#if !BX_PLATFORM_EMSCRIPTEN
-		WGPU_CHECK(wgpuInstanceProcessEvents(s_renderWGPU->m_instance) );
-	#endif // !BX_PLATFORM_EMSCRIPTEN
 
 		m_commandEncoder = WGPU_CHECK(wgpuDeviceCreateCommandEncoder(s_renderWGPU->m_device, NULL) );
 	}
 
 	void CommandQueueWGPU::wait()
 	{
-	#if BX_PLATFORM_EMSCRIPTEN
-		wgpuInstanceProcessEvents(s_renderWGPU->m_instance);
-	#else
-		while (0 < m_counter)
-		{
-			WGPU_CHECK(wgpuInstanceProcessEvents(s_renderWGPU->m_instance) );
-		}
-	#endif // BX_PLATFORM_EMSCRIPTEN
+	#if !BX_PLATFORM_EMSCRIPTEN
+		const WGPUFuture future = WGPU_CHECK(wgpuQueueOnSubmittedWorkDone(
+			  m_queue
+			, {
+				.nextInChain = NULL,
+				.mode        = WGPUCallbackMode_WaitAnyOnly,
+				.callback    = queueWorkDoneCb,
+				.userdata1   = NULL,
+				.userdata2   = NULL,
+			}) );
+		s_renderWGPU->waitForFuture(future);
+	#endif // !BX_PLATFORM_EMSCRIPTEN
 	}
 
 	void CommandQueueWGPU::frame()
@@ -6706,7 +6784,7 @@ WGPU_IMPORT
 	{
 		m_result.reset();
 
-		m_supported = isFeatureSupported(WGPUFeatureName_TimestampQuery);
+		m_supported = wgpuDeviceHasFeature(s_renderWGPU->m_device, WGPUFeatureName_TimestampQuery);
 
 		if (!m_supported)
 		{
@@ -6719,6 +6797,7 @@ WGPU_IMPORT
 	void TimerQueryWGPU::shutdown()
 	{
 		destroy();
+		s_renderWGPU->pollFuture(m_mapFuture);
 	}
 
 	void TimerQueryWGPU::create(uint32_t _num)
@@ -6782,7 +6861,7 @@ WGPU_IMPORT
 	void TimerQueryWGPU::resize(uint32_t _num)
 	{
 		if (!m_supported
-		||  m_mapPending
+		||  0 != m_mapFuture.id
 		||  m_resolved
 		||  bx::min(_num, kMaxQueries) == m_numQueries)
 		{
@@ -6856,7 +6935,7 @@ WGPU_IMPORT
 	void TimerQueryWGPU::resolve(uint32_t _frameNum)
 	{
 		if (!m_supported
-		||  m_mapPending)
+		||  0 != m_mapFuture.id)
 		{
 			return;
 		}
@@ -6887,30 +6966,32 @@ WGPU_IMPORT
 
 	static void readTimestampResultsCb(WGPUMapAsyncStatus _status, WGPUStringView _message, void* _userdata1, void* _userdata2)
 	{
-		BX_UNUSED(_status, _message, _userdata2);
-		TimerQueryWGPU& timerQuery = *(TimerQueryWGPU*)_userdata1;
-		timerQuery.consumeResults();
+		BX_UNUSED(_message, _userdata2);
+
+		if (WGPUMapAsyncStatus_Success == _status)
+		{
+			TimerQueryWGPU& timerQuery = *(TimerQueryWGPU*)_userdata1;
+			timerQuery.consumeResults();
+		}
 	}
 
 	void TimerQueryWGPU::readResultsAsync()
 	{
 		if (!m_resolved
-		||  m_mapPending)
+		||  0 != m_mapFuture.id)
 		{
 			return;
 		}
 
-		m_resolved   = false;
-		m_mapPending = true;
-
-		WGPU_CHECK(wgpuBufferMapAsync(
+		m_resolved  = false;
+		m_mapFuture = WGPU_CHECK(wgpuBufferMapAsync(
 			  m_readback
 			, WGPUMapMode_Read
 			, 0
 			, size_t(getBufferSize() )
 			, {
 				.nextInChain = NULL,
-				.mode        = WGPUCallbackMode_AllowProcessEvents,
+				.mode        = WGPUCallbackMode_WaitAnyOnly,
 				.callback    = readTimestampResultsCb,
 				.userdata1   = this,
 				.userdata2   = NULL,
@@ -6945,8 +7026,6 @@ WGPU_IMPORT
 
 			WGPU_CHECK(wgpuBufferUnmap(m_readback) );
 		}
-
-		m_mapPending = false;
 	}
 
 	void OcclusionQueryWGPU::init()
@@ -7001,6 +7080,7 @@ WGPU_IMPORT
 		wgpuDestroy(m_querySet);
 		wgpuDestroy(m_resolve);
 		wgpuDestroy(m_readback);
+		s_renderWGPU->pollFuture(m_mapFuture);
 	}
 
 	void OcclusionQueryWGPU::begin(WGPURenderPassEncoder _renderPassEncoder, OcclusionQueryHandle _handle)
@@ -7026,7 +7106,8 @@ WGPU_IMPORT
 
 	void OcclusionQueryWGPU::resolve()
 	{
-		if (0 < m_control.getNumUsed() )
+		if (0 <  m_control.getNumUsed()
+		&&  0 == m_mapFuture.id)
 		{
 			WGPUCommandEncoder commandEncoder = s_renderWGPU->m_cmd.m_commandEncoder;
 
@@ -7054,25 +7135,30 @@ WGPU_IMPORT
 
 	static void readQueryResultsCb(WGPUMapAsyncStatus _status, WGPUStringView _message, void* _userdata1, void* _userdata2)
 	{
-		BX_UNUSED(_status, _message);
-		OcclusionQueryWGPU& occlusionQuery = *(OcclusionQueryWGPU*)_userdata1;
-		occlusionQuery.consumeResults( (Frame*)_userdata2);
+		BX_UNUSED(_message);
+
+		if (WGPUMapAsyncStatus_Success == _status)
+		{
+			OcclusionQueryWGPU& occlusionQuery = *(OcclusionQueryWGPU*)_userdata1;
+			occlusionQuery.consumeResults( (Frame*)_userdata2);
+		}
 	}
 
 	void OcclusionQueryWGPU::readResultsAsync(Frame* _frame)
 	{
-		if (0 < m_control.getNumUsed() )
+		if (0 <  m_control.getNumUsed()
+		&&  0 == m_mapFuture.id)
 		{
 			constexpr uint64_t kOcclusionQueryBufferSize = BGFX_CONFIG_MAX_OCCLUSION_QUERIES * sizeof(uint64_t);
 
-			WGPU_CHECK(wgpuBufferMapAsync(
+			m_mapFuture = WGPU_CHECK(wgpuBufferMapAsync(
 				  m_readback
 				, WGPUMapMode_Read
 				, 0
 				, kOcclusionQueryBufferSize
 				, {
 					.nextInChain = NULL,
-					.mode        = WGPUCallbackMode_AllowProcessEvents,
+					.mode        = WGPUCallbackMode_WaitAnyOnly,
 					.callback    = readQueryResultsCb,
 					.userdata1   = this,
 					.userdata2   = _frame,
@@ -7549,7 +7635,9 @@ WGPU_IMPORT
 		m_mipGen = &_mipGen;
 		m_occlusionQuery.readResultsAsync(_render);
 		m_gpuTimer.readResultsAsync();
-		WGPU_CHECK(wgpuInstanceProcessEvents(s_renderWGPU->m_instance) );
+		processEvents();
+		pollFuture(m_occlusionQuery.m_mapFuture);
+		pollFuture(m_gpuTimer.m_mapFuture);
 		m_gpuTimer.resize(getNumTimerQueries(_render, m_gpuTimer.m_control.getSize() ) );
 
 #if BX_PLATFORM_EMSCRIPTEN
@@ -7610,6 +7698,8 @@ WGPU_IMPORT
 		_render->sort();
 
 		m_cmd.wait();
+		pollFuture(m_occlusionQuery.m_mapFuture);
+		pollFuture(m_gpuTimer.m_mapFuture);
 
 		RenderDraw currentState;
 		currentState.clear();

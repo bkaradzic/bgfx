@@ -7865,8 +7865,9 @@ public final class Bgfx {
 		}
 
 		/**
-		 * GL context, D3D device, or Vulkan device. If {@code NULL}, bgfx
-		 * will create context/device.
+		 * GL context, D3D device, Metal device, Vulkan device, or WebGPU device.
+		 * If {@code NULL}, bgfx will create context/device. A native WebGPU device's lost
+		 * callback must use {@code WGPUCallbackMode_AllowSpontaneous}.
 		 * @return the field value
 		 */
 		public MemorySegment context() {

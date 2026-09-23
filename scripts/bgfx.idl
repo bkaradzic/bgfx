@@ -934,8 +934,9 @@ struct.InternalData { section = "Platform specific" }
 --- Platform data.
 struct.PlatformData { ctor, section = "Platform specific" }
 	.context "void*"
-		--- GL context, D3D device, or Vulkan device. If `NULL`, bgfx
-		--- will create context/device.
+		--- GL context, D3D device, Metal device, Vulkan device, or WebGPU device.
+		--- If `NULL`, bgfx will create context/device. A native WebGPU device's lost
+		--- callback must use `WGPUCallbackMode_AllowSpontaneous`.
 	.queue "void*"
 		--- D3D12 Queue. If `NULL` bgfx will create queue.
 	.type "NativeWindowHandleType::Enum" --- Handle type. Needed for platforms having more than one option.
