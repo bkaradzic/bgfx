@@ -417,7 +417,11 @@ void showExampleDialog(entry::AppI* _app, const char* _errorText)
 	const bgfx::Stats* stats = bgfx::getStats();
 	const double toMsCpu = 1000.0/stats->cpuTimerFreq;
 	const double toMsGpu = 1000.0/stats->gpuTimerFreq;
-	const double frameMs = double(stats->cpuTimeFrame)*toMsCpu;
+	const bool   fixedTime = bx::Ticks(bx::InitZero) != entry::getFixedTimeStep();
+	const double frameMs   = fixedTime
+		? bx::toMilliseconds<double>(entry::getFixedTimeStep() )
+		: double(stats->cpuTimeFrame)*toMsCpu
+		;
 
 	s_frameTime.pushSample(float(frameMs) );
 
@@ -444,8 +448,8 @@ void showExampleDialog(entry::AppI* _app, const char* _errorText)
 	ImGui::PopStyleColor();
 
 	ImGui::Text("Submit CPU %0.3f, GPU %0.3f (L: %d)"
-		, double(stats->cpuTimeEnd - stats->cpuTimeBegin)*toMsCpu
-		, double(stats->gpuTimeEnd - stats->gpuTimeBegin)*toMsGpu
+		, fixedTime ? 0.0 : double(stats->cpuTimeEnd - stats->cpuTimeBegin)*toMsCpu
+		, fixedTime ? 0.0 : double(stats->gpuTimeEnd - stats->gpuTimeBegin)*toMsGpu
 		, stats->maxGpuLatency
 		);
 
