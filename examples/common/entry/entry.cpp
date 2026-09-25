@@ -7,6 +7,7 @@
 #include <bx/commandline.h>
 #include <bx/file.h>
 #include <bx/sort.h>
+#include <bx/timer.h>
 #include <bgfx/bgfx.h>
 
 #include <time.h>
@@ -553,6 +554,71 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		return s_numApps;
 	}
 
+	static bx::Ticks s_fixedTimeStep = bx::InitZero;
+
+	bx::Ticks getFixedTimeStep()
+	{
+		return s_fixedTimeStep;
+	}
+
+	///
+	struct TestRun
+	{
+		TestRun(int _argc, const char* const* _argv)
+			: m_frame(0)
+			, m_screenshotFrame(0)
+		{
+			bx::CommandLine cmdLine(_argc, _argv);
+
+			const char* screenshot = cmdLine.findOption("screenshot");
+			if (NULL != screenshot)
+			{
+				bx::strCopy(m_screenshot, sizeof(m_screenshot), screenshot);
+				m_screenshotFrame = 60;
+
+				const char* frame = cmdLine.findOption("screenshot-frame");
+				if (NULL != frame)
+				{
+					bx::fromString(&m_screenshotFrame, frame);
+				}
+			}
+
+			uint32_t fps = 0 != m_screenshotFrame ? 60 : 0;
+			const char* fixedFps = cmdLine.findOption("fixed-fps");
+			if (NULL != fixedFps)
+			{
+				bx::fromString(&fps, fixedFps);
+			}
+
+			s_fixedTimeStep = 0 != fps
+				? bx::Ticks(bx::Ticks::s_kFreq.ticks/fps)
+				: bx::Ticks(bx::InitZero)
+				;
+		}
+
+		///
+		bool frame()
+		{
+			if (0 == m_screenshotFrame)
+			{
+				return true;
+			}
+
+			++m_frame;
+
+			if (m_frame == m_screenshotFrame)
+			{
+				bgfx::requestScreenShot(BGFX_INVALID_HANDLE, m_screenshot);
+			}
+
+			return m_frame < m_screenshotFrame + 3;
+		}
+
+		uint32_t m_frame;
+		uint32_t m_screenshotFrame;
+		char     m_screenshot[bx::kMaxFilePath];
+	};
+
 	int runApp(AppI* _app, int _argc, const char* const* _argv)
 	{
 		setWindowSize(kDefaultWindowHandle, s_width, s_height);
@@ -564,6 +630,8 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		bx::snprintf(title, BX_COUNTOF(title), "%S - %s", &exeName, _app->getName() );
 		setWindowTitle(kDefaultWindowHandle, title);
 
+		TestRun test(_argc, _argv);
+
 		_app->init(_argc, _argv, s_width, s_height);
 		bgfx::frame();
 
@@ -573,7 +641,8 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 #else
 		while (_app->update() )
 		{
-			if (0 != bx::strLen(s_restartApp) )
+			if (0 != bx::strLen(s_restartApp)
+			||  !test.frame() )
 			{
 				break;
 			}

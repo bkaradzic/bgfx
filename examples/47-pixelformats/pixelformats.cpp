@@ -523,6 +523,8 @@ public:
 		}
 
 		imguiCreate();
+
+		m_frameTime.reset();
 	}
 
 	int32_t shutdown() override
@@ -596,8 +598,7 @@ public:
 		{
 			if (bgfx::isValid(m_checkerboard) )
 			{
-				static int64_t timeOffset = bx::getHPCounter();
-				const float time = float( (bx::getHPCounter()-timeOffset)/double(bx::getHPFrequency() ) );
+				const float time = bx::toSeconds<float>(m_frameTime.getDurationTime() );
 				const float animate = float(m_animate)*0.5f;
 				const float xx = bx::sin(time * 0.37f) * animate;
 				const float yy = bx::cos(time * 0.43f) * animate;
@@ -631,6 +632,8 @@ public:
 	{
 		if (!entry::processEvents(m_width, m_height, m_debug, m_reset, &m_mouseState) )
 		{
+			m_frameTime.frame();
+
 			imguiBeginFrame(m_mouseState.m_mx
 				,  m_mouseState.m_my
 				, (m_mouseState.m_buttons[entry::MouseButton::Left  ] ? IMGUI_MBUT_LEFT   : 0)
@@ -832,6 +835,7 @@ public:
 	}
 
 	entry::MouseState m_mouseState;
+	FrameTime m_frameTime;
 
 	uint32_t m_width;
 	uint32_t m_height;
