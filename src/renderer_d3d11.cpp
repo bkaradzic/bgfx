@@ -1208,6 +1208,8 @@ namespace bgfx { namespace d3d11
 
 							m_scd.bufferCount = m_swapBufferCount;
 							m_scd.swapEffect  = m_swapEffect;
+							// DXGI_SCALING_NONE is only valid for flip-model swap chains.
+							m_scd.scaling     = DXGI_SCALING_STRETCH;
 							hr = m_dxgi.createSwapChain(m_device
 								, m_scd
 								, &mainFrameBuffer().m_swapChain
