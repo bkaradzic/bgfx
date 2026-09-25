@@ -3880,7 +3880,15 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 		const char* code = (const char*)reader.getDataPtr();
 		bx::skip(&reader, shaderSize+1);
 
-		m_lib = newLibraryWithSource(s_renderMtl->m_device, code);
+		if (shaderSize >= 4
+		&&  0 == bx::memCmp(code, "MTLB", 4) )
+		{
+			m_lib = newLibraryWithData(s_renderMtl->m_device, code, shaderSize);
+		}
+		else
+		{
+			m_lib = newLibraryWithSource(s_renderMtl->m_device, code);
+		}
 
 		if (NULL != m_lib)
 		{
