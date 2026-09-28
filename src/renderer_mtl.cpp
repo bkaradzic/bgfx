@@ -1256,6 +1256,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			{
 				NS::AutoreleasePool* pool = NS::AutoreleasePool::alloc()->init();
 
+				endEncoding();
 				m_gpuTimer.shutdown();
 				m_cmd.kick(false, true);
 
@@ -1828,8 +1829,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 #if BX_PLATFORM_OSX
 			m_blitCommandEncoder->synchronizeResource(swapChain->m_screenshotTarget);
 #endif  // BX_PLATFORM_OSX
-			m_blitCommandEncoder->endEncoding();
-			m_blitCommandEncoder = NULL;
+			endBlitEncoding();
 
 			m_cmd.kick(false, true);
 			m_commandBuffer = 0;
@@ -3531,7 +3531,10 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 					m_commandBuffer = m_cmd.alloc();
 				}
 
+				// Retained, since it can stay open past the end of renderFrame's autorelease pool
+				// when submit is skipped (e.g. resource updates pending at shutdown).
 				m_blitCommandEncoder = m_commandBuffer->blitCommandEncoder();
+				retain(m_blitCommandEncoder);
 			}
 
 			return m_blitCommandEncoder;
@@ -3618,10 +3621,15 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 				m_computeCommandEncoder = NULL;
 			}
 
+			endBlitEncoding();
+		}
+
+		void endBlitEncoding()
+		{
 			if (NULL != m_blitCommandEncoder)
 			{
 				m_blitCommandEncoder->endEncoding();
-				m_blitCommandEncoder = NULL;
+				MTL_RELEASE_I(m_blitCommandEncoder);
 			}
 		}
 
@@ -5965,11 +5973,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			}
 		}
 
-		if (0 != m_blitCommandEncoder)
-		{
-			m_blitCommandEncoder->endEncoding();
-			m_blitCommandEncoder = 0;
-		}
+		endBlitEncoding();
 	}
 
 	void RendererContextMtl::submitUniformCache(UniformCacheState& _ucs, uint16_t _view)
@@ -6014,11 +6018,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 		int64_t timeBegin = bx::getHPCounter();
 		int64_t captureElapsed = 0;
 
-		if (m_blitCommandEncoder)
-		{
-			m_blitCommandEncoder->endEncoding();
-			m_blitCommandEncoder = NULL;
-		}
+		endBlitEncoding();
 
 		updateResolution(_render->m_mainSwapChain, _render->m_reset);
 
