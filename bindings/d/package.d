@@ -3936,6 +3936,9 @@ mixin(joinFnBinds((){
 			handle = Frame buffer handle. If handle is `BGFX_INVALID_HANDLE` request will be
 		made for main window back buffer.
 			filePath = Will be passed to `bgfx::CallbackI::screenShot` callback.
+		If the device is lost before the screenshot is taken,
+		`bgfx::CallbackI::fatal` reports `Fatal::DeviceLost` in that frame
+		and `screenShot` is not called for this request.
 		*/
 		{q{void}, q{requestScreenShot}, q{FrameBufferHandle handle, const(char)* filePath}, ext: `C++, "bgfx"`},
 		
