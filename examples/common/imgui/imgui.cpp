@@ -531,6 +531,14 @@ struct OcornutImguiContext
 		const double freq = double(bx::getHPFrequency() );
 		io.DeltaTime = float(frameTime/freq);
 
+#if USE_ENTRY
+		const bx::Ticks step = entry::getFixedTimeStep();
+		if (bx::Ticks(bx::InitZero) != step)
+		{
+			io.DeltaTime = bx::toSeconds<float>(step);
+		}
+#endif // USE_ENTRY
+
 		io.AddMousePosEvent( (float)_mx, (float)_my);
 		io.AddMouseButtonEvent(ImGuiMouseButton_Left,   0 != (_button & IMGUI_MBUT_LEFT  ) );
 		io.AddMouseButtonEvent(ImGuiMouseButton_Right,  0 != (_button & IMGUI_MBUT_RIGHT ) );

@@ -100,7 +100,6 @@ namespace bgfx { namespace mtl
 		return MtlObjAccess::hasLabel(_obj) ? MtlObjAccess::label(_obj) : "?!";
 	}
 
-	// String conversion helper for metal-cpp API calls that take NS::String*
 	inline NS::String* nsstr(const char* _str)
 	{
 		return NS::String::string(_str, NS::UTF8StringEncoding);
@@ -108,13 +107,30 @@ namespace bgfx { namespace mtl
 
 	inline MTL::Library* newLibraryWithSource(MTL::Device* _device, const char* _source)
 	{
-		NS::Error* error = NULL;
+		NS::Error*  error  = NULL;
 		NS::String* source = NS::String::string(_source, NS::ASCIIStringEncoding);
-		MTL::Library* lib = _device->newLibrary(source, (MTL::CompileOptions*)NULL, &error);
+		MTL::Library*  lib = _device->newLibrary(source, (MTL::CompileOptions*)NULL, &error);
+
 		BX_WARN(NULL == error
 			, "Shader compilation failed: %s"
 			, error->localizedDescription()->utf8String()
 			);
+
+		return lib;
+	}
+
+	inline MTL::Library* newLibraryWithData(MTL::Device* _device, const void* _data, uint32_t _size)
+	{
+		dispatch_data_t data = dispatch_data_create(_data, _size, NULL, DISPATCH_DATA_DESTRUCTOR_DEFAULT);
+		NS::Error*  error = NULL;
+		MTL::Library* lib = _device->newLibrary(data, &error);
+		dispatch_release(data);
+
+		BX_WARN(NULL == error
+			, "Shader library load failed: %s"
+			, error->localizedDescription()->utf8String()
+			);
+
 		return lib;
 	}
 
@@ -471,6 +487,8 @@ namespace bgfx { namespace mtl
 			, uint16_t _numLayers = UINT16_MAX
 			, uint8_t _firstMip = 0
 			, uint8_t _numMips = UINT8_MAX
+			, uint8_t _lodMin = 0
+			, uint8_t _lodMax = UINT8_MAX
 			);
 
 		MTL::Texture* getTextureImage(uint8_t _mip, uint16_t _firstLayer = 0, uint16_t _numLayers = UINT16_MAX);

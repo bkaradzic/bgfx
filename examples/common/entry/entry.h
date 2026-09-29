@@ -373,6 +373,9 @@ namespace entry
 	///
 	void setRestartArgs(const char* _args);
 
+	///
+	bx::Ticks getFixedTimeStep();
+
 } // namespace entry
 
 #endif // ENTRY_H_HEADER_GUARD

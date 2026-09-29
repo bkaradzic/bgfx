@@ -646,7 +646,7 @@ namespace wgpu {
 		void update(uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem);
 		void clear(uint8_t _mip, uint8_t _numMips, uint16_t _layer, uint16_t _numLayers);
 
-		WGPUSampler getSamplerState(uint32_t _samplerFlags) const;
+		WGPUSampler getSamplerState(uint32_t _samplerFlags, uint8_t _lodMin = 0, uint8_t _lodMax = UINT8_MAX) const;
 		WGPUTextureView getTextureView(uint8_t _baseMipLevel, uint8_t _mipLevelCount, bool _storage, uint16_t _baseArrayLayer = 0, uint16_t _arrayLayerCount = UINT16_MAX, WGPUTextureViewDimension _viewDimension = WGPUTextureViewDimension_Undefined, bool _stencil = false, WGPUTextureFormat _format = WGPUTextureFormat_Undefined) const;
 		WGPUTextureFormat getViewFormat(uint32_t _flags, uint32_t _bit) const;
 
@@ -679,8 +679,11 @@ namespace wgpu {
 			, m_msaaTextureView(NULL)
 			, m_depthStencilView(NULL)
 			, m_viewFormat(WGPUTextureFormat_Undefined)
+			, m_formatDepthStencil(uint8_t(TextureFormat::Count) )
 			, m_readable(false)
+			, m_needToRecreateSwapChain(false)
 		{
+			bx::memSet(&m_descPending, 0, sizeof(m_descPending) );
 		}
 
 		bool create(void* _nwh, const SwapChain& _desc);
@@ -695,6 +698,7 @@ namespace wgpu {
 
 		void* m_nwh;
 		SwapChain m_desc;
+		SwapChain m_descPending;
 		WGPUSurfaceConfiguration m_surfaceConfig;
 
 		WGPUSurface m_surface;
@@ -707,6 +711,7 @@ namespace wgpu {
 
 		uint8_t m_formatDepthStencil;
 		bool m_readable;
+		bool m_needToRecreateSwapChain;
 	};
 
 	struct FrameBufferWGPU
@@ -719,8 +724,11 @@ namespace wgpu {
 			, m_denseIdx(kInvalidHandle)
 			, m_numColorAttachments(0)
 			, m_numAttachments(0)
+			, m_width(0)
+			, m_height(0)
 			, m_msaaCount(1)
 			, m_needPresent(false)
+			, m_needResolve(false)
 		{
 		}
 

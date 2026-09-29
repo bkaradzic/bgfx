@@ -71,7 +71,7 @@ void main()
 
 		// Calculate hi-Z buffer mip
 		ivec2 size = ivec2( (maxXY - minXY) * u_inputRTSize.xy);
-		float mip = ceil(log2(max(size.x, size.y)));
+		float mip  = ceil(log2(float(max(size.x, size.y) ) ) );
 
 		mip = clamp(mip, 0, u_cullingConfig.z);
 

@@ -341,6 +341,7 @@ namespace bgfx { namespace spirv
 		"BgfxSamplerCubeArray",
 		"BgfxSamplerCubeShadow",
 		"BgfxSampler2DMS",
+		"BgfxSampler2DMSArray",
 	};
 
 	static uint16_t writeUniformArray(bx::WriterI* _shaderWriter, const UniformArray& uniforms, bool isFragmentShader)

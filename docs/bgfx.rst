@@ -462,7 +462,7 @@ Textures
 Bind textures to texture stages for draw calls.
 
 .. doxygenfunction:: bgfx::setTexture(uint8_t _stage, UniformHandle _sampler, TextureHandle _handle, uint32_t _flags = UINT32_MAX)
-.. doxygenfunction:: bgfx::setTexture(uint8_t _stage, UniformHandle _sampler, TextureHandle _handle, uint16_t _firstLayer, uint16_t _numLayers, uint8_t _firstMip, uint8_t _numMips, uint32_t _flags = UINT32_MAX)
+.. doxygenfunction:: bgfx::setTexture(uint8_t _stage, UniformHandle _sampler, TextureHandle _handle, uint16_t _firstLayer, uint16_t _numLayers, uint8_t _firstMip, uint8_t _numMips, uint32_t _flags = UINT32_MAX, uint8_t _lodMin = 0, uint8_t _lodMax = UINT8_MAX)
 
 Uniforms
 ********

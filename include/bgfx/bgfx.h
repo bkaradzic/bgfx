@@ -1767,6 +1767,11 @@ namespace bgfx
 		///   mode.
 		///   - `BGFX_SAMPLER_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]` - Point or anisotropic
 		///   sampling.
+		/// @param[in] _lodMin Lowest (most detailed) level of detail the sampler may use, in
+		///   quarter-mip steps, relative to `_firstMip`.
+		/// @param[in] _lodMax Highest (least detailed) level of detail the sampler may use, in
+		///   quarter-mip steps, relative to `_firstMip`. `UINT8_MAX` leaves it
+		///   unclamped.
 		///
 		/// @attention C99's equivalent binding is `bgfx_encoder_set_texture_view`.
 		///
@@ -1779,6 +1784,8 @@ namespace bgfx
 			, uint8_t _firstMip
 			, uint8_t _numMips
 			, uint32_t _flags = UINT32_MAX
+			, uint8_t _lodMin = 0
+			, uint8_t _lodMax = UINT8_MAX
 			);
 
 		/// Submit an empty primitive for rendering. Uniforms and draw state
@@ -3417,6 +3424,7 @@ namespace bgfx
 	/// @param[in] _width Width.
 	/// @param[in] _height Height.
 	/// @param[in] _hasMips Indicates that texture contains full mip-map chain.
+	///   Ignored when `BGFX_TEXTURE_MIP_COUNT` is set in _flags.
 	/// @param[in] _numLayers Number of layers in texture array.
 	/// @param[in] _format Texture format. See: `TextureFormat::Enum`.
 	/// @param[in] _flags Texture creation (see `BGFX_TEXTURE_*`.), and sampler (see `BGFX_SAMPLER_*`)
@@ -3450,6 +3458,7 @@ namespace bgfx
 	///
 	/// @param[in] _ratio Texture size in respect to back-buffer size. See: `BackbufferRatio::Enum`.
 	/// @param[in] _hasMips Indicates that texture contains full mip-map chain.
+	///   Ignored when `BGFX_TEXTURE_MIP_COUNT` is set in _flags.
 	/// @param[in] _numLayers Number of layers in texture array.
 	/// @param[in] _format Texture format. See: `TextureFormat::Enum`.
 	/// @param[in] _flags Texture creation (see `BGFX_TEXTURE_*`.), and sampler (see `BGFX_SAMPLER_*`)
@@ -3477,6 +3486,7 @@ namespace bgfx
 	/// @param[in] _height Height.
 	/// @param[in] _depth Depth.
 	/// @param[in] _hasMips Indicates that texture contains full mip-map chain.
+	///   Ignored when `BGFX_TEXTURE_MIP_COUNT` is set in _flags.
 	/// @param[in] _format Texture format. See: `TextureFormat::Enum`.
 	/// @param[in] _flags Texture creation (see `BGFX_TEXTURE_*`.), and sampler (see `BGFX_SAMPLER_*`)
 	///   flags. Default texture sampling mode is linear, and wrap mode is repeat.
@@ -3508,6 +3518,7 @@ namespace bgfx
 	///
 	/// @param[in] _size Cube side size.
 	/// @param[in] _hasMips Indicates that texture contains full mip-map chain.
+	///   Ignored when `BGFX_TEXTURE_MIP_COUNT` is set in _flags.
 	/// @param[in] _numLayers Number of layers in texture array.
 	/// @param[in] _format Texture format. See: `TextureFormat::Enum`.
 	/// @param[in] _flags Texture creation (see `BGFX_TEXTURE_*`.), and sampler (see `BGFX_SAMPLER_*`)
@@ -4942,6 +4953,11 @@ namespace bgfx
 	///   mode.
 	///   - `BGFX_SAMPLER_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]` - Point or anisotropic
 	///   sampling.
+	/// @param[in] _lodMin Lowest (most detailed) level of detail the sampler may use, in
+	///   quarter-mip steps, relative to `_firstMip`.
+	/// @param[in] _lodMax Highest (least detailed) level of detail the sampler may use, in
+	///   quarter-mip steps, relative to `_firstMip`. `UINT8_MAX` leaves it
+	///   unclamped.
 	///
 	/// @attention C99's equivalent binding is `bgfx_set_texture_view`.
 	///
@@ -4954,6 +4970,8 @@ namespace bgfx
 		, uint8_t _firstMip
 		, uint8_t _numMips
 		, uint32_t _flags = UINT32_MAX
+		, uint8_t _lodMin = 0
+		, uint8_t _lodMax = UINT8_MAX
 		);
 
 	/// Submit an empty primitive for rendering. Uniforms and draw state

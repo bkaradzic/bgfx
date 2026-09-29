@@ -981,12 +981,12 @@ BGFX_C_API void bgfx_encoder_set_texture(bgfx_encoder_t* _this, uint8_t _stage, 
 	This->setTexture(_stage, sampler.cpp, handle.cpp, _flags);
 }
 
-BGFX_C_API void bgfx_encoder_set_texture_view(bgfx_encoder_t* _this, uint8_t _stage, bgfx_uniform_handle_t _sampler, bgfx_texture_handle_t _handle, uint16_t _firstLayer, uint16_t _numLayers, uint8_t _firstMip, uint8_t _numMips, uint32_t _flags)
+BGFX_C_API void bgfx_encoder_set_texture_view(bgfx_encoder_t* _this, uint8_t _stage, bgfx_uniform_handle_t _sampler, bgfx_texture_handle_t _handle, uint16_t _firstLayer, uint16_t _numLayers, uint8_t _firstMip, uint8_t _numMips, uint32_t _flags, uint8_t _lodMin, uint8_t _lodMax)
 {
 	bgfx::Encoder* This = (bgfx::Encoder*)_this;
 	union { bgfx_uniform_handle_t c; bgfx::UniformHandle cpp; } sampler = { _sampler };
 	union { bgfx_texture_handle_t c; bgfx::TextureHandle cpp; } handle = { _handle };
-	This->setTexture(_stage, sampler.cpp, handle.cpp, _firstLayer, _numLayers, _firstMip, _numMips, _flags);
+	This->setTexture(_stage, sampler.cpp, handle.cpp, _firstLayer, _numLayers, _firstMip, _numMips, _flags, _lodMin, _lodMax);
 }
 
 BGFX_C_API void bgfx_encoder_touch(bgfx_encoder_t* _this, bgfx_view_id_t _id)
@@ -1306,11 +1306,11 @@ BGFX_C_API void bgfx_set_texture(uint8_t _stage, bgfx_uniform_handle_t _sampler,
 	bgfx::setTexture(_stage, sampler.cpp, handle.cpp, _flags);
 }
 
-BGFX_C_API void bgfx_set_texture_view(uint8_t _stage, bgfx_uniform_handle_t _sampler, bgfx_texture_handle_t _handle, uint16_t _firstLayer, uint16_t _numLayers, uint8_t _firstMip, uint8_t _numMips, uint32_t _flags)
+BGFX_C_API void bgfx_set_texture_view(uint8_t _stage, bgfx_uniform_handle_t _sampler, bgfx_texture_handle_t _handle, uint16_t _firstLayer, uint16_t _numLayers, uint8_t _firstMip, uint8_t _numMips, uint32_t _flags, uint8_t _lodMin, uint8_t _lodMax)
 {
 	union { bgfx_uniform_handle_t c; bgfx::UniformHandle cpp; } sampler = { _sampler };
 	union { bgfx_texture_handle_t c; bgfx::TextureHandle cpp; } handle = { _handle };
-	bgfx::setTexture(_stage, sampler.cpp, handle.cpp, _firstLayer, _numLayers, _firstMip, _numMips, _flags);
+	bgfx::setTexture(_stage, sampler.cpp, handle.cpp, _firstLayer, _numLayers, _firstMip, _numMips, _flags, _lodMin, _lodMax);
 }
 
 BGFX_C_API void bgfx_touch(bgfx_view_id_t _id)
