@@ -3641,7 +3641,7 @@ WGPU_IMPORT
 									.buffer      = NULL,
 									.offset      = 0,
 									.size        = 0,
-									.sampler     = texture.getSamplerState(bind.m_samplerFlags),
+									.sampler     = texture.getSamplerState(bind.m_samplerFlags, bind.m_lod.min, bind.m_lod.max),
 									.textureView = NULL,
 								};
 							}
@@ -5031,7 +5031,7 @@ WGPU_IMPORT
 		}
 	}
 
-	WGPUSampler TextureWGPU::getSamplerState(uint32_t _samplerFlags) const
+	WGPUSampler TextureWGPU::getSamplerState(uint32_t _samplerFlags, uint8_t _lodMin, uint8_t _lodMax) const
 	{
 		uint32_t samplerFlags = (0 == (BGFX_SAMPLER_INTERNAL_DEFAULT & _samplerFlags)
 			? _samplerFlags
@@ -5047,7 +5047,14 @@ WGPU_IMPORT
 		}
 
 		samplerFlags &= BGFX_SAMPLER_BITS_MASK;
-		WGPUSampler sampler = s_renderWGPU->m_samplerStateCache.find(samplerFlags);
+
+		const uint64_t key = 0
+			| uint64_t(samplerFlags)
+			| (uint64_t(_lodMin) << 40)
+			| (uint64_t(_lodMax) << 32)
+			;
+
+		WGPUSampler sampler = s_renderWGPU->m_samplerStateCache.find(key);
 
 		const bool disableAniso = true
 			&& (BGFX_SAMPLER_MIN_POINT == (samplerFlags&BGFX_SAMPLER_MIN_POINT) )
@@ -5067,14 +5074,14 @@ WGPU_IMPORT
 				.magFilter     = s_textureFilterMinMag[(samplerFlags&BGFX_SAMPLER_MAG_MASK)>>BGFX_SAMPLER_MAG_SHIFT],
 				.minFilter     = s_textureFilterMinMag[(samplerFlags&BGFX_SAMPLER_MIN_MASK)>>BGFX_SAMPLER_MIN_SHIFT],
 				.mipmapFilter  = s_textureFilterMip[(samplerFlags&BGFX_SAMPLER_MIP_MASK)>>BGFX_SAMPLER_MIP_SHIFT],
-				.lodMinClamp   = 0,
-				.lodMaxClamp   = bx::kFloatLargest,
+				.lodMinClamp   = float(_lodMin) * 0.25f,
+				.lodMaxClamp   = UINT8_MAX == _lodMax ? bx::kFloatLargest : float(_lodMax) * 0.25f,
 				.compare       = 0 == cmpFunc ? WGPUCompareFunction_Undefined : s_cmpFunc[cmpFunc],
 				.maxAnisotropy = disableAniso ? uint16_t(1) : s_renderWGPU->m_maxAnisotropy,
 			};
 
 			sampler = WGPU_CHECK(wgpuDeviceCreateSampler(s_renderWGPU->m_device, &samplerDesc) );
-			s_renderWGPU->m_samplerStateCache.add(samplerFlags, sampler);
+			s_renderWGPU->m_samplerStateCache.add(key, sampler);
 		}
 
 		return sampler;

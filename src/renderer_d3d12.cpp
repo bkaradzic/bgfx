@@ -4271,14 +4271,20 @@ namespace bgfx { namespace d3d12
 			return pso;
 		}
 
-		uint16_t getSamplerState(const uint32_t* _flags, uint32_t _num, const float _palette[][4])
+		uint16_t getSamplerState(const uint32_t* _flags, uint32_t _num, const float _palette[][4], const uint16_t* _lod = NULL)
 		{
 			bx::HashMurmur3 murmur;
 			murmur.begin();
 			murmur.add(_flags, _num * sizeof(uint32_t) );
+
+			if (NULL != _lod)
+			{
+				murmur.add(_lod, _num * sizeof(uint16_t) );
+			}
+
 			uint32_t hash = murmur.end();
 
-			return m_samplerAllocator.alloc(hash, _flags, _num, _palette);
+			return m_samplerAllocator.alloc(hash, _flags, _num, _palette, _lod);
 		}
 
 		bool isVisible(Frame* _render, OcclusionQueryHandle _handle, bool _visible)
@@ -5231,7 +5237,7 @@ namespace bgfx { namespace d3d12
 		return idx;
 	}
 
-	uint16_t DescriptorAllocatorD3D12::alloc(uint32_t _hash, const uint32_t* _flags, uint32_t _num, const float _palette[][4])
+	uint16_t DescriptorAllocatorD3D12::alloc(uint32_t _hash, const uint32_t* _flags, uint32_t _num, const float _palette[][4], const uint16_t* _lod)
 	{
 		uint16_t idx = m_stateCache.find(_hash);
 		if (UINT16_MAX != idx)
@@ -5290,8 +5296,11 @@ namespace bgfx { namespace d3d12
 				sd.BorderColor[2] = 0.0f;
 				sd.BorderColor[3] = 0.0f;
 			}
-			sd.MinLOD   = 0;
-			sd.MaxLOD   = D3D12_FLOAT32_MAX;
+			const uint8_t lodMin = NULL != _lod ? uint8_t(_lod[ii] >> 8)   : 0;
+			const uint8_t lodMax = NULL != _lod ? uint8_t(_lod[ii] & 0xff) : UINT8_MAX;
+
+			sd.MinLOD   = float(lodMin) * 0.25f;
+			sd.MaxLOD   = UINT8_MAX == lodMax ? D3D12_FLOAT32_MAX : float(lodMax) * 0.25f;
 
 			D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle =
 			{
@@ -9803,6 +9812,8 @@ namespace bgfx { namespace d3d12
 							uint32_t numSet = 0;
 							D3D12_GPU_DESCRIPTOR_HANDLE srvHandle[BGFX_MAX_COMPUTE_BINDINGS] = {};
 							uint32_t samplerFlags[BGFX_MAX_COMPUTE_BINDINGS] = {};
+							uint16_t samplerLod[BGFX_MAX_COMPUTE_BINDINGS];
+							bx::memSet(samplerLod, 0xff, sizeof(samplerLod) );
 							{
 								const ProgramD3D12& program = m_program[key.m_program.idx];
 
@@ -9851,6 +9862,7 @@ namespace bgfx { namespace d3d12
 													, srgbSelect(resolvedFlags, BGFX_SAMPLER_SRGB)
 													);
 												samplerFlags[stage] = resolvedFlags & (BGFX_SAMPLER_BITS_MASK | BGFX_SAMPLER_BORDER_COLOR_MASK | BGFX_SAMPLER_COMPARE_MASK);
+												samplerLod[stage]   = uint16_t(uint16_t(bind.m_lod.min)<<8) | bind.m_lod.max;
 
 												++numSet;
 											}
@@ -9891,7 +9903,7 @@ namespace bgfx { namespace d3d12
 								{
 									Bind& bind = bindCache[bindIdx];
 									bind.m_srvHandle = srvHandle[0];
-									bind.m_samplerStateIdx = getSamplerState(samplerFlags, maxComputeBindings, _render->m_colorPalette);
+									bind.m_samplerStateIdx = getSamplerState(samplerFlags, maxComputeBindings, _render->m_colorPalette, samplerLod);
 									bind.m_rawSrvMask = currentRawSrvMask;
 									bind.m_rawUavMask = currentRawUavMask;
 									bind.m_texDimHash = currentTexDimHash;
@@ -10185,6 +10197,8 @@ namespace bgfx { namespace d3d12
 							uint32_t numSet = 0;
 							D3D12_GPU_DESCRIPTOR_HANDLE srvHandle[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS] = {};
 							uint32_t samplerFlags[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS] = {};
+							uint16_t samplerLod[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS];
+							bx::memSet(samplerLod, 0xff, sizeof(samplerLod) );
 							{
 								const ProgramD3D12& program = m_program[key.m_program.idx];
 
@@ -10233,6 +10247,7 @@ namespace bgfx { namespace d3d12
 													, srgbSelect(resolvedFlags, BGFX_SAMPLER_SRGB)
 													);
 												samplerFlags[stage] = resolvedFlags & (BGFX_SAMPLER_BITS_MASK | BGFX_SAMPLER_BORDER_COLOR_MASK | BGFX_SAMPLER_COMPARE_MASK);
+												samplerLod[stage]   = uint16_t(uint16_t(bind.m_lod.min)<<8) | bind.m_lod.max;
 
 												++numSet;
 											}
@@ -10276,7 +10291,7 @@ namespace bgfx { namespace d3d12
 							{
 								Bind& bind = bindCache[bindIdx];
 								bind.m_srvHandle       = srvHandle[0];
-								bind.m_samplerStateIdx = getSamplerState(samplerFlags, BGFX_CONFIG_MAX_TEXTURE_SAMPLERS, _render->m_colorPalette);
+								bind.m_samplerStateIdx = getSamplerState(samplerFlags, BGFX_CONFIG_MAX_TEXTURE_SAMPLERS, _render->m_colorPalette, samplerLod);
 								bind.m_rawSrvMask      = currentRawSrvMask;
 								bind.m_rawUavMask      = currentRawUavMask;
 								bind.m_texDimHash      = currentTexDimHash;

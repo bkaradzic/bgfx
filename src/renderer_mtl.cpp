@@ -3450,7 +3450,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			return result;
 		}
 
-		MTL::SamplerState* getSamplerState(uint32_t _flags)
+		MTL::SamplerState* getSamplerState(uint32_t _flags, uint8_t _lodMin = 0, uint8_t _lodMax = UINT8_MAX)
 		{
 			const uint32_t index = bx::min<uint32_t>(
 				  BGFX_CONFIG_MAX_COLOR_PALETTE-1
@@ -3472,7 +3472,13 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 			_flags |= uint32_t(borderColor) << BGFX_SAMPLER_BORDER_COLOR_SHIFT;
 
-			MTL::SamplerState* sampler = m_samplerStateCache.find(_flags);
+			const uint64_t key = 0
+				| uint64_t(_flags)
+				| (uint64_t(_lodMin) << 40)
+				| (uint64_t(_lodMax) << 32)
+				;
+
+			MTL::SamplerState* sampler = m_samplerStateCache.find(key);
 
 			if (NULL == sampler)
 			{
@@ -3484,8 +3490,8 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 				desc->setMinFilter(s_textureFilterMinMag[(_flags & BGFX_SAMPLER_MIN_MASK) >> BGFX_SAMPLER_MIN_SHIFT]);
 				desc->setMagFilter(s_textureFilterMinMag[(_flags & BGFX_SAMPLER_MAG_MASK) >> BGFX_SAMPLER_MAG_SHIFT]);
 				desc->setMipFilter(   s_textureFilterMip[(_flags & BGFX_SAMPLER_MIP_MASK) >> BGFX_SAMPLER_MIP_SHIFT]);
-				desc->setLodMinClamp(0);
-				desc->setLodMaxClamp(FLT_MAX);
+				desc->setLodMinClamp(float(_lodMin) * 0.25f);
+				desc->setLodMaxClamp(UINT8_MAX == _lodMax ? FLT_MAX : float(_lodMax) * 0.25f);
 				desc->setNormalizedCoordinates(TRUE);
 				desc->setBorderColor(borderColor);
 				desc->setMaxAnisotropy(true
@@ -3502,7 +3508,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 					;
 
 				sampler = m_device->newSamplerState(desc);
-				m_samplerStateCache.add(_flags, sampler);
+				m_samplerStateCache.add(key, sampler);
 			}
 
 			return sampler;
@@ -4619,7 +4625,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 		}
 	}
 
-	void TextureMtl::commit(uint8_t _stage, bool _vertex, bool _fragment, uint32_t _flags, uint8_t _mip, uint16_t _firstLayer, uint16_t _numLayers, uint8_t _firstMip, uint8_t _numMips)
+	void TextureMtl::commit(uint8_t _stage, bool _vertex, bool _fragment, uint32_t _flags, uint8_t _mip, uint16_t _firstLayer, uint16_t _numLayers, uint8_t _firstMip, uint8_t _numMips, uint8_t _lodMin, uint8_t _lodMax)
 	{
 		if (!_vertex
 		&&  !_fragment)
@@ -4643,7 +4649,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			s_renderMtl->m_renderCommandEncoder->setVertexTexture(ptr, _stage);
 			s_renderMtl->m_renderCommandEncoder->setVertexSamplerState(
 				  0 == (BGFX_SAMPLER_INTERNAL_DEFAULT & _flags)
-					? s_renderMtl->getSamplerState(_flags)
+					? s_renderMtl->getSamplerState(_flags, _lodMin, _lodMax)
 					: m_sampler
 				, _stage
 				);
@@ -4654,7 +4660,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			s_renderMtl->m_renderCommandEncoder->setFragmentTexture(ptr, _stage);
 			s_renderMtl->m_renderCommandEncoder->setFragmentSamplerState(
 				  0 == (BGFX_SAMPLER_INTERNAL_DEFAULT & _flags)
-					? s_renderMtl->getSamplerState(_flags)
+					? s_renderMtl->getSamplerState(_flags, _lodMin, _lodMax)
 					: m_sampler
 				, _stage
 				);
@@ -6544,7 +6550,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 										);
 									m_computeCommandEncoder->setSamplerState(
 										0 == (BGFX_SAMPLER_INTERNAL_DEFAULT & flags)
-										? getSamplerState(flags)
+										? getSamplerState(flags, bind.m_lod.min, bind.m_lod.max)
 										: texture.m_sampler
 										, stage
 										);
@@ -6981,6 +6987,8 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 											, bind.m_numLayers
 											, bind.m_firstMip
 											, bind.m_numMips
+											, bind.m_lod.min
+											, bind.m_lod.max
 											);
 									}
 									break;
