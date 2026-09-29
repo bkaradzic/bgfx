@@ -5234,7 +5234,7 @@ public static partial class bgfx
 	/// </summary>
 	///
 	/// <param name="_handle">Frame buffer handle. If handle is `BGFX_INVALID_HANDLE` request will be made for main window back buffer.</param>
-	/// <param name="_filePath">Will be passed to `bgfx::CallbackI::screenShot` callback.</param>
+	/// <param name="_filePath">Will be passed to `bgfx::CallbackI::screenShot` callback. If the device is lost before the screenshot is taken, `bgfx::CallbackI::fatal` reports `Fatal::DeviceLost` in that frame and `screenShot` is not called for this request.</param>
 	///
 	[DllImport(DllName, EntryPoint="bgfx_request_screen_shot", CallingConvention = CallingConvention.Cdecl)]
 	public static extern unsafe void request_screen_shot(FrameBufferHandle _handle, [MarshalAs(UnmanagedType.LPStr)] string _filePath);
