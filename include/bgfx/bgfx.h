@@ -2824,6 +2824,8 @@ namespace bgfx
 	/// @param[in] _data Destination buffer.
 	///
 	/// @returns Frame number when the result will be available. See: `bgfx::frame`.
+	///   If the device is lost before then, `bgfx::CallbackI::fatal` reports
+	///   `Fatal::DeviceLost` in that frame, and `_data` is left untouched.
 	///
 	/// @remarks
 	///   Read back is asynchronous, and the result is available at the returned frame.
@@ -3673,6 +3675,8 @@ namespace bgfx
 	/// @param[in] _data Destination buffer.
 	///
 	/// @returns Frame number when the result will be available. See: `bgfx::frame`.
+	///   If the device is lost before then, `bgfx::CallbackI::fatal` reports
+	///   `Fatal::DeviceLost` in that frame, and `_data` is left untouched.
 	///
 	/// @remarks
 	///   Read back is asynchronous, and the result is available at the returned frame.
@@ -4410,6 +4414,9 @@ namespace bgfx
 	/// @param[in] _handle Frame buffer handle. If handle is `BGFX_INVALID_HANDLE` request will be
 	///   made for main window back buffer.
 	/// @param[in] _filePath Will be passed to `bgfx::CallbackI::screenShot` callback.
+	///   If the device is lost before the screenshot is taken,
+	///   `bgfx::CallbackI::fatal` reports `Fatal::DeviceLost` in that frame
+	///   and `screenShot` is not called for this request.
 	///
 	/// @remarks
 	///   `bgfx::CallbackI::screenShot` must be implemented.

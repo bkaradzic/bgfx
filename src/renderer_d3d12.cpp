@@ -2596,6 +2596,7 @@ namespace bgfx { namespace d3d12
 					, uint32_t(hr)
 					, uint32_t(m_device->GetDeviceRemovedReason() )
 					);
+					handleDeviceLost(hr);
 			}
 			else
 			{
@@ -2683,6 +2684,7 @@ namespace bgfx { namespace d3d12
 					, uint32_t(hr)
 					, uint32_t(m_device->GetDeviceRemovedReason() )
 					);
+					handleDeviceLost(hr);
 			}
 			else
 			{
@@ -2769,6 +2771,7 @@ namespace bgfx { namespace d3d12
 					, uint32_t(hr)
 					, uint32_t(m_device->GetDeviceRemovedReason() )
 					);
+					handleDeviceLost(hr);
 			}
 			else
 			{
@@ -3005,6 +3008,7 @@ namespace bgfx { namespace d3d12
 					, uint32_t(hr)
 					, uint32_t(m_device->GetDeviceRemovedReason() )
 					);
+					handleDeviceLost(hr);
 			}
 			else
 			{
