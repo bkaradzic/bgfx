@@ -365,7 +365,7 @@ namespace bgfx { namespace d3d11
 		void destroy();
 		void update(uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem);
 		void clear(uint8_t _mip, uint8_t _numMips, uint16_t _layer, uint16_t _numLayers);
-		void commit(uint8_t _stage, uint32_t _flags, const float _palette[][4], uint16_t _firstLayer = 0, uint16_t _numLayers = UINT16_MAX, uint8_t _firstMip = 0, uint8_t _numMips = UINT8_MAX, TextureDimension::Enum _dimension = TextureDimension::Count);
+		void commit(uint8_t _stage, uint32_t _flags, const float _palette[][4], uint16_t _firstLayer = 0, uint16_t _numLayers = UINT16_MAX, uint8_t _firstMip = 0, uint8_t _numMips = UINT8_MAX, uint8_t _lodMin = 0, uint8_t _lodMax = UINT8_MAX, TextureDimension::Enum _dimension = TextureDimension::Count);
 		void resolve(uint8_t _resolve, uint32_t _layer, uint32_t _numLayers, uint32_t _mip) const;
 		TextureHandle getHandle() const;
 		DXGI_FORMAT getSrvFormat(SrgbSelect::Enum _srgb = SrgbSelect::Native) const;
@@ -418,11 +418,13 @@ namespace bgfx { namespace d3d11
 			, m_numTh(0)
 			, m_numUav(0)
 			, m_needPresent(false)
+			, m_needToRecreateSwapChain(false)
 			, m_needsQuadClear(false)
 			, m_needsQuadClearZero(false)
 			, m_intColor(false)
 		{
 			bx::memSet(&m_desc, 0, sizeof(m_desc) );
+			bx::memSet(&m_descPending, 0, sizeof(m_descPending) );
 			bx::memSet(m_rtv, 0, sizeof(m_rtv) );
 			bx::memSet(m_uav, 0, sizeof(m_uav) );
 			bx::memSet(m_srv, 0, sizeof(m_srv) );
@@ -454,6 +456,7 @@ namespace bgfx { namespace d3d11
 		Dxgi::SwapChainI* m_swapChain;
 		ID3D11Texture2D*  m_msaaRt;
 		SwapChain m_desc;
+		SwapChain m_descPending;
 		void* m_nwh;
 		uint32_t m_width;
 		uint32_t m_height;
@@ -464,6 +467,7 @@ namespace bgfx { namespace d3d11
 		uint8_t m_numTh;
 		uint8_t m_numUav;
 		bool m_needPresent;
+		bool m_needToRecreateSwapChain;
 		bool m_needsQuadClear;
 		bool m_needsQuadClearZero;
 		bool m_intColor;

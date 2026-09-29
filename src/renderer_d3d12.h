@@ -211,7 +211,7 @@ namespace bgfx { namespace d3d12
 		void destroy();
 
 		uint16_t alloc(ID3D12Resource* _ptr, const D3D12_SHADER_RESOURCE_VIEW_DESC* _desc);
-		uint16_t alloc(uint32_t _hash, const uint32_t* _flags, uint32_t _num, const float _palette[][4]);
+		uint16_t alloc(uint32_t _hash, const uint32_t* _flags, uint32_t _num, const float _palette[][4], const uint16_t* _lod = NULL);
 		void free(uint16_t _handle);
 		void reset();
 
@@ -468,9 +468,11 @@ namespace bgfx { namespace d3d12
 		D3D12_RESOURCE_STATES setState(ID3D12GraphicsCommandList* _commandList, D3D12_RESOURCE_STATES _state);
 
 		void setState(ID3D12GraphicsCommandList* _commandList, D3D12_RESOURCE_STATES _state, uint16_t _firstMip, uint16_t _numMips, uint16_t _firstSlice, uint16_t _numSlices);
+		void setPlaneStates(ID3D12GraphicsCommandList* _commandList, D3D12_RESOURCE_STATES _depthState, D3D12_RESOURCE_STATES _stencilState);
 
 		uint32_t getNumSlices() const;
 		uint32_t getNumPtrMips() const;
+		uint32_t getNumPlanes() const;
 		uint32_t getNumSubresources() const;
 
 		bool isMsaaSurface() const;
@@ -516,10 +518,12 @@ namespace bgfx { namespace d3d12
 			, m_numTh(0)
 			, m_state(D3D12_RESOURCE_STATE_PRESENT)
 			, m_needPresent(false)
+			, m_needToRecreateSwapChain(false)
 			, m_frameLatencyWaitableObject(NULL)
 		{
 			m_depth.idx = bgfx::kInvalidHandle;
 			bx::memSet(&m_desc, 0, sizeof(m_desc) );
+			bx::memSet(&m_descPending, 0, sizeof(m_descPending) );
 			bx::memSet(m_backBufferColor, 0, sizeof(m_backBufferColor) );
 		}
 
@@ -548,6 +552,7 @@ namespace bgfx { namespace d3d12
 		Dxgi::SwapChainI* m_swapChain;
 		DXGI_FORMAT m_swapChainFormat;
 		SwapChain m_desc;
+		SwapChain m_descPending;
 		ID3D12Resource* m_backBufferColor[BGFX_CONFIG_MAX_BACK_BUFFERS];
 		ID3D12Resource* m_msaaRt;
 		ID3D12Resource* m_backBufferDepthStencil;
@@ -561,6 +566,7 @@ namespace bgfx { namespace d3d12
 		Attachment m_attachment[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
 		D3D12_RESOURCE_STATES m_state;
 		bool m_needPresent;
+		bool m_needToRecreateSwapChain;
 		void* m_frameLatencyWaitableObject;
 	};
 

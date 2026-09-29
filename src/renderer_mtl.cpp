@@ -1788,17 +1788,14 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			{
 				--m_numWindows;
 
-				if (m_numWindows > 1)
+				if (m_numWindows != denseIdx)
 				{
 					FrameBufferHandle handle = m_windows[m_numWindows];
-					m_windows[m_numWindows]  = {kInvalidHandle};
-
-					if (m_numWindows != denseIdx)
-					{
-						m_windows[denseIdx] = handle;
-						m_frameBuffers[handle.idx].m_denseIdx = denseIdx;
-					}
+					m_windows[denseIdx] = handle;
+					m_frameBuffers[handle.idx].m_denseIdx = denseIdx;
 				}
+
+				m_windows[m_numWindows] = {kInvalidHandle};
 			}
 		}
 
@@ -2135,6 +2132,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			||  m_mainSwapChain.height           !=  _swapChain.height
 			||  m_mainSwapChain.nwh              !=  _swapChain.nwh
 			||  m_mainSwapChain.ndt              !=  _swapChain.ndt
+			||  m_mainSwapChain.flags            !=  _swapChain.flags
 			|| (m_reset&maskFlags) != (_reset&maskFlags) )
 			{
 				m_mainSwapChain = _swapChain;
@@ -3327,6 +3325,8 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 					MTL::RenderPipelineReflection* reflection = NULL;
 					pso->m_rps = newRenderPipelineStateWithDescriptor(m_device, pd, MTL::PipelineOptionBufferTypeInfo, &reflection);
 
+					BGFX_FATAL(NULL != pso->m_rps, Fatal::InvalidShader, "Failed to create graphics PSO!");
+
 					if (NULL != reflection)
 					{
 						if (m_usesMTLBindings)
@@ -3384,6 +3384,8 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 					, MTL::PipelineOptionBufferTypeInfo
 					, &reflection
 					);
+
+				BGFX_FATAL(NULL != pso->m_cps, Fatal::InvalidShader, "Failed to create compute PSO!");
 
 				if (m_usesMTLBindings)
 				{
@@ -3449,7 +3451,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			return result;
 		}
 
-		MTL::SamplerState* getSamplerState(uint32_t _flags)
+		MTL::SamplerState* getSamplerState(uint32_t _flags, uint8_t _lodMin = 0, uint8_t _lodMax = UINT8_MAX)
 		{
 			const uint32_t index = bx::min<uint32_t>(
 				  BGFX_CONFIG_MAX_COLOR_PALETTE-1
@@ -3471,7 +3473,13 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 			_flags |= uint32_t(borderColor) << BGFX_SAMPLER_BORDER_COLOR_SHIFT;
 
-			MTL::SamplerState* sampler = m_samplerStateCache.find(_flags);
+			const uint64_t key = 0
+				| uint64_t(_flags)
+				| (uint64_t(_lodMin) << 40)
+				| (uint64_t(_lodMax) << 32)
+				;
+
+			MTL::SamplerState* sampler = m_samplerStateCache.find(key);
 
 			if (NULL == sampler)
 			{
@@ -3483,8 +3491,8 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 				desc->setMinFilter(s_textureFilterMinMag[(_flags & BGFX_SAMPLER_MIN_MASK) >> BGFX_SAMPLER_MIN_SHIFT]);
 				desc->setMagFilter(s_textureFilterMinMag[(_flags & BGFX_SAMPLER_MAG_MASK) >> BGFX_SAMPLER_MAG_SHIFT]);
 				desc->setMipFilter(   s_textureFilterMip[(_flags & BGFX_SAMPLER_MIP_MASK) >> BGFX_SAMPLER_MIP_SHIFT]);
-				desc->setLodMinClamp(0);
-				desc->setLodMaxClamp(FLT_MAX);
+				desc->setLodMinClamp(float(_lodMin) * 0.25f);
+				desc->setLodMaxClamp(UINT8_MAX == _lodMax ? FLT_MAX : float(_lodMax) * 0.25f);
 				desc->setNormalizedCoordinates(TRUE);
 				desc->setBorderColor(borderColor);
 				desc->setMaxAnisotropy(true
@@ -3501,7 +3509,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 					;
 
 				sampler = m_device->newSamplerState(desc);
-				m_samplerStateCache.add(_flags, sampler);
+				m_samplerStateCache.add(key, sampler);
 			}
 
 			return sampler;
@@ -3879,7 +3887,15 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 		const char* code = (const char*)reader.getDataPtr();
 		bx::skip(&reader, shaderSize+1);
 
-		m_lib = newLibraryWithSource(s_renderMtl->m_device, code);
+		if (shaderSize >= 4
+		&&  0 == bx::memCmp(code, "MTLB", 4) )
+		{
+			m_lib = newLibraryWithData(s_renderMtl->m_device, code, shaderSize);
+		}
+		else
+		{
+			m_lib = newLibraryWithSource(s_renderMtl->m_device, code);
+		}
 
 		if (NULL != m_lib)
 		{
@@ -4610,7 +4626,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 		}
 	}
 
-	void TextureMtl::commit(uint8_t _stage, bool _vertex, bool _fragment, uint32_t _flags, uint8_t _mip, uint16_t _firstLayer, uint16_t _numLayers, uint8_t _firstMip, uint8_t _numMips)
+	void TextureMtl::commit(uint8_t _stage, bool _vertex, bool _fragment, uint32_t _flags, uint8_t _mip, uint16_t _firstLayer, uint16_t _numLayers, uint8_t _firstMip, uint8_t _numMips, uint8_t _lodMin, uint8_t _lodMax)
 	{
 		if (!_vertex
 		&&  !_fragment)
@@ -4634,7 +4650,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			s_renderMtl->m_renderCommandEncoder->setVertexTexture(ptr, _stage);
 			s_renderMtl->m_renderCommandEncoder->setVertexSamplerState(
 				  0 == (BGFX_SAMPLER_INTERNAL_DEFAULT & _flags)
-					? s_renderMtl->getSamplerState(_flags)
+					? s_renderMtl->getSamplerState(_flags, _lodMin, _lodMax)
 					: m_sampler
 				, _stage
 				);
@@ -4645,7 +4661,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			s_renderMtl->m_renderCommandEncoder->setFragmentTexture(ptr, _stage);
 			s_renderMtl->m_renderCommandEncoder->setFragmentSamplerState(
 				  0 == (BGFX_SAMPLER_INTERNAL_DEFAULT & _flags)
-					? s_renderMtl->getSamplerState(_flags)
+					? s_renderMtl->getSamplerState(_flags, _lodMin, _lodMax)
 					: m_sampler
 				, _stage
 				);
@@ -5140,6 +5156,8 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 		murmur.add(m_metalLayer->pixelFormat() );
 		murmur.add(formatColor);
 		murmur.add(formatDepthStencil);
+		murmur.add(NULL != m_backBufferDepth   ? m_backBufferDepth->pixelFormat()   : MTL::PixelFormatInvalid);
+		murmur.add(NULL != m_backBufferStencil ? m_backBufferStencil->pixelFormat() : MTL::PixelFormatInvalid);
 		murmur.add(sampleCount);
 
 		return murmur.end();
@@ -6016,17 +6034,18 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 				continue;
 			}
 
-			const uint16_t fbhIdx = 0 == ii ? kInvalidHandle : m_windows[ii].idx;
+			const bool     isMainWindow = !isValid(m_windows[ii]);
+			const uint16_t fbhIdx = isMainWindow ? kInvalidHandle : m_windows[ii].idx;
 
-			bool needScreenshot = 0 == ii && NULL != m_capture;
+			bool needScreenshot = isMainWindow && NULL != m_capture;
 
 			for (uint8_t jj = 0, numShots = _render->m_numScreenShots; jj < numShots && !needScreenshot; ++jj)
 			{
 				needScreenshot = _render->m_screenShot[jj].handle.idx == fbhIdx;
 			}
 
-			const uint32_t width  = 0 == ii ? m_mainSwapChain.width  : frameBuffer.m_width;
-			const uint32_t height = 0 == ii ? m_mainSwapChain.height : frameBuffer.m_height;
+			const uint32_t width  = isMainWindow ? m_mainSwapChain.width  : frameBuffer.m_width;
+			const uint32_t height = isMainWindow ? m_mainSwapChain.height : frameBuffer.m_height;
 
 			if (needScreenshot)
 			{
@@ -6532,7 +6551,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 										);
 									m_computeCommandEncoder->setSamplerState(
 										0 == (BGFX_SAMPLER_INTERNAL_DEFAULT & flags)
-										? getSamplerState(flags)
+										? getSamplerState(flags, bind.m_lod.min, bind.m_lod.max)
 										: texture.m_sampler
 										, stage
 										);
@@ -6969,6 +6988,8 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 											, bind.m_numLayers
 											, bind.m_firstMip
 											, bind.m_numMips
+											, bind.m_lod.min
+											, bind.m_lod.max
 											);
 									}
 									break;

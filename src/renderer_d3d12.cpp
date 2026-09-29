@@ -693,11 +693,13 @@ namespace bgfx { namespace d3d12
 #endif // BX_PLATFORM_WINDOWS
 	}
 
+	static bool reportDeviceLost(HRESULT _hr);
+
 	ID3D12Resource* createCommittedResource(ID3D12Device* _device, HeapProperty::Enum _heapProperty, const D3D12_RESOURCE_DESC* _resourceDesc, const D3D12_CLEAR_VALUE* _clearValue, bool _memSet = false, D3D12_HEAP_FLAGS _heapFlags = D3D12_HEAP_FLAG_NONE)
 	{
 		const HeapProperty& heapProperty = s_heapProperties[_heapProperty];
 		ID3D12Resource* resource = NULL;
-		DX_CHECK(_device->CreateCommittedResource(
+		const HRESULT hr = _device->CreateCommittedResource(
 			  &heapProperty.m_properties
 			, _heapFlags
 			, _resourceDesc
@@ -705,7 +707,14 @@ namespace bgfx { namespace d3d12
 			, _clearValue
 			, IID_ID3D12Resource
 			, (void**)&resource
-			) );
+			);
+
+		if (reportDeviceLost(hr) )
+		{
+			return NULL;
+		}
+
+		BX_ASSERT(SUCCEEDED(hr), "CreateCommittedResource FAILED 0x%08x.", uint32_t(hr) );
 		BX_WARN(NULL != resource, "CreateCommittedResource failed (size: %d). Out of memory?"
 			, _resourceDesc->Width
 			);
@@ -2322,7 +2331,7 @@ namespace bgfx { namespace d3d12
 				}
 			}
 
-			DX_RELEASE(dred, 0);
+			DX_RELEASE_I(dred);
 		}
 
 		bool handleDeviceLost(HRESULT _hr)
@@ -2532,6 +2541,14 @@ namespace bgfx { namespace d3d12
 
 			ID3D12Resource* readback = createCommittedResource(m_device, HeapProperty::ReadBack, total);
 
+			if (NULL == readback)
+			{
+				BX_TRACE("readTexture: failed to create readback buffer, device removed reason 0x%08x."
+					, uint32_t(m_device->GetDeviceRemovedReason() )
+					);
+				return;
+			}
+
 			const uint32_t srcWidth  = bx::max(1u, texture.m_width >>_mip);
 			const uint32_t srcHeight = bx::max(1u, texture.m_height>>_mip);
 
@@ -2570,13 +2587,23 @@ namespace bgfx { namespace d3d12
 
 			uint32_t pitch = bx::min(srcPitch, dstPitch);
 
-			uint8_t* src;
-			readback->Map(0, NULL, (void**)&src);
+			uint8_t* src = NULL;
+			const HRESULT hr = readback->Map(0, NULL, (void**)&src);
 
-			bx::memCopy(dst, dstPitch, src, srcPitch, pitch, numBlockRows);
+			if (FAILED(hr) )
+			{
+				BX_TRACE("readTexture: Map failed 0x%08x, device removed reason 0x%08x."
+					, uint32_t(hr)
+					, uint32_t(m_device->GetDeviceRemovedReason() )
+					);
+			}
+			else
+			{
+				bx::memCopy(dst, dstPitch, src, srcPitch, pitch, numBlockRows);
 
-			D3D12_RANGE writeRange = { 0, 0 };
-			readback->Unmap(0, &writeRange);
+				D3D12_RANGE writeRange = { 0, 0 };
+				readback->Unmap(0, &writeRange);
+			}
 
 			DX_RELEASE(readback, 0);
 		}
@@ -2613,6 +2640,14 @@ namespace bgfx { namespace d3d12
 
 			ID3D12Resource* readback = createCommittedResource(m_device, HeapProperty::ReadBack, stencilOffset + total[1]);
 
+			if (NULL == readback)
+			{
+				BX_TRACE("readTexturePlanar: failed to create readback buffer, device removed reason 0x%08x."
+					, uint32_t(m_device->GetDeviceRemovedReason() )
+					);
+				return;
+			}
+
 			const uint32_t srcWidth  = bx::max(1u, _texture.m_width >>_mip);
 			const uint32_t srcHeight = bx::max(1u, _texture.m_height>>_mip);
 
@@ -2639,47 +2674,57 @@ namespace bgfx { namespace d3d12
 			finish();
 			m_commandList = m_cmd.alloc();
 
-			uint8_t* src;
-			readback->Map(0, NULL, (void**)&src);
+			uint8_t* src = NULL;
+			const HRESULT hr = readback->Map(0, NULL, (void**)&src);
 
-			const uint32_t texelSize = bimg::getBlockInfo(bimg::TextureFormat::Enum(_texture.m_textureFormat) ).blockSize;
-			const uint32_t dstPitch  = srcWidth * texelSize;
-
-			for (uint32_t yy = 0; yy < srcHeight; ++yy)
+			if (FAILED(hr) )
 			{
-				const uint8_t* depthRow   = src + layout[0].Offset + yy*layout[0].Footprint.RowPitch;
-				const uint8_t* stencilRow = src + layout[1].Offset + yy*layout[1].Footprint.RowPitch;
-				uint8_t*       dstRow     = (uint8_t*)_data + yy*dstPitch;
+				BX_TRACE("readTexturePlanar: Map failed 0x%08x, device removed reason 0x%08x."
+					, uint32_t(hr)
+					, uint32_t(m_device->GetDeviceRemovedReason() )
+					);
+			}
+			else
+			{
+				const uint32_t texelSize = bimg::getBlockInfo(bimg::TextureFormat::Enum(_texture.m_textureFormat) ).blockSize;
+				const uint32_t dstPitch  = srcWidth * texelSize;
 
-				for (uint32_t xx = 0; xx < srcWidth; ++xx)
+				for (uint32_t yy = 0; yy < srcHeight; ++yy)
 				{
-					uint8_t* texel = dstRow + xx*texelSize;
+					const uint8_t* depthRow   = src + layout[0].Offset + yy*layout[0].Footprint.RowPitch;
+					const uint8_t* stencilRow = src + layout[1].Offset + yy*layout[1].Footprint.RowPitch;
+					uint8_t*       dstRow     = (uint8_t*)_data + yy*dstPitch;
 
-					if (1 == texelSize)
+					for (uint32_t xx = 0; xx < srcWidth; ++xx)
 					{
-						texel[0] = stencilRow[xx];
-					}
-					else
-					{
-						bx::memCopy(texel, depthRow + xx*4, 4);
+						uint8_t* texel = dstRow + xx*texelSize;
 
-						if (4 == texelSize)
+						if (1 == texelSize)
 						{
-							texel[3] = stencilRow[xx];
+							texel[0] = stencilRow[xx];
 						}
 						else
 						{
-							texel[4] = stencilRow[xx];
-							texel[5] = 0;
-							texel[6] = 0;
-							texel[7] = 0;
+							bx::memCopy(texel, depthRow + xx*4, 4);
+
+							if (4 == texelSize)
+							{
+								texel[3] = stencilRow[xx];
+							}
+							else
+							{
+								texel[4] = stencilRow[xx];
+								texel[5] = 0;
+								texel[6] = 0;
+								texel[7] = 0;
+							}
 						}
 					}
 				}
-			}
 
-			D3D12_RANGE writeRange = { 0, 0 };
-			readback->Unmap(0, &writeRange);
+				D3D12_RANGE writeRange = { 0, 0 };
+				readback->Unmap(0, &writeRange);
+			}
 
 			DX_RELEASE(readback, 0);
 		}
@@ -2700,6 +2745,14 @@ namespace bgfx { namespace d3d12
 
 			ID3D12Resource* readback = createCommittedResource(m_device, HeapProperty::ReadBack, _size);
 
+			if (NULL == readback)
+			{
+				BX_TRACE("readBuffer: failed to create readback buffer, device removed reason 0x%08x."
+					, uint32_t(m_device->GetDeviceRemovedReason() )
+					);
+				return;
+			}
+
 			const D3D12_RESOURCE_STATES state = buffer.setState(m_commandList, D3D12_RESOURCE_STATE_COPY_SOURCE);
 			m_commandList->CopyBufferRegion(readback, 0, buffer.m_ptr, _offset, _size);
 			buffer.setState(m_commandList, state);
@@ -2708,10 +2761,22 @@ namespace bgfx { namespace d3d12
 			m_commandList = m_cmd.alloc();
 
 			void* src = NULL;
-			readback->Map(0, NULL, (void**)&src);
-			bx::memCopy(_data, src, _size);
-			D3D12_RANGE readbackWriteRange = { 0, 0 };
-			readback->Unmap(0, &readbackWriteRange);
+			const HRESULT hr = readback->Map(0, NULL, (void**)&src);
+
+			if (FAILED(hr) )
+			{
+				BX_TRACE("readBuffer: Map failed 0x%08x, device removed reason 0x%08x."
+					, uint32_t(hr)
+					, uint32_t(m_device->GetDeviceRemovedReason() )
+					);
+			}
+			else
+			{
+				bx::memCopy(_data, src, _size);
+
+				D3D12_RANGE writeRange = { 0, 0 };
+				readback->Unmap(0, &writeRange);
+			}
 
 			DX_RELEASE(readback, 0);
 		}
@@ -2897,6 +2962,20 @@ namespace bgfx { namespace d3d12
 
 			ID3D12Resource* readback = createCommittedResource(m_device, HeapProperty::ReadBack, total);
 
+			if (NULL == readback)
+			{
+				BX_TRACE("requestScreenShot: failed to create readback buffer, device removed reason 0x%08x."
+					, uint32_t(m_device->GetDeviceRemovedReason() )
+					);
+
+				if (NULL != swapFb)
+				{
+					DX_RELEASE(backBuffer, swapFb->getSwapChainDesc().bufferCount);
+				}
+
+				return;
+			}
+
 			D3D12_BOX box;
 			box.left   = 0;
 			box.top    = 0;
@@ -2917,21 +2996,31 @@ namespace bgfx { namespace d3d12
 			finish();
 			m_commandList = m_cmd.alloc();
 
-			void* data;
-			readback->Map(0, NULL, (void**)&data);
+			void* data = NULL;
+			const HRESULT hr = readback->Map(0, NULL, (void**)&data);
 
-			g_callback->screenShot(_filePath
-				, width
-				, height
-				, layout.Footprint.RowPitch
-				, colorFormat
-				, data
-				, (uint32_t)total
-				, false
-				);
+			if (FAILED(hr) )
+			{
+				BX_TRACE("requestScreenShot: Map failed 0x%08x, device removed reason 0x%08x."
+					, uint32_t(hr)
+					, uint32_t(m_device->GetDeviceRemovedReason() )
+					);
+			}
+			else
+			{
+				g_callback->screenShot(_filePath
+					, width
+					, height
+					, layout.Footprint.RowPitch
+					, colorFormat
+					, data
+					, (uint32_t)total
+					, false
+					);
 
-			D3D12_RANGE writeRange = { 0, 0 };
-			readback->Unmap(0, &writeRange);
+				D3D12_RANGE writeRange = { 0, 0 };
+				readback->Unmap(0, &writeRange);
+			}
 
 			DX_RELEASE(readback, 0);
 
@@ -3206,6 +3295,7 @@ namespace bgfx { namespace d3d12
 			||  m_mainSwapChain.formatDepthStencil !=  _swapChain.formatDepthStencil
 			||  m_mainSwapChain.nwh                !=  _swapChain.nwh
 			||  m_mainSwapChain.ndt                !=  _swapChain.ndt
+			||  m_mainSwapChain.flags              !=  _swapChain.flags
 			|| (m_reset&maskFlags)   != (_reset&maskFlags) )
 			{
 				uint32_t flags = _reset & (~BGFX_RESET_INTERNAL_FORCE);
@@ -3504,11 +3594,16 @@ namespace bgfx { namespace d3d12
 					{
 						TextureD3D12& texture = m_textures[frameBuffer.m_depth.idx];
 
-						texture.setState(m_commandList
-							, hasReadOnlyDepth(frameBuffer.m_attachment, frameBuffer.m_numTh)
+						const D3D12_RESOURCE_STATES depthState = hasReadOnlyDepth(frameBuffer.m_attachment, frameBuffer.m_numTh)
 							? D3D12_RESOURCE_STATE_DEPTH_READ|D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE
 							: D3D12_RESOURCE_STATE_DEPTH_WRITE
-							);
+							;
+						const D3D12_RESOURCE_STATES stencilState = hasReadOnlyStencil(frameBuffer.m_attachment, frameBuffer.m_numTh)
+							? D3D12_RESOURCE_STATE_DEPTH_READ|D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE
+							: D3D12_RESOURCE_STATE_DEPTH_WRITE
+							;
+
+						texture.setPlaneStates(m_commandList, depthState, stencilState);
 					}
 				}
 
@@ -3783,6 +3878,8 @@ namespace bgfx { namespace d3d12
 					, (void**)&pso
 					) );
 			}
+
+			BGFX_FATAL(NULL != pso, Fatal::InvalidShader, "Failed to create compute PSO!");
 
 			m_pipelineStateCache.add(hash, pso);
 
@@ -4174,14 +4271,20 @@ namespace bgfx { namespace d3d12
 			return pso;
 		}
 
-		uint16_t getSamplerState(const uint32_t* _flags, uint32_t _num, const float _palette[][4])
+		uint16_t getSamplerState(const uint32_t* _flags, uint32_t _num, const float _palette[][4], const uint16_t* _lod = NULL)
 		{
 			bx::HashMurmur3 murmur;
 			murmur.begin();
 			murmur.add(_flags, _num * sizeof(uint32_t) );
+
+			if (NULL != _lod)
+			{
+				murmur.add(_lod, _num * sizeof(uint16_t) );
+			}
+
 			uint32_t hash = murmur.end();
 
-			return m_samplerAllocator.alloc(hash, _flags, _num, _palette);
+			return m_samplerAllocator.alloc(hash, _flags, _num, _palette, _lod);
 		}
 
 		bool isVisible(Frame* _render, OcclusionQueryHandle _handle, bool _visible)
@@ -4540,6 +4643,13 @@ namespace bgfx { namespace d3d12
 	};
 
 	static RendererContextD3D12* s_renderD3D12;
+
+	static bool reportDeviceLost(HRESULT _hr)
+	{
+		return NULL != s_renderD3D12
+			&& s_renderD3D12->handleDeviceLost(_hr)
+			;
+	}
 
 	ID3D12PipelineState* videoGetPipelineState(RendererContextD3D12* _renderer, ProgramHandle _handle)
 	{
@@ -5127,7 +5237,7 @@ namespace bgfx { namespace d3d12
 		return idx;
 	}
 
-	uint16_t DescriptorAllocatorD3D12::alloc(uint32_t _hash, const uint32_t* _flags, uint32_t _num, const float _palette[][4])
+	uint16_t DescriptorAllocatorD3D12::alloc(uint32_t _hash, const uint32_t* _flags, uint32_t _num, const float _palette[][4], const uint16_t* _lod)
 	{
 		uint16_t idx = m_stateCache.find(_hash);
 		if (UINT16_MAX != idx)
@@ -5186,8 +5296,11 @@ namespace bgfx { namespace d3d12
 				sd.BorderColor[2] = 0.0f;
 				sd.BorderColor[3] = 0.0f;
 			}
-			sd.MinLOD   = 0;
-			sd.MaxLOD   = D3D12_FLOAT32_MAX;
+			const uint8_t lodMin = NULL != _lod ? uint8_t(_lod[ii] >> 8)   : 0;
+			const uint8_t lodMax = NULL != _lod ? uint8_t(_lod[ii] & 0xff) : UINT8_MAX;
+
+			sd.MinLOD   = float(lodMin) * 0.25f;
+			sd.MaxLOD   = UINT8_MAX == lodMax ? D3D12_FLOAT32_MAX : float(lodMax) * 0.25f;
 
 			D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle =
 			{
@@ -7418,9 +7531,20 @@ namespace bgfx { namespace d3d12
 			;
 	}
 
+	uint32_t TextureD3D12::getNumPlanes() const
+	{
+		return false
+			|| TextureFormat::D24S8  == m_textureFormat
+			|| TextureFormat::D32FS8 == m_textureFormat
+			|| TextureFormat::D0S8   == m_textureFormat
+			? 2
+			: 1
+			;
+	}
+
 	uint32_t TextureD3D12::getNumSubresources() const
 	{
-		return getNumPtrMips() * getNumSlices();
+		return getNumPtrMips() * getNumSlices() * getNumPlanes();
 	}
 
 	DXGI_FORMAT TextureD3D12::getSrvFormat(SrgbSelect::Enum _srgb) const
@@ -7507,17 +7631,56 @@ namespace bgfx { namespace d3d12
 			}
 		}
 
-		for (uint32_t slice = firstSlice, sliceEnd = firstSlice + numSlices; slice < sliceEnd; ++slice)
-		{
-			for (uint32_t mip = firstMip, mipEnd = firstMip + numMips; mip < mipEnd; ++mip)
-			{
-				const uint32_t subresource = mip + slice*mipCount;
+		const uint32_t numPlanes = getNumPlanes();
 
-				if (m_subStates[subresource] != _state)
+		for (uint32_t plane = 0; plane < numPlanes; ++plane)
+		{
+			for (uint32_t slice = firstSlice, sliceEnd = firstSlice + numSlices; slice < sliceEnd; ++slice)
+			{
+				for (uint32_t mip = firstMip, mipEnd = firstMip + numMips; mip < mipEnd; ++mip)
 				{
-					setResourceBarrier(_commandList, m_ptr, m_subStates[subresource], _state, subresource);
-					m_subStates[subresource] = _state;
+					const uint32_t subresource = mip + slice*mipCount + plane*mipCount*sliceCount;
+
+					if (m_subStates[subresource] != _state)
+					{
+						setResourceBarrier(_commandList, m_ptr, m_subStates[subresource], _state, subresource);
+						m_subStates[subresource] = _state;
+					}
 				}
+			}
+		}
+	}
+
+	void TextureD3D12::setPlaneStates(ID3D12GraphicsCommandList* _commandList, D3D12_RESOURCE_STATES _depthState, D3D12_RESOURCE_STATES _stencilState)
+	{
+		if (_depthState == _stencilState
+		||  2 != getNumPlanes() )
+		{
+			setState(_commandList, _depthState);
+			return;
+		}
+
+		const uint32_t numSubresources = getNumSubresources();
+		const uint32_t planeSize       = numSubresources / 2;
+
+		if (NULL == m_subStates)
+		{
+			m_subStates = (D3D12_RESOURCE_STATES*)bx::alloc(g_allocator, numSubresources*sizeof(D3D12_RESOURCE_STATES) );
+
+			for (uint32_t ii = 0; ii < numSubresources; ++ii)
+			{
+				m_subStates[ii] = m_state;
+			}
+		}
+
+		for (uint32_t ii = 0; ii < numSubresources; ++ii)
+		{
+			const D3D12_RESOURCE_STATES state = ii < planeSize ? _depthState : _stencilState;
+
+			if (m_subStates[ii] != state)
+			{
+				setResourceBarrier(_commandList, m_ptr, m_subStates[ii], state, ii);
+				m_subStates[ii] = state;
 			}
 		}
 	}
@@ -7734,6 +7897,8 @@ namespace bgfx { namespace d3d12
 			return;
 		}
 
+		const SwapChain prev = m_desc;
+
 		m_desc = _desc;
 		m_nwh  = _desc.nwh;
 
@@ -7760,19 +7925,21 @@ namespace bgfx { namespace d3d12
 		{
 			BX_TRACE("Failed to resize swap chain, hr 0x%08x.", hr);
 
-#if !BX_PLATFORM_LINUX
-			if (NULL != m_frameLatencyWaitableObject)
-			{
-				CloseHandle( (HANDLE)m_frameLatencyWaitableObject);
-				m_frameLatencyWaitableObject = NULL;
-			}
-#endif // !BX_PLATFORM_LINUX
+			m_descPending             = _desc;
+			m_needToRecreateSwapChain = true;
 
-			DX_RELEASE(m_swapChain, 0);
-			m_swapChainFormat = DXGI_FORMAT_UNKNOWN;
-			m_num = 0;
+			m_desc       = prev;
+			m_desc.depth = _desc.depth;
+
+			m_state           = D3D12_RESOURCE_STATE_PRESENT;
+			m_swapChainFormat = getSwapChainDesc().format;
+
+			createSwapChainViews();
+
 			return;
 		}
+
+		m_needToRecreateSwapChain = false;
 
 		m_state           = D3D12_RESOURCE_STATE_PRESENT;
 		m_swapChainFormat = scd.format;
@@ -9276,6 +9443,18 @@ namespace bgfx { namespace d3d12
 			renderDocTriggerCapture();
 		}
 
+#if BX_PLATFORM_WINDOWS
+		for (uint32_t ii = 1, num = m_numWindows; ii < num; ++ii)
+		{
+			FrameBufferD3D12& frameBuffer = m_frameBuffers[m_windows[ii].idx];
+
+			if (frameBuffer.m_needToRecreateSwapChain)
+			{
+				frameBuffer.update(frameBuffer.m_descPending);
+			}
+		}
+#endif // BX_PLATFORM_WINDOWS
+
 		BGFX_D3D12_PROFILER_BEGIN_LITERAL("rendererSubmit", kColorFrame);
 
 		int64_t timeBegin = bx::getHPCounter();
@@ -9633,6 +9812,8 @@ namespace bgfx { namespace d3d12
 							uint32_t numSet = 0;
 							D3D12_GPU_DESCRIPTOR_HANDLE srvHandle[BGFX_MAX_COMPUTE_BINDINGS] = {};
 							uint32_t samplerFlags[BGFX_MAX_COMPUTE_BINDINGS] = {};
+							uint16_t samplerLod[BGFX_MAX_COMPUTE_BINDINGS];
+							bx::memSet(samplerLod, 0xff, sizeof(samplerLod) );
 							{
 								const ProgramD3D12& program = m_program[key.m_program.idx];
 
@@ -9670,13 +9851,18 @@ namespace bgfx { namespace d3d12
 													? bind.m_samplerFlags
 													: uint32_t(texture.m_flags)
 													;
-												texture.setState(m_commandList, D3D12_RESOURCE_STATE_GENERIC_READ, bind.m_firstMip, bind.m_numMips, bind.m_firstLayer, bind.m_numLayers);
+												const bool isDepthAttach = isValid(m_fbh) && NULL == m_frameBuffers[m_fbh.idx].m_swapChain && m_frameBuffers[m_fbh.idx].m_depth.idx == bind.m_idx;
+												if (!isDepthAttach)
+												{
+													texture.setState(m_commandList, D3D12_RESOURCE_STATE_GENERIC_READ, bind.m_firstMip, bind.m_numMips, bind.m_firstLayer, bind.m_numLayers);
+												}
 												scratchBuffer.allocSrv(srvHandle[stage], texture, bind.m_firstLayer, bind.m_numLayers, bind.m_firstMip, bind.m_numMips
 													, 0 != (resolvedFlags & BGFX_SAMPLER_SAMPLE_STENCIL)
 													, program.getTextureDimension(uint8_t(stage) )
 													, srgbSelect(resolvedFlags, BGFX_SAMPLER_SRGB)
 													);
 												samplerFlags[stage] = resolvedFlags & (BGFX_SAMPLER_BITS_MASK | BGFX_SAMPLER_BORDER_COLOR_MASK | BGFX_SAMPLER_COMPARE_MASK);
+												samplerLod[stage]   = uint16_t(uint16_t(bind.m_lod.min)<<8) | bind.m_lod.max;
 
 												++numSet;
 											}
@@ -9717,7 +9903,7 @@ namespace bgfx { namespace d3d12
 								{
 									Bind& bind = bindCache[bindIdx];
 									bind.m_srvHandle = srvHandle[0];
-									bind.m_samplerStateIdx = getSamplerState(samplerFlags, maxComputeBindings, _render->m_colorPalette);
+									bind.m_samplerStateIdx = getSamplerState(samplerFlags, maxComputeBindings, _render->m_colorPalette, samplerLod);
 									bind.m_rawSrvMask = currentRawSrvMask;
 									bind.m_rawUavMask = currentRawUavMask;
 									bind.m_texDimHash = currentTexDimHash;
@@ -9955,7 +10141,7 @@ namespace bgfx { namespace d3d12
 						;
 					const bool depthClamp = depthControl.m_depthClamp;
 
-					
+
 
 					ID3D12PipelineState* pso = getPipelineState(
 						  state
@@ -10011,6 +10197,8 @@ namespace bgfx { namespace d3d12
 							uint32_t numSet = 0;
 							D3D12_GPU_DESCRIPTOR_HANDLE srvHandle[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS] = {};
 							uint32_t samplerFlags[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS] = {};
+							uint16_t samplerLod[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS];
+							bx::memSet(samplerLod, 0xff, sizeof(samplerLod) );
 							{
 								const ProgramD3D12& program = m_program[key.m_program.idx];
 
@@ -10048,13 +10236,18 @@ namespace bgfx { namespace d3d12
 													? bind.m_samplerFlags
 													: uint32_t(texture.m_flags)
 													;
-												texture.setState(m_commandList, D3D12_RESOURCE_STATE_GENERIC_READ, bind.m_firstMip, bind.m_numMips, bind.m_firstLayer, bind.m_numLayers);
+												const bool isDepthAttach = isValid(m_fbh) && NULL == m_frameBuffers[m_fbh.idx].m_swapChain && m_frameBuffers[m_fbh.idx].m_depth.idx == bind.m_idx;
+												if (!isDepthAttach)
+												{
+													texture.setState(m_commandList, D3D12_RESOURCE_STATE_GENERIC_READ, bind.m_firstMip, bind.m_numMips, bind.m_firstLayer, bind.m_numLayers);
+												}
 												scratchBuffer.allocSrv(srvHandle[stage], texture, bind.m_firstLayer, bind.m_numLayers, bind.m_firstMip, bind.m_numMips
 													, 0 != (resolvedFlags & BGFX_SAMPLER_SAMPLE_STENCIL)
 													, program.getTextureDimension(uint8_t(stage) )
 													, srgbSelect(resolvedFlags, BGFX_SAMPLER_SRGB)
 													);
 												samplerFlags[stage] = resolvedFlags & (BGFX_SAMPLER_BITS_MASK | BGFX_SAMPLER_BORDER_COLOR_MASK | BGFX_SAMPLER_COMPARE_MASK);
+												samplerLod[stage]   = uint16_t(uint16_t(bind.m_lod.min)<<8) | bind.m_lod.max;
 
 												++numSet;
 											}
@@ -10098,7 +10291,7 @@ namespace bgfx { namespace d3d12
 							{
 								Bind& bind = bindCache[bindIdx];
 								bind.m_srvHandle       = srvHandle[0];
-								bind.m_samplerStateIdx = getSamplerState(samplerFlags, BGFX_CONFIG_MAX_TEXTURE_SAMPLERS, _render->m_colorPalette);
+								bind.m_samplerStateIdx = getSamplerState(samplerFlags, BGFX_CONFIG_MAX_TEXTURE_SAMPLERS, _render->m_colorPalette, samplerLod);
 								bind.m_rawSrvMask      = currentRawSrvMask;
 								bind.m_rawUavMask      = currentRawUavMask;
 								bind.m_texDimHash      = currentTexDimHash;

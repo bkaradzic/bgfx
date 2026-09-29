@@ -451,11 +451,11 @@ their codenames. Simple to explain, easy to understand, challenging gameplay.
 
 ## PeakFinder
 
-https://www.peakfinder.org/ - PeakFinder shows the names of all mountains and
-peaks with a 360° panorama display. More than 850'000 peaks - from Mount Everest
+https://www.peakfinder.com/ - PeakFinder shows the names of all mountains and
+peaks with a 360° panorama display. More than 1.000'000 peaks - from Mount Everest
 to the little hill around the corner.
 
-![PeakFinder screenshot](https://pfweb-c125.kxcdn.com/videos/mobile/manual/v4/light/en/peakfinder-trecime.jpg)
+![PeakFinder screenshot](https://www.peakfinder.com/images/v1/peakfinder-trecime.jpg)
 
 ## Ember Sword
 

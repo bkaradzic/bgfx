@@ -426,6 +426,8 @@ class TextureFlags(enum.IntFlag):
 	RtWriteOnly = 0x8000000000
 	RtShift = 0x24
 	RtMask = 0xf000000000
+	MipCountShift = 0x31
+	MipCountMask = 0x3e000000000000
 
 class SamplerFlags(enum.IntFlag):
 	UMirror = 0x1
@@ -1701,7 +1703,7 @@ def _bind(lib):
 	bgfx_encoder_set_texture.restype = None
 	global bgfx_encoder_set_texture_view
 	bgfx_encoder_set_texture_view = lib.bgfx_encoder_set_texture_view
-	bgfx_encoder_set_texture_view.argtypes = [ctypes.POINTER(Encoder), ctypes.c_uint8, UniformHandle, TextureHandle, ctypes.c_uint16, ctypes.c_uint16, ctypes.c_uint8, ctypes.c_uint8, ctypes.c_uint32]
+	bgfx_encoder_set_texture_view.argtypes = [ctypes.POINTER(Encoder), ctypes.c_uint8, UniformHandle, TextureHandle, ctypes.c_uint16, ctypes.c_uint16, ctypes.c_uint8, ctypes.c_uint8, ctypes.c_uint32, ctypes.c_uint8, ctypes.c_uint8]
 	bgfx_encoder_set_texture_view.restype = None
 	global bgfx_encoder_touch
 	bgfx_encoder_touch = lib.bgfx_encoder_touch
@@ -1909,7 +1911,7 @@ def _bind(lib):
 	bgfx_set_texture.restype = None
 	global bgfx_set_texture_view
 	bgfx_set_texture_view = lib.bgfx_set_texture_view
-	bgfx_set_texture_view.argtypes = [ctypes.c_uint8, UniformHandle, TextureHandle, ctypes.c_uint16, ctypes.c_uint16, ctypes.c_uint8, ctypes.c_uint8, ctypes.c_uint32]
+	bgfx_set_texture_view.argtypes = [ctypes.c_uint8, UniformHandle, TextureHandle, ctypes.c_uint16, ctypes.c_uint16, ctypes.c_uint8, ctypes.c_uint8, ctypes.c_uint32, ctypes.c_uint8, ctypes.c_uint8]
 	bgfx_set_texture_view.restype = None
 	global bgfx_touch
 	bgfx_touch = lib.bgfx_touch

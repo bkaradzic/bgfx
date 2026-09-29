@@ -496,15 +496,20 @@ namespace bgfx
 			hr = factory5->CheckFeatureSupport(DXGI_FEATURE_PRESENT_ALLOW_TEARING, &allowTearing, sizeof(allowTearing) );
 			BX_TRACE("Allow tearing is %ssupported.", allowTearing ? "" : "not ");
 
-			scd.Flags |= allowTearing ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0;
-			scd.Flags |= (_scd.waitable
-				&& (DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL == _scd.swapEffect
-				 || DXGI_SWAP_EFFECT_FLIP_DISCARD    == _scd.swapEffect) )
+			// DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING and the waitable object are only
+			// valid on flip-model swap chains.
+			const bool flipModel = false
+				|| DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL == _scd.swapEffect
+				|| DXGI_SWAP_EFFECT_FLIP_DISCARD    == _scd.swapEffect
+				;
+
+			scd.Flags |= allowTearing && flipModel ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0;
+			scd.Flags |= _scd.waitable && flipModel
 				? DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT
 				: 0
 				;
 
-			m_tearingSupported = allowTearing;
+			m_tearingSupported = allowTearing && flipModel;
 
 			DX_RELEASE_I(factory5);
 		}
@@ -745,10 +750,15 @@ namespace bgfx
 			hr = factory5->CheckFeatureSupport(DXGI_FEATURE_PRESENT_ALLOW_TEARING, &allowTearing, sizeof(allowTearing));
 			BX_TRACE("Allow tearing is %ssupported.", allowTearing ? "" : "not ");
 
-			scdFlags |= allowTearing ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0;
-			scdFlags |= (_scd.waitable
-				&& (DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL == _scd.swapEffect
-				 || DXGI_SWAP_EFFECT_FLIP_DISCARD    == _scd.swapEffect) )
+			// Must match the flags the swap chain was created with: tearing and the
+			// waitable object are only valid on flip-model swap chains.
+			const bool flipModel = false
+				|| DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL == _scd.swapEffect
+				|| DXGI_SWAP_EFFECT_FLIP_DISCARD    == _scd.swapEffect
+				;
+
+			scdFlags |= allowTearing && flipModel ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0;
+			scdFlags |= _scd.waitable && flipModel
 				? DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT
 				: 0
 				;

@@ -2911,16 +2911,14 @@ VK_IMPORT_DEVICE
 			if (UINT16_MAX != denseIdx)
 			{
 				--m_numWindows;
-				if (m_numWindows > 1)
+				if (m_numWindows != denseIdx)
 				{
 					FrameBufferHandle handle = m_windows[m_numWindows];
-					m_windows[m_numWindows]  = {kInvalidHandle};
-					if (m_numWindows != denseIdx)
-					{
-						m_windows[denseIdx] = handle;
-						m_frameBuffers[handle.idx].m_denseIdx = denseIdx;
-					}
+					m_windows[denseIdx] = handle;
+					m_frameBuffers[handle.idx].m_denseIdx = denseIdx;
 				}
+
+				m_windows[m_numWindows] = {kInvalidHandle};
 			}
 		}
 
@@ -3292,6 +3290,7 @@ VK_IMPORT_DEVICE
 			||  m_mainSwapChain.height             !=  _swapChain.height
 			||  m_mainSwapChain.nwh                !=  _swapChain.nwh
 			||  m_mainSwapChain.ndt                !=  _swapChain.ndt
+			||  m_mainSwapChain.flags              !=  _swapChain.flags
 			|| (m_reset&maskFlags)   != (_reset&maskFlags)
 			||  m_backBuffer.m_swapChain.m_needToRecreateSurface
 			||  m_backBuffer.m_swapChain.m_needToRecreateSwapchain
@@ -3477,8 +3476,12 @@ VK_IMPORT_DEVICE
 						);
 				}
 
+				const bool block = !isValid(_fbh)
+					|| NULL == m_backBuffer.m_swapChain.m_nwh
+					;
+
 				int64_t start = bx::getHPCounter();
-				newFrameBuffer.acquire(m_commandBuffer, !isValid(_fbh) );
+				newFrameBuffer.acquire(m_commandBuffer, block);
 				m_presentElapsed += bx::getHPCounter() - start;
 			}
 
@@ -3955,10 +3958,12 @@ VK_IMPORT_DEVICE
 			return getRenderPass(num, formats, aspects, resolve, samples, _clearFlags, 0, _outRenderPass, _outHashKey);
 		}
 
-		VkSampler getSampler(uint32_t _flags, VkFormat _format, const float _palette[][4])
+		VkSampler getSampler(uint32_t _flags, VkFormat _format, const float _palette[][4], uint8_t _lodMin = 0, uint8_t _lodMax = UINT8_MAX)
 		{
 			uint32_t index = ( (_flags & BGFX_SAMPLER_BORDER_COLOR_MASK) >> BGFX_SAMPLER_BORDER_COLOR_SHIFT);
 			index = bx::min<uint32_t>(BGFX_CONFIG_MAX_COLOR_PALETTE - 1, index);
+
+			const uint32_t lod = (uint32_t(_lodMin) << 8) | _lodMax;
 
 			_flags &= BGFX_SAMPLER_BITS_MASK;
 			_flags &= ~(m_deviceFeatures.samplerAnisotropy ? 0 : (BGFX_SAMPLER_MIN_ANISOTROPIC | BGFX_SAMPLER_MAG_ANISOTROPIC) );
@@ -3989,6 +3994,7 @@ VK_IMPORT_DEVICE
 				hash.add(_flags);
 				hash.add(-1);
 				hash.add(VK_FORMAT_UNDEFINED);
+				hash.add(lod);
 				hashKey = hash.end();
 
 				sampler = m_samplerCache.find(hashKey);
@@ -4000,6 +4006,7 @@ VK_IMPORT_DEVICE
 				hash.add(_flags);
 				hash.add(index);
 				hash.add(_format);
+				hash.add(lod);
 				hashKey = hash.end();
 
 				const uint32_t colorHashKey = m_samplerBorderColorCache.find(hashKey);
@@ -4039,8 +4046,8 @@ VK_IMPORT_DEVICE
 			sci.maxAnisotropy    = m_maxAnisotropy;
 			sci.compareEnable    = 0 != cmpFunc;
 			sci.compareOp        = s_cmpFunc[cmpFunc];
-			sci.minLod           = 0.0f;
-			sci.maxLod           = VK_LOD_CLAMP_NONE;
+			sci.minLod           = float(_lodMin) * 0.25f;
+			sci.maxLod           = UINT8_MAX == _lodMax ? VK_LOD_CLAMP_NONE : float(_lodMax) * 0.25f;
 			sci.borderColor      = VK_BORDER_COLOR_FLOAT_OPAQUE_BLACK;
 			sci.unnormalizedCoordinates = VK_FALSE;
 
@@ -4143,7 +4150,14 @@ VK_IMPORT_DEVICE
 			cpci.basePipelineHandle = VK_NULL_HANDLE;
 			cpci.basePipelineIndex  = 0;
 
-			VK_CHECK(vkCreateComputePipelines(m_device, m_pipelineCache, 1, &cpci, m_allocatorCb, &pipeline) );
+			const VkResult result = vkCreateComputePipelines(m_device, m_pipelineCache, 1, &cpci, m_allocatorCb, &pipeline);
+
+			BGFX_FATAL(VK_SUCCESS == result && VK_NULL_HANDLE != pipeline
+				, Fatal::InvalidShader
+				, "Failed to create compute PSO! vkCreateComputePipelines failed %d: %s."
+				, result
+				, getName(result)
+				);
 
 			m_pipelineStateCache.add(hash, pipeline);
 
@@ -4382,14 +4396,22 @@ VK_IMPORT_DEVICE
 			VkPipelineCache cache;
 			VK_CHECK(vkCreatePipelineCache(m_device, &pcci, m_allocatorCb, &cache) );
 
-			VK_CHECK(vkCreateGraphicsPipelines(
+			const VkResult result = vkCreateGraphicsPipelines(
 				  m_device
 				, cache
 				, 1
 				, &graphicsPipeline
 				, m_allocatorCb
 				, &pipeline
-				) );
+				);
+
+			BGFX_FATAL(VK_SUCCESS == result && VK_NULL_HANDLE != pipeline
+				, Fatal::InvalidShader
+				, "Failed to create graphics PSO! vkCreateGraphicsPipelines failed %d: %s."
+				, result
+				, getName(result)
+				);
+
 			m_pipelineStateCache.add(hash, pipeline);
 
 			size_t dataSize;
@@ -4608,7 +4630,7 @@ VK_IMPORT_DEVICE
 								: (uint32_t)texture.m_flags
 								;
 							const bool sampleStencil = !!(samplerFlags & BGFX_SAMPLER_SAMPLE_STENCIL);
-							VkSampler sampler = getSampler(samplerFlags, texture.m_format, _palette);
+							VkSampler sampler = getSampler(samplerFlags, texture.m_format, _palette, bind.m_lod.min, bind.m_lod.max);
 
 							const VkImageViewType type = UINT32_MAX == bindInfo.index
 								? texture.m_type
@@ -6902,7 +6924,8 @@ VK_DESTROY
 		ici.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
 		ici.pNext = NULL;
 		ici.flags = 0
-			| (VK_IMAGE_VIEW_TYPE_CUBE == m_type
+			| (VK_IMAGE_VIEW_TYPE_CUBE       == m_type
+			|| VK_IMAGE_VIEW_TYPE_CUBE_ARRAY == m_type
 				? VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT
 				: 0
 				)
@@ -8001,7 +8024,7 @@ VK_DESTROY
 		if (VK_IMAGE_VIEW_TYPE_CUBE       == _type
 		||  VK_IMAGE_VIEW_TYPE_CUBE_ARRAY == _type)
 		{
-			BX_ASSERT(_numLayers % 6 == 0, "");
+			BX_ASSERT(0 < _numLayers, "");
 			BX_ASSERT(false
 				|| VK_IMAGE_VIEW_TYPE_3D != m_type
 				, "3D image can't be aliased as a cube texture"
@@ -10761,6 +10784,12 @@ VK_DESTROY
 							vkCmdEndRenderPass(m_commandBuffer);
 							beginRenderPass = false;
 						}
+					}
+
+					if (viewChanged)
+					{
+						submitUniformCache(ucs, view);
+						submitBlit(bs, view);
 					}
 
 					// renderpass external subpass dependencies handle graphics -> compute and compute -> graphics

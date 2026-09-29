@@ -9,7 +9,7 @@ import bindbc.common.types: c_int64, c_uint64, va_list;
 import bindbc.bgfx.config;
 static import bgfx.impl;
 
-enum uint apiVersion = 161;
+enum uint apiVersion = 162;
 
 alias ViewID = ushort;
 
@@ -346,6 +346,20 @@ enum TextureRT: TextureRT_{
 	shift      = 36,
 	mask       = 0x0000_00F0_0000_0000,
 }
+
+/**
+Mip level count, `BGFX_TEXTURE_MIP_COUNT(n)`. Overrides `_hasMips` of
+`createTexture2D`, `createTexture3D` and `createTextureCube`: the texture
+gets `n` levels, clamped to the full chain for its size. Zero keeps the
+`_hasMips` behaviour. A texture created from an image container keeps the
+container's level count.
+*/
+alias TextureMIPCount_ = ulong;
+enum TextureMIPCount: TextureMIPCount_{
+	shift  = 49, ///Mip level count bit shift
+	mask   = 0x003E_0000_0000_0000, ///Mip level count bit mask
+}
+TextureMIPCount_ toTextureMIPCount(ulong v) nothrow @nogc pure @safe{ return (v << TextureMIPCount.shift) & TextureMIPCount.mask; }
 
 ///Sampler flags.
 alias SamplerU_ = uint;
@@ -2203,8 +2217,13 @@ extern(C++, "bgfx") struct Encoder{
 			    mode.
 			  - `BGFX_SAMPLER_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]` - Point or anisotropic
 			    sampling.
+				lodMin = Lowest (most detailed) level of detail the sampler may use, in
+			quarter-mip steps, relative to `_firstMip`.
+				lodMax = Highest (least detailed) level of detail the sampler may use, in
+			quarter-mip steps, relative to `_firstMip`. `UINT8_MAX` leaves it
+			unclamped.
 			*/
-			{q{void}, q{setTexture}, q{ubyte stage, UniformHandle sampler, TextureHandle handle, ushort firstLayer, ushort numLayers, ubyte firstMIP, ubyte numMIPs, uint flags=uint.max}, ext: `C++`},
+			{q{void}, q{setTexture}, q{ubyte stage, UniformHandle sampler, TextureHandle handle, ushort firstLayer, ushort numLayers, ubyte firstMIP, ubyte numMIPs, uint flags=uint.max, ubyte lodMin=0, ubyte lodMax=ubyte.max}, ext: `C++`},
 			
 			/**
 			Submit an empty primitive for rendering. Uniforms and draw state
@@ -3198,6 +3217,7 @@ mixin(joinFnBinds((){
 			width = Width.
 			height = Height.
 			hasMIPs = Indicates that texture contains full mip-map chain.
+		Ignored when `BGFX_TEXTURE_MIP_COUNT` is set in _flags.
 			numLayers = Number of layers in texture array.
 			format = Texture format. See: `TextureFormat::Enum`.
 			flags = Texture creation (see `BGFX_TEXTURE_*`.), and sampler (see `BGFX_SAMPLER_*`)
@@ -3219,6 +3239,7 @@ mixin(joinFnBinds((){
 		Params:
 			ratio = Texture size in respect to back-buffer size. See: `BackbufferRatio::Enum`.
 			hasMIPs = Indicates that texture contains full mip-map chain.
+		Ignored when `BGFX_TEXTURE_MIP_COUNT` is set in _flags.
 			numLayers = Number of layers in texture array.
 			format = Texture format. See: `TextureFormat::Enum`.
 			flags = Texture creation (see `BGFX_TEXTURE_*`.), and sampler (see `BGFX_SAMPLER_*`)
@@ -3237,6 +3258,7 @@ mixin(joinFnBinds((){
 			height = Height.
 			depth = Depth.
 			hasMIPs = Indicates that texture contains full mip-map chain.
+		Ignored when `BGFX_TEXTURE_MIP_COUNT` is set in _flags.
 			format = Texture format. See: `TextureFormat::Enum`.
 			flags = Texture creation (see `BGFX_TEXTURE_*`.), and sampler (see `BGFX_SAMPLER_*`)
 		flags. Default texture sampling mode is linear, and wrap mode is repeat.
@@ -3256,6 +3278,7 @@ mixin(joinFnBinds((){
 		Params:
 			size = Cube side size.
 			hasMIPs = Indicates that texture contains full mip-map chain.
+		Ignored when `BGFX_TEXTURE_MIP_COUNT` is set in _flags.
 			numLayers = Number of layers in texture array.
 			format = Texture format. See: `TextureFormat::Enum`.
 			flags = Texture creation (see `BGFX_TEXTURE_*`.), and sampler (see `BGFX_SAMPLER_*`)
@@ -4327,8 +4350,13 @@ mixin(joinFnBinds((){
 		    mode.
 		  - `BGFX_SAMPLER_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]` - Point or anisotropic
 		    sampling.
+			lodMin = Lowest (most detailed) level of detail the sampler may use, in
+		quarter-mip steps, relative to `_firstMip`.
+			lodMax = Highest (least detailed) level of detail the sampler may use, in
+		quarter-mip steps, relative to `_firstMip`. `UINT8_MAX` leaves it
+		unclamped.
 		*/
-		{q{void}, q{setTexture}, q{ubyte stage, UniformHandle sampler, TextureHandle handle, ushort firstLayer, ushort numLayers, ubyte firstMIP, ubyte numMIPs, uint flags=uint.max}, ext: `C++, "bgfx"`},
+		{q{void}, q{setTexture}, q{ubyte stage, UniformHandle sampler, TextureHandle handle, ushort firstLayer, ushort numLayers, ubyte firstMIP, ubyte numMIPs, uint flags=uint.max, ubyte lodMin=0, ubyte lodMax=ubyte.max}, ext: `C++, "bgfx"`},
 		
 		/**
 		* Submit an empty primitive for rendering. Uniforms and draw state

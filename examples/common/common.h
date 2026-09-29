@@ -25,15 +25,21 @@ struct FrameTime
 	///
 	void reset()
 	{
-		m_start = m_current;
-		frame();
+		m_current = bx::getNow();
+		m_start   = m_current;
+		m_last    = m_current;
 	}
 
 	///
 	void frame()
 	{
+		const bx::Ticks step = entry::getFixedTimeStep();
+
 		m_last    = m_current;
-		m_current = bx::getNow();
+		m_current = bx::Ticks(bx::InitZero) == step
+			? bx::getNow()
+			: m_current + step
+			;
 	}
 
 	///

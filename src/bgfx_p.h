@@ -764,6 +764,18 @@ namespace bgfx
 		return 1;
 	}
 
+	inline constexpr uint8_t calcNumMips(uint64_t _flags, bool _hasMips, uint16_t _width, uint16_t _height, uint16_t _depth = 1)
+	{
+		const uint8_t requested = uint8_t( (_flags & BGFX_TEXTURE_MIP_COUNT_MASK) >> BGFX_TEXTURE_MIP_COUNT_SHIFT);
+
+		if (0 == requested)
+		{
+			return calcNumMips(_hasMips, _width, _height, _depth);
+		}
+
+		return bx::min(requested, calcNumMips(true, _width, _height, _depth) );
+	}
+
 	/// Dump vertex layout info into debug output.
 	void dump(const VertexLayout& _layout);
 
@@ -2395,6 +2407,13 @@ namespace bgfx
 			Count
 		};
 
+		struct LodClamp
+		{
+			uint8_t min;
+			uint8_t max;
+			uint8_t pad[2];
+		};
+
 		void reset()
 		{
 			m_samplerFlags = BGFX_SAMPLER_NONE;
@@ -2414,7 +2433,10 @@ namespace bgfx
 		void setTexture(TextureHandle _handle, uint32_t _samplerFlags, uint8_t _firstMip = 0, uint8_t _numMips = UINT8_MAX)
 		{
 			m_samplerFlags = _samplerFlags;
-			m_offset       = 0;
+			m_lod.min    = 0;
+			m_lod.max    = UINT8_MAX;
+			m_lod.pad[0] = 0;
+			m_lod.pad[1] = 0;
 			m_size         = UINT32_MAX;
 			m_firstLayer   = 0;
 			m_numLayers    = UINT16_MAX;
@@ -2427,10 +2449,13 @@ namespace bgfx
 			m_pad      = 0;
 		}
 
-		void setTexture(TextureHandle _handle, uint16_t _firstLayer, uint16_t _numLayers, uint8_t _firstMip, uint8_t _numMips, uint32_t _samplerFlags)
+		void setTexture(TextureHandle _handle, uint16_t _firstLayer, uint16_t _numLayers, uint8_t _firstMip, uint8_t _numMips, uint32_t _samplerFlags, uint8_t _lodMin = 0, uint8_t _lodMax = UINT8_MAX)
 		{
 			m_samplerFlags = _samplerFlags;
-			m_offset       = 0;
+			m_lod.min    = _lodMin;
+			m_lod.max    = _lodMax;
+			m_lod.pad[0] = 0;
+			m_lod.pad[1] = 0;
 			m_size         = UINT32_MAX;
 			m_firstLayer   = _firstLayer;
 			m_numLayers    = _numLayers;
@@ -2501,10 +2526,17 @@ namespace bgfx
 			return kInvalidHandle != m_idx;
 		}
 
-		bool operator==(const Binding& _rhs) const = default;
+		bool operator==(const Binding& _rhs) const
+		{
+			return 0 == bx::memCmp(this, &_rhs, sizeof(Binding) );
+		}
 
 		uint32_t m_samplerFlags;
-		uint32_t m_offset;
+		union
+		{
+			uint32_t m_offset;
+			LodClamp m_lod;
+		};
 		uint32_t m_size;
 		uint16_t m_firstLayer;
 		uint16_t m_numLayers;
@@ -4369,7 +4401,7 @@ namespace bgfx
 			}
 		}
 
-		void setTexture(uint8_t _stage, UniformHandle _sampler, TextureHandle _handle, uint16_t _firstLayer, uint16_t _numLayers, uint8_t _firstMip, uint8_t _numMips, uint32_t _flags)
+		void setTexture(uint8_t _stage, UniformHandle _sampler, TextureHandle _handle, uint16_t _firstLayer, uint16_t _numLayers, uint8_t _firstMip, uint8_t _numMips, uint32_t _flags, uint8_t _lodMin, uint8_t _lodMax)
 		{
 			Binding bind;
 			bind.setTexture(
@@ -4381,6 +4413,8 @@ namespace bgfx
 				, 0 != (_flags&BGFX_SAMPLER_INTERNAL_DEFAULT)
 					? BGFX_SAMPLER_INTERNAL_DEFAULT
 					: _flags
+				, _lodMin
+				, _lodMax
 				);
 			setBind(_stage, bind);
 
@@ -5216,6 +5250,7 @@ namespace bgfx
 			, m_numFreeDynamicIndexBufferHandles(0)
 			, m_numFreeDynamicVertexBufferHandles(0)
 			, m_numFreeOcclusionQueryHandles(0)
+			, m_numNewOcclusionQueryHandles(0)
 			, m_colorPaletteDirty(2)
 			, m_frames(0)
 			, m_debug(BGFX_DEBUG_NONE)
@@ -6979,7 +7014,7 @@ namespace bgfx
 			BX_ASSERT(BackbufferRatio::Count != ref.m_bbRatio, "");
 
 			getTextureSizeFromRatio(BackbufferRatio::Enum(ref.m_bbRatio), _width, _height);
-			_numMips = calcNumMips(1 < _numMips, _width, _height);
+			_numMips = calcNumMips(ref.m_flags, 1 < _numMips, _width, _height);
 
 			ref.m_width     = _width;
 			ref.m_height    = _height;
@@ -7539,6 +7574,7 @@ namespace bgfx
 			if (isValid(handle) )
 			{
 				m_submit->m_occlusion[handle.idx] = INT32_MIN;
+				m_newOcclusionQueryHandle[m_numNewOcclusionQueryHandles++] = handle;
 
 				CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::InvalidateOcclusionQuery);
 				cmdbuf.write(handle);
@@ -7892,9 +7928,11 @@ namespace bgfx
 		uint16_t m_numFreeDynamicIndexBufferHandles;
 		uint16_t m_numFreeDynamicVertexBufferHandles;
 		uint16_t m_numFreeOcclusionQueryHandles;
+		uint16_t m_numNewOcclusionQueryHandles;
 		DynamicIndexBufferHandle  m_freeDynamicIndexBufferHandle[BGFX_CONFIG_MAX_DYNAMIC_INDEX_BUFFERS];
 		DynamicVertexBufferHandle m_freeDynamicVertexBufferHandle[BGFX_CONFIG_MAX_DYNAMIC_VERTEX_BUFFERS];
 		OcclusionQueryHandle      m_freeOcclusionQueryHandle[BGFX_CONFIG_MAX_OCCLUSION_QUERIES];
+		OcclusionQueryHandle      m_newOcclusionQueryHandle[BGFX_CONFIG_MAX_OCCLUSION_QUERIES];
 
 		NonLocalAllocator m_dynIndexBufferAllocator;
 		bx::HandleAllocT<BGFX_CONFIG_MAX_DYNAMIC_INDEX_BUFFERS> m_dynamicIndexBufferHandle;
