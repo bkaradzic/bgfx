@@ -803,6 +803,18 @@ class TextureFlags(enum.IntFlag):
 	RtWriteOnly = 0x8000000000
 	RtShift = 0x24
 	RtMask = 0xf000000000
+	# Mip level count, `BGFX_TEXTURE_MIP_COUNT(n)`. Overrides `_hasMips` of
+	# `createTexture2D`, `createTexture3D` and `createTextureCube`: the texture
+	# gets `n` levels, clamped to the full chain for its size. Zero keeps the
+	# `_hasMips` behaviour. A texture created from an image container keeps the
+	# container's level count.
+	MipCountShift = 0x31
+	# Mip level count, `BGFX_TEXTURE_MIP_COUNT(n)`. Overrides `_hasMips` of
+	# `createTexture2D`, `createTexture3D` and `createTextureCube`: the texture
+	# gets `n` levels, clamped to the full chain for its size. Zero keeps the
+	# `_hasMips` behaviour. A texture created from an image container keeps the
+	# container's level count.
+	MipCountMask = 0x3e000000000000
 
 class SamplerFlags(enum.IntFlag):
 	# Wrap U mode: Mirror
@@ -2863,6 +2875,8 @@ def bgfx_encoder_set_texture_view(
 	_firstMip: int,
 	_numMips: int,
 	_flags: int,
+	_lodMin: int,
+	_lodMax: int,
 	/,
 ) -> None: ...
 
@@ -3283,6 +3297,8 @@ def bgfx_set_texture_view(
 	_firstMip: int,
 	_numMips: int,
 	_flags: int,
+	_lodMin: int,
+	_lodMax: int,
 	/,
 ) -> None: ...
 

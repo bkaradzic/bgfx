@@ -365,7 +365,7 @@ namespace bgfx { namespace d3d11
 		void destroy();
 		void update(uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem);
 		void clear(uint8_t _mip, uint8_t _numMips, uint16_t _layer, uint16_t _numLayers);
-		void commit(uint8_t _stage, uint32_t _flags, const float _palette[][4], uint16_t _firstLayer = 0, uint16_t _numLayers = UINT16_MAX, uint8_t _firstMip = 0, uint8_t _numMips = UINT8_MAX, TextureDimension::Enum _dimension = TextureDimension::Count);
+		void commit(uint8_t _stage, uint32_t _flags, const float _palette[][4], uint16_t _firstLayer = 0, uint16_t _numLayers = UINT16_MAX, uint8_t _firstMip = 0, uint8_t _numMips = UINT8_MAX, uint8_t _lodMin = 0, uint8_t _lodMax = UINT8_MAX, TextureDimension::Enum _dimension = TextureDimension::Count);
 		void resolve(uint8_t _resolve, uint32_t _layer, uint32_t _numLayers, uint32_t _mip) const;
 		TextureHandle getHandle() const;
 		DXGI_FORMAT getSrvFormat(SrgbSelect::Enum _srgb = SrgbSelect::Native) const;

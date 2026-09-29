@@ -3155,7 +3155,7 @@ namespace bgfx { namespace d3d11
 			m_deviceCtx->RSSetState(rs);
 		}
 
-		ID3D11SamplerState* getSamplerState(uint32_t _flags, const float _rgba[4])
+		ID3D11SamplerState* getSamplerState(uint32_t _flags, const float _rgba[4], uint8_t _lodMin = 0, uint8_t _lodMax = UINT8_MAX)
 		{
 			const uint32_t index = (_flags & BGFX_SAMPLER_BORDER_COLOR_MASK) >> BGFX_SAMPLER_BORDER_COLOR_SHIFT;
 			_flags &= BGFX_SAMPLER_BITS_MASK;
@@ -3169,12 +3169,14 @@ namespace bgfx { namespace d3d11
 
 			uint32_t hash;
 			ID3D11SamplerState* sampler;
+			const uint32_t lod = (uint32_t(_lodMin) << 8) | _lodMax;
 			if (!needBorderColor(_flags) )
 			{
 				bx::HashMurmur2A murmur;
 				murmur.begin();
 				murmur.add(_flags);
 				murmur.add(-1);
+				murmur.add(lod);
 				hash = murmur.end();
 				_rgba = s_zero.m_zerof;
 
@@ -3186,6 +3188,7 @@ namespace bgfx { namespace d3d11
 				murmur.begin();
 				murmur.add(_flags);
 				murmur.add(index);
+				murmur.add(lod);
 				hash = murmur.end();
 				_rgba = NULL == _rgba ? s_zero.m_zerof : _rgba;
 
@@ -3223,8 +3226,8 @@ namespace bgfx { namespace d3d11
 				sd.BorderColor[1] = _rgba[1];
 				sd.BorderColor[2] = _rgba[2];
 				sd.BorderColor[3] = _rgba[3];
-				sd.MinLOD = 0;
-				sd.MaxLOD = D3D11_FLOAT32_MAX;
+				sd.MinLOD = float(_lodMin) * 0.25f;
+				sd.MaxLOD = UINT8_MAX == _lodMax ? D3D11_FLOAT32_MAX : float(_lodMax) * 0.25f;
 
 				DX_CHECK(m_device->CreateSamplerState(&sd, &sampler));
 				DX_CHECK_REFCOUNT(sampler, 1);
@@ -5517,7 +5520,7 @@ namespace bgfx { namespace d3d11
 		}
 	}
 
-	void TextureD3D11::commit(uint8_t _stage, uint32_t _flags, const float _palette[][4], uint16_t _firstLayer, uint16_t _numLayers, uint8_t _firstMip, uint8_t _numMips, TextureDimension::Enum _dimension)
+	void TextureD3D11::commit(uint8_t _stage, uint32_t _flags, const float _palette[][4], uint16_t _firstLayer, uint16_t _numLayers, uint8_t _firstMip, uint8_t _numMips, uint8_t _lodMin, uint8_t _lodMax, TextureDimension::Enum _dimension)
 	{
 		TextureStage& ts = s_renderD3D11->m_textureStage;
 
@@ -5590,7 +5593,7 @@ namespace bgfx { namespace d3d11
 		}
 
 		uint32_t index = (flags & BGFX_SAMPLER_BORDER_COLOR_MASK) >> BGFX_SAMPLER_BORDER_COLOR_SHIFT;
-		ts.m_sampler[_stage] = s_renderD3D11->getSamplerState(flags, _palette[index]);
+		ts.m_sampler[_stage] = s_renderD3D11->getSamplerState(flags, _palette[index], _lodMin, _lodMax);
 	}
 
 	void TextureD3D11::resolve(uint8_t _resolve, uint32_t _layer, uint32_t _numLayers, uint32_t _mip) const
@@ -7102,7 +7105,7 @@ namespace bgfx { namespace d3d11
 								{
 									TextureD3D11& texture = m_textures[bind.m_idx];
 									const ProgramD3D11* program = m_currentProgram;
-									texture.commit(stage, bind.m_samplerFlags, _render->m_colorPalette, bind.m_firstLayer, bind.m_numLayers, bind.m_firstMip, bind.m_numMips
+									texture.commit(stage, bind.m_samplerFlags, _render->m_colorPalette, bind.m_firstLayer, bind.m_numLayers, bind.m_firstMip, bind.m_numMips, bind.m_lod.min, bind.m_lod.max
 										, NULL != program ? program->getTextureDimension(stage) : TextureDimension::Count
 										);
 								}
@@ -7462,7 +7465,7 @@ namespace bgfx { namespace d3d11
 									{
 										TextureD3D11& texture = m_textures[bind.m_idx];
 										const ProgramD3D11* program = m_currentProgram;
-										texture.commit(stage, bind.m_samplerFlags, _render->m_colorPalette, bind.m_firstLayer, bind.m_numLayers, bind.m_firstMip, bind.m_numMips
+										texture.commit(stage, bind.m_samplerFlags, _render->m_colorPalette, bind.m_firstLayer, bind.m_numLayers, bind.m_firstMip, bind.m_numMips, bind.m_lod.min, bind.m_lod.max
 											, NULL != program ? program->getTextureDimension(stage) : TextureDimension::Count
 											);
 									}

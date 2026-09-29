@@ -460,6 +460,8 @@ constdef TextureFlags : inline ulong
 	RTWRITEONLY            = 0x0000008000000000,
 	RTSHIFT                = 36,
 	RTMASK                 = 0x000000f000000000,
+	MIPCOUNTSHIFT          = 49,
+	MIPCOUNTMASK           = 0x003e000000000000,
 }
 
 constdef SamplerFlags : inline uint
@@ -2864,7 +2866,7 @@ extern fn TextureHandle create_texture(Memory* _mem, ulong _flags, char _skip, T
 // Create 2D texture.
 // _width : `Width.`
 // _height : `Height.`
-// _hasMips : `Indicates that texture contains full mip-map chain.`
+// _hasMips : `Indicates that texture contains full mip-map chain. Ignored when `BGFX_TEXTURE_MIP_COUNT` is set in _flags.`
 // _numLayers : `Number of layers in texture array.`
 // _format : `Texture format. See: `TextureFormat::Enum`.`
 // _flags : `Texture creation (see `BGFX_TEXTURE_*`.), and sampler (see `BGFX_SAMPLER_*`) flags. Default texture sampling mode is linear, and wrap mode is repeat. - `BGFX_SAMPLER_[U/V/W]_[MIRROR/CLAMP]` - Mirror or clamp to edge wrap   mode. - `BGFX_SAMPLER_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]` - Point or anisotropic   sampling.`
@@ -2875,7 +2877,7 @@ extern fn TextureHandle create_texture_2d(ushort _width, ushort _height, bool _h
 // Create texture with size based on back-buffer ratio. Texture will maintain ratio
 // if back buffer resolution changes.
 // _ratio : `Texture size in respect to back-buffer size. See: `BackbufferRatio::Enum`.`
-// _hasMips : `Indicates that texture contains full mip-map chain.`
+// _hasMips : `Indicates that texture contains full mip-map chain. Ignored when `BGFX_TEXTURE_MIP_COUNT` is set in _flags.`
 // _numLayers : `Number of layers in texture array.`
 // _format : `Texture format. See: `TextureFormat::Enum`.`
 // _flags : `Texture creation (see `BGFX_TEXTURE_*`.), and sampler (see `BGFX_SAMPLER_*`) flags. Default texture sampling mode is linear, and wrap mode is repeat. - `BGFX_SAMPLER_[U/V/W]_[MIRROR/CLAMP]` - Mirror or clamp to edge wrap   mode. - `BGFX_SAMPLER_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]` - Point or anisotropic   sampling.`
@@ -2885,7 +2887,7 @@ extern fn TextureHandle create_texture_2d_scaled(BackbufferRatio _ratio, bool _h
 // _width : `Width.`
 // _height : `Height.`
 // _depth : `Depth.`
-// _hasMips : `Indicates that texture contains full mip-map chain.`
+// _hasMips : `Indicates that texture contains full mip-map chain. Ignored when `BGFX_TEXTURE_MIP_COUNT` is set in _flags.`
 // _format : `Texture format. See: `TextureFormat::Enum`.`
 // _flags : `Texture creation (see `BGFX_TEXTURE_*`.), and sampler (see `BGFX_SAMPLER_*`) flags. Default texture sampling mode is linear, and wrap mode is repeat. - `BGFX_SAMPLER_[U/V/W]_[MIRROR/CLAMP]` - Mirror or clamp to edge wrap   mode. - `BGFX_SAMPLER_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]` - Point or anisotropic   sampling.`
 // _mem : `Texture data. If `_mem` is non-NULL, created texture will be immutable. If `_mem` is NULL content of the texture is uninitialized. When `_numLayers` is more than 1, expected memory layout is texture and all mips together for each array element.`
@@ -2894,7 +2896,7 @@ extern fn TextureHandle create_texture_3d(ushort _width, ushort _height, ushort 
 
 // Create Cube texture.
 // _size : `Cube side size.`
-// _hasMips : `Indicates that texture contains full mip-map chain.`
+// _hasMips : `Indicates that texture contains full mip-map chain. Ignored when `BGFX_TEXTURE_MIP_COUNT` is set in _flags.`
 // _numLayers : `Number of layers in texture array.`
 // _format : `Texture format. See: `TextureFormat::Enum`.`
 // _flags : `Texture creation (see `BGFX_TEXTURE_*`.), and sampler (see `BGFX_SAMPLER_*`) flags. Default texture sampling mode is linear, and wrap mode is repeat. - `BGFX_SAMPLER_[U/V/W]_[MIRROR/CLAMP]` - Mirror or clamp to edge wrap   mode. - `BGFX_SAMPLER_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]` - Point or anisotropic   sampling.`
@@ -3566,7 +3568,9 @@ extern fn void encoder_set_texture(Encoder* _this, char _stage, UniformHandle _s
 // _firstMip : `First (most detailed) mip level.`
 // _numMips : `Number of mip levels.`
 // _flags : `Texture sampling mode. Default value UINT32_MAX uses   texture sampling settings from the texture.   - `BGFX_SAMPLER_[U/V/W]_[MIRROR/CLAMP]` - Mirror or clamp to edge wrap     mode.   - `BGFX_SAMPLER_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]` - Point or anisotropic     sampling.`
-extern fn void encoder_set_texture_view(Encoder* _this, char _stage, UniformHandle _sampler, TextureHandle _handle, ushort _firstLayer, ushort _numLayers, char _firstMip, char _numMips, uint _flags) @cname("bgfx_encoder_set_texture_view");
+// _lodMin : `Lowest (most detailed) level of detail the sampler may use, in quarter-mip steps, relative to `_firstMip`.`
+// _lodMax : `Highest (least detailed) level of detail the sampler may use, in quarter-mip steps, relative to `_firstMip`. `UINT8_MAX` leaves it unclamped.`
+extern fn void encoder_set_texture_view(Encoder* _this, char _stage, UniformHandle _sampler, TextureHandle _handle, ushort _firstLayer, ushort _numLayers, char _firstMip, char _numMips, uint _flags, char _lodMin, char _lodMax) @cname("bgfx_encoder_set_texture_view");
 
 // Submit an empty primitive for rendering. Uniforms and draw state
 // will be applied but no geometry will be submitted. Useful in cases
@@ -4057,7 +4061,9 @@ extern fn void set_texture(char _stage, UniformHandle _sampler, TextureHandle _h
 // _firstMip : `First (most detailed) mip level.`
 // _numMips : `Number of mip levels.`
 // _flags : `Texture sampling mode. Default value UINT32_MAX uses   texture sampling settings from the texture.   - `BGFX_SAMPLER_[U/V/W]_[MIRROR/CLAMP]` - Mirror or clamp to edge wrap     mode.   - `BGFX_SAMPLER_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]` - Point or anisotropic     sampling.`
-extern fn void set_texture_view(char _stage, UniformHandle _sampler, TextureHandle _handle, ushort _firstLayer, ushort _numLayers, char _firstMip, char _numMips, uint _flags) @cname("bgfx_set_texture_view");
+// _lodMin : `Lowest (most detailed) level of detail the sampler may use, in quarter-mip steps, relative to `_firstMip`.`
+// _lodMax : `Highest (least detailed) level of detail the sampler may use, in quarter-mip steps, relative to `_firstMip`. `UINT8_MAX` leaves it unclamped.`
+extern fn void set_texture_view(char _stage, UniformHandle _sampler, TextureHandle _handle, ushort _firstLayer, ushort _numLayers, char _firstMip, char _numMips, uint _flags, char _lodMin, char _lodMax) @cname("bgfx_set_texture_view");
 
 // Submit an empty primitive for rendering. Uniforms and draw state
 // will be applied but no geometry will be submitted.

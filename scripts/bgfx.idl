@@ -262,6 +262,13 @@ flag.TextureRtMsaa { bits = 64, shift = 36, range = 3, base = 2 }
 flag.TextureRt { bits = 64, shift = 36, range = 4, section = "Textures" }
 	.WriteOnly (9) --- Render target will be used for writing
 
+--- Mip level count, `BGFX_TEXTURE_MIP_COUNT(n)`. Overrides `_hasMips` of
+--- `createTexture2D`, `createTexture3D` and `createTextureCube`: the texture
+--- gets `n` levels, clamped to the full chain for its size. Zero keeps the
+--- `_hasMips` behaviour. A texture created from an image container keeps the
+--- container's level count.
+flag.TextureMipCount { bits = 64, shift = 49, range = 5, desc = "Mip level count", "helper" }
+
 --- Sampler flags.
 flag.SamplerU { bits = 32, shift = 0, range = 2, base = 1 }
 	.Mirror --- Wrap U mode: Mirror
@@ -2039,6 +2046,7 @@ func.createTexture2D { section = "Textures" }
 	.width     "uint16_t"                      --- Width.
 	.height    "uint16_t"                      --- Height.
 	.hasMips   "bool"                          --- Indicates that texture contains full mip-map chain.
+	                                           --- Ignored when `BGFX_TEXTURE_MIP_COUNT` is set in _flags.
 	.numLayers "uint16_t"                      --- Number of layers in texture array.
 	.format    "TextureFormat::Enum"           --- Texture format. See: `TextureFormat::Enum`.
 	.flags     "uint64_t"                      --- Texture creation (see `BGFX_TEXTURE_*`.), and sampler (see `BGFX_SAMPLER_*`)
@@ -2059,6 +2067,7 @@ func.createTexture2D { cname = "create_texture_2d_scaled", section = "Textures" 
 	"TextureHandle"                            --- Texture handle.
 	.ratio     "BackbufferRatio::Enum"         --- Texture size in respect to back-buffer size. See: `BackbufferRatio::Enum`.
 	.hasMips   "bool"                          --- Indicates that texture contains full mip-map chain.
+	                                           --- Ignored when `BGFX_TEXTURE_MIP_COUNT` is set in _flags.
 	.numLayers "uint16_t"                      --- Number of layers in texture array.
 	.format    "TextureFormat::Enum"           --- Texture format. See: `TextureFormat::Enum`.
 	.flags     "uint64_t"                      --- Texture creation (see `BGFX_TEXTURE_*`.), and sampler (see `BGFX_SAMPLER_*`)
@@ -2076,6 +2085,7 @@ func.createTexture3D { section = "Textures" }
 	.height    "uint16_t"                      --- Height.
 	.depth     "uint16_t"                      --- Depth.
 	.hasMips   "bool"                          --- Indicates that texture contains full mip-map chain.
+	                                           --- Ignored when `BGFX_TEXTURE_MIP_COUNT` is set in _flags.
 	.format    "TextureFormat::Enum"           --- Texture format. See: `TextureFormat::Enum`.
 	.flags     "uint64_t"                      --- Texture creation (see `BGFX_TEXTURE_*`.), and sampler (see `BGFX_SAMPLER_*`)
 	 { default = "BGFX_TEXTURE_NONE|BGFX_SAMPLER_NONE" }
@@ -2095,6 +2105,7 @@ func.createTextureCube { section = "Textures" }
 	"TextureHandle"                            --- Texture handle.
 	.size      "uint16_t"                      --- Cube side size.
 	.hasMips   "bool"                          --- Indicates that texture contains full mip-map chain.
+	                                           --- Ignored when `BGFX_TEXTURE_MIP_COUNT` is set in _flags.
 	.numLayers "uint16_t"                      --- Number of layers in texture array.
 	.format    "TextureFormat::Enum"           --- Texture format. See: `TextureFormat::Enum`.
 	.flags     "uint64_t"                      --- Texture creation (see `BGFX_TEXTURE_*`.), and sampler (see `BGFX_SAMPLER_*`)
@@ -3027,6 +3038,11 @@ func.Encoder.setTexture { cname = "set_texture_view", section = "Draw/Textures" 
 	                             ---     mode.
 	                             ---   - `BGFX_SAMPLER_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]` - Point or anisotropic
 	                             ---     sampling.
+	.lodMin     "uint8_t"        --- Lowest (most detailed) level of detail the sampler may use, in
+	 { default = 0 }             --- quarter-mip steps, relative to `_firstMip`.
+	.lodMax     "uint8_t"        --- Highest (least detailed) level of detail the sampler may use, in
+	 { default = UINT8_MAX }     --- quarter-mip steps, relative to `_firstMip`. `UINT8_MAX` leaves it
+	                             --- unclamped.
 
 --- Submit an empty primitive for rendering. Uniforms and draw state
 --- will be applied but no geometry will be submitted. Useful in cases
@@ -3692,6 +3708,11 @@ func.setTexture { cname = "set_texture_view", section = "Draw/Textures" }
 	                             ---     mode.
 	                             ---   - `BGFX_SAMPLER_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]` - Point or anisotropic
 	                             ---     sampling.
+	.lodMin     "uint8_t"        --- Lowest (most detailed) level of detail the sampler may use, in
+	 { default = 0 }             --- quarter-mip steps, relative to `_firstMip`.
+	.lodMax     "uint8_t"        --- Highest (least detailed) level of detail the sampler may use, in
+	 { default = UINT8_MAX }     --- quarter-mip steps, relative to `_firstMip`. `UINT8_MAX` leaves it
+	                             --- unclamped.
 
 --- Submit an empty primitive for rendering. Uniforms and draw state
 --- will be applied but no geometry will be submitted.

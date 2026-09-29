@@ -3958,10 +3958,12 @@ VK_IMPORT_DEVICE
 			return getRenderPass(num, formats, aspects, resolve, samples, _clearFlags, 0, _outRenderPass, _outHashKey);
 		}
 
-		VkSampler getSampler(uint32_t _flags, VkFormat _format, const float _palette[][4])
+		VkSampler getSampler(uint32_t _flags, VkFormat _format, const float _palette[][4], uint8_t _lodMin = 0, uint8_t _lodMax = UINT8_MAX)
 		{
 			uint32_t index = ( (_flags & BGFX_SAMPLER_BORDER_COLOR_MASK) >> BGFX_SAMPLER_BORDER_COLOR_SHIFT);
 			index = bx::min<uint32_t>(BGFX_CONFIG_MAX_COLOR_PALETTE - 1, index);
+
+			const uint32_t lod = (uint32_t(_lodMin) << 8) | _lodMax;
 
 			_flags &= BGFX_SAMPLER_BITS_MASK;
 			_flags &= ~(m_deviceFeatures.samplerAnisotropy ? 0 : (BGFX_SAMPLER_MIN_ANISOTROPIC | BGFX_SAMPLER_MAG_ANISOTROPIC) );
@@ -3992,6 +3994,7 @@ VK_IMPORT_DEVICE
 				hash.add(_flags);
 				hash.add(-1);
 				hash.add(VK_FORMAT_UNDEFINED);
+				hash.add(lod);
 				hashKey = hash.end();
 
 				sampler = m_samplerCache.find(hashKey);
@@ -4003,6 +4006,7 @@ VK_IMPORT_DEVICE
 				hash.add(_flags);
 				hash.add(index);
 				hash.add(_format);
+				hash.add(lod);
 				hashKey = hash.end();
 
 				const uint32_t colorHashKey = m_samplerBorderColorCache.find(hashKey);
@@ -4042,8 +4046,8 @@ VK_IMPORT_DEVICE
 			sci.maxAnisotropy    = m_maxAnisotropy;
 			sci.compareEnable    = 0 != cmpFunc;
 			sci.compareOp        = s_cmpFunc[cmpFunc];
-			sci.minLod           = 0.0f;
-			sci.maxLod           = VK_LOD_CLAMP_NONE;
+			sci.minLod           = float(_lodMin) * 0.25f;
+			sci.maxLod           = UINT8_MAX == _lodMax ? VK_LOD_CLAMP_NONE : float(_lodMax) * 0.25f;
 			sci.borderColor      = VK_BORDER_COLOR_FLOAT_OPAQUE_BLACK;
 			sci.unnormalizedCoordinates = VK_FALSE;
 
@@ -4626,7 +4630,7 @@ VK_IMPORT_DEVICE
 								: (uint32_t)texture.m_flags
 								;
 							const bool sampleStencil = !!(samplerFlags & BGFX_SAMPLER_SAMPLE_STENCIL);
-							VkSampler sampler = getSampler(samplerFlags, texture.m_format, _palette);
+							VkSampler sampler = getSampler(samplerFlags, texture.m_format, _palette, bind.m_lod.min, bind.m_lod.max);
 
 							const VkImageViewType type = UINT32_MAX == bindInfo.index
 								? texture.m_type

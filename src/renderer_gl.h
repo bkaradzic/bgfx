@@ -878,6 +878,14 @@ typedef double GLdouble;
 #	define GL_TEXTURE_MAX_LEVEL 0x813D
 #endif // GL_TEXTURE_MAX_LEVEL
 
+#ifndef GL_TEXTURE_MIN_LOD
+#	define GL_TEXTURE_MIN_LOD 0x813A
+#endif // GL_TEXTURE_MIN_LOD
+
+#ifndef GL_TEXTURE_MAX_LOD
+#	define GL_TEXTURE_MAX_LOD 0x813B
+#endif // GL_TEXTURE_MAX_LOD
+
 #ifndef GL_COMPUTE_SHADER
 #	define GL_COMPUTE_SHADER 0x91B9
 #endif // GL_COMPUTE_SHADER
@@ -1490,8 +1498,8 @@ namespace bgfx { namespace gl
 		void update(uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem);
 		void clear(uint8_t _mip, uint8_t _numMips, uint16_t _layer, uint16_t _numLayers);
 		void clearAttached(uint8_t _mipBeg, uint8_t _mipEnd, uint16_t _layer, uint16_t _numLayers);
-		void setSamplerState(uint32_t _flags, const float _rgba[4]);
-		void commit(uint32_t _stage, uint32_t _flags, const float _palette[][4], uint8_t _firstMip, uint8_t _numMips, uint16_t _firstLayer, uint16_t _numLayers);
+		void setSamplerState(uint32_t _flags, const float _rgba[4], uint8_t _lodMin = 0, uint8_t _lodMax = UINT8_MAX);
+		void commit(uint32_t _stage, uint32_t _flags, const float _palette[][4], uint8_t _firstMip, uint8_t _numMips, uint16_t _firstLayer, uint16_t _numLayers, uint8_t _lodMin = 0, uint8_t _lodMax = UINT8_MAX);
 		GLenum getViewTarget(uint16_t _numLayers, bool _layered = false) const;
 		GLuint getViewId(uint8_t _firstMip, uint8_t _numMips, uint16_t _firstLayer, uint16_t _numLayers, GLenum* _target = NULL, bool _layered = false);
 		void resolve(uint8_t _resolve) const;

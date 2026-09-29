@@ -321,6 +321,18 @@
 #define BGFX_TEXTURE_RT_MASK                      UINT64_C(0x000000f000000000)
 
 /**
+ * Mip level count, `BGFX_TEXTURE_MIP_COUNT(n)`. Overrides `_hasMips` of
+ * `createTexture2D`, `createTexture3D` and `createTextureCube`: the texture
+ * gets `n` levels, clamped to the full chain for its size. Zero keeps the
+ * `_hasMips` behaviour. A texture created from an image container keeps the
+ * container's level count.
+ *
+ */
+#define BGFX_TEXTURE_MIP_COUNT_SHIFT              49                           //!< Mip level count bit shift
+#define BGFX_TEXTURE_MIP_COUNT_MASK               UINT64_C(0x003e000000000000) //!< Mip level count bit mask
+#define BGFX_TEXTURE_MIP_COUNT(v) ( ( (uint64_t)(v)<<BGFX_TEXTURE_MIP_COUNT_SHIFT )&BGFX_TEXTURE_MIP_COUNT_MASK)
+
+/**
  * Sampler flags.
  *
  */
