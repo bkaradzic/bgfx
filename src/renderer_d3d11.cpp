@@ -1909,8 +1909,17 @@ namespace bgfx { namespace d3d11
 
 			m_deviceCtx->CopySubresourceRegion(texture.m_staging, subresource, 0, 0, 0, texture.m_ptr, subresource, NULL);
 
-			D3D11_MAPPED_SUBRESOURCE mapped;
-			DX_CHECK(m_deviceCtx->Map(texture.m_staging, subresource, D3D11_MAP_READ, 0, &mapped) );
+			D3D11_MAPPED_SUBRESOURCE mapped = {};
+			const HRESULT hr = m_deviceCtx->Map(texture.m_staging, subresource, D3D11_MAP_READ, 0, &mapped);
+
+			if (FAILED(hr) )
+			{
+				BX_TRACE("readTexture: Map failed 0x%08x, device removed reason 0x%08x."
+					, uint32_t(hr)
+					, uint32_t(m_device->GetDeviceRemovedReason() )
+					);
+				return;
+			}
 
 			uint32_t srcWidth  = bx::max(1, texture.m_width >>_mip);
 			uint32_t srcHeight = bx::max(1, texture.m_height>>_mip);
@@ -1979,10 +1988,21 @@ namespace bgfx { namespace d3d11
 			box.back   = 1;
 			m_deviceCtx->CopySubresourceRegion(staging, 0, _offset, 0, 0, buffer.m_ptr, 0, &box);
 
-			D3D11_MAPPED_SUBRESOURCE mapped;
-			DX_CHECK(m_deviceCtx->Map(staging, 0, D3D11_MAP_READ, 0, &mapped) );
-			bx::memCopy(_data, (const uint8_t*)mapped.pData + _offset, _size);
-			m_deviceCtx->Unmap(staging, 0);
+			D3D11_MAPPED_SUBRESOURCE mapped = {};
+			const HRESULT hr = m_deviceCtx->Map(staging, 0, D3D11_MAP_READ, 0, &mapped);
+
+			if (FAILED(hr) )
+			{
+				BX_TRACE("readBuffer: Map failed 0x%08x, device removed reason 0x%08x."
+					, uint32_t(hr)
+					, uint32_t(m_device->GetDeviceRemovedReason() )
+					);
+			}
+			else
+			{
+				bx::memCopy(_data, (const uint8_t*)mapped.pData + _offset, _size);
+				m_deviceCtx->Unmap(staging, 0);
+			}
 
 			DX_RELEASE(staging, 0);
 		}
@@ -2159,21 +2179,31 @@ namespace bgfx { namespace d3d11
 					}
 				}
 
-				D3D11_MAPPED_SUBRESOURCE mapped;
-				DX_CHECK(m_deviceCtx->Map(texture, 0, D3D11_MAP_READ, 0, &mapped) );
+				D3D11_MAPPED_SUBRESOURCE mapped = {};
+				hr = m_deviceCtx->Map(texture, 0, D3D11_MAP_READ, 0, &mapped);
 
-				g_callback->screenShot(
-					  _filePath
-					, backBufferDesc.Width
-					, backBufferDesc.Height
-					, mapped.RowPitch
-					, colorFormat
-					, mapped.pData
-					, backBufferDesc.Height*mapped.RowPitch
-					, false
-					);
+				if (FAILED(hr) )
+				{
+					BX_TRACE("requestScreenShot: Map failed 0x%08x, device removed reason 0x%08x."
+						, uint32_t(hr)
+						, uint32_t(m_device->GetDeviceRemovedReason() )
+						);
+				}
+				else
+				{
+					g_callback->screenShot(
+						  _filePath
+						, backBufferDesc.Width
+						, backBufferDesc.Height
+						, mapped.RowPitch
+						, colorFormat
+						, mapped.pData
+						, backBufferDesc.Height*mapped.RowPitch
+						, false
+						);
 
-				m_deviceCtx->Unmap(texture, 0);
+					m_deviceCtx->Unmap(texture, 0);
+				}
 
 				DX_RELEASE(texture, 0);
 			}
@@ -3622,21 +3652,31 @@ namespace bgfx { namespace d3d11
 					m_deviceCtx->CopyResource(m_captureTexture, m_captureResolve);
 				}
 
-				D3D11_MAPPED_SUBRESOURCE mapped;
-				DX_CHECK(m_deviceCtx->Map(m_captureTexture, 0, D3D11_MAP_READ, 0, &mapped) );
+				D3D11_MAPPED_SUBRESOURCE mapped = {};
+				const HRESULT hr = m_deviceCtx->Map(m_captureTexture, 0, D3D11_MAP_READ, 0, &mapped);
 
-				bimg::imageSwizzleBgra8(
-					  mapped.pData
-					, mapped.RowPitch
-					, m_scd.width
-					, m_scd.height
-					, mapped.pData
-					, mapped.RowPitch
-					);
+				if (FAILED(hr) )
+				{
+					BX_TRACE("capture: Map failed 0x%08x, device removed reason 0x%08x."
+						, uint32_t(hr)
+						, uint32_t(m_device->GetDeviceRemovedReason() )
+						);
+				}
+				else
+				{
+					bimg::imageSwizzleBgra8(
+						  mapped.pData
+						, mapped.RowPitch
+						, m_scd.width
+						, m_scd.height
+						, mapped.pData
+						, mapped.RowPitch
+						);
 
-				g_callback->captureFrame(mapped.pData, m_scd.height*mapped.RowPitch);
+					g_callback->captureFrame(mapped.pData, m_scd.height*mapped.RowPitch);
 
-				m_deviceCtx->Unmap(m_captureTexture, 0);
+					m_deviceCtx->Unmap(m_captureTexture, 0);
+				}
 
 				DX_RELEASE(backBuffer, 0);
 			}

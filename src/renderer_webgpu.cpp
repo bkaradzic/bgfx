@@ -1830,34 +1830,38 @@ WGPU_IMPORT
 
 		static void readTextureCb(WGPUMapAsyncStatus _status, WGPUStringView _message, void* _userdata1, void* _userdata2)
 		{
-			BX_ASSERT(WGPUMapAsyncStatus_Success == _status, "%d", _status);
-
-			BX_UNUSED(_status, _message, _userdata2);
-
 			ReadTexture& readTexture = *(ReadTexture*)_userdata1;
 
-			const void* result = (const void*)WGPU_CHECK(wgpuBufferGetConstMappedRange(
-				  readTexture.buffer
-				, 0
-				, readTexture.size
-				) );
-
-			if (0 != readTexture.stencilPitch)
+			if (WGPUMapAsyncStatus_Success != _status)
 			{
-				interleaveDepthStencil(readTexture, result);
+				BX_TRACE("readTexture: map failed %d.", _status);
+				trace(_message);
 			}
 			else
 			{
-				bx::gather(
-					  readTexture.data
-					, result
-					, readTexture.pitch
-					, readTexture.dataPitch
-					, readTexture.height
-					);
-			}
+				const void* result = (const void*)WGPU_CHECK(wgpuBufferGetConstMappedRange(
+					  readTexture.buffer
+					, 0
+					, readTexture.size
+					) );
 
-			WGPU_CHECK(wgpuBufferUnmap(readTexture.buffer) );
+				if (0 != readTexture.stencilPitch)
+				{
+					interleaveDepthStencil(readTexture, result);
+				}
+				else
+				{
+					bx::gather(
+						  readTexture.data
+						, result
+						, readTexture.pitch
+						, readTexture.dataPitch
+						, readTexture.height
+						);
+				}
+
+				WGPU_CHECK(wgpuBufferUnmap(readTexture.buffer) );
+			}
 
 			wgpuRelease(readTexture.buffer);
 
@@ -1873,21 +1877,25 @@ WGPU_IMPORT
 
 		static void readBufferCb(WGPUMapAsyncStatus _status, WGPUStringView _message, void* _userdata1, void* _userdata2)
 		{
-			BX_ASSERT(WGPUMapAsyncStatus_Success == _status, "%d", _status);
-
-			BX_UNUSED(_status, _message, _userdata2);
-
 			ReadBuffer& readBuffer = *(ReadBuffer*)_userdata1;
 
-			const void* result = (const void*)WGPU_CHECK(wgpuBufferGetConstMappedRange(
-				  readBuffer.buffer
-				, 0
-				, readBuffer.size
-				) );
+			if (WGPUMapAsyncStatus_Success != _status)
+			{
+				BX_TRACE("readBuffer: map failed %d.", _status);
+				trace(_message);
+			}
+			else
+			{
+				const void* result = (const void*)WGPU_CHECK(wgpuBufferGetConstMappedRange(
+					  readBuffer.buffer
+					, 0
+					, readBuffer.size
+					) );
 
-			bx::memCopy(readBuffer.data, result, readBuffer.size);
+				bx::memCopy(readBuffer.data, result, readBuffer.size);
 
-			WGPU_CHECK(wgpuBufferUnmap(readBuffer.buffer) );
+				WGPU_CHECK(wgpuBufferUnmap(readBuffer.buffer) );
+			}
 
 			wgpuRelease(readBuffer.buffer);
 
