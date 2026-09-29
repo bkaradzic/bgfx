@@ -1842,6 +1842,8 @@ BGFX_C_API bgfx_index_buffer_handle_t bgfx_create_index_buffer(const bgfx_memory
  * @param[in] _data Destination buffer.
  *
  * @returns Frame number when the result will be available. See: `bgfx::frame`.
+ *  If the device is lost before then, `bgfx::CallbackI::fatal` reports
+ *  `Fatal::DeviceLost` in that frame, and `_data` is left untouched.
  *
  */
 BGFX_C_API uint32_t bgfx_read_buffer(const bgfx_buffer_region_t * _src, void* _data);
@@ -2511,6 +2513,8 @@ BGFX_C_API void bgfx_clear_texture(bgfx_texture_handle_t _handle, uint8_t _mip, 
  * @param[in] _data Destination buffer.
  *
  * @returns Frame number when the result will be available. See: `bgfx::frame`.
+ *  If the device is lost before then, `bgfx::CallbackI::fatal` reports
+ *  `Fatal::DeviceLost` in that frame, and `_data` is left untouched.
  *
  */
 BGFX_C_API uint32_t bgfx_read_texture(const bgfx_texture_region_t * _src, void* _data);
@@ -3761,6 +3765,9 @@ BGFX_C_API void bgfx_encoder_blit_from_buffer(bgfx_encoder_t* _this, bgfx_view_i
  * @param[in] _handle Frame buffer handle. If handle is `BGFX_INVALID_HANDLE` request will be
  *  made for main window back buffer.
  * @param[in] _filePath Will be passed to `bgfx::CallbackI::screenShot` callback.
+ *  If the device is lost before the screenshot is taken,
+ *  `bgfx::CallbackI::fatal` reports `Fatal::DeviceLost` in that frame
+ *  and `screenShot` is not called for this request.
  *
  */
 BGFX_C_API void bgfx_request_screen_shot(bgfx_frame_buffer_handle_t _handle, const char* _filePath);

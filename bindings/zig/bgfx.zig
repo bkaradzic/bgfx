@@ -4222,7 +4222,7 @@ extern fn bgfx_encoder_blit_from_buffer(self: ?*Encoder, _id: ViewId, _dst: [*c]
 /// @attention Frame buffer handle must be created with OS' target native window handle.
 /// 
 /// <param name="_handle">Frame buffer handle. If handle is `BGFX_INVALID_HANDLE` request will be made for main window back buffer.</param>
-/// <param name="_filePath">Will be passed to `bgfx::CallbackI::screenShot` callback.</param>
+/// <param name="_filePath">Will be passed to `bgfx::CallbackI::screenShot` callback. If the device is lost before the screenshot is taken, `bgfx::CallbackI::fatal` reports `Fatal::DeviceLost` in that frame and `screenShot` is not called for this request.</param>
 pub inline fn requestScreenShot(_handle: FrameBufferHandle, _filePath: [*c]const u8) void {
     return bgfx_request_screen_shot(_handle, _filePath);
 }
