@@ -549,6 +549,23 @@ namespace bgfx
 			m_stencil  = _stencil;
 		}
 
+		uint8_t getColorSkipMask(uint32_t _num) const
+		{
+			if (0 == (m_flags & BGFX_CLEAR_COLOR_USE_PALETTE) )
+			{
+				return 0;
+			}
+
+			uint8_t mask = 0;
+
+			for (uint32_t ii = 0, num = bx::min<uint32_t>(_num, BX_COUNTOF(m_index) ); ii < num; ++ii)
+			{
+				mask |= UINT8_MAX == m_index[ii] ? 1<<ii : 0;
+			}
+
+			return mask;
+		}
+
 		uint8_t  m_index[8];
 		float    m_depth;
 		uint8_t  m_stencil;

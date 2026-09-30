@@ -4927,9 +4927,13 @@ VK_IMPORT_DEVICE
 
 			if (BGFX_CLEAR_COLOR & _clear.m_flags)
 			{
-				for (uint32_t ii = 0; ii < numMrt; ++ii)
+				const uint8_t colorMask = uint8_t(~_clear.getColorSkipMask(numMrt) & ( (1<<numMrt)-1) );
+
+				for (BitMaskToIndexIteratorT it(colorMask); !it.isDone(); it.next() )
 				{
-					attachments[mrt].colorAttachment = mrt;
+					const uint32_t ii = it.idx;
+
+					attachments[mrt].colorAttachment = ii;
 					attachments[mrt].aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 
 					VkClearColorValue& clearValue = attachments[mrt].clearValue.color;
@@ -10602,7 +10606,17 @@ VK_DESTROY
 
 					if (isFrameBufferValid)
 					{
-						VkRenderPass renderPass = fb.getRenderPass(_render->m_view[view].m_clear.m_flags);
+						const Clear& clr = _render->m_view[view].m_clear;
+
+						const bool partialColorClear = true
+							&& 0 != (clr.m_flags & BGFX_CLEAR_COLOR)
+							&& 0 != clr.getColorSkipMask(NULL == fb.m_nwh ? fb.m_num : 1)
+							;
+
+						VkRenderPass renderPass = fb.getRenderPass(partialColorClear
+							? clr.m_flags & ~BGFX_CLEAR_COLOR
+							: clr.m_flags
+							);
 
 						viewState.m_rect = _render->m_view[view].m_rect;
 						const Rect& rect = _render->m_view[view].m_rect;
@@ -10671,8 +10685,6 @@ VK_DESTROY
 							VkClearValue clearValues[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS + 1];
 							uint32_t mrt = 0;
 
-							const Clear& clr = _render->m_view[view].m_clear;
-
 							for (uint32_t ii = 0; ii < numMrt; ++ii)
 							{
 								if (BGFX_CLEAR_COLOR & clr.m_flags)
@@ -10738,10 +10750,16 @@ VK_DESTROY
 
 							vkCmdBeginRenderPass(m_commandBuffer, &rpbi, VK_SUBPASS_CONTENTS_INLINE);
 							beginRenderPass = true;
+
+							if (partialColorClear)
+							{
+								Clear colorClr = clr;
+								colorClr.m_flags &= ~(BGFX_CLEAR_DEPTH|BGFX_CLEAR_STENCIL);
+								clearQuad(renderArea, colorClr, _render->m_colorPalette);
+							}
 						}
 						else
 						{
-							const Clear& clr = _render->m_view[view].m_clear;
 							if (BGFX_CLEAR_NONE != clr.m_flags)
 							{
 								Rect clearRect;

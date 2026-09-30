@@ -6209,6 +6209,7 @@ namespace bgfx
 				, storageSize
 				, _mem->size
 				);
+			BX_UNUSED(storageSize);
 		}
 
 		uint32_t size = sizeof(uint32_t)+sizeof(TextureCreate);
@@ -6281,6 +6282,7 @@ namespace bgfx
 				, storageSize
 				, _mem->size
 				);
+			BX_UNUSED(storageSize);
 		}
 
 		uint32_t size = sizeof(uint32_t)+sizeof(TextureCreate);
@@ -6332,6 +6334,7 @@ namespace bgfx
 				, storageSize
 				, _mem->size
 				);
+			BX_UNUSED(storageSize);
 		}
 
 		uint32_t size = sizeof(uint32_t)+sizeof(TextureCreate);
@@ -6701,6 +6704,24 @@ namespace bgfx
 	void setViewClear(ViewId _id, uint16_t _flags, float _depth, uint8_t _stencil, uint8_t _0, uint8_t _1, uint8_t _2, uint8_t _3, uint8_t _4, uint8_t _5, uint8_t _6, uint8_t _7)
 	{
 		BX_ASSERT(checkView(_id), "Invalid view id: %d", _id);
+
+		if (BX_ENABLED(BGFX_CONFIG_DEBUG) )
+		{
+			const uint8_t index[] = { _0, _1, _2, _3, _4, _5, _6, _7 };
+
+			for (uint32_t ii = 0; ii < BX_COUNTOF(index); ++ii)
+			{
+				BX_ASSERT(UINT8_MAX == index[ii] || index[ii] < BGFX_CONFIG_MAX_COLOR_PALETTE
+					, "setViewClear: Invalid palette index %d for frame buffer attachment %d (must be less than BGFX_CONFIG_MAX_COLOR_PALETTE (%d), or UINT8_MAX to leave the attachment unchanged)."
+					, index[ii]
+					, ii
+					, BGFX_CONFIG_MAX_COLOR_PALETTE
+					);
+			}
+
+			BX_UNUSED(index);
+		}
+
 		s_ctx->setViewClear(_id, _flags, _depth, _stencil, _0, _1, _2, _3, _4, _5, _6, _7);
 	}
 
