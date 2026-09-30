@@ -2128,7 +2128,7 @@ namespace bgfx { namespace d3d12
 
 		void shutdown()
 		{
-			m_cmd.finish();
+			finishAll(true);
 			m_batch.destroy();
 
 			DX_RELEASE(m_zeroInitBuffer, 0);

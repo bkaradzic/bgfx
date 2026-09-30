@@ -4202,7 +4202,8 @@ namespace bgfx
 
 	/// Set view clear flags with different clear color for each
 	/// frame buffer texture. `bgfx::setPaletteColor` must be used to set up a
-	/// clear color palette.
+	/// clear color palette. Frame buffer attachment with palette index set to
+	/// `UINT8_MAX` is not cleared.
 	///
 	/// @param[in] _id View id.
 	/// @param[in] _flags Clear flags. Use `BGFX_CLEAR_NONE` to remove any clear

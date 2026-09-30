@@ -2613,7 +2613,8 @@ def bgfx_set_view_clear(_id: int, _flags: int, _rgba: int, _depth: float, _stenc
 
 # Set view clear flags with different clear color for each
 # frame buffer texture. `bgfx::setPaletteColor` must be used to set up a
-# clear color palette.
+# clear color palette. Frame buffer attachment with palette index set to
+# `UINT8_MAX` is not cleared.
 def bgfx_set_view_clear_mrt(
 	_id: int,
 	_flags: int,

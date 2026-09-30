@@ -2901,7 +2901,7 @@ namespace bgfx { namespace d3d11
 			setInputLayout(BX_COUNTOF(layouts), layouts, _program, _numInstanceData);
 		}
 
-		void setBlendState(uint64_t _state, uint32_t _rgba = 0, uint32_t _sampleMask = UINT32_MAX)
+		void setBlendState(uint64_t _state, uint32_t _rgba = 0, uint32_t _sampleMask = UINT32_MAX, uint8_t _mrtMask = UINT8_MAX)
 		{
 			_state &= BGFX_D3D11_BLEND_STATE_MASK;
 
@@ -2912,6 +2912,7 @@ namespace bgfx { namespace d3d11
 				? _rgba
 				: -1
 				);
+			murmur.add(_mrtMask);
 			const uint32_t hash = murmur.end();
 
 			ID3D11BlendState* bs = m_blendStateCache.find(hash);
@@ -2978,6 +2979,19 @@ namespace bgfx { namespace d3d11
 					for (uint32_t ii = 1; ii < BX_COUNTOF(desc.RenderTarget); ++ii)
 					{
 						bx::memCopy(&desc.RenderTarget[ii], drt, sizeof(D3D11_RENDER_TARGET_BLEND_DESC) );
+					}
+				}
+
+				if (UINT8_MAX != _mrtMask)
+				{
+					desc.IndependentBlendEnable = true;
+
+					for (uint32_t ii = 0; ii < BX_COUNTOF(desc.RenderTarget); ++ii)
+					{
+						if (0 == (_mrtMask & (1<<ii) ) )
+						{
+							desc.RenderTarget[ii].RenderTargetWriteMask = 0;
+						}
 					}
 				}
 
@@ -3854,10 +3868,6 @@ namespace bgfx { namespace d3d11
 					: 0
 					;
 
-				setBlendState(state);
-				setDepthStencilState(state, stencil);
-				setRasterizerState(state);
-
 				uint32_t numMrt = 1;
 				FrameBufferHandle fbh = m_fbh;
 				if (isValid(fbh) )
@@ -3865,6 +3875,10 @@ namespace bgfx { namespace d3d11
 					const FrameBufferD3D11& fb = m_frameBuffers[fbh.idx];
 					numMrt = bx::max(1, fb.m_num);
 				}
+
+				setBlendState(state, 0, UINT32_MAX, uint8_t(~_clear.getColorSkipMask(numMrt) ) );
+				setDepthStencilState(state, stencil);
+				setRasterizerState(state);
 
 				ProgramD3D11& program = m_program[_clearQuad.m_program[numMrt-1].idx];
 				m_currentProgram = &program;

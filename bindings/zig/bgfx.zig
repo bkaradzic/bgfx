@@ -3627,7 +3627,8 @@ extern fn bgfx_set_view_clear(_id: ViewId, _flags: u16, _rgba: u32, _depth: f32,
 
 /// Set view clear flags with different clear color for each
 /// frame buffer texture. `bgfx::setPaletteColor` must be used to set up a
-/// clear color palette.
+/// clear color palette. Frame buffer attachment with palette index set to
+/// `UINT8_MAX` is not cleared.
 /// <param name="_id">View id.</param>
 /// <param name="_flags">Clear flags. Use `BGFX_CLEAR_NONE` to remove any clear operation. See: `BGFX_CLEAR_*`.</param>
 /// <param name="_depth">Depth clear value.</param>

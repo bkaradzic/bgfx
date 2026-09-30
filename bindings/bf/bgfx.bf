@@ -4423,7 +4423,8 @@ public static class bgfx
 	/// <summary>
 	/// Set view clear flags with different clear color for each
 	/// frame buffer texture. `bgfx::setPaletteColor` must be used to set up a
-	/// clear color palette.
+	/// clear color palette. Frame buffer attachment with palette index set to
+	/// `UINT8_MAX` is not cleared.
 	/// </summary>
 	///
 	/// <param name="_id">View id.</param>
