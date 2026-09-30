@@ -2419,6 +2419,8 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 				, &layout
 				, _clearQuad.m_program[numMrt-1]
 				, 0
+				, UINT32_MAX
+				, uint8_t(~_clear.getColorSkipMask(numMrt) )
 				);
 			setRenderPipelineState(pso->m_rps);
 
@@ -2971,6 +2973,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			, ProgramHandle _program
 			, uint8_t _numInstanceData
 			, uint32_t _sampleMask = UINT32_MAX
+			, uint8_t _mrtMask = UINT8_MAX
 			)
 		{
 			_state &= (0
@@ -2994,7 +2997,8 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			&&  m_lastPsoState.m_fbh             == _fbh.idx
 			&&  m_lastPsoState.m_numStreams      == _numStreams
 			&&  m_lastPsoState.m_numInstanceData == _numInstanceData
-			&&  m_lastPsoState.m_sampleMask      == _sampleMask)
+			&&  m_lastPsoState.m_sampleMask      == _sampleMask
+			&&  m_lastPsoState.m_mrtMask         == _mrtMask)
 			{
 				bool match = true;
 				for (uint8_t ii = 0; ii < _numStreams && match; ++ii)
@@ -3015,6 +3019,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			m_lastPsoState.m_numStreams      = _numStreams;
 			m_lastPsoState.m_numInstanceData = _numInstanceData;
 			m_lastPsoState.m_sampleMask      = _sampleMask;
+			m_lastPsoState.m_mrtMask         = _mrtMask;
 			for (uint8_t ii = 0; ii < _numStreams; ++ii)
 			{
 				m_lastPsoState.m_layouts[ii] = _layouts[ii];
@@ -3028,6 +3033,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			murmur.add(rgba);
 			murmur.add(_numInstanceData);
 			murmur.add(_sampleMask);
+			murmur.add(_mrtMask);
 
 			if (!isValid(_fbh) )
 			{
@@ -3190,6 +3196,17 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 						drt->setAlphaBlendOperation(        (MTL::BlendOperation)s_blendEquation[equationIndex]);
 
 						drt->setWriteMask(writeMask);
+					}
+				}
+
+				if (UINT8_MAX != _mrtMask)
+				{
+					for (uint32_t ii = 0; ii < frameBufferAttachment; ++ii)
+					{
+						if (0 == (_mrtMask & (1<<ii) ) )
+						{
+							pd->colorAttachments()->object(ii)->setWriteMask(MTL::ColorWriteMaskNone);
+						}
 					}
 				}
 
@@ -3688,6 +3705,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			uint16_t            m_fbh;
 			uint8_t             m_numStreams;
 			uint8_t             m_numInstanceData;
+			uint8_t             m_mrtMask;
 		};
 
 		PipelineState m_lastPsoState;
@@ -6289,13 +6307,16 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 							if (clearWithRenderPass)
 							{
+								const uint8_t colorSkipMask = clr.getColorSkipMask(g_caps.limits.maxFBAttachments);
+
 								for (uint32_t ii = 0; ii < g_caps.limits.maxFBAttachments; ++ii)
 								{
 									MTL::RenderPassColorAttachmentDescriptor* desc = renderPassDescriptor->colorAttachments()->object(ii);
 
 									if (desc->texture() != NULL)
 									{
-										if (0 != (BGFX_CLEAR_COLOR & clr.m_flags) )
+										if (0 != (BGFX_CLEAR_COLOR & clr.m_flags)
+										&&  0 == (colorSkipMask & (1<<ii) ) )
 										{
 											if (0 != (BGFX_CLEAR_COLOR_USE_PALETTE & clr.m_flags) )
 											{

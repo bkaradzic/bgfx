@@ -2567,6 +2567,12 @@ WGPU_IMPORT
 				, true
 				, renderBind
 				, true
+				, false
+				, 0
+				, 0.0f
+				, 0.0f
+				, UINT32_MAX
+				, uint8_t(~_clear.getColorSkipMask(numMrt) )
 				);
 
 			const ProgramWGPU& program = m_program[_clearQuad.m_program[numMrt-1].idx];
@@ -3206,6 +3212,7 @@ WGPU_IMPORT
 			, float _slopeScale = 0.0f
 			, float _biasClamp = 0.0f
 			, uint32_t _sampleMask = UINT32_MAX
+			, uint8_t _mrtMask = UINT8_MAX
 			)
 		{
 			const ProgramWGPU& program = m_program[_program.idx];
@@ -3310,6 +3317,7 @@ WGPU_IMPORT
 			murmur.add(_slopeScale);
 			murmur.add(_biasClamp);
 			murmur.add(_sampleMask);
+			murmur.add(_mrtMask);
 			const uint32_t hash = murmur.end();
 
 			RenderPipeline* renderPipeline = m_renderPipelineCache.find(hash);
@@ -3458,7 +3466,7 @@ WGPU_IMPORT
 			const bool hasFragmentShader = NULL != program.m_fsh;
 			const bool bgra8Storage = hasBgra8Storage(entries, entryCount);
 
-			const uint32_t targetCount = hasFragmentShader ? setColorTargetState(blendState, colorTragetState, fb, _state, _rgba) : 0;
+			const uint32_t targetCount = hasFragmentShader ? setColorTargetState(blendState, colorTragetState, fb, _state, _rgba, _mrtMask) : 0;
 
 			if (NULL != depthStencilTextureView)
 			{
@@ -3707,7 +3715,7 @@ WGPU_IMPORT
 			}
 		}
 
-		uint32_t setColorTargetState(WGPUBlendState* _outBlendState, WGPUColorTargetState* _outColorTargetState, const FrameBufferWGPU& _fb, uint64_t _state, uint32_t _rgba = 0)
+		uint32_t setColorTargetState(WGPUBlendState* _outBlendState, WGPUColorTargetState* _outColorTargetState, const FrameBufferWGPU& _fb, uint64_t _state, uint32_t _rgba = 0, uint8_t _mrtMask = UINT8_MAX)
 		{
 			if (0 == _fb.m_numColorAttachments
 			&&  !_fb.isSwapChain() )
@@ -3807,7 +3815,10 @@ WGPU_IMPORT
 					.nextInChain = NULL,
 					.format      = format,
 					.blend       = blend,
-					.writeMask   = writeMask,
+					.writeMask   = 0 != (_mrtMask & (1<<ii) )
+						? writeMask
+						: WGPUColorWriteMask_None
+						,
 				};
 			}
 
@@ -7098,6 +7109,8 @@ WGPU_IMPORT
 						: fb.m_numColorAttachments
 						;
 
+					const uint8_t colorSkipMask = clr.getColorSkipMask(numColorAttachments);
+
 					isFrameBufferValid = false
 						||    0 != numColorAttachments
 						|| NULL != depthStencilTextureView
@@ -7135,7 +7148,10 @@ WGPU_IMPORT
 							.view          = colorTextureView,
 							.depthSlice    = WGPU_DEPTH_SLICE_UNDEFINED,
 							.resolveTarget = resolveTextureView,
-							.loadOp        = clearWhole && (BGFX_CLEAR_COLOR & clr.m_flags)
+							.loadOp        = true
+								&& clearWhole
+								&& 0 != (BGFX_CLEAR_COLOR & clr.m_flags)
+								&& 0 == (colorSkipMask & (1<<ii) )
 								? WGPULoadOp_Clear
 								: WGPULoadOp_Load
 								,
