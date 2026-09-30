@@ -889,6 +889,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			, m_borderColorSupport(false)
 			, m_colorPalette(NULL)
 			, m_screenshotBlitRenderPipelineState(NULL)
+			, m_screenshotBlitPixelFormat(MTL::PixelFormatInvalid)
 			, m_commandBuffer(NULL)
 			, m_blitCommandEncoder(NULL)
 			, m_renderCommandEncoder(NULL)
@@ -920,6 +921,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 			m_fbh = BGFX_INVALID_HANDLE;
 			m_mainSwapChain = _init.swapChain;
+			m_reset         = _init.reset & (~BGFX_RESET_INTERNAL_FORCE);
 
 			m_device = (MTL::Device*)g_platformData.context;
 
@@ -1234,13 +1236,6 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			}
 
 			m_screenshotBlitProgram.create(&m_screenshotBlitProgramVsh, &m_screenshotBlitProgramFsh);
-
-			reset(m_renderPipelineDescriptor);
-			m_renderPipelineDescriptor->colorAttachments()->object(0)->setPixelFormat(getSwapChainPixelFormat(m_mainFrameBuffer.m_swapChain) );
-
-			m_renderPipelineDescriptor->setVertexFunction(m_screenshotBlitProgram.m_vsh->m_function);
-			m_renderPipelineDescriptor->setFragmentFunction(m_screenshotBlitProgram.m_fsh->m_function);
-			m_screenshotBlitRenderPipelineState = newRenderPipelineStateWithDescriptor(m_device, m_renderPipelineDescriptor);
 
 			m_occlusionQuery.preReset();
 			m_gpuTimer.init();
@@ -1694,7 +1689,11 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 			MTL::BlitCommandEncoder* bce = s_renderMtl->getBlitCommandEncoder();
 #if BX_PLATFORM_OSX
-			bce->synchronizeResource(buffer.m_ptr);
+			if (m_hasSynchronizeResource
+			&&  MTL::StorageModeManaged == buffer.m_ptr->storageMode() )
+			{
+				bce->synchronizeResource(buffer.m_ptr);
+			}
 #endif // BX_PLATFORM_OSX
 			BX_UNUSED(bce);
 			endEncoding();
@@ -2135,8 +2134,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			|| (m_reset&maskFlags) != (_reset&maskFlags) )
 			{
 				m_mainSwapChain = _swapChain;
-
-				const MTL::PixelFormat prevPixelFormat = getSwapChainPixelFormat(swapChain);
+				m_reset         = _reset;
 
 				if (NULL != swapChain)
 				{
@@ -2160,20 +2158,25 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 				m_textVideoMem.resize(false, _swapChain.width, _swapChain.height);
 				m_textVideoMem.clear();
-
-				const MTL::PixelFormat pixelFormat = getSwapChainPixelFormat(swapChain);
-
-				if (prevPixelFormat != pixelFormat)
-				{
-					MTL_RELEASE_I(m_screenshotBlitRenderPipelineState);
-					reset(m_renderPipelineDescriptor);
-
-					m_renderPipelineDescriptor->colorAttachments()->object(0)->setPixelFormat(pixelFormat);
-					m_renderPipelineDescriptor->setVertexFunction(m_screenshotBlitProgram.m_vsh->m_function);
-					m_renderPipelineDescriptor->setFragmentFunction(m_screenshotBlitProgram.m_fsh->m_function);
-					m_screenshotBlitRenderPipelineState = newRenderPipelineStateWithDescriptor(m_device, m_renderPipelineDescriptor);
-				}
 			}
+		}
+
+		MTL::RenderPipelineState* getScreenshotBlitRenderPipelineState(MTL::PixelFormat _pixelFormat)
+		{
+			if (NULL == m_screenshotBlitRenderPipelineState
+			||  m_screenshotBlitPixelFormat != _pixelFormat)
+			{
+				MTL_RELEASE_I(m_screenshotBlitRenderPipelineState);
+				reset(m_renderPipelineDescriptor);
+
+				m_renderPipelineDescriptor->colorAttachments()->object(0)->setPixelFormat(_pixelFormat);
+				m_renderPipelineDescriptor->setVertexFunction(m_screenshotBlitProgram.m_vsh->m_function);
+				m_renderPipelineDescriptor->setFragmentFunction(m_screenshotBlitProgram.m_fsh->m_function);
+				m_screenshotBlitRenderPipelineState = newRenderPipelineStateWithDescriptor(m_device, m_renderPipelineDescriptor);
+				m_screenshotBlitPixelFormat = _pixelFormat;
+			}
+
+			return m_screenshotBlitRenderPipelineState;
 		}
 
 		void invalidateCompute()
@@ -2593,16 +2596,23 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 					MTL::Texture* ptr     = alt ? texture.m_ptrAlt     : texture.m_ptr;
 					MTL::Texture* ptrMsaa = alt ? texture.m_ptrMsaaAlt : texture.m_ptrMsaa;
 
+					const bx::EncodingType::Enum encoding = bx::EncodingType::Enum(bimg::getBlockInfo(bimg::TextureFormat::Enum(texture.m_textureFormat) ).encoding);
+					const bool resolve = true
+						&& NULL != ptrMsaa
+						&& bx::EncodingType::Int  != encoding
+						&& bx::EncodingType::Uint != encoding
+						;
+
 					_renderPassDescriptor->colorAttachments()->object(ii)->setTexture(ptrMsaa
 						? ptrMsaa
 						: ptr
 						);
-					_renderPassDescriptor->colorAttachments()->object(ii)->setResolveTexture(ptrMsaa
+					_renderPassDescriptor->colorAttachments()->object(ii)->setResolveTexture(resolve
 						? ptr
 						: NULL
 						);
 
-					setAttachment( (MTL::RenderPassAttachmentDescriptor*)_renderPassDescriptor->colorAttachments()->object(ii), frameBuffer.m_colorAttachment[ii], texture.m_type, texture.m_ptrMsaa != NULL);
+					setAttachment( (MTL::RenderPassAttachmentDescriptor*)_renderPassDescriptor->colorAttachments()->object(ii), frameBuffer.m_colorAttachment[ii], texture.m_type, resolve);
 				}
 
 				if (isValid(frameBuffer.m_depthHandle) )
@@ -3742,6 +3752,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 		ShaderMtl                 m_screenshotBlitProgramFsh;
 		ProgramMtl                m_screenshotBlitProgram;
 		MTL::RenderPipelineState* m_screenshotBlitRenderPipelineState;
+		MTL::PixelFormat          m_screenshotBlitPixelFormat;
 
 		MTL::CommandBuffer*         m_commandBuffer;
 		MTL::BlitCommandEncoder*    m_blitCommandEncoder;
@@ -4562,7 +4573,9 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 				rectpitch = (alignedW / blockW)*blockInfo.blockSize;
 			}
 		}
-		const uint32_t srcpitch  = UINT16_MAX == _pitch ? rectpitch : _pitch;
+		const bool convert = m_textureFormat != m_requestedFormat;
+
+		const uint32_t srcpitch  = (UINT16_MAX == _pitch || convert) ? rectpitch : _pitch;
 		const uint32_t slice     = ( (m_type == Texture3D) ? 0 : _side + _z * (m_type == TextureCube ? 6 : 1) );
 		const uint16_t zz        = (m_type == Texture3D) ? _z : 0 ;
 
@@ -4570,8 +4583,6 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 		const uint32_t mipHeight = bx::max(1u, uint32_t(m_height) >> _mip);
 		const uint32_t width     = bx::min<uint32_t>(_rect.m_width,  mipWidth);
 		const uint32_t height    = bx::min<uint32_t>(_rect.m_height, mipHeight);
-
-		const bool convert = m_textureFormat != m_requestedFormat;
 
 		uint8_t* data = _mem->data;
 		uint8_t* temp = NULL;
@@ -6286,12 +6297,17 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 							fbh = _render->m_view[view].m_fbh;
 
-							stateMask = isValid(fbh)
+							const bool hasDepthAttachment = true
+								&& isValid(fbh)
+								&& isValid(m_frameBuffers[fbh.idx].m_depthHandle)
+								;
+
+							stateMask = hasDepthAttachment
 								? getAttachmentStateMask(&m_frameBuffers[fbh.idx].m_depthAttachment, 1)
 								: UINT64_MAX
 								;
 
-							stencilMask = isValid(fbh)
+							stencilMask = hasDepthAttachment
 								? getAttachmentStencilMask(&m_frameBuffers[fbh.idx].m_depthAttachment, 1)
 								: UINT64_MAX
 								;
@@ -6349,7 +6365,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 											: MTL::StoreActionMultisampleResolve
 											;
 
-										desc->setStoreAction(desc->texture()->sampleCount() > 1
+										desc->setStoreAction(NULL != desc->resolveTexture()
 											? multisampleStoreAction
 											: MTL::StoreActionStore
 											);
@@ -6394,7 +6410,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 											: MTL::StoreActionMultisampleResolve
 											;
 
-										desc->setStoreAction(desc->texture()->sampleCount() > 1
+										desc->setStoreAction(NULL != desc->resolveTexture()
 											? multisampleStoreAction
 											: MTL::StoreActionStore
 											);
@@ -7381,7 +7397,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 			rce->setCullMode( (MTL::CullMode)MTL::CullModeNone);
 
-			rce->setRenderPipelineState(m_screenshotBlitRenderPipelineState);
+			rce->setRenderPipelineState(getScreenshotBlitRenderPipelineState(getSwapChainPixelFormat(swapChain) ) );
 
 			const MTL::SamplerState* samplerState = getSamplerState(0
 				| BGFX_SAMPLER_U_CLAMP
