@@ -4876,8 +4876,13 @@ namespace bgfx { namespace gl
 
 				GLint intClear[4] = {};
 
+				const bool clearColor = true
+					&& 0 != (BGFX_CLEAR_COLOR & _clear.m_flags)
+					&& 0 == _clear.getColorSkipMask(1)
+					;
+
 				GLuint flags = 0;
-				if (BGFX_CLEAR_COLOR & _clear.m_flags)
+				if (clearColor)
 				{
 					if (BGFX_CLEAR_COLOR_USE_PALETTE & _clear.m_flags)
 					{
@@ -4941,7 +4946,7 @@ namespace bgfx { namespace gl
 					GL_CHECK(glStencilMask(0xff) );
 				}
 
-				const bool clearColorInt = intColor && 0 != (BGFX_CLEAR_COLOR & _clear.m_flags);
+				const bool clearColorInt = intColor && clearColor;
 
 				if (0 != flags
 				||  clearColorInt)
@@ -5081,10 +5086,36 @@ namespace bgfx { namespace gl
 
 				commit(*program.m_constantBuffer);
 
+				const uint8_t skipMask = _clear.getColorSkipMask(numMrt);
+				GLenum buffers[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
+
+				if (0 != skipMask)
+				{
+					for (uint32_t ii = 0; ii < numMrt; ++ii)
+					{
+						buffers[ii] = 0 != (skipMask & (1<<ii) )
+							? GL_NONE
+							: GL_COLOR_ATTACHMENT0 + ii
+							;
+					}
+
+					GL_CHECK(glDrawBuffers(numMrt, buffers) );
+				}
+
 				GL_CHECK(glDrawArrays(GL_TRIANGLE_STRIP
 					, 0
 					, 4
 					) );
+
+				if (0 != skipMask)
+				{
+					for (uint32_t ii = 0; ii < numMrt; ++ii)
+					{
+						buffers[ii] = GL_COLOR_ATTACHMENT0 + ii;
+					}
+
+					GL_CHECK(glDrawBuffers(numMrt, buffers) );
+				}
 			}
 		}
 
