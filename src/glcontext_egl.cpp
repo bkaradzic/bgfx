@@ -65,28 +65,6 @@ namespace bgfx { namespace gl
 EGL_IMPORT
 #undef EGL_IMPORT_FUNC
 
-	void* eglOpen()
-	{
-	    void* handle = bx::dlopen(
-#if BX_PLATFORM_LINUX
-			"libEGL.so.1"
-#else
-			"libEGL." BX_DL_EXT
-#endif // BX_PLATFORM_*
-			);
-
-		BGFX_FATAL(NULL != handle, Fatal::UnableToInitialize, "Failed to load libEGL dynamic library.");
-
-#define EGL_IMPORT_FUNC(_proto, _func)         \
-	_func = (_proto)bx::dlsym(handle, #_func); \
-	BX_TRACE("%p " #_func, _func);             \
-	BGFX_FATAL(NULL != _func, Fatal::UnableToInitialize, "Failed get " #_func ".")
-EGL_IMPORT
-#undef EGL_IMPORT_FUNC
-
-		return handle;
-	}
-
 	void eglClose(void* _handle)
 	{
 		bx::dlclose(_handle);
@@ -94,6 +72,43 @@ EGL_IMPORT
 #define EGL_IMPORT_FUNC(_proto, _func) _func = NULL
 EGL_IMPORT
 #undef EGL_IMPORT_FUNC
+	}
+
+	void* eglOpen()
+	{
+		const char* eglDllName =
+#if BX_PLATFORM_LINUX
+			"libEGL.so.1"
+#else
+			"libEGL." BX_DL_EXT
+#endif // BX_PLATFORM_*
+			;
+
+		void* handle = bx::dlopen(eglDllName);
+
+		if (NULL == handle)
+		{
+			BX_TRACE("Init error: Failed to load %s.", eglDllName);
+			return NULL;
+		}
+
+		bool imported = true;
+
+#define EGL_IMPORT_FUNC(_proto, _func)         \
+	_func = (_proto)bx::dlsym(handle, #_func); \
+	BX_TRACE("%p " #_func, _func);             \
+	imported &= NULL != _func
+EGL_IMPORT
+#undef EGL_IMPORT_FUNC
+
+		if (!imported)
+		{
+			BX_TRACE("Init error: Failed to import functions from %s.", eglDllName);
+			eglClose(handle);
+			return NULL;
+		}
+
+		return handle;
 	}
 
 #else
@@ -126,7 +141,12 @@ WL_EGL_IMPORT
 	void* waylandEglOpen()
 	{
 		void* handle = bx::dlopen("libwayland-egl.so.1");
-		BGFX_FATAL(handle != NULL, Fatal::UnableToInitialize, "Could not dlopen() libwayland-egl.so.1");
+
+		if (NULL == handle)
+		{
+			BX_TRACE("Init error: Failed to load libwayland-egl.so.1.");
+			return NULL;
+		}
 
 #	define WL_EGL_FUNC(rt, fname, params) fname = (PFNWLEGL_##fname) bx::dlsym(handle, #fname);
 		WL_EGL_IMPORT
@@ -245,8 +265,22 @@ WL_EGL_IMPORT
 	static EGL_DISPMANX_WINDOW_T s_dispmanWindow;
 #	endif // BX_PLATFORM_RPI
 
-	void GlContext::create(const SwapChain& _swapChain, uint32_t _reset)
+	bool GlContext::create(const SwapChain& _swapChain, uint32_t _reset)
 	{
+		struct ErrorState
+		{
+			enum Enum
+			{
+				Default,
+				LoadedEGL,
+				InitializedDisplay,
+				CreatedSurface,
+				CreatedContext,
+			};
+		};
+
+		ErrorState::Enum errorState = ErrorState::Default;
+
 		m_nwh = _swapChain.nwh;
 
 #	if BX_PLATFORM_RPI
@@ -254,6 +288,15 @@ WL_EGL_IMPORT
 #	endif // BX_PLATFORM_RPI
 
 		m_eglDll = eglOpen();
+
+		if (BX_ENABLED(BGFX_USE_GL_DYNAMIC_LIB)
+		&&  NULL == m_eglDll)
+		{
+			goto error;
+		}
+
+		errorState = ErrorState::LoadedEGL;
+
 		m_ownsContext = NULL == g_platformData.context;
 
 		if (m_ownsContext)
@@ -276,12 +319,31 @@ WL_EGL_IMPORT
 #	endif // BX_PLATFORM_WINDOWS
 
 			m_display = eglGetDisplay(NULL == ndt ? EGL_DEFAULT_DISPLAY : ndt);
-			BGFX_FATAL(m_display != EGL_NO_DISPLAY, Fatal::UnableToInitialize, "Failed to create display %p", m_display);
+
+			if (EGL_NO_DISPLAY == m_display)
+			{
+				BX_TRACE("Init error: Failed to get display (error: 0x%x).", eglGetError() );
+				goto error;
+			}
 
 			EGLint major = 0;
 			EGLint minor = 0;
 			EGLBoolean success = eglInitialize(m_display, &major, &minor);
-			BGFX_FATAL(success && major >= 1 && minor >= 3, Fatal::UnableToInitialize, "Failed to initialize %d.%d", major, minor);
+
+			if (!success)
+			{
+				BX_TRACE("Init error: Failed to initialize display (error: 0x%x).", eglGetError() );
+				goto error;
+			}
+
+			errorState = ErrorState::InitializedDisplay;
+
+			if (major < 1
+			||  minor < 3)
+			{
+				BX_TRACE("Init error: EGL %d.%d is not supported.", major, minor);
+				goto error;
+			}
 
 			BX_TRACE("EGL info:");
 			const char* clientApis = eglQueryString(m_display, EGL_CLIENT_APIS);
@@ -300,7 +362,12 @@ WL_EGL_IMPORT
 			if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) )
 			{
 				EGLBoolean ok = eglBindAPI(EGL_OPENGL_API);
-				BGFX_FATAL(ok, Fatal::UnableToInitialize, "Could not set API! error: %d", eglGetError());
+
+				if (!ok)
+				{
+					BX_TRACE("Init error: Failed to bind OpenGL API (error: 0x%x).", eglGetError() );
+					goto error;
+				}
 			}
 
 			const bool isAngle = !bx::findIdentifierMatch(version, "ANGLE").isEmpty();
@@ -483,7 +550,12 @@ WL_EGL_IMPORT
 				break;
 			}
 
-			BGFX_FATAL(0 != numConfigs, Fatal::UnableToInitialize, "eglChooseConfig");
+			if (!success
+			||  0 == numConfigs)
+			{
+				BX_TRACE("Init error: Failed to choose config (error: 0x%x).", eglGetError() );
+				goto error;
+			}
 
 			m_msaaContext = 1 < msaaSamples;
 
@@ -531,6 +603,11 @@ WL_EGL_IMPORT
 			if (g_platformData.type == NativeWindowHandleType::Wayland)
 			{
 				m_waylandEglDll = waylandEglOpen();
+
+				if (NULL == m_waylandEglDll)
+				{
+					goto error;
+				}
 			}
 #	endif // BX_PLATFORM_LINUX
 
@@ -565,7 +642,13 @@ WL_EGL_IMPORT
 				m_surface = eglCreateWindowSurface(m_display, m_config, nwh, NULL);
 			}
 
-			BGFX_FATAL(m_surface != EGL_NO_SURFACE, Fatal::UnableToInitialize, "Failed to create surface.");
+			if (EGL_NO_SURFACE == m_surface)
+			{
+				BX_TRACE("Init error: Failed to create surface (error: 0x%x).", eglGetError() );
+				goto error;
+			}
+
+			errorState = ErrorState::CreatedSurface;
 			m_readSurface = m_surface;
 
 			const bool hasEglKhrCreateContext = !bx::findIdentifierMatch(extensions, "EGL_KHR_create_context").isEmpty();
@@ -629,10 +712,22 @@ WL_EGL_IMPORT
 				BX_TRACE("Failed to create EGL context with EGL_CONTEXT_FLAGS_KHR (%08x). Retrying without it!", flags);
 			}
 
-			BGFX_FATAL(m_context != EGL_NO_CONTEXT, Fatal::UnableToInitialize, "Failed to create context.");
+			if (EGL_NO_CONTEXT == m_context)
+			{
+				BX_TRACE("Init error: Failed to create context (error: 0x%x).", eglGetError() );
+				goto error;
+			}
+
+			errorState = ErrorState::CreatedContext;
 
 			success = eglMakeCurrent(m_display, m_surface, m_surface, m_context);
-			BGFX_FATAL(success, Fatal::UnableToInitialize, "Failed to set context.");
+
+			if (!success)
+			{
+				BX_TRACE("Init error: Failed to set context (error: 0x%x).", eglGetError() );
+				goto error;
+			}
+
 			m_current = NULL;
 
 			m_swapInterval = !!(_reset & BGFX_RESET_VSYNC) ? 1 : 0;
@@ -641,16 +736,20 @@ WL_EGL_IMPORT
 		else
 		{
 			m_context = (EGLContext)g_platformData.context;
-			BGFX_FATAL(m_context == eglGetCurrentContext()
-				, Fatal::UnableToInitialize
-				, "Caller-provided EGL context must be current."
-				);
+
+			if (m_context != eglGetCurrentContext() )
+			{
+				BX_TRACE("Init error: Caller-provided EGL context must be current.");
+				goto error;
+			}
 
 			m_display = eglGetCurrentDisplay();
-			BGFX_FATAL(EGL_NO_DISPLAY != m_display
-				, Fatal::UnableToInitialize
-				, "Caller-provided EGL context has no current display."
-				);
+
+			if (EGL_NO_DISPLAY == m_display)
+			{
+				BX_TRACE("Init error: Caller-provided EGL context has no current display.");
+				goto error;
+			}
 
 			m_surface = eglGetCurrentSurface(EGL_DRAW);
 			m_readSurface = eglGetCurrentSurface(EGL_READ);
@@ -658,7 +757,12 @@ WL_EGL_IMPORT
 			if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) )
 			{
 				EGLBoolean ok = eglBindAPI(EGL_OPENGL_API);
-				BGFX_FATAL(ok, Fatal::UnableToInitialize, "Could not set API! error: %d", eglGetError() );
+
+				if (!ok)
+				{
+					BX_TRACE("Init error: Failed to bind OpenGL API (error: 0x%x).", eglGetError() );
+					goto error;
+				}
 			}
 
 			EGLint configId = 0;
@@ -750,9 +854,74 @@ WL_EGL_IMPORT
 			m_swapInterval = !!(_reset & BGFX_RESET_VSYNC) ? 1 : 0;
 		}
 
-		import();
+		if (!import() )
+		{
+			goto error;
+		}
 
 		g_internalData.context = m_context;
+
+		return true;
+
+	error:
+		switch (errorState)
+		{
+		case ErrorState::CreatedContext:
+			eglMakeCurrent(m_display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+			eglDestroyContext(m_display, m_context);
+			[[fallthrough]];
+
+		case ErrorState::CreatedSurface:
+			eglDestroySurface(m_display, m_surface);
+			[[fallthrough]];
+
+		case ErrorState::InitializedDisplay:
+#	if BX_PLATFORM_LINUX
+			if (NULL != m_eglWindow)
+			{
+				wl_egl_window_destroy(m_eglWindow);
+				m_eglWindow = NULL;
+			}
+
+			if (NULL != m_waylandEglDll)
+			{
+				waylandEglClose(m_waylandEglDll);
+				m_waylandEglDll = NULL;
+			}
+#	endif // BX_PLATFORM_LINUX
+
+			eglTerminate(m_display);
+			eglReleaseThread();
+			[[fallthrough]];
+
+		case ErrorState::LoadedEGL:
+			eglClose(m_eglDll);
+			m_eglDll = NULL;
+			[[fallthrough]];
+
+		case ErrorState::Default:
+		default:
+#	if BX_PLATFORM_WINDOWS
+			if (NULL != m_hdc)
+			{
+				ReleaseDC( (HWND)m_nwh, m_hdc);
+				m_hdc = NULL;
+			}
+#	endif // BX_PLATFORM_WINDOWS
+
+#	if BX_PLATFORM_RPI
+			bcm_host_deinit();
+#	endif // BX_PLATFORM_RPI
+
+			m_config      = NULL;
+			m_context     = NULL;
+			m_display     = NULL;
+			m_surface     = NULL;
+			m_readSurface = NULL;
+			break;
+		}
+
+		return false;
 	}
 
 	void GlContext::destroy()
@@ -809,6 +978,8 @@ WL_EGL_IMPORT
 
 	void GlContext::resize(const SwapChain& _swapChain, uint32_t _reset)
 	{
+		BX_UNUSED(_swapChain);
+
 		if (!m_ownsContext
 		&&  m_context == eglGetCurrentContext() )
 		{
@@ -957,9 +1128,11 @@ WL_EGL_IMPORT
 		}
 	}
 
-	void GlContext::import()
+	bool GlContext::import()
 	{
 		BX_TRACE("Import:");
+
+		bool imported = true;
 
 #	if BX_PLATFORM_WINDOWS || BX_PLATFORM_LINUX
 #		if BX_PLATFORM_WINDOWS
@@ -984,10 +1157,12 @@ WL_EGL_IMPORT
 				{                                                                        \
 					_func = bx::dlsym<_proto>(lib, #_import);                            \
 					BX_TRACE("\t%p " #_func " (" #_import ")", _func);                   \
-					BGFX_FATAL(_optional || NULL != _func                                \
-						, Fatal::UnableToInitialize                                      \
-						, "Failed to create OpenGLES context. eglGetProcAddress(\"%s\")" \
-						, #_import);                                                     \
+					if (!BX_IGNORE_C4127(_optional)                                      \
+					&&  NULL == _func)                                                   \
+					{                                                                    \
+						BX_TRACE("Init error: Failed to import %s.", #_import);          \
+						imported = false;                                                \
+					}                                                                    \
 				}                                                                        \
 			}
 #	else
@@ -997,10 +1172,12 @@ WL_EGL_IMPORT
 				{                                                                        \
 					_func = reinterpret_cast<_proto>(eglGetProcAddress(#_import) );      \
 					BX_TRACE("\t%p " #_func " (" #_import ")", _func);                   \
-					BGFX_FATAL(_optional || NULL != _func                                \
-						, Fatal::UnableToInitialize                                      \
-						, "Failed to create OpenGLES context. eglGetProcAddress(\"%s\")" \
-						, #_import);                                                     \
+					if (!BX_IGNORE_C4127(_optional)                                      \
+					&&  NULL == _func)                                                   \
+					{                                                                    \
+						BX_TRACE("Init error: Failed to import %s.", #_import);          \
+						imported = false;                                                \
+					}                                                                    \
 				}                                                                        \
 			}
 
@@ -1009,6 +1186,8 @@ WL_EGL_IMPORT
 #	include "glimports.h"
 
 #	undef GL_EXTENSION
+
+		return imported;
 	}
 
 } /* namespace gl */ } // namespace bgfx

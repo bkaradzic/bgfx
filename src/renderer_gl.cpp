@@ -2303,10 +2303,14 @@ namespace bgfx { namespace gl
 				enum Enum
 				{
 					Default,
+					CreatedContext,
 				};
 			};
 
 			ErrorState::Enum errorState = ErrorState::Default;
+
+			GLint  numCmpFormats = 0;
+			GLint* cmpFormat     = NULL;
 
 			initLazyEnabledVertexAttributes();
 
@@ -2321,7 +2325,13 @@ namespace bgfx { namespace gl
 
 			m_reset = _init.reset & ~BGFX_RESET_INTERNAL_FORCE;
 
-			setRenderContextSize(_init.swapChain);
+			if (!m_glctx.create(_init.swapChain, m_reset) )
+			{
+				goto error;
+			}
+
+			errorState = ErrorState::CreatedContext;
+			m_flip = true;
 
 			m_vendor      = getGLString(GL_VENDOR);
 			m_renderer    = getGLString(GL_RENDERER);
@@ -2340,11 +2350,8 @@ namespace bgfx { namespace gl
 
 			m_workaround.reset();
 
-			GLint numCmpFormats = 0;
 			GL_CHECK(glGetIntegerv(GL_NUM_COMPRESSED_TEXTURE_FORMATS, &numCmpFormats) );
 			BX_TRACE("GL_NUM_COMPRESSED_TEXTURE_FORMATS %d", numCmpFormats);
-
-			GLint* cmpFormat = NULL;
 
 			if (0 < numCmpFormats)
 			{
@@ -3139,13 +3146,16 @@ namespace bgfx { namespace gl
 		error:
 			switch (errorState)
 			{
+			case ErrorState::CreatedContext:
+				m_glctx.destroy();
+				[[fallthrough]];
+
 			case ErrorState::Default:
+			default:
+				unloadRenderDoc(m_renderdocdll);
 				break;
 			}
 
-			m_glctx.destroy();
-
-			unloadRenderDoc(m_renderdocdll);
 			return false;
 		}
 
@@ -4438,21 +4448,14 @@ namespace bgfx { namespace gl
 
 		void setRenderContextSize(const SwapChain& _swapChain)
 		{
-			if (!m_glctx.isValid() )
-			{
-				m_glctx.create(_swapChain, m_reset);
-			}
-			else
-			{
-				destroyMsaaFbo();
+			destroyMsaaFbo();
 
-				m_glctx.resize(_swapChain, m_reset);
+			m_glctx.resize(_swapChain, m_reset);
 
-				uint32_t msaa = (_swapChain.flags & BGFX_SWAP_CHAIN_MSAA_MASK)>>BGFX_SWAP_CHAIN_MSAA_SHIFT;
-				msaa = bx::min(m_maxMsaa, msaa == 0 ? 0 : 1<<msaa);
+			uint32_t msaa = (_swapChain.flags & BGFX_SWAP_CHAIN_MSAA_MASK)>>BGFX_SWAP_CHAIN_MSAA_SHIFT;
+			msaa = bx::min(m_maxMsaa, msaa == 0 ? 0 : 1<<msaa);
 
-				createMsaaFbo(_swapChain.width, _swapChain.height, msaa);
-			}
+			createMsaaFbo(_swapChain.width, _swapChain.height, msaa);
 
 			m_flip = true;
 		}

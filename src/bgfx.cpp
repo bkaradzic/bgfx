@@ -2476,6 +2476,11 @@ namespace bgfx
 			m_submit->destroy();
 #if BGFX_CONFIG_MULTITHREADED
 			m_render->destroy();
+
+			if (m_singleThreaded)
+			{
+				s_renderFrameCalled = false;
+			}
 #endif // BGFX_CONFIG_MULTITHREADED
 			return false;
 		}
