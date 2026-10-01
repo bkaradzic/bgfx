@@ -667,6 +667,7 @@ namespace bgfx
 	extern CallbackI* g_callback;
 	extern bx::AllocatorI* g_allocator;
 	extern Caps g_caps;
+	extern char g_viewName[BGFX_CONFIG_MAX_VIEWS][BGFX_CONFIG_MAX_VIEW_NAME];
 
 	struct ProfilerScope
 	{
@@ -3488,6 +3489,7 @@ namespace bgfx
 			, m_peakDepthBias(0)
 			, m_observe(0)
 			, m_numPeakFrames(0)
+			, m_viewStats(NULL)
 			, m_waitSubmit(0)
 			, m_waitRender(0)
 			, m_frameNum(0)
@@ -3545,6 +3547,21 @@ namespace bgfx
 			m_blitKeys[_num] = 0;
 		}
 
+		void reserveViewStats(bool _enable)
+		{
+			if (!_enable)
+			{
+				bx::free(g_allocator, m_viewStats);
+				m_viewStats = NULL;
+			}
+			else if (NULL == m_viewStats)
+			{
+				m_viewStats = (ViewStats*)bx::alloc(g_allocator, sizeof(ViewStats)*BGFX_CONFIG_MAX_VIEWS);
+			}
+
+			m_perfStats.viewStats = m_viewStats;
+		}
+
 		void freeArrays()
 		{
 			bx::free(g_allocator, m_sortKeys);
@@ -3554,6 +3571,8 @@ namespace bgfx
 			m_sortValues = NULL;
 			m_blitKeys   = NULL;
 			m_blitKeysCapacity = 0;
+
+			reserveViewStats(false);
 
 			m_renderItem.destroy();
 			m_renderBind.destroy();
@@ -3931,7 +3950,7 @@ namespace bgfx
 		TextVideoMem* m_textVideoMem;
 
 		Stats     m_perfStats;
-		ViewStats m_viewStats[BGFX_CONFIG_MAX_VIEWS];
+		ViewStats* m_viewStats;
 
 		int64_t m_waitSubmit;
 		int64_t m_waitRender;
@@ -5197,7 +5216,6 @@ namespace bgfx
 
 		virtual void destroyFrameBuffer(FrameBufferHandle _handle) = 0;
 		virtual void requestScreenShot(FrameBufferHandle _handle, const char* _filePath) = 0;
-		virtual void updateViewName(ViewId _id, const char* _name) = 0;
 		virtual void invalidateOcclusionQuery(OcclusionQueryHandle _handle) = 0;
 		virtual void setMarker(const char* _name, uint16_t _len) = 0;
 		virtual void setName(Handle _handle, const char* _name, uint16_t _len) = 0;

@@ -14,16 +14,6 @@
 
 namespace bgfx { namespace gl
 {
-	static char s_viewName[BGFX_CONFIG_MAX_VIEWS][BGFX_CONFIG_MAX_VIEW_NAME];
-
-	inline void setViewType(ViewId _view, const bx::StringView _str)
-	{
-		if (BX_ENABLED(BGFX_CONFIG_DEBUG_ANNOTATION || BGFX_CONFIG_PROFILER) )
-		{
-			bx::memCopy(&s_viewName[_view][3], _str.getPtr(), _str.getLength() );
-		}
-	}
-
 	struct PrimInfo
 	{
 		GLenum m_type;
@@ -3141,12 +3131,6 @@ namespace bgfx { namespace gl
 					m_occlusionQuery.create();
 				}
 
-				// Init reserved part of view name.
-				for (uint32_t ii = 0; ii < BGFX_CONFIG_MAX_VIEWS; ++ii)
-				{
-					bx::snprintf(s_viewName[ii], BGFX_CONFIG_MAX_VIEW_NAME_RESERVED+1, "%3d   ", ii);
-				}
-
 				m_needPresent = false;
 			}
 
@@ -3824,14 +3808,6 @@ namespace bgfx { namespace gl
 
 			m_glctx.makeCurrent(NULL);
 			GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, m_backBufferFbo) );
-		}
-
-		void updateViewName(ViewId _id, const char* _name) override
-		{
-			bx::strCopy(&s_viewName[_id][BGFX_CONFIG_MAX_VIEW_NAME_RESERVED]
-				, BX_COUNTOF(s_viewName[0])-BGFX_CONFIG_MAX_VIEW_NAME_RESERVED
-				, _name
-				);
 		}
 
 		void invalidateOcclusionQuery(OcclusionQueryHandle _handle) override
@@ -8756,6 +8732,7 @@ namespace bgfx { namespace gl
 
 		if (m_timerQuerySupport)
 		{
+			m_gpuTimer.resize(getNumTimerQueries(_render, m_gpuTimer.m_control.getSize() ) );
 			frameQueryIdx = m_gpuTimer.begin(BGFX_CONFIG_MAX_VIEWS, _render->m_frameNum);
 		}
 
@@ -8848,7 +8825,6 @@ namespace bgfx { namespace gl
 		Profiler<TimerQueryGL> profiler(
 			  _render
 			, m_gpuTimer
-			, s_viewName
 			, m_timerQuerySupport
 			);
 

@@ -24,16 +24,6 @@ PFN_PIX_EVENTS_REPLACE_BLOCK bgfx_PIXEventsReplaceBlock;
 
 namespace bgfx { namespace d3d12
 {
-	static char s_viewName[BGFX_CONFIG_MAX_VIEWS][BGFX_CONFIG_MAX_VIEW_NAME];
-
-	inline void setViewType(ViewId _view, const bx::StringView _str)
-	{
-		if (BX_ENABLED(BGFX_CONFIG_DEBUG_ANNOTATION || BGFX_CONFIG_PROFILER) )
-		{
-			bx::memCopy(&s_viewName[_view][3], _str.getPtr(), _str.getLength() );
-		}
-	}
-
 	struct PrimInfo
 	{
 		D3D_PRIMITIVE_TOPOLOGY m_topology;
@@ -2036,12 +2026,6 @@ namespace bgfx { namespace d3d12
 						});
 				}
 
-				// Init reserved part of view name.
-				for (uint32_t ii = 0; ii < BGFX_CONFIG_MAX_VIEWS; ++ii)
-				{
-					bx::snprintf(s_viewName[ii], BGFX_CONFIG_MAX_VIEW_NAME_RESERVED + 1, "%3d   ", ii);
-				}
-
 				postReset();
 
 				m_batch.create(4<<10);
@@ -3032,14 +3016,6 @@ namespace bgfx { namespace d3d12
 			{
 				DX_RELEASE(backBuffer, swapFb->getSwapChainDesc().bufferCount);
 			}
-		}
-
-		void updateViewName(ViewId _id, const char* _name) override
-		{
-			bx::strCopy(&s_viewName[_id][BGFX_CONFIG_MAX_VIEW_NAME_RESERVED]
-				, BX_COUNTOF(s_viewName[0]) - BGFX_CONFIG_MAX_VIEW_NAME_RESERVED
-				, _name
-				);
 		}
 
 		void invalidateOcclusionQuery(OcclusionQueryHandle _handle) override
@@ -8529,6 +8505,17 @@ namespace bgfx { namespace d3d12
 
 	void TimerQueryD3D12::init()
 	{
+		create();
+
+		for (uint32_t ii = 0; ii < BX_COUNTOF(m_result); ++ii)
+		{
+			Result& result = m_result[ii];
+			result.reset();
+		}
+	}
+
+	void TimerQueryD3D12::create()
+	{
 		ID3D12Device* device = s_renderD3D12->m_device;
 
 		D3D12_QUERY_HEAP_DESC queryHeapDesc =
@@ -8557,12 +8544,6 @@ namespace bgfx { namespace d3d12
 		D3D12_RANGE range = { .Begin = 0, .End = size };
 		m_readback->Map(0, &range, (void**)&m_queryResult);
 
-		for (uint32_t ii = 0; ii < BX_COUNTOF(m_result); ++ii)
-		{
-			Result& result = m_result[ii];
-			result.reset();
-		}
-
 		m_control.reset();
 	}
 
@@ -8573,6 +8554,29 @@ namespace bgfx { namespace d3d12
 
 		DX_RELEASE(m_queryHeap, 0);
 		DX_RELEASE(m_readback, 0);
+	}
+
+	void TimerQueryD3D12::resize(uint32_t _size)
+	{
+		if (_size == m_control.getSize() )
+		{
+			return;
+		}
+
+		s_renderD3D12->finishAll(true);
+
+		while (update() )
+		{
+		}
+
+		shutdown();
+		bgfx::resize(m_control, _size);
+		create();
+
+		for (uint32_t ii = 0; ii < BX_COUNTOF(m_result); ++ii)
+		{
+			m_result[ii].m_pending = 0;
+		}
 	}
 
 	uint32_t TimerQueryD3D12::begin(uint32_t _resultIdx, uint32_t _frameNum)
@@ -9459,6 +9463,8 @@ namespace bgfx { namespace d3d12
 		}
 #endif // BX_PLATFORM_WINDOWS
 
+		m_gpuTimer.resize(getNumTimerQueries(_render, m_gpuTimer.m_control.getSize() ) );
+
 		BGFX_D3D12_PROFILER_BEGIN_LITERAL("rendererSubmit", kColorFrame);
 
 		int64_t timeBegin = bx::getHPCounter();
@@ -9534,7 +9540,6 @@ namespace bgfx { namespace d3d12
 		Profiler<TimerQueryD3D12> profiler(
 			  _render
 			, m_gpuTimer
-			, s_viewName
 			);
 
 #if BX_PLATFORM_WINDOWS
