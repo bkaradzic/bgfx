@@ -15,16 +15,6 @@
 
 namespace bgfx { namespace wgpu
 {
-	static char s_viewName[BGFX_CONFIG_MAX_VIEWS][BGFX_CONFIG_MAX_VIEW_NAME];
-
-	inline void setViewType(ViewId _view, const bx::StringView _str)
-	{
-		if (BX_ENABLED(BGFX_CONFIG_DEBUG_ANNOTATION || BGFX_CONFIG_PROFILER) )
-		{
-			bx::memCopy(&s_viewName[_view][3], _str.getPtr(), _str.getLength() );
-		}
-	}
-
 	struct PrimInfo
 	{
 		WGPUPrimitiveTopology m_topology;
@@ -2326,15 +2316,6 @@ WGPU_IMPORT
 				);
 
 			bx::free(g_allocator, data);
-		}
-
-		void updateViewName(ViewId _id, const char* _name) override
-		{
-			bx::strCopy(
-				  &s_viewName[_id][BGFX_CONFIG_MAX_VIEW_NAME_RESERVED]
-				, BX_COUNTOF(s_viewName[0])-BGFX_CONFIG_MAX_VIEW_NAME_RESERVED
-				, _name
-				);
 		}
 
 		void invalidateOcclusionQuery(OcclusionQueryHandle _handle) override
@@ -6970,7 +6951,6 @@ WGPU_IMPORT
 		Profiler<TimerQueryWGPU> profiler(
 			  _render
 			, m_gpuTimer
-			, s_viewName
 			, true
 			);
 
@@ -7209,7 +7189,7 @@ WGPU_IMPORT
 					WGPURenderPassDescriptor renderPassDesc =
 					{
 						.nextInChain            = NULL,
-						.label                  = toWGPUStringView(s_viewName[view]),
+						.label                  = toWGPUStringView(g_viewName[view]),
 						.colorAttachmentCount   = numColorAttachments,
 						.colorAttachments       = colorAttachment,
 						.depthStencilAttachment = NULL == depthStencilTextureView

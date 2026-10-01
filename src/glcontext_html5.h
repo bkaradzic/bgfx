@@ -21,7 +21,7 @@ namespace bgfx { namespace gl
 		{
 		}
 
-		void create(const SwapChain& _swapChain, uint32_t _reset);
+		bool create(const SwapChain& _swapChain, uint32_t _reset);
 		void destroy();
 		void resize(const SwapChain& _swapChain, uint32_t _reset);
 
@@ -31,7 +31,7 @@ namespace bgfx { namespace gl
 		void swap(SwapChainGL* _swapChain = NULL);
 		void makeCurrent(SwapChainGL* _swapChain = NULL);
 
-		void import();
+		bool import();
 
 		bool isValid() const
 		{

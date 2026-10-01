@@ -12,22 +12,18 @@
 
 namespace bgfx { namespace d3d11
 {
-	static wchar_t s_viewNameW[BGFX_CONFIG_MAX_VIEWS][BGFX_CONFIG_MAX_VIEW_NAME];
-	static char    s_viewName [BGFX_CONFIG_MAX_VIEWS][BGFX_CONFIG_MAX_VIEW_NAME];
-
-	inline void setViewType(ViewId _view, const bx::StringView _str)
+	inline const wchar_t* toViewNameW(wchar_t* _out, ViewId _view)
 	{
-		if (BX_ENABLED(BGFX_CONFIG_DEBUG_ANNOTATION | BGFX_CONFIG_PROFILER) )
+		size_t len = mbstowcs(_out, g_viewName[_view], BGFX_CONFIG_MAX_VIEW_NAME-1);
+
+		if (size_t(-1) == len)
 		{
-			const uint32_t len = _str.getLength();
-
-			bx::memCopy(&s_viewName[_view][3], _str.getPtr(), len);
-
-			wchar_t tmpW[16];
-			mbstowcs(tmpW, _str.getPtr(), len);
-
-			bx::memCopy(&s_viewNameW[_view][3], tmpW, len*2);
+			len = mbstowcs(_out, g_viewName[_view], BGFX_CONFIG_MAX_VIEW_NAME_RESERVED);
 		}
+
+		_out[size_t(-1) == len ? 0 : len] = L'\0';
+
+		return _out;
 	}
 
 	struct PrimInfo
@@ -1605,13 +1601,6 @@ namespace bgfx { namespace d3d11
 						});
 				}
 
-				// Init reserved part of view name.
-				for (uint32_t ii = 0; ii < BGFX_CONFIG_MAX_VIEWS; ++ii)
-				{
-					bx::snprintf(s_viewName[ii], BGFX_CONFIG_MAX_VIEW_NAME_RESERVED + 1, "%3d   ", ii);
-					mbstowcs(s_viewNameW[ii], s_viewName[ii], BGFX_CONFIG_MAX_VIEW_NAME_RESERVED);
-				}
-
 				if (_init.debug
 				&&  NULL != m_infoQueue)
 				{
@@ -2212,22 +2201,6 @@ namespace bgfx { namespace d3d11
 			}
 
 			DX_RELEASE(backBuffer, 0);
-		}
-
-		void updateViewName(ViewId _id, const char* _name) override
-		{
-			if (BX_ENABLED(BGFX_CONFIG_DEBUG_ANNOTATION) )
-			{
-				mbstowcs(&s_viewNameW[_id][BGFX_CONFIG_MAX_VIEW_NAME_RESERVED]
-					, _name
-					, BX_COUNTOF(s_viewNameW[0])-BGFX_CONFIG_MAX_VIEW_NAME_RESERVED
-					);
-			}
-
-			bx::strCopy(&s_viewName[_id][BGFX_CONFIG_MAX_VIEW_NAME_RESERVED]
-				, BX_COUNTOF(s_viewName[0]) - BGFX_CONFIG_MAX_VIEW_NAME_RESERVED
-				, _name
-				);
 		}
 
 		void invalidateOcclusionQuery(OcclusionQueryHandle _handle) override
@@ -6303,22 +6276,7 @@ namespace bgfx { namespace d3d11
 
 	void TimerQueryD3D11::postReset()
 	{
-		ID3D11Device* device = s_renderD3D11->m_device;
-
-		D3D11_QUERY_DESC qd;
-		qd.MiscFlags = 0;
-		for (uint32_t ii = 0; ii < BX_COUNTOF(m_query); ++ii)
-		{
-			Query& query = m_query[ii];
-			query.m_ready = false;
-
-			qd.Query = D3D11_QUERY_TIMESTAMP_DISJOINT;
-			DX_CHECK(device->CreateQuery(&qd, &query.m_disjoint) );
-
-			qd.Query = D3D11_QUERY_TIMESTAMP;
-			DX_CHECK(device->CreateQuery(&qd, &query.m_begin) );
-			DX_CHECK(device->CreateQuery(&qd, &query.m_end) );
-		}
+		create(0, m_control.getSize() );
 
 		for (uint32_t ii = 0; ii < BX_COUNTOF(m_result); ++ii)
 		{
@@ -6331,12 +6289,67 @@ namespace bgfx { namespace d3d11
 
 	void TimerQueryD3D11::preReset()
 	{
-		for (uint32_t ii = 0; ii < BX_COUNTOF(m_query); ++ii)
+		destroy(0, m_control.getSize() );
+	}
+
+	void TimerQueryD3D11::create(uint32_t _begin, uint32_t _end)
+	{
+		ID3D11Device* device = s_renderD3D11->m_device;
+
+		D3D11_QUERY_DESC qd;
+		qd.MiscFlags = 0;
+		for (uint32_t ii = _begin; ii < _end; ++ii)
+		{
+			Query& query = m_query[ii];
+			query.m_ready = false;
+
+			qd.Query = D3D11_QUERY_TIMESTAMP_DISJOINT;
+			DX_CHECK(device->CreateQuery(&qd, &query.m_disjoint) );
+
+			qd.Query = D3D11_QUERY_TIMESTAMP;
+			DX_CHECK(device->CreateQuery(&qd, &query.m_begin) );
+			DX_CHECK(device->CreateQuery(&qd, &query.m_end) );
+		}
+	}
+
+	void TimerQueryD3D11::destroy(uint32_t _begin, uint32_t _end)
+	{
+		for (uint32_t ii = _begin; ii < _end; ++ii)
 		{
 			Query& query = m_query[ii];
 			DX_RELEASE(query.m_disjoint, 0);
 			DX_RELEASE(query.m_begin, 0);
 			DX_RELEASE(query.m_end, 0);
+		}
+	}
+
+	void TimerQueryD3D11::resize(uint32_t _size)
+	{
+		const uint32_t size  = m_control.getSize();
+		const uint32_t write = m_control.m_write;
+
+		m_control.resize(int32_t(_size) - int32_t(size) );
+
+		const uint32_t newSize = m_control.getSize();
+
+		if (newSize > size)
+		{
+			const uint32_t num = newSize - size;
+
+			bx::memMove(&m_query[write+num], &m_query[write], (size-write)*sizeof(Query) );
+			create(write, write+num);
+		}
+		else if (newSize < size)
+		{
+			const uint32_t num   = size - newSize;
+			const uint32_t back  = bx::min(num, size-write);
+			const uint32_t front = num - back;
+
+			destroy(write, write+back);
+			destroy(0, front);
+
+			bx::memMove(&m_query[write], &m_query[write+back], (size-write-back)*sizeof(Query) );
+			bx::memMove(&m_query[0], &m_query[front], newSize*sizeof(Query) );
 		}
 	}
 
@@ -6873,6 +6886,7 @@ namespace bgfx { namespace d3d11
 
 		if (m_timerQuerySupport)
 		{
+			m_gpuTimer.resize(getNumTimerQueries(_render, m_gpuTimer.m_control.getSize() ) );
 			frameQueryIdx = m_gpuTimer.begin(BGFX_CONFIG_MAX_VIEWS, _render->m_frameNum);
 		}
 
@@ -6941,7 +6955,6 @@ namespace bgfx { namespace d3d11
 		Profiler<TimerQueryD3D11> profiler(
 			  _render
 			, m_gpuTimer
-			, s_viewName
 			, m_timerQuerySupport
 			);
 

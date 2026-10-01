@@ -10,6 +10,37 @@
 
 namespace bgfx
 {
+	inline void setViewType(ViewId _view, const bx::StringView _str)
+	{
+		if (BX_ENABLED(BGFX_CONFIG_DEBUG_ANNOTATION || BGFX_CONFIG_PROFILER) )
+		{
+			bx::memCopy(&g_viewName[_view][3], _str.getPtr(), _str.getLength() );
+		}
+	}
+
+	static constexpr uint32_t kTimerQueryBlock = 64;
+	static constexpr uint32_t kMaxTimerQueries = BGFX_CONFIG_MAX_VIEWS*4;
+	static constexpr uint32_t kMinTimerQueries = bx::min<uint32_t>(kTimerQueryBlock, kMaxTimerQueries);
+
+	inline uint32_t getNumTimerQueries(const Frame* _frame, uint32_t _num)
+	{
+		const bool profiler     = 0 != (_frame->m_debug & BGFX_DEBUG_PROFILER);
+		const uint32_t numViews = profiler ? _frame->m_numUsedViews : 0;
+		const uint32_t spare    = profiler ? kTimerQueryBlock : 0;
+		const uint32_t num      = bx::min<uint32_t>(bx::alignUp( (numViews+1)*4, kTimerQueryBlock) + spare, kMaxTimerQueries);
+
+		return profiler
+			? bx::max(num, _num)
+			: num
+			;
+	}
+
+	inline void resize(bx::RingBufferControl& _control, uint32_t _size)
+	{
+		_control.reset();
+		_control.resize(int32_t(_size) - int32_t(_control.getSize() ) );
+	}
+
 	struct BlitState
 	{
 		BlitState(const Frame* _frame)
@@ -826,9 +857,8 @@ namespace bgfx
 	template<typename Ty>
 	struct Profiler
 	{
-		Profiler(Frame* _frame, Ty& _gpuTimer, const char (*_viewName)[BGFX_CONFIG_MAX_VIEW_NAME], bool _enabled = true)
-			: m_viewName(_viewName)
-			, m_frame(_frame)
+		Profiler(Frame* _frame, Ty& _gpuTimer, bool _enabled = true)
+			: m_frame(_frame)
 			, m_gpuTimer(_gpuTimer)
 			, m_queryIdx(UINT32_MAX)
 			, m_numViews(0)
@@ -853,7 +883,7 @@ namespace bgfx
 				viewStats.view = ViewId(_view);
 				bx::strCopy(viewStats.name
 					, BGFX_CONFIG_MAX_VIEW_NAME
-					, &m_viewName[_view][BGFX_CONFIG_MAX_VIEW_NAME_RESERVED]
+					, &g_viewName[_view][BGFX_CONFIG_MAX_VIEW_NAME_RESERVED]
 					);
 			}
 		}
@@ -878,7 +908,6 @@ namespace bgfx
 			}
 		}
 
-		const char (*m_viewName)[BGFX_CONFIG_MAX_VIEW_NAME];
 		Frame*   m_frame;
 		Ty&      m_gpuTimer;
 		uint32_t m_queryIdx;

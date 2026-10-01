@@ -64,12 +64,13 @@ namespace bgfx { namespace gl
 		char* m_canvas;
 	};
 
-	void GlContext::create(const SwapChain& _swapChain, uint32_t _reset)
+	bool GlContext::create(const SwapChain& _swapChain, uint32_t _reset)
 	{
 		if (NULL != m_primary)
 		{
-			return;
+			return true;
 		}
+
 		const bimg::ImageBlockInfo& colorBlockInfo       = bimg::getBlockInfo(bimg::TextureFormat::Enum(_swapChain.formatColor) );
 		const bimg::ImageBlockInfo& depthStecilBlockInfo = bimg::getBlockInfo(bimg::TextureFormat::Enum(_swapChain.formatDepthStencil) );
 
@@ -86,19 +87,28 @@ namespace bgfx { namespace gl
 		EMSCRIPTEN_WEBGL_CONTEXT_HANDLE context = bx::narrowCast<EMSCRIPTEN_WEBGL_CONTEXT_HANDLE>( (uintptr_t) g_platformData.context);
 		if (context > 0)
 		{
-			if (emscripten_webgl_get_context_attributes(context, &s_attrs) >= 0)
+			if (emscripten_webgl_get_context_attributes(context, &s_attrs) < 0)
 			{
-				import();
-				m_primary = BX_NEW(g_allocator, SwapChainGL)(context, canvas);
+				BX_TRACE("Init error: Invalid WebGL context. (Canvas handle: '%s', context handle: %d)", canvas, context);
+				return false;
 			}
-			else
+
+			if (!import() )
 			{
-				BX_TRACE("Invalid WebGL context. (Canvas handle: '%s', context handle: %d)", canvas, context);
+				return false;
 			}
+
+			m_primary = BX_NEW(g_allocator, SwapChainGL)(context, canvas);
 		}
 		else
 		{
 			m_primary = createSwapChain( (void*)canvas, _swapChain.width, _swapChain.height);
+
+			if (NULL == m_primary)
+			{
+				BX_TRACE("Init error: Failed to create WebGL context.");
+				return false;
+			}
 		}
 
 		if (0 != _swapChain.width
@@ -112,6 +122,8 @@ namespace bgfx { namespace gl
 		}
 
 		makeCurrent(m_primary);
+
+		return true;
 	}
 
 	void GlContext::destroy()
@@ -157,7 +169,11 @@ namespace bgfx { namespace gl
 
 			SwapChainGL* swapChain = BX_NEW(g_allocator, SwapChainGL)(context, canvas);
 
-			import();
+			if (!import() )
+			{
+				bx::deleteObject(g_allocator, swapChain);
+				return NULL;
+			}
 
 			return swapChain;
 		}
@@ -213,9 +229,11 @@ namespace bgfx { namespace gl
 		return func;
 	}
 
-	void GlContext::import()
+	bool GlContext::import()
 	{
 		BX_TRACE("Import:");
+
+		bool imported = true;
 
 #	define GL_EXTENSION(_optional, _proto, _func, _import)                          \
 	{                                                                               \
@@ -223,10 +241,12 @@ namespace bgfx { namespace gl
 		{                                                                           \
 			_func = getProcAddress<_proto>(#_import);                               \
 			BX_TRACE("\t%p " #_func " (" #_import ")", _func);                      \
-			BGFX_FATAL(_optional || NULL != _func, Fatal::UnableToInitialize        \
-				, "Failed to create WebGL/OpenGLES context. GetProcAddress(\"%s\")" \
-				, #_import                                                          \
-				);                                                                  \
+			if (!BX_IGNORE_C4127(_optional)                                         \
+			&&  NULL == _func)                                                      \
+			{                                                                       \
+				BX_TRACE("Init error: Failed to import %s.", #_import);             \
+				imported = false;                                                   \
+			}                                                                       \
 		}                                                                           \
 	}
 
@@ -234,6 +254,7 @@ namespace bgfx { namespace gl
 
 #	undef GL_EXTENSION
 
+		return imported;
 	}
 
 } /* namespace gl */ } // namespace bgfx
