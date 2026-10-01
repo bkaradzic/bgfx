@@ -14,16 +14,6 @@
 
 namespace bgfx { namespace gl
 {
-	static char s_viewName[BGFX_CONFIG_MAX_VIEWS][BGFX_CONFIG_MAX_VIEW_NAME];
-
-	inline void setViewType(ViewId _view, const bx::StringView _str)
-	{
-		if (BX_ENABLED(BGFX_CONFIG_DEBUG_ANNOTATION || BGFX_CONFIG_PROFILER) )
-		{
-			bx::memCopy(&s_viewName[_view][3], _str.getPtr(), _str.getLength() );
-		}
-	}
-
 	struct PrimInfo
 	{
 		GLenum m_type;
@@ -2313,10 +2303,14 @@ namespace bgfx { namespace gl
 				enum Enum
 				{
 					Default,
+					CreatedContext,
 				};
 			};
 
 			ErrorState::Enum errorState = ErrorState::Default;
+
+			GLint  numCmpFormats = 0;
+			GLint* cmpFormat     = NULL;
 
 			initLazyEnabledVertexAttributes();
 
@@ -2331,7 +2325,13 @@ namespace bgfx { namespace gl
 
 			m_reset = _init.reset & ~BGFX_RESET_INTERNAL_FORCE;
 
-			setRenderContextSize(_init.swapChain);
+			if (!m_glctx.create(_init.swapChain, m_reset) )
+			{
+				goto error;
+			}
+
+			errorState = ErrorState::CreatedContext;
+			m_flip = true;
 
 			m_vendor      = getGLString(GL_VENDOR);
 			m_renderer    = getGLString(GL_RENDERER);
@@ -2350,11 +2350,8 @@ namespace bgfx { namespace gl
 
 			m_workaround.reset();
 
-			GLint numCmpFormats = 0;
 			GL_CHECK(glGetIntegerv(GL_NUM_COMPRESSED_TEXTURE_FORMATS, &numCmpFormats) );
 			BX_TRACE("GL_NUM_COMPRESSED_TEXTURE_FORMATS %d", numCmpFormats);
-
-			GLint* cmpFormat = NULL;
 
 			if (0 < numCmpFormats)
 			{
@@ -3141,12 +3138,6 @@ namespace bgfx { namespace gl
 					m_occlusionQuery.create();
 				}
 
-				// Init reserved part of view name.
-				for (uint32_t ii = 0; ii < BGFX_CONFIG_MAX_VIEWS; ++ii)
-				{
-					bx::snprintf(s_viewName[ii], BGFX_CONFIG_MAX_VIEW_NAME_RESERVED+1, "%3d   ", ii);
-				}
-
 				m_needPresent = false;
 			}
 
@@ -3155,13 +3146,16 @@ namespace bgfx { namespace gl
 		error:
 			switch (errorState)
 			{
+			case ErrorState::CreatedContext:
+				m_glctx.destroy();
+				[[fallthrough]];
+
 			case ErrorState::Default:
+			default:
+				unloadRenderDoc(m_renderdocdll);
 				break;
 			}
 
-			m_glctx.destroy();
-
-			unloadRenderDoc(m_renderdocdll);
 			return false;
 		}
 
@@ -3826,14 +3820,6 @@ namespace bgfx { namespace gl
 			GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, m_backBufferFbo) );
 		}
 
-		void updateViewName(ViewId _id, const char* _name) override
-		{
-			bx::strCopy(&s_viewName[_id][BGFX_CONFIG_MAX_VIEW_NAME_RESERVED]
-				, BX_COUNTOF(s_viewName[0])-BGFX_CONFIG_MAX_VIEW_NAME_RESERVED
-				, _name
-				);
-		}
-
 		void invalidateOcclusionQuery(OcclusionQueryHandle _handle) override
 		{
 			m_occlusionQuery.invalidate(_handle);
@@ -4462,21 +4448,14 @@ namespace bgfx { namespace gl
 
 		void setRenderContextSize(const SwapChain& _swapChain)
 		{
-			if (!m_glctx.isValid() )
-			{
-				m_glctx.create(_swapChain, m_reset);
-			}
-			else
-			{
-				destroyMsaaFbo();
+			destroyMsaaFbo();
 
-				m_glctx.resize(_swapChain, m_reset);
+			m_glctx.resize(_swapChain, m_reset);
 
-				uint32_t msaa = (_swapChain.flags & BGFX_SWAP_CHAIN_MSAA_MASK)>>BGFX_SWAP_CHAIN_MSAA_SHIFT;
-				msaa = bx::min(m_maxMsaa, msaa == 0 ? 0 : 1<<msaa);
+			uint32_t msaa = (_swapChain.flags & BGFX_SWAP_CHAIN_MSAA_MASK)>>BGFX_SWAP_CHAIN_MSAA_SHIFT;
+			msaa = bx::min(m_maxMsaa, msaa == 0 ? 0 : 1<<msaa);
 
-				createMsaaFbo(_swapChain.width, _swapChain.height, msaa);
-			}
+			createMsaaFbo(_swapChain.width, _swapChain.height, msaa);
 
 			m_flip = true;
 		}
@@ -8756,6 +8735,7 @@ namespace bgfx { namespace gl
 
 		if (m_timerQuerySupport)
 		{
+			m_gpuTimer.resize(getNumTimerQueries(_render, m_gpuTimer.m_control.getSize() ) );
 			frameQueryIdx = m_gpuTimer.begin(BGFX_CONFIG_MAX_VIEWS, _render->m_frameNum);
 		}
 
@@ -8848,7 +8828,6 @@ namespace bgfx { namespace gl
 		Profiler<TimerQueryGL> profiler(
 			  _render
 			, m_gpuTimer
-			, s_viewName
 			, m_timerQuerySupport
 			);
 

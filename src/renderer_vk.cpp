@@ -19,16 +19,6 @@
 
 namespace bgfx { namespace vk
 {
-	static char s_viewName[BGFX_CONFIG_MAX_VIEWS][BGFX_CONFIG_MAX_VIEW_NAME];
-
-	inline void setViewType(ViewId _view, const bx::StringView _str)
-	{
-		if (BX_ENABLED(BGFX_CONFIG_DEBUG_ANNOTATION || BGFX_CONFIG_PROFILER) )
-		{
-			bx::memCopy(&s_viewName[_view][3], _str.getPtr(), _str.getLength() );
-		}
-	}
-
 	struct PrimInfo
 	{
 		VkPrimitiveTopology m_topology;
@@ -2429,12 +2419,6 @@ VK_IMPORT_DEVICE
 				vkCmdInsertDebugUtilsLabelEXT = stubCmdInsertDebugUtilsLabelEXT;
 			}
 
-			// Init reserved part of view name.
-			for (uint32_t ii = 0; ii < BGFX_CONFIG_MAX_VIEWS; ++ii)
-			{
-				bx::snprintf(s_viewName[ii], BGFX_CONFIG_MAX_VIEW_NAME_RESERVED+1, "%3d   ", ii);
-			}
-
 			if (m_timerQuerySupport)
 			{
 				result = m_gpuTimer.init();
@@ -2961,14 +2945,6 @@ VK_IMPORT_DEVICE
 
 			vkDestroy(stagingBuffer);
 			recycleMemory(stagingMemory);
-		}
-
-		void updateViewName(ViewId _id, const char* _name) override
-		{
-			bx::strCopy(&s_viewName[_id][BGFX_CONFIG_MAX_VIEW_NAME_RESERVED]
-				, BX_COUNTOF(s_viewName[0]) - BGFX_CONFIG_MAX_VIEW_NAME_RESERVED
-				, _name
-				);
 		}
 
 		void invalidateOcclusionQuery(OcclusionQueryHandle _handle) override
@@ -6378,6 +6354,17 @@ VK_DESTROY
 	VkResult TimerQueryVK::init()
 	{
 		BGFX_PROFILER_SCOPE("TimerQueryVK::init", kColorFrame);
+
+		for (uint32_t ii = 0; ii < BX_COUNTOF(m_result); ++ii)
+		{
+			m_result[ii].reset();
+		}
+
+		return create();
+	}
+
+	VkResult TimerQueryVK::create()
+	{
 		VkResult result = VK_SUCCESS;
 
 		const VkDevice device = s_renderVK->m_device;
@@ -6421,11 +6408,6 @@ VK_DESTROY
 
 		m_frequency = uint64_t(1000000000.0 / double(s_renderVK->m_deviceProperties.limits.timestampPeriod) );
 
-		for (uint32_t ii = 0; ii < BX_COUNTOF(m_result); ++ii)
-		{
-			m_result[ii].reset();
-		}
-
 		m_control.reset();
 
 		return result;
@@ -6437,6 +6419,27 @@ VK_DESTROY
 		vkDestroy(m_readback);
 		vkUnmapMemory(s_renderVK->m_device, m_readbackMemory.mem);
 		s_renderVK->recycleMemory(m_readbackMemory);
+	}
+
+	void TimerQueryVK::resize(uint32_t _size)
+	{
+		if (_size == m_control.getSize() )
+		{
+			return;
+		}
+
+		s_renderVK->release(m_queryPool);
+		s_renderVK->release(m_readback);
+		vkUnmapMemory(s_renderVK->m_device, m_readbackMemory.mem);
+		s_renderVK->recycleMemory(m_readbackMemory);
+
+		bgfx::resize(m_control, _size);
+		VK_CHECK(create() );
+
+		for (uint32_t ii = 0; ii < BX_COUNTOF(m_result); ++ii)
+		{
+			m_result[ii].m_pending = 0;
+		}
 	}
 
 	uint32_t TimerQueryVK::begin(uint32_t _resultIdx, uint32_t _frameNum)
@@ -9872,6 +9875,7 @@ VK_DESTROY
 			case VK_OBJECT_TYPE_FRAMEBUFFER:           destroy<VkFramebuffer        >(resource.m_handle); break;
 			case VK_OBJECT_TYPE_PIPELINE_LAYOUT:       destroy<VkPipelineLayout     >(resource.m_handle); break;
 			case VK_OBJECT_TYPE_PIPELINE:              destroy<VkPipeline           >(resource.m_handle); break;
+			case VK_OBJECT_TYPE_QUERY_POOL:            destroy<VkQueryPool          >(resource.m_handle); break;
 			case VK_OBJECT_TYPE_DESCRIPTOR_SET:        destroy<VkDescriptorSet      >(resource.m_handle); break;
 			case VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT: destroy<VkDescriptorSetLayout>(resource.m_handle); break;
 			case VK_OBJECT_TYPE_RENDER_PASS:           destroy<VkRenderPass         >(resource.m_handle); break;
@@ -10381,6 +10385,7 @@ VK_DESTROY
 
 		if (m_timerQuerySupport)
 		{
+			m_gpuTimer.resize(getNumTimerQueries(_render, m_gpuTimer.m_control.getSize() ) );
 			frameQueryIdx = m_gpuTimer.begin(BGFX_CONFIG_MAX_VIEWS, _render->m_frameNum);
 		}
 
@@ -10504,7 +10509,6 @@ VK_DESTROY
 		Profiler<TimerQueryVK> profiler(
 			  _render
 			, m_gpuTimer
-			, s_viewName
 			, m_timerQuerySupport
 			);
 

@@ -202,10 +202,6 @@ namespace bgfx { namespace noop
 		{
 		}
 
-		void updateViewName(ViewId /*_id*/, const char* /*_name*/) override
-		{
-		}
-
 		void invalidateOcclusionQuery(OcclusionQueryHandle /*_handle*/) override
 		{
 		}

@@ -24,16 +24,6 @@
 
 namespace bgfx { namespace mtl
 {
-	static char s_viewName[BGFX_CONFIG_MAX_VIEWS][BGFX_CONFIG_MAX_VIEW_NAME];
-
-	inline void setViewType(ViewId _view, const bx::StringView _str)
-	{
-		if (BX_ENABLED(BGFX_CONFIG_DEBUG_ANNOTATION || BGFX_CONFIG_PROFILER) )
-		{
-			bx::memCopy(&s_viewName[_view][3], _str.getPtr(), _str.getLength() );
-		}
-	}
-
 	struct PrimInfo
 	{
 		MTL::PrimitiveType m_type;
@@ -1161,12 +1151,6 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 				}
 			}
 
-			// Init reserved part of view name.
-			for (uint32_t ii = 0; ii < BGFX_CONFIG_MAX_VIEWS; ++ii)
-			{
-				bx::snprintf(s_viewName[ii], BGFX_CONFIG_MAX_VIEW_NAME_RESERVED+1, "%3d   ", ii);
-			}
-
 			m_renderPipelineDescriptor   = newRenderPipelineDescriptor();
 			m_depthStencilDescriptor     = newDepthStencilDescriptor();
 			m_frontFaceStencilDescriptor = newStencilDescriptor();
@@ -1858,15 +1842,6 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 				);
 
 			bx::free(g_allocator, data);
-		}
-
-		void updateViewName(ViewId _id, const char* _name) override
-		{
-			bx::strCopy(
-				  &s_viewName[_id][BGFX_CONFIG_MAX_VIEW_NAME_RESERVED]
-				, BX_COUNTOF(s_viewName[0])-BGFX_CONFIG_MAX_VIEW_NAME_RESERVED
-				, _name
-				);
 		}
 
 		void invalidateOcclusionQuery(OcclusionQueryHandle _handle) override
@@ -6196,7 +6171,6 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 		Profiler<TimerQueryMtl> profiler(
 			  _render
 			, m_gpuTimer
-			, s_viewName
 			);
 
 		m_occlusionQuery.resolve(_render);
@@ -6458,7 +6432,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 						if (BX_ENABLED(BGFX_CONFIG_DEBUG_ANNOTATION) )
 						{
-							rce->pushDebugGroup(nsstr(s_viewName[view]) );
+							rce->pushDebugGroup(nsstr(g_viewName[view]) );
 						}
 
 						rce->setTriangleFillMode( (MTL::TriangleFillMode)wireframe ? MTL::TriangleFillModeLines : MTL::TriangleFillModeFill);
@@ -6513,9 +6487,9 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 					if (viewChanged
 					&&  BX_ENABLED(BGFX_CONFIG_DEBUG_ANNOTATION) )
 					{
-						s_viewName[view][3] = L'C';
-						m_computeCommandEncoder->pushDebugGroup(nsstr(s_viewName[view]) );
-						s_viewName[view][3] = L' ';
+						g_viewName[view][3] = L'C';
+						m_computeCommandEncoder->pushDebugGroup(nsstr(g_viewName[view]) );
+						g_viewName[view][3] = L' ';
 					}
 
 					const RenderCompute& compute = renderItem.compute;

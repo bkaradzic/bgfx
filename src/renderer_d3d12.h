@@ -59,8 +59,8 @@ extern "C" uint64_t                    WINAPI bgfx_PIXEventsReplaceBlock(PIXEven
 
 #define BGFX_D3D12_PROFILER_BEGIN(_view, _abgr)                   \
 	BX_MACRO_BLOCK_BEGIN                                          \
-		PIX3_BEGINEVENT(m_commandList, _abgr, s_viewName[_view]); \
-		BGFX_PROFILER_BEGIN(s_viewName[view], _abgr);             \
+		PIX3_BEGINEVENT(m_commandList, _abgr, g_viewName[_view]); \
+		BGFX_PROFILER_BEGIN(g_viewName[view], _abgr);             \
 	BX_MACRO_BLOCK_END
 
 #define BGFX_D3D12_PROFILER_BEGIN_LITERAL(_name, _abgr)           \
@@ -750,12 +750,14 @@ namespace bgfx { namespace d3d12
 	struct TimerQueryD3D12
 	{
 		TimerQueryD3D12()
-			: m_control(BX_COUNTOF(m_query) )
+			: m_control(kMinTimerQueries)
 		{
 		}
 
 		void init();
 		void shutdown();
+		void create();
+		void resize(uint32_t _size);
 		uint32_t begin(uint32_t _resultIdx, uint32_t _frameNum);
 		void end(uint32_t _idx);
 		bool update();
@@ -787,7 +789,7 @@ namespace bgfx { namespace d3d12
 		uint64_t m_frequency;
 
 		Result m_result[BGFX_CONFIG_MAX_VIEWS+1];
-		Query m_query[BGFX_CONFIG_MAX_VIEWS*4];
+		Query m_query[kMaxTimerQueries];
 
 		ID3D12Resource*  m_readback;
 		ID3D12QueryHeap* m_queryHeap;
