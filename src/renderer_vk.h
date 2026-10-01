@@ -305,8 +305,8 @@
 
 #define BGFX_VK_PROFILER_BEGIN(_view, _abgr)                      \
 	BX_MACRO_BLOCK_BEGIN                                          \
-		BGFX_VK_BEGIN_DEBUG_UTILS_LABEL(s_viewName[view], _abgr); \
-		BGFX_PROFILER_BEGIN(s_viewName[view], _abgr);             \
+		BGFX_VK_BEGIN_DEBUG_UTILS_LABEL(g_viewName[view], _abgr); \
+		BGFX_PROFILER_BEGIN(g_viewName[view], _abgr);             \
 	BX_MACRO_BLOCK_END
 
 #define BGFX_VK_PROFILER_BEGIN_LITERAL(_name, _abgr)   \
@@ -605,12 +605,14 @@ VK_DESTROY_FUNC(DescriptorSet);
 	struct TimerQueryVK
 	{
 		TimerQueryVK()
-			: m_control(BX_COUNTOF(m_query) )
+			: m_control(kMinTimerQueries)
 		{
 		}
 
 		VkResult init();
 		void shutdown();
+		VkResult create();
+		void resize(uint32_t _size);
 		uint32_t begin(uint32_t _resultIdx, uint32_t _frameNum);
 		void end(uint32_t _idx);
 		bool update();
@@ -642,7 +644,7 @@ VK_DESTROY_FUNC(DescriptorSet);
 		uint64_t m_frequency;
 
 		Result m_result[BGFX_CONFIG_MAX_VIEWS+1];
-		Query m_query[BGFX_CONFIG_MAX_VIEWS*4];
+		Query m_query[kMaxTimerQueries];
 
 		VkBuffer m_readback;
 		DeviceMemoryAllocationVK m_readbackMemory;

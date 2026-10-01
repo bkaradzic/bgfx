@@ -387,6 +387,7 @@ namespace bgfx
 	bx::AllocatorI* g_allocator = NULL;
 
 	Caps g_caps;
+	char g_viewName[BGFX_CONFIG_MAX_VIEWS][BGFX_CONFIG_MAX_VIEW_NAME];
 
 #if BGFX_CONFIG_MULTITHREADED
 	static BX_THREAD_LOCAL uint32_t s_threadIndex(0);
@@ -2880,6 +2881,7 @@ namespace bgfx
 		m_submit->m_debugFrameBuffer = m_debugFrameBuffer;
 		m_submit->m_debugTextScale   = m_debugTextScale;
 		m_submit->m_perfStats.numViews = 0;
+		m_submit->reserveViewStats(0 != (m_debug & BGFX_DEBUG_PROFILER) );
 
 		bx::memCopy(m_submit->m_viewRemap, m_viewRemap, sizeof(m_viewRemap) );
 
@@ -3463,6 +3465,12 @@ namespace bgfx
 					Init init;
 					_cmdbuf.read(init);
 
+					// Init reserved part of view name.
+					for (uint32_t ii = 0; ii < BGFX_CONFIG_MAX_VIEWS; ++ii)
+					{
+						bx::snprintf(g_viewName[ii], BGFX_CONFIG_MAX_VIEW_NAME_RESERVED+1, "%3d   ", ii);
+					}
+
 					m_renderCtx = rendererCreate(init);
 
 					m_rendererInitialized = NULL != m_renderCtx;
@@ -4027,7 +4035,10 @@ namespace bgfx
 
 					const char* name = (const char*)_cmdbuf.skip(len);
 
-					m_renderCtx->updateViewName(id, name);
+					bx::strCopy(&g_viewName[id][BGFX_CONFIG_MAX_VIEW_NAME_RESERVED]
+						, BX_COUNTOF(g_viewName[0])-BGFX_CONFIG_MAX_VIEW_NAME_RESERVED
+						, name
+						);
 				}
 				break;
 

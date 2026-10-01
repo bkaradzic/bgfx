@@ -368,7 +368,7 @@
 
 #define BGFX_WGPU_PROFILER_BEGIN(_view, _abgr)        \
 	BX_MACRO_BLOCK_BEGIN                              \
-		BGFX_PROFILER_BEGIN(s_viewName[view], _abgr); \
+		BGFX_PROFILER_BEGIN(g_viewName[view], _abgr); \
 	BX_MACRO_BLOCK_END
 
 #define BGFX_WGPU_PROFILER_BEGIN_LITERAL(_name, _abgr) \
