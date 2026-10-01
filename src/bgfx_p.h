@@ -297,7 +297,7 @@ namespace bgfx
 	static constexpr uint32_t kBlitBlock     = 64;
 	static constexpr uint32_t kRectBlock     = 64;
 	static constexpr uint32_t kDepthControlBlock = 64;
-	static constexpr uint32_t kViewUsedWords = bx::alignUp(BGFX_CONFIG_MAX_VIEWS, 64);
+	static constexpr uint32_t kViewUsedWords = bx::alignUp(BGFX_CONFIG_MAX_VIEWS, 64)/64;
 
 	inline uint32_t alignDrawCalls(uint32_t _num)
 	{
