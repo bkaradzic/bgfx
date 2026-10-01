@@ -2472,15 +2472,34 @@ namespace bgfx
 			getCommandBuffer(CommandBuffer::RendererShutdownEnd);
 			frame();
 			frame();
+
+			m_encoder[0].end(true);
+			m_encoderHandle->free(0);
+			bx::destroyHandleAlloc(g_allocator, m_encoderHandle);
+			m_encoderHandle = NULL;
+
+			for (uint32_t ii = 0, num = g_caps.limits.maxEncoders; ii < num; ++ii)
+			{
+				m_encoder[ii].~EncoderImpl();
+			}
+
+			bx::alignedFree(g_allocator, m_encoder, BX_ALIGNOF(EncoderImpl) );
+			bx::free(g_allocator, m_encoderStats);
+
 			m_vertexLayoutRef.shutdown(m_layoutHandle);
 			m_submit->destroy();
 #if BGFX_CONFIG_MULTITHREADED
-			m_render->destroy();
-
-			if (m_singleThreaded)
+			if (m_thread.isRunning() )
+			{
+				m_thread.shutdown();
+				s_renderFrameCalled = false;
+			}
+			else if (m_singleThreaded)
 			{
 				s_renderFrameCalled = false;
 			}
+
+			m_render->destroy();
 #endif // BGFX_CONFIG_MULTITHREADED
 			return false;
 		}
@@ -4290,7 +4309,8 @@ namespace bgfx
 		errorState = ErrorState::ContextAllocated;
 
 		s_ctx = BX_ALIGNED_NEW(g_allocator, Context, Context::kAlignment);
-		if (s_ctx->init(init) )
+		Context* ctx = s_ctx;
+		if (ctx->init(init) )
 		{
 			BX_TRACE("Init complete.");
 			return true;
@@ -4301,7 +4321,7 @@ namespace bgfx
 		switch (errorState)
 		{
 		case ErrorState::ContextAllocated:
-			bx::deleteObject(g_allocator, s_ctx, Context::kAlignment);
+			bx::deleteObject(g_allocator, ctx, Context::kAlignment);
 			s_ctx = NULL;
 			[[fallthrough]];
 
