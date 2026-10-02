@@ -1391,6 +1391,7 @@ namespace bgfx
 	static constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRAMS-1)<<kSortKeyComputeProgramShift;
 
 	static_assert(BGFX_CONFIG_MAX_VIEWS <= (1<<kSortKeyViewNumBits) );
+	static_assert(BGFX_CONFIG_MAX_DRAW_CALLS <= (1<<BGFX_CONFIG_SORT_KEY_NUM_BITS_SEQ), "BGFX_CONFIG_MAX_DRAW_CALLS must fit into BGFX_CONFIG_SORT_KEY_NUM_BITS_SEQ bits.");
 	static_assert( (BGFX_CONFIG_MAX_PROGRAMS & (BGFX_CONFIG_MAX_PROGRAMS-1) ) == 0); // Must be power of 2.
 	static_assert( (0 // Render key mask shouldn't overlap.
 		| kSortKeyViewMask
@@ -7801,11 +7802,6 @@ namespace bgfx
 
 		BGFX_API_FUNC(uint32_t frame(uint8_t _flags = BGFX_FRAME_NONE) );
 
-		uint32_t getSeqIncr(ViewId _id)
-		{
-			return bx::atomicFetchAndAdd<uint32_t>(&m_seq[_id], 1);
-		}
-
 		void dumpViewStats();
 		void freeDynamicBuffers();
 		void freeAllHandles(Frame* _frame);
@@ -8002,7 +7998,6 @@ namespace bgfx
 		VertexLayoutRef m_vertexLayoutRef;
 
 		ViewId m_viewRemap[BGFX_CONFIG_MAX_VIEWS];
-		uint32_t m_seq[BGFX_CONFIG_MAX_VIEWS];
 		View m_view[BGFX_CONFIG_MAX_VIEWS];
 
 		UniformCache m_uniformCache;
