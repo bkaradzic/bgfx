@@ -410,7 +410,7 @@ public:
 
 			m_time += m_speed * deltaTime;
 
-			bgfx::ViewId shuffle[10] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+			bgfx::ViewId shuffle[10] = { 300, 301, 302, 303, 304, 305, 306, 307, 308, 309 };
 			bx::shuffle(&m_rng, shuffle, BX_COUNTOF(shuffle) );
 
 			bgfx::ViewId hdrSkybox       = shuffle[0];
@@ -499,7 +499,7 @@ public:
 			// Set view and projection matrix for view 0.
 			for (uint8_t ii = 0; ii < BX_COUNTOF(order); ++ii)
 			{
-				bgfx::setViewTransform(ii, NULL, proj);
+				bgfx::setViewTransform(order[ii], NULL, proj);
 			}
 
 			const bx::Vec3 at  = { 0.0f, 1.0f,  0.0f };

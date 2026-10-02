@@ -15,9 +15,9 @@
 
 #include "renderer.h"
 
-#define BGFX_MTL_PROFILER_BEGIN(_view, _abgr)         \
-	BX_MACRO_BLOCK_BEGIN                              \
-		BGFX_PROFILER_BEGIN(g_viewName[view], _abgr); \
+#define BGFX_MTL_PROFILER_BEGIN(_view, _abgr) \
+	BX_MACRO_BLOCK_BEGIN                      \
+		BGFX_PROFILER_BEGIN(viewName, _abgr); \
 	BX_MACRO_BLOCK_END
 
 #define BGFX_MTL_PROFILER_BEGIN_LITERAL(_name, _abgr) \
@@ -694,7 +694,7 @@ namespace bgfx { namespace mtl
 		uint64_t m_frequency;
 		uint32_t m_frameNum;
 
-		Result m_result[BGFX_CONFIG_MAX_VIEWS+1];
+		TimerResultT<Result> m_result;
 		Result m_frameResult[4];
 		bx::RingBufferControl m_control;
 

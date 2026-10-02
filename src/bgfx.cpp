@@ -387,7 +387,6 @@ namespace bgfx
 	bx::AllocatorI* g_allocator = NULL;
 
 	Caps g_caps;
-	char g_viewName[BGFX_CONFIG_MAX_VIEWS][BGFX_CONFIG_MAX_VIEW_NAME];
 
 #if BGFX_CONFIG_MULTITHREADED
 	static BX_THREAD_LOCAL uint32_t s_threadIndex(0);
@@ -396,6 +395,43 @@ namespace bgfx
 #endif // BGFX_CONFIG_MULTITHREADED
 
 	static Context* s_ctx = NULL;
+
+	const char* getViewName(const Frame* _frame, ViewId _view)
+	{
+		return s_ctx->m_viewNames.get(_frame->view(_view).m_nameIdx);
+	}
+
+	void formatViewName(char* _out, const Frame* _frame, ViewId _view, const bx::StringView& _type)
+	{
+		_out[0] = _view >= 1000 ? char('0' + (_view/1000)%10) : ' ';
+		_out[1] = _view >=  100 ? char('0' + (_view/ 100)%10) : ' ';
+		_out[2] = _view >=   10 ? char('0' + (_view/  10)%10) : ' ';
+		_out[3] = char('0' + _view%10);
+		_out[4] = ' ';
+		_out[5] = ' ';
+		_out[6] = ' ';
+
+		bx::strCopy(&_out[BGFX_CONFIG_MAX_VIEW_NAME_RESERVED]
+			, BGFX_CONFIG_MAX_VIEW_NAME-BGFX_CONFIG_MAX_VIEW_NAME_RESERVED
+			, getViewName(_frame, _view)
+			);
+
+		bx::memCopy(&_out[4], _type.getPtr(), _type.getLength() );
+	}
+
+	const View& Frame::view(ViewId _id) const
+	{
+		const uint32_t word = _id / 64;
+		const uint64_t bit  = UINT64_C(1) << (_id & 63);
+		const uint64_t used = m_viewUsed[word];
+
+		if (0 == (used & bit) )
+		{
+			return s_ctx->m_view.unset();
+		}
+
+		return m_view[m_viewUsedOffset[word] + bx::countBits(used & (bit - 1) )];
+	}
 	static bool s_renderFrameCalled = false;
 	InternalData g_internalData;
 	PlatformData g_platformData;
@@ -1589,7 +1625,7 @@ namespace bgfx
 		m_key.m_view = _id;
 
 		SortKey::Enum type;
-		switch (s_ctx->m_view[_id].m_mode)
+		switch (s_ctx->m_view.get(_id).m_mode)
 		{
 		case ViewMode::Sequential:      m_key.m_seq   =     renderItemIdx; type = SortKey::SortSequence; break;
 		case ViewMode::DepthAscending:  m_key.m_depth =            _depth; type = SortKey::SortDepth;    break;
@@ -1717,14 +1753,9 @@ namespace bgfx
 	{
 		BGFX_PROFILER_SCOPE("bgfx/Sort", kColorSubmit);
 
-		for (uint32_t ii = 0; ii < BGFX_CONFIG_MAX_VIEWS; ++ii)
-		{
-			m_viewOrder[m_viewRemap[ii] ] = ViewId(ii);
-		}
-
 		for (uint32_t ii = 0, num = m_numUsedViews; ii < num; ++ii)
 		{
-			View& view = m_view[m_usedViews[ii] ];
+			View& view = m_view[ii];
 			Rect rect(0, 0, uint16_t(m_mainSwapChain.width), uint16_t(m_mainSwapChain.height) );
 
 			if (isValid(view.m_fbh) )
@@ -2425,12 +2456,12 @@ namespace bgfx
 		for (uint32_t ii = 0; ii < BX_COUNTOF(m_viewRemap); ++ii)
 		{
 			m_viewRemap[ii] = ViewId(ii);
+			m_viewOrder[ii] = ViewId(ii);
 		}
 
-		for (uint32_t ii = 0; ii < BGFX_CONFIG_MAX_VIEWS; ++ii)
-		{
-			resetView(ViewId(ii) );
-		}
+		m_view.create(_init.limits.minViews);
+		m_viewNames.create();
+		m_viewObserve = 0;
 
 		for (uint32_t ii = 0; ii < BX_COUNTOF(m_clearColor); ++ii)
 		{
@@ -2487,6 +2518,7 @@ namespace bgfx
 			bx::free(g_allocator, m_encoderStats);
 
 			m_vertexLayoutRef.shutdown(m_layoutHandle);
+			m_viewNames.destroy();
 			m_submit->destroy();
 #if BGFX_CONFIG_MULTITHREADED
 			if (m_thread.isRunning() )
@@ -2632,6 +2664,7 @@ namespace bgfx
 		bx::memSet(&g_internalData, 0, sizeof(InternalData) );
 		s_ctx = NULL;
 
+		m_viewNames.destroy();
 		m_submit->destroy();
 
 		if (BX_ENABLED(BGFX_CONFIG_DEBUG) )
@@ -2905,17 +2938,48 @@ namespace bgfx
 		m_submit->m_debugFrameBuffer = m_debugFrameBuffer;
 		m_submit->m_debugTextScale   = m_debugTextScale;
 		m_submit->m_perfStats.numViews = 0;
-		m_submit->reserveViewStats(0 != (m_debug & BGFX_DEBUG_PROFILER) );
-
-		bx::memCopy(m_submit->m_viewRemap, m_viewRemap, sizeof(m_viewRemap) );
+		m_submit->reserveViewStats(0 != (m_debug & BGFX_DEBUG_PROFILER), m_submit->m_numUsedViews);
 
 		m_uniformCache.frame(m_submit->m_uniformCacheFrame);
 
 		static_assert(bx::isTriviallyCopyable<View>(), "Must be memcopyiable...");
-		for (uint32_t ii = 0, num = m_submit->m_numUsedViews; ii < num; ++ii)
+		for (uint32_t ww = 0, num = 0; ww < kViewUsedWords; ++ww)
 		{
-			const ViewId id = m_submit->m_usedViews[ii];
-			m_submit->m_view[id] = m_view[id];
+			uint64_t bits = m_submit->m_viewUsed[ww];
+
+			if (0 != bits)
+			{
+				const View* src = m_view.find(ww*64);
+				View*       dst = &m_submit->m_view[num];
+
+				while (0 != bits)
+				{
+					const uint32_t bit   = bx::countTrailingZeros(bits);
+					const ViewId   id    = ViewId(ww*64 + bit);
+					const ViewId   order = m_viewOrder[id];
+					bits &= bits - 1;
+
+					*dst++ = NULL != src
+						? src[bit]
+						: m_view.unset()
+						;
+					m_submit->m_viewOrder[id]    = order;
+					m_submit->m_viewRemap[order] = id;
+
+					if (0 == (++num % kViewBlock) )
+					{
+						dst = &m_submit->m_view[num];
+					}
+				}
+			}
+		}
+
+		if (0 != m_init.limits.numDrawCallPeakFrames
+		&&  ++m_viewObserve >= m_init.limits.numDrawCallPeakFrames)
+		{
+			m_view.freeUnset();
+			m_viewNames.freeUnused();
+			m_viewObserve = 0;
 		}
 
 		if (m_colorPaletteDirty > 0)
@@ -3487,12 +3551,6 @@ namespace bgfx
 					Init init;
 					_cmdbuf.read(init);
 
-					// Init reserved part of view name.
-					for (uint32_t ii = 0; ii < BGFX_CONFIG_MAX_VIEWS; ++ii)
-					{
-						bx::snprintf(g_viewName[ii], BGFX_CONFIG_MAX_VIEW_NAME_RESERVED+1, "%3d   ", ii);
-					}
-
 					m_renderCtx = rendererCreate(init);
 
 					m_rendererInitialized = NULL != m_renderCtx;
@@ -4049,16 +4107,16 @@ namespace bgfx
 				{
 					BGFX_PROFILER_SCOPE("UpdateViewName", kColorResource);
 
-					ViewId id;
-					_cmdbuf.read(id);
+					uint16_t idx;
+					_cmdbuf.read(idx);
 
 					uint16_t len;
 					_cmdbuf.read(len);
 
 					const char* name = (const char*)_cmdbuf.skip(len);
 
-					bx::strCopy(&g_viewName[id][BGFX_CONFIG_MAX_VIEW_NAME_RESERVED]
-						, BX_COUNTOF(g_viewName[0])-BGFX_CONFIG_MAX_VIEW_NAME_RESERVED
+					bx::strCopy(m_viewNames.data(idx)
+						, ViewNameArena::kNameSize-BGFX_CONFIG_MAX_VIEW_NAME_RESERVED
 						, name
 						);
 				}
@@ -4175,6 +4233,7 @@ namespace bgfx
 				: BGFX_CONFIG_MAX_DRAW_CALLS
 				)
 		, numDrawCallPeakFrames(60)
+		, minViews(bx::min<uint32_t>(BGFX_CONFIG_MIN_VIEWS, BGFX_CONFIG_MAX_VIEWS) )
 		, minResourceCbSize(BGFX_CONFIG_MIN_RESOURCE_COMMAND_BUFFER_SIZE)
 		, maxTransientVbSize(BGFX_CONFIG_MAX_TRANSIENT_VERTEX_BUFFER_SIZE)
 		, maxTransientIbSize(BGFX_CONFIG_MAX_TRANSIENT_INDEX_BUFFER_SIZE)
@@ -4224,6 +4283,7 @@ namespace bgfx
 
 		init.limits.maxEncoders       = bx::clamp<uint16_t>(init.limits.maxEncoders, 1, (0 != BGFX_CONFIG_MULTITHREADED) ? 128 : 1);
 		init.limits.numDrawCalls      = alignDrawCalls(bx::max(init.limits.numDrawCalls, kDrawCallBlock) );
+		init.limits.minViews          = bx::alignUp(bx::clamp<uint32_t>(init.limits.minViews, kViewBlock, BGFX_CONFIG_MAX_VIEWS), kViewBlock);
 		init.limits.minResourceCbSize = bx::min<uint32_t>(init.limits.minResourceCbSize, BGFX_CONFIG_MIN_RESOURCE_COMMAND_BUFFER_SIZE);
 
 		struct ErrorState

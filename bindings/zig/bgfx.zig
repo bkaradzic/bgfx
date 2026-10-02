@@ -1674,6 +1674,7 @@ pub const Init = extern struct {
         maxEncoders: u16,
         numDrawCalls: u32,
         numDrawCallPeakFrames: u32,
+        minViews: u32,
         minResourceCbSize: u32,
         maxTransientVbSize: u32,
         maxTransientIbSize: u32,
@@ -3546,10 +3547,10 @@ extern fn bgfx_set_palette_color_rgba8(_index: u8, _rgba: u32) void;
 /// 
 ///   In graphics debugger view name will appear as:
 /// 
-///       "nnnc <view name>"
-///        ^  ^ ^
-///        |  +--- compute (C)
-///        +------ view id
+///       "nnnnc <view name>"
+///        ^   ^ ^
+///        |   +--- compute (C)
+///        +------- view id
 /// 
 /// <param name="_id">View id.</param>
 /// <param name="_name">View name.</param>
@@ -3680,7 +3681,9 @@ pub inline fn setViewTransform(_id: ViewId, _view: ?*const anyopaque, _proj: ?*c
 }
 extern fn bgfx_set_view_transform(_id: ViewId, _view: ?*const anyopaque, _proj: ?*const anyopaque) void;
 
-/// Post submit view reordering.
+/// Post submit view reordering. A view in `_order` that currently renders
+/// outside the remapped range swaps places with the view it displaces, so the
+/// order stays a permutation of all view ids.
 /// <param name="_id">First view id.</param>
 /// <param name="_num">Number of views to remap.</param>
 /// <param name="_order">View remap id table. Passing `NULL` will reset view ids to default state.</param>
@@ -3700,7 +3703,7 @@ pub inline fn setViewShadingRate(_id: ViewId, _shadingRate: ShadingRate) void {
 }
 extern fn bgfx_set_view_shading_rate(_id: ViewId, _shadingRate: ShadingRate) void;
 
-/// Reset all view settings to default.
+/// Reset all view settings to default, including the view name.
 /// <param name="_id">_id View id.</param>
 pub inline fn resetView(_id: ViewId) void {
     return bgfx_reset_view(_id);

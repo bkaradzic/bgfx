@@ -12,13 +12,13 @@
 
 namespace bgfx { namespace d3d11
 {
-	inline const wchar_t* toViewNameW(wchar_t* _out, ViewId _view)
+	inline const wchar_t* toViewNameW(wchar_t* _out, const char* _viewName)
 	{
-		size_t len = mbstowcs(_out, g_viewName[_view], BGFX_CONFIG_MAX_VIEW_NAME-1);
+		size_t len = mbstowcs(_out, _viewName, BGFX_CONFIG_MAX_VIEW_NAME-1);
 
 		if (size_t(-1) == len)
 		{
-			len = mbstowcs(_out, g_viewName[_view], BGFX_CONFIG_MAX_VIEW_NAME_RESERVED);
+			len = mbstowcs(_out, _viewName, BGFX_CONFIG_MAX_VIEW_NAME_RESERVED);
 		}
 
 		_out[size_t(-1) == len ? 0 : len] = L'\0';
@@ -6278,11 +6278,7 @@ namespace bgfx { namespace d3d11
 	{
 		create(0, m_control.getSize() );
 
-		for (uint32_t ii = 0; ii < BX_COUNTOF(m_result); ++ii)
-		{
-			Result& result = m_result[ii];
-			result.reset();
-		}
+		m_result.reset();
 
 		m_control.reset();
 	}
@@ -6926,6 +6922,8 @@ namespace bgfx { namespace d3d11
 		ProgramHandle currentProgram = BGFX_INVALID_HANDLE;
 		SortKey key;
 		uint16_t view = UINT16_MAX;
+		const View* renderView = &_render->view(0);
+		char viewName[BGFX_CONFIG_MAX_VIEW_NAME] = "";
 		FrameBufferHandle fbh = { BGFX_CONFIG_MAX_FRAME_BUFFERS };
 
 		UniformCacheState ucs(_render);
@@ -6966,7 +6964,7 @@ namespace bgfx { namespace d3d11
 			// if we don't do this we'll only see one frame of output and then nothing
 			setFrameBuffer(BGFX_INVALID_HANDLE, true, false);
 
-			viewState.m_rect = _render->m_view[0].m_rect;
+			viewState.m_rect = _render->view(0).m_rect;
 			int32_t numItems = _render->m_numRenderItems;
 
 			for (int32_t item = 0; item < numItems;)
@@ -6988,6 +6986,8 @@ namespace bgfx { namespace d3d11
 				if (viewChanged)
 				{
 					view = key.m_view;
+					renderView = &_render->view(view);
+					viewState.setView(*renderView);
 					currentProgram = BGFX_INVALID_HANDLE;
 
 					if (item > 1)
@@ -6996,18 +6996,18 @@ namespace bgfx { namespace d3d11
 					}
 
 					BGFX_D3D11_PROFILER_END();
-					setViewType(view, "  ");
+					formatViewName(viewName, _render, view, "  ");
 					BGFX_D3D11_PROFILER_BEGIN(view, kColorView);
 
 					profiler.begin(view);
 
-					resolveFrameBuffer(_render->m_view[view].m_fbh);
+					resolveFrameBuffer(renderView->m_fbh);
 					submitUniformCache(ucs, view);
 					submitBlit(bs, view);
 
-					if (_render->m_view[view].m_fbh.idx != fbh.idx)
+					if (renderView->m_fbh.idx != fbh.idx)
 					{
-						fbh = _render->m_view[view].m_fbh;
+						fbh = renderView->m_fbh;
 						setFrameBuffer(fbh);
 
 						stateMask = isValid(fbh)
@@ -7016,10 +7016,10 @@ namespace bgfx { namespace d3d11
 							;
 					}
 
-					viewState.m_rect = _render->m_view[view].m_rect;
-					const Rect& clippedRect = _render->m_view[view].m_clippedRect;
+					viewState.m_rect = renderView->m_rect;
+					const Rect& clippedRect = renderView->m_clippedRect;
 
-					const Rect& scissorRect = _render->m_view[view].m_scissor;
+					const Rect& scissorRect = renderView->m_scissor;
 					viewHasScissor = !scissorRect.isZero();
 					viewScissorRect = viewHasScissor ? scissorRect : clippedRect;
 
@@ -7028,10 +7028,10 @@ namespace bgfx { namespace d3d11
 					vp.TopLeftY = viewState.m_rect.m_y;
 					vp.Width    = viewState.m_rect.m_width;
 					vp.Height   = viewState.m_rect.m_height;
-					vp.MinDepth = _render->m_view[view].m_minDepth;
-					vp.MaxDepth = _render->m_view[view].m_maxDepth;
+					vp.MinDepth = renderView->m_minDepth;
+					vp.MaxDepth = renderView->m_maxDepth;
 					deviceCtx->RSSetViewports(1, &vp);
-					Clear& clr = _render->m_view[view].m_clear;
+					const Clear& clr = renderView->m_clear;
 
 					if (BGFX_CLEAR_NONE != (clr.m_flags & BGFX_CLEAR_MASK) )
 					{
@@ -7046,7 +7046,7 @@ namespace bgfx { namespace d3d11
 					{
 						wasCompute = true;
 
-						setViewType(view, "C");
+						setViewType(viewName, "C");
 						BGFX_D3D11_PROFILER_END();
 						BGFX_D3D11_PROFILER_BEGIN(view, kColorCompute);
 
@@ -7093,7 +7093,7 @@ namespace bgfx { namespace d3d11
 							}
 						}
 
-						viewState.setPredefined<4>(this, view, program, _render, compute);
+						viewState.setPredefined<4>(this, view, *renderView, program, _render, compute);
 
 						if (constantsChanged
 						||  program.m_numPredefined > 0)
@@ -7218,7 +7218,7 @@ namespace bgfx { namespace d3d11
 
 				if (wasCompute)
 				{
-					setViewType(view, " ");
+					setViewType(viewName, " ");
 					BGFX_D3D11_PROFILER_END();
 					BGFX_D3D11_PROFILER_BEGIN(view, kColorDraw);
 
@@ -7253,7 +7253,7 @@ namespace bgfx { namespace d3d11
 				}
 
 				const uint64_t newFlags = draw.m_stateFlags & stateMask;
-				const uint32_t sampleMask = _render->m_view[view].m_sampleMask & draw.m_sampleMask;
+				const uint32_t sampleMask = renderView->m_sampleMask & draw.m_sampleMask;
 				uint64_t changedFlags = currentState.m_stateFlags ^ newFlags;
 				changedFlags |= currentState.m_rgba != draw.m_rgba ? BGFX_D3D11_BLEND_STATE_MASK : 0;
 				changedFlags |= currentState.m_sampleMask != sampleMask ? BGFX_D3D11_BLEND_STATE_MASK : 0;
@@ -7295,7 +7295,7 @@ namespace bgfx { namespace d3d11
 				// tracked index.
 				const DepthControl& depthBias = (UINT16_MAX != draw.m_depthBias)
 					? _render->m_frameCache.m_depthBiasCache.m_cache[draw.m_depthBias]
-					: _render->m_view[view].m_depthBias;
+					: renderView->m_depthBias;
 				const bool depthBiasChanged = currentState.m_depthBias != draw.m_depthBias;
 				currentState.m_depthBias = draw.m_depthBias;
 
@@ -7445,7 +7445,7 @@ namespace bgfx { namespace d3d11
 						}
 					}
 
-					viewState.setPredefined<4>(this, view, program, _render, draw);
+					viewState.setPredefined<4>(this, view, *renderView, program, _render, draw);
 
 					if (constantsChanged
 					||  program.m_numPredefined > 0)
@@ -7809,7 +7809,7 @@ namespace bgfx { namespace d3d11
 
 			if (wasCompute)
 			{
-				setViewType(view, "C");
+				setViewType(viewName, "C");
 				BGFX_D3D11_PROFILER_END();
 				BGFX_D3D11_PROFILER_BEGIN(view, kColorCompute);
 

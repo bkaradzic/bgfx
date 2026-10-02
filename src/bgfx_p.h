@@ -292,12 +292,13 @@ namespace bgfx
 	typedef uint32_t RenderItemCount;
 #endif // BGFX_CONFIG_MAX_DRAW_CALLS < (64<<10)
 
-	static constexpr uint32_t kDrawCallBlock = BGFX_CONFIG_DRAW_CALL_BLOCK;
-	static constexpr uint16_t kMatrixBlock   = 64;
-	static constexpr uint32_t kBlitBlock     = 64;
-	static constexpr uint32_t kRectBlock     = 64;
-	static constexpr uint32_t kDepthControlBlock = 64;
-	static constexpr uint32_t kViewUsedWords = bx::alignUp(BGFX_CONFIG_MAX_VIEWS, 64)/64;
+	static constexpr uint32_t kBlitBlock         = BGFX_CONFIG_BLIT_BLOCK;
+	static constexpr uint32_t kDepthControlBlock = BGFX_CONFIG_DEPTH_CONTROL_BLOCK;
+	static constexpr uint32_t kDrawCallBlock     = BGFX_CONFIG_DRAW_CALL_BLOCK;
+	static constexpr uint32_t kMatrixBlock       = BGFX_CONFIG_MATRIX_BLOCK;
+	static constexpr uint32_t kRectBlock         = BGFX_CONFIG_RECT_BLOCK;
+	static constexpr uint32_t kViewBlock         = BGFX_CONFIG_VIEW_BLOCK;
+	static constexpr uint32_t kViewUsedWords     = bx::alignUp(BGFX_CONFIG_MAX_VIEWS, 64)/64;
 
 	inline uint32_t alignDrawCalls(uint32_t _num)
 	{
@@ -667,7 +668,9 @@ namespace bgfx
 	extern CallbackI* g_callback;
 	extern bx::AllocatorI* g_allocator;
 	extern Caps g_caps;
-	extern char g_viewName[BGFX_CONFIG_MAX_VIEWS][BGFX_CONFIG_MAX_VIEW_NAME];
+	struct Frame;
+	void formatViewName(char* _out, const Frame* _frame, ViewId _view, const bx::StringView& _type);
+	const char* getViewName(const Frame* _frame, ViewId _view);
 
 	struct ProfilerScope
 	{
@@ -3168,10 +3171,11 @@ namespace bgfx
 	{
 		void reset()
 		{
+			bx::memSet(this, 0, sizeof(View) );
+
 			setRect(0, 0, 1, 1);
 			setScissor(0, 0, 0, 0);
 			setClear(BGFX_CLEAR_NONE, 0, 0.0f, 0);
-			setMode(ViewMode::Default);
 			setShadingRate(ShadingRate::Rate1x1);
 			setFrameBuffer(BGFX_INVALID_HANDLE);
 			setTransform(NULL, NULL);
@@ -3221,11 +3225,6 @@ namespace bgfx
 			m_clear.set(_flags, _depth, _stencil, _0, _1, _2, _3, _4, _5, _6, _7);
 		}
 
-		void setMode(ViewMode::Enum _mode)
-		{
-			m_mode = uint8_t(_mode);
-		}
-
 		void setShadingRate(ShadingRate::Enum _shadingRate)
 		{
 			m_shadingRate = uint8_t(_shadingRate);
@@ -3269,12 +3268,354 @@ namespace bgfx
 		Matrix4 m_view;
 		Matrix4 m_proj;
 		FrameBufferHandle m_fbh;
-		uint8_t m_mode;
+		uint16_t m_nameIdx;
 		uint8_t m_shadingRate;
+		uint8_t m_mode;
 		float   m_minDepth = 0.0f;
 		float   m_maxDepth = 1.0f;
 		DepthControl m_depthBias;
 		uint32_t     m_sampleMask;
+	};
+
+	class ViewArena
+	{
+	public:
+		~ViewArena()
+		{
+			destroy();
+		}
+
+#if BGFX_CONFIG_DYNAMIC_FRAME_STORAGE
+		static constexpr uint32_t kBlockMask = kViewBlock - 1;
+		static constexpr uint32_t kNumBlocks = bx::alignUp(BGFX_CONFIG_MAX_VIEWS, kViewBlock)/kViewBlock;
+
+		ViewArena()
+			: m_reserved(NULL)
+			, m_numReservedBlocks(0)
+		{
+			bx::memSet(m_block, 0, sizeof(m_block) );
+			m_default.reset();
+		}
+
+		void create(uint32_t _numReserved)
+		{
+			destroy();
+
+			m_numReservedBlocks = bx::min( (_numReserved + kBlockMask)/kViewBlock, kNumBlocks);
+
+			if (0 < m_numReservedBlocks)
+			{
+				m_reserved = alloc(m_numReservedBlocks*kViewBlock);
+
+				for (uint32_t ii = 0; ii < m_numReservedBlocks; ++ii)
+				{
+					m_block[ii] = m_reserved + ii*kViewBlock;
+				}
+			}
+		}
+
+		void destroy()
+		{
+			for (uint32_t ii = m_numReservedBlocks; ii < kNumBlocks; ++ii)
+			{
+				freeBlock(ii);
+			}
+
+			if (NULL != m_reserved)
+			{
+				bx::free(g_allocator, m_reserved, BX_ALIGNOF(View) );
+				m_reserved = NULL;
+			}
+
+			bx::memSet(m_block, 0, sizeof(m_block) );
+			m_numReservedBlocks = 0;
+		}
+
+		BX_FORCE_INLINE View& operator[](uint32_t _id)
+		{
+			const uint32_t blockIdx = _id / kViewBlock;
+
+			View* block = load(blockIdx);
+
+			if (NULL == block)
+			{
+				block = allocBlock(blockIdx);
+			}
+
+			return block[_id & kBlockMask];
+		}
+
+		BX_FORCE_INLINE View* find(uint32_t _id)
+		{
+			View* block = load(_id / kViewBlock);
+
+			return NULL != block
+				? &block[_id & kBlockMask]
+				: NULL
+				;
+		}
+
+		BX_FORCE_INLINE const View& get(uint32_t _id) const
+		{
+			const View* block = load(_id / kViewBlock);
+
+			return NULL != block
+				? block[_id & kBlockMask]
+				: m_default
+				;
+		}
+
+		BX_FORCE_INLINE const View& unset() const
+		{
+			return m_default;
+		}
+
+		void freeUnset()
+		{
+			for (uint32_t ii = m_numReservedBlocks; ii < kNumBlocks; ++ii)
+			{
+				const View* block = m_block[ii];
+
+				if (NULL != block)
+				{
+					bool unset = true;
+
+					for (uint32_t jj = 0; jj < kViewBlock && unset; ++jj)
+					{
+						unset = 0 == bx::memCmp(&block[jj], &m_default, sizeof(View) );
+					}
+
+					if (unset)
+					{
+						freeBlock(ii);
+					}
+				}
+			}
+		}
+
+	private:
+		static View* alloc(uint32_t _num)
+		{
+			View* view = (View*)bx::alloc(g_allocator, sizeof(View)*_num, BX_ALIGNOF(View) );
+
+			for (uint32_t ii = 0; ii < _num; ++ii)
+			{
+				view[ii].reset();
+			}
+
+			return view;
+		}
+
+		BX_FORCE_INLINE View* load(uint32_t _blockIdx) const
+		{
+			return *(View* volatile*)&m_block[_blockIdx];
+		}
+
+		BX_NO_INLINE View* allocBlock(uint32_t _blockIdx)
+		{
+			bx::MutexScope lock(m_lock);
+
+			View* block = m_block[_blockIdx];
+
+			if (NULL == block)
+			{
+				block = alloc(kViewBlock);
+
+				bx::atomicExchangePtr( (void**)&m_block[_blockIdx], block);
+			}
+
+			return block;
+		}
+
+		void freeBlock(uint32_t _blockIdx)
+		{
+			if (NULL != m_block[_blockIdx])
+			{
+				bx::free(g_allocator, m_block[_blockIdx], BX_ALIGNOF(View) );
+				m_block[_blockIdx] = NULL;
+			}
+		}
+
+		View*     m_block[kNumBlocks];
+		View*     m_reserved;
+		uint32_t  m_numReservedBlocks;
+		View      m_default;
+		bx::Mutex m_lock;
+#else
+		ViewArena()
+		{
+			create(BGFX_CONFIG_MAX_VIEWS);
+			m_default.reset();
+		}
+
+		void create(uint32_t /*_numReserved*/)
+		{
+			for (uint32_t ii = 0; ii < BGFX_CONFIG_MAX_VIEWS; ++ii)
+			{
+				m_view[ii].reset();
+			}
+		}
+
+		void destroy()
+		{
+		}
+
+		BX_FORCE_INLINE View& operator[](uint32_t _id)
+		{
+			return m_view[_id];
+		}
+
+		BX_FORCE_INLINE View* find(uint32_t _id)
+		{
+			return &m_view[_id];
+		}
+
+		BX_FORCE_INLINE const View& get(uint32_t _id) const
+		{
+			return m_view[_id];
+		}
+
+		BX_FORCE_INLINE const View& unset() const
+		{
+			return m_default;
+		}
+
+		void freeUnset()
+		{
+		}
+
+	private:
+		View m_view[BGFX_CONFIG_MAX_VIEWS];
+		View m_default;
+#endif // BGFX_CONFIG_DYNAMIC_FRAME_STORAGE
+	};
+
+	class ViewNameArena
+	{
+	public:
+		static constexpr uint32_t kBlock     = 64;
+		static constexpr uint32_t kBlockMask = kBlock - 1;
+		static constexpr uint32_t kNumNames  = BGFX_CONFIG_MAX_VIEWS + 1;
+		static constexpr uint32_t kNumBlocks = (kNumNames + kBlockMask)/kBlock;
+		static constexpr uint32_t kNameSize  = BGFX_CONFIG_MAX_VIEW_NAME;
+
+		void create()
+		{
+			bx::memSet(m_used, 0, sizeof(m_used) );
+			bx::memSet(m_touched, 0, sizeof(m_touched) );
+
+			m_used[0] = 1;
+		}
+
+		void destroy()
+		{
+#if BGFX_CONFIG_DYNAMIC_FRAME_STORAGE
+			for (uint32_t ii = 0; ii < kNumBlocks; ++ii)
+			{
+				freeBlock(ii);
+			}
+#endif // BGFX_CONFIG_DYNAMIC_FRAME_STORAGE
+		}
+
+		uint16_t alloc()
+		{
+			for (uint32_t blockIdx = 0; blockIdx < kNumBlocks; ++blockIdx)
+			{
+				const uint64_t avail = ~m_used[blockIdx];
+
+				if (0 != avail)
+				{
+					const uint32_t bit = bx::countTrailingZeros(avail);
+					const uint32_t idx = blockIdx*kBlock + bit;
+
+					if (idx >= kNumNames)
+					{
+						break;
+					}
+
+#if BGFX_CONFIG_DYNAMIC_FRAME_STORAGE
+					if (NULL == m_block[blockIdx])
+					{
+						char* block = (char*)bx::alloc(g_allocator, kBlock*kNameSize);
+						bx::memSet(block, 0, kBlock*kNameSize);
+
+						bx::atomicExchangePtr( (void**)&m_block[blockIdx], block);
+					}
+#endif // BGFX_CONFIG_DYNAMIC_FRAME_STORAGE
+
+					m_used[blockIdx]   |= UINT64_C(1) << bit;
+					m_touched[blockIdx] = true;
+
+					return uint16_t(idx);
+				}
+			}
+
+			BX_ASSERT(false, "Out of view names.");
+			return 0;
+		}
+
+		void free(uint16_t _idx)
+		{
+			m_used[_idx / kBlock] &= ~(UINT64_C(1) << (_idx & kBlockMask) );
+		}
+
+		const char* get(uint16_t _idx) const
+		{
+#if BGFX_CONFIG_DYNAMIC_FRAME_STORAGE
+			const char* block = *(char* volatile*)&m_block[_idx / kBlock];
+
+			if (NULL == block)
+			{
+				return "";
+			}
+#else
+			const char* block = m_name[_idx / kBlock];
+#endif // BGFX_CONFIG_DYNAMIC_FRAME_STORAGE
+
+			return &block[(_idx & kBlockMask)*kNameSize];
+		}
+
+		char* data(uint16_t _idx)
+		{
+			BX_ASSERT(0 != _idx, "View name 0 is the unset name.");
+
+			return const_cast<char*>(get(_idx) );
+		}
+
+		void freeUnused()
+		{
+			for (uint32_t ii = 1; ii < kNumBlocks; ++ii)
+			{
+				if (0 == m_used[ii]
+				&&  !m_touched[ii])
+				{
+#if BGFX_CONFIG_DYNAMIC_FRAME_STORAGE
+					freeBlock(ii);
+#endif // BGFX_CONFIG_DYNAMIC_FRAME_STORAGE
+				}
+
+				m_touched[ii] = false;
+			}
+		}
+
+	private:
+#if BGFX_CONFIG_DYNAMIC_FRAME_STORAGE
+		void freeBlock(uint32_t _blockIdx)
+		{
+			if (NULL != m_block[_blockIdx])
+			{
+				bx::free(g_allocator, m_block[_blockIdx]);
+				m_block[_blockIdx] = NULL;
+			}
+		}
+
+		char* m_block[kNumBlocks] = {};
+#else
+		char m_name[kNumBlocks][kBlock*kNameSize] = {};
+#endif // BGFX_CONFIG_DYNAMIC_FRAME_STORAGE
+
+		uint64_t m_used[kNumBlocks];
+		bool     m_touched[kNumBlocks];
 	};
 
 	struct UniformCacheKey
@@ -3491,6 +3832,7 @@ namespace bgfx
 			, m_observe(0)
 			, m_numPeakFrames(0)
 			, m_viewStats(NULL)
+			, m_numViewStats(0)
 			, m_waitSubmit(0)
 			, m_waitRender(0)
 			, m_frameNum(0)
@@ -3498,11 +3840,13 @@ namespace bgfx
 			, m_flush(false)
 			, m_needBindDedup(false)
 			, m_numUsedViews(0)
+			, m_peakViews(0)
 		{
 			m_numRenderItems = 0;
 			m_numRenderBinds = 0;
 			bx::memSet(m_occlusion, 0xff, sizeof(m_occlusion) );
 			bx::memSet(m_viewUsed, 0, sizeof(m_viewUsed) );
+			bx::memSet(m_viewUsedOffset, 0, sizeof(m_viewUsedOffset) );
 
 			m_perfStats.viewStats = m_viewStats;
 		}
@@ -3527,6 +3871,7 @@ namespace bgfx
 
 			m_renderItem.create(reserved, num);
 			m_renderBind.create(reserved, num);
+			m_view.create(kViewBlock, BGFX_CONFIG_MAX_VIEWS);
 
 			m_blitItem.create(0, BGFX_CONFIG_MAX_BLIT_ITEMS);
 			reserveBlitKeys(0);
@@ -3548,16 +3893,19 @@ namespace bgfx
 			m_blitKeys[_num] = 0;
 		}
 
-		void reserveViewStats(bool _enable)
+		void reserveViewStats(bool _enable, uint32_t _num)
 		{
 			if (!_enable)
 			{
 				bx::free(g_allocator, m_viewStats);
 				m_viewStats = NULL;
+				m_numViewStats = 0;
 			}
-			else if (NULL == m_viewStats)
+			else if (m_numViewStats < _num)
 			{
-				m_viewStats = (ViewStats*)bx::alloc(g_allocator, sizeof(ViewStats)*BGFX_CONFIG_MAX_VIEWS);
+				bx::free(g_allocator, m_viewStats);
+				m_numViewStats = bx::alignUp(_num, kViewBlock);
+				m_viewStats    = (ViewStats*)bx::alloc(g_allocator, sizeof(ViewStats)*m_numViewStats);
 			}
 
 			m_perfStats.viewStats = m_viewStats;
@@ -3573,8 +3921,9 @@ namespace bgfx
 			m_blitKeys   = NULL;
 			m_blitKeysCapacity = 0;
 
-			reserveViewStats(false);
+			reserveViewStats(false, 0);
 
+			m_view.destroy();
 			m_renderItem.destroy();
 			m_renderBind.destroy();
 			m_blitItem.destroy();
@@ -3600,6 +3949,7 @@ namespace bgfx
 			m_peakBlit      = bx::max(m_peakBlit, m_numBlitItems);
 			m_peakRect      = bx::max(m_peakRect, m_frameCache.m_rectCache.m_num);
 			m_peakDepthBias = bx::max(m_peakDepthBias, m_frameCache.m_depthBiasCache.m_num);
+			m_peakViews     = bx::max<uint32_t>(m_peakViews, m_numUsedViews);
 
 			if (++m_observe >= m_numPeakFrames)
 			{
@@ -3610,6 +3960,7 @@ namespace bgfx
 				m_blitItem.shrink(m_peakBlit + 1 + kBlitBlock);
 				m_frameCache.m_rectCache.shrink(m_peakRect + 1 + kRectBlock);
 				m_frameCache.m_depthBiasCache.shrink(m_peakDepthBias + 1 + kDepthControlBlock);
+				m_view.shrink(m_peakViews + kViewBlock);
 				m_cmdPre.shrink();
 				m_cmdPost.shrink();
 
@@ -3625,6 +3976,7 @@ namespace bgfx
 				m_peakBlit      = 0;
 				m_peakRect      = 0;
 				m_peakDepthBias = 0;
+				m_peakViews     = 0;
 				m_observe       = 0;
 			}
 		}
@@ -3718,14 +4070,8 @@ namespace bgfx
 
 			for (uint32_t ww = 0; ww < kViewUsedWords; ++ww)
 			{
-				uint64_t bits = m_viewUsed[ww];
-
-				while (0 != bits)
-				{
-					const uint8_t bit = bx::countTrailingZeros(bits);
-					m_usedViews[num++] = ViewId(ww*64 + bit);
-					bits &= bits - 1;
-				}
+				m_viewUsedOffset[ww] = num;
+				num += uint16_t(bx::countBits(m_viewUsed[ww]) );
 			}
 
 			m_numUsedViews = num;
@@ -3833,8 +4179,9 @@ namespace bgfx
 		ViewId m_viewRemap[BGFX_CONFIG_MAX_VIEWS];
 		ViewId m_viewOrder[BGFX_CONFIG_MAX_VIEWS+1]; //!< Inverse of m_viewRemap.
 		float m_colorPalette[BGFX_CONFIG_MAX_COLOR_PALETTE][4];
+		FrameArenaT<View, kViewBlock> m_view;
 
-		View m_view[BGFX_CONFIG_MAX_VIEWS];
+		const View& view(ViewId _id) const;
 
 		int32_t m_occlusion[BGFX_CONFIG_MAX_OCCLUSION_QUERIES];
 
@@ -3952,6 +4299,7 @@ namespace bgfx
 
 		Stats     m_perfStats;
 		ViewStats* m_viewStats;
+		uint32_t   m_numViewStats;
 
 		int64_t m_waitSubmit;
 		int64_t m_waitRender;
@@ -3963,8 +4311,9 @@ namespace bgfx
 		bool m_needBindDedup;
 
 		uint64_t m_viewUsed[kViewUsedWords];
-		ViewId   m_usedViews[BGFX_CONFIG_MAX_VIEWS];
+		uint16_t m_viewUsedOffset[kViewUsedWords];
 		uint16_t m_numUsedViews;
+		uint32_t m_peakViews;
 	};
 
 	BX_ALIGN_DECL_CACHE_LINE(struct) EncoderImpl
@@ -5430,7 +5779,12 @@ namespace bgfx
 
 			for (uint32_t ii = 0; ii < BGFX_CONFIG_MAX_VIEWS; ++ii)
 			{
-				m_view[ii].setFrameBuffer(BGFX_INVALID_HANDLE);
+				View* view = m_view.find(ii);
+
+				if (NULL != view)
+				{
+					view->setFrameBuffer(BGFX_INVALID_HANDLE);
+				}
 			}
 
 			for (uint16_t ii = 0, num = m_textureHandle.getNumHandles(); ii < num; ++ii)
@@ -7702,8 +8056,15 @@ namespace bgfx
 		{
 			BGFX_MUTEX_SCOPE(m_resourceApiLock);
 
+			View& view = m_view[_id];
+
+			if (0 == view.m_nameIdx)
+			{
+				view.m_nameIdx = m_viewNames.alloc();
+			}
+
 			CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::UpdateViewName);
-			cmdbuf.write(_id);
+			cmdbuf.write(view.m_nameIdx);
 			cmdbuf.write(_name);
 		}
 
@@ -7749,7 +8110,7 @@ namespace bgfx
 
 		BGFX_API_FUNC(void setViewMode(ViewId _id, ViewMode::Enum _mode) )
 		{
-			m_view[_id].setMode(_mode);
+			m_view[_id].m_mode = uint8_t(_mode);
 		}
 
 		BGFX_API_FUNC(void setViewFrameBuffer(ViewId _id, FrameBufferHandle _handle) )
@@ -7766,17 +8127,21 @@ namespace bgfx
 		BGFX_API_FUNC(void setViewOrder(ViewId _id, uint16_t _num, const ViewId* _order) )
 		{
 			const uint32_t num = bx::min(_id + _num, BGFX_CONFIG_MAX_VIEWS) - _id;
-			if (NULL == _order)
+
+			for (uint32_t ii = 0; ii < num; ++ii)
 			{
-				for (uint32_t ii = 0; ii < num; ++ii)
-				{
-					ViewId id = ViewId(ii+_id);
-					m_viewRemap[id] = id;
-				}
-			}
-			else
-			{
-				bx::memCopy(&m_viewRemap[_id], _order, num*sizeof(ViewId) );
+				const ViewId pos = ViewId(ii+_id);
+				const ViewId id  = NULL != _order ? _order[ii] : pos;
+
+				BX_ASSERT(id < BGFX_CONFIG_MAX_VIEWS, "Invalid view id: %d", id);
+
+				const ViewId prevPos = m_viewOrder[id];
+				const ViewId prevId  = m_viewRemap[pos];
+
+				m_viewRemap[pos]     = id;
+				m_viewOrder[id]      = pos;
+				m_viewRemap[prevPos] = prevId;
+				m_viewOrder[prevId]  = prevPos;
 			}
 		}
 
@@ -7792,7 +8157,19 @@ namespace bgfx
 
 		BGFX_API_FUNC(void resetView(ViewId _id) )
 		{
-			m_view[_id].reset();
+			View* view = m_view.find(_id);
+
+			if (NULL != view)
+			{
+				if (0 != view->m_nameIdx)
+				{
+					BGFX_MUTEX_SCOPE(m_resourceApiLock);
+					m_viewNames.free(view->m_nameIdx);
+				}
+
+				view->reset();
+			}
+
 			m_uniformCache.invalidate(_id);
 		}
 
@@ -7998,7 +8375,10 @@ namespace bgfx
 		VertexLayoutRef m_vertexLayoutRef;
 
 		ViewId m_viewRemap[BGFX_CONFIG_MAX_VIEWS];
-		View m_view[BGFX_CONFIG_MAX_VIEWS];
+		ViewId m_viewOrder[BGFX_CONFIG_MAX_VIEWS];
+		ViewArena m_view;
+		ViewNameArena m_viewNames;
+		uint32_t m_viewObserve;
 
 		UniformCache m_uniformCache;
 

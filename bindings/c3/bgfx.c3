@@ -1853,13 +1853,22 @@ struct InitLimits
 	// `Stats::numDrawCallsPeak` to size it.
 	uint numDrawCalls;
 	// Number of frames the draw-call peak (high-water mark) is observed
-	// before unused storage is released. Also used for resource command
-	// buffers and uniform buffers. Set to 0 to keep whatever has been
-	// allocated for the lifetime of the context. With
+	// before unused storage is released. Also used for view storage,
+	// resource command buffers and uniform buffers. Set to 0 to keep
+	// whatever has been allocated for the lifetime of the context. With
 	// `BGFX_CONFIG_DYNAMIC_FRAME_STORAGE` disabled draw/blit/rect storage
 	// is not resized; unused uniform and resource command buffer space
 	// is still released.
 	uint numDrawCallPeakFrames;
+	// Minimum number of views to keep state for. Rounded up to a
+	// multiple of 64. This is a reservation, not a limit: a view past it
+	// gets storage when it is first set, up to
+	// `Caps::Limits::maxViews`, and that storage is released again once
+	// the views sharing it are all reset. Per-frame view data is sized
+	// by the views used in a frame, see `numDrawCallPeakFrames`. With
+	// `BGFX_CONFIG_DYNAMIC_FRAME_STORAGE` disabled storage for all views
+	// is allocated up front.
+	uint minViews;
 	// Minimum resource command buffer size.
 	uint minResourceCbSize;
 	// Maximum transient vertex buffer size.
@@ -3170,10 +3179,10 @@ extern fn void set_palette_color_rgba8(char _index, uint _rgba) @cname("bgfx_set
 // 
 //   In graphics debugger view name will appear as:
 // 
-//       "nnnc <view name>"
-//        ^  ^ ^
-//        |  +--- compute (C)
-//        +------ view id
+//       "nnnnc <view name>"
+//        ^   ^ ^
+//        |   +--- compute (C)
+//        +------- view id
 // 
 // _id : `View id.`
 // _name : `View name.`
@@ -3271,7 +3280,9 @@ extern fn void set_view_frame_buffer(ushort _id, FrameBufferHandle _handle) @cna
 // _proj : `Projection matrix.`
 extern fn void set_view_transform(ushort _id, void* _view, void* _proj) @cname("bgfx_set_view_transform");
 
-// Post submit view reordering.
+// Post submit view reordering. A view in `_order` that currently renders
+// outside the remapped range swaps places with the view it displaces, so the
+// order stays a permutation of all view ids.
 // _id : `First view id.`
 // _num : `Number of views to remap.`
 // _order : `View remap id table. Passing `NULL` will reset view ids to default state.`
@@ -3285,7 +3296,7 @@ extern fn void set_view_order(ushort _id, ushort _num, ushort* _order) @cname("b
 // _shadingRate : `Shading rate.`
 extern fn void set_view_shading_rate(ushort _id, ShadingRate _shadingRate) @cname("bgfx_set_view_shading_rate");
 
-// Reset all view settings to default.
+// Reset all view settings to default, including the view name.
 // _id : `_id View id.`
 extern fn void reset_view(ushort _id) @cname("bgfx_reset_view");
 

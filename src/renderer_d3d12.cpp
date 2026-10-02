@@ -8507,11 +8507,7 @@ namespace bgfx { namespace d3d12
 	{
 		create();
 
-		for (uint32_t ii = 0; ii < BX_COUNTOF(m_result); ++ii)
-		{
-			Result& result = m_result[ii];
-			result.reset();
-		}
+		m_result.reset();
 	}
 
 	void TimerQueryD3D12::create()
@@ -8573,10 +8569,7 @@ namespace bgfx { namespace d3d12
 		bgfx::resize(m_control, _size);
 		create();
 
-		for (uint32_t ii = 0; ii < BX_COUNTOF(m_result); ++ii)
-		{
-			m_result[ii].m_pending = 0;
-		}
+		m_result.resetPending();
 	}
 
 	uint32_t TimerQueryD3D12::begin(uint32_t _resultIdx, uint32_t _frameNum)
@@ -9511,6 +9504,8 @@ namespace bgfx { namespace d3d12
 		m_lastPso = NULL;
 		SortKey key;
 		uint16_t view = UINT16_MAX;
+		const View* renderView = &_render->view(0);
+		char viewName[BGFX_CONFIG_MAX_VIEW_NAME] = "";
 		FrameBufferHandle fbh = { BGFX_CONFIG_MAX_FRAME_BUFFERS };
 
 		UniformCacheState ucs(_render);
@@ -9610,7 +9605,7 @@ namespace bgfx { namespace d3d12
 
 			m_batch.begin();
 
-			viewState.m_rect = _render->m_view[0].m_rect;
+			viewState.m_rect = _render->view(0).m_rect;
 			int32_t numItems = _render->m_numRenderItems;
 
 			for (int32_t item = 0; item < numItems;)
@@ -9638,6 +9633,8 @@ namespace bgfx { namespace d3d12
 					commandListChanged = true;
 
 					view = key.m_view;
+					renderView = &_render->view(view);
+					viewState.setView(*renderView);
 					currentPso = NULL;
 					currentSamplerStateIdx = kInvalidHandle;
 					currentProgram         = BGFX_INVALID_HANDLE;
@@ -9649,18 +9646,16 @@ namespace bgfx { namespace d3d12
 					}
 
 					BGFX_D3D12_PROFILER_END();
-					setViewType(view, "  ");
+					formatViewName(viewName, _render, view, "  ");
 					BGFX_D3D12_PROFILER_BEGIN(view, kColorView);
 
 					profiler.begin(view);
 
-					const View& renderView = _render->m_view[view];
-
-					resolveFrameBuffer(renderView.m_fbh);
+					resolveFrameBuffer(renderView->m_fbh);
 					submitUniformCache(ucs, view);
 					submitBlit(bs, view);
 
-					fbh = _render->m_view[view].m_fbh;
+					fbh = renderView->m_fbh;
 					setFrameBuffer(fbh);
 
 					stateMask = isValid(fbh)
@@ -9668,10 +9663,10 @@ namespace bgfx { namespace d3d12
 						: UINT64_MAX
 						;
 
-					viewState.m_rect = renderView.m_rect;
-					const Rect& rect        = renderView.m_rect;
-					const Rect& clippedRect = renderView.m_clippedRect;
-					const Rect& scissorRect = renderView.m_scissor;
+					viewState.m_rect = renderView->m_rect;
+					const Rect& rect        = renderView->m_rect;
+					const Rect& clippedRect = renderView->m_clippedRect;
+					const Rect& scissorRect = renderView->m_scissor;
 					viewHasScissor  = !scissorRect.isZero();
 					viewScissorRect = viewHasScissor ? scissorRect : clippedRect;
 
@@ -9680,8 +9675,8 @@ namespace bgfx { namespace d3d12
 					vp.TopLeftY = rect.m_y;
 					vp.Width    = rect.m_width;
 					vp.Height   = rect.m_height;
-					vp.MinDepth = renderView.m_minDepth;
-					vp.MaxDepth = renderView.m_maxDepth;
+					vp.MinDepth = renderView->m_minDepth;
+					vp.MaxDepth = renderView->m_maxDepth;
 					m_commandList->RSSetViewports(1, &vp);
 
 					D3D12_RECT rc;
@@ -9692,7 +9687,7 @@ namespace bgfx { namespace d3d12
 					m_commandList->RSSetScissorRects(1, &rc);
 					restoreScissor = false;
 
-					const Clear& clr = renderView.m_clear;
+					const Clear& clr = renderView->m_clear;
 
 					if (BGFX_CLEAR_NONE != clr.m_flags)
 					{
@@ -9706,8 +9701,8 @@ namespace bgfx { namespace d3d12
 					if (m_variableRateShadingSupport)
 					{
 						const uint8_t shadingRate = m_additionalShadingRatesSupport
-							? renderView.m_shadingRate
-							: bx::min<uint8_t>(renderView.m_shadingRate, ShadingRate::Rate2x2)
+							? renderView->m_shadingRate
+							: bx::min<uint8_t>(renderView->m_shadingRate, ShadingRate::Rate2x2)
 							;
 						reinterpret_cast<ID3D12GraphicsCommandList5*>(m_commandList)->RSSetShadingRate(s_shadingRate[shadingRate], NULL);
 					}
@@ -9719,7 +9714,7 @@ namespace bgfx { namespace d3d12
 					{
 						wasCompute = true;
 
-						setViewType(view, "C");
+						setViewType(viewName, "C");
 						BGFX_D3D12_PROFILER_END();
 						BGFX_D3D12_PROFILER_BEGIN(view, kColorCompute);
 
@@ -9963,7 +9958,7 @@ namespace bgfx { namespace d3d12
 					||  hasPredefined)
 					{
 						ProgramD3D12& program = m_program[currentProgram.idx];
-						viewState.setPredefined<4>(this, view, program, _render, compute);
+						viewState.setPredefined<4>(this, view, *renderView, program, _render, compute);
 						commitShaderConstants(key.m_program, gpuAddress);
 						m_commandList->SetComputeRootConstantBufferView(ComputeRp::CBV, gpuAddress);
 					}
@@ -10016,7 +10011,7 @@ namespace bgfx { namespace d3d12
 				{
 					wasCompute = false;
 
-					setViewType(view, " ");
+					setViewType(viewName, " ");
 					BGFX_D3D12_PROFILER_END();
 					BGFX_D3D12_PROFILER_BEGIN(view, kColorDraw);
 
@@ -10051,7 +10046,7 @@ namespace bgfx { namespace d3d12
 				if (0 != draw.m_streamMask)
 				{
 					const uint64_t newFlags = draw.m_stateFlags & stateMask;
-					const uint32_t sampleMask = _render->m_view[view].m_sampleMask & draw.m_sampleMask;
+					const uint32_t sampleMask = renderView->m_sampleMask & draw.m_sampleMask;
 					uint64_t changedFlags = currentState.m_stateFlags ^ newFlags;
 					currentState.m_stateFlags = newFlags;
 
@@ -10146,7 +10141,7 @@ namespace bgfx { namespace d3d12
 
 					const DepthControl& depthControl = (UINT16_MAX != draw.m_depthBias)
 						? _render->m_frameCache.m_depthBiasCache.m_cache[draw.m_depthBias]
-						: _render->m_view[view].m_depthBias
+						: renderView->m_depthBias
 						;
 					const bool depthClamp = depthControl.m_depthClamp;
 
@@ -10433,7 +10428,7 @@ namespace bgfx { namespace d3d12
 						ProgramD3D12& program = m_program[currentProgram.idx];
 						uint32_t ref = (newFlags&BGFX_STATE_ALPHA_REF_MASK)>>BGFX_STATE_ALPHA_REF_SHIFT;
 						viewState.m_alphaRef = ref/255.0f;
-						viewState.setPredefined<4>(this, view, program, _render, draw);
+						viewState.setPredefined<4>(this, view, *renderView, program, _render, draw);
 						commitShaderConstants(key.m_program, gpuAddress);
 					}
 
@@ -10460,7 +10455,7 @@ namespace bgfx { namespace d3d12
 
 			if (wasCompute)
 			{
-				setViewType(view, "C");
+				setViewType(viewName, "C");
 				BGFX_D3D12_PROFILER_END();
 				BGFX_D3D12_PROFILER_BEGIN(view, kColorCompute);
 			}

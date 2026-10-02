@@ -34,10 +34,10 @@
 // on the following platforms.
 #define BGFX_GL_CONFIG_UNIFORM_CACHE BX_PLATFORM_EMSCRIPTEN
 
-#define BGFX_GL_PROFILER_BEGIN(_view, _abgr)                                               \
-	BX_MACRO_BLOCK_BEGIN                                                                   \
-		GL_CHECK(glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, g_viewName[view]) ); \
-		BGFX_PROFILER_BEGIN(g_viewName[view], _abgr);                                      \
+#define BGFX_GL_PROFILER_BEGIN(_view, _abgr)                                       \
+	BX_MACRO_BLOCK_BEGIN                                                           \
+		GL_CHECK(glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, viewName) ); \
+		BGFX_PROFILER_BEGIN(viewName, _abgr);                                      \
 	BX_MACRO_BLOCK_END
 
 #define BGFX_GL_PROFILER_BEGIN_LITERAL(_name, _abgr)                                       \
@@ -1667,11 +1667,7 @@ namespace bgfx { namespace gl
 		{
 			create(0, m_control.getSize() );
 
-			for (uint32_t ii = 0; ii < BX_COUNTOF(m_result); ++ii)
-			{
-				Result& result = m_result[ii];
-				result.reset();
-			}
+			m_result.reset();
 		}
 
 		void destroy()
@@ -1845,7 +1841,7 @@ namespace bgfx { namespace gl
 			bool     m_ready;
 		};
 
-		Result m_result[BGFX_CONFIG_MAX_VIEWS+1];
+		TimerResultT<Result> m_result;
 
 		Query m_query[kMaxTimerQueries];
 		bx::RingBufferControl m_control;
