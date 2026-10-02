@@ -370,7 +370,7 @@
 #endif // BGFX_CONFIG_SORT_KEY_NUM_BITS_DEPTH
 
 /// Number of bits used for sequence number in the sort key. Default is 20.
-/// Determines maximum draw calls per view in sequential mode (2^20 = ~1M).
+/// Determines maximum BGFX_CONFIG_MAX_DRAW_CALLS (2^20 = ~1M).
 #ifndef BGFX_CONFIG_SORT_KEY_NUM_BITS_SEQ
 #	define BGFX_CONFIG_SORT_KEY_NUM_BITS_SEQ 20
 #endif // BGFX_CONFIG_SORT_KEY_NUM_BITS_SEQ
