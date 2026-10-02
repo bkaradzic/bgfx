@@ -1636,6 +1636,13 @@ namespace bgfx { namespace gl
 		return err;
 	}
 
+	static bool isHalfFloatType(GLenum _type)
+	{
+		return 0x140B == _type  // GL_HALF_FLOAT
+			|| 0x8D61 == _type  // GL_HALF_FLOAT_OES
+			;
+	}
+
 #if BX_PLATFORM_EMSCRIPTEN
 	static bool isTextureFormatValidPerSpec(
 		  TextureFormat::Enum _format
@@ -3592,15 +3599,38 @@ namespace bgfx { namespace gl
 							|| TextureFormat::BGRA8 == texture.m_textureFormat
 							;
 
+						GL_CHECK(glPixelStorei(GL_PACK_ALIGNMENT, 1) );
+
+						GLenum readFmt  = rgba8 ? m_readPixelsFmt  : texture.m_fmt;
+						GLenum readType = rgba8 ? GL_UNSIGNED_BYTE : texture.m_type;
+
+						if (!rgba8)
+						{
+							GLint implFmt  = 0;
+							GLint implType = 0;
+							glGetIntegerv(GL_IMPLEMENTATION_COLOR_READ_FORMAT, &implFmt);
+							glGetIntegerv(GL_IMPLEMENTATION_COLOR_READ_TYPE, &implType);
+
+							if (GLenum(implFmt) == readFmt
+							&&  GLenum(implType) != readType
+							&&  isHalfFloatType(readType)
+							&&  isHalfFloatType(GLenum(implType) ) )
+							{
+								readType = GLenum(implType);
+							}
+						}
+
 						GL_CHECK(glReadPixels(
 							  0
 							, 0
 							, mipWidth
 							, mipHeight
-							, rgba8 ? m_readPixelsFmt  : texture.m_fmt
-							, rgba8 ? GL_UNSIGNED_BYTE : texture.m_type
+							, readFmt
+							, readType
 							, _data
 							) );
+
+						GL_CHECK(glPixelStorei(GL_PACK_ALIGNMENT, 4) );
 
 						if (GL_RGBA == m_readPixelsFmt
 						&&  TextureFormat::BGRA8 == texture.m_textureFormat)
@@ -5061,9 +5091,15 @@ namespace bgfx { namespace gl
 					}
 				}
 
-				updateUniform(m_clearQuadColor.idx, mrtClearColor[0], numMrt * sizeof(float) * 4);
+				if (isValid(m_clearQuadColor) )
+				{
+					updateUniform(m_clearQuadColor.idx, mrtClearColor[0], numMrt * sizeof(float) * 4);
+				}
 
-				commit(*program.m_constantBuffer);
+				if (NULL != program.m_constantBuffer)
+				{
+					commit(*program.m_constantBuffer);
+				}
 
 				const uint8_t skipMask = _clear.getColorSkipMask(numMrt);
 				GLenum buffers[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
@@ -7180,7 +7216,14 @@ namespace bgfx { namespace gl
 
 		if (bx::findIdentifierMatch(_code, "bgfx_indirectArgBase").isEmpty() )
 		{
-			bx::write(&writer, "uniform vec4 bgfx_indirectArgBase;\n", &err);
+			bx::write(&writer
+				, "#ifdef GL_ES\n"
+				  "uniform highp vec4 bgfx_indirectArgBase;\n"
+				  "#else\n"
+				  "uniform vec4 bgfx_indirectArgBase;\n"
+				  "#endif // GL_ES\n"
+				, &err
+				);
 		}
 
 		if (GL_VERTEX_SHADER == _type)
