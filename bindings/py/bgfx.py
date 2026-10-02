@@ -905,6 +905,7 @@ InitLimits._fields_ = [
 	("maxEncoders", ctypes.c_uint16),
 	("numDrawCalls", ctypes.c_uint32),
 	("numDrawCallPeakFrames", ctypes.c_uint32),
+	("minViews", ctypes.c_uint32),
 	("minResourceCbSize", ctypes.c_uint32),
 	("maxTransientVbSize", ctypes.c_uint32),
 	("maxTransientIbSize", ctypes.c_uint32),

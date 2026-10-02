@@ -2701,6 +2701,7 @@ public static class bgfx
 			public uint16 maxEncoders;
 			public uint32 numDrawCalls;
 			public uint32 numDrawCallPeakFrames;
+			public uint32 minViews;
 			public uint32 minResourceCbSize;
 			public uint32 maxTransientVbSize;
 			public uint32 maxTransientIbSize;
@@ -4328,10 +4329,10 @@ public static class bgfx
 	/// 
 	///   In graphics debugger view name will appear as:
 	/// 
-	///       "nnnc <view name>"
-	///        ^  ^ ^
-	///        |  +--- compute (C)
-	///        +------ view id
+	///       "nnnnc <view name>"
+	///        ^   ^ ^
+	///        |   +--- compute (C)
+	///        +------- view id
 	/// 
 	/// </summary>
 	///
@@ -4484,7 +4485,9 @@ public static class bgfx
 	public static extern void set_view_transform(ViewId _id, void* _view, void* _proj);
 	
 	/// <summary>
-	/// Post submit view reordering.
+	/// Post submit view reordering. A view in `_order` that currently renders
+	/// outside the remapped range swaps places with the view it displaces, so the
+	/// order stays a permutation of all view ids.
 	/// </summary>
 	///
 	/// <param name="_id">First view id.</param>
@@ -4508,7 +4511,7 @@ public static class bgfx
 	public static extern void set_view_shading_rate(ViewId _id, ShadingRate _shadingRate);
 	
 	/// <summary>
-	/// Reset all view settings to default.
+	/// Reset all view settings to default, including the view name.
 	/// </summary>
 	///
 	/// <param name="_id">_id View id.</param>

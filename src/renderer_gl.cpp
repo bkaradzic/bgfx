@@ -8770,6 +8770,8 @@ namespace bgfx { namespace gl
 		ProgramHandle boundProgram   = BGFX_INVALID_HANDLE;
 		SortKey key;
 		uint16_t view = UINT16_MAX;
+		const View* renderView = &_render->view(0);
+		char viewName[BGFX_CONFIG_MAX_VIEW_NAME] = "";
 		FrameBufferHandle fbh = { BGFX_CONFIG_MAX_FRAME_BUFFERS };
 		bool currentDepthClamp = false; // GL default: depth clipping on (WebGPU unclippedDepth = false).
 		int32_t currentPolygonOffsetConstant = 0;
@@ -8840,7 +8842,7 @@ namespace bgfx { namespace gl
 		{
 			GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, m_msaaBackBufferFbo) );
 
-			viewState.m_rect = _render->m_view[0].m_rect;
+			viewState.m_rect = _render->view(0).m_rect;
 			int32_t numItems = _render->m_numRenderItems;
 
 			for (int32_t item = 0; item < numItems;)
@@ -8862,6 +8864,8 @@ namespace bgfx { namespace gl
 				if (viewChanged)
 				{
 					view = key.m_view;
+					renderView = &_render->view(view);
+					viewState.setView(*renderView);
 					currentProgram = BGFX_INVALID_HANDLE;
 
 					if (item > 1)
@@ -8871,13 +8875,13 @@ namespace bgfx { namespace gl
 
 					BGFX_GL_PROFILER_END();
 
-					resolveFrameBuffer(_render->m_view[view].m_fbh);
+					resolveFrameBuffer(renderView->m_fbh);
 					submitUniformCache(ucs, view);
 					submitBlit(bs, view);
 
-					if (_render->m_view[view].m_fbh.idx != fbh.idx)
+					if (renderView->m_fbh.idx != fbh.idx)
 					{
-						fbh = _render->m_view[view].m_fbh;
+						fbh = renderView->m_fbh;
 						resolutionHeight = _render->m_mainSwapChain.height;
 						resolutionHeight = setFrameBuffer(fbh, resolutionHeight, discardFlags);
 
@@ -8892,12 +8896,12 @@ namespace bgfx { namespace gl
 							;
 					}
 
-					setViewType(view, "  ");
+					formatViewName(viewName, _render, view, "  ");
 					BGFX_GL_PROFILER_BEGIN(view, kColorView);
 
 					profiler.begin(view);
 
-					viewState.m_rect = _render->m_view[view].m_rect;
+					viewState.m_rect = renderView->m_rect;
 
 					const bool offscreenFb = isValid(fbh)
 						&& NULL == m_frameBuffers[fbh.idx].m_swapChain
@@ -8912,9 +8916,9 @@ namespace bgfx { namespace gl
 						;
 					ndcFlipRectY = !(offscreenFb && BX_ENABLED(BGFX_CONFIG_GL_NORMALIZE_NDC_CONVENTIONS) );
 
-					const Rect& clippedRect = _render->m_view[view].m_clippedRect;
+					const Rect& clippedRect = renderView->m_clippedRect;
 
-					const Rect& scissorRect = _render->m_view[view].m_scissor;
+					const Rect& scissorRect = renderView->m_scissor;
 					viewHasScissor  = !scissorRect.isZero();
 					viewScissorRect = viewHasScissor ? scissorRect : clippedRect;
 
@@ -8926,7 +8930,7 @@ namespace bgfx { namespace gl
 						, viewState.m_rect.m_height
 						) );
 
-					Clear& clear = _render->m_view[view].m_clear;
+					const Clear& clear = renderView->m_clear;
 					discardFlags = clear.m_flags & BGFX_CLEAR_DISCARD_MASK;
 
 					if (BGFX_CLEAR_NONE != (clear.m_flags & BGFX_CLEAR_MASK) )
@@ -8947,7 +8951,7 @@ namespace bgfx { namespace gl
 					{
 						wasCompute = true;
 
-						setViewType(view, "C");
+						setViewType(viewName, "C");
 						BGFX_GL_PROFILER_END();
 						BGFX_GL_PROFILER_BEGIN(view, kColorCompute);
 					}
@@ -9056,7 +9060,7 @@ namespace bgfx { namespace gl
 								commit(*program.m_constantBuffer);
 							}
 
-							viewState.setPredefined<1>(this, view, program, _render, compute);
+							viewState.setPredefined<1>(this, view, *renderView, program, _render, compute);
 
 							if (isValid(compute.m_indirectBuffer) )
 							{
@@ -9104,7 +9108,7 @@ namespace bgfx { namespace gl
 				{
 					wasCompute = false;
 
-					setViewType(view, " ");
+					setViewType(viewName, " ");
 					BGFX_GL_PROFILER_END();
 					BGFX_GL_PROFILER_BEGIN(view, kColorDraw);
 				}
@@ -9134,7 +9138,7 @@ namespace bgfx { namespace gl
 				}
 
 				const uint64_t newFlags   = (draw.m_stateFlags & stateMask) ^ ndcFrontCcw;
-				const uint32_t sampleMask = _render->m_view[view].m_sampleMask & draw.m_sampleMask;
+				const uint32_t sampleMask = renderView->m_sampleMask & draw.m_sampleMask;
 				uint64_t changedFlags     = currentState.m_stateFlags ^ newFlags;
 				currentState.m_stateFlags = newFlags;
 
@@ -9241,7 +9245,7 @@ namespace bgfx { namespace gl
 				{
 					const bool depthClamp = (UINT16_MAX != draw.m_depthBias)
 						? _render->m_frameCache.m_depthBiasCache.m_cache[draw.m_depthBias].m_depthClamp
-						: _render->m_view[view].m_depthBias.m_depthClamp
+						: renderView->m_depthBias.m_depthClamp
 						;
 					if (currentDepthClamp != depthClamp)
 					{
@@ -9260,7 +9264,7 @@ namespace bgfx { namespace gl
 				{
 					const DepthControl& depthControl = (UINT16_MAX != draw.m_depthBias)
 						? _render->m_frameCache.m_depthBiasCache.m_cache[draw.m_depthBias]
-						: _render->m_view[view].m_depthBias
+						: renderView->m_depthBias
 						;
 
 					if (currentPolygonOffsetConstant != depthControl.m_constant
@@ -9589,7 +9593,7 @@ namespace bgfx { namespace gl
 						commit(*program.m_constantBuffer);
 					}
 
-					viewState.setPredefined<1>(this, view, program, _render, draw);
+					viewState.setPredefined<1>(this, view, *renderView, program, _render, draw);
 
 					{
 						GLbitfield barrier = 0;
@@ -9981,7 +9985,7 @@ namespace bgfx { namespace gl
 
 			if (wasCompute)
 			{
-				setViewType(view, "C");
+				setViewType(viewName, "C");
 				BGFX_GL_PROFILER_END();
 				BGFX_GL_PROFILER_BEGIN(view, kColorCompute);
 			}

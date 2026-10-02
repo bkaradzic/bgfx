@@ -303,10 +303,10 @@
 #	define BGFX_VK_END_DEBUG_UTILS_LABEL() BX_NOOP()
 #endif // BGFX_CONFIG_DEBUG_ANNOTATION
 
-#define BGFX_VK_PROFILER_BEGIN(_view, _abgr)                      \
-	BX_MACRO_BLOCK_BEGIN                                          \
-		BGFX_VK_BEGIN_DEBUG_UTILS_LABEL(g_viewName[view], _abgr); \
-		BGFX_PROFILER_BEGIN(g_viewName[view], _abgr);             \
+#define BGFX_VK_PROFILER_BEGIN(_view, _abgr)              \
+	BX_MACRO_BLOCK_BEGIN                                  \
+		BGFX_VK_BEGIN_DEBUG_UTILS_LABEL(viewName, _abgr); \
+		BGFX_PROFILER_BEGIN(viewName, _abgr);             \
 	BX_MACRO_BLOCK_END
 
 #define BGFX_VK_PROFILER_BEGIN_LITERAL(_name, _abgr)   \
@@ -643,7 +643,7 @@ VK_DESTROY_FUNC(DescriptorSet);
 
 		uint64_t m_frequency;
 
-		Result m_result[BGFX_CONFIG_MAX_VIEWS+1];
+		TimerResultT<Result> m_result;
 		Query m_query[kMaxTimerQueries];
 
 		VkBuffer m_readback;

@@ -6355,10 +6355,7 @@ VK_DESTROY
 	{
 		BGFX_PROFILER_SCOPE("TimerQueryVK::init", kColorFrame);
 
-		for (uint32_t ii = 0; ii < BX_COUNTOF(m_result); ++ii)
-		{
-			m_result[ii].reset();
-		}
+		m_result.reset();
 
 		return create();
 	}
@@ -6436,10 +6433,7 @@ VK_DESTROY
 		bgfx::resize(m_control, _size);
 		VK_CHECK(create() );
 
-		for (uint32_t ii = 0; ii < BX_COUNTOF(m_result); ++ii)
-		{
-			m_result[ii].m_pending = 0;
-		}
+		m_result.resetPending();
 	}
 
 	uint32_t TimerQueryVK::begin(uint32_t _resultIdx, uint32_t _frameNum)
@@ -10449,6 +10443,8 @@ VK_DESTROY
 		VkIndexType currentIndexFormat = VK_INDEX_TYPE_MAX_ENUM;
 		SortKey key;
 		uint16_t view = UINT16_MAX;
+		const View* renderView = &_render->view(0);
+		char viewName[BGFX_CONFIG_MAX_VIEW_NAME] = "";
 		FrameBufferHandle fbh = { BGFX_CONFIG_MAX_FRAME_BUFFERS };
 
 		UniformCacheState ucs(_render);
@@ -10516,7 +10512,7 @@ VK_DESTROY
 
 		if (0 == (_render->m_debug&BGFX_DEBUG_IFH) )
 		{
-			viewState.m_rect = _render->m_view[0].m_rect;
+			viewState.m_rect = _render->view(0).m_rect;
 
 			int32_t numItems = _render->m_numRenderItems;
 			for (int32_t item = 0; item < numItems;)
@@ -10539,10 +10535,12 @@ VK_DESTROY
 				if (viewChanged)
 				{
 					view = key.m_view;
+					renderView = &_render->view(view);
+					viewState.setView(*renderView);
 					currentProgram = BGFX_INVALID_HANDLE;
 					hasPredefined = false;
 
-					if (_render->m_view[view].m_fbh.idx != fbh.idx)
+					if (renderView->m_fbh.idx != fbh.idx)
 					{
 						if ( beginRenderPass )
 						{
@@ -10550,7 +10548,7 @@ VK_DESTROY
 							beginRenderPass = false;
 						}
 
-						fbh = _render->m_view[view].m_fbh;
+						fbh = renderView->m_fbh;
 						setFrameBuffer(fbh);
 
 						stateMask = isValid(fbh)
@@ -10575,8 +10573,8 @@ VK_DESTROY
 					}
 
 					if (beginRenderPass && (false
-					||  _render->m_view[view].m_fbh.idx != fbh.idx
-					|| !_render->m_view[view].m_rect.isEqual(viewState.m_rect)
+					||  renderView->m_fbh.idx != fbh.idx
+					|| !renderView->m_rect.isEqual(viewState.m_rect)
 					||  profiler.m_enabled
 					   ) )
 					{
@@ -10599,7 +10597,7 @@ VK_DESTROY
 					submitBlit(bs, view);
 
 					BGFX_VK_PROFILER_END();
-					setViewType(view, " ");
+					formatViewName(viewName, _render, view, " ");
 					BGFX_VK_PROFILER_BEGIN(view, kColorView);
 
 					profiler.begin(view);
@@ -10610,7 +10608,7 @@ VK_DESTROY
 
 					if (isFrameBufferValid)
 					{
-						const Clear& clr = _render->m_view[view].m_clear;
+						const Clear& clr = renderView->m_clear;
 
 						const bool partialColorClear = true
 							&& 0 != (clr.m_flags & BGFX_CLEAR_COLOR)
@@ -10622,8 +10620,8 @@ VK_DESTROY
 							: clr.m_flags
 							);
 
-						viewState.m_rect = _render->m_view[view].m_rect;
-						const Rect& rect = _render->m_view[view].m_rect;
+						viewState.m_rect = renderView->m_rect;
+						const Rect& rect = renderView->m_rect;
 
 						const Rect framebufferRect(
 							  0
@@ -10633,9 +10631,9 @@ VK_DESTROY
 							);
 
 						Rect renderArea;
-						renderArea.setIntersect(_render->m_view[view].m_clippedRect, framebufferRect);
+						renderArea.setIntersect(renderView->m_clippedRect, framebufferRect);
 
-						Rect scissorRect = _render->m_view[view].m_scissor;
+						Rect scissorRect = renderView->m_scissor;
 						viewHasScissor  = !scissorRect.isZero();
 						viewScissorRect = viewHasScissor ? scissorRect : renderArea;
 						restoreScissor = false;
@@ -10652,8 +10650,8 @@ VK_DESTROY
 						vp.y        =  float(rect.m_y + rect.m_height);
 						vp.width    =  float(rect.m_width);
 						vp.height   = -float(rect.m_height);
-						vp.minDepth = _render->m_view[view].m_minDepth;
-						vp.maxDepth = _render->m_view[view].m_maxDepth;
+						vp.minDepth = renderView->m_minDepth;
+						vp.maxDepth = renderView->m_maxDepth;
 						vkCmdSetViewport(m_commandBuffer, 0, 1, &vp);
 
 						VkRect2D rc;
@@ -10783,7 +10781,7 @@ VK_DESTROY
 
 							vkCmdSetFragmentShadingRateKHR(
 								  m_commandBuffer
-								, &s_shadingRate[_render->m_view[view].m_shadingRate].fragmentSize
+								, &s_shadingRate[renderView->m_shadingRate].fragmentSize
 								, combinerOp
 								);
 						}
@@ -10798,7 +10796,7 @@ VK_DESTROY
 						currentBindHash = 0;
 
 						BGFX_VK_PROFILER_END();
-						setViewType(view, "C");
+						setViewType(viewName, "C");
 						BGFX_VK_PROFILER_BEGIN(view, kColorCompute);
 
 						if (beginRenderPass)
@@ -10858,7 +10856,7 @@ VK_DESTROY
 					if (constantsChanged
 					||  hasPredefined)
 					{
-						viewState.setPredefined<4>(this, view, program, _render, compute);
+						viewState.setPredefined<4>(this, view, *renderView, program, _render, compute);
 					}
 
 					if (VK_NULL_HANDLE != program.m_descriptorSetLayout)
@@ -10976,7 +10974,7 @@ VK_DESTROY
 				}
 
 				const uint64_t state = draw.m_stateFlags & stateMask;
-				const uint32_t sampleMask = _render->m_view[view].m_sampleMask & draw.m_sampleMask;
+				const uint32_t sampleMask = renderView->m_sampleMask & draw.m_sampleMask;
 				const uint64_t stencil = draw.m_stencil & stencilMask;
 				const uint64_t changedFlags = currentState.m_stateFlags ^ state;
 				currentState.m_stateFlags = state;
@@ -11056,7 +11054,7 @@ VK_DESTROY
 
 					const DepthControl& depthControl = (UINT16_MAX != draw.m_depthBias)
 						? _render->m_frameCache.m_depthBiasCache.m_cache[draw.m_depthBias]
-						: _render->m_view[view].m_depthBias
+						: renderView->m_depthBias
 						;
 
 					if (pipelineState.valid
@@ -11218,7 +11216,7 @@ VK_DESTROY
 					{
 						uint32_t ref = (draw.m_stateFlags & BGFX_STATE_ALPHA_REF_MASK) >> BGFX_STATE_ALPHA_REF_SHIFT;
 						viewState.m_alphaRef = ref / 255.0f;
-						viewState.setPredefined<4>(this, view, program, _render, draw);
+						viewState.setPredefined<4>(this, view, *renderView, program, _render, draw);
 					}
 
 					if (VK_NULL_HANDLE != program.m_descriptorSetLayout)
@@ -11451,7 +11449,7 @@ VK_DESTROY
 
 			if (wasCompute)
 			{
-				setViewType(view, "C");
+				setViewType(viewName, "C");
 				BGFX_VK_PROFILER_END();
 				BGFX_VK_PROFILER_BEGIN(view, kColorCompute);
 			}
