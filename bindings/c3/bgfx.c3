@@ -699,35 +699,38 @@ constdef CapsFlags : inline ulong
 	// Renderer is on separate thread.
 	RENDERERMULTITHREADED  = 0x0000000000000800,
 
+	// 16-bit floats are supported in shaders.
+	SHADERF16              = 0x0000000000001000,
+
 	// Multiple windows are supported.
-	SWAPCHAIN              = 0x0000000000001000,
+	SWAPCHAIN              = 0x0000000000002000,
 
 	// Cubemap texture array is supported.
-	TEXTURECUBEARRAY       = 0x0000000000002000,
+	TEXTURECUBEARRAY       = 0x0000000000004000,
 
 	// CPU direct access to GPU texture memory.
-	TEXTUREDIRECTACCESS    = 0x0000000000004000,
+	TEXTUREDIRECTACCESS    = 0x0000000000008000,
 
 	// External texture is supported.
-	TEXTUREEXTERNAL        = 0x0000000000008000,
+	TEXTUREEXTERNAL        = 0x0000000000010000,
 
 	// External shared texture is supported.
-	TEXTUREEXTERNALSHARED  = 0x0000000000010000,
+	TEXTUREEXTERNALSHARED  = 0x0000000000020000,
 
 	// Transparent back buffer supported.
-	TRANSPARENTBACKBUFFER  = 0x0000000000020000,
+	TRANSPARENTBACKBUFFER  = 0x0000000000040000,
 
 	// Variable Rate Shading
-	VARIABLERATESHADING    = 0x0000000000040000,
+	VARIABLERATESHADING    = 0x0000000000080000,
 
 	// Vertex attribute 10_10_10_2 is supported.
-	VERTEXATTRIBUINT10     = 0x0000000000080000,
+	VERTEXATTRIBUINT10     = 0x0000000000100000,
 
 	// Hardware video decode is supported.
-	VIDEODECODE            = 0x0000000000100000,
+	VIDEODECODE            = 0x0000000000200000,
 
 	// Viewport layer is available in vertex shader.
-	VIEWPORTLAYERARRAY     = 0x0000000000200000,
+	VIEWPORTLAYERARRAY     = 0x0000000000400000,
 }
 
 constdef CapsFormatFlags : inline uint

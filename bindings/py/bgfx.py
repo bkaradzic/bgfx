@@ -572,16 +572,17 @@ class CapsFlags(enum.IntFlag):
 	Index32 = 0x200
 	PrimitiveId = 0x400
 	RendererMultithreaded = 0x800
-	SwapChain = 0x1000
-	TextureCubeArray = 0x2000
-	TextureDirectAccess = 0x4000
-	TextureExternal = 0x8000
-	TextureExternalShared = 0x10000
-	TransparentBackbuffer = 0x20000
-	VariableRateShading = 0x40000
-	VertexAttribUint10 = 0x80000
-	VideoDecode = 0x100000
-	ViewportLayerArray = 0x200000
+	ShaderF16 = 0x1000
+	SwapChain = 0x2000
+	TextureCubeArray = 0x4000
+	TextureDirectAccess = 0x8000
+	TextureExternal = 0x10000
+	TextureExternalShared = 0x20000
+	TransparentBackbuffer = 0x40000
+	VariableRateShading = 0x80000
+	VertexAttribUint10 = 0x100000
+	VideoDecode = 0x200000
+	ViewportLayerArray = 0x400000
 
 class CapsFormatFlags(enum.IntFlag):
 	TextureNone = 0x0

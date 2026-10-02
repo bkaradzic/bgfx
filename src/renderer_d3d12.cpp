@@ -883,6 +883,7 @@ namespace bgfx { namespace d3d12
 			, m_backBufferColorIdx(0)
 			, m_rtMsaa(false)
 			, m_directAccessSupport(false)
+			, m_shaderF16Support(false)
 			, m_variableRateShadingSupport(false)
 			, m_additionalShadingRatesSupport(false)
 			, m_computeStateDirty(false)
@@ -1259,6 +1260,7 @@ namespace bgfx { namespace d3d12
 				BX_TRACE("\tMSAA64KBAlignedTextureSupported %d", options4.MSAA64KBAlignedTextureSupported);
 				BX_TRACE("\tSharedResourceCompatibilityTier %d", options4.SharedResourceCompatibilityTier);
 				BX_TRACE("\tNative16BitShaderOpsSupported %d", options4.Native16BitShaderOpsSupported);
+				m_shaderF16Support = !!options4.Native16BitShaderOpsSupported;
 				break;
 			}
 
@@ -1791,6 +1793,7 @@ namespace bgfx { namespace d3d12
 					| BGFX_CAPS_IMAGE_RW
 					| BGFX_CAPS_INDEX32
 					| BGFX_CAPS_PRIMITIVE_ID
+					| (m_shaderF16Support ? BGFX_CAPS_SHADER_F16 : 0)
 					| (BX_ENABLED(BX_PLATFORM_WINDOWS) ? BGFX_CAPS_SWAP_CHAIN : 0)
 					| BGFX_CAPS_TEXTURE_CUBE_ARRAY
 					| (m_directAccessSupport ? BGFX_CAPS_TEXTURE_DIRECT_ACCESS : 0)
@@ -4611,6 +4614,7 @@ namespace bgfx { namespace d3d12
 		uint32_t m_backBufferColorIdx;
 		bool m_rtMsaa;
 		bool m_directAccessSupport;
+		bool m_shaderF16Support;
 		bool m_variableRateShadingSupport;
 		bool m_additionalShadingRatesSupport;
 

@@ -480,18 +480,19 @@ namespace bgfx { namespace dxil
 			args[numArgs++] = L"-E";
 			args[numArgs++] = L"main";
 
+			wchar_t target[] = L"cs_6_0";
+			target[0] = 'f' == _options.shaderType ? L'p'
+				:       'v' == _options.shaderType ? L'v'
+				:                                    L'c'
+				;
+			target[5] = wchar_t(L'0' + (_version/10)%10);
+
 			args[numArgs++] = L"-T";
-			if ('c' == _options.shaderType)
+			args[numArgs++] = target;
+
+			if (_options.uses16BitTypes)
 			{
-				args[numArgs++] = L"cs_6_0";
-			}
-			else if ('f' == _options.shaderType)
-			{
-				args[numArgs++] = L"ps_6_0";
-			}
-			else if ('v' == _options.shaderType)
-			{
-				args[numArgs++] = L"vs_6_0";
+				args[numArgs++] = L"-enable-16bit-types";
 			}
 
 			if (_options.warningsAreErrors)

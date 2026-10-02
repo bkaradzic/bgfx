@@ -1056,26 +1056,28 @@ class CapsFlags(enum.IntFlag):
 	PrimitiveId = 0x400
 	# Renderer is on separate thread.
 	RendererMultithreaded = 0x800
+	# 16-bit floats are supported in shaders.
+	ShaderF16 = 0x1000
 	# Multiple windows are supported.
-	SwapChain = 0x1000
+	SwapChain = 0x2000
 	# Cubemap texture array is supported.
-	TextureCubeArray = 0x2000
+	TextureCubeArray = 0x4000
 	# CPU direct access to GPU texture memory.
-	TextureDirectAccess = 0x4000
+	TextureDirectAccess = 0x8000
 	# External texture is supported.
-	TextureExternal = 0x8000
+	TextureExternal = 0x10000
 	# External shared texture is supported.
-	TextureExternalShared = 0x10000
+	TextureExternalShared = 0x20000
 	# Transparent back buffer supported.
-	TransparentBackbuffer = 0x20000
+	TransparentBackbuffer = 0x40000
 	# Variable Rate Shading
-	VariableRateShading = 0x40000
+	VariableRateShading = 0x80000
 	# Vertex attribute 10_10_10_2 is supported.
-	VertexAttribUint10 = 0x80000
+	VertexAttribUint10 = 0x100000
 	# Hardware video decode is supported.
-	VideoDecode = 0x100000
+	VideoDecode = 0x200000
 	# Viewport layer is available in vertex shader.
-	ViewportLayerArray = 0x200000
+	ViewportLayerArray = 0x400000
 
 class CapsFormatFlags(enum.IntFlag):
 	# Texture format is not supported.
