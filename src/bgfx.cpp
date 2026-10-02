@@ -1591,15 +1591,15 @@ namespace bgfx
 		SortKey::Enum type;
 		switch (s_ctx->m_view[_id].m_mode)
 		{
-		case ViewMode::Sequential:      m_key.m_seq   = s_ctx->getSeqIncr(_id); type = SortKey::SortSequence; break;
-		case ViewMode::DepthAscending:  m_key.m_depth =            _depth;      type = SortKey::SortDepth;    break;
-		case ViewMode::DepthDescending: m_key.m_depth = UINT32_MAX-_depth;      type = SortKey::SortDepth;    break;
-		default:                        m_key.m_depth =            _depth;      type = SortKey::SortProgram;  break;
+		case ViewMode::Sequential:      m_key.m_seq   =     renderItemIdx; type = SortKey::SortSequence; break;
+		case ViewMode::DepthAscending:  m_key.m_depth =            _depth; type = SortKey::SortDepth;    break;
+		case ViewMode::DepthDescending: m_key.m_depth = UINT32_MAX-_depth; type = SortKey::SortDepth;    break;
+		default:                        m_key.m_depth =            _depth; type = SortKey::SortProgram;  break;
 		}
 
 		uint64_t key = m_key.encodeDraw(type);
 
-		m_frame->m_sortKeys[renderItemIdx]   = key;
+		m_frame->m_sortKeys  [renderItemIdx] = key;
 		m_frame->m_sortValues[renderItemIdx] = RenderItemCount(renderItemIdx);
 
 		m_draw.m_uniformIdx   = m_uniformIdx;
@@ -1675,7 +1675,7 @@ namespace bgfx
 		m_key.m_program = _handle;
 		m_key.m_depth   = 0;
 		m_key.m_view    = _id;
-		m_key.m_seq     = s_ctx->getSeqIncr(_id);
+		m_key.m_seq     = renderItemIdx;
 
 		uint64_t key = m_key.encodeCompute();
 		m_frame->m_sortKeys[renderItemIdx]   = key;
@@ -2947,8 +2947,6 @@ namespace bgfx
 
 		uint32_t nextFrameNum = m_render->m_frameNum + 1;
 		m_submit->start(nextFrameNum);
-
-		bx::memSet(m_seq, 0, sizeof(m_seq) );
 
 		if (BX_ENABLED(BGFX_CONFIG_DEBUG_TEXT) )
 		{
