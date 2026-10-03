@@ -1325,23 +1325,65 @@ function gen.gen()
 	if os.getenv("LOCAL_LUA_DEBUGGER_VSCODE") == "1" then
 		require("lldebugger").start()
 	end
-	return generate("single")
+	return generate(os.getenv("BGFX_JAVAGEN_MULTIFILE") ~= nil and "files" or "single")
 end
 
--- Optional multi-file output; genie uses gen.gen() instead.
+-- Generate the multi-file layout regardless of the selected genie mode.
 function gen.files()
 	return generate("files")
 end
 
+local function sorted_names(files)
+	local names = {}
+	for name in pairs(files) do
+		table.insert(names, name)
+	end
+	table.sort(names)
+	return names
+end
+
 function gen.write(codes, outputfile)
-	local out = assert(io.open(outputfile, "wb"))
-	out:write(codes)
-	out:close()
-	print("Generating: " .. outputfile)
+	local normalized = outputfile:gsub("\\", "/")
+	local directory, filename = normalized:match("^(.*)/([^/]+)$")
+	directory = directory or "."
+	filename = filename or normalized
+	local multiple = type(codes) == "table"
+	local files = multiple and codes or { [filename] = codes }
+	for _, name in ipairs(sorted_names(files)) do
+		local target = multiple and directory .. "/" .. name or outputfile
+		local out = assert(io.open(target, "wb"))
+		out:write(files[name])
+		out:close()
+		print("Generating: " .. target)
+	end
+
+	-- GENie provides os.matchfiles; keep direct Lua usage of gen.write available.
+	if os.matchfiles then
+		for _, existing in ipairs(os.matchfiles(directory .. "/*.java")) do
+			local name = existing:gsub("\\", "/"):match("([^/]+)$")
+			if not files[name] then
+				local input = assert(io.open(existing, "rb"))
+				local header = input:read(256) or ""
+				input:close()
+				if header:find("AUTO GENERATED! DO NOT EDIT!", 1, true) then
+					assert(os.remove(existing))
+					print("Removing: " .. existing)
+				end
+			end
+		end
+	end
 end
 
 if (...) == nil then
-	print(gen.gen())
+	local codes = gen.gen()
+	if type(codes) == "table" then
+		for _, name in ipairs(sorted_names(codes)) do
+			print("// " .. name)
+			print(codes[name])
+		end
+	else
+		print(codes)
+	end
 end
 
 return gen
