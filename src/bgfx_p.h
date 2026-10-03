@@ -4397,21 +4397,19 @@ namespace bgfx
 			const uint32_t hash = hashBindings(m_bind.m_bind, m_bindOccupied);
 
 			BindHashMap::const_iterator it = m_bindHashMap.find(hash);
-			if (it != m_bindHashMap.end() )
+			if (it != m_bindHashMap.end()
+			&&  bindingsEqual(m_frame->m_renderBind[it->second].m_bind, m_bind.m_bind) )
 			{
-				const uint32_t idx = it->second;
-
-				BX_ASSERT(bindingsEqual(m_frame->m_renderBind[idx].m_bind, m_bind.m_bind)
-					, "RenderBind hash collision (hash 0x%08x)."
-					, hash
-					);
-
-				return idx;
+				return it->second;
 			}
 
 			const uint32_t idx = bx::atomicFetchAndAddsat<uint32_t>(&m_frame->m_numRenderBinds, 1, m_frame->m_maxDrawCalls);
 			m_frame->m_renderBind[idx] = m_bind;
-			m_bindHashMap.insert(stl::make_pair(hash, idx) );
+
+			if (it == m_bindHashMap.end() )
+			{
+				m_bindHashMap.insert(stl::make_pair(hash, idx) );
+			}
 
 			return idx;
 		}
