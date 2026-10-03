@@ -6,6 +6,7 @@ concurrency:
 
 on:
   push:
+    branches: [master]
   pull_request:
 
 env:
@@ -40,12 +41,31 @@ jobs:
           path: bimg
       - name: Prepare
         uses: microsoft/setup-msbuild@v2
+      - name: Prepare ccache
+        shell: bash
+        run: |
+          curl -sSL https://github.com/ccache/ccache/releases/download/v4.14.1/ccache-4.14.1-windows-x86_64.zip -o ccache.zip
+          unzip -q -j ccache.zip '*/ccache.exe' -d ccache-cl
+          cp ccache-cl/ccache.exe ccache-cl/cl.exe
+          echo '<Project><ItemDefinitionGroup><ClCompile><DebugInformationFormat>OldStyle</DebugInformationFormat></ClCompile></ItemDefinitionGroup></Project>' > Directory.Build.targets
+      - name: Cache key
+        id: cache-key
+        shell: bash
+        run: |
+          echo "key=$("/c/Program Files (x86)/Microsoft Visual Studio/Installer/vswhere.exe" -latest -property installationVersion)-$(git -C bgfx rev-parse HEAD:3rdparty)-$(git -C bimg rev-parse HEAD:3rdparty)" >> "$GITHUB_OUTPUT"
+      - name: Cache
+        uses: actions/cache@v6
+        with:
+          path: .ccache
+          key: ccache-msvc-${{ matrix.config }}-${{ matrix.platform }}-${{ steps.cache-key.outputs.key }}
+          restore-keys: ccache-msvc-${{ matrix.config }}-${{ matrix.platform }}-
       - name: Build
         shell: cmd
         run: |
           cd bgfx
           ..\bx\tools\bin\windows\genie.exe ${{ matrix.genie-args }} ${{ matrix.genie-action }}
-          msbuild ".build/projects/${{ matrix.genie-action }}/bgfx.${{ matrix.solution-ext }}" /m /v:minimal /p:Configuration=${{ matrix.config }} /p:Platform=${{ matrix.platform }}
+          msbuild ".build/projects/${{ matrix.genie-action }}/bgfx.${{ matrix.solution-ext }}" /m /v:minimal /p:Configuration=${{ matrix.config }} /p:Platform=${{ matrix.platform }} /p:CLToolExe=cl.exe /p:CLToolPath=%GITHUB_WORKSPACE%\ccache-cl /p:UseMultiToolTask=true /p:EnforceProcessCountAcrossBuilds=true /p:TrackFileAccess=false || exit /b 1
+          ..\ccache-cl\ccache.exe -s
       - name: Check
         if: matrix.tools
         shell: cmd
