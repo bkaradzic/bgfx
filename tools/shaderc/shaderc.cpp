@@ -556,6 +556,7 @@ namespace bgfx
 		std::string m_type;
 		std::string m_init;
 		std::string m_semantics;
+		std::string m_array;
 	};
 
 	typedef std::unordered_map<std::string, Varying> VaryingMap;
@@ -980,7 +981,7 @@ namespace bgfx
 		return hash;
 	}
 
-	void addFragData(Preprocessor& _preprocessor, char* _data, uint32_t _idx, bool _comma)
+	void replaceFragData(char* _data, uint32_t _idx)
 	{
 		char find[32];
 		bx::snprintf(find, sizeof(find), "gl_FragData[%d]", _idx);
@@ -989,21 +990,96 @@ namespace bgfx
 		bx::snprintf(replace, sizeof(replace), "bgfx_FragData%d", _idx);
 
 		strReplace(_data, find, replace);
+	}
+
+	void addFragData(Preprocessor& _preprocessor, char* _data, uint32_t _idx, bool _comma, const char* _type)
+	{
+		replaceFragData(_data, _idx);
 
 		_preprocessor.writef(
-			" \\\n\t%sout vec4 bgfx_FragData%d : SV_TARGET%d"
+			" \\\n\t%sout %s bgfx_FragData%d : SV_TARGET%d"
 			, _comma ? ", " : "  "
+			, _type
 			, _idx
 			, _idx
 			);
 	}
 
-	void voidFragData(char* _data, uint32_t _idx)
+	void voidFragData(char* _data, uint32_t _idx, bool _isCustomType)
 	{
 		char find[32];
 		bx::snprintf(find, sizeof(find), "gl_FragData[%d]", _idx);
 
-		strReplace(_data, find, "bgfx_VoidFrag");
+		char replace[32];
+		if (_isCustomType)
+		{
+			bx::snprintf(replace, sizeof(replace), "bgfx_VoidFrag%d", _idx);
+		}
+		else
+		{
+			bx::snprintf(replace, sizeof(replace), "bgfx_VoidFrag");
+		}
+
+		strReplace(_data, find, replace);
+	}
+
+	const char* getVoidValueForType(const bx::StringView& type)
+	{
+		if (0 == bx::strCmp(type, "float", 5))
+		{
+			return "0.0";
+		}
+		else if (0 == bx::strCmp(type, "int", 3))
+		{
+			return "0";
+		}
+		else if (0 == bx::strCmp(type, "uint", 4))
+		{
+			return "0";
+		}
+		else if (0 == bx::strCmp(type, "bool", 4))
+		{
+			return "false";
+		}
+		else if (0 == bx::strCmp(type, "vec2", 4))
+		{
+			return "vec2_splat(0.0)";
+		}
+		else if (0 == bx::strCmp(type, "ivec2", 5))
+		{
+			return "ivec2_splat(0)";
+		}
+		else if (0 == bx::strCmp(type, "uvec2", 5))
+		{
+			return "uvec2_splat(0)";
+		}
+		else if (0 == bx::strCmp(type, "vec3", 4))
+		{
+			return "vec3_splat(0.0)";
+		}
+		else if (0 == bx::strCmp(type, "ivec3", 5))
+		{
+			return "ivec3_splat(0)";
+		}
+		else if (0 == bx::strCmp(type, "uvec3", 5))
+		{
+			return "uvec3_splat(0)";
+		}
+		else if (0 == bx::strCmp(type, "vec4", 4))
+		{
+			return "vec4_splat(0.0)";
+		}
+		else if (0 == bx::strCmp(type, "ivec4", 5))
+		{
+			return "ivec4_splat(0)";
+		}
+		else if (0 == bx::strCmp(type, "uvec4", 5))
+		{
+			return "uvec4_splat(0)";
+		}
+		
+		// other
+		return "0.0";
 	}
 
 	bx::StringView baseName(const bx::StringView& _filePath)
@@ -1405,6 +1481,7 @@ namespace bgfx
 		bx::StringView parse(_varying);
 		bx::StringView term(parse);
 
+		bool usesCustomRenderTargetFormats = false;
 
 		while (!parse.isEmpty() )
 		{
@@ -1469,10 +1546,17 @@ namespace bgfx
 				bx::StringView name   = nextWord(parse);
 				bx::StringView column = bx::strSubstr(parse, 0, 1);
 				bx::StringView semantics;
+				bx::StringView array;
+
 				if (0 == bx::strCmp(column, ":", 1) )
 				{
 					parse = bx::strLTrimSpace(bx::StringView(parse.getPtr() + 1, parse.getTerm() ) );
 					semantics = nextWord(parse);
+				}
+				else if (0 == bx::strCmp(column, "[", 1) )
+				{
+					parse = bx::strLTrimSpace(bx::StringView(parse.getPtr() + 1, parse.getTerm() ) );
+					array = nextWord(parse);
 				}
 
 				bx::StringView assign = bx::strSubstr(parse, 0, 1);
@@ -1484,8 +1568,7 @@ namespace bgfx
 				}
 
 				if (!typen.isEmpty()
-				&&  !name.isEmpty()
-				&&  !semantics.isEmpty() )
+				&&  !name.isEmpty() )
 				{
 					Varying var;
 					if (!precision.isEmpty() )
@@ -1498,13 +1581,33 @@ namespace bgfx
 						var.m_interpolation.assign(interpolation.getPtr(), interpolation.getTerm() );
 					}
 
+					if (!semantics.isEmpty() )
+					{
+						var.m_semantics.assign(semantics.getPtr(), semantics.getTerm() );
+					}
+					
+					if (!array.isEmpty() )
+					{
+						var.m_array.assign(array.getPtr(), array.getTerm() );
+					}
+
 					var.m_type.assign(typen.getPtr(), typen.getTerm() );
 					var.m_name.assign(name.getPtr(), name.getTerm() );
-					var.m_semantics.assign(semantics.getPtr(), semantics.getTerm() );
 
 					if (!init.isEmpty() )
 					{
 						var.m_init.assign(init.getPtr(), init.getTerm() );
+					}
+
+					if (var.m_name == "gl_FragColor"
+					 || var.m_name == "gl_FragData")
+					{
+						usesCustomRenderTargetFormats = true;
+					}
+
+					if (!array.isEmpty() )
+					{
+						var.m_name += "[" + var.m_array + "]";
 					}
 
 					varyingMap.insert(std::make_pair(var.m_name, var) );
@@ -1854,6 +1957,84 @@ namespace bgfx
 						"#define shadow2DProj(_sampler, _coord) bgfxShadow2DProj(_sampler, _coord).x\n"
 						);
 
+					// if we have custom render target formats defined
+					if(usesCustomRenderTargetFormats && profile->id >= 330)
+					{
+						const bool hasFragColor   = !bx::strFind(input, "gl_FragColor").isEmpty();
+
+						if (hasFragColor)
+						{
+							preprocessor.writef("#define gl_FragColor bgfx_FragColor\n");
+
+							VaryingMap::const_iterator varyingIt = varyingMap.find("gl_FragColor");
+							if (varyingIt == varyingMap.end() )
+							{
+								// if gl_FragColor is not defined, check for gl_FragData[0] instead
+								varyingIt = varyingMap.find("gl_FragData[0]");
+							}
+
+							if (varyingIt != varyingMap.end() )
+							{
+								const Varying& var = varyingIt->second;
+								preprocessor.writef(
+									  "out %s %s bgfx_FragColor;\n"
+									, var.m_precision.c_str()
+									, var.m_type.c_str()
+									);
+							}
+							else
+							{
+								preprocessor.writef("out mediump vec4 bgfx_FragColor;\n");
+							}
+						}
+						else
+						{
+							for (uint32_t ii = 0; ii < 8; ++ii)
+							{
+								char temp[32];
+								bx::snprintf(temp, BX_COUNTOF(temp), "gl_FragData[%d]", ii);
+								const bool hasFragData = !bx::strFind(input, temp).isEmpty();
+
+								if (hasFragData && usesCustomRenderTargetFormats)
+								{
+									replaceFragData(input, ii);
+
+									VaryingMap::const_iterator varyingIt = varyingMap.find(temp);
+									if (varyingIt != varyingMap.end() )
+									{
+										const Varying& var = varyingIt->second;
+										preprocessor.writef(
+												"layout(location=%d) out %s %s bgfx_FragData%d;\n"
+											, ii
+											, var.m_precision.c_str()
+											, var.m_type.c_str()
+											, ii
+											);
+									}
+									else
+									{
+										preprocessor.writef(
+												"layout(location=%d) out mediump vec4 bgfx_FragData%d;\n"
+											, ii
+											, ii
+											);
+									}
+								}
+								else if (hasFragData)
+								{
+									// at least one gl_FragData, quick exit without custom render target formats
+									preprocessor.writef("#define gl_FragData bgfx_FragData\n");
+									preprocessor.writef("out mediump vec4 bgfx_FragData[gl_MaxDrawBuffers];\n");
+									break;
+								}
+							}
+						}
+					}
+					else if (usesCustomRenderTargetFormats)
+					{
+						bx::write(_messageWriter, &messageErr, "Custom render target formats are not supported for this shader language version.\n");
+					}
+
 					for (InOut::const_iterator it = shaderInputs.begin(), itEnd = shaderInputs.end(); it != itEnd; ++it)
 					{
 						VaryingMap::const_iterator varyingIt = varyingMap.find(*it);
@@ -1932,7 +2113,52 @@ namespace bgfx
 						bx::StringView insert = bx::strFind(bx::StringView(entry.getPtr(), shader.getTerm() ), "{");
 						if (!insert.isEmpty() )
 						{
-							insert = strInsert(const_cast<char*>(insert.getPtr()+1), "\nvec4 bgfx_VoidFrag = vec4_splat(0.0);\n");
+							VaryingMap::const_iterator varyingIt = varyingMap.find("gl_FragColor");
+							if (varyingIt == varyingMap.end() )
+							{
+								// if gl_FragColor is not defined, check for gl_FragData[0] instead
+								varyingIt = varyingMap.find("gl_FragData[0]");
+							}
+
+							if (varyingIt != varyingMap.end() )
+							{
+								const Varying& var = varyingIt->second;
+								char temp[64];
+								bx::snprintf(temp, BX_COUNTOF(temp), "\n%s bgfx_VoidFrag = %s;\n",
+									var.m_type.c_str(),
+									getVoidValueForType(bx::StringView(var.m_type.data(), var.m_type.size())) );
+								insert = strInsert(const_cast<char*>(insert.getPtr()+1), temp);
+							}
+							else
+							{
+								insert = strInsert(const_cast<char*>(insert.getPtr()+1), "\nvec4 bgfx_VoidFrag = vec4_splat(0.0);\n");
+							}
+						}
+
+						bool hasFragData[8] = {};
+						uint32_t numFragData = 0;
+						const uint32_t maxRT = profile->id >= 400 ? BX_COUNTOF(hasFragData) : 4;
+						for (uint32_t ii = 0; ii < BX_COUNTOF(hasFragData); ++ii)
+						{
+							char temp[32];
+							bx::snprintf(temp, BX_COUNTOF(temp), "gl_FragData[%d]", ii);
+							hasFragData[ii] = !bx::strFind(input, temp).isEmpty();
+							numFragData += hasFragData[ii];
+
+							if (hasFragData[ii] && !insert.isEmpty() && ii >= maxRT)
+							{
+								// define custom type VoidFrags
+								VaryingMap::const_iterator varyingIt = varyingMap.find(temp);
+								if (varyingIt != varyingMap.end() )
+								{
+									const Varying& var = varyingIt->second;
+									char temp[64];
+									bx::snprintf(temp, BX_COUNTOF(temp), "\n%s bgfx_VoidFrag%d = %s;\n",
+										var.m_type.c_str(), ii,
+										getVoidValueForType(bx::StringView(var.m_type.data(), var.m_type.size())) );
+									insert = strInsert(const_cast<char*>(insert.getPtr()+1), temp);
+								}
+							}
 						}
 
 						const bool hasFragColor   = !bx::strFind(input, "gl_FragColor").isEmpty();
@@ -1944,16 +2170,6 @@ namespace bgfx
 						if (!hasPrimitiveId)
 						{
 							preprocessor.writef("#define gl_PrimitiveID 0\n");
-						}
-
-						bool hasFragData[8] = {};
-						uint32_t numFragData = 0;
-						for (uint32_t ii = 0; ii < BX_COUNTOF(hasFragData); ++ii)
-						{
-							char temp[32];
-							bx::snprintf(temp, BX_COUNTOF(temp), "gl_FragData[%d]", ii);
-							hasFragData[ii] = !bx::strFind(input, temp).isEmpty();
-							numFragData += hasFragData[ii];
 						}
 
 						if (0 == numFragData)
@@ -2002,20 +2218,40 @@ namespace bgfx
 							}
 						}
 
-						const uint32_t maxRT = profile->id >= 400 ? BX_COUNTOF(hasFragData) : 4;
-
 						for (uint32_t ii = 0; ii < BX_COUNTOF(hasFragData); ++ii)
 						{
-							if (ii < maxRT)
+							VaryingMap::const_iterator varyingIt;
+
+							if(ii == 0 && hasFragColor)
 							{
-								if (hasFragData[ii])
+								varyingIt = varyingMap.find("gl_FragColor");
+								if (varyingIt == varyingMap.end() )
 								{
-									addFragData(preprocessor, input, ii, arg++ > 0);
+									// if gl_FragColor is not defined, check for gl_FragData[0] instead
+									varyingIt = varyingMap.find("gl_FragData[0]");
 								}
 							}
 							else
 							{
-								voidFragData(input, ii);
+								char temp[32];
+								bx::snprintf(temp, BX_COUNTOF(temp), "gl_FragData[%d]", ii);
+
+								varyingIt = varyingMap.find(temp);
+							}
+
+							if (ii < maxRT)
+							{
+								if (hasFragData[ii])
+								{
+									addFragData(preprocessor, input, ii, arg++ > 0,
+										varyingIt != varyingMap.end()
+										? varyingIt->second.m_type.c_str()
+										: "vec4" );
+								}
+							}
+							else
+							{
+								voidFragData(input, ii, varyingIt != varyingMap.end() );
 							}
 						}
 
@@ -2334,31 +2570,33 @@ namespace bgfx
 									);
 							}
 
-							if (!bx::findIdentifierMatch(input, "gl_FragColor").isEmpty() )
-							{
-								bx::stringPrintf(code
-									, "out vec4 bgfx_FragColor;\n"
-									  "#define gl_FragColor bgfx_FragColor\n"
-									);
-							}
-							else if (!bx::findIdentifierMatch(input, "gl_FragData").isEmpty() )
-							{
-								// gl_MaxDrawBuffers is not used here, because it can be
-								// larger than what the driver reports as GL_MAX_DRAW_BUFFERS.
-								uint32_t numFragData = 0;
-
-								for (uint32_t ii = 0; ii < 8; ++ii)
+							if (!usesCustomRenderTargetFormats ) {
+								if (!bx::findIdentifierMatch(input, "gl_FragColor").isEmpty() )
 								{
-									char temp[32];
-									bx::snprintf(temp, BX_COUNTOF(temp), "gl_FragData[%d]", ii);
-									numFragData = bx::strFind(input, temp).isEmpty() ? numFragData : ii+1;
+									bx::stringPrintf(code
+										, "out vec4 bgfx_FragColor;\n"
+										  "#define gl_FragColor bgfx_FragColor\n"
+										);
 								}
+								else if (!bx::findIdentifierMatch(input, "gl_FragData").isEmpty() )
+								{
+									// gl_MaxDrawBuffers is not used here, because it can be
+									// larger than what the driver reports as GL_MAX_DRAW_BUFFERS.
+									uint32_t numFragData = 0;
 
-								bx::stringPrintf(code
-									, "out vec4 bgfx_FragData[%d];\n"
-									  "#define gl_FragData bgfx_FragData\n"
-									, bx::max<uint32_t>(numFragData, 1)
-									);
+									for (uint32_t ii = 0; ii < 8; ++ii)
+									{
+										char temp[32];
+										bx::snprintf(temp, BX_COUNTOF(temp), "gl_FragData[%d]", ii);
+										numFragData = bx::strFind(input, temp).isEmpty() ? numFragData : ii+1;
+									}
+
+									bx::stringPrintf(code
+										, "out vec4 bgfx_FragData[%d];\n"
+										  "#define gl_FragData bgfx_FragData\n"
+										, bx::max<uint32_t>(numFragData, 1)
+										);
+								}
 							}
 
 							bx::stringPrintf(code
