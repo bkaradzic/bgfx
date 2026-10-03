@@ -91,6 +91,9 @@ newaction {
 			pygen.write(pygen.gen(), "../bindings/py/bgfx.py")
 			pygen.write(pygen.gen_pyi(), "../bindings/py/bgfx.pyi")
 
+			local javagen = require "bindings-java"
+			javagen.write(javagen.gen(), "../bindings/java/io/github/bkaradzic/bgfx/Bgfx.java")
+
 			local docsgen = require "docs-rst"
 			docsgen.write(docsgen.gen(), "../docs/bgfx.rst")
 		end

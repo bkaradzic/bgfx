@@ -8,4 +8,6 @@
 .git
 .svn
 .vscode
+.idea
 tags
+*.pyc
