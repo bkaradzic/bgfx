@@ -2358,6 +2358,91 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			}
 		}
 
+		bool clearIntegerColor(FrameBufferHandle _fbh, const Rect& _rect, const Clear& _clear, const float _palette[][4])
+		{
+			if (!isValid(_fbh)
+			||  0 == (_clear.m_flags & BGFX_CLEAR_COLOR) )
+			{
+				return false;
+			}
+
+			const FrameBufferMtl& fb = m_frameBuffers[_fbh.idx];
+
+			bool integer = false;
+
+			for (uint32_t ii = 0; ii < fb.m_num; ++ii)
+			{
+				const TextureMtl& texture = m_textures[fb.m_colorHandle[ii].idx];
+				integer |= NULL == texture.m_ptrMsaa
+					&& isIntegerFormat(TextureFormat::Enum(texture.m_textureFormat) )
+					;
+			}
+
+			if (!integer)
+			{
+				return false;
+			}
+
+			const uint8_t skipMask = _clear.getColorSkipMask(fb.m_num);
+
+			for (uint32_t ii = 0; ii < fb.m_num; ++ii)
+			{
+				if (0 != (skipMask & (1<<ii) ) )
+				{
+					continue;
+				}
+
+				const TextureMtl& texture = m_textures[fb.m_colorHandle[ii].idx];
+				const TextureFormat::Enum format = TextureFormat::Enum(texture.m_textureFormat);
+
+				if (NULL != texture.m_ptrMsaa
+				||  !isIntegerFormat(format) )
+				{
+					continue;
+				}
+
+				float rgba[4];
+				getClearColor(rgba, _clear, _palette, ii, true);
+
+				uint8_t texel[16];
+				const uint32_t texelSize = packIntegerTexel(texel, format, rgba);
+				const uint32_t pitch     = _rect.m_width*texelSize;
+				const uint32_t size      = pitch*_rect.m_height;
+
+				MTL::Buffer* buffer = m_device->newBuffer(size, MTL::ResourceStorageModeShared);
+				uint8_t* data = (uint8_t*)buffer->contents();
+
+				for (uint32_t xx = 0; xx < _rect.m_width; ++xx)
+				{
+					bx::memCopy(data + xx*texelSize, texel, texelSize);
+				}
+
+				for (uint32_t yy = 1; yy < _rect.m_height; ++yy)
+				{
+					bx::memCopy(data + yy*pitch, data, pitch);
+				}
+
+				MTL::BlitCommandEncoder* bce = getBlitCommandEncoder();
+				bce->copyFromBuffer(
+					  buffer
+					, 0
+					, pitch
+					, size
+					, MTL::Size::Make(_rect.m_width, _rect.m_height, 1)
+					, texture.m_ptr
+					, 0
+					, 0
+					, MTL::Origin::Make(_rect.m_x, _rect.m_y, 0)
+					);
+
+				MTL_RELEASE_I(buffer);
+			}
+
+			endBlitEncoding();
+
+			return true;
+		}
+
 		void clearQuad(const ClearQuad& _clearQuad, const Rect& /*_rect*/, const Clear& _clear, const float _palette[][4])
 		{
 			const uint64_t state = 0
@@ -6258,6 +6343,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 						const Rect viewRect = viewState.m_rect;
 						bool clearWithRenderPass = false;
+						bool integerCleared      = false;
 
 						if (NULL == m_renderCommandEncoder
 						||  fbh.idx != renderView->m_fbh.idx
@@ -6292,6 +6378,10 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 								&& 0      == viewRect.m_y
 								&& width  == viewRect.m_width
 								&& height == viewRect.m_height
+								;
+
+							integerCleared = !clearWithRenderPass
+								&& clearIntegerColor(fbh, clippedRect, clr, _render->m_colorPalette)
 								;
 
 							setFrameBuffer(renderPassDescriptor, fbh);
@@ -6437,30 +6527,33 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 						rce->setTriangleFillMode( (MTL::TriangleFillMode)wireframe ? MTL::TriangleFillModeLines : MTL::TriangleFillModeFill);
 
-						{
-							MTL::Viewport vp;
-							vp.originX = viewState.m_rect.m_x;
-							vp.originY = viewState.m_rect.m_y;
-							vp.width   = viewState.m_rect.m_width;
-							vp.height  = viewState.m_rect.m_height;
-							vp.znear   = 0.0f;
-							vp.zfar    = 1.0f;
-							rce->setViewport(vp);
+						MTL::Viewport vp;
+						vp.originX = viewState.m_rect.m_x;
+						vp.originY = viewState.m_rect.m_y;
+						vp.width   = viewState.m_rect.m_width;
+						vp.height  = viewState.m_rect.m_height;
+						vp.znear   = 0.0f;
+						vp.zfar    = 1.0f;
+						rce->setViewport(vp);
 
-							MTL::ScissorRect sciRect = {
-								NS::UInteger(clippedRect.m_x),
-								NS::UInteger(clippedRect.m_y),
-								NS::UInteger(clippedRect.m_width),
-								NS::UInteger(clippedRect.m_height)
-							};
-							rce->setScissorRect(sciRect);
-						}
+						MTL::ScissorRect sciRect = {
+							NS::UInteger(clippedRect.m_x),
+							NS::UInteger(clippedRect.m_y),
+							NS::UInteger(clippedRect.m_width),
+							NS::UInteger(clippedRect.m_height)
+						};
+						rce->setScissorRect(sciRect);
 
 						if (BGFX_CLEAR_NONE != (clr.m_flags & BGFX_CLEAR_MASK)
-							&& !clearWithRenderPass)
+							&& !clearWithRenderPass
+							&& !integerCleared)
 						{
 							clearQuad(_clearQuad, clippedRect, clr, _render->m_colorPalette);
 						}
+
+						vp.znear = renderView->m_minDepth;
+						vp.zfar  = renderView->m_maxDepth;
+						rce->setViewport(vp);
 					}
 				}
 

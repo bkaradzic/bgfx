@@ -1231,6 +1231,7 @@ typedef double GLdouble;
 
 #if !BGFX_CONFIG_RENDERER_OPENGL
 #	define glClearDepth glClearDepthf
+#	define glDepthRange glDepthRangef
 #endif // !BGFX_CONFIG_RENDERER_OPENGL
 
 namespace bgfx

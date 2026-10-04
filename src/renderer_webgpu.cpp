@@ -2495,6 +2495,105 @@ WGPU_IMPORT
 			wgpuRelease(blitRenderPassEncoder);
 		}
 
+		bool clearIntegerColor(WGPUCommandEncoder _commandEncoder, const FrameBufferWGPU& _fb, const Rect& _rect, const Clear& _clear, const float _palette[][4])
+		{
+			if (0 == (_clear.m_flags & BGFX_CLEAR_COLOR)
+			||  1 <  _fb.m_msaaCount)
+			{
+				return false;
+			}
+
+			bool integer = false;
+
+			for (uint32_t ii = 0; ii < _fb.m_numColorAttachments; ++ii)
+			{
+				const TextureWGPU& texture = m_textures[_fb.m_texture[ii].idx];
+				integer |= isIntegerFormat(TextureFormat::Enum(texture.m_textureFormat) );
+			}
+
+			if (!integer)
+			{
+				return false;
+			}
+
+			const uint8_t skipMask = _clear.getColorSkipMask(_fb.m_numColorAttachments);
+
+			for (uint32_t ii = 0; ii < _fb.m_numColorAttachments; ++ii)
+			{
+				if (0 != (skipMask & (1<<ii) ) )
+				{
+					continue;
+				}
+
+				const TextureWGPU& texture = m_textures[_fb.m_texture[ii].idx];
+				const TextureFormat::Enum format = TextureFormat::Enum(texture.m_textureFormat);
+
+				if (!isIntegerFormat(format) )
+				{
+					continue;
+				}
+
+				float rgba[4];
+				getClearColor(rgba, _clear, _palette, ii, true);
+
+				uint8_t texel[16];
+				const uint32_t texelSize = packIntegerTexel(texel, format, rgba);
+				const uint32_t pitch     = bx::alignUp(_rect.m_width*texelSize, 256);
+				const uint32_t size      = bx::alignUp(pitch*(_rect.m_height-1) + _rect.m_width*texelSize, 4);
+
+				uint8_t* data = (uint8_t*)bx::alloc(g_allocator, size);
+
+				for (uint32_t yy = 0; yy < _rect.m_height; ++yy)
+				{
+					uint8_t* row = data + yy*pitch;
+
+					for (uint32_t xx = 0; xx < _rect.m_width; ++xx)
+					{
+						bx::memCopy(row + xx*texelSize, texel, texelSize);
+					}
+				}
+
+				const WGPUBufferDescriptor bufferDesc =
+				{
+					.nextInChain      = NULL,
+					.label            = toWGPUStringView("Integer clear"),
+					.usage            = WGPUBufferUsage_CopySrc | WGPUBufferUsage_CopyDst,
+					.size             = size,
+					.mappedAtCreation = false,
+				};
+
+				WGPUBuffer buffer = WGPU_CHECK(wgpuDeviceCreateBuffer(m_device, &bufferDesc) );
+				m_cmd.writeBuffer(buffer, 0, data, size);
+				bx::free(g_allocator, data);
+
+				const WGPUTexelCopyBufferInfo source =
+				{
+					.layout =
+					{
+						.offset       = 0,
+						.bytesPerRow  = pitch,
+						.rowsPerImage = _rect.m_height,
+					},
+					.buffer = buffer,
+				};
+
+				const WGPUTexelCopyTextureInfo destination =
+				{
+					.texture  = texture.m_texture,
+					.mipLevel = 0,
+					.origin   = { uint32_t(_rect.m_x), uint32_t(_rect.m_y), 0 },
+					.aspect   = WGPUTextureAspect_All,
+				};
+
+				const WGPUExtent3D extent = { _rect.m_width, _rect.m_height, 1 };
+
+				WGPU_CHECK(wgpuCommandEncoderCopyBufferToTexture(_commandEncoder, &source, &destination, &extent) );
+				wgpuBufferRelease(buffer);
+			}
+
+			return true;
+		}
+
 		void clearQuad(WGPURenderPassEncoder _renderPassEncoder, FrameBufferHandle _fbh, uint32_t _msaaCount, const ClearQuad& _clearQuad, const Rect& _rect, const Clear& _clear, const float _palette[][4])
 		{
 			BX_UNUSED(_clearQuad, _rect, _clear, _palette);
@@ -7239,6 +7338,14 @@ WGPU_IMPORT
 					if (isFrameBufferValid)
 					{
 						WGPUCommandEncoder cmdEncoder = m_cmd.alloc();
+
+						const bool integerCleared = true
+							&& !clearWhole
+							&&  needClear
+							&& !isSwapChain
+							&&  clearIntegerColor(cmdEncoder, fb, clippedRect, clr, _render->m_colorPalette)
+							;
+
 						renderPassEncoder = WGPU_CHECK(wgpuCommandEncoderBeginRenderPass(cmdEncoder, &renderPassDesc) );
 						currentPipeline   = NULL;
 
@@ -7254,10 +7361,22 @@ WGPU_IMPORT
 							, 1.0f
 							);
 
-						if (!clearWhole && needClear)
+						if (!clearWhole
+						&&  needClear
+						&& !integerCleared)
 						{
 							clearQuad(renderPassEncoder, fbh, msaaCount, _clearQuad, clippedRect, clr, _render->m_colorPalette);
 						}
+
+						wgpuRenderPassEncoderSetViewport(
+							  renderPassEncoder
+							, float(viewRect.m_x)
+							, float(viewRect.m_y)
+							, float(viewRect.m_width)
+							, float(viewRect.m_height)
+							, renderView->m_minDepth
+							, renderView->m_maxDepth
+							);
 
 						wgpuRenderPassEncoderSetScissorRect(
 							  renderPassEncoder
