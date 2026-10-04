@@ -8563,6 +8563,7 @@ namespace bgfx { namespace d3d12
 
 		shutdown();
 		bgfx::resize(m_control, _size);
+		m_query.resize(m_control.getSize() );
 		create();
 
 		m_result.resetPending();

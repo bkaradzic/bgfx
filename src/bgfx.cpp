@@ -2588,65 +2588,75 @@ namespace bgfx
 
 		if (BX_ENABLED(BGFX_CONFIG_DEBUG) )
 		{
-#define CHECK_HANDLE_LEAK(_name, _handleAlloc)                                        \
-	BX_MACRO_BLOCK_BEGIN                                                              \
-		if (0 != _handleAlloc.getNumHandles() )                                       \
-		{                                                                             \
-			BX_TRACE("LEAK: %s %d (max: %d)"                                          \
-				, _name                                                               \
-				, _handleAlloc.getNumHandles()                                        \
-				, _handleAlloc.getMaxHandles()                                        \
-				);                                                                    \
-			for (uint16_t ii = 0, num = _handleAlloc.getNumHandles(); ii < num; ++ii) \
-			{                                                                         \
-				BX_TRACE("\t%3d: %4d", ii, _handleAlloc.getHandleAt(ii) );            \
-			}                                                                         \
-		}                                                                             \
+#define CHECK_HANDLE_LEAK(_name, _handleAlloc)           \
+	BX_MACRO_BLOCK_BEGIN                                 \
+		if (0 != _handleAlloc.getNumHandles() )          \
+		{                                                \
+			BX_TRACE("LEAK: %s %d (max: %d)"             \
+				, _name                                  \
+				, _handleAlloc.getNumHandles()           \
+				, _handleAlloc.getMaxHandles()           \
+				);                                       \
+			uint16_t ii = 0; BX_UNUSED(ii);              \
+			for (uint16_t idx = _handleAlloc.findFirst() \
+				; bx::kInvalidHandle != idx              \
+				; idx = _handleAlloc.findNext(idx), ++ii \
+				)                                        \
+			{                                            \
+				BX_TRACE("\t%3d: %4d", ii, idx);         \
+			}                                            \
+		}                                                \
 	BX_MACRO_BLOCK_END
 
-#define CHECK_HANDLE_LEAK_NAME(_name, _handleAlloc, _type, _ref)                      \
-	BX_MACRO_BLOCK_BEGIN                                                              \
-		if (0 != _handleAlloc.getNumHandles() )                                       \
-		{                                                                             \
-			BX_TRACE("LEAK: %s %d (max: %d)"                                          \
-				, _name                                                               \
-				, _handleAlloc.getNumHandles()                                        \
-				, _handleAlloc.getMaxHandles()                                        \
-				);                                                                    \
-			for (uint16_t ii = 0, num = _handleAlloc.getNumHandles(); ii < num; ++ii) \
-			{                                                                         \
-				uint16_t idx = _handleAlloc.getHandleAt(ii);                          \
-				const _type& ref = _ref[idx]; BX_UNUSED(ref);                         \
-				BX_TRACE("\t%3d: %4d %s"                                              \
-					, ii                                                              \
-					, idx                                                             \
-					, ref.m_name.getCPtr()                                            \
-					);                                                                \
-			}                                                                         \
-		}                                                                             \
+#define CHECK_HANDLE_LEAK_NAME(_name, _handleAlloc, _type, _ref) \
+	BX_MACRO_BLOCK_BEGIN                                         \
+		if (0 != _handleAlloc.getNumHandles() )                  \
+		{                                                        \
+			BX_TRACE("LEAK: %s %d (max: %d)"                     \
+				, _name                                          \
+				, _handleAlloc.getNumHandles()                   \
+				, _handleAlloc.getMaxHandles()                   \
+				);                                               \
+			uint16_t ii = 0; BX_UNUSED(ii);                      \
+			for (uint16_t idx = _handleAlloc.findFirst()         \
+				; bx::kInvalidHandle != idx                      \
+				; idx = _handleAlloc.findNext(idx), ++ii         \
+				)                                                \
+			{                                                    \
+				const _type& ref = _ref[idx]; BX_UNUSED(ref);    \
+				BX_TRACE("\t%3d: %4d %s"                         \
+					, ii                                         \
+					, idx                                        \
+					, ref.m_name.getCPtr()                       \
+					);                                           \
+			}                                                    \
+		}                                                        \
 	BX_MACRO_BLOCK_END
 
-#define CHECK_HANDLE_LEAK_RC_NAME(_name, _handleAlloc, _type, _ref)                   \
-	BX_MACRO_BLOCK_BEGIN                                                              \
-		if (0 != _handleAlloc.getNumHandles() )                                       \
-		{                                                                             \
-			BX_TRACE("LEAK: %s %d (max: %d)"                                          \
-				, _name                                                               \
-				, _handleAlloc.getNumHandles()                                        \
-				, _handleAlloc.getMaxHandles()                                        \
-				);                                                                    \
-			for (uint16_t ii = 0, num = _handleAlloc.getNumHandles(); ii < num; ++ii) \
-			{                                                                         \
-				uint16_t idx = _handleAlloc.getHandleAt(ii);                          \
-				const _type& ref = _ref[idx]; BX_UNUSED(ref);                         \
-				BX_TRACE("\t%3d: %4d %s (count %d)"                                   \
-					, ii                                                              \
-					, idx                                                             \
-					, ref.m_name.getCPtr()                                            \
-					, ref.m_refCount                                                  \
-					);                                                                \
-			}                                                                         \
-		}                                                                             \
+#define CHECK_HANDLE_LEAK_RC_NAME(_name, _handleAlloc, _type, _ref) \
+	BX_MACRO_BLOCK_BEGIN                                            \
+		if (0 != _handleAlloc.getNumHandles() )                     \
+		{                                                           \
+			BX_TRACE("LEAK: %s %d (max: %d)"                        \
+				, _name                                             \
+				, _handleAlloc.getNumHandles()                      \
+				, _handleAlloc.getMaxHandles()                      \
+				);                                                  \
+			uint16_t ii = 0; BX_UNUSED(ii);                         \
+			for (uint16_t idx = _handleAlloc.findFirst()            \
+				; bx::kInvalidHandle != idx                         \
+				; idx = _handleAlloc.findNext(idx), ++ii            \
+				)                                                   \
+			{                                                       \
+				const _type& ref = _ref[idx]; BX_UNUSED(ref);       \
+				BX_TRACE("\t%3d: %4d %s (count %d)"                 \
+					, ii                                            \
+					, idx                                           \
+					, ref.m_name.getCPtr()                          \
+					, ref.m_refCount                                \
+					);                                              \
+			}                                                       \
+		}                                                           \
 	BX_MACRO_BLOCK_END
 
 			CHECK_HANDLE_LEAK        ("DynamicIndexBufferHandle",  m_dynamicIndexBufferHandle                                  );
@@ -2667,17 +2677,17 @@ namespace bgfx
 
 	void Context::freeDynamicBuffers()
 	{
-		for (uint16_t ii = 0, num = m_numFreeDynamicIndexBufferHandles; ii < num; ++ii)
+		for (uint16_t ii = 0, num = m_freeDynamicIndexBuffer.getNumQueued(); ii < num; ++ii)
 		{
-			destroyDynamicIndexBufferInternal(m_freeDynamicIndexBufferHandle[ii]);
+			destroyDynamicIndexBufferInternal(m_freeDynamicIndexBuffer.get(ii) );
 		}
-		m_numFreeDynamicIndexBufferHandles = 0;
+		m_freeDynamicIndexBuffer.reset();
 
-		for (uint16_t ii = 0, num = m_numFreeDynamicVertexBufferHandles; ii < num; ++ii)
+		for (uint16_t ii = 0, num = m_freeDynamicVertexBuffer.getNumQueued(); ii < num; ++ii)
 		{
-			destroyDynamicVertexBufferInternal(m_freeDynamicVertexBufferHandle[ii]);
+			destroyDynamicVertexBufferInternal(m_freeDynamicVertexBuffer.get(ii) );
 		}
-		m_numFreeDynamicVertexBufferHandles = 0;
+		m_freeDynamicVertexBuffer.reset();
 
 		for (uint16_t ii = 0, num = m_numFreeOcclusionQueryHandles; ii < num; ++ii)
 		{
