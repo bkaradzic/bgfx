@@ -3467,6 +3467,8 @@ namespace bgfx { namespace gl
 				const uint32_t mipWidth  = bx::max<uint32_t>(1, texture.m_width  >> _mip);
 				const uint32_t mipHeight = bx::max<uint32_t>(1, texture.m_height >> _mip);
 
+				GL_CHECK(glPixelStorei(GL_PACK_ALIGNMENT, 1) );
+
 				if (texture.m_numLayers > 1
 				&&  NULL != glGetTextureSubImage)
 				{
@@ -3536,6 +3538,8 @@ namespace bgfx { namespace gl
 
 					GL_CHECK(glBindTexture(texture.m_target, 0) );
 				}
+
+				GL_CHECK(glPixelStorei(GL_PACK_ALIGNMENT, 4) );
 
 				if (TextureFormat::D24S8 == texture.m_textureFormat)
 				{
