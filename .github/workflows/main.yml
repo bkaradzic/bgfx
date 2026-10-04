@@ -295,7 +295,7 @@ jobs:
           path: bimg
       - uses: mymindstorm/setup-emsdk@v14
         with:
-          version: 5.0.2
+          version: 6.0.9
           actions-cache-folder: emsdk-cache
       - name: Build
         run: |
@@ -347,7 +347,7 @@ jobs:
       - uses: mymindstorm/setup-emsdk@v14
         if: matrix.name == 'wasm'
         with:
-          version: 5.0.2
+          version: 6.0.9
           actions-cache-folder: emsdk-cache
       - name: Build
         if: matrix.name == 'msvc'

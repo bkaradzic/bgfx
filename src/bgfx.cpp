@@ -2690,6 +2690,7 @@ namespace bgfx
 	{
 		for (uint16_t ii = 0, num = _frame->m_freeIndexBuffer.getNumQueued(); ii < num; ++ii)
 		{
+			m_indexBuffers.release(_frame->m_freeIndexBuffer.get(ii).idx);
 			m_indexBufferHandle.free(_frame->m_freeIndexBuffer.get(ii).idx);
 		}
 
@@ -2705,6 +2706,7 @@ namespace bgfx
 
 		for (uint16_t ii = 0, num = _frame->m_freeShader.getNumQueued(); ii < num; ++ii)
 		{
+			m_shaderRef.release(_frame->m_freeShader.get(ii).idx);
 			m_shaderHandle.free(_frame->m_freeShader.get(ii).idx);
 		}
 
@@ -2715,11 +2717,13 @@ namespace bgfx
 
 		for (uint16_t ii = 0, num = _frame->m_freeTexture.getNumQueued(); ii < num; ++ii)
 		{
+			m_textureRef.release(_frame->m_freeTexture.get(ii).idx);
 			m_textureHandle.free(_frame->m_freeTexture.get(ii).idx);
 		}
 
 		for (uint16_t ii = 0, num = _frame->m_freeFrameBuffer.getNumQueued(); ii < num; ++ii)
 		{
+			m_frameBufferRef.release(_frame->m_freeFrameBuffer.get(ii).idx);
 			m_frameBufferHandle.free(_frame->m_freeFrameBuffer.get(ii).idx);
 		}
 
@@ -2727,6 +2731,7 @@ namespace bgfx
 		{
 			UniformHandle handle = _frame->m_freeUniform.get(ii);
 			m_uniformCache.invalidate(handle);
+			m_uniformRef.release(handle.idx);
 			m_uniformHandle.free(handle.idx);
 		}
 	}
@@ -2898,6 +2903,14 @@ namespace bgfx
 		{
 			m_view.freeUnset();
 			m_viewNames.freeUnused();
+			m_textureRef.freeUnused();
+			m_shaderRef.freeUnused();
+			m_dynamicIndexBuffers.freeUnused();
+			m_dynamicVertexBuffers.freeUnused();
+			m_indexBuffers.freeUnused();
+			m_vertexBuffers.freeUnused();
+			m_uniformRef.freeUnused();
+			m_frameBufferRef.freeUnused();
 			m_viewObserve = 0;
 		}
 
