@@ -505,6 +505,7 @@ namespace bgfx { namespace d3d11
 	BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG("-Wunneeded-internal-declaration");
 
 	static const GUID IID_ID3D11Device1             = { 0xa04bfb29, 0x08ef, 0x43d6, { 0xa4, 0x9c, 0xa9, 0xbd, 0xbd, 0xcb, 0xe6, 0x86 } };
+	static const GUID IID_ID3D11DeviceContext1      = { 0xbb2c6faa, 0xb5fb, 0x4082, { 0x8e, 0x6b, 0x38, 0x8b, 0x8c, 0xfa, 0x90, 0xe1 } };
 	static const GUID IID_ID3D11Device2             = { 0x9d06dffa, 0xd1e5, 0x4d07, { 0x83, 0xa8, 0x1b, 0xb1, 0x23, 0xf2, 0xf8, 0x41 } };
 	extern const GUID IID_ID3D11Device3             = { 0xa05c8c37, 0xd2c6, 0x4732, { 0xb3, 0xa0, 0x9c, 0xe0, 0xb0, 0xdc, 0x9a, 0xe6 } };
 	static const GUID IID_ID3D11InfoQueue           = { 0x6543dbb6, 0x1b48, 0x42f5, { 0xab, 0x82, 0xe9, 0x7e, 0xc7, 0x43, 0x26, 0xf6 } };
@@ -800,6 +801,7 @@ namespace bgfx { namespace d3d11
 			, m_device(NULL)
 			, m_deviceCtx(NULL)
 			, m_annotation(NULL)
+			, m_deviceCtx1(NULL)
 			, m_infoQueue(NULL)
 			, m_deviceInterfaceVersion(0)
 			, m_currentColor(NULL)
@@ -1246,6 +1248,11 @@ namespace bgfx { namespace d3d11
 
 			m_numWindows = 1;
 
+			if (FAILED(m_deviceCtx->QueryInterface(IID_ID3D11DeviceContext1, (void**)&m_deviceCtx1) ) )
+			{
+				m_deviceCtx1 = NULL;
+			}
+
 #if USE_D3D11_DYNAMIC_LIB
 			if (BX_ENABLED(BGFX_CONFIG_DEBUG_ANNOTATION) )
 			{
@@ -1657,6 +1664,7 @@ namespace bgfx { namespace d3d11
 			{
 			case ErrorState::LoadedDXGI:
 				DX_RELEASE(m_annotation, 1);
+				DX_RELEASE_I(m_deviceCtx1);
 				DX_RELEASE_W(m_infoQueue, 0);
 				DX_RELEASE(mainFrameBuffer().m_msaaRt, 0);
 
@@ -1750,6 +1758,7 @@ namespace bgfx { namespace d3d11
 				m_textures[ii].destroy();
 			}
 
+			DX_RELEASE_I(m_deviceCtx1);
 			DX_RELEASE(m_annotation, 1);
 			dumpInfoQueue();
 			DX_RELEASE_W(m_infoQueue, 0);
@@ -3824,8 +3833,42 @@ namespace bgfx { namespace d3d11
 			{
 				ID3D11DeviceContext* deviceCtx = m_deviceCtx;
 
+				bool clearColor = 0 != (_clear.m_flags & BGFX_CLEAR_COLOR);
+
+				if (clearColor
+				&&  intColor
+				&&  NULL != m_deviceCtx1)
+				{
+					const FrameBufferD3D11& fb = m_frameBuffers[m_fbh.idx];
+					const D3D11_RECT rect = { _rect.m_x, _rect.m_y, _rect.m_x + _rect.m_width, _rect.m_y + _rect.m_height };
+					const uint8_t skipMask = _clear.getColorSkipMask(fb.m_num);
+
+					for (uint32_t ii = 0; ii < fb.m_num; ++ii)
+					{
+						if (NULL == fb.m_rtv[ii]
+						||  0 != (skipMask & (1<<ii) ) )
+						{
+							continue;
+						}
+
+						const TextureFormat::Enum format = TextureFormat::Enum(m_textures[fb.m_attachment[ii].handle.idx].m_textureFormat);
+
+						float rgba[4];
+						getClearColor(rgba, _clear, _palette, ii, isIntegerFormat(format) );
+
+						m_deviceCtx1->ClearView(fb.m_rtv[ii], rgba, &rect, 1);
+					}
+
+					if (0 == (_clear.m_flags & (BGFX_CLEAR_DEPTH|BGFX_CLEAR_STENCIL) ) )
+					{
+						return;
+					}
+
+					clearColor = false;
+				}
+
 				const uint64_t state = 0
-					| (_clear.m_flags & BGFX_CLEAR_COLOR ? BGFX_STATE_WRITE_RGB|BGFX_STATE_WRITE_A         : 0)
+					| (clearColor                        ? BGFX_STATE_WRITE_RGB|BGFX_STATE_WRITE_A         : 0)
 					| (_clear.m_flags & BGFX_CLEAR_DEPTH ? BGFX_STATE_DEPTH_TEST_ALWAYS|BGFX_STATE_WRITE_Z : 0)
 					;
 
@@ -3862,7 +3905,8 @@ namespace bgfx { namespace d3d11
 				const float mrtClearDepth[4] = { _clear.m_depth };
 				deviceCtx->UpdateSubresource(vsh->m_buffer, 0, 0, mrtClearDepth, 0, 0);
 
-				if (NULL != m_currentColor)
+				if (clearColor
+				&&  NULL != m_currentColor)
 				{
 					const ShaderD3D11* fsh = program.m_fsh;
 					deviceCtx->PSSetShader(fsh->m_pixelShader, NULL, 0);
@@ -3973,6 +4017,7 @@ namespace bgfx { namespace d3d11
 		ID3D11Device*              m_device;
 		ID3D11DeviceContext*       m_deviceCtx;
 		ID3DUserDefinedAnnotation* m_annotation;
+		ID3D11DeviceContext1* m_deviceCtx1;
 		ID3D11InfoQueue*           m_infoQueue;
 
 		TimerQueryD3D11     m_gpuTimer;

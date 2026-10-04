@@ -4985,6 +4985,141 @@ namespace bgfx { namespace gl
 			}
 			else
 			{
+				bool intMrt = false;
+
+				if (isValid(fbh)
+				&&  NULL != glClearBufferfv
+				&&  NULL != glClearBufferiv
+				&&  NULL != glClearBufferuiv)
+				{
+					const FrameBufferGL& fb = m_frameBuffers[fbh.idx];
+
+					for (uint32_t ii = 0; ii < fb.m_numTh && !intMrt; ++ii)
+					{
+						const Attachment& at = fb.m_attachment[ii];
+
+						if (!isValid(at.handle) )
+						{
+							continue;
+						}
+
+						const TextureFormat::Enum format = TextureFormat::Enum(m_textures[at.handle.idx].m_textureFormat);
+
+						if (bimg::isDepth(bimg::TextureFormat::Enum(format) ) )
+						{
+							continue;
+						}
+
+						const bx::EncodingType::Enum enc = bx::EncodingType::Enum(bimg::getBlockInfo(bimg::TextureFormat::Enum(format) ).encoding);
+						intMrt = bx::EncodingType::Int  == enc
+							||   bx::EncodingType::Uint == enc
+							;
+					}
+				}
+
+				if (intMrt)
+				{
+					const FrameBufferGL& fb = m_frameBuffers[fbh.idx];
+					const bool usePalette = 0 != (BGFX_CLEAR_COLOR_USE_PALETTE & _clear.m_flags);
+
+					GL_CHECK(glEnable(GL_SCISSOR_TEST) );
+					GL_CHECK(glScissor(_rect.m_x, rectY, _rect.m_width, _rect.m_height) );
+					GL_CHECK(glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE) );
+
+					if (BGFX_CLEAR_COLOR & _clear.m_flags)
+					{
+						GLint drawBuffer = 0;
+
+						for (uint32_t ii = 0; ii < fb.m_numTh; ++ii)
+						{
+							const Attachment& at = fb.m_attachment[ii];
+
+							if (!isValid(at.handle) )
+							{
+								continue;
+							}
+
+							const TextureFormat::Enum format = TextureFormat::Enum(m_textures[at.handle.idx].m_textureFormat);
+
+							if (bimg::isDepth(bimg::TextureFormat::Enum(format) ) )
+							{
+								continue;
+							}
+
+							const uint8_t index = usePalette ? _clear.m_index[drawBuffer] : 0;
+
+							if (usePalette
+							&&  UINT8_MAX == index)
+							{
+								++drawBuffer;
+								continue;
+							}
+
+							const float* palette = usePalette
+								? _palette[bx::min<uint8_t>(BGFX_CONFIG_MAX_COLOR_PALETTE-1, index)]
+								: NULL
+								;
+
+							const bx::EncodingType::Enum enc = bx::EncodingType::Enum(bimg::getBlockInfo(bimg::TextureFormat::Enum(format) ).encoding);
+
+							if (bx::EncodingType::Uint == enc
+							||  bx::EncodingType::Int  == enc)
+							{
+								GLint value[4];
+
+								for (uint32_t cc = 0; cc < 4; ++cc)
+								{
+									value[cc] = NULL != palette
+										? GLint(palette[cc])
+										: GLint(_clear.m_index[cc])
+										;
+								}
+
+								if (bx::EncodingType::Uint == enc)
+								{
+									GL_CHECK(glClearBufferuiv(GL_COLOR, drawBuffer, (const GLuint*)value) );
+								}
+								else
+								{
+									GL_CHECK(glClearBufferiv(GL_COLOR, drawBuffer, value) );
+								}
+							}
+							else
+							{
+								float rgba[4];
+
+								for (uint32_t cc = 0; cc < 4; ++cc)
+								{
+									rgba[cc] = NULL != palette
+										? palette[cc]
+										: _clear.m_index[cc]*1.0f/255.0f
+										;
+								}
+
+								GL_CHECK(glClearBufferfv(GL_COLOR, drawBuffer, rgba) );
+							}
+
+							++drawBuffer;
+						}
+					}
+
+					if (BGFX_CLEAR_DEPTH & _clear.m_flags)
+					{
+						GL_CHECK(glDepthMask(GL_TRUE) );
+						GL_CHECK(glClearBufferfv(GL_DEPTH, 0, &_clear.m_depth) );
+					}
+
+					if (BGFX_CLEAR_STENCIL & _clear.m_flags)
+					{
+						const GLint stencil = _clear.m_stencil;
+						GL_CHECK(glStencilMask(0xff) );
+						GL_CHECK(glClearBufferiv(GL_STENCIL, 0, &stencil) );
+					}
+
+					GL_CHECK(glDisable(GL_SCISSOR_TEST) );
+					return;
+				}
+
 				if (0 != m_vao)
 				{
 					GL_CHECK(glBindVertexArray(m_vao) );
@@ -8821,6 +8956,13 @@ namespace bgfx { namespace gl
 		float   currentPolygonOffsetSlope    = 0.0f;
 		float   currentPolygonOffsetClamp    = 0.0f;
 
+		GL_CHECK(glDisable(GL_POLYGON_OFFSET_FILL) );
+
+		if (s_extension[Extension::ARB_depth_clamp].m_supported)
+		{
+			GL_CHECK(glDisable(GL_DEPTH_CLAMP) );
+		}
+
 		UniformCacheState ucs(_render);
 		BlitState bs(_render);
 
@@ -8973,6 +9115,8 @@ namespace bgfx { namespace gl
 						, viewState.m_rect.m_height
 						) );
 
+					GL_CHECK(glDepthRange(0.0f, 1.0f) );
+
 					const Clear& clear = renderView->m_clear;
 					discardFlags = clear.m_flags & BGFX_CLEAR_DISCARD_MASK;
 
@@ -8984,6 +9128,7 @@ namespace bgfx { namespace gl
 					GL_CHECK(glDisable(GL_STENCIL_TEST) );
 					GL_CHECK(glEnable(GL_DEPTH_TEST) );
 					GL_CHECK(glDepthFunc(GL_LESS) );
+					GL_CHECK(glDepthRange(renderView->m_minDepth, renderView->m_maxDepth) );
 					GL_CHECK(glEnable(GL_CULL_FACE) );
 					GL_CHECK(glDisable(GL_BLEND) );
 				}

@@ -7,12 +7,58 @@
 #define BGFX_RENDERER_H_HEADER_GUARD
 
 #include "bgfx_p.h"
+#include <bx/pixelformat.h>
 
 namespace bgfx
 {
 	inline void setViewType(char* _viewName, const bx::StringView _str)
 	{
 		bx::memCopy(&_viewName[4], _str.getPtr(), _str.getLength() );
+	}
+
+	inline bool isIntegerFormat(TextureFormat::Enum _format)
+	{
+		const bx::EncodingType::Enum encoding = bx::EncodingType::Enum(bimg::getBlockInfo(bimg::TextureFormat::Enum(_format) ).encoding);
+		return bx::EncodingType::Int  == encoding
+			|| bx::EncodingType::Uint == encoding
+			;
+	}
+
+	inline void getClearColor(float _rgba[4], const Clear& _clear, const float _palette[][4], uint32_t _attachment, bool _integer)
+	{
+		if (BGFX_CLEAR_COLOR_USE_PALETTE & _clear.m_flags)
+		{
+			const uint8_t index = bx::min<uint8_t>(BGFX_CONFIG_MAX_COLOR_PALETTE-1, _clear.m_index[_attachment]);
+			bx::memCopy(_rgba, _palette[index], sizeof(float)*4);
+		}
+		else
+		{
+			const float scale = _integer ? 1.0f : 1.0f/255.0f;
+			_rgba[0] = _clear.m_index[0]*scale;
+			_rgba[1] = _clear.m_index[1]*scale;
+			_rgba[2] = _clear.m_index[2]*scale;
+			_rgba[3] = _clear.m_index[3]*scale;
+		}
+	}
+
+	inline uint32_t packIntegerTexel(uint8_t* _out, TextureFormat::Enum _format, const float _rgba[4])
+	{
+		const bimg::ImageBlockInfo& info = bimg::getBlockInfo(bimg::TextureFormat::Enum(_format) );
+		const uint8_t bits[4] = { info.rBits, info.gBits, info.bBits, info.aBits };
+
+		uint32_t size = 0;
+
+		for (uint32_t ii = 0; ii < 4; ++ii)
+		{
+			const int64_t value = int64_t(_rgba[ii]);
+
+			for (uint32_t bb = 0, num = bits[ii]/8; bb < num; ++bb)
+			{
+				_out[size++] = uint8_t(value >> (bb*8) );
+			}
+		}
+
+		return size;
 	}
 
 	static constexpr uint32_t kTimerQueryBlock = 64;
