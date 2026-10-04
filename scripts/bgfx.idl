@@ -1,7 +1,7 @@
 -- vim: syntax=lua
 -- bgfx interface
 
-version(163)
+version(164)
 
 typedef "bool"
 typedef "char"
@@ -398,6 +398,7 @@ flag.Caps { bits = 64, base = 1, name = "Caps", section = "Available Caps" }
 	.Index32                --- 32-bit indices are supported.
 	.PrimitiveId            --- PrimitiveID is available in fragment shader.
 	.RendererMultithreaded  --- Renderer is on separate thread.
+	.ShaderF16              --- 16-bit floats are supported in shaders.
 	.SwapChain              --- Multiple windows are supported.
 	.TextureCubeArray       --- Cubemap texture array is supported.
 	.TextureDirectAccess    --- CPU direct access to GPU texture memory.

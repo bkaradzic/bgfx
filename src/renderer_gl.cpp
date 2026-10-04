@@ -606,6 +606,7 @@ namespace bgfx { namespace gl
 		enum Enum
 		{
 			AMD_conservative_depth,
+			AMD_gpu_shader_half_float,
 			AMD_multi_draw_indirect,
 
 			ANGLE_depth_texture,
@@ -759,6 +760,7 @@ namespace bgfx { namespace gl
 			NV_copy_image,
 			NV_draw_buffers,
 			NV_draw_instanced,
+			NV_gpu_shader5,
 			NV_instanced_arrays,
 			NV_occlusion_query,
 			NV_polygon_mode,
@@ -840,6 +842,7 @@ namespace bgfx { namespace gl
 	static Extension s_extension[] =
 	{
 		{ "AMD_conservative_depth",                   false,                                    true  },
+		{ "AMD_gpu_shader_half_float",                false,                                    true  },
 		{ "AMD_multi_draw_indirect",                  false,                                    true  },
 
 		{ "ANGLE_depth_texture",                      false,                                    true  },
@@ -993,6 +996,7 @@ namespace bgfx { namespace gl
 		{ "NV_copy_image",                            false,                                    true  },
 		{ "NV_draw_buffers",                          false,                                    true  }, // GLES extension.
 		{ "NV_draw_instanced",                        false,                                    true  }, // GLES extension.
+		{ "NV_gpu_shader5",                           false,                                    true  },
 		{ "NV_instanced_arrays",                      false,                                    true  }, // GLES extension.
 		{ "NV_occlusion_query",                       false,                                    true  },
 		{ "NV_polygon_mode",                          false,                                    true  }, // GLES extension.
@@ -2827,6 +2831,12 @@ namespace bgfx { namespace gl
 
 				g_caps.supported |= s_extension[Extension::ARB_indirect_parameters].m_supported
 					? BGFX_CAPS_DRAW_INDIRECT_COUNT
+					: 0
+					;
+
+				g_caps.supported |= s_extension[Extension::AMD_gpu_shader_half_float].m_supported
+					|| s_extension[Extension::NV_gpu_shader5].m_supported
+					? BGFX_CAPS_SHADER_F16
 					: 0
 					;
 

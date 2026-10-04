@@ -378,10 +378,12 @@ VK_IMPORT_DEVICE
 			EXT_shader_viewport_index_layer,
 			EXT_surface_maintenance1,
 			EXT_swapchain_maintenance1,
+			KHR_16bit_storage,
 			KHR_draw_indirect_count,
 			KHR_fragment_shading_rate,
 			KHR_get_physical_device_properties2,
 			KHR_get_surface_capabilities2,
+			KHR_shader_float16_int8,
 			KHR_video_queue,
 			KHR_video_decode_queue,
 			KHR_video_decode_h264,
@@ -426,10 +428,12 @@ VK_IMPORT_DEVICE
 		{ "VK_EXT_shader_viewport_index_layer",     1, false, false, true,                                                          Layer::Count },
 		{ "VK_EXT_surface_maintenance1",            1, false, false, true,                                                          Layer::Count },
 		{ "VK_EXT_swapchain_maintenance1",          1, false, false, true,                                                          Layer::Count },
+		{ "VK_KHR_16bit_storage",                   1, false, false, true,                                                          Layer::Count },
 		{ "VK_KHR_draw_indirect_count",             1, false, false, true,                                                          Layer::Count },
 		{ "VK_KHR_fragment_shading_rate",           1, false, false, true,                                                          Layer::Count },
 		{ "VK_KHR_get_physical_device_properties2", 1, false, false, true,                                                          Layer::Count },
 		{ "VK_KHR_get_surface_capabilities2",       1, false, false, true,                                                          Layer::Count },
+		{ "VK_KHR_shader_float16_int8",             1, false, false, true,                                                          Layer::Count },
 		{ "VK_KHR_video_queue",                     1, false, false, true,                                                          Layer::Count },
 		{ "VK_KHR_video_decode_queue",              1, false, false, true,                                                          Layer::Count },
 		{ "VK_KHR_video_decode_h264",               1, false, false, true,                                                          Layer::Count },
@@ -1337,6 +1341,8 @@ VK_IMPORT_DEVICE
 			VkPhysicalDeviceCustomBorderColorFeaturesEXT customBorderColorFeatures = {};
 			VkPhysicalDeviceFragmentShadingRateFeaturesKHR fragmentShadingRate = {};
 			VkPhysicalDeviceSwapchainMaintenance1FeaturesEXT swapchainMaintenance1Features = {};
+			VkPhysicalDeviceShaderFloat16Int8Features shaderFloat16Int8Features = {};
+			VkPhysicalDevice16BitStorageFeatures storage16BitFeatures = {};
 
 			m_fbh = BGFX_INVALID_HANDLE;
 			m_readOnlyDepthLayout = VK_IMAGE_LAYOUT_UNDEFINED;
@@ -1787,6 +1793,19 @@ VK_IMPORT_INSTANCE
 						swapchainMaintenance1Features.pNext = NULL;
 					}
 
+					next->pNext = (VkBaseOutStructure*)&storage16BitFeatures;
+					next = (VkBaseOutStructure*)&storage16BitFeatures;
+					storage16BitFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_16BIT_STORAGE_FEATURES;
+					storage16BitFeatures.pNext = NULL;
+
+					if (s_extension[Extension::KHR_shader_float16_int8].m_supported)
+					{
+						next->pNext = (VkBaseOutStructure*)&shaderFloat16Int8Features;
+						next = (VkBaseOutStructure*)&shaderFloat16Int8Features;
+						shaderFloat16Int8Features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_FLOAT16_INT8_FEATURES;
+						shaderFloat16Int8Features.pNext = NULL;
+					}
+
 					nextFeatures = deviceFeatures2.pNext;
 
 					vkGetPhysicalDeviceFeatures2KHR(m_physicalDevice, &deviceFeatures2);
@@ -1947,6 +1966,13 @@ VK_IMPORT_INSTANCE
 					| (s_extension[Extension::EXT_shader_viewport_index_layer].m_supported ? BGFX_CAPS_VIEWPORT_LAYER_ARRAY : 0)
 					| (s_extension[Extension::KHR_draw_indirect_count        ].m_supported && indirectDrawSupport ? BGFX_CAPS_DRAW_INDIRECT_COUNT : 0)
 					| (s_extension[Extension::KHR_fragment_shading_rate      ].m_supported ? BGFX_CAPS_VARIABLE_RATE_SHADING : 0)
+					| (true
+						&& shaderFloat16Int8Features.shaderFloat16
+						&& storage16BitFeatures.storageBuffer16BitAccess
+						&& storage16BitFeatures.uniformAndStorageBuffer16BitAccess
+						&& storage16BitFeatures.storageInputOutput16
+						? BGFX_CAPS_SHADER_F16
+						: 0)
 					;
 
 				m_variableRateShadingSupported = true

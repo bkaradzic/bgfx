@@ -1222,6 +1222,8 @@ WGPU_IMPORT
 						ifSupported(WGPUFeatureName_RG11B10UfloatRenderable),
 
 						ifSupported(WGPUFeatureName_Depth32FloatStencil8),
+
+						ifSupported(WGPUFeatureName_ShaderF16),
 					};
 
 					bx::quickSort(requiredFeatures, BX_COUNTOF(requiredFeatures) );
@@ -1465,6 +1467,7 @@ WGPU_IMPORT
 							| BGFX_CAPS_RENDERER_MULTITHREADED
 							| BGFX_CAPS_SWAP_CHAIN
 							| BGFX_CAPS_TEXTURE_CUBE_ARRAY
+							| (isFeatureSupported(WGPUFeatureName_ShaderF16) ? BGFX_CAPS_SHADER_F16 : 0)
 							;
 
 						TextureFormatCaps textureFormatCaps;
