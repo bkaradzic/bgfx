@@ -3277,6 +3277,211 @@ namespace bgfx
 		uint32_t     m_sampleMask;
 	};
 
+	template<typename Ty, uint32_t MaxT, uint32_t BlockT = 64>
+	class HandleArenaT
+	{
+	public:
+		static_assert(bx::isPowerOf2(BlockT), "HandleArenaT BlockT must be power of two.");
+
+		~HandleArenaT()
+		{
+			destroy();
+		}
+
+#if BGFX_CONFIG_DYNAMIC_FRAME_STORAGE
+		static constexpr uint32_t kBlockMask = BlockT - 1;
+		static constexpr uint32_t kNumBlocks = (MaxT + kBlockMask)/BlockT;
+
+		HandleArenaT()
+		{
+			bx::memSet(m_block, 0, sizeof(m_block) );
+			bx::memSet(m_numLive, 0, sizeof(m_numLive) );
+			bx::memSet(m_touched, 0, sizeof(m_touched) );
+		}
+
+		void destroy()
+		{
+			for (uint32_t ii = 0; ii < kNumBlocks; ++ii)
+			{
+				freeBlock(ii);
+			}
+
+			bx::memSet(m_numLive, 0, sizeof(m_numLive) );
+			bx::memSet(m_touched, 0, sizeof(m_touched) );
+		}
+
+		Ty& alloc(uint16_t _idx)
+		{
+			const uint32_t blockIdx = _idx / BlockT;
+
+			Ty* block = m_block[blockIdx];
+
+			if (NULL == block)
+			{
+				block = allocBlock(blockIdx);
+			}
+
+			m_numLive[blockIdx]++;
+			m_touched[blockIdx] = true;
+
+			return block[_idx & kBlockMask];
+		}
+
+		template<typename Fn>
+		void each(Fn _fn)
+		{
+			for (uint32_t ii = 0; ii < kNumBlocks; ++ii)
+			{
+				Ty* block = m_block[ii];
+
+				if (NULL != block)
+				{
+					for (uint32_t jj = 0; jj < BlockT; ++jj)
+					{
+						_fn(block[jj]);
+					}
+				}
+			}
+		}
+
+		uint16_t indexOf(const Ty& _ref) const
+		{
+			const Ty* ptr = &_ref;
+
+			for (uint32_t ii = 0; ii < kNumBlocks; ++ii)
+			{
+				const Ty* block = m_block[ii];
+
+				if (NULL != block
+				&&  ptr >= block
+				&&  ptr <  block + BlockT)
+				{
+					return uint16_t(ii*BlockT + uint32_t(ptr - block) );
+				}
+			}
+
+			BX_ASSERT(false, "Element is not in arena.");
+			return UINT16_MAX;
+		}
+
+		void release(uint16_t _idx)
+		{
+			const uint32_t blockIdx = _idx / BlockT;
+
+			BX_ASSERT(0 < m_numLive[blockIdx], "Handle %d released more times than allocated.", _idx);
+			m_numLive[blockIdx]--;
+		}
+
+		BX_FORCE_INLINE Ty& operator[](uint16_t _idx)
+		{
+			return load(_idx / BlockT)[_idx & kBlockMask];
+		}
+
+		BX_FORCE_INLINE const Ty& operator[](uint16_t _idx) const
+		{
+			return load(_idx / BlockT)[_idx & kBlockMask];
+		}
+
+		void freeUnused()
+		{
+			for (uint32_t ii = 0; ii < kNumBlocks; ++ii)
+			{
+				if (0 == m_numLive[ii]
+				&&  !m_touched[ii])
+				{
+					freeBlock(ii);
+				}
+
+				m_touched[ii] = false;
+			}
+		}
+
+	private:
+		BX_FORCE_INLINE Ty* load(uint32_t _blockIdx) const
+		{
+			return *(Ty* volatile*)&m_block[_blockIdx];
+		}
+
+		BX_NO_INLINE Ty* allocBlock(uint32_t _blockIdx)
+		{
+			Ty* block = (Ty*)bx::alloc(g_allocator, sizeof(Ty)*BlockT, BX_ALIGNOF(Ty) );
+
+			for (uint32_t ii = 0; ii < BlockT; ++ii)
+			{
+				BX_PLACEMENT_NEW(&block[ii], Ty);
+			}
+
+			bx::atomicExchangePtr( (void**)&m_block[_blockIdx], block);
+
+			return block;
+		}
+
+		BX_NO_INLINE void freeBlock(uint32_t _blockIdx)
+		{
+			Ty* block = m_block[_blockIdx];
+
+			if (NULL != block)
+			{
+				for (uint32_t ii = 0; ii < BlockT; ++ii)
+				{
+					block[ii].~Ty();
+				}
+
+				bx::free(g_allocator, block, BX_ALIGNOF(Ty) );
+				m_block[_blockIdx] = NULL;
+			}
+		}
+
+		Ty*      m_block[kNumBlocks];
+		uint16_t m_numLive[kNumBlocks];
+		bool     m_touched[kNumBlocks];
+#else
+		void destroy()
+		{
+		}
+
+		Ty& alloc(uint16_t _idx)
+		{
+			return m_data[_idx];
+		}
+
+		void release(uint16_t /*_idx*/)
+		{
+		}
+
+		BX_FORCE_INLINE Ty& operator[](uint16_t _idx)
+		{
+			return m_data[_idx];
+		}
+
+		BX_FORCE_INLINE const Ty& operator[](uint16_t _idx) const
+		{
+			return m_data[_idx];
+		}
+
+		template<typename Fn>
+		void each(Fn _fn)
+		{
+			for (uint32_t ii = 0; ii < MaxT; ++ii)
+			{
+				_fn(m_data[ii]);
+			}
+		}
+
+		uint16_t indexOf(const Ty& _ref) const
+		{
+			return uint16_t(&_ref - m_data);
+		}
+
+		void freeUnused()
+		{
+		}
+
+	private:
+		Ty m_data[MaxT];
+#endif // BGFX_CONFIG_DYNAMIC_FRAME_STORAGE
+	};
+
 	class ViewArena
 	{
 	public:
@@ -5913,7 +6118,7 @@ namespace bgfx
 			BX_WARN(isValid(handle), "Failed to allocate index buffer handle.");
 			if (isValid(handle) )
 			{
-				IndexBuffer& ib = m_indexBuffers[handle.idx];
+				IndexBuffer& ib = m_indexBuffers.alloc(handle.idx);
 				ib.m_size  = _mem->size;
 				ib.m_flags = _flags;
 
@@ -6031,7 +6236,7 @@ namespace bgfx
 
 				m_vertexLayoutRef.add(handle, layoutHandle, _layout.m_hash);
 
-				VertexBuffer& vb = m_vertexBuffers[handle.idx];
+				VertexBuffer& vb = m_vertexBuffers.alloc(handle.idx);
 				vb.m_size   = _mem->size;
 				vb.m_stride = _layout.m_stride;
 				vb.m_flags  = _flags;
@@ -6090,6 +6295,7 @@ namespace bgfx
 				m_render->free(layoutHandle);
 			}
 
+			m_vertexBuffers.release(_handle.idx);
 			m_vertexBufferHandle.free(_handle.idx);
 		}
 
@@ -6107,7 +6313,7 @@ namespace bgfx
 
 				const uint32_t allocSize = bx::max<uint32_t>(BGFX_CONFIG_DYNAMIC_INDEX_BUFFER_SIZE, bx::alignUp(_size, 1<<20) );
 
-				IndexBuffer& ib = m_indexBuffers[indexBufferHandle.idx];
+				IndexBuffer& ib = m_indexBuffers.alloc(indexBufferHandle.idx);
 				ib.m_size  = allocSize;
 				ib.m_flags = _flags;
 
@@ -6132,7 +6338,7 @@ namespace bgfx
 				return NonLocalAllocator::kInvalidBlock;
 			}
 
-			IndexBuffer& ib = m_indexBuffers[indexBufferHandle.idx];
+			IndexBuffer& ib = m_indexBuffers.alloc(indexBufferHandle.idx);
 			ib.m_size  = _size;
 			ib.m_flags = _flags;
 
@@ -6171,7 +6377,7 @@ namespace bgfx
 				return BGFX_INVALID_HANDLE;
 			}
 
-			DynamicIndexBuffer& dib = m_dynamicIndexBuffers[handle.idx];
+			DynamicIndexBuffer& dib = m_dynamicIndexBuffers.alloc(handle.idx);
 			dib.m_handle.idx = uint16_t(ptr>>32);
 			dib.m_offset     = uint32_t(ptr);
 			dib.m_size       = _num * indexSize;
@@ -6275,6 +6481,7 @@ namespace bgfx
 			DynamicIndexBuffer& dib = m_dynamicIndexBuffers[_handle.idx];
 			destroy(dib);
 			dib.reset();
+			m_dynamicIndexBuffers.release(_handle.idx);
 			m_dynamicIndexBufferHandle.free(_handle.idx);
 		}
 
@@ -6292,7 +6499,7 @@ namespace bgfx
 
 				const uint32_t allocSize = bx::max<uint32_t>(BGFX_CONFIG_DYNAMIC_VERTEX_BUFFER_SIZE, bx::alignUp(_size, 1<<20) );
 
-				VertexBuffer& vb = m_vertexBuffers[vertexBufferHandle.idx];
+				VertexBuffer& vb = m_vertexBuffers.alloc(vertexBufferHandle.idx);
 				vb.m_size   = allocSize;
 				vb.m_stride = 0;
 				vb.m_flags  = _flags;
@@ -6319,7 +6526,7 @@ namespace bgfx
 				return NonLocalAllocator::kInvalidBlock;
 			}
 
-			VertexBuffer& vb = m_vertexBuffers[vertexBufferHandle.idx];
+			VertexBuffer& vb = m_vertexBuffers.alloc(vertexBufferHandle.idx);
 			vb.m_size   = _size;
 			vb.m_stride = 0;
 			vb.m_flags  = _flags;
@@ -6365,7 +6572,7 @@ namespace bgfx
 				return BGFX_INVALID_HANDLE;
 			}
 
-			DynamicVertexBuffer& dvb = m_dynamicVertexBuffers[handle.idx];
+			DynamicVertexBuffer& dvb = m_dynamicVertexBuffers.alloc(handle.idx);
 			dvb.m_handle.idx    = uint16_t(ptr>>32);
 			dvb.m_offset        = uint32_t(ptr);
 			dvb.m_size          = _num * _layout.m_stride;
@@ -6486,6 +6693,7 @@ namespace bgfx
 			DynamicVertexBuffer& dvb = m_dynamicVertexBuffers[_handle.idx];
 			destroy(dvb);
 			dvb.reset();
+			m_dynamicVertexBuffers.release(_handle.idx);
 			m_dynamicVertexBufferHandle.free(_handle.idx);
 		}
 
@@ -6513,6 +6721,8 @@ namespace bgfx
 			BX_WARN(isValid(handle), "Failed to allocate transient index buffer handle.");
 			if (isValid(handle) )
 			{
+				m_indexBuffers.alloc(handle.idx);
+
 				CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::CreateDynamicIndexBuffer);
 				cmdbuf.write(handle);
 				cmdbuf.write(_size);
@@ -6569,6 +6779,8 @@ namespace bgfx
 			BX_WARN(isValid(handle), "Failed to allocate transient vertex buffer handle.");
 			if (isValid(handle) )
 			{
+				m_vertexBuffers.alloc(handle.idx);
+
 				uint16_t stride = 0;
 				VertexLayoutHandle layoutHandle = BGFX_INVALID_HANDLE;
 
@@ -6656,7 +6868,7 @@ namespace bgfx
 				const uint32_t size  = _num * BGFX_CONFIG_DRAW_INDIRECT_STRIDE;
 				const uint16_t flags = BGFX_BUFFER_DRAW_INDIRECT;
 
-				VertexBuffer& vb = m_vertexBuffers[handle.idx];
+				VertexBuffer& vb = m_vertexBuffers.alloc(handle.idx);
 				vb.m_size   = size;
 				vb.m_stride = BGFX_CONFIG_DRAW_INDIRECT_STRIDE;
 				vb.m_flags  = flags;
@@ -6780,7 +6992,7 @@ namespace bgfx
 			bool ok = m_shaderHashMap.insert(shaderHash, handle.idx);
 			BX_ASSERT(ok, "Shader already exists!"); BX_UNUSED(ok);
 
-			ShaderRef& sr = m_shaderRef[handle.idx];
+			ShaderRef& sr = m_shaderRef.alloc(handle.idx);
 			sr.m_refCount = 1;
 			sr.m_hashIn   = hashIn;
 			sr.m_hashOut  = hashOut;
@@ -7190,7 +7402,7 @@ namespace bgfx
 				return BGFX_INVALID_HANDLE;
 			}
 
-			TextureRef& ref = m_textureRef[handle.idx];
+			TextureRef& ref = m_textureRef.alloc(handle.idx);
 			ref.init(
 				  _ratio
 				, uint16_t(imageContainer.m_width)
@@ -7584,7 +7796,7 @@ namespace bgfx
 				const TextureRef& firstTexture = m_textureRef[_attachment[0].handle.idx];
 				const BackbufferRatio::Enum bbRatio = BackbufferRatio::Enum(firstTexture.m_bbRatio);
 
-				FrameBufferRef& fbr = m_frameBufferRef[handle.idx];
+				FrameBufferRef& fbr = m_frameBufferRef.alloc(handle.idx);
 				if (BackbufferRatio::Count == bbRatio)
 				{
 					fbr.m_width  = bx::max<uint16_t>(firstTexture.m_width  >> _attachment[0].mip, 1);
@@ -7729,7 +7941,7 @@ namespace bgfx
 
 			if (isValid(handle) )
 			{
-				FrameBufferRef& fbr = m_frameBufferRef[handle.idx];
+				FrameBufferRef& fbr = m_frameBufferRef.alloc(handle.idx);
 				fbr.m_swapChain   = _desc;
 				fbr.m_swapChain.flags = checkSwapChainFlags(_desc.flags & kSwapChainFlagMask);
 				fbr.m_width       = uint16_t(bx::max<uint32_t>(_desc.width,  1) );
@@ -7895,7 +8107,7 @@ namespace bgfx
 
 			BX_TRACE("Creating uniform (handle %3d) `%s`, num %d", handle.idx, _name, _num);
 
-			UniformRef& uniform = m_uniformRef[handle.idx];
+			UniformRef& uniform = m_uniformRef.alloc(handle.idx);
 			uniform.m_name.set(_name);
 			uniform.m_refCount = 1;
 			uniform.m_freq = UniformFreq::Count == _freq
@@ -8325,11 +8537,11 @@ namespace bgfx
 		typedef stl::unordered_map<uint32_t, uint32_t> BindHashMap;
 		BindHashMap m_renderBindHashMap;
 
-		IndexBuffer  m_indexBuffers[BGFX_CONFIG_MAX_INDEX_BUFFERS];
-		VertexBuffer m_vertexBuffers[BGFX_CONFIG_MAX_VERTEX_BUFFERS];
+		HandleArenaT<IndexBuffer,  BGFX_CONFIG_MAX_INDEX_BUFFERS>  m_indexBuffers;
+		HandleArenaT<VertexBuffer, BGFX_CONFIG_MAX_VERTEX_BUFFERS> m_vertexBuffers;
 
-		DynamicIndexBuffer  m_dynamicIndexBuffers[BGFX_CONFIG_MAX_DYNAMIC_INDEX_BUFFERS];
-		DynamicVertexBuffer m_dynamicVertexBuffers[BGFX_CONFIG_MAX_DYNAMIC_VERTEX_BUFFERS];
+		HandleArenaT<DynamicIndexBuffer,  BGFX_CONFIG_MAX_DYNAMIC_INDEX_BUFFERS>  m_dynamicIndexBuffers;
+		HandleArenaT<DynamicVertexBuffer, BGFX_CONFIG_MAX_DYNAMIC_VERTEX_BUFFERS> m_dynamicVertexBuffers;
 
 		uint16_t m_numFreeDynamicIndexBufferHandles;
 		uint16_t m_numFreeDynamicVertexBufferHandles;
@@ -8358,18 +8570,18 @@ namespace bgfx
 
 		typedef bx::HandleHashMapT<BGFX_CONFIG_MAX_UNIFORMS*2> UniformHashMap;
 		UniformHashMap m_uniformHashMap;
-		UniformRef     m_uniformRef[BGFX_CONFIG_MAX_UNIFORMS];
+		HandleArenaT<UniformRef, BGFX_CONFIG_MAX_UNIFORMS> m_uniformRef;
 
 		typedef bx::HandleHashMapT<BGFX_CONFIG_MAX_SHADERS*2> ShaderHashMap;
 		ShaderHashMap m_shaderHashMap;
-		ShaderRef     m_shaderRef[BGFX_CONFIG_MAX_SHADERS];
+		HandleArenaT<ShaderRef, BGFX_CONFIG_MAX_SHADERS> m_shaderRef;
 
 		typedef bx::HandleHashMapT<BGFX_CONFIG_MAX_PROGRAMS*2> ProgramHashMap;
 		ProgramHashMap m_programHashMap;
 		ProgramRef     m_programRef[BGFX_CONFIG_MAX_PROGRAMS];
 
-		TextureRef      m_textureRef[BGFX_CONFIG_MAX_TEXTURES];
-		FrameBufferRef  m_frameBufferRef[BGFX_CONFIG_MAX_FRAME_BUFFERS];
+		HandleArenaT<TextureRef, BGFX_CONFIG_MAX_TEXTURES> m_textureRef;
+		HandleArenaT<FrameBufferRef, BGFX_CONFIG_MAX_FRAME_BUFFERS> m_frameBufferRef;
 		VertexLayoutRef m_vertexLayoutRef;
 
 		ViewId m_viewRemap[BGFX_CONFIG_MAX_VIEWS];

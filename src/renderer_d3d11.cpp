@@ -831,6 +831,8 @@ namespace bgfx { namespace d3d11
 
 		bool init(const Init& _init)
 		{
+			m_frameBuffers.alloc(kMainFrameBufferIdx);
+
 			struct ErrorState
 			{
 				enum Enum
@@ -1733,30 +1735,15 @@ namespace bgfx { namespace d3d11
 
 			invalidateCache();
 
-			for (uint32_t ii = 0; ii < BX_COUNTOF(m_frameBuffers); ++ii)
-			{
-				m_frameBuffers[ii].destroy();
-			}
+			m_frameBuffers.each([](FrameBufferD3D11& _frameBuffer) { _frameBuffer.destroy(); });
 
-			for (uint32_t ii = 0; ii < BX_COUNTOF(m_indexBuffers); ++ii)
-			{
-				m_indexBuffers[ii].destroy();
-			}
+			m_indexBuffers.each([](IndexBufferD3D11& _indexBuffer) { _indexBuffer.destroy(); });
 
-			for (uint32_t ii = 0; ii < BX_COUNTOF(m_vertexBuffers); ++ii)
-			{
-				m_vertexBuffers[ii].destroy();
-			}
+			m_vertexBuffers.each([](VertexBufferD3D11& _vertexBuffer) { _vertexBuffer.destroy(); });
 
-			for (uint32_t ii = 0; ii < BX_COUNTOF(m_shaders); ++ii)
-			{
-				m_shaders[ii].destroy();
-			}
+			m_shaders.each([](ShaderD3D11& _shader) { _shader.destroy(); });
 
-			for (uint32_t ii = 0; ii < BX_COUNTOF(m_textures); ++ii)
-			{
-				m_textures[ii].destroy();
-			}
+			m_textures.each([](TextureD3D11& _texture) { _texture.destroy(); });
 
 			DX_RELEASE_I(m_deviceCtx1);
 			DX_RELEASE(m_annotation, 1);
@@ -1799,13 +1786,14 @@ namespace bgfx { namespace d3d11
 
 		void createIndexBuffer(IndexBufferHandle _handle, const Memory* _mem, uint16_t _flags) override
 		{
-			m_indexBuffers[_handle.idx].create(_mem->size, _mem->data, _flags);
+			m_indexBuffers.alloc(_handle.idx).create(_mem->size, _mem->data, _flags);
 		}
 
 		void destroyIndexBuffer(IndexBufferHandle _handle) override
 		{
 			m_srvUavLru.invalidateWithParent(bufferViewParent(_handle.idx, false) );
 			m_indexBuffers[_handle.idx].destroy();
+			m_indexBuffers.release(_handle.idx);
 		}
 
 		void createVertexLayout(VertexLayoutHandle _handle, const VertexLayout& _layout) override
@@ -1821,18 +1809,19 @@ namespace bgfx { namespace d3d11
 
 		void createVertexBuffer(VertexBufferHandle _handle, const Memory* _mem, VertexLayoutHandle _layoutHandle, uint16_t _flags) override
 		{
-			m_vertexBuffers[_handle.idx].create(_mem->size, _mem->data, _layoutHandle, _flags);
+			m_vertexBuffers.alloc(_handle.idx).create(_mem->size, _mem->data, _layoutHandle, _flags);
 		}
 
 		void destroyVertexBuffer(VertexBufferHandle _handle) override
 		{
 			m_srvUavLru.invalidateWithParent(bufferViewParent(_handle.idx, true) );
 			m_vertexBuffers[_handle.idx].destroy();
+			m_vertexBuffers.release(_handle.idx);
 		}
 
 		void createDynamicIndexBuffer(IndexBufferHandle _handle, uint32_t _size, uint16_t _flags) override
 		{
-			m_indexBuffers[_handle.idx].create(_size, NULL, _flags);
+			m_indexBuffers.alloc(_handle.idx).create(_size, NULL, _flags);
 		}
 
 		void updateDynamicIndexBuffer(IndexBufferHandle _handle, uint32_t _offset, uint32_t _size, const Memory* _mem) override
@@ -1844,12 +1833,13 @@ namespace bgfx { namespace d3d11
 		{
 			m_srvUavLru.invalidateWithParent(bufferViewParent(_handle.idx, false) );
 			m_indexBuffers[_handle.idx].destroy();
+			m_indexBuffers.release(_handle.idx);
 		}
 
 		void createDynamicVertexBuffer(VertexBufferHandle _handle, uint32_t _size, uint16_t _flags) override
 		{
 			VertexLayoutHandle layoutHandle = BGFX_INVALID_HANDLE;
-			m_vertexBuffers[_handle.idx].create(_size, NULL, layoutHandle, _flags);
+			m_vertexBuffers.alloc(_handle.idx).create(_size, NULL, layoutHandle, _flags);
 		}
 
 		void updateDynamicVertexBuffer(VertexBufferHandle _handle, uint32_t _offset, uint32_t _size, const Memory* _mem) override
@@ -1861,31 +1851,34 @@ namespace bgfx { namespace d3d11
 		{
 			m_srvUavLru.invalidateWithParent(bufferViewParent(_handle.idx, true) );
 			m_vertexBuffers[_handle.idx].destroy();
+			m_vertexBuffers.release(_handle.idx);
 		}
 
 		void createShader(ShaderHandle _handle, const Memory* _mem) override
 		{
-			m_shaders[_handle.idx].create(_mem);
+			m_shaders.alloc(_handle.idx).create(_mem);
 		}
 
 		void destroyShader(ShaderHandle _handle) override
 		{
 			m_shaders[_handle.idx].destroy();
+			m_shaders.release(_handle.idx);
 		}
 
 		void createProgram(ProgramHandle _handle, ShaderHandle _vsh, ShaderHandle _fsh) override
 		{
-			m_program[_handle.idx].create(&m_shaders[_vsh.idx], isValid(_fsh) ? &m_shaders[_fsh.idx] : NULL);
+			m_program.alloc(_handle.idx).create(&m_shaders[_vsh.idx], isValid(_fsh) ? &m_shaders[_fsh.idx] : NULL);
 		}
 
 		void destroyProgram(ProgramHandle _handle) override
 		{
 			m_program[_handle.idx].destroy();
+			m_program.release(_handle.idx);
 		}
 
 		void* createTexture(TextureHandle _handle, const Memory* _mem, uint64_t _flags, uint8_t _skip, uint64_t _external) override
 		{
-			return m_textures[_handle.idx].create(_mem, _flags, _skip, _external);
+			return m_textures.alloc(_handle.idx).create(_mem, _flags, _skip, _external);
 		}
 
 		void updateTexture(TextureHandle _handle, uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem) override
@@ -2045,11 +2038,12 @@ namespace bgfx { namespace d3d11
 		void destroyTexture(TextureHandle _handle) override
 		{
 			m_textures[_handle.idx].destroy();
+			m_textures.release(_handle.idx);
 		}
 
 		void createFrameBuffer(FrameBufferHandle _handle, uint8_t _num, const Attachment* _attachment) override
 		{
-			m_frameBuffers[_handle.idx].create(_num, _attachment);
+			m_frameBuffers.alloc(_handle.idx).create(_num, _attachment);
 		}
 
 		void createFrameBuffer(FrameBufferHandle _handle, const SwapChain& _desc) override
@@ -2066,7 +2060,7 @@ namespace bgfx { namespace d3d11
 
 			uint16_t denseIdx = m_numWindows++;
 			m_windows[denseIdx] = _handle;
-			m_frameBuffers[_handle.idx].create(denseIdx, _desc);
+			m_frameBuffers.alloc(_handle.idx).create(denseIdx, _desc);
 		}
 
 		void resizeFrameBuffer(FrameBufferHandle _handle, const SwapChain& _desc) override
@@ -2082,6 +2076,7 @@ namespace bgfx { namespace d3d11
 			}
 
 			uint16_t denseIdx = m_frameBuffers[_handle.idx].destroy();
+			m_frameBuffers.release(_handle.idx);
 			if (UINT16_MAX != denseIdx)
 			{
 				--m_numWindows;
@@ -2346,10 +2341,7 @@ namespace bgfx { namespace d3d11
 			}
 			m_occlusionQuery.preReset();
 
-			for (uint32_t ii = 0; ii < BX_COUNTOF(m_frameBuffers); ++ii)
-			{
-				m_frameBuffers[ii].preReset();
-			}
+			m_frameBuffers.each([](FrameBufferD3D11& _frameBuffer) { _frameBuffer.preReset(); });
 
 //			invalidateCache();
 
@@ -2367,10 +2359,7 @@ namespace bgfx { namespace d3d11
 
 			mainFrameBuffer().m_desc = m_mainSwapChain;
 
-			for (uint32_t ii = 0; ii < BX_COUNTOF(m_frameBuffers); ++ii)
-			{
-				m_frameBuffers[ii].postReset();
-			}
+			m_frameBuffers.each([](FrameBufferD3D11& _frameBuffer) { _frameBuffer.postReset(); });
 
 			FrameBufferD3D11& mainFb = mainFrameBuffer();
 			m_deviceCtx->OMSetRenderTargets(1, &mainFb.m_rtv[0], mainFb.m_dsv);
@@ -4040,13 +4029,13 @@ namespace bgfx { namespace d3d11
 		uint32_t m_maxAnisotropy;
 		bool m_wireframe;
 
-		IndexBufferD3D11 m_indexBuffers[BGFX_CONFIG_MAX_INDEX_BUFFERS];
-		VertexBufferD3D11 m_vertexBuffers[BGFX_CONFIG_MAX_VERTEX_BUFFERS];
-		ShaderD3D11 m_shaders[BGFX_CONFIG_MAX_SHADERS];
-		ProgramD3D11 m_program[BGFX_CONFIG_MAX_PROGRAMS];
-		TextureD3D11 m_textures[BGFX_CONFIG_MAX_TEXTURES];
+		HandleArenaT<IndexBufferD3D11,  BGFX_CONFIG_MAX_INDEX_BUFFERS>   m_indexBuffers;
+		HandleArenaT<VertexBufferD3D11, BGFX_CONFIG_MAX_VERTEX_BUFFERS>  m_vertexBuffers;
+		HandleArenaT<ShaderD3D11,       BGFX_CONFIG_MAX_SHADERS>         m_shaders;
+		HandleArenaT<ProgramD3D11,      BGFX_CONFIG_MAX_PROGRAMS>        m_program;
+		HandleArenaT<TextureD3D11,      BGFX_CONFIG_MAX_TEXTURES>        m_textures;
 		VertexLayout m_vertexLayouts[BGFX_CONFIG_MAX_VERTEX_LAYOUTS];
-		FrameBufferD3D11 m_frameBuffers[BGFX_CONFIG_MAX_FRAME_BUFFERS+1];
+		HandleArenaT<FrameBufferD3D11,  BGFX_CONFIG_MAX_FRAME_BUFFERS+1> m_frameBuffers;
 		Matrix4 m_predefinedUniforms[PredefinedUniform::Count];
 
 		StateCacheT<ID3D11BlendState*> m_blendStateCache;
@@ -5585,7 +5574,7 @@ namespace bgfx { namespace d3d11
 		if (asArray)
 		{
 			ts.m_srv[_stage] = s_renderD3D11->getCachedSrv(
-				  TextureHandle{ uint16_t(this - s_renderD3D11->m_textures) }
+				  TextureHandle{ s_renderD3D11->m_textures.indexOf(*this) }
 				, _firstMip
 				, numMips
 				, _firstLayer
@@ -5599,7 +5588,7 @@ namespace bgfx { namespace d3d11
 		else if (0 != (flags & BGFX_SAMPLER_SAMPLE_STENCIL) )
 		{
 			ts.m_srv[_stage] = s_renderD3D11->getCachedSrv(
-				  TextureHandle{ uint16_t(this - s_renderD3D11->m_textures) }
+				  TextureHandle{ s_renderD3D11->m_textures.indexOf(*this) }
 				, _firstMip
 				, numMips
 				, _firstLayer
@@ -5612,7 +5601,7 @@ namespace bgfx { namespace d3d11
 			 ||  srgbMutable)
 		{
 			ts.m_srv[_stage] = s_renderD3D11->getCachedSrv(
-				  TextureHandle{ uint16_t(this - s_renderD3D11->m_textures) }
+				  TextureHandle{ s_renderD3D11->m_textures.indexOf(*this) }
 				, _firstMip
 				, numMips
 				, _firstLayer
@@ -5670,7 +5659,7 @@ namespace bgfx { namespace d3d11
 
 	TextureHandle TextureD3D11::getHandle() const
 	{
-		TextureHandle handle = { (uint16_t)(this - s_renderD3D11->m_textures) };
+		TextureHandle handle = { s_renderD3D11->m_textures.indexOf(*this) };
 		return handle;
 	}
 
@@ -6889,6 +6878,13 @@ namespace bgfx { namespace d3d11
 
 	void RendererContextD3D11::submit(Frame* _render, const ClearQuad& _clearQuad, const MipGen& /*_mipGen*/, TextVideoMemBlitter& _textVideoMemBlitter)
 	{
+		m_indexBuffers.freeUnused();
+		m_vertexBuffers.freeUnused();
+		m_shaders.freeUnused();
+		m_program.freeUnused();
+		m_textures.freeUnused();
+		m_frameBuffers.freeUnused();
+
 		if (m_lost)
 		{
 			return;

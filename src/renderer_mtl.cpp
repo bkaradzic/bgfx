@@ -1253,15 +1253,9 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 				m_depthStencilStateCache.invalidate();
 				m_samplerStateCache.invalidate();
 
-				for (uint32_t ii = 0; ii < BX_COUNTOF(m_shaders); ++ii)
-				{
-					m_shaders[ii].destroy();
-				}
+				m_shaders.each([](ShaderMtl& _shader) { _shader.destroy(); });
 
-				for (uint32_t ii = 0; ii < BX_COUNTOF(m_textures); ++ii)
-				{
-					m_textures[ii].destroy();
-				}
+				m_textures.each([](TextureMtl& _texture) { _texture.destroy(); });
 
 				m_screenshotBlitProgramVsh.destroy();
 				m_screenshotBlitProgramFsh.destroy();
@@ -1302,12 +1296,13 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 		void createIndexBuffer(IndexBufferHandle _handle, const Memory* _mem, uint16_t _flags) override
 		{
-			m_indexBuffers[_handle.idx].create(_mem->size, _mem->data, _flags);
+			m_indexBuffers.alloc(_handle.idx).create(_mem->size, _mem->data, _flags);
 		}
 
 		void destroyIndexBuffer(IndexBufferHandle _handle) override
 		{
 			m_indexBuffers[_handle.idx].destroy();
+			m_indexBuffers.release(_handle.idx);
 		}
 
 		void createVertexLayout(VertexLayoutHandle _handle, const VertexLayout& _layout) override
@@ -1323,17 +1318,18 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 		void createVertexBuffer(VertexBufferHandle _handle, const Memory* _mem, VertexLayoutHandle _layoutHandle, uint16_t _flags) override
 		{
-			m_vertexBuffers[_handle.idx].create(_mem->size, _mem->data, _layoutHandle, _flags);
+			m_vertexBuffers.alloc(_handle.idx).create(_mem->size, _mem->data, _layoutHandle, _flags);
 		}
 
 		void destroyVertexBuffer(VertexBufferHandle _handle) override
 		{
 			m_vertexBuffers[_handle.idx].destroy();
+			m_vertexBuffers.release(_handle.idx);
 		}
 
 		void createDynamicIndexBuffer(IndexBufferHandle _handle, uint32_t _size, uint16_t _flags) override
 		{
-			m_indexBuffers[_handle.idx].create(_size, NULL, _flags);
+			m_indexBuffers.alloc(_handle.idx).create(_size, NULL, _flags);
 		}
 
 		void updateDynamicIndexBuffer(IndexBufferHandle _handle, uint32_t _offset, uint32_t _size, const Memory* _mem) override
@@ -1344,12 +1340,13 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 		void destroyDynamicIndexBuffer(IndexBufferHandle _handle) override
 		{
 			m_indexBuffers[_handle.idx].destroy();
+			m_indexBuffers.release(_handle.idx);
 		}
 
 		void createDynamicVertexBuffer(VertexBufferHandle _handle, uint32_t _size, uint16_t _flags) override
 		{
 			VertexLayoutHandle layoutHandle = BGFX_INVALID_HANDLE;
-			m_vertexBuffers[_handle.idx].create(_size, NULL, layoutHandle, _flags);
+			m_vertexBuffers.alloc(_handle.idx).create(_size, NULL, layoutHandle, _flags);
 		}
 
 		void updateDynamicVertexBuffer(VertexBufferHandle _handle, uint32_t _offset, uint32_t _size, const Memory* _mem) override
@@ -1360,21 +1357,23 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 		void destroyDynamicVertexBuffer(VertexBufferHandle _handle) override
 		{
 			m_vertexBuffers[_handle.idx].destroy();
+			m_vertexBuffers.release(_handle.idx);
 		}
 
 		void createShader(ShaderHandle _handle, const Memory* _mem) override
 		{
-			m_shaders[_handle.idx].create(_mem);
+			m_shaders.alloc(_handle.idx).create(_mem);
 		}
 
 		void destroyShader(ShaderHandle _handle) override
 		{
 			m_shaders[_handle.idx].destroy();
+			m_shaders.release(_handle.idx);
 		}
 
 		void createProgram(ProgramHandle _handle, ShaderHandle _vsh, ShaderHandle _fsh) override
 		{
-			m_program[_handle.idx].create(&m_shaders[_vsh.idx], isValid(_fsh) ? &m_shaders[_fsh.idx] : NULL);
+			m_program.alloc(_handle.idx).create(&m_shaders[_vsh.idx], isValid(_fsh) ? &m_shaders[_fsh.idx] : NULL);
 		}
 
 		void destroyProgram(ProgramHandle _handle) override
@@ -1394,11 +1393,12 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 			m_lastPso = NULL;
 			m_program[_handle.idx].destroy();
+			m_program.release(_handle.idx);
 		}
 
 		void* createTexture(TextureHandle _handle, const Memory* _mem, uint64_t _flags, uint8_t _skip, uint64_t _external) override
 		{
-			m_textures[_handle.idx].create(_mem, _flags, _skip, _external);
+			m_textures.alloc(_handle.idx).create(_mem, _flags, _skip, _external);
 			return NULL;
 		}
 
@@ -1724,11 +1724,12 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 		void destroyTexture(TextureHandle _handle) override
 		{
 			m_textures[_handle.idx].destroy();
+			m_textures.release(_handle.idx);
 		}
 
 		void createFrameBuffer(FrameBufferHandle _handle, uint8_t _num, const Attachment* _attachment) override
 		{
-			m_frameBuffers[_handle.idx].create(_num, _attachment);
+			m_frameBuffers.alloc(_handle.idx).create(_num, _attachment);
 		}
 
 		void createFrameBuffer(FrameBufferHandle _handle, const SwapChain& _desc) override
@@ -1746,7 +1747,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			uint16_t denseIdx   = m_numWindows++;
 			m_windows[denseIdx] = _handle;
 
-			FrameBufferMtl& fb = m_frameBuffers[_handle.idx];
+			FrameBufferMtl& fb = m_frameBuffers.alloc(_handle.idx);
 			fb.create(denseIdx, _desc);
 		}
 
@@ -1767,6 +1768,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			}
 
 			uint16_t denseIdx = m_frameBuffers[_handle.idx].destroy();
+			m_frameBuffers.release(_handle.idx);
 
 			if (UINT16_MAX != denseIdx)
 			{
@@ -2125,10 +2127,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 				m_reset &= ~BGFX_RESET_INTERNAL_FORCE;
 
-				for (uint32_t ii = 0; ii < BX_COUNTOF(m_frameBuffers); ++ii)
-				{
-					m_frameBuffers[ii].postReset();
-				}
+				m_frameBuffers.each([](FrameBufferMtl& _frameBuffer) { _frameBuffer.postReset(); });
 
 				updateCapture();
 
@@ -3743,13 +3742,13 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 		uint16_t          m_numWindows;
 		FrameBufferHandle m_windows[BGFX_CONFIG_MAX_FRAME_BUFFERS];
 
-		IndexBufferMtl  m_indexBuffers[BGFX_CONFIG_MAX_INDEX_BUFFERS];
-		VertexBufferMtl m_vertexBuffers[BGFX_CONFIG_MAX_VERTEX_BUFFERS];
-		ShaderMtl       m_shaders[BGFX_CONFIG_MAX_SHADERS];
-		ProgramMtl      m_program[BGFX_CONFIG_MAX_PROGRAMS];
-		TextureMtl      m_textures[BGFX_CONFIG_MAX_TEXTURES];
+		HandleArenaT<IndexBufferMtl,  BGFX_CONFIG_MAX_INDEX_BUFFERS>  m_indexBuffers;
+		HandleArenaT<VertexBufferMtl, BGFX_CONFIG_MAX_VERTEX_BUFFERS> m_vertexBuffers;
+		HandleArenaT<ShaderMtl,       BGFX_CONFIG_MAX_SHADERS>        m_shaders;
+		HandleArenaT<ProgramMtl,      BGFX_CONFIG_MAX_PROGRAMS>       m_program;
+		HandleArenaT<TextureMtl,      BGFX_CONFIG_MAX_TEXTURES>       m_textures;
 		FrameBufferMtl  m_mainFrameBuffer;
-		FrameBufferMtl  m_frameBuffers[BGFX_CONFIG_MAX_FRAME_BUFFERS];
+		HandleArenaT<FrameBufferMtl,  BGFX_CONFIG_MAX_FRAME_BUFFERS>  m_frameBuffers;
 		VertexLayout    m_vertexLayouts[BGFX_CONFIG_MAX_VERTEX_LAYOUTS];
 
 		struct PipelineProgram
@@ -4324,7 +4323,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			const bool srgb         = 0 != (_flags&BGFX_TEXTURE_SRGB);
 
 			BX_TRACE("Texture %3d: %s (requested: %s), layers %d, %dx%d%s RT[%c], WO[%c], CW[%c], sRGB[%c]"
-				, this - s_renderMtl->m_textures
+				, s_renderMtl->m_textures.indexOf(*this)
 				, getName( (TextureFormat::Enum)m_textureFormat)
 				, getName( (TextureFormat::Enum)m_requestedFormat)
 				, ti.numLayers
@@ -6075,6 +6074,13 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 	void RendererContextMtl::submit(Frame* _render, const ClearQuad& _clearQuad, const MipGen& /*_mipGen*/, TextVideoMemBlitter& _textVideoMemBlitter)
 	{
+		m_indexBuffers.freeUnused();
+		m_vertexBuffers.freeUnused();
+		m_shaders.freeUnused();
+		m_program.freeUnused();
+		m_textures.freeUnused();
+		m_frameBuffers.freeUnused();
+
 		m_cmd.finish(false);
 
 		m_colorPalette = _render->m_colorPalette;

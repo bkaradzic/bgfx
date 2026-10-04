@@ -1583,30 +1583,15 @@ WGPU_IMPORT
 				}
 			}
 
-			for (uint32_t ii = 0; ii < BX_COUNTOF(m_frameBuffers); ++ii)
-			{
-				m_frameBuffers[ii].destroy();
-			}
+			m_frameBuffers.each([](FrameBufferWGPU& _frameBuffer) { _frameBuffer.destroy(); });
 
-			for (uint32_t ii = 0; ii < BX_COUNTOF(m_indexBuffers); ++ii)
-			{
-				m_indexBuffers[ii].destroy();
-			}
+			m_indexBuffers.each([](IndexBufferWGPU& _indexBuffer) { _indexBuffer.destroy(); });
 
-			for (uint32_t ii = 0; ii < BX_COUNTOF(m_vertexBuffers); ++ii)
-			{
-				m_vertexBuffers[ii].destroy();
-			}
+			m_vertexBuffers.each([](VertexBufferWGPU& _vertexBuffer) { _vertexBuffer.destroy(); });
 
-			for (uint32_t ii = 0; ii < BX_COUNTOF(m_shaders); ++ii)
-			{
-				m_shaders[ii].destroy();
-			}
+			m_shaders.each([](ShaderWGPU& _shader) { _shader.destroy(); });
 
-			for (uint32_t ii = 0; ii < BX_COUNTOF(m_textures); ++ii)
-			{
-				m_textures[ii].destroy();
-			}
+			m_textures.each([](TextureWGPU& _texture) { _texture.destroy(); });
 
 			m_backBuffer.destroy();
 
@@ -1664,13 +1649,14 @@ WGPU_IMPORT
 
 		void createIndexBuffer(IndexBufferHandle _handle, const Memory* _mem, uint16_t _flags) override
 		{
-			m_indexBuffers[_handle.idx].create(_mem->size, _mem->data, _flags, false);
+			m_indexBuffers.alloc(_handle.idx).create(_mem->size, _mem->data, _flags, false);
 		}
 
 		void destroyIndexBuffer(IndexBufferHandle _handle) override
 		{
 			invalidateBindGroupCache();
 			m_indexBuffers[_handle.idx].destroy();
+			m_indexBuffers.release(_handle.idx);
 		}
 
 		void createVertexLayout(VertexLayoutHandle _handle, const VertexLayout& _layout) override
@@ -1686,18 +1672,19 @@ WGPU_IMPORT
 
 		void createVertexBuffer(VertexBufferHandle _handle, const Memory* _mem, VertexLayoutHandle _layoutHandle, uint16_t _flags) override
 		{
-			m_vertexBuffers[_handle.idx].create(_mem->size, _mem->data, _layoutHandle, _flags);
+			m_vertexBuffers.alloc(_handle.idx).create(_mem->size, _mem->data, _layoutHandle, _flags);
 		}
 
 		void destroyVertexBuffer(VertexBufferHandle _handle) override
 		{
 			invalidateBindGroupCache();
 			m_vertexBuffers[_handle.idx].destroy();
+			m_vertexBuffers.release(_handle.idx);
 		}
 
 		void createDynamicIndexBuffer(IndexBufferHandle _handle, uint32_t _size, uint16_t _flags) override
 		{
-			m_indexBuffers[_handle.idx].create(_size, NULL, _flags, false);
+			m_indexBuffers.alloc(_handle.idx).create(_size, NULL, _flags, false);
 		}
 
 		void updateDynamicIndexBuffer(IndexBufferHandle _handle, uint32_t _offset, uint32_t _size, const Memory* _mem) override
@@ -1709,12 +1696,13 @@ WGPU_IMPORT
 		{
 			invalidateBindGroupCache();
 			m_indexBuffers[_handle.idx].destroy();
+			m_indexBuffers.release(_handle.idx);
 		}
 
 		void createDynamicVertexBuffer(VertexBufferHandle _handle, uint32_t _size, uint16_t _flags) override
 		{
 			VertexLayoutHandle layoutHandle = BGFX_INVALID_HANDLE;
-			m_vertexBuffers[_handle.idx].create(_size, NULL, layoutHandle, _flags);
+			m_vertexBuffers.alloc(_handle.idx).create(_size, NULL, layoutHandle, _flags);
 		}
 
 		void updateDynamicVertexBuffer(VertexBufferHandle _handle, uint32_t _offset, uint32_t _size, const Memory* _mem) override
@@ -1726,32 +1714,35 @@ WGPU_IMPORT
 		{
 			invalidateBindGroupCache();
 			m_vertexBuffers[_handle.idx].destroy();
+			m_vertexBuffers.release(_handle.idx);
 		}
 
 		void createShader(ShaderHandle _handle, const Memory* _mem) override
 		{
-			m_shaders[_handle.idx].create(_mem);
+			m_shaders.alloc(_handle.idx).create(_mem);
 		}
 
 		void destroyShader(ShaderHandle _handle) override
 		{
 			m_shaders[_handle.idx].destroy();
+			m_shaders.release(_handle.idx);
 		}
 
 		void createProgram(ProgramHandle _handle, ShaderHandle _vsh, ShaderHandle _fsh) override
 		{
-			m_program[_handle.idx].create(&m_shaders[_vsh.idx], isValid(_fsh) ? &m_shaders[_fsh.idx] : NULL);
+			m_program.alloc(_handle.idx).create(&m_shaders[_vsh.idx], isValid(_fsh) ? &m_shaders[_fsh.idx] : NULL);
 		}
 
 		void destroyProgram(ProgramHandle _handle) override
 		{
 			m_program[_handle.idx].destroy();
+			m_program.release(_handle.idx);
 		}
 
 		void* createTexture(TextureHandle _handle, const Memory* _mem, uint64_t _flags, uint8_t _skip, uint64_t _external) override
 		{
 			BX_UNUSED(_external);
-			m_textures[_handle.idx].create(_mem, _flags, _skip);
+			m_textures.alloc(_handle.idx).create(_mem, _flags, _skip);
 			return NULL;
 		}
 
@@ -2138,11 +2129,12 @@ WGPU_IMPORT
 		{
 			invalidateBindGroupCache();
 			m_textures[_handle.idx].destroy();
+			m_textures.release(_handle.idx);
 		}
 
 		void createFrameBuffer(FrameBufferHandle _handle, uint8_t _num, const Attachment* _attachment) override
 		{
-			m_frameBuffers[_handle.idx].create(_num, _attachment);
+			m_frameBuffers.alloc(_handle.idx).create(_num, _attachment);
 		}
 
 		void createFrameBuffer(FrameBufferHandle _handle, const SwapChain& _desc) override
@@ -2159,7 +2151,7 @@ WGPU_IMPORT
 
 			uint16_t denseIdx = m_numWindows++;
 			m_windows[denseIdx] = _handle;
-			m_frameBuffers[_handle.idx].create(denseIdx, _desc);
+			m_frameBuffers.alloc(_handle.idx).create(denseIdx, _desc);
 		}
 
 		void resizeFrameBuffer(FrameBufferHandle _handle, const SwapChain& _desc) override
@@ -2174,6 +2166,7 @@ WGPU_IMPORT
 			FrameBufferWGPU& frameBuffer = m_frameBuffers[_handle.idx];
 
 			uint16_t denseIdx = frameBuffer.destroy();
+			m_frameBuffers.release(_handle.idx);
 			if (UINT16_MAX != denseIdx)
 			{
 				--m_numWindows;
@@ -2709,20 +2702,14 @@ WGPU_IMPORT
 		{
 			m_renderPipelineCache.invalidate();
 
-			for (uint32_t ii = 0; ii < BX_COUNTOF(m_frameBuffers); ++ii)
-			{
-				m_frameBuffers[ii].preReset();
-			}
+			m_frameBuffers.each([](FrameBufferWGPU& _frameBuffer) { _frameBuffer.preReset(); });
 
 			invalidateCache();
 		}
 
 		void postReset()
 		{
-			for (uint32_t ii = 0; ii < BX_COUNTOF(m_frameBuffers); ++ii)
-			{
-				m_frameBuffers[ii].postReset();
-			}
+			m_frameBuffers.each([](FrameBufferWGPU& _frameBuffer) { _frameBuffer.postReset(); });
 
 			if (m_reset & BGFX_RESET_CAPTURE)
 			{
@@ -2771,11 +2758,10 @@ WGPU_IMPORT
 					m_mainSwapChain.width  = _swapChain.width;
 					m_mainSwapChain.height = _swapChain.height;
 
-					for (uint32_t ii = 0; ii < BX_COUNTOF(m_frameBuffers); ++ii)
-					{
-						m_frameBuffers[ii].preReset();
-						m_frameBuffers[ii].postReset();
-					}
+					m_frameBuffers.each([](FrameBufferWGPU& _frameBuffer) {
+						_frameBuffer.preReset();
+						_frameBuffer.postReset();
+					});
 				}
 
 				return suspended;
@@ -4018,13 +4004,13 @@ WGPU_IMPORT
 		WGPUTexture     m_mipGenStubTexture[2];
 		WGPUTextureView m_mipGenStubTextureView[2][3];
 
-		IndexBufferWGPU  m_indexBuffers[BGFX_CONFIG_MAX_INDEX_BUFFERS];
-		VertexBufferWGPU m_vertexBuffers[BGFX_CONFIG_MAX_VERTEX_BUFFERS];
-		ShaderWGPU       m_shaders[BGFX_CONFIG_MAX_SHADERS];
-		ProgramWGPU      m_program[BGFX_CONFIG_MAX_PROGRAMS];
-		TextureWGPU      m_textures[BGFX_CONFIG_MAX_TEXTURES];
+		HandleArenaT<IndexBufferWGPU,  BGFX_CONFIG_MAX_INDEX_BUFFERS>  m_indexBuffers;
+		HandleArenaT<VertexBufferWGPU, BGFX_CONFIG_MAX_VERTEX_BUFFERS> m_vertexBuffers;
+		HandleArenaT<ShaderWGPU,       BGFX_CONFIG_MAX_SHADERS>        m_shaders;
+		HandleArenaT<ProgramWGPU,      BGFX_CONFIG_MAX_PROGRAMS>       m_program;
+		HandleArenaT<TextureWGPU,      BGFX_CONFIG_MAX_TEXTURES>       m_textures;
 		VertexLayout     m_vertexLayouts[BGFX_CONFIG_MAX_VERTEX_LAYOUTS];
-		FrameBufferWGPU  m_frameBuffers[BGFX_CONFIG_MAX_FRAME_BUFFERS];
+		HandleArenaT<FrameBufferWGPU,  BGFX_CONFIG_MAX_FRAME_BUFFERS>  m_frameBuffers;
 
 		StateCacheLru<ComputePipeline, 1024> m_computePipelineCache;
 		StateCacheLru<RenderPipeline, 1024>  m_renderPipelineCache;
@@ -4764,7 +4750,7 @@ WGPU_IMPORT
 			const bool needResolve = 1 < m_msaaCount && !writeOnly;
 
 			BX_TRACE("Texture %3d: %s (requested: %s), %dx%d%s RT[%c], BO[%c], CW[%c]%s."
-				, this - s_renderWGPU->m_textures
+				, s_renderWGPU->m_textures.indexOf(*this)
 				, getName( (TextureFormat::Enum)m_textureFormat)
 				, getName( (TextureFormat::Enum)m_requestedFormat)
 				, ti.width
@@ -4971,7 +4957,7 @@ WGPU_IMPORT
 
 	void TextureWGPU::destroy()
 	{
-		s_renderWGPU->m_textureViewStateCache.invalidateWithParent(uint16_t(this - s_renderWGPU->m_textures) );
+		s_renderWGPU->m_textureViewStateCache.invalidateWithParent(s_renderWGPU->m_textures.indexOf(*this) );
 
 		wgpuDestroy(m_texture);
 		wgpuDestroy(m_textureMsaa);
@@ -5286,7 +5272,7 @@ WGPU_IMPORT
 			};
 
 			textureView = WGPU_CHECK(wgpuTextureCreateView(m_texture, &textureViewDesc) );
-			s_renderWGPU->m_textureViewStateCache.add(hash, textureView, uint16_t(this - s_renderWGPU->m_textures) );
+			s_renderWGPU->m_textureViewStateCache.add(hash, textureView, s_renderWGPU->m_textures.indexOf(*this) );
 		}
 
 		return textureView;
@@ -6937,6 +6923,13 @@ WGPU_IMPORT
 
 	void RendererContextWGPU::submit(Frame* _render, const ClearQuad& _clearQuad, const MipGen& _mipGen, TextVideoMemBlitter& _textVideoMemBlitter)
 	{
+		m_indexBuffers.freeUnused();
+		m_vertexBuffers.freeUnused();
+		m_shaders.freeUnused();
+		m_program.freeUnused();
+		m_textures.freeUnused();
+		m_frameBuffers.freeUnused();
+
 		if (0 != m_lost)
 		{
 			return;
