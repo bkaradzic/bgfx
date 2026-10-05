@@ -7344,6 +7344,7 @@ WGPU_IMPORT
 
 						renderPassEncoder = WGPU_CHECK(wgpuCommandEncoderBeginRenderPass(cmdEncoder, &renderPassDesc) );
 						currentPipeline   = NULL;
+						blendFactor       = 0;
 
 						currentState.m_stencil = UINT64_MAX;
 
