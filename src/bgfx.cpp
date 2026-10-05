@@ -9,6 +9,7 @@
 #include <bgfx/embedded_shader.h>
 #include <bx/file.h>
 #include <bx/mutex.h>
+#include <bx/superluminal.h>
 
 #include "topology.h"
 
@@ -68,99 +69,16 @@ namespace bgfx
 		}
 	}
 
-	struct Superluminal
-	{
-		struct SuppressTailCallOptimization
-		{
-			int64_t SuppressTailCall[3];
-		};
-
-		typedef void (*SuperluminalBeginEventtFn)(const char* _inID, const char* _inData, uint32_t _inColor);
-		typedef SuppressTailCallOptimization(*SuperluminalEndEventFn)();
-
-		static void stubSuperluminalBeginEvent(const char* _inID, const char* _inData, uint32_t _inColor)
-		{
-			BX_UNUSED(_inID, _inData, _inColor);
-		}
-
-		static SuppressTailCallOptimization stubSuperluminalEndEvent()
-		{
-			return {};
-		}
-
-		bool init()
-		{
-			if (!BX_ENABLED(BGFX_CONFIG_PROFILER) )
-			{
-				return false;
-			}
-
-			const char* superluminalDllName = "PerformanceAPI.dll";
-			superluminalDll = bx::dlopen(superluminalDllName);
-
-			if (NULL != superluminalDll)
-			{
-				void* funcPtrs[11];
-
-				typedef int (*PerformanceAPI_GetAPI)(int32_t _version, void** _funcPtrs);
-
-				constexpr int32_t version = 0x30000;
-
-				PerformanceAPI_GetAPI getApi = bx::dlsym<PerformanceAPI_GetAPI>(superluminalDll, "PerformanceAPI_GetAPI");
-				if (NULL == getApi)
-				{
-					BX_TRACE("Failed to obtain Superluminal's %s GetAPI function!", superluminalDllName);
-					bx::dlclose(superluminalDll);
-					return false;
-				}
-
-				if (getApi(version, funcPtrs) )
-				{
-					BX_TRACE("Superluminal's PerformanceAPI.dll is loaded!");
-					beginEvent = (SuperluminalBeginEventtFn)funcPtrs[2];
-					endEvent   = (SuperluminalEndEventFn   )funcPtrs[6];
-					return true;
-				}
-
-				BX_TRACE("Failed to obtain Superluminal's %s GetAPI function!", superluminalDllName);
-				bx::dlclose(superluminalDll);
-			}
-			else
-			{
-				BX_TRACE("Failed to load Superluminal's %s!", superluminalDllName);
-			}
-
-			return false;
-		}
-
-		void shutdown()
-		{
-			if (NULL != superluminalDll)
-			{
-				bx::dlclose(superluminalDll);
-				superluminalDll = NULL;
-				beginEvent = stubSuperluminalBeginEvent;
-				endEvent   = stubSuperluminalEndEvent;
-			}
-		}
-
-		void* superluminalDll = NULL;
-		SuperluminalBeginEventtFn beginEvent = stubSuperluminalBeginEvent;
-		SuperluminalEndEventFn    endEvent   = stubSuperluminalEndEvent;
-	};
-
 	struct CallbackStub : public CallbackI
 	{
-		Superluminal m_superluminal;
+		bx::Superluminal m_superluminal;
 
 		CallbackStub()
 		{
-			m_superluminal.init();
-		}
-
-		virtual ~CallbackStub()
-		{
-			m_superluminal.shutdown();
+			if (BX_ENABLED(BGFX_CONFIG_PROFILER) )
+			{
+				m_superluminal.load();
+			}
 		}
 
 		virtual void fatal(const char* _filePath, uint16_t _line, Fatal::Enum _code, const char* _str) override
@@ -387,7 +305,6 @@ namespace bgfx
 	bx::AllocatorI* g_allocator = NULL;
 
 	Caps g_caps;
-	char g_viewName[BGFX_CONFIG_MAX_VIEWS][BGFX_CONFIG_MAX_VIEW_NAME];
 
 #if BGFX_CONFIG_MULTITHREADED
 	static BX_THREAD_LOCAL uint32_t s_threadIndex(0);
@@ -396,6 +313,43 @@ namespace bgfx
 #endif // BGFX_CONFIG_MULTITHREADED
 
 	static Context* s_ctx = NULL;
+
+	const char* getViewName(const Frame* _frame, ViewId _view)
+	{
+		return s_ctx->m_viewNames.get(_frame->view(_view).m_nameIdx);
+	}
+
+	void formatViewName(char* _out, const Frame* _frame, ViewId _view, const bx::StringView& _type)
+	{
+		_out[0] = _view >= 1000 ? char('0' + (_view/1000)%10) : ' ';
+		_out[1] = _view >=  100 ? char('0' + (_view/ 100)%10) : ' ';
+		_out[2] = _view >=   10 ? char('0' + (_view/  10)%10) : ' ';
+		_out[3] = char('0' + _view%10);
+		_out[4] = ' ';
+		_out[5] = ' ';
+		_out[6] = ' ';
+
+		bx::strCopy(&_out[BGFX_CONFIG_MAX_VIEW_NAME_RESERVED]
+			, BGFX_CONFIG_MAX_VIEW_NAME-BGFX_CONFIG_MAX_VIEW_NAME_RESERVED
+			, getViewName(_frame, _view)
+			);
+
+		bx::memCopy(&_out[4], _type.getPtr(), _type.getLength() );
+	}
+
+	const View& Frame::view(ViewId _id) const
+	{
+		const uint32_t word = _id / 64;
+		const uint64_t bit  = UINT64_C(1) << (_id & 63);
+		const uint64_t used = m_viewUsed[word];
+
+		if (0 == (used & bit) )
+		{
+			return s_ctx->m_view.unset();
+		}
+
+		return m_view[m_viewUsedOffset[word] + bx::countBits(used & (bit - 1) )];
+	}
 	static bool s_renderFrameCalled = false;
 	InternalData g_internalData;
 	PlatformData g_platformData;
@@ -1589,7 +1543,7 @@ namespace bgfx
 		m_key.m_view = _id;
 
 		SortKey::Enum type;
-		switch (s_ctx->m_view[_id].m_mode)
+		switch (s_ctx->m_view.get(_id).m_mode)
 		{
 		case ViewMode::Sequential:      m_key.m_seq   =     renderItemIdx; type = SortKey::SortSequence; break;
 		case ViewMode::DepthAscending:  m_key.m_depth =            _depth; type = SortKey::SortDepth;    break;
@@ -1717,14 +1671,9 @@ namespace bgfx
 	{
 		BGFX_PROFILER_SCOPE("bgfx/Sort", kColorSubmit);
 
-		for (uint32_t ii = 0; ii < BGFX_CONFIG_MAX_VIEWS; ++ii)
-		{
-			m_viewOrder[m_viewRemap[ii] ] = ViewId(ii);
-		}
-
 		for (uint32_t ii = 0, num = m_numUsedViews; ii < num; ++ii)
 		{
-			View& view = m_view[m_usedViews[ii] ];
+			View& view = m_view[ii];
 			Rect rect(0, 0, uint16_t(m_mainSwapChain.width), uint16_t(m_mainSwapChain.height) );
 
 			if (isValid(view.m_fbh) )
@@ -1944,6 +1893,7 @@ namespace bgfx
 		CAPS_FLAGS(BGFX_CAPS_INDEX32),
 		CAPS_FLAGS(BGFX_CAPS_PRIMITIVE_ID),
 		CAPS_FLAGS(BGFX_CAPS_RENDERER_MULTITHREADED),
+		CAPS_FLAGS(BGFX_CAPS_SHADER_F16),
 		CAPS_FLAGS(BGFX_CAPS_SWAP_CHAIN),
 		CAPS_FLAGS(BGFX_CAPS_TEXTURE_CUBE_ARRAY),
 		CAPS_FLAGS(BGFX_CAPS_TEXTURE_DIRECT_ACCESS),
@@ -2425,12 +2375,12 @@ namespace bgfx
 		for (uint32_t ii = 0; ii < BX_COUNTOF(m_viewRemap); ++ii)
 		{
 			m_viewRemap[ii] = ViewId(ii);
+			m_viewOrder[ii] = ViewId(ii);
 		}
 
-		for (uint32_t ii = 0; ii < BGFX_CONFIG_MAX_VIEWS; ++ii)
-		{
-			resetView(ViewId(ii) );
-		}
+		m_view.create(_init.limits.minViews);
+		m_viewNames.create();
+		m_viewObserve = 0;
 
 		for (uint32_t ii = 0; ii < BX_COUNTOF(m_clearColor); ++ii)
 		{
@@ -2487,6 +2437,7 @@ namespace bgfx
 			bx::free(g_allocator, m_encoderStats);
 
 			m_vertexLayoutRef.shutdown(m_layoutHandle);
+			m_viewNames.destroy();
 			m_submit->destroy();
 #if BGFX_CONFIG_MULTITHREADED
 			if (m_thread.isRunning() )
@@ -2632,69 +2583,80 @@ namespace bgfx
 		bx::memSet(&g_internalData, 0, sizeof(InternalData) );
 		s_ctx = NULL;
 
+		m_viewNames.destroy();
 		m_submit->destroy();
 
 		if (BX_ENABLED(BGFX_CONFIG_DEBUG) )
 		{
-#define CHECK_HANDLE_LEAK(_name, _handleAlloc)                                        \
-	BX_MACRO_BLOCK_BEGIN                                                              \
-		if (0 != _handleAlloc.getNumHandles() )                                       \
-		{                                                                             \
-			BX_TRACE("LEAK: %s %d (max: %d)"                                          \
-				, _name                                                               \
-				, _handleAlloc.getNumHandles()                                        \
-				, _handleAlloc.getMaxHandles()                                        \
-				);                                                                    \
-			for (uint16_t ii = 0, num = _handleAlloc.getNumHandles(); ii < num; ++ii) \
-			{                                                                         \
-				BX_TRACE("\t%3d: %4d", ii, _handleAlloc.getHandleAt(ii) );            \
-			}                                                                         \
-		}                                                                             \
+#define CHECK_HANDLE_LEAK(_name, _handleAlloc)           \
+	BX_MACRO_BLOCK_BEGIN                                 \
+		if (0 != _handleAlloc.getNumHandles() )          \
+		{                                                \
+			BX_TRACE("LEAK: %s %d (max: %d)"             \
+				, _name                                  \
+				, _handleAlloc.getNumHandles()           \
+				, _handleAlloc.getMaxHandles()           \
+				);                                       \
+			uint16_t ii = 0; BX_UNUSED(ii);              \
+			for (uint16_t idx = _handleAlloc.findFirst() \
+				; bx::kInvalidHandle != idx              \
+				; idx = _handleAlloc.findNext(idx), ++ii \
+				)                                        \
+			{                                            \
+				BX_TRACE("\t%3d: %4d", ii, idx);         \
+			}                                            \
+		}                                                \
 	BX_MACRO_BLOCK_END
 
-#define CHECK_HANDLE_LEAK_NAME(_name, _handleAlloc, _type, _ref)                      \
-	BX_MACRO_BLOCK_BEGIN                                                              \
-		if (0 != _handleAlloc.getNumHandles() )                                       \
-		{                                                                             \
-			BX_TRACE("LEAK: %s %d (max: %d)"                                          \
-				, _name                                                               \
-				, _handleAlloc.getNumHandles()                                        \
-				, _handleAlloc.getMaxHandles()                                        \
-				);                                                                    \
-			for (uint16_t ii = 0, num = _handleAlloc.getNumHandles(); ii < num; ++ii) \
-			{                                                                         \
-				uint16_t idx = _handleAlloc.getHandleAt(ii);                          \
-				const _type& ref = _ref[idx]; BX_UNUSED(ref);                         \
-				BX_TRACE("\t%3d: %4d %s"                                              \
-					, ii                                                              \
-					, idx                                                             \
-					, ref.m_name.getCPtr()                                            \
-					);                                                                \
-			}                                                                         \
-		}                                                                             \
+#define CHECK_HANDLE_LEAK_NAME(_name, _handleAlloc, _type, _ref) \
+	BX_MACRO_BLOCK_BEGIN                                         \
+		if (0 != _handleAlloc.getNumHandles() )                  \
+		{                                                        \
+			BX_TRACE("LEAK: %s %d (max: %d)"                     \
+				, _name                                          \
+				, _handleAlloc.getNumHandles()                   \
+				, _handleAlloc.getMaxHandles()                   \
+				);                                               \
+			uint16_t ii = 0; BX_UNUSED(ii);                      \
+			for (uint16_t idx = _handleAlloc.findFirst()         \
+				; bx::kInvalidHandle != idx                      \
+				; idx = _handleAlloc.findNext(idx), ++ii         \
+				)                                                \
+			{                                                    \
+				const _type& ref = _ref[idx]; BX_UNUSED(ref);    \
+				BX_TRACE("\t%3d: %4d %s"                         \
+					, ii                                         \
+					, idx                                        \
+					, ref.m_name.getCPtr()                       \
+					);                                           \
+			}                                                    \
+		}                                                        \
 	BX_MACRO_BLOCK_END
 
-#define CHECK_HANDLE_LEAK_RC_NAME(_name, _handleAlloc, _type, _ref)                   \
-	BX_MACRO_BLOCK_BEGIN                                                              \
-		if (0 != _handleAlloc.getNumHandles() )                                       \
-		{                                                                             \
-			BX_TRACE("LEAK: %s %d (max: %d)"                                          \
-				, _name                                                               \
-				, _handleAlloc.getNumHandles()                                        \
-				, _handleAlloc.getMaxHandles()                                        \
-				);                                                                    \
-			for (uint16_t ii = 0, num = _handleAlloc.getNumHandles(); ii < num; ++ii) \
-			{                                                                         \
-				uint16_t idx = _handleAlloc.getHandleAt(ii);                          \
-				const _type& ref = _ref[idx]; BX_UNUSED(ref);                         \
-				BX_TRACE("\t%3d: %4d %s (count %d)"                                   \
-					, ii                                                              \
-					, idx                                                             \
-					, ref.m_name.getCPtr()                                            \
-					, ref.m_refCount                                                  \
-					);                                                                \
-			}                                                                         \
-		}                                                                             \
+#define CHECK_HANDLE_LEAK_RC_NAME(_name, _handleAlloc, _type, _ref) \
+	BX_MACRO_BLOCK_BEGIN                                            \
+		if (0 != _handleAlloc.getNumHandles() )                     \
+		{                                                           \
+			BX_TRACE("LEAK: %s %d (max: %d)"                        \
+				, _name                                             \
+				, _handleAlloc.getNumHandles()                      \
+				, _handleAlloc.getMaxHandles()                      \
+				);                                                  \
+			uint16_t ii = 0; BX_UNUSED(ii);                         \
+			for (uint16_t idx = _handleAlloc.findFirst()            \
+				; bx::kInvalidHandle != idx                         \
+				; idx = _handleAlloc.findNext(idx), ++ii            \
+				)                                                   \
+			{                                                       \
+				const _type& ref = _ref[idx]; BX_UNUSED(ref);       \
+				BX_TRACE("\t%3d: %4d %s (count %d)"                 \
+					, ii                                            \
+					, idx                                           \
+					, ref.m_name.getCPtr()                          \
+					, ref.m_refCount                                \
+					);                                              \
+			}                                                       \
+		}                                                           \
 	BX_MACRO_BLOCK_END
 
 			CHECK_HANDLE_LEAK        ("DynamicIndexBufferHandle",  m_dynamicIndexBufferHandle                                  );
@@ -2715,17 +2677,17 @@ namespace bgfx
 
 	void Context::freeDynamicBuffers()
 	{
-		for (uint16_t ii = 0, num = m_numFreeDynamicIndexBufferHandles; ii < num; ++ii)
+		for (uint16_t ii = 0, num = m_freeDynamicIndexBuffer.getNumQueued(); ii < num; ++ii)
 		{
-			destroyDynamicIndexBufferInternal(m_freeDynamicIndexBufferHandle[ii]);
+			destroyDynamicIndexBufferInternal(m_freeDynamicIndexBuffer.get(ii) );
 		}
-		m_numFreeDynamicIndexBufferHandles = 0;
+		m_freeDynamicIndexBuffer.reset();
 
-		for (uint16_t ii = 0, num = m_numFreeDynamicVertexBufferHandles; ii < num; ++ii)
+		for (uint16_t ii = 0, num = m_freeDynamicVertexBuffer.getNumQueued(); ii < num; ++ii)
 		{
-			destroyDynamicVertexBufferInternal(m_freeDynamicVertexBufferHandle[ii]);
+			destroyDynamicVertexBufferInternal(m_freeDynamicVertexBuffer.get(ii) );
 		}
-		m_numFreeDynamicVertexBufferHandles = 0;
+		m_freeDynamicVertexBuffer.reset();
 
 		for (uint16_t ii = 0, num = m_numFreeOcclusionQueryHandles; ii < num; ++ii)
 		{
@@ -2738,6 +2700,7 @@ namespace bgfx
 	{
 		for (uint16_t ii = 0, num = _frame->m_freeIndexBuffer.getNumQueued(); ii < num; ++ii)
 		{
+			m_indexBuffers.release(_frame->m_freeIndexBuffer.get(ii).idx);
 			m_indexBufferHandle.free(_frame->m_freeIndexBuffer.get(ii).idx);
 		}
 
@@ -2753,6 +2716,7 @@ namespace bgfx
 
 		for (uint16_t ii = 0, num = _frame->m_freeShader.getNumQueued(); ii < num; ++ii)
 		{
+			m_shaderRef.release(_frame->m_freeShader.get(ii).idx);
 			m_shaderHandle.free(_frame->m_freeShader.get(ii).idx);
 		}
 
@@ -2763,11 +2727,13 @@ namespace bgfx
 
 		for (uint16_t ii = 0, num = _frame->m_freeTexture.getNumQueued(); ii < num; ++ii)
 		{
+			m_textureRef.release(_frame->m_freeTexture.get(ii).idx);
 			m_textureHandle.free(_frame->m_freeTexture.get(ii).idx);
 		}
 
 		for (uint16_t ii = 0, num = _frame->m_freeFrameBuffer.getNumQueued(); ii < num; ++ii)
 		{
+			m_frameBufferRef.release(_frame->m_freeFrameBuffer.get(ii).idx);
 			m_frameBufferHandle.free(_frame->m_freeFrameBuffer.get(ii).idx);
 		}
 
@@ -2775,6 +2741,7 @@ namespace bgfx
 		{
 			UniformHandle handle = _frame->m_freeUniform.get(ii);
 			m_uniformCache.invalidate(handle);
+			m_uniformRef.release(handle.idx);
 			m_uniformHandle.free(handle.idx);
 		}
 	}
@@ -2905,17 +2872,56 @@ namespace bgfx
 		m_submit->m_debugFrameBuffer = m_debugFrameBuffer;
 		m_submit->m_debugTextScale   = m_debugTextScale;
 		m_submit->m_perfStats.numViews = 0;
-		m_submit->reserveViewStats(0 != (m_debug & BGFX_DEBUG_PROFILER) );
-
-		bx::memCopy(m_submit->m_viewRemap, m_viewRemap, sizeof(m_viewRemap) );
+		m_submit->reserveViewStats(0 != (m_debug & BGFX_DEBUG_PROFILER), m_submit->m_numUsedViews);
 
 		m_uniformCache.frame(m_submit->m_uniformCacheFrame);
 
 		static_assert(bx::isTriviallyCopyable<View>(), "Must be memcopyiable...");
-		for (uint32_t ii = 0, num = m_submit->m_numUsedViews; ii < num; ++ii)
+		for (uint32_t ww = 0, num = 0; ww < kViewUsedWords; ++ww)
 		{
-			const ViewId id = m_submit->m_usedViews[ii];
-			m_submit->m_view[id] = m_view[id];
+			uint64_t bits = m_submit->m_viewUsed[ww];
+
+			if (0 != bits)
+			{
+				const View* src = m_view.find(ww*64);
+				View*       dst = &m_submit->m_view[num];
+
+				while (0 != bits)
+				{
+					const uint32_t bit   = bx::countTrailingZeros(bits);
+					const ViewId   id    = ViewId(ww*64 + bit);
+					const ViewId   order = m_viewOrder[id];
+					bits &= bits - 1;
+
+					*dst++ = NULL != src
+						? src[bit]
+						: m_view.unset()
+						;
+					m_submit->m_viewOrder[id]    = order;
+					m_submit->m_viewRemap[order] = id;
+
+					if (0 == (++num % kViewBlock) )
+					{
+						dst = &m_submit->m_view[num];
+					}
+				}
+			}
+		}
+
+		if (0 != m_init.limits.numDrawCallPeakFrames
+		&&  ++m_viewObserve >= m_init.limits.numDrawCallPeakFrames)
+		{
+			m_view.freeUnset();
+			m_viewNames.freeUnused();
+			m_textureRef.freeUnused();
+			m_shaderRef.freeUnused();
+			m_dynamicIndexBuffers.freeUnused();
+			m_dynamicVertexBuffers.freeUnused();
+			m_indexBuffers.freeUnused();
+			m_vertexBuffers.freeUnused();
+			m_uniformRef.freeUnused();
+			m_frameBufferRef.freeUnused();
+			m_viewObserve = 0;
 		}
 
 		if (m_colorPaletteDirty > 0)
@@ -3487,12 +3493,6 @@ namespace bgfx
 					Init init;
 					_cmdbuf.read(init);
 
-					// Init reserved part of view name.
-					for (uint32_t ii = 0; ii < BGFX_CONFIG_MAX_VIEWS; ++ii)
-					{
-						bx::snprintf(g_viewName[ii], BGFX_CONFIG_MAX_VIEW_NAME_RESERVED+1, "%3d   ", ii);
-					}
-
 					m_renderCtx = rendererCreate(init);
 
 					m_rendererInitialized = NULL != m_renderCtx;
@@ -4049,16 +4049,16 @@ namespace bgfx
 				{
 					BGFX_PROFILER_SCOPE("UpdateViewName", kColorResource);
 
-					ViewId id;
-					_cmdbuf.read(id);
+					uint16_t idx;
+					_cmdbuf.read(idx);
 
 					uint16_t len;
 					_cmdbuf.read(len);
 
 					const char* name = (const char*)_cmdbuf.skip(len);
 
-					bx::strCopy(&g_viewName[id][BGFX_CONFIG_MAX_VIEW_NAME_RESERVED]
-						, BX_COUNTOF(g_viewName[0])-BGFX_CONFIG_MAX_VIEW_NAME_RESERVED
+					bx::strCopy(m_viewNames.data(idx)
+						, ViewNameArena::kNameSize-BGFX_CONFIG_MAX_VIEW_NAME_RESERVED
 						, name
 						);
 				}
@@ -4175,6 +4175,7 @@ namespace bgfx
 				: BGFX_CONFIG_MAX_DRAW_CALLS
 				)
 		, numDrawCallPeakFrames(60)
+		, minViews(bx::min<uint32_t>(BGFX_CONFIG_MIN_VIEWS, BGFX_CONFIG_MAX_VIEWS) )
 		, minResourceCbSize(BGFX_CONFIG_MIN_RESOURCE_COMMAND_BUFFER_SIZE)
 		, maxTransientVbSize(BGFX_CONFIG_MAX_TRANSIENT_VERTEX_BUFFER_SIZE)
 		, maxTransientIbSize(BGFX_CONFIG_MAX_TRANSIENT_INDEX_BUFFER_SIZE)
@@ -4224,6 +4225,7 @@ namespace bgfx
 
 		init.limits.maxEncoders       = bx::clamp<uint16_t>(init.limits.maxEncoders, 1, (0 != BGFX_CONFIG_MULTITHREADED) ? 128 : 1);
 		init.limits.numDrawCalls      = alignDrawCalls(bx::max(init.limits.numDrawCalls, kDrawCallBlock) );
+		init.limits.minViews          = bx::alignUp(bx::clamp<uint32_t>(init.limits.minViews, kViewBlock, BGFX_CONFIG_MAX_VIEWS), kViewBlock);
 		init.limits.minResourceCbSize = bx::min<uint32_t>(init.limits.minResourceCbSize, BGFX_CONFIG_MIN_RESOURCE_COMMAND_BUFFER_SIZE);
 
 		struct ErrorState

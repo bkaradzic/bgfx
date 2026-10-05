@@ -1095,54 +1095,59 @@ public static partial class bgfx
 		RendererMultithreaded  = 0x0000000000000800,
 	
 		/// <summary>
+		/// 16-bit floats are supported in shaders.
+		/// </summary>
+		ShaderF16              = 0x0000000000001000,
+	
+		/// <summary>
 		/// Multiple windows are supported.
 		/// </summary>
-		SwapChain              = 0x0000000000001000,
+		SwapChain              = 0x0000000000002000,
 	
 		/// <summary>
 		/// Cubemap texture array is supported.
 		/// </summary>
-		TextureCubeArray       = 0x0000000000002000,
+		TextureCubeArray       = 0x0000000000004000,
 	
 		/// <summary>
 		/// CPU direct access to GPU texture memory.
 		/// </summary>
-		TextureDirectAccess    = 0x0000000000004000,
+		TextureDirectAccess    = 0x0000000000008000,
 	
 		/// <summary>
 		/// External texture is supported.
 		/// </summary>
-		TextureExternal        = 0x0000000000008000,
+		TextureExternal        = 0x0000000000010000,
 	
 		/// <summary>
 		/// External shared texture is supported.
 		/// </summary>
-		TextureExternalShared  = 0x0000000000010000,
+		TextureExternalShared  = 0x0000000000020000,
 	
 		/// <summary>
 		/// Transparent back buffer supported.
 		/// </summary>
-		TransparentBackbuffer  = 0x0000000000020000,
+		TransparentBackbuffer  = 0x0000000000040000,
 	
 		/// <summary>
 		/// Variable Rate Shading
 		/// </summary>
-		VariableRateShading    = 0x0000000000040000,
+		VariableRateShading    = 0x0000000000080000,
 	
 		/// <summary>
 		/// Vertex attribute 10_10_10_2 is supported.
 		/// </summary>
-		VertexAttribUint10     = 0x0000000000080000,
+		VertexAttribUint10     = 0x0000000000100000,
 	
 		/// <summary>
 		/// Hardware video decode is supported.
 		/// </summary>
-		VideoDecode            = 0x0000000000100000,
+		VideoDecode            = 0x0000000000200000,
 	
 		/// <summary>
 		/// Viewport layer is available in vertex shader.
 		/// </summary>
-		ViewportLayerArray     = 0x0000000000200000,
+		ViewportLayerArray     = 0x0000000000400000,
 	}
 	
 	[Flags]
@@ -2674,6 +2679,7 @@ public static partial class bgfx
 			public ushort maxEncoders;
 			public uint numDrawCalls;
 			public uint numDrawCallPeakFrames;
+			public uint minViews;
 			public uint minResourceCbSize;
 			public uint maxTransientVbSize;
 			public uint maxTransientIbSize;
@@ -4275,10 +4281,10 @@ public static partial class bgfx
 	/// 
 	///   In graphics debugger view name will appear as:
 	/// 
-	///       "nnnc <view name>"
-	///        ^  ^ ^
-	///        |  +--- compute (C)
-	///        +------ view id
+	///       "nnnnc <view name>"
+	///        ^   ^ ^
+	///        |   +--- compute (C)
+	///        +------- view id
 	/// 
 	/// </summary>
 	///
@@ -4431,7 +4437,9 @@ public static partial class bgfx
 	public static extern unsafe void set_view_transform(ushort _id, void* _view, void* _proj);
 	
 	/// <summary>
-	/// Post submit view reordering.
+	/// Post submit view reordering. A view in `_order` that currently renders
+	/// outside the remapped range swaps places with the view it displaces, so the
+	/// order stays a permutation of all view ids.
 	/// </summary>
 	///
 	/// <param name="_id">First view id.</param>
@@ -4455,7 +4463,7 @@ public static partial class bgfx
 	public static extern unsafe void set_view_shading_rate(ushort _id, ShadingRate _shadingRate);
 	
 	/// <summary>
-	/// Reset all view settings to default.
+	/// Reset all view settings to default, including the view name.
 	/// </summary>
 	///
 	/// <param name="_id">_id View id.</param>

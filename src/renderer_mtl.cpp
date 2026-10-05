@@ -1003,6 +1003,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 				| BGFX_CAPS_BLEND_INDEPENDENT
 				| BGFX_CAPS_COMPUTE
 				| BGFX_CAPS_INDEX32
+				| BGFX_CAPS_SHADER_F16
 				| BGFX_CAPS_SWAP_CHAIN
 				| BGFX_CAPS_TEXTURE_EXTERNAL
 				| BGFX_CAPS_VERTEX_ATTRIB_UINT10
@@ -1253,15 +1254,9 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 				m_depthStencilStateCache.invalidate();
 				m_samplerStateCache.invalidate();
 
-				for (uint32_t ii = 0; ii < BX_COUNTOF(m_shaders); ++ii)
-				{
-					m_shaders[ii].destroy();
-				}
+				m_shaders.each([](ShaderMtl& _shader) { _shader.destroy(); });
 
-				for (uint32_t ii = 0; ii < BX_COUNTOF(m_textures); ++ii)
-				{
-					m_textures[ii].destroy();
-				}
+				m_textures.each([](TextureMtl& _texture) { _texture.destroy(); });
 
 				m_screenshotBlitProgramVsh.destroy();
 				m_screenshotBlitProgramFsh.destroy();
@@ -1302,12 +1297,13 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 		void createIndexBuffer(IndexBufferHandle _handle, const Memory* _mem, uint16_t _flags) override
 		{
-			m_indexBuffers[_handle.idx].create(_mem->size, _mem->data, _flags);
+			m_indexBuffers.alloc(_handle.idx).create(_mem->size, _mem->data, _flags);
 		}
 
 		void destroyIndexBuffer(IndexBufferHandle _handle) override
 		{
 			m_indexBuffers[_handle.idx].destroy();
+			m_indexBuffers.release(_handle.idx);
 		}
 
 		void createVertexLayout(VertexLayoutHandle _handle, const VertexLayout& _layout) override
@@ -1323,17 +1319,18 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 		void createVertexBuffer(VertexBufferHandle _handle, const Memory* _mem, VertexLayoutHandle _layoutHandle, uint16_t _flags) override
 		{
-			m_vertexBuffers[_handle.idx].create(_mem->size, _mem->data, _layoutHandle, _flags);
+			m_vertexBuffers.alloc(_handle.idx).create(_mem->size, _mem->data, _layoutHandle, _flags);
 		}
 
 		void destroyVertexBuffer(VertexBufferHandle _handle) override
 		{
 			m_vertexBuffers[_handle.idx].destroy();
+			m_vertexBuffers.release(_handle.idx);
 		}
 
 		void createDynamicIndexBuffer(IndexBufferHandle _handle, uint32_t _size, uint16_t _flags) override
 		{
-			m_indexBuffers[_handle.idx].create(_size, NULL, _flags);
+			m_indexBuffers.alloc(_handle.idx).create(_size, NULL, _flags);
 		}
 
 		void updateDynamicIndexBuffer(IndexBufferHandle _handle, uint32_t _offset, uint32_t _size, const Memory* _mem) override
@@ -1344,12 +1341,13 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 		void destroyDynamicIndexBuffer(IndexBufferHandle _handle) override
 		{
 			m_indexBuffers[_handle.idx].destroy();
+			m_indexBuffers.release(_handle.idx);
 		}
 
 		void createDynamicVertexBuffer(VertexBufferHandle _handle, uint32_t _size, uint16_t _flags) override
 		{
 			VertexLayoutHandle layoutHandle = BGFX_INVALID_HANDLE;
-			m_vertexBuffers[_handle.idx].create(_size, NULL, layoutHandle, _flags);
+			m_vertexBuffers.alloc(_handle.idx).create(_size, NULL, layoutHandle, _flags);
 		}
 
 		void updateDynamicVertexBuffer(VertexBufferHandle _handle, uint32_t _offset, uint32_t _size, const Memory* _mem) override
@@ -1360,21 +1358,23 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 		void destroyDynamicVertexBuffer(VertexBufferHandle _handle) override
 		{
 			m_vertexBuffers[_handle.idx].destroy();
+			m_vertexBuffers.release(_handle.idx);
 		}
 
 		void createShader(ShaderHandle _handle, const Memory* _mem) override
 		{
-			m_shaders[_handle.idx].create(_mem);
+			m_shaders.alloc(_handle.idx).create(_mem);
 		}
 
 		void destroyShader(ShaderHandle _handle) override
 		{
 			m_shaders[_handle.idx].destroy();
+			m_shaders.release(_handle.idx);
 		}
 
 		void createProgram(ProgramHandle _handle, ShaderHandle _vsh, ShaderHandle _fsh) override
 		{
-			m_program[_handle.idx].create(&m_shaders[_vsh.idx], isValid(_fsh) ? &m_shaders[_fsh.idx] : NULL);
+			m_program.alloc(_handle.idx).create(&m_shaders[_vsh.idx], isValid(_fsh) ? &m_shaders[_fsh.idx] : NULL);
 		}
 
 		void destroyProgram(ProgramHandle _handle) override
@@ -1394,11 +1394,12 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 			m_lastPso = NULL;
 			m_program[_handle.idx].destroy();
+			m_program.release(_handle.idx);
 		}
 
 		void* createTexture(TextureHandle _handle, const Memory* _mem, uint64_t _flags, uint8_t _skip, uint64_t _external) override
 		{
-			m_textures[_handle.idx].create(_mem, _flags, _skip, _external);
+			m_textures.alloc(_handle.idx).create(_mem, _flags, _skip, _external);
 			return NULL;
 		}
 
@@ -1724,11 +1725,12 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 		void destroyTexture(TextureHandle _handle) override
 		{
 			m_textures[_handle.idx].destroy();
+			m_textures.release(_handle.idx);
 		}
 
 		void createFrameBuffer(FrameBufferHandle _handle, uint8_t _num, const Attachment* _attachment) override
 		{
-			m_frameBuffers[_handle.idx].create(_num, _attachment);
+			m_frameBuffers.alloc(_handle.idx).create(_num, _attachment);
 		}
 
 		void createFrameBuffer(FrameBufferHandle _handle, const SwapChain& _desc) override
@@ -1746,7 +1748,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			uint16_t denseIdx   = m_numWindows++;
 			m_windows[denseIdx] = _handle;
 
-			FrameBufferMtl& fb = m_frameBuffers[_handle.idx];
+			FrameBufferMtl& fb = m_frameBuffers.alloc(_handle.idx);
 			fb.create(denseIdx, _desc);
 		}
 
@@ -1767,6 +1769,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			}
 
 			uint16_t denseIdx = m_frameBuffers[_handle.idx].destroy();
+			m_frameBuffers.release(_handle.idx);
 
 			if (UINT16_MAX != denseIdx)
 			{
@@ -2125,10 +2128,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 				m_reset &= ~BGFX_RESET_INTERNAL_FORCE;
 
-				for (uint32_t ii = 0; ii < BX_COUNTOF(m_frameBuffers); ++ii)
-				{
-					m_frameBuffers[ii].postReset();
-				}
+				m_frameBuffers.each([](FrameBufferMtl& _frameBuffer) { _frameBuffer.postReset(); });
 
 				updateCapture();
 
@@ -2357,6 +2357,91 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 					break;
 				}
 			}
+		}
+
+		bool clearIntegerColor(FrameBufferHandle _fbh, const Rect& _rect, const Clear& _clear, const float _palette[][4])
+		{
+			if (!isValid(_fbh)
+			||  0 == (_clear.m_flags & BGFX_CLEAR_COLOR) )
+			{
+				return false;
+			}
+
+			const FrameBufferMtl& fb = m_frameBuffers[_fbh.idx];
+
+			bool integer = false;
+
+			for (uint32_t ii = 0; ii < fb.m_num; ++ii)
+			{
+				const TextureMtl& texture = m_textures[fb.m_colorHandle[ii].idx];
+				integer |= NULL == texture.m_ptrMsaa
+					&& isIntegerFormat(TextureFormat::Enum(texture.m_textureFormat) )
+					;
+			}
+
+			if (!integer)
+			{
+				return false;
+			}
+
+			const uint8_t skipMask = _clear.getColorSkipMask(fb.m_num);
+
+			for (uint32_t ii = 0; ii < fb.m_num; ++ii)
+			{
+				if (0 != (skipMask & (1<<ii) ) )
+				{
+					continue;
+				}
+
+				const TextureMtl& texture = m_textures[fb.m_colorHandle[ii].idx];
+				const TextureFormat::Enum format = TextureFormat::Enum(texture.m_textureFormat);
+
+				if (NULL != texture.m_ptrMsaa
+				||  !isIntegerFormat(format) )
+				{
+					continue;
+				}
+
+				float rgba[4];
+				getClearColor(rgba, _clear, _palette, ii, true);
+
+				uint8_t texel[16];
+				const uint32_t texelSize = packIntegerTexel(texel, format, rgba);
+				const uint32_t pitch     = _rect.m_width*texelSize;
+				const uint32_t size      = pitch*_rect.m_height;
+
+				MTL::Buffer* buffer = m_device->newBuffer(size, MTL::ResourceStorageModeShared);
+				uint8_t* data = (uint8_t*)buffer->contents();
+
+				for (uint32_t xx = 0; xx < _rect.m_width; ++xx)
+				{
+					bx::memCopy(data + xx*texelSize, texel, texelSize);
+				}
+
+				for (uint32_t yy = 1; yy < _rect.m_height; ++yy)
+				{
+					bx::memCopy(data + yy*pitch, data, pitch);
+				}
+
+				MTL::BlitCommandEncoder* bce = getBlitCommandEncoder();
+				bce->copyFromBuffer(
+					  buffer
+					, 0
+					, pitch
+					, size
+					, MTL::Size::Make(_rect.m_width, _rect.m_height, 1)
+					, texture.m_ptr
+					, 0
+					, 0
+					, MTL::Origin::Make(_rect.m_x, _rect.m_y, 0)
+					);
+
+				MTL_RELEASE_I(buffer);
+			}
+
+			endBlitEncoding();
+
+			return true;
 		}
 
 		void clearQuad(const ClearQuad& _clearQuad, const Rect& /*_rect*/, const Clear& _clear, const float _palette[][4])
@@ -3658,13 +3743,13 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 		uint16_t          m_numWindows;
 		FrameBufferHandle m_windows[BGFX_CONFIG_MAX_FRAME_BUFFERS];
 
-		IndexBufferMtl  m_indexBuffers[BGFX_CONFIG_MAX_INDEX_BUFFERS];
-		VertexBufferMtl m_vertexBuffers[BGFX_CONFIG_MAX_VERTEX_BUFFERS];
-		ShaderMtl       m_shaders[BGFX_CONFIG_MAX_SHADERS];
-		ProgramMtl      m_program[BGFX_CONFIG_MAX_PROGRAMS];
-		TextureMtl      m_textures[BGFX_CONFIG_MAX_TEXTURES];
+		HandleArenaT<IndexBufferMtl,  BGFX_CONFIG_MAX_INDEX_BUFFERS>  m_indexBuffers;
+		HandleArenaT<VertexBufferMtl, BGFX_CONFIG_MAX_VERTEX_BUFFERS> m_vertexBuffers;
+		HandleArenaT<ShaderMtl,       BGFX_CONFIG_MAX_SHADERS>        m_shaders;
+		HandleArenaT<ProgramMtl,      BGFX_CONFIG_MAX_PROGRAMS>       m_program;
+		HandleArenaT<TextureMtl,      BGFX_CONFIG_MAX_TEXTURES>       m_textures;
 		FrameBufferMtl  m_mainFrameBuffer;
-		FrameBufferMtl  m_frameBuffers[BGFX_CONFIG_MAX_FRAME_BUFFERS];
+		HandleArenaT<FrameBufferMtl,  BGFX_CONFIG_MAX_FRAME_BUFFERS>  m_frameBuffers;
 		VertexLayout    m_vertexLayouts[BGFX_CONFIG_MAX_VERTEX_LAYOUTS];
 
 		struct PipelineProgram
@@ -4239,7 +4324,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			const bool srgb         = 0 != (_flags&BGFX_TEXTURE_SRGB);
 
 			BX_TRACE("Texture %3d: %s (requested: %s), layers %d, %dx%d%s RT[%c], WO[%c], CW[%c], sRGB[%c]"
-				, this - s_renderMtl->m_textures
+				, s_renderMtl->m_textures.indexOf(*this)
 				, getName( (TextureFormat::Enum)m_textureFormat)
 				, getName( (TextureFormat::Enum)m_requestedFormat)
 				, ti.numLayers
@@ -5514,10 +5599,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 		m_frequency = kNanosecondsPerSecond;
 		m_frameNum  = 0;
 
-		for (uint32_t ii = 0; ii < BX_COUNTOF(m_result); ++ii)
-		{
-			m_result[ii].reset();
-		}
+		m_result.reset();
 
 		for (uint32_t ii = 0; ii < BX_COUNTOF(m_frameResult); ++ii)
 		{
@@ -5993,6 +6075,13 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 	void RendererContextMtl::submit(Frame* _render, const ClearQuad& _clearQuad, const MipGen& /*_mipGen*/, TextVideoMemBlitter& _textVideoMemBlitter)
 	{
+		m_indexBuffers.freeUnused();
+		m_vertexBuffers.freeUnused();
+		m_shaders.freeUnused();
+		m_program.freeUnused();
+		m_textures.freeUnused();
+		m_frameBuffers.freeUnused();
+
 		m_cmd.finish(false);
 
 		m_colorPalette = _render->m_colorPalette;
@@ -6132,6 +6221,8 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 		ProgramHandle currentProgram = BGFX_INVALID_HANDLE;
 		SortKey key;
 		uint16_t view = UINT16_MAX;
+		const View* renderView = &_render->view(0);
+		char viewName[BGFX_CONFIG_MAX_VIEW_NAME] = "";
 		FrameBufferHandle fbh = { BGFX_CONFIG_MAX_FRAME_BUFFERS };
 
 		UniformCacheState ucs(_render);
@@ -6177,7 +6268,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 		if (0 == (_render->m_debug&BGFX_DEBUG_IFH) )
 		{
-			viewState.m_rect = _render->m_view[0].m_rect;
+			viewState.m_rect = _render->view(0).m_rect;
 			int32_t numItems = _render->m_numRenderItems;
 
 			for (int32_t item = 0; item < numItems;)
@@ -6200,6 +6291,8 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 				|| (!isCompute && wasCompute) )
 				{
 					view = key.m_view;
+					renderView = &_render->view(view);
+					viewState.setView(*renderView);
 					currentProgram = BGFX_INVALID_HANDLE;
 
 					if (item > 1)
@@ -6208,17 +6301,17 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 					}
 
 					BGFX_MTL_PROFILER_END();
-					setViewType(view, "  ");
+					formatViewName(viewName, _render, view, "  ");
 					BGFX_MTL_PROFILER_BEGIN(view, kColorView);
 
 					profiler.begin(view);
 
-					viewState.m_rect = _render->m_view[view].m_rect;
+					viewState.m_rect = renderView->m_rect;
 
 					submitUniformCache(ucs, view);
 
 					if (isValid(m_fbh)
-					&&  m_fbh.idx != _render->m_view[view].m_fbh.idx)
+					&&  m_fbh.idx != renderView->m_fbh.idx)
 					{
 						resolveFrameBuffer();
 					}
@@ -6227,7 +6320,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 					if (!isCompute)
 					{
-						const FrameBufferHandle viewFbh = _render->m_view[view].m_fbh;
+						const FrameBufferHandle viewFbh = renderView->m_fbh;
 
 						uint32_t width  = m_mainSwapChain.width;
 						uint32_t height = m_mainSwapChain.height;
@@ -6247,20 +6340,21 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 							);
 
 						Rect clippedRect;
-						clippedRect.setIntersect(_render->m_view[view].m_clippedRect, framebufferRect);
+						clippedRect.setIntersect(renderView->m_clippedRect, framebufferRect);
 
 						Rect scissorRect;
-						scissorRect.setIntersect(_render->m_view[view].m_scissor, framebufferRect);
+						scissorRect.setIntersect(renderView->m_scissor, framebufferRect);
 
-						viewHasScissor = !_render->m_view[view].m_scissor.isZero();
+						viewHasScissor = !renderView->m_scissor.isZero();
 						viewScissorRect = viewHasScissor ? scissorRect : clippedRect;
-						Clear& clr = _render->m_view[view].m_clear;
+						const Clear& clr = renderView->m_clear;
 
 						const Rect viewRect = viewState.m_rect;
 						bool clearWithRenderPass = false;
+						bool integerCleared      = false;
 
 						if (NULL == m_renderCommandEncoder
-						||  fbh.idx != _render->m_view[view].m_fbh.idx
+						||  fbh.idx != renderView->m_fbh.idx
 						||  profileViews)
 						{
 							endEncoding();
@@ -6270,7 +6364,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 							m_gpuTimer.attach(renderPassDescriptor);
 
-							fbh = _render->m_view[view].m_fbh;
+							fbh = renderView->m_fbh;
 
 							const bool hasDepthAttachment = true
 								&& isValid(fbh)
@@ -6292,6 +6386,10 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 								&& 0      == viewRect.m_y
 								&& width  == viewRect.m_width
 								&& height == viewRect.m_height
+								;
+
+							integerCleared = !clearWithRenderPass
+								&& clearIntegerColor(fbh, clippedRect, clr, _render->m_colorPalette)
 								;
 
 							setFrameBuffer(renderPassDescriptor, fbh);
@@ -6411,7 +6509,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 							if (m_variableRateShadingSupported)
 							{
-								MTL::RasterizationRateLayerDescriptor* rrld = newRasterizationRateLayerDescriptor(s_shadingRate[_render->m_view[view].m_shadingRate]);
+								MTL::RasterizationRateLayerDescriptor* rrld = newRasterizationRateLayerDescriptor(s_shadingRate[renderView->m_shadingRate]);
 								MTL::RasterizationRateMapDescriptor*   rrmd = newRasterizationRateMapDescriptor();
 								rrmd->setScreenSize(MTL::Size::Make(viewRect.m_width, viewRect.m_height, 0) );
 								rrmd->setLayer(rrld, 0);
@@ -6422,6 +6520,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 							rce = m_commandBuffer->renderCommandEncoder(renderPassDescriptor);
 							setRenderCommandEncoder(rce);
 							m_renderCommandEncoderFbh = fbh;
+							blendFactor = 0;
 
 							MTL_RELEASE(renderPassDescriptor, 0);
 						}
@@ -6432,35 +6531,38 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 						if (BX_ENABLED(BGFX_CONFIG_DEBUG_ANNOTATION) )
 						{
-							rce->pushDebugGroup(nsstr(g_viewName[view]) );
+							rce->pushDebugGroup(nsstr(viewName) );
 						}
 
 						rce->setTriangleFillMode( (MTL::TriangleFillMode)wireframe ? MTL::TriangleFillModeLines : MTL::TriangleFillModeFill);
 
-						{
-							MTL::Viewport vp;
-							vp.originX = viewState.m_rect.m_x;
-							vp.originY = viewState.m_rect.m_y;
-							vp.width   = viewState.m_rect.m_width;
-							vp.height  = viewState.m_rect.m_height;
-							vp.znear   = 0.0f;
-							vp.zfar    = 1.0f;
-							rce->setViewport(vp);
+						MTL::Viewport vp;
+						vp.originX = viewState.m_rect.m_x;
+						vp.originY = viewState.m_rect.m_y;
+						vp.width   = viewState.m_rect.m_width;
+						vp.height  = viewState.m_rect.m_height;
+						vp.znear   = 0.0f;
+						vp.zfar    = 1.0f;
+						rce->setViewport(vp);
 
-							MTL::ScissorRect sciRect = {
-								NS::UInteger(clippedRect.m_x),
-								NS::UInteger(clippedRect.m_y),
-								NS::UInteger(clippedRect.m_width),
-								NS::UInteger(clippedRect.m_height)
-							};
-							rce->setScissorRect(sciRect);
-						}
+						MTL::ScissorRect sciRect = {
+							NS::UInteger(clippedRect.m_x),
+							NS::UInteger(clippedRect.m_y),
+							NS::UInteger(clippedRect.m_width),
+							NS::UInteger(clippedRect.m_height)
+						};
+						rce->setScissorRect(sciRect);
 
 						if (BGFX_CLEAR_NONE != (clr.m_flags & BGFX_CLEAR_MASK)
-							&& !clearWithRenderPass)
+							&& !clearWithRenderPass
+							&& !integerCleared)
 						{
 							clearQuad(_clearQuad, clippedRect, clr, _render->m_colorPalette);
 						}
+
+						vp.znear = renderView->m_minDepth;
+						vp.zfar  = renderView->m_maxDepth;
+						rce->setViewport(vp);
 					}
 				}
 
@@ -6473,7 +6575,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 						endEncoding();
 						rce = NULL;
 
-						setViewType(view, "C");
+						setViewType(viewName, "C");
 						BGFX_MTL_PROFILER_END();
 						BGFX_MTL_PROFILER_BEGIN(view, kColorCompute);
 
@@ -6487,9 +6589,9 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 					if (viewChanged
 					&&  BX_ENABLED(BGFX_CONFIG_DEBUG_ANNOTATION) )
 					{
-						g_viewName[view][3] = L'C';
-						m_computeCommandEncoder->pushDebugGroup(nsstr(g_viewName[view]) );
-						g_viewName[view][3] = L' ';
+						viewName[4] = 'C';
+						m_computeCommandEncoder->pushDebugGroup(nsstr(viewName) );
+						viewName[4] = ' ';
 					}
 
 					const RenderCompute& compute = renderItem.compute;
@@ -6522,7 +6624,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 							commit(*vcb);
 						}
 
-						viewState.setPredefined<4>(this, view, *currentPso, _render, compute);
+						viewState.setPredefined<4>(this, view, *renderView, *currentPso, _render, compute);
 
 						if (0 != vertexUniformBufferSize)
 						{
@@ -6627,7 +6729,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 					wasCompute = false;
 					currentProgram = BGFX_INVALID_HANDLE;
 
-					setViewType(view, " ");
+					setViewType(viewName, " ");
 					BGFX_MTL_PROFILER_END();
 					BGFX_MTL_PROFILER_BEGIN(view, kColorDraw);
 				}
@@ -6727,7 +6829,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 				{
 					const DepthControl& depthControl = (UINT16_MAX != draw.m_depthBias)
 						? _render->m_frameCache.m_depthBiasCache.m_cache[draw.m_depthBias]
-						: _render->m_view[view].m_depthBias
+						: renderView->m_depthBias
 						;
 
 					if (m_supportsDepthClipMode)
@@ -6792,7 +6894,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 				bool vertexStreamChanged = hasVertexStreamChanged(currentState, draw);
 
-				const uint32_t sampleMask = _render->m_view[view].m_sampleMask & draw.m_sampleMask;
+				const uint32_t sampleMask = renderView->m_sampleMask & draw.m_sampleMask;
 
 				if (key.m_program.idx != currentProgram.idx
 				||  vertexStreamChanged
@@ -6912,7 +7014,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 						commit(*fcb);
 					}
 
-					viewState.setPredefined<4>(this, view, *currentPso, _render, draw);
+					viewState.setPredefined<4>(this, view, *renderView, *currentPso, _render, draw);
 
 					if (0 != vertexUniformBufferSize
 					||  0 != fragmentUniformBufferSize)
@@ -7149,7 +7251,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			{
 				invalidateCompute();
 
-				setViewType(view, "C");
+				setViewType(viewName, "C");
 				BGFX_MTL_PROFILER_END();
 				BGFX_MTL_PROFILER_BEGIN(view, kColorCompute);
 			}

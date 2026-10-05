@@ -366,9 +366,9 @@
 	/*WGPU_DESTROY_FUNC(ResourceTable);*/ \
 	/* end */
 
-#define BGFX_WGPU_PROFILER_BEGIN(_view, _abgr)        \
-	BX_MACRO_BLOCK_BEGIN                              \
-		BGFX_PROFILER_BEGIN(g_viewName[view], _abgr); \
+#define BGFX_WGPU_PROFILER_BEGIN(_view, _abgr) \
+	BX_MACRO_BLOCK_BEGIN                       \
+		BGFX_PROFILER_BEGIN(viewName, _abgr);  \
 	BX_MACRO_BLOCK_END
 
 #define BGFX_WGPU_PROFILER_BEGIN_LITERAL(_name, _abgr) \
@@ -811,10 +811,12 @@ namespace wgpu {
 	{
 		TimerQueryWGPU()
 			: m_frequency(UINT64_C(1000000000) )
+			, m_query(NULL)
+			, m_numQueries(0)
 			, m_querySet(NULL)
 			, m_resolve(NULL)
 			, m_readback(NULL)
-			, m_control(BX_COUNTOF(m_result) )
+			, m_control(0)
 			, m_resolvedFrameNum(0)
 			, m_supported(false)
 			, m_resolved(false)
@@ -824,6 +826,9 @@ namespace wgpu {
 
 		void init();
 		void shutdown();
+		void create(uint32_t _num);
+		void destroy();
+		void resize(uint32_t _num);
 		uint32_t begin(uint32_t _resultIdx, uint32_t _frameNum);
 		void end(uint32_t _idx);
 		void resolve(uint32_t _frameNum);
@@ -855,13 +860,18 @@ namespace wgpu {
 			uint32_t m_frameNum;
 		};
 
-		static constexpr uint32_t kNumTimestamps = (BGFX_CONFIG_MAX_VIEWS+1)*2;
-		static constexpr uint64_t kBufferSize    = kNumTimestamps * sizeof(uint64_t);
+		static constexpr uint32_t kMaxQueries = bx::min<uint32_t>(kMaxTimerQueries, 4096/2);
+
+		uint64_t getBufferSize() const
+		{
+			return uint64_t(m_numQueries)*2*sizeof(uint64_t);
+		}
 
 		uint64_t m_frequency;
 
-		Result m_result[BGFX_CONFIG_MAX_VIEWS+1];
-		Query m_query[BGFX_CONFIG_MAX_VIEWS+1];
+		TimerResultT<Result> m_result;
+		Query*   m_query;
+		uint32_t m_numQueries;
 
 		WGPUQuerySet m_querySet;
 		WGPUBuffer m_resolve;

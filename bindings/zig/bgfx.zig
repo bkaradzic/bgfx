@@ -679,35 +679,38 @@ pub const CapsFlags_PrimitiveId: CapsFlags            = 0x0000000000000400;
 /// Renderer is on separate thread.
 pub const CapsFlags_RendererMultithreaded: CapsFlags  = 0x0000000000000800;
 
+/// 16-bit floats are supported in shaders.
+pub const CapsFlags_ShaderF16: CapsFlags              = 0x0000000000001000;
+
 /// Multiple windows are supported.
-pub const CapsFlags_SwapChain: CapsFlags              = 0x0000000000001000;
+pub const CapsFlags_SwapChain: CapsFlags              = 0x0000000000002000;
 
 /// Cubemap texture array is supported.
-pub const CapsFlags_TextureCubeArray: CapsFlags       = 0x0000000000002000;
+pub const CapsFlags_TextureCubeArray: CapsFlags       = 0x0000000000004000;
 
 /// CPU direct access to GPU texture memory.
-pub const CapsFlags_TextureDirectAccess: CapsFlags    = 0x0000000000004000;
+pub const CapsFlags_TextureDirectAccess: CapsFlags    = 0x0000000000008000;
 
 /// External texture is supported.
-pub const CapsFlags_TextureExternal: CapsFlags        = 0x0000000000008000;
+pub const CapsFlags_TextureExternal: CapsFlags        = 0x0000000000010000;
 
 /// External shared texture is supported.
-pub const CapsFlags_TextureExternalShared: CapsFlags  = 0x0000000000010000;
+pub const CapsFlags_TextureExternalShared: CapsFlags  = 0x0000000000020000;
 
 /// Transparent back buffer supported.
-pub const CapsFlags_TransparentBackbuffer: CapsFlags  = 0x0000000000020000;
+pub const CapsFlags_TransparentBackbuffer: CapsFlags  = 0x0000000000040000;
 
 /// Variable Rate Shading
-pub const CapsFlags_VariableRateShading: CapsFlags    = 0x0000000000040000;
+pub const CapsFlags_VariableRateShading: CapsFlags    = 0x0000000000080000;
 
 /// Vertex attribute 10_10_10_2 is supported.
-pub const CapsFlags_VertexAttribUint10: CapsFlags     = 0x0000000000080000;
+pub const CapsFlags_VertexAttribUint10: CapsFlags     = 0x0000000000100000;
 
 /// Hardware video decode is supported.
-pub const CapsFlags_VideoDecode: CapsFlags            = 0x0000000000100000;
+pub const CapsFlags_VideoDecode: CapsFlags            = 0x0000000000200000;
 
 /// Viewport layer is available in vertex shader.
-pub const CapsFlags_ViewportLayerArray: CapsFlags     = 0x0000000000200000;
+pub const CapsFlags_ViewportLayerArray: CapsFlags     = 0x0000000000400000;
 
 pub const CapsFormatFlags = u32;
 /// Texture format is not supported.
@@ -1674,6 +1677,7 @@ pub const Init = extern struct {
         maxEncoders: u16,
         numDrawCalls: u32,
         numDrawCallPeakFrames: u32,
+        minViews: u32,
         minResourceCbSize: u32,
         maxTransientVbSize: u32,
         maxTransientIbSize: u32,
@@ -3546,10 +3550,10 @@ extern fn bgfx_set_palette_color_rgba8(_index: u8, _rgba: u32) void;
 /// 
 ///   In graphics debugger view name will appear as:
 /// 
-///       "nnnc <view name>"
-///        ^  ^ ^
-///        |  +--- compute (C)
-///        +------ view id
+///       "nnnnc <view name>"
+///        ^   ^ ^
+///        |   +--- compute (C)
+///        +------- view id
 /// 
 /// <param name="_id">View id.</param>
 /// <param name="_name">View name.</param>
@@ -3680,7 +3684,9 @@ pub inline fn setViewTransform(_id: ViewId, _view: ?*const anyopaque, _proj: ?*c
 }
 extern fn bgfx_set_view_transform(_id: ViewId, _view: ?*const anyopaque, _proj: ?*const anyopaque) void;
 
-/// Post submit view reordering.
+/// Post submit view reordering. A view in `_order` that currently renders
+/// outside the remapped range swaps places with the view it displaces, so the
+/// order stays a permutation of all view ids.
 /// <param name="_id">First view id.</param>
 /// <param name="_num">Number of views to remap.</param>
 /// <param name="_order">View remap id table. Passing `NULL` will reset view ids to default state.</param>
@@ -3700,7 +3706,7 @@ pub inline fn setViewShadingRate(_id: ViewId, _shadingRate: ShadingRate) void {
 }
 extern fn bgfx_set_view_shading_rate(_id: ViewId, _shadingRate: ShadingRate) void;
 
-/// Reset all view settings to default.
+/// Reset all view settings to default, including the view name.
 /// <param name="_id">_id View id.</param>
 pub inline fn resetView(_id: ViewId) void {
     return bgfx_reset_view(_id);
