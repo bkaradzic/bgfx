@@ -2893,10 +2893,18 @@ namespace bgfx
 					const ViewId   order = m_viewOrder[id];
 					bits &= bits - 1;
 
-					*dst++ = NULL != src
+					View& view = *dst++;
+					view = NULL != src
 						? src[bit]
 						: m_view.unset()
 						;
+
+					if (isValid(view.m_fbh)
+					&& !m_frameBufferHandle.isValid(view.m_fbh.idx) )
+					{
+						view.m_fbh = BGFX_INVALID_HANDLE;
+					}
+
 					m_submit->m_viewOrder[id]    = order;
 					m_submit->m_viewRemap[order] = id;
 

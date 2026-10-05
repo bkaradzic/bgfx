@@ -3624,12 +3624,13 @@ namespace bgfx { namespace gl
 						GLenum readFmt  = rgba8 ? m_readPixelsFmt  : texture.m_fmt;
 						GLenum readType = rgba8 ? GL_UNSIGNED_BYTE : texture.m_type;
 
-						if (!rgba8)
+						if (color
+						&& !rgba8)
 						{
 							GLint implFmt  = 0;
 							GLint implType = 0;
-							glGetIntegerv(GL_IMPLEMENTATION_COLOR_READ_FORMAT, &implFmt);
-							glGetIntegerv(GL_IMPLEMENTATION_COLOR_READ_TYPE, &implType);
+							GL_CHECK(glGetIntegerv(GL_IMPLEMENTATION_COLOR_READ_FORMAT, &implFmt) );
+							GL_CHECK(glGetIntegerv(GL_IMPLEMENTATION_COLOR_READ_TYPE, &implType) );
 
 							if (GLenum(implFmt) == readFmt
 							&&  GLenum(implType) != readType
