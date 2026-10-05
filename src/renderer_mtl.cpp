@@ -6519,6 +6519,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 							rce = m_commandBuffer->renderCommandEncoder(renderPassDescriptor);
 							setRenderCommandEncoder(rce);
 							m_renderCommandEncoderFbh = fbh;
+							blendFactor = 0;
 
 							MTL_RELEASE(renderPassDescriptor, 0);
 						}

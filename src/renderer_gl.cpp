@@ -147,8 +147,8 @@ namespace bgfx { namespace gl
 
 	struct Blend
 	{
-		GLenum m_src;
-		GLenum m_dst;
+		GLenum m_rgb;
+		GLenum m_alpha;
 		bool m_factor;
 	};
 
@@ -8996,6 +8996,9 @@ namespace bgfx { namespace gl
 		uint32_t blendFactor = 0;
 		uint32_t currentSampleMask = UINT32_MAX;
 
+		uint32_t blendColor = 0;
+		GL_CHECK(glBlendColor(0.0f, 0.0f, 0.0f, 0.0f) );
+
 		uint8_t primIndex;
 		{
 			const uint64_t pt = 0;
@@ -9689,15 +9692,18 @@ namespace bgfx { namespace gl
 								if (enabled)
 								{
 									GL_CHECK(glEnable(GL_BLEND) );
-									GL_CHECK(glBlendFuncSeparate(s_blendFactor[srcRGB].m_src
-										, s_blendFactor[dstRGB].m_dst
-										, s_blendFactor[srcA].m_src
-										, s_blendFactor[dstA].m_dst
+									GL_CHECK(glBlendFuncSeparate(s_blendFactor[srcRGB].m_rgb
+										, s_blendFactor[dstRGB].m_rgb
+										, s_blendFactor[srcA].m_alpha
+										, s_blendFactor[dstA].m_alpha
 										) );
 									GL_CHECK(glBlendEquationSeparate(s_blendEquation[equRGB], s_blendEquation[equA]) );
 
-									if ( (s_blendFactor[srcRGB].m_factor || s_blendFactor[dstRGB].m_factor)
-									&&  blendFactor != draw.m_rgba)
+									if ( (s_blendFactor[srcRGB].m_factor
+									||    s_blendFactor[dstRGB].m_factor
+									||    s_blendFactor[srcA].m_factor
+									||    s_blendFactor[dstA].m_factor)
+									&&  blendColor != draw.m_rgba)
 									{
 										const uint32_t rgba = draw.m_rgba;
 										GLclampf rr = ( (rgba>>24)     )/255.0f;
@@ -9706,6 +9712,8 @@ namespace bgfx { namespace gl
 										GLclampf aa = ( (rgba    )&0xff)/255.0f;
 
 										GL_CHECK(glBlendColor(rr, gg, bb, aa) );
+
+										blendColor = rgba;
 									}
 								}
 								else
@@ -9719,10 +9727,10 @@ namespace bgfx { namespace gl
 								{
 									GL_CHECK(glEnablei(GL_BLEND, 0) );
 									GL_CHECK(glBlendFuncSeparatei(0
-										, s_blendFactor[srcRGB].m_src
-										, s_blendFactor[dstRGB].m_dst
-										, s_blendFactor[srcA].m_src
-										, s_blendFactor[dstA].m_dst
+										, s_blendFactor[srcRGB].m_rgb
+										, s_blendFactor[dstRGB].m_rgb
+										, s_blendFactor[srcA].m_alpha
+										, s_blendFactor[dstA].m_alpha
 										) );
 									GL_CHECK(glBlendEquationSeparatei(0
 										, s_blendEquation[equRGB]
@@ -9742,7 +9750,7 @@ namespace bgfx { namespace gl
 										const uint32_t dst      = (rgba>>4)&0xf;
 										const uint32_t equation = (rgba>>8)&0x7;
 										GL_CHECK(glEnablei(GL_BLEND, ii) );
-										GL_CHECK(glBlendFunci(ii, s_blendFactor[src].m_src, s_blendFactor[dst].m_dst) );
+										GL_CHECK(glBlendFunci(ii, s_blendFactor[src].m_rgb, s_blendFactor[dst].m_rgb) );
 										GL_CHECK(glBlendEquationi(ii, s_blendEquation[equation]) );
 									}
 									else
