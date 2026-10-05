@@ -55,14 +55,14 @@ BX_PRAGMA_DIAGNOSTIC_POP()
 	| BGFX_STATE_DEPTH_TEST_MASK         \
 	)
 
-#define BGFX_D3D11_PROFILER_BEGIN(_view, _abgr)                          \
-	BX_MACRO_BLOCK_BEGIN                                                 \
-		if (BX_ENABLED(BGFX_CONFIG_DEBUG_ANNOTATION) )                   \
-		{                                                                \
-			wchar_t viewNameW[BGFX_CONFIG_MAX_VIEW_NAME];                \
-			PIX_BEGINEVENT(_abgr, toViewNameW(viewNameW, _view) );       \
-		}                                                                \
-		BGFX_PROFILER_BEGIN(g_viewName[_view], _abgr);                   \
+#define BGFX_D3D11_PROFILER_BEGIN(_view, _abgr)                       \
+	BX_MACRO_BLOCK_BEGIN                                              \
+		if (BX_ENABLED(BGFX_CONFIG_DEBUG_ANNOTATION) )                \
+		{                                                             \
+			wchar_t viewNameW[BGFX_CONFIG_MAX_VIEW_NAME];             \
+			PIX_BEGINEVENT(_abgr, toViewNameW(viewNameW, viewName) ); \
+		}                                                             \
+		BGFX_PROFILER_BEGIN(viewName, _abgr);                         \
 	BX_MACRO_BLOCK_END
 
 #define BGFX_D3D11_PROFILER_BEGIN_LITERAL(_name, _abgr) \
@@ -480,7 +480,8 @@ namespace bgfx { namespace d3d11
 	struct TimerQueryD3D11
 	{
 		TimerQueryD3D11()
-			: m_control(kMinTimerQueries)
+			: m_query(kMinTimerQueries)
+			, m_control(kMinTimerQueries)
 		{
 		}
 
@@ -521,9 +522,9 @@ namespace bgfx { namespace d3d11
 			uint32_t m_frameNum;
 		};
 
-		Result m_result[BGFX_CONFIG_MAX_VIEWS+1];
+		TimerResultT<Result> m_result;
 
-		Query m_query[kMaxTimerQueries];
+		TimerQueryArrayT<Query> m_query;
 		bx::RingBufferControl m_control;
 	};
 

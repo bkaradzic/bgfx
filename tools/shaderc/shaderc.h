@@ -178,6 +178,7 @@ namespace bgfx
 		bool backwardsCompatibility;
 		bool warningsAreErrors;
 		bool keepIntermediate;
+		bool uses16BitTypes;
 
 		bool optimize;
 		uint32_t optimizationLevel;

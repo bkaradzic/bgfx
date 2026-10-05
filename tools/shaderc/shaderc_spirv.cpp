@@ -483,6 +483,7 @@ namespace bgfx { namespace spirv
 			| EShMsgVulkanRules
 			| EShMsgSpvRules
 			| EShMsgDebugInfo
+			| (_options.uses16BitTypes ? EShMsgHlslEnable16BitTypes : 0)
 			);
 
 		shader->setEntryPoint("main");

@@ -57,10 +57,10 @@ extern "C" uint64_t                    WINAPI bgfx_PIXEventsReplaceBlock(PIXEven
 #	define PIX3_ENDEVENT(_commandList)                  BX_UNUSED(_commandList)
 #endif // BGFX_CONFIG_DEBUG_ANNOTATION
 
-#define BGFX_D3D12_PROFILER_BEGIN(_view, _abgr)                   \
-	BX_MACRO_BLOCK_BEGIN                                          \
-		PIX3_BEGINEVENT(m_commandList, _abgr, g_viewName[_view]); \
-		BGFX_PROFILER_BEGIN(g_viewName[view], _abgr);             \
+#define BGFX_D3D12_PROFILER_BEGIN(_view, _abgr)          \
+	BX_MACRO_BLOCK_BEGIN                                 \
+		PIX3_BEGINEVENT(m_commandList, _abgr, viewName); \
+		BGFX_PROFILER_BEGIN(viewName, _abgr);            \
 	BX_MACRO_BLOCK_END
 
 #define BGFX_D3D12_PROFILER_BEGIN_LITERAL(_name, _abgr)           \
@@ -750,7 +750,8 @@ namespace bgfx { namespace d3d12
 	struct TimerQueryD3D12
 	{
 		TimerQueryD3D12()
-			: m_control(kMinTimerQueries)
+			: m_query(kMinTimerQueries)
+			, m_control(kMinTimerQueries)
 		{
 		}
 
@@ -788,8 +789,8 @@ namespace bgfx { namespace d3d12
 
 		uint64_t m_frequency;
 
-		Result m_result[BGFX_CONFIG_MAX_VIEWS+1];
-		Query m_query[kMaxTimerQueries];
+		TimerResultT<Result> m_result;
+		TimerQueryArrayT<Query> m_query;
 
 		ID3D12Resource*  m_readback;
 		ID3D12QueryHeap* m_queryHeap;

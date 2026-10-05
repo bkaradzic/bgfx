@@ -68,6 +68,8 @@ typedef void           (GL_APIENTRYP PFNGLCLEARBUFFERUIVPROC) (GLenum buffer, GL
 typedef void           (GL_APIENTRYP PFNGLCLEARCOLORPROC) (GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha);
 typedef void           (GL_APIENTRYP PFNGLCLEARDEPTHPROC) (GLdouble d);
 typedef void           (GL_APIENTRYP PFNGLCLEARDEPTHFPROC) (GLfloat d);
+typedef void           (GL_APIENTRYP PFNGLDEPTHRANGEPROC) (GLdouble n, GLdouble f);
+typedef void           (GL_APIENTRYP PFNGLDEPTHRANGEFPROC) (GLfloat n, GLfloat f);
 typedef void           (GL_APIENTRYP PFNGLCLEARSTENCILPROC) (GLint s);
 typedef void           (GL_APIENTRYP PFNGLCLIPCONTROLPROC) (GLenum origin, GLenum depth);
 typedef void           (GL_APIENTRYP PFNGLCOLORMASKPROC) (GLboolean red, GLboolean green, GLboolean blue, GLboolean alpha);
@@ -454,6 +456,7 @@ GL_IMPORT______(false, PFNGLVIEWPORTPROC,                          glViewport);
 
 #	if BGFX_CONFIG_RENDERER_OPENGL
 GL_IMPORT______(false, PFNGLCLEARDEPTHPROC,                        glClearDepth);
+GL_IMPORT______(false, PFNGLDEPTHRANGEPROC,                        glDepthRange);
 GL_IMPORT______(true,  PFNGLPOINTSIZEPROC,                         glPointSize);
 GL_IMPORT______(true,  PFNGLPOLYGONMODEPROC,                       glPolygonMode);
 
@@ -508,6 +511,7 @@ GL_IMPORT______(true,  PFNGLTEXIMAGE3DMULTISAMPLEPROC,             glTexImage3DM
 
 #	else // GLES
 GL_IMPORT______(false, PFNGLCLEARDEPTHFPROC,                       glClearDepthf);
+GL_IMPORT______(false, PFNGLDEPTHRANGEFPROC,                       glDepthRangef);
 GL_IMPORT_EXT__(true,  PFNGLRENDERBUFFERSTORAGEMULTISAMPLEPROC,    glRenderbufferStorageMultisample);
 #	endif // BGFX_CONFIG_RENDERER_OPENGL
 

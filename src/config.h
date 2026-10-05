@@ -311,10 +311,46 @@
 
 /// Granularity dynamic per frame storage grows by, in items. Reserving a
 /// multiple of it up front keeps growing off the common path. Must be power of
-/// two. Default is 1024.
+/// two, at least 64. Default is 1024.
 #ifndef BGFX_CONFIG_DRAW_CALL_BLOCK
 #	define BGFX_CONFIG_DRAW_CALL_BLOCK 1024
 #endif // BGFX_CONFIG_DRAW_CALL_BLOCK
+static_assert(bx::isPowerOf2(BGFX_CONFIG_DRAW_CALL_BLOCK) && 64 <= BGFX_CONFIG_DRAW_CALL_BLOCK, "BGFX_CONFIG_DRAW_CALL_BLOCK must be power of two, at least 64.");
+
+/// Granularity per frame blit item storage grows by. Must be power of two, at
+/// least 64. Default is 64.
+#ifndef BGFX_CONFIG_BLIT_BLOCK
+#	define BGFX_CONFIG_BLIT_BLOCK 64
+#endif // BGFX_CONFIG_BLIT_BLOCK
+static_assert(bx::isPowerOf2(BGFX_CONFIG_BLIT_BLOCK) && 64 <= BGFX_CONFIG_BLIT_BLOCK, "BGFX_CONFIG_BLIT_BLOCK must be power of two, at least 64.");
+
+/// Granularity per frame depth control cache grows by. Must be power of two,
+/// at least 64. Default is 64.
+#ifndef BGFX_CONFIG_DEPTH_CONTROL_BLOCK
+#	define BGFX_CONFIG_DEPTH_CONTROL_BLOCK 64
+#endif // BGFX_CONFIG_DEPTH_CONTROL_BLOCK
+static_assert(bx::isPowerOf2(BGFX_CONFIG_DEPTH_CONTROL_BLOCK) && 64 <= BGFX_CONFIG_DEPTH_CONTROL_BLOCK, "BGFX_CONFIG_DEPTH_CONTROL_BLOCK must be power of two, at least 64.");
+
+/// Granularity per frame transform matrix cache grows by. Must be power of
+/// two, at least 64. Default is 64.
+#ifndef BGFX_CONFIG_MATRIX_BLOCK
+#	define BGFX_CONFIG_MATRIX_BLOCK 64
+#endif // BGFX_CONFIG_MATRIX_BLOCK
+static_assert(bx::isPowerOf2(BGFX_CONFIG_MATRIX_BLOCK) && 64 <= BGFX_CONFIG_MATRIX_BLOCK, "BGFX_CONFIG_MATRIX_BLOCK must be power of two, at least 64.");
+
+/// Granularity per frame scissor rectangle cache grows by. Must be power of
+/// two, at least 64. Default is 64.
+#ifndef BGFX_CONFIG_RECT_BLOCK
+#	define BGFX_CONFIG_RECT_BLOCK 64
+#endif // BGFX_CONFIG_RECT_BLOCK
+static_assert(bx::isPowerOf2(BGFX_CONFIG_RECT_BLOCK) && 64 <= BGFX_CONFIG_RECT_BLOCK, "BGFX_CONFIG_RECT_BLOCK must be power of two, at least 64.");
+
+/// Granularity view storage grows by, in views. Must be power of two, at least
+/// 64. Default is 64.
+#ifndef BGFX_CONFIG_VIEW_BLOCK
+#	define BGFX_CONFIG_VIEW_BLOCK 64
+#endif // BGFX_CONFIG_VIEW_BLOCK
+static_assert(bx::isPowerOf2(BGFX_CONFIG_VIEW_BLOCK) && 64 <= BGFX_CONFIG_VIEW_BLOCK, "BGFX_CONFIG_VIEW_BLOCK must be power of two, at least 64.");
 
 /// Maximum number of blit items per frame.
 ///
@@ -385,14 +421,20 @@
 #define BGFX_CONFIG_MAX_PROGRAMS (1<<BGFX_CONFIG_SORT_KEY_NUM_BITS_PROGRAM)
 static_assert(bx::isPowerOf2(BGFX_CONFIG_MAX_PROGRAMS), "BGFX_CONFIG_MAX_PROGRAMS must be power of 2.");
 
-/// Maximum number of views. Default is 256. Must be a power of 2.
-/// Views are referenced by ViewId (uint16_t).
-#ifndef BGFX_CONFIG_MAX_VIEWS
-#	define BGFX_CONFIG_MAX_VIEWS 256
-#endif // BGFX_CONFIG_MAX_VIEWS
-static_assert(bx::isPowerOf2(BGFX_CONFIG_MAX_VIEWS), "BGFX_CONFIG_MAX_VIEWS must be power of 2.");
+/// Maximum number of views. Views are referenced by ViewId (uint16_t). Storage
+/// for views is allocated as they are used, so this is only the id range.
+// Cannot be configured via compiler options.
+#define BGFX_CONFIG_MAX_VIEWS 4096
 
-#define BGFX_CONFIG_MAX_VIEW_NAME_RESERVED 6
+/// Minimum number of views storage is kept for. Default is 256. Views past it
+/// get storage when first set or used, up to BGFX_CONFIG_MAX_VIEWS, and give
+/// it back once they are reset and unused. Must be at least BGFX_CONFIG_VIEW_BLOCK.
+#ifndef BGFX_CONFIG_MIN_VIEWS
+#	define BGFX_CONFIG_MIN_VIEWS 256
+#endif // BGFX_CONFIG_MIN_VIEWS
+static_assert(BGFX_CONFIG_VIEW_BLOCK <= BGFX_CONFIG_MIN_VIEWS && BGFX_CONFIG_MIN_VIEWS <= BGFX_CONFIG_MAX_VIEWS, "BGFX_CONFIG_MIN_VIEWS must be between BGFX_CONFIG_VIEW_BLOCK and BGFX_CONFIG_MAX_VIEWS.");
+
+#define BGFX_CONFIG_MAX_VIEW_NAME_RESERVED 7
 
 /// Maximum length of a view name string. Default is 256.
 #ifndef BGFX_CONFIG_MAX_VIEW_NAME

@@ -1222,6 +1222,8 @@ WGPU_IMPORT
 						ifSupported(WGPUFeatureName_RG11B10UfloatRenderable),
 
 						ifSupported(WGPUFeatureName_Depth32FloatStencil8),
+
+						ifSupported(WGPUFeatureName_ShaderF16),
 					};
 
 					bx::quickSort(requiredFeatures, BX_COUNTOF(requiredFeatures) );
@@ -1465,6 +1467,7 @@ WGPU_IMPORT
 							| BGFX_CAPS_RENDERER_MULTITHREADED
 							| BGFX_CAPS_SWAP_CHAIN
 							| BGFX_CAPS_TEXTURE_CUBE_ARRAY
+							| (isFeatureSupported(WGPUFeatureName_ShaderF16) ? BGFX_CAPS_SHADER_F16 : 0)
 							;
 
 						TextureFormatCaps textureFormatCaps;
@@ -1580,30 +1583,15 @@ WGPU_IMPORT
 				}
 			}
 
-			for (uint32_t ii = 0; ii < BX_COUNTOF(m_frameBuffers); ++ii)
-			{
-				m_frameBuffers[ii].destroy();
-			}
+			m_frameBuffers.each([](FrameBufferWGPU& _frameBuffer) { _frameBuffer.destroy(); });
 
-			for (uint32_t ii = 0; ii < BX_COUNTOF(m_indexBuffers); ++ii)
-			{
-				m_indexBuffers[ii].destroy();
-			}
+			m_indexBuffers.each([](IndexBufferWGPU& _indexBuffer) { _indexBuffer.destroy(); });
 
-			for (uint32_t ii = 0; ii < BX_COUNTOF(m_vertexBuffers); ++ii)
-			{
-				m_vertexBuffers[ii].destroy();
-			}
+			m_vertexBuffers.each([](VertexBufferWGPU& _vertexBuffer) { _vertexBuffer.destroy(); });
 
-			for (uint32_t ii = 0; ii < BX_COUNTOF(m_shaders); ++ii)
-			{
-				m_shaders[ii].destroy();
-			}
+			m_shaders.each([](ShaderWGPU& _shader) { _shader.destroy(); });
 
-			for (uint32_t ii = 0; ii < BX_COUNTOF(m_textures); ++ii)
-			{
-				m_textures[ii].destroy();
-			}
+			m_textures.each([](TextureWGPU& _texture) { _texture.destroy(); });
 
 			m_backBuffer.destroy();
 
@@ -1661,13 +1649,14 @@ WGPU_IMPORT
 
 		void createIndexBuffer(IndexBufferHandle _handle, const Memory* _mem, uint16_t _flags) override
 		{
-			m_indexBuffers[_handle.idx].create(_mem->size, _mem->data, _flags, false);
+			m_indexBuffers.alloc(_handle.idx).create(_mem->size, _mem->data, _flags, false);
 		}
 
 		void destroyIndexBuffer(IndexBufferHandle _handle) override
 		{
 			invalidateBindGroupCache();
 			m_indexBuffers[_handle.idx].destroy();
+			m_indexBuffers.release(_handle.idx);
 		}
 
 		void createVertexLayout(VertexLayoutHandle _handle, const VertexLayout& _layout) override
@@ -1683,18 +1672,19 @@ WGPU_IMPORT
 
 		void createVertexBuffer(VertexBufferHandle _handle, const Memory* _mem, VertexLayoutHandle _layoutHandle, uint16_t _flags) override
 		{
-			m_vertexBuffers[_handle.idx].create(_mem->size, _mem->data, _layoutHandle, _flags);
+			m_vertexBuffers.alloc(_handle.idx).create(_mem->size, _mem->data, _layoutHandle, _flags);
 		}
 
 		void destroyVertexBuffer(VertexBufferHandle _handle) override
 		{
 			invalidateBindGroupCache();
 			m_vertexBuffers[_handle.idx].destroy();
+			m_vertexBuffers.release(_handle.idx);
 		}
 
 		void createDynamicIndexBuffer(IndexBufferHandle _handle, uint32_t _size, uint16_t _flags) override
 		{
-			m_indexBuffers[_handle.idx].create(_size, NULL, _flags, false);
+			m_indexBuffers.alloc(_handle.idx).create(_size, NULL, _flags, false);
 		}
 
 		void updateDynamicIndexBuffer(IndexBufferHandle _handle, uint32_t _offset, uint32_t _size, const Memory* _mem) override
@@ -1706,12 +1696,13 @@ WGPU_IMPORT
 		{
 			invalidateBindGroupCache();
 			m_indexBuffers[_handle.idx].destroy();
+			m_indexBuffers.release(_handle.idx);
 		}
 
 		void createDynamicVertexBuffer(VertexBufferHandle _handle, uint32_t _size, uint16_t _flags) override
 		{
 			VertexLayoutHandle layoutHandle = BGFX_INVALID_HANDLE;
-			m_vertexBuffers[_handle.idx].create(_size, NULL, layoutHandle, _flags);
+			m_vertexBuffers.alloc(_handle.idx).create(_size, NULL, layoutHandle, _flags);
 		}
 
 		void updateDynamicVertexBuffer(VertexBufferHandle _handle, uint32_t _offset, uint32_t _size, const Memory* _mem) override
@@ -1723,32 +1714,35 @@ WGPU_IMPORT
 		{
 			invalidateBindGroupCache();
 			m_vertexBuffers[_handle.idx].destroy();
+			m_vertexBuffers.release(_handle.idx);
 		}
 
 		void createShader(ShaderHandle _handle, const Memory* _mem) override
 		{
-			m_shaders[_handle.idx].create(_mem);
+			m_shaders.alloc(_handle.idx).create(_mem);
 		}
 
 		void destroyShader(ShaderHandle _handle) override
 		{
 			m_shaders[_handle.idx].destroy();
+			m_shaders.release(_handle.idx);
 		}
 
 		void createProgram(ProgramHandle _handle, ShaderHandle _vsh, ShaderHandle _fsh) override
 		{
-			m_program[_handle.idx].create(&m_shaders[_vsh.idx], isValid(_fsh) ? &m_shaders[_fsh.idx] : NULL);
+			m_program.alloc(_handle.idx).create(&m_shaders[_vsh.idx], isValid(_fsh) ? &m_shaders[_fsh.idx] : NULL);
 		}
 
 		void destroyProgram(ProgramHandle _handle) override
 		{
 			m_program[_handle.idx].destroy();
+			m_program.release(_handle.idx);
 		}
 
 		void* createTexture(TextureHandle _handle, const Memory* _mem, uint64_t _flags, uint8_t _skip, uint64_t _external) override
 		{
 			BX_UNUSED(_external);
-			m_textures[_handle.idx].create(_mem, _flags, _skip);
+			m_textures.alloc(_handle.idx).create(_mem, _flags, _skip);
 			return NULL;
 		}
 
@@ -2135,11 +2129,12 @@ WGPU_IMPORT
 		{
 			invalidateBindGroupCache();
 			m_textures[_handle.idx].destroy();
+			m_textures.release(_handle.idx);
 		}
 
 		void createFrameBuffer(FrameBufferHandle _handle, uint8_t _num, const Attachment* _attachment) override
 		{
-			m_frameBuffers[_handle.idx].create(_num, _attachment);
+			m_frameBuffers.alloc(_handle.idx).create(_num, _attachment);
 		}
 
 		void createFrameBuffer(FrameBufferHandle _handle, const SwapChain& _desc) override
@@ -2156,7 +2151,7 @@ WGPU_IMPORT
 
 			uint16_t denseIdx = m_numWindows++;
 			m_windows[denseIdx] = _handle;
-			m_frameBuffers[_handle.idx].create(denseIdx, _desc);
+			m_frameBuffers.alloc(_handle.idx).create(denseIdx, _desc);
 		}
 
 		void resizeFrameBuffer(FrameBufferHandle _handle, const SwapChain& _desc) override
@@ -2171,6 +2166,7 @@ WGPU_IMPORT
 			FrameBufferWGPU& frameBuffer = m_frameBuffers[_handle.idx];
 
 			uint16_t denseIdx = frameBuffer.destroy();
+			m_frameBuffers.release(_handle.idx);
 			if (UINT16_MAX != denseIdx)
 			{
 				--m_numWindows;
@@ -2495,6 +2491,105 @@ WGPU_IMPORT
 			wgpuRelease(blitRenderPassEncoder);
 		}
 
+		bool clearIntegerColor(WGPUCommandEncoder _commandEncoder, const FrameBufferWGPU& _fb, const Rect& _rect, const Clear& _clear, const float _palette[][4])
+		{
+			if (0 == (_clear.m_flags & BGFX_CLEAR_COLOR)
+			||  1 <  _fb.m_msaaCount)
+			{
+				return false;
+			}
+
+			bool integer = false;
+
+			for (uint32_t ii = 0; ii < _fb.m_numColorAttachments; ++ii)
+			{
+				const TextureWGPU& texture = m_textures[_fb.m_texture[ii].idx];
+				integer |= isIntegerFormat(TextureFormat::Enum(texture.m_textureFormat) );
+			}
+
+			if (!integer)
+			{
+				return false;
+			}
+
+			const uint8_t skipMask = _clear.getColorSkipMask(_fb.m_numColorAttachments);
+
+			for (uint32_t ii = 0; ii < _fb.m_numColorAttachments; ++ii)
+			{
+				if (0 != (skipMask & (1<<ii) ) )
+				{
+					continue;
+				}
+
+				const TextureWGPU& texture = m_textures[_fb.m_texture[ii].idx];
+				const TextureFormat::Enum format = TextureFormat::Enum(texture.m_textureFormat);
+
+				if (!isIntegerFormat(format) )
+				{
+					continue;
+				}
+
+				float rgba[4];
+				getClearColor(rgba, _clear, _palette, ii, true);
+
+				uint8_t texel[16];
+				const uint32_t texelSize = packIntegerTexel(texel, format, rgba);
+				const uint32_t pitch     = bx::alignUp(_rect.m_width*texelSize, 256);
+				const uint32_t size      = bx::alignUp(pitch*(_rect.m_height-1) + _rect.m_width*texelSize, 4);
+
+				uint8_t* data = (uint8_t*)bx::alloc(g_allocator, size);
+
+				for (uint32_t yy = 0; yy < _rect.m_height; ++yy)
+				{
+					uint8_t* row = data + yy*pitch;
+
+					for (uint32_t xx = 0; xx < _rect.m_width; ++xx)
+					{
+						bx::memCopy(row + xx*texelSize, texel, texelSize);
+					}
+				}
+
+				const WGPUBufferDescriptor bufferDesc =
+				{
+					.nextInChain      = NULL,
+					.label            = toWGPUStringView("Integer clear"),
+					.usage            = WGPUBufferUsage_CopySrc | WGPUBufferUsage_CopyDst,
+					.size             = size,
+					.mappedAtCreation = false,
+				};
+
+				WGPUBuffer buffer = WGPU_CHECK(wgpuDeviceCreateBuffer(m_device, &bufferDesc) );
+				m_cmd.writeBuffer(buffer, 0, data, size);
+				bx::free(g_allocator, data);
+
+				const WGPUTexelCopyBufferInfo source =
+				{
+					.layout =
+					{
+						.offset       = 0,
+						.bytesPerRow  = pitch,
+						.rowsPerImage = _rect.m_height,
+					},
+					.buffer = buffer,
+				};
+
+				const WGPUTexelCopyTextureInfo destination =
+				{
+					.texture  = texture.m_texture,
+					.mipLevel = 0,
+					.origin   = { uint32_t(_rect.m_x), uint32_t(_rect.m_y), 0 },
+					.aspect   = WGPUTextureAspect_All,
+				};
+
+				const WGPUExtent3D extent = { _rect.m_width, _rect.m_height, 1 };
+
+				WGPU_CHECK(wgpuCommandEncoderCopyBufferToTexture(_commandEncoder, &source, &destination, &extent) );
+				wgpuBufferRelease(buffer);
+			}
+
+			return true;
+		}
+
 		void clearQuad(WGPURenderPassEncoder _renderPassEncoder, FrameBufferHandle _fbh, uint32_t _msaaCount, const ClearQuad& _clearQuad, const Rect& _rect, const Clear& _clear, const float _palette[][4])
 		{
 			BX_UNUSED(_clearQuad, _rect, _clear, _palette);
@@ -2607,20 +2702,14 @@ WGPU_IMPORT
 		{
 			m_renderPipelineCache.invalidate();
 
-			for (uint32_t ii = 0; ii < BX_COUNTOF(m_frameBuffers); ++ii)
-			{
-				m_frameBuffers[ii].preReset();
-			}
+			m_frameBuffers.each([](FrameBufferWGPU& _frameBuffer) { _frameBuffer.preReset(); });
 
 			invalidateCache();
 		}
 
 		void postReset()
 		{
-			for (uint32_t ii = 0; ii < BX_COUNTOF(m_frameBuffers); ++ii)
-			{
-				m_frameBuffers[ii].postReset();
-			}
+			m_frameBuffers.each([](FrameBufferWGPU& _frameBuffer) { _frameBuffer.postReset(); });
 
 			if (m_reset & BGFX_RESET_CAPTURE)
 			{
@@ -2669,11 +2758,10 @@ WGPU_IMPORT
 					m_mainSwapChain.width  = _swapChain.width;
 					m_mainSwapChain.height = _swapChain.height;
 
-					for (uint32_t ii = 0; ii < BX_COUNTOF(m_frameBuffers); ++ii)
-					{
-						m_frameBuffers[ii].preReset();
-						m_frameBuffers[ii].postReset();
-					}
+					m_frameBuffers.each([](FrameBufferWGPU& _frameBuffer) {
+						_frameBuffer.preReset();
+						_frameBuffer.postReset();
+					});
 				}
 
 				return suspended;
@@ -3916,13 +4004,13 @@ WGPU_IMPORT
 		WGPUTexture     m_mipGenStubTexture[2];
 		WGPUTextureView m_mipGenStubTextureView[2][3];
 
-		IndexBufferWGPU  m_indexBuffers[BGFX_CONFIG_MAX_INDEX_BUFFERS];
-		VertexBufferWGPU m_vertexBuffers[BGFX_CONFIG_MAX_VERTEX_BUFFERS];
-		ShaderWGPU       m_shaders[BGFX_CONFIG_MAX_SHADERS];
-		ProgramWGPU      m_program[BGFX_CONFIG_MAX_PROGRAMS];
-		TextureWGPU      m_textures[BGFX_CONFIG_MAX_TEXTURES];
+		HandleArenaT<IndexBufferWGPU,  BGFX_CONFIG_MAX_INDEX_BUFFERS>  m_indexBuffers;
+		HandleArenaT<VertexBufferWGPU, BGFX_CONFIG_MAX_VERTEX_BUFFERS> m_vertexBuffers;
+		HandleArenaT<ShaderWGPU,       BGFX_CONFIG_MAX_SHADERS>        m_shaders;
+		HandleArenaT<ProgramWGPU,      BGFX_CONFIG_MAX_PROGRAMS>       m_program;
+		HandleArenaT<TextureWGPU,      BGFX_CONFIG_MAX_TEXTURES>       m_textures;
 		VertexLayout     m_vertexLayouts[BGFX_CONFIG_MAX_VERTEX_LAYOUTS];
-		FrameBufferWGPU  m_frameBuffers[BGFX_CONFIG_MAX_FRAME_BUFFERS];
+		HandleArenaT<FrameBufferWGPU,  BGFX_CONFIG_MAX_FRAME_BUFFERS>  m_frameBuffers;
 
 		StateCacheLru<ComputePipeline, 1024> m_computePipelineCache;
 		StateCacheLru<RenderPipeline, 1024>  m_renderPipelineCache;
@@ -4662,7 +4750,7 @@ WGPU_IMPORT
 			const bool needResolve = 1 < m_msaaCount && !writeOnly;
 
 			BX_TRACE("Texture %3d: %s (requested: %s), %dx%d%s RT[%c], BO[%c], CW[%c]%s."
-				, this - s_renderWGPU->m_textures
+				, s_renderWGPU->m_textures.indexOf(*this)
 				, getName( (TextureFormat::Enum)m_textureFormat)
 				, getName( (TextureFormat::Enum)m_requestedFormat)
 				, ti.width
@@ -4869,7 +4957,7 @@ WGPU_IMPORT
 
 	void TextureWGPU::destroy()
 	{
-		s_renderWGPU->m_textureViewStateCache.invalidateWithParent(uint16_t(this - s_renderWGPU->m_textures) );
+		s_renderWGPU->m_textureViewStateCache.invalidateWithParent(s_renderWGPU->m_textures.indexOf(*this) );
 
 		wgpuDestroy(m_texture);
 		wgpuDestroy(m_textureMsaa);
@@ -5184,7 +5272,7 @@ WGPU_IMPORT
 			};
 
 			textureView = WGPU_CHECK(wgpuTextureCreateView(m_texture, &textureViewDesc) );
-			s_renderWGPU->m_textureViewStateCache.add(hash, textureView, uint16_t(this - s_renderWGPU->m_textures) );
+			s_renderWGPU->m_textureViewStateCache.add(hash, textureView, s_renderWGPU->m_textures.indexOf(*this) );
 		}
 
 		return textureView;
@@ -6005,10 +6093,7 @@ WGPU_IMPORT
 
 	void TimerQueryWGPU::init()
 	{
-		for (uint32_t ii = 0; ii < BX_COUNTOF(m_result); ++ii)
-		{
-			m_result[ii].reset();
-		}
+		m_result.reset();
 
 		m_supported = isFeatureSupported(WGPUFeatureName_TimestampQuery);
 
@@ -6017,6 +6102,20 @@ WGPU_IMPORT
 			return;
 		}
 
+		create(kMinTimerQueries);
+	}
+
+	void TimerQueryWGPU::shutdown()
+	{
+		destroy();
+	}
+
+	void TimerQueryWGPU::create(uint32_t _num)
+	{
+		m_numQueries = bx::min(_num, kMaxQueries);
+		m_query      = (Query*)bx::alloc(g_allocator, sizeof(Query)*m_numQueries);
+		bgfx::resize(m_control, m_numQueries);
+
 		WGPUDevice device = s_renderWGPU->m_device;
 
 		WGPUQuerySetDescriptor querySetDesc =
@@ -6024,7 +6123,7 @@ WGPU_IMPORT
 			.nextInChain = NULL,
 			.label       = toWGPUStringView("TimerQuery"),
 			.type        = WGPUQueryType_Timestamp,
-			.count       = kNumTimestamps,
+			.count       = m_numQueries*2,
 		};
 
 		m_querySet = WGPU_CHECK(wgpuDeviceCreateQuerySet(device, &querySetDesc) );
@@ -6037,7 +6136,7 @@ WGPU_IMPORT
 				| WGPUBufferUsage_CopySrc
 				| WGPUBufferUsage_QueryResolve
 				,
-			.size = kBufferSize,
+			.size = getBufferSize(),
 			.mappedAtCreation = false,
 		};
 
@@ -6051,18 +6150,38 @@ WGPU_IMPORT
 				| WGPUBufferUsage_MapRead
 				| WGPUBufferUsage_CopyDst
 				,
-			.size = kBufferSize,
+			.size = getBufferSize(),
 			.mappedAtCreation = false,
 		};
 
 		m_readback = WGPU_CHECK(wgpuDeviceCreateBuffer(device, &readbackBufferDesc) );
 	}
 
-	void TimerQueryWGPU::shutdown()
+	void TimerQueryWGPU::destroy()
 	{
 		wgpuDestroy(m_querySet);
 		wgpuDestroy(m_resolve);
 		wgpuDestroy(m_readback);
+
+		bx::free(g_allocator, m_query);
+		m_query      = NULL;
+		m_numQueries = 0;
+	}
+
+	void TimerQueryWGPU::resize(uint32_t _num)
+	{
+		if (!m_supported
+		||  m_mapPending
+		||  m_resolved
+		||  bx::min(_num, kMaxQueries) == m_numQueries)
+		{
+			return;
+		}
+
+		destroy();
+		create(_num);
+
+		m_result.resetPending();
 	}
 
 	void TimerQueryWGPU::writeTimestamp(uint32_t _index)
@@ -6137,7 +6256,7 @@ WGPU_IMPORT
 			  commandEncoder
 			, m_querySet
 			, 0
-			, kNumTimestamps
+			, m_numQueries*2
 			, m_resolve
 			, 0
 			) );
@@ -6148,7 +6267,7 @@ WGPU_IMPORT
 			, 0
 			, m_readback
 			, 0
-			, kBufferSize
+			, getBufferSize()
 			) );
 
 		m_resolvedFrameNum = _frameNum;
@@ -6177,7 +6296,7 @@ WGPU_IMPORT
 			  m_readback
 			, WGPUMapMode_Read
 			, 0
-			, kBufferSize
+			, getBufferSize()
 			, {
 				.nextInChain = NULL,
 				.mode        = WGPUCallbackMode_AllowProcessEvents,
@@ -6189,7 +6308,7 @@ WGPU_IMPORT
 
 	void TimerQueryWGPU::consumeResults()
 	{
-		const uint64_t* timestamp = (const uint64_t*)wgpuBufferGetConstMappedRange(m_readback, 0, kBufferSize);
+		const uint64_t* timestamp = (const uint64_t*)wgpuBufferGetConstMappedRange(m_readback, 0, getBufferSize() );
 
 		if (NULL != timestamp)
 		{
@@ -6804,6 +6923,13 @@ WGPU_IMPORT
 
 	void RendererContextWGPU::submit(Frame* _render, const ClearQuad& _clearQuad, const MipGen& _mipGen, TextVideoMemBlitter& _textVideoMemBlitter)
 	{
+		m_indexBuffers.freeUnused();
+		m_vertexBuffers.freeUnused();
+		m_shaders.freeUnused();
+		m_program.freeUnused();
+		m_textures.freeUnused();
+		m_frameBuffers.freeUnused();
+
 		if (0 != m_lost)
 		{
 			return;
@@ -6813,6 +6939,7 @@ WGPU_IMPORT
 		m_occlusionQuery.readResultsAsync(_render);
 		m_gpuTimer.readResultsAsync();
 		WGPU_CHECK(wgpuInstanceProcessEvents(s_renderWGPU->m_instance) );
+		m_gpuTimer.resize(getNumTimerQueries(_render, m_gpuTimer.m_control.getSize() ) );
 
 		if (updateResolution(_render->m_mainSwapChain, _render->m_reset) )
 		{
@@ -6879,6 +7006,8 @@ WGPU_IMPORT
 		bool hasPredefined = false;
 		SortKey key;
 		uint16_t view = UINT16_MAX;
+		const View* renderView = &_render->view(0);
+		char viewName[BGFX_CONFIG_MAX_VIEW_NAME] = "";
 		FrameBufferHandle fbh = BGFX_INVALID_HANDLE;
 
 		UniformCacheState ucs(_render);
@@ -6958,7 +7087,7 @@ WGPU_IMPORT
 
 		if (0 == (_render->m_debug&BGFX_DEBUG_IFH) )
 		{
-			viewState.m_rect = _render->m_view[0].m_rect;
+			viewState.m_rect = _render->view(0).m_rect;
 
 			int32_t numItems = _render->m_numRenderItems;
 			for (int32_t item = 0; item < numItems;)
@@ -6980,13 +7109,15 @@ WGPU_IMPORT
 				if (viewChanged)
 				{
 					view = key.m_view;
+					renderView = &_render->view(view);
+					viewState.setView(*renderView);
 					currentProgram = BGFX_INVALID_HANDLE;
 					currentState.clear();
 					hasPredefined = false;
 					pipelineState.valid = false;
 					bindState.valid     = false;
 
-					if (_render->m_view[view].m_fbh.idx != fbh.idx)
+					if (renderView->m_fbh.idx != fbh.idx)
 					{
 						if (NULL != renderPassEncoder)
 						{
@@ -7008,7 +7139,7 @@ WGPU_IMPORT
 							oldFb.resolve(m_cmd.m_commandEncoder);
 						}
 
-						fbh = _render->m_view[view].m_fbh;
+						fbh = renderView->m_fbh;
 
 						stateMask = isValid(fbh)
 							? getAttachmentStateMask(m_frameBuffers[fbh.idx].m_attachment, m_frameBuffers[fbh.idx].m_numAttachments)
@@ -7042,7 +7173,7 @@ WGPU_IMPORT
 					submitBlit(bs, view);
 
 					BGFX_WGPU_PROFILER_END();
-					setViewType(view, " ");
+					formatViewName(viewName, _render, view, " ");
 					BGFX_WGPU_PROFILER_BEGIN(view, kColorView);
 
 					profiler.begin(view);
@@ -7061,23 +7192,23 @@ WGPU_IMPORT
 						: fb.m_depthStencilView
 						;
 
-					viewState.m_rect = _render->m_view[view].m_rect;
+					viewState.m_rect = renderView->m_rect;
 
 					const Rect fbRect(0, 0, bx::narrowCast<uint16_t>(fb.m_width), bx::narrowCast<uint16_t>(fb.m_height) );
 
-					const Rect& viewRect = _render->m_view[view].m_rect;
+					const Rect& viewRect = renderView->m_rect;
 
 					Rect clippedRect;
-					clippedRect.setIntersect(_render->m_view[view].m_clippedRect, fbRect);
+					clippedRect.setIntersect(renderView->m_clippedRect, fbRect);
 
-					Rect scissorRect = _render->m_view[view].m_scissor;
+					Rect scissorRect = renderView->m_scissor;
 					scissorRect.intersect(fbRect);
 
 					viewHasScissor   = !scissorRect.isZero();
 					viewScissorRect  = viewHasScissor ? scissorRect : clippedRect;
 					restoreScissor   = false;
 
-					const Clear& clr = _render->m_view[view].m_clear;
+					const Clear& clr = renderView->m_clear;
 
 					const bool needClear  = BGFX_CLEAR_NONE != ( (BGFX_CLEAR_COLOR|BGFX_CLEAR_DEPTH|BGFX_CLEAR_STENCIL) & clr.m_flags);
 					const bool clearWhole = clippedRect.isEqual(fbRect);
@@ -7189,7 +7320,7 @@ WGPU_IMPORT
 					WGPURenderPassDescriptor renderPassDesc =
 					{
 						.nextInChain            = NULL,
-						.label                  = toWGPUStringView(g_viewName[view]),
+						.label                  = toWGPUStringView(viewName),
 						.colorAttachmentCount   = numColorAttachments,
 						.colorAttachments       = colorAttachment,
 						.depthStencilAttachment = NULL == depthStencilTextureView
@@ -7203,8 +7334,17 @@ WGPU_IMPORT
 					if (isFrameBufferValid)
 					{
 						WGPUCommandEncoder cmdEncoder = m_cmd.alloc();
+
+						const bool integerCleared = true
+							&& !clearWhole
+							&&  needClear
+							&& !isSwapChain
+							&&  clearIntegerColor(cmdEncoder, fb, clippedRect, clr, _render->m_colorPalette)
+							;
+
 						renderPassEncoder = WGPU_CHECK(wgpuCommandEncoderBeginRenderPass(cmdEncoder, &renderPassDesc) );
 						currentPipeline   = NULL;
+						blendFactor       = 0;
 
 						currentState.m_stencil = UINT64_MAX;
 
@@ -7218,10 +7358,22 @@ WGPU_IMPORT
 							, 1.0f
 							);
 
-						if (!clearWhole && needClear)
+						if (!clearWhole
+						&&  needClear
+						&& !integerCleared)
 						{
 							clearQuad(renderPassEncoder, fbh, msaaCount, _clearQuad, clippedRect, clr, _render->m_colorPalette);
 						}
+
+						wgpuRenderPassEncoderSetViewport(
+							  renderPassEncoder
+							, float(viewRect.m_x)
+							, float(viewRect.m_y)
+							, float(viewRect.m_width)
+							, float(viewRect.m_height)
+							, renderView->m_minDepth
+							, renderView->m_maxDepth
+							);
 
 						wgpuRenderPassEncoderSetScissorRect(
 							  renderPassEncoder
@@ -7246,7 +7398,7 @@ WGPU_IMPORT
 					if (NULL == computePassEncoder)
 					{
 						BGFX_WGPU_PROFILER_END();
-						setViewType(view, "C");
+						setViewType(viewName, "C");
 						BGFX_WGPU_PROFILER_BEGIN(view, kColorCompute);
 
 						if (NULL != renderPassEncoder)
@@ -7296,7 +7448,7 @@ WGPU_IMPORT
 					if (constantsChanged
 					||  hasPredefined)
 					{
-						viewState.setPredefined<4>(this, view, program, _render, compute);
+						viewState.setPredefined<4>(this, view, *renderView, program, _render, compute);
 						m_uniformScratchBuffer.write(sbo, m_vsScratch, vsSize);
 					}
 
@@ -7355,7 +7507,7 @@ WGPU_IMPORT
 					WGPU_CHECK(wgpuComputePassEncoderEnd(computePassEncoder) );
 					wgpuRelease(computePassEncoder);
 
-					setViewType(view, " ");
+					setViewType(viewName, " ");
 					BGFX_WGPU_PROFILER_END();
 					BGFX_WGPU_PROFILER_BEGIN(view, kColorDraw);
 				}
@@ -7389,7 +7541,7 @@ WGPU_IMPORT
 				rendererUpdateUniforms(this, _render->m_uniformBuffer[draw.m_uniformIdx], draw.m_uniformBegin, draw.m_uniformEnd);
 
 				const uint64_t state = draw.m_stateFlags & stateMask;
-				const uint32_t sampleMask = _render->m_view[view].m_sampleMask & draw.m_sampleMask;
+				const uint32_t sampleMask = renderView->m_sampleMask & draw.m_sampleMask;
 
 				const uint8_t numInstanceData = uint8_t(draw.m_instanceDataStride/16);
 				const bool    drawIsIndex16   = draw.isIndex16();
@@ -7416,7 +7568,7 @@ WGPU_IMPORT
 				{
 					const DepthControl& depthControl = (UINT16_MAX != draw.m_depthBias)
 						? _render->m_frameCache.m_depthBiasCache.m_cache[draw.m_depthBias]
-						: _render->m_view[view].m_depthBias
+						: renderView->m_depthBias
 						;
 					const bool depthClamp = depthControl.m_depthClamp;
 
@@ -7497,7 +7649,7 @@ WGPU_IMPORT
 				{
 					const uint32_t ref = (draw.m_stateFlags&BGFX_STATE_ALPHA_REF_MASK)>>BGFX_STATE_ALPHA_REF_SHIFT;
 					viewState.m_alphaRef = ref/255.0f;
-					viewState.setPredefined<4>(this, view, program, _render, draw);
+					viewState.setPredefined<4>(this, view, *renderView, program, _render, draw);
 				}
 
 				ChunkedScratchBufferOffset sbo;
@@ -7874,7 +8026,7 @@ WGPU_IMPORT
 				WGPU_CHECK(wgpuComputePassEncoderEnd(computePassEncoder) );
 				wgpuRelease(computePassEncoder);
 
-				setViewType(view, "C");
+				setViewType(viewName, "C");
 				BGFX_WGPU_PROFILER_END();
 				BGFX_WGPU_PROFILER_BEGIN(view, kColorCompute);
 			}

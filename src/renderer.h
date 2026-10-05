@@ -7,15 +7,58 @@
 #define BGFX_RENDERER_H_HEADER_GUARD
 
 #include "bgfx_p.h"
+#include <bx/pixelformat.h>
 
 namespace bgfx
 {
-	inline void setViewType(ViewId _view, const bx::StringView _str)
+	inline void setViewType(char* _viewName, const bx::StringView _str)
 	{
-		if (BX_ENABLED(BGFX_CONFIG_DEBUG_ANNOTATION || BGFX_CONFIG_PROFILER) )
+		bx::memCopy(&_viewName[4], _str.getPtr(), _str.getLength() );
+	}
+
+	inline bool isIntegerFormat(TextureFormat::Enum _format)
+	{
+		const bx::EncodingType::Enum encoding = bx::EncodingType::Enum(bimg::getBlockInfo(bimg::TextureFormat::Enum(_format) ).encoding);
+		return bx::EncodingType::Int  == encoding
+			|| bx::EncodingType::Uint == encoding
+			;
+	}
+
+	inline void getClearColor(float _rgba[4], const Clear& _clear, const float _palette[][4], uint32_t _attachment, bool _integer)
+	{
+		if (BGFX_CLEAR_COLOR_USE_PALETTE & _clear.m_flags)
 		{
-			bx::memCopy(&g_viewName[_view][3], _str.getPtr(), _str.getLength() );
+			const uint8_t index = bx::min<uint8_t>(BGFX_CONFIG_MAX_COLOR_PALETTE-1, _clear.m_index[_attachment]);
+			bx::memCopy(_rgba, _palette[index], sizeof(float)*4);
 		}
+		else
+		{
+			const float scale = _integer ? 1.0f : 1.0f/255.0f;
+			_rgba[0] = _clear.m_index[0]*scale;
+			_rgba[1] = _clear.m_index[1]*scale;
+			_rgba[2] = _clear.m_index[2]*scale;
+			_rgba[3] = _clear.m_index[3]*scale;
+		}
+	}
+
+	inline uint32_t packIntegerTexel(uint8_t* _out, TextureFormat::Enum _format, const float _rgba[4])
+	{
+		const bimg::ImageBlockInfo& info = bimg::getBlockInfo(bimg::TextureFormat::Enum(_format) );
+		const uint8_t bits[4] = { info.rBits, info.gBits, info.bBits, info.aBits };
+
+		uint32_t size = 0;
+
+		for (uint32_t ii = 0; ii < 4; ++ii)
+		{
+			const int64_t value = int64_t(_rgba[ii]);
+
+			for (uint32_t bb = 0, num = bits[ii]/8; bb < num; ++bb)
+			{
+				_out[size++] = uint8_t(value >> (bb*8) );
+			}
+		}
+
+		return size;
 	}
 
 	static constexpr uint32_t kTimerQueryBlock = 64;
@@ -40,6 +83,116 @@ namespace bgfx
 		_control.reset();
 		_control.resize(int32_t(_size) - int32_t(_control.getSize() ) );
 	}
+
+	template<typename QueryT>
+	class TimerQueryArrayT
+	{
+	public:
+		TimerQueryArrayT(uint32_t _num)
+			: m_query(NULL)
+			, m_num(0)
+		{
+			resize(_num);
+		}
+
+		~TimerQueryArrayT()
+		{
+			bx::free(g_allocator, m_query);
+		}
+
+		void resize(uint32_t _num)
+		{
+			if (_num != m_num)
+			{
+				m_query = (QueryT*)bx::realloc(g_allocator, m_query, sizeof(QueryT)*_num);
+				m_num   = _num;
+			}
+		}
+
+		QueryT& operator[](uint32_t _idx)
+		{
+			BX_ASSERT(_idx < m_num, "Timer query index %d out of range %d.", _idx, m_num);
+			return m_query[_idx];
+		}
+
+	private:
+		QueryT*  m_query;
+		uint32_t m_num;
+	};
+
+	template<typename ResultT>
+	class TimerResultT
+	{
+	public:
+		TimerResultT()
+			: m_result(NULL)
+			, m_num(0)
+		{
+			m_frame.reset();
+		}
+
+		~TimerResultT()
+		{
+			bx::free(g_allocator, m_result);
+		}
+
+		void reset()
+		{
+			for (uint32_t ii = 0; ii < m_num; ++ii)
+			{
+				m_result[ii].reset();
+			}
+
+			m_frame.reset();
+		}
+
+		void resetPending()
+		{
+			for (uint32_t ii = 0; ii < m_num; ++ii)
+			{
+				m_result[ii].m_pending = 0;
+			}
+
+			m_frame.m_pending = 0;
+		}
+
+		ResultT& operator[](uint32_t _idx)
+		{
+			if (BGFX_CONFIG_MAX_VIEWS == _idx)
+			{
+				return m_frame;
+			}
+
+			if (_idx >= m_num)
+			{
+				grow(_idx + 1);
+			}
+
+			return m_result[_idx];
+		}
+
+	private:
+		BX_NO_INLINE void grow(uint32_t _num)
+		{
+			const uint32_t num = bx::alignUp(_num, kTimerQueryBlock);
+
+			ResultT* result = (ResultT*)bx::alloc(g_allocator, sizeof(ResultT)*num);
+			bx::memCopy(result, m_result, sizeof(ResultT)*m_num);
+
+			for (uint32_t ii = m_num; ii < num; ++ii)
+			{
+				result[ii].reset();
+			}
+
+			bx::free(g_allocator, m_result);
+			m_result = result;
+			m_num    = num;
+		}
+
+		ResultT* m_result;
+		uint32_t m_num;
+		ResultT  m_frame;
+	};
 
 	struct BlitState
 	{
@@ -134,21 +287,19 @@ namespace bgfx
 			m_invProjCached = UINT16_MAX;
 			m_invViewProjCached = UINT16_MAX;
 
-			m_view = m_viewTmp;
+			BX_UNUSED(_frame);
+		}
 
-			for (uint32_t ii = 0, num = _frame->m_numUsedViews; ii < num; ++ii)
-			{
-				const uint16_t view = _frame->m_usedViews[ii];
-				bx::memCopy(&m_view[view].un.f4x4, &_frame->m_view[view].m_view.un.f4x4, sizeof(Matrix4) );
-				bx::float4x4_mul(&m_viewProj[view].un.f4x4
-					, &m_view[view].un.f4x4
-					, &_frame->m_view[view].m_proj.un.f4x4
-					);
-			}
+		BX_NO_INLINE void setView(const View& _renderView)
+		{
+			bx::float4x4_mul(&m_viewProj.un.f4x4
+				, &_renderView.m_view.un.f4x4
+				, &_renderView.m_proj.un.f4x4
+				);
 		}
 
 		template<uint16_t mtxRegs, typename RendererContext, typename Program, typename Draw>
-		void setPredefined(RendererContext* _renderer, uint16_t _view, const Program& _program, const Frame* _frame, const Draw& _draw)
+		void setPredefined(RendererContext* _renderer, uint16_t _view, const View& _renderView, const Program& _program, const Frame* _frame, const Draw& _draw)
 		{
 			const FrameCache& frameCache = _frame->m_frameCache;
 
@@ -181,8 +332,8 @@ namespace bgfx
 						frect[1] = 1.0f/float(m_rect.m_height);
 						// .zw = the view's viewport depth range [minDepth, maxDepth], for
 						// shaders that clamp a written depth (WebGPU @builtin(frag_depth)).
-						frect[2] = _frame->m_view[_view].m_minDepth;
-						frect[3] = _frame->m_view[_view].m_maxDepth;
+						frect[2] = _renderView.m_minDepth;
+						frect[3] = _renderView.m_maxDepth;
 
 						_renderer->setShaderUniform4f(flags
 							, predefined.m_loc
@@ -196,7 +347,7 @@ namespace bgfx
 					{
 						_renderer->setShaderUniform4x4f(flags
 							, predefined.m_loc
-							, m_view[_view].un.val
+							, _renderView.m_view.un.val
 							, bx::min(mtxRegs, predefined.m_count)
 							);
 					}
@@ -208,7 +359,7 @@ namespace bgfx
 						{
 							m_invViewCached = _view;
 							bx::float4x4_inverse(&m_invView.un.f4x4
-								, &m_view[_view].un.f4x4
+								, &_renderView.m_view.un.f4x4
 								);
 						}
 
@@ -224,7 +375,7 @@ namespace bgfx
 					{
 						_renderer->setShaderUniform4x4f(flags
 							, predefined.m_loc
-							, _frame->m_view[_view].m_proj.un.val
+							, _renderView.m_proj.un.val
 							, bx::min(mtxRegs, predefined.m_count)
 							);
 					}
@@ -236,7 +387,7 @@ namespace bgfx
 						{
 							m_invProjCached = _view;
 							bx::float4x4_inverse(&m_invProj.un.f4x4
-								, &_frame->m_view[_view].m_proj.un.f4x4
+								, &_renderView.m_proj.un.f4x4
 								);
 						}
 
@@ -252,7 +403,7 @@ namespace bgfx
 					{
 						_renderer->setShaderUniform4x4f(flags
 							, predefined.m_loc
-							, m_viewProj[_view].un.val
+							, m_viewProj.un.val
 							, bx::min(mtxRegs, predefined.m_count)
 							);
 					}
@@ -264,7 +415,7 @@ namespace bgfx
 						{
 							m_invViewProjCached = _view;
 							bx::float4x4_inverse(&m_invViewProj.un.f4x4
-								, &m_viewProj[_view].un.f4x4
+								, &m_viewProj.un.f4x4
 								);
 						}
 
@@ -293,7 +444,7 @@ namespace bgfx
 						const Matrix4& model = frameCache.m_matrixCache.at(_draw.m_startMatrix);
 						bx::model4x4_mul(&modelView.un.f4x4
 							, &model.un.f4x4
-							, &m_view[_view].un.f4x4
+							, &_renderView.m_view.un.f4x4
 							);
 						_renderer->setShaderUniform4x4f(flags
 							, predefined.m_loc
@@ -310,7 +461,7 @@ namespace bgfx
 						const Matrix4& model = frameCache.m_matrixCache.at(_draw.m_startMatrix);
 						bx::model4x4_mul(&modelView.un.f4x4
 							, &model.un.f4x4
-							, &m_view[_view].un.f4x4
+							, &_renderView.m_view.un.f4x4
 							);
 						bx::float4x4_inverse(&invModelView.un.f4x4
 							, &modelView.un.f4x4
@@ -329,7 +480,7 @@ namespace bgfx
 						const Matrix4& model = frameCache.m_matrixCache.at(_draw.m_startMatrix);
 						bx::model4x4_mul_viewproj4x4(&modelViewProj.un.f4x4
 							, &model.un.f4x4
-							, &m_viewProj[_view].un.f4x4
+							, &m_viewProj.un.f4x4
 							);
 						_renderer->setShaderUniform4x4f(flags
 							, predefined.m_loc
@@ -373,10 +524,8 @@ namespace bgfx
 			}
 		}
 
-		Matrix4  m_viewTmp[BGFX_CONFIG_MAX_VIEWS];
-		Matrix4  m_viewProj[BGFX_CONFIG_MAX_VIEWS];
-		Matrix4* m_view;
 		Rect     m_rect;
+		Matrix4  m_viewProj;
 		Matrix4  m_invView;
 		Matrix4  m_invProj;
 		Matrix4  m_invViewProj;
@@ -883,7 +1032,7 @@ namespace bgfx
 				viewStats.view = ViewId(_view);
 				bx::strCopy(viewStats.name
 					, BGFX_CONFIG_MAX_VIEW_NAME
-					, &g_viewName[_view][BGFX_CONFIG_MAX_VIEW_NAME_RESERVED]
+					, getViewName(m_frame, _view)
 					);
 			}
 		}

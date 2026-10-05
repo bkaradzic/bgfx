@@ -90,7 +90,7 @@ Any API call starting with ``bgfx::setView*`` is considered part of the View API
 
 One important constraint: ``bgfx::setViewMode`` must be set **before** any draw calls are submitted to that view within a frame. The internal encoder reads the view mode at submit time to select the sort key encoding. Changing the view mode after draw calls have already been submitted to that view will cause incorrect sort behaviour.
 
-The maximum number of views is configured by ``BGFX_CONFIG_MAX_VIEWS`` (default: 256, must be a power of 2). Views are referenced by ``ViewId`` (a 16-bit integer).
+Views are referenced by ``ViewId`` (a 16-bit integer) in the range ``0`` to ``BGFX_CONFIG_MAX_VIEWS-1`` (4096 ids, fixed). View state is kept for ``Init::Limits::minViews`` views (``BGFX_CONFIG_MIN_VIEWS``, default 256) and allocated in blocks of 64 as views past that are set; a block whose views are all reset is released again once ``Init::Limits::numDrawCallPeakFrames`` frames have gone by. The per-frame copies hold only the views used in that frame and grow and shrink with that count.
 
 Encoder API
 -----------
@@ -173,11 +173,15 @@ Resource limits
 
 ``BGFX_CONFIG_DYNAMIC_FRAME_STORAGE`` - Enable dynamic per frame storage. When enabled, storage for render items, binds, blit items and scissor rectangles is allocated in blocks, on first touch, and grows during the frame instead of dropping submissions; ``Init::Limits::numDrawCalls`` is then what is reserved up front rather than a hard limit, and ``Caps::Limits::maxDrawCalls`` always reports ``BGFX_CONFIG_MAX_DRAW_CALLS``. When disabled, all of it is allocated once, up front, at exactly the requested size, indexing has no indirection, and ``Init::Limits::numDrawCalls`` is a hard limit that submissions are dropped past. Default is 1. Disabling trades memory for a small amount of submission throughput; see ``Stats::numDrawCallsPeak`` to size ``numDrawCalls``.
 
-``BGFX_CONFIG_DRAW_CALL_BLOCK`` - Granularity dynamic per frame storage grows by, in items, and the multiple ``Init::Limits::numDrawCalls`` is rounded up to. Must be a power of two. Default is 64.
+``BGFX_CONFIG_DRAW_CALL_BLOCK`` - Granularity dynamic per frame storage grows by, in items, and the multiple ``Init::Limits::numDrawCalls`` is rounded up to. Must be a power of two, at least 64. Default is 1024.
+
+``BGFX_CONFIG_BLIT_BLOCK``, ``BGFX_CONFIG_DEPTH_CONTROL_BLOCK``, ``BGFX_CONFIG_MATRIX_BLOCK``, ``BGFX_CONFIG_RECT_BLOCK``, ``BGFX_CONFIG_VIEW_BLOCK`` - Granularity the per frame blit item, depth control, matrix and scissor rect caches and the view storage grow by. Must be a power of two, at least 64. Default is 64.
 
 ``BGFX_CONFIG_MAX_BLIT_ITEMS`` - Maximum number of blit items per frame. Default is 1024.
 
-``BGFX_CONFIG_MAX_VIEWS`` - Maximum number of views. Default is 256. Must be a power of 2.
+``BGFX_CONFIG_MAX_VIEWS`` - Number of view ids. Fixed at 4096; view storage is allocated as views are used, so this is only the id range.
+
+``BGFX_CONFIG_MIN_VIEWS`` - Minimum number of views storage is kept for. Default is 256. Must be at least ``BGFX_CONFIG_VIEW_BLOCK``.
 
 ``BGFX_CONFIG_MAX_VIEW_NAME`` - Maximum length of a view name string. Default is 256.
 

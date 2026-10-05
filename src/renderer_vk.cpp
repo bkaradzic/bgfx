@@ -378,10 +378,12 @@ VK_IMPORT_DEVICE
 			EXT_shader_viewport_index_layer,
 			EXT_surface_maintenance1,
 			EXT_swapchain_maintenance1,
+			KHR_16bit_storage,
 			KHR_draw_indirect_count,
 			KHR_fragment_shading_rate,
 			KHR_get_physical_device_properties2,
 			KHR_get_surface_capabilities2,
+			KHR_shader_float16_int8,
 			KHR_video_queue,
 			KHR_video_decode_queue,
 			KHR_video_decode_h264,
@@ -426,10 +428,12 @@ VK_IMPORT_DEVICE
 		{ "VK_EXT_shader_viewport_index_layer",     1, false, false, true,                                                          Layer::Count },
 		{ "VK_EXT_surface_maintenance1",            1, false, false, true,                                                          Layer::Count },
 		{ "VK_EXT_swapchain_maintenance1",          1, false, false, true,                                                          Layer::Count },
+		{ "VK_KHR_16bit_storage",                   1, false, false, true,                                                          Layer::Count },
 		{ "VK_KHR_draw_indirect_count",             1, false, false, true,                                                          Layer::Count },
 		{ "VK_KHR_fragment_shading_rate",           1, false, false, true,                                                          Layer::Count },
 		{ "VK_KHR_get_physical_device_properties2", 1, false, false, true,                                                          Layer::Count },
 		{ "VK_KHR_get_surface_capabilities2",       1, false, false, true,                                                          Layer::Count },
+		{ "VK_KHR_shader_float16_int8",             1, false, false, true,                                                          Layer::Count },
 		{ "VK_KHR_video_queue",                     1, false, false, true,                                                          Layer::Count },
 		{ "VK_KHR_video_decode_queue",              1, false, false, true,                                                          Layer::Count },
 		{ "VK_KHR_video_decode_h264",               1, false, false, true,                                                          Layer::Count },
@@ -1337,6 +1341,8 @@ VK_IMPORT_DEVICE
 			VkPhysicalDeviceCustomBorderColorFeaturesEXT customBorderColorFeatures = {};
 			VkPhysicalDeviceFragmentShadingRateFeaturesKHR fragmentShadingRate = {};
 			VkPhysicalDeviceSwapchainMaintenance1FeaturesEXT swapchainMaintenance1Features = {};
+			VkPhysicalDeviceShaderFloat16Int8Features shaderFloat16Int8Features = {};
+			VkPhysicalDevice16BitStorageFeatures storage16BitFeatures = {};
 
 			m_fbh = BGFX_INVALID_HANDLE;
 			m_readOnlyDepthLayout = VK_IMAGE_LAYOUT_UNDEFINED;
@@ -1787,6 +1793,19 @@ VK_IMPORT_INSTANCE
 						swapchainMaintenance1Features.pNext = NULL;
 					}
 
+					next->pNext = (VkBaseOutStructure*)&storage16BitFeatures;
+					next = (VkBaseOutStructure*)&storage16BitFeatures;
+					storage16BitFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_16BIT_STORAGE_FEATURES;
+					storage16BitFeatures.pNext = NULL;
+
+					if (s_extension[Extension::KHR_shader_float16_int8].m_supported)
+					{
+						next->pNext = (VkBaseOutStructure*)&shaderFloat16Int8Features;
+						next = (VkBaseOutStructure*)&shaderFloat16Int8Features;
+						shaderFloat16Int8Features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_FLOAT16_INT8_FEATURES;
+						shaderFloat16Int8Features.pNext = NULL;
+					}
+
 					nextFeatures = deviceFeatures2.pNext;
 
 					vkGetPhysicalDeviceFeatures2KHR(m_physicalDevice, &deviceFeatures2);
@@ -1947,6 +1966,13 @@ VK_IMPORT_INSTANCE
 					| (s_extension[Extension::EXT_shader_viewport_index_layer].m_supported ? BGFX_CAPS_VIEWPORT_LAYER_ARRAY : 0)
 					| (s_extension[Extension::KHR_draw_indirect_count        ].m_supported && indirectDrawSupport ? BGFX_CAPS_DRAW_INDIRECT_COUNT : 0)
 					| (s_extension[Extension::KHR_fragment_shading_rate      ].m_supported ? BGFX_CAPS_VARIABLE_RATE_SHADING : 0)
+					| (true
+						&& shaderFloat16Int8Features.shaderFloat16
+						&& storage16BitFeatures.storageBuffer16BitAccess
+						&& storage16BitFeatures.uniformAndStorageBuffer16BitAccess
+						&& storage16BitFeatures.storageInputOutput16
+						? BGFX_CAPS_SHADER_F16
+						: 0)
 					;
 
 				m_variableRateShadingSupported = true
@@ -2531,30 +2557,15 @@ VK_IMPORT_DEVICE
 				m_scratchStagingBuffer[ii].destroy();
 			}
 
-			for (uint32_t ii = 0; ii < BX_COUNTOF(m_frameBuffers); ++ii)
-			{
-				m_frameBuffers[ii].destroy();
-			}
+			m_frameBuffers.each([](FrameBufferVK& _frameBuffer) { _frameBuffer.destroy(); });
 
-			for (uint32_t ii = 0; ii < BX_COUNTOF(m_indexBuffers); ++ii)
-			{
-				m_indexBuffers[ii].destroy();
-			}
+			m_indexBuffers.each([](IndexBufferVK& _indexBuffer) { _indexBuffer.destroy(); });
 
-			for (uint32_t ii = 0; ii < BX_COUNTOF(m_vertexBuffers); ++ii)
-			{
-				m_vertexBuffers[ii].destroy();
-			}
+			m_vertexBuffers.each([](VertexBufferVK& _vertexBuffer) { _vertexBuffer.destroy(); });
 
-			for (uint32_t ii = 0; ii < BX_COUNTOF(m_shaders); ++ii)
-			{
-				m_shaders[ii].destroy();
-			}
+			m_shaders.each([](ShaderVK& _shader) { _shader.destroy(); });
 
-			for (uint32_t ii = 0; ii < BX_COUNTOF(m_textures); ++ii)
-			{
-				m_textures[ii].destroy();
-			}
+			m_textures.each([](TextureVK& _texture) { _texture.destroy(); });
 
 			m_backBuffer.destroy();
 
@@ -2651,12 +2662,13 @@ VK_IMPORT_DEVICE
 
 		void createIndexBuffer(IndexBufferHandle _handle, const Memory* _mem, uint16_t _flags) override
 		{
-			m_indexBuffers[_handle.idx].create(m_commandBuffer, _mem->size, _mem->data, _flags, false);
+			m_indexBuffers.alloc(_handle.idx).create(m_commandBuffer, _mem->size, _mem->data, _flags, false);
 		}
 
 		void destroyIndexBuffer(IndexBufferHandle _handle) override
 		{
 			m_indexBuffers[_handle.idx].destroy();
+			m_indexBuffers.release(_handle.idx);
 		}
 
 		void createVertexLayout(VertexLayoutHandle _handle, const VertexLayout& _layout) override
@@ -2672,17 +2684,18 @@ VK_IMPORT_DEVICE
 
 		void createVertexBuffer(VertexBufferHandle _handle, const Memory* _mem, VertexLayoutHandle _layoutHandle, uint16_t _flags) override
 		{
-			m_vertexBuffers[_handle.idx].create(m_commandBuffer, _mem->size, _mem->data, _layoutHandle, _flags);
+			m_vertexBuffers.alloc(_handle.idx).create(m_commandBuffer, _mem->size, _mem->data, _layoutHandle, _flags);
 		}
 
 		void destroyVertexBuffer(VertexBufferHandle _handle) override
 		{
 			m_vertexBuffers[_handle.idx].destroy();
+			m_vertexBuffers.release(_handle.idx);
 		}
 
 		void createDynamicIndexBuffer(IndexBufferHandle _handle, uint32_t _size, uint16_t _flags) override
 		{
-			m_indexBuffers[_handle.idx].create(m_commandBuffer, _size, NULL, _flags, false);
+			m_indexBuffers.alloc(_handle.idx).create(m_commandBuffer, _size, NULL, _flags, false);
 		}
 
 		void updateDynamicIndexBuffer(IndexBufferHandle _handle, uint32_t _offset, uint32_t _size, const Memory* _mem) override
@@ -2693,12 +2706,13 @@ VK_IMPORT_DEVICE
 		void destroyDynamicIndexBuffer(IndexBufferHandle _handle) override
 		{
 			m_indexBuffers[_handle.idx].destroy();
+			m_indexBuffers.release(_handle.idx);
 		}
 
 		void createDynamicVertexBuffer(VertexBufferHandle _handle, uint32_t _size, uint16_t _flags) override
 		{
 			VertexLayoutHandle layoutHandle = BGFX_INVALID_HANDLE;
-			m_vertexBuffers[_handle.idx].create(m_commandBuffer, _size, NULL, layoutHandle, _flags);
+			m_vertexBuffers.alloc(_handle.idx).create(m_commandBuffer, _size, NULL, layoutHandle, _flags);
 		}
 
 		void updateDynamicVertexBuffer(VertexBufferHandle _handle, uint32_t _offset, uint32_t _size, const Memory* _mem) override
@@ -2709,31 +2723,34 @@ VK_IMPORT_DEVICE
 		void destroyDynamicVertexBuffer(VertexBufferHandle _handle) override
 		{
 			m_vertexBuffers[_handle.idx].destroy();
+			m_vertexBuffers.release(_handle.idx);
 		}
 
 		void createShader(ShaderHandle _handle, const Memory* _mem) override
 		{
-			m_shaders[_handle.idx].create(_mem);
+			m_shaders.alloc(_handle.idx).create(_mem);
 		}
 
 		void destroyShader(ShaderHandle _handle) override
 		{
 			m_shaders[_handle.idx].destroy();
+			m_shaders.release(_handle.idx);
 		}
 
 		void createProgram(ProgramHandle _handle, ShaderHandle _vsh, ShaderHandle _fsh) override
 		{
-			m_program[_handle.idx].create(&m_shaders[_vsh.idx], isValid(_fsh) ? &m_shaders[_fsh.idx] : NULL);
+			m_program.alloc(_handle.idx).create(&m_shaders[_vsh.idx], isValid(_fsh) ? &m_shaders[_fsh.idx] : NULL);
 		}
 
 		void destroyProgram(ProgramHandle _handle) override
 		{
 			m_program[_handle.idx].destroy();
+			m_program.release(_handle.idx);
 		}
 
 		void* createTexture(TextureHandle _handle, const Memory* _mem, uint64_t _flags, uint8_t _skip, uint64_t _external) override
 		{
-			return m_textures[_handle.idx].create(m_commandBuffer, _mem, _flags, _skip, _external);
+			return m_textures.alloc(_handle.idx).create(m_commandBuffer, _mem, _flags, _skip, _external);
 		}
 
 		void updateTexture(TextureHandle _handle, uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem) override
@@ -2853,11 +2870,12 @@ VK_IMPORT_DEVICE
 		{
 			m_imageViewCache.invalidateWithParent(_handle.idx);
 			m_textures[_handle.idx].destroy();
+			m_textures.release(_handle.idx);
 		}
 
 		void createFrameBuffer(FrameBufferHandle _handle, uint8_t _num, const Attachment* _attachment) override
 		{
-			m_frameBuffers[_handle.idx].create(_num, _attachment);
+			m_frameBuffers.alloc(_handle.idx).create(_num, _attachment);
 		}
 
 		void createFrameBuffer(FrameBufferHandle _handle, const SwapChain& _desc) override
@@ -2874,7 +2892,7 @@ VK_IMPORT_DEVICE
 
 			uint16_t denseIdx = m_numWindows++;
 			m_windows[denseIdx] = _handle;
-			VK_CHECK(m_frameBuffers[_handle.idx].create(denseIdx, _desc) );
+			VK_CHECK(m_frameBuffers.alloc(_handle.idx).create(denseIdx, _desc) );
 		}
 
 		void resizeFrameBuffer(FrameBufferHandle _handle, const SwapChain& _desc) override
@@ -2892,6 +2910,7 @@ VK_IMPORT_DEVICE
 			}
 
 			uint16_t denseIdx = frameBuffer.destroy();
+			m_frameBuffers.release(_handle.idx);
 			if (UINT16_MAX != denseIdx)
 			{
 				--m_numWindows;
@@ -3160,10 +3179,7 @@ VK_IMPORT_DEVICE
 
 		void preReset()
 		{
-			for (uint32_t ii = 0; ii < BX_COUNTOF(m_frameBuffers); ++ii)
-			{
-				m_frameBuffers[ii].preReset();
-			}
+			m_frameBuffers.each([](FrameBufferVK& _frameBuffer) { _frameBuffer.preReset(); });
 
 			if (m_captureSize > 0)
 			{
@@ -3177,10 +3193,7 @@ VK_IMPORT_DEVICE
 
 		void postReset()
 		{
-			for (uint32_t ii = 0; ii < BX_COUNTOF(m_frameBuffers); ++ii)
-			{
-				m_frameBuffers[ii].postReset();
-			}
+			m_frameBuffers.each([](FrameBufferVK& _frameBuffer) { _frameBuffer.postReset(); });
 
 			if (m_reset & BGFX_RESET_CAPTURE)
 			{
@@ -3226,11 +3239,10 @@ VK_IMPORT_DEVICE
 					m_mainSwapChain.width  = _swapChain.width;
 					m_mainSwapChain.height = _swapChain.height;
 
-					for (uint32_t ii = 0; ii < BX_COUNTOF(m_frameBuffers); ++ii)
-					{
-						m_frameBuffers[ii].preReset();
-						m_frameBuffers[ii].postReset();
-					}
+					m_frameBuffers.each([](FrameBufferVK& _frameBuffer) {
+						_frameBuffer.preReset();
+						_frameBuffer.postReset();
+					});
 				}
 
 				return suspended;
@@ -5242,13 +5254,13 @@ VK_IMPORT_DEVICE
 		void* m_renderDocDll;
 		void* m_vulkan1Dll;
 
-		IndexBufferVK  m_indexBuffers[BGFX_CONFIG_MAX_INDEX_BUFFERS];
-		VertexBufferVK m_vertexBuffers[BGFX_CONFIG_MAX_VERTEX_BUFFERS];
-		ShaderVK       m_shaders[BGFX_CONFIG_MAX_SHADERS];
-		ProgramVK      m_program[BGFX_CONFIG_MAX_PROGRAMS];
-		TextureVK      m_textures[BGFX_CONFIG_MAX_TEXTURES];
+		HandleArenaT<IndexBufferVK,  BGFX_CONFIG_MAX_INDEX_BUFFERS>  m_indexBuffers;
+		HandleArenaT<VertexBufferVK, BGFX_CONFIG_MAX_VERTEX_BUFFERS> m_vertexBuffers;
+		HandleArenaT<ShaderVK,       BGFX_CONFIG_MAX_SHADERS>        m_shaders;
+		HandleArenaT<ProgramVK,      BGFX_CONFIG_MAX_PROGRAMS>       m_program;
+		HandleArenaT<TextureVK,      BGFX_CONFIG_MAX_TEXTURES>       m_textures;
 		VertexLayout   m_vertexLayouts[BGFX_CONFIG_MAX_VERTEX_LAYOUTS];
-		FrameBufferVK  m_frameBuffers[BGFX_CONFIG_MAX_FRAME_BUFFERS];
+		HandleArenaT<FrameBufferVK,  BGFX_CONFIG_MAX_FRAME_BUFFERS>  m_frameBuffers;
 
 		Matrix4 m_predefinedUniforms[PredefinedUniform::Count];
 
@@ -6355,10 +6367,7 @@ VK_DESTROY
 	{
 		BGFX_PROFILER_SCOPE("TimerQueryVK::init", kColorFrame);
 
-		for (uint32_t ii = 0; ii < BX_COUNTOF(m_result); ++ii)
-		{
-			m_result[ii].reset();
-		}
+		m_result.reset();
 
 		return create();
 	}
@@ -6434,12 +6443,10 @@ VK_DESTROY
 		s_renderVK->recycleMemory(m_readbackMemory);
 
 		bgfx::resize(m_control, _size);
+		m_query.resize(m_control.getSize() );
 		VK_CHECK(create() );
 
-		for (uint32_t ii = 0; ii < BX_COUNTOF(m_result); ++ii)
-		{
-			m_result[ii].m_pending = 0;
-		}
+		m_result.resetPending();
 	}
 
 	uint32_t TimerQueryVK::begin(uint32_t _resultIdx, uint32_t _frameNum)
@@ -6998,7 +7005,7 @@ VK_DESTROY
 			m_textureDeviceMem = {};
 			m_flags |= BGFX_SAMPLER_INTERNAL_SHARED;
 
-			s_renderVK->m_cmd.addExternal({ uint16_t(this - s_renderVK->m_textures) });
+			s_renderVK->m_cmd.addExternal({ s_renderVK->m_textures.indexOf(*this) });
 		}
 		else
 		{
@@ -7165,7 +7172,7 @@ VK_DESTROY
 
 			BX_TRACE(
 				  "Texture %3d: %s (requested: %s), %dx%dx%d%s RT[%c], BO[%c], CW[%c]%s."
-				, (int)(this - s_renderVK->m_textures)
+				, s_renderVK->m_textures.indexOf(*this)
 				, getName( (TextureFormat::Enum)m_textureFormat)
 				, getName( (TextureFormat::Enum)m_requestedFormat)
 				, ti.width
@@ -7417,7 +7424,7 @@ VK_DESTROY
 
 		if (external)
 		{
-			s_renderVK->m_cmd.removeExternal({ uint16_t(this - s_renderVK->m_textures) });
+			s_renderVK->m_cmd.removeExternal({ s_renderVK->m_textures.indexOf(*this) });
 		}
 		else
 		{
@@ -10365,6 +10372,13 @@ VK_DESTROY
 
 	void RendererContextVK::submit(Frame* _render, const ClearQuad& /*_clearQuad*/, const MipGen& /*_mipGen*/, TextVideoMemBlitter& _textVideoMemBlitter)
 	{
+		m_indexBuffers.freeUnused();
+		m_vertexBuffers.freeUnused();
+		m_shaders.freeUnused();
+		m_program.freeUnused();
+		m_textures.freeUnused();
+		m_frameBuffers.freeUnused();
+
 		if (m_lost
 		||  updateResolution(_render->m_mainSwapChain, _render->m_reset) )
 		{
@@ -10449,6 +10463,8 @@ VK_DESTROY
 		VkIndexType currentIndexFormat = VK_INDEX_TYPE_MAX_ENUM;
 		SortKey key;
 		uint16_t view = UINT16_MAX;
+		const View* renderView = &_render->view(0);
+		char viewName[BGFX_CONFIG_MAX_VIEW_NAME] = "";
 		FrameBufferHandle fbh = { BGFX_CONFIG_MAX_FRAME_BUFFERS };
 
 		UniformCacheState ucs(_render);
@@ -10516,7 +10532,7 @@ VK_DESTROY
 
 		if (0 == (_render->m_debug&BGFX_DEBUG_IFH) )
 		{
-			viewState.m_rect = _render->m_view[0].m_rect;
+			viewState.m_rect = _render->view(0).m_rect;
 
 			int32_t numItems = _render->m_numRenderItems;
 			for (int32_t item = 0; item < numItems;)
@@ -10539,10 +10555,12 @@ VK_DESTROY
 				if (viewChanged)
 				{
 					view = key.m_view;
+					renderView = &_render->view(view);
+					viewState.setView(*renderView);
 					currentProgram = BGFX_INVALID_HANDLE;
 					hasPredefined = false;
 
-					if (_render->m_view[view].m_fbh.idx != fbh.idx)
+					if (renderView->m_fbh.idx != fbh.idx)
 					{
 						if ( beginRenderPass )
 						{
@@ -10550,7 +10568,7 @@ VK_DESTROY
 							beginRenderPass = false;
 						}
 
-						fbh = _render->m_view[view].m_fbh;
+						fbh = renderView->m_fbh;
 						setFrameBuffer(fbh);
 
 						stateMask = isValid(fbh)
@@ -10575,8 +10593,8 @@ VK_DESTROY
 					}
 
 					if (beginRenderPass && (false
-					||  _render->m_view[view].m_fbh.idx != fbh.idx
-					|| !_render->m_view[view].m_rect.isEqual(viewState.m_rect)
+					||  renderView->m_fbh.idx != fbh.idx
+					|| !renderView->m_rect.isEqual(viewState.m_rect)
 					||  profiler.m_enabled
 					   ) )
 					{
@@ -10599,7 +10617,7 @@ VK_DESTROY
 					submitBlit(bs, view);
 
 					BGFX_VK_PROFILER_END();
-					setViewType(view, " ");
+					formatViewName(viewName, _render, view, " ");
 					BGFX_VK_PROFILER_BEGIN(view, kColorView);
 
 					profiler.begin(view);
@@ -10610,7 +10628,7 @@ VK_DESTROY
 
 					if (isFrameBufferValid)
 					{
-						const Clear& clr = _render->m_view[view].m_clear;
+						const Clear& clr = renderView->m_clear;
 
 						const bool partialColorClear = true
 							&& 0 != (clr.m_flags & BGFX_CLEAR_COLOR)
@@ -10622,8 +10640,8 @@ VK_DESTROY
 							: clr.m_flags
 							);
 
-						viewState.m_rect = _render->m_view[view].m_rect;
-						const Rect& rect = _render->m_view[view].m_rect;
+						viewState.m_rect = renderView->m_rect;
+						const Rect& rect = renderView->m_rect;
 
 						const Rect framebufferRect(
 							  0
@@ -10633,9 +10651,9 @@ VK_DESTROY
 							);
 
 						Rect renderArea;
-						renderArea.setIntersect(_render->m_view[view].m_clippedRect, framebufferRect);
+						renderArea.setIntersect(renderView->m_clippedRect, framebufferRect);
 
-						Rect scissorRect = _render->m_view[view].m_scissor;
+						Rect scissorRect = renderView->m_scissor;
 						viewHasScissor  = !scissorRect.isZero();
 						viewScissorRect = viewHasScissor ? scissorRect : renderArea;
 						restoreScissor = false;
@@ -10652,8 +10670,8 @@ VK_DESTROY
 						vp.y        =  float(rect.m_y + rect.m_height);
 						vp.width    =  float(rect.m_width);
 						vp.height   = -float(rect.m_height);
-						vp.minDepth = _render->m_view[view].m_minDepth;
-						vp.maxDepth = _render->m_view[view].m_maxDepth;
+						vp.minDepth = renderView->m_minDepth;
+						vp.maxDepth = renderView->m_maxDepth;
 						vkCmdSetViewport(m_commandBuffer, 0, 1, &vp);
 
 						VkRect2D rc;
@@ -10783,7 +10801,7 @@ VK_DESTROY
 
 							vkCmdSetFragmentShadingRateKHR(
 								  m_commandBuffer
-								, &s_shadingRate[_render->m_view[view].m_shadingRate].fragmentSize
+								, &s_shadingRate[renderView->m_shadingRate].fragmentSize
 								, combinerOp
 								);
 						}
@@ -10798,7 +10816,7 @@ VK_DESTROY
 						currentBindHash = 0;
 
 						BGFX_VK_PROFILER_END();
-						setViewType(view, "C");
+						setViewType(viewName, "C");
 						BGFX_VK_PROFILER_BEGIN(view, kColorCompute);
 
 						if (beginRenderPass)
@@ -10858,7 +10876,7 @@ VK_DESTROY
 					if (constantsChanged
 					||  hasPredefined)
 					{
-						viewState.setPredefined<4>(this, view, program, _render, compute);
+						viewState.setPredefined<4>(this, view, *renderView, program, _render, compute);
 					}
 
 					if (VK_NULL_HANDLE != program.m_descriptorSetLayout)
@@ -10976,7 +10994,7 @@ VK_DESTROY
 				}
 
 				const uint64_t state = draw.m_stateFlags & stateMask;
-				const uint32_t sampleMask = _render->m_view[view].m_sampleMask & draw.m_sampleMask;
+				const uint32_t sampleMask = renderView->m_sampleMask & draw.m_sampleMask;
 				const uint64_t stencil = draw.m_stencil & stencilMask;
 				const uint64_t changedFlags = currentState.m_stateFlags ^ state;
 				currentState.m_stateFlags = state;
@@ -11056,7 +11074,7 @@ VK_DESTROY
 
 					const DepthControl& depthControl = (UINT16_MAX != draw.m_depthBias)
 						? _render->m_frameCache.m_depthBiasCache.m_cache[draw.m_depthBias]
-						: _render->m_view[view].m_depthBias
+						: renderView->m_depthBias
 						;
 
 					if (pipelineState.valid
@@ -11218,7 +11236,7 @@ VK_DESTROY
 					{
 						uint32_t ref = (draw.m_stateFlags & BGFX_STATE_ALPHA_REF_MASK) >> BGFX_STATE_ALPHA_REF_SHIFT;
 						viewState.m_alphaRef = ref / 255.0f;
-						viewState.setPredefined<4>(this, view, program, _render, draw);
+						viewState.setPredefined<4>(this, view, *renderView, program, _render, draw);
 					}
 
 					if (VK_NULL_HANDLE != program.m_descriptorSetLayout)
@@ -11451,7 +11469,7 @@ VK_DESTROY
 
 			if (wasCompute)
 			{
-				setViewType(view, "C");
+				setViewType(viewName, "C");
 				BGFX_VK_PROFILER_END();
 				BGFX_VK_PROFILER_BEGIN(view, kColorCompute);
 			}

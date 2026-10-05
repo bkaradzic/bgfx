@@ -1056,26 +1056,28 @@ class CapsFlags(enum.IntFlag):
 	PrimitiveId = 0x400
 	# Renderer is on separate thread.
 	RendererMultithreaded = 0x800
+	# 16-bit floats are supported in shaders.
+	ShaderF16 = 0x1000
 	# Multiple windows are supported.
-	SwapChain = 0x1000
+	SwapChain = 0x2000
 	# Cubemap texture array is supported.
-	TextureCubeArray = 0x2000
+	TextureCubeArray = 0x4000
 	# CPU direct access to GPU texture memory.
-	TextureDirectAccess = 0x4000
+	TextureDirectAccess = 0x8000
 	# External texture is supported.
-	TextureExternal = 0x8000
+	TextureExternal = 0x10000
 	# External shared texture is supported.
-	TextureExternalShared = 0x10000
+	TextureExternalShared = 0x20000
 	# Transparent back buffer supported.
-	TransparentBackbuffer = 0x20000
+	TransparentBackbuffer = 0x40000
 	# Variable Rate Shading
-	VariableRateShading = 0x40000
+	VariableRateShading = 0x80000
 	# Vertex attribute 10_10_10_2 is supported.
-	VertexAttribUint10 = 0x80000
+	VertexAttribUint10 = 0x100000
 	# Hardware video decode is supported.
-	VideoDecode = 0x100000
+	VideoDecode = 0x200000
 	# Viewport layer is available in vertex shader.
-	ViewportLayerArray = 0x200000
+	ViewportLayerArray = 0x400000
 
 class CapsFormatFlags(enum.IntFlag):
 	# Texture format is not supported.
@@ -1411,13 +1413,22 @@ class InitLimits(ctypes.Structure):
 	# `Stats::numDrawCallsPeak` to size it.
 	numDrawCalls: int
 	# Number of frames the draw-call peak (high-water mark) is observed
-	# before unused storage is released. Also used for resource command
-	# buffers and uniform buffers. Set to 0 to keep whatever has been
-	# allocated for the lifetime of the context. With
+	# before unused storage is released. Also used for view storage,
+	# resource command buffers and uniform buffers. Set to 0 to keep
+	# whatever has been allocated for the lifetime of the context. With
 	# `BGFX_CONFIG_DYNAMIC_FRAME_STORAGE` disabled draw/blit/rect storage
 	# is not resized; unused uniform and resource command buffer space
 	# is still released.
 	numDrawCallPeakFrames: int
+	# Minimum number of views to keep state for. Rounded up to a
+	# multiple of 64. This is a reservation, not a limit: a view past it
+	# gets storage when it is first set, up to
+	# `Caps::Limits::maxViews`, and that storage is released again once
+	# the views sharing it are all reset. Per-frame view data is sized
+	# by the views used in a frame, see `numDrawCallPeakFrames`. With
+	# `BGFX_CONFIG_DYNAMIC_FRAME_STORAGE` disabled storage for all views
+	# is allocated up front.
+	minViews: int
 	# Minimum resource command buffer size.
 	minResourceCbSize: int
 	# Maximum transient vertex buffer size.
@@ -2574,10 +2585,10 @@ def bgfx_set_palette_color_rgba8(_index: int, _rgba: int, /) -> None: ...
 # 
 #   In graphics debugger view name will appear as:
 # 
-#       "nnnc <view name>"
-#        ^  ^ ^
-#        |  +--- compute (C)
-#        +------ view id
+#       "nnnnc <view name>"
+#        ^   ^ ^
+#        |   +--- compute (C)
+#        +------- view id
 # 
 def bgfx_set_view_name(_id: int, _name: Optional[bytes], _len: int, /) -> None: ...
 
@@ -2649,7 +2660,9 @@ def bgfx_set_view_frame_buffer(_id: int, _handle: FrameBufferHandle, /) -> None:
 # all draw primitives in this view will use these two matrices.
 def bgfx_set_view_transform(_id: int, _view: Any, _proj: Any, /) -> None: ...
 
-# Post submit view reordering.
+# Post submit view reordering. A view in `_order` that currently renders
+# outside the remapped range swaps places with the view it displaces, so the
+# order stays a permutation of all view ids.
 def bgfx_set_view_order(_id: int, _num: int, _order: Any, /) -> None: ...
 
 # Set view shading rate.
@@ -2658,7 +2671,7 @@ def bgfx_set_view_order(_id: int, _num: int, _order: Any, /) -> None: ...
 # 
 def bgfx_set_view_shading_rate(_id: int, _shadingRate: Union[ShadingRate, int], /) -> None: ...
 
-# Reset all view settings to default.
+# Reset all view settings to default, including the view name.
 def bgfx_reset_view(_id: int, /) -> None: ...
 
 # Begin submitting draw calls from thread. Obtains an encoder that can be

@@ -6,7 +6,12 @@ concurrency:
 
 on:
   push:
+    branches: [master]
   pull_request:
+
+env:
+  CCACHE_DIR: ${{ github.workspace }}/.ccache
+  CCACHE_MAXSIZE: 2G
 
 jobs:
   msvc:
@@ -14,8 +19,8 @@ jobs:
       fail-fast: true
       matrix:
         include: [
-          { config: Debug,   platform: x64, bindir: 'win64_vs2022', genie-action: 'vs2022', solution-ext: 'sln' },
-          { config: Release, platform: x64, bindir: 'win64_vs2022', genie-action: 'vs2022', solution-ext: 'sln' },
+          { config: Debug,   platform: x64, bindir: 'win64_vs2022', genie-action: 'vs2022', solution-ext: 'sln', tools: true,  genie-args: '--with-tools --with-combined-examples --with-shared-lib' },
+          { config: Release, platform: x64, bindir: 'win64_vs2022', genie-action: 'vs2022', solution-ext: 'sln', tools: false, genie-args: '--with-combined-examples --with-shared-lib'              },
         ]
     name: msvc-${{ matrix.config }}-${{ matrix.platform }}
     runs-on: windows-latest
@@ -36,13 +41,33 @@ jobs:
           path: bimg
       - name: Prepare
         uses: microsoft/setup-msbuild@v2
+      - name: Prepare ccache
+        shell: bash
+        run: |
+          curl -sSL https://github.com/ccache/ccache/releases/download/v4.14.1/ccache-4.14.1-windows-x86_64.zip -o ccache.zip
+          unzip -q -j ccache.zip '*/ccache.exe' -d ccache-cl
+          cp ccache-cl/ccache.exe ccache-cl/cl.exe
+          echo '<Project><ItemDefinitionGroup><ClCompile><DebugInformationFormat>OldStyle</DebugInformationFormat></ClCompile></ItemDefinitionGroup></Project>' > Directory.Build.targets
+      - name: Cache key
+        id: cache-key
+        shell: bash
+        run: |
+          echo "key=$("/c/Program Files (x86)/Microsoft Visual Studio/Installer/vswhere.exe" -latest -property installationVersion)-$(git -C bgfx rev-parse HEAD:3rdparty)-$(git -C bimg rev-parse HEAD:3rdparty)" >> "$GITHUB_OUTPUT"
+      - name: Cache
+        uses: actions/cache@v6
+        with:
+          path: .ccache
+          key: ccache-msvc-${{ matrix.config }}-${{ matrix.platform }}-${{ steps.cache-key.outputs.key }}
+          restore-keys: ccache-msvc-${{ matrix.config }}-${{ matrix.platform }}-
       - name: Build
         shell: cmd
         run: |
           cd bgfx
-          ..\bx\tools\bin\windows\genie.exe --with-tools --with-combined-examples --with-shared-lib ${{ matrix.genie-action }}
-          msbuild ".build/projects/${{ matrix.genie-action }}/bgfx.${{ matrix.solution-ext }}" /m /v:minimal /p:Configuration=${{ matrix.config }} /p:Platform=${{ matrix.platform }}
+          ..\bx\tools\bin\windows\genie.exe ${{ matrix.genie-args }} ${{ matrix.genie-action }}
+          msbuild ".build/projects/${{ matrix.genie-action }}/bgfx.${{ matrix.solution-ext }}" /m /v:minimal /p:Configuration=${{ matrix.config }} /p:Platform=${{ matrix.platform }} /p:CLToolExe=cl.exe /p:CLToolPath=%GITHUB_WORKSPACE%\ccache-cl /p:UseMultiToolTask=true /p:EnforceProcessCountAcrossBuilds=true /p:TrackFileAccess=false || exit /b 1
+          ..\ccache-cl\ccache.exe -s
       - name: Check
+        if: matrix.tools
         shell: cmd
         run: |
           cd bgfx
@@ -80,12 +105,27 @@ jobs:
           msystem: ${{ matrix.msystem }}
           update: true
           install: make
-          pacboy: cc:p
+          pacboy: cc:p ccache:p
+      - name: Cache key
+        id: cache-key
+        shell: bash
+        run: echo "key=$(git -C bgfx rev-parse HEAD:3rdparty)-$(git -C bimg rev-parse HEAD:3rdparty)" >> "$GITHUB_OUTPUT"
+      - name: Compiler version
+        id: compiler
+        shell: msys2 {0}
+        run: echo "version=$(cc --version | head -n1 | cksum | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
+      - name: Cache
+        uses: actions/cache@v6
+        with:
+          path: .ccache
+          key: ccache-${{ matrix.project }}-${{ steps.compiler.outputs.version }}-${{ steps.cache-key.outputs.key }}
+          restore-keys: ccache-${{ matrix.project }}-
       - name: Build
         shell: msys2 {0}
         run: |
           cd bgfx
-          make ${{ matrix.project }}-release64 -j$(nproc) AR=ar CC=cc CXX=c++ MINGW=$MINGW_PREFIX
+          make ${{ matrix.project }}-release64 -j$(nproc) AR=ar CC="ccache cc" CXX="ccache c++" MINGW=$MINGW_PREFIX
+          ccache -s
       - name: Check
         shell: cmd
         run: |
@@ -98,10 +138,10 @@ jobs:
       fail-fast: true
       matrix:
         include: [
-          { compiler: gcc,   config: debug,   binsuffix: Debug,   bindir: linux64_gcc   },
-          { compiler: gcc,   config: release, binsuffix: Release, bindir: linux64_gcc   },
-          { compiler: clang, config: debug,   binsuffix: Debug,   bindir: linux64_clang },
-          { compiler: clang, config: release, binsuffix: Release, bindir: linux64_clang },
+          { compiler: gcc,   config: debug,   binsuffix: Debug,   bindir: linux64_gcc,   cc: gcc,   cxx: g++     },
+          { compiler: gcc,   config: release, binsuffix: Release, bindir: linux64_gcc,   cc: gcc,   cxx: g++     },
+          { compiler: clang, config: debug,   binsuffix: Debug,   bindir: linux64_clang, cc: clang, cxx: clang++ },
+          { compiler: clang, config: release, binsuffix: Release, bindir: linux64_clang, cc: clang, cxx: clang++ },
         ]
     name: linux-${{ matrix.compiler }}-${{ matrix.config }}64
     runs-on: ubuntu-24.04
@@ -120,11 +160,22 @@ jobs:
         with:
           repository: bkaradzic/bimg
           path: bimg
+      - name: Prepare
+        run: sudo apt install libgl-dev ccache
+      - name: Cache key
+        id: cache-key
+        run: echo "key=$(${{ matrix.cc }} --version | head -n1 | cksum | cut -d' ' -f1)-$(git -C bgfx rev-parse HEAD:3rdparty)-$(git -C bimg rev-parse HEAD:3rdparty)" >> "$GITHUB_OUTPUT"
+      - name: Cache
+        uses: actions/cache@v6
+        with:
+          path: .ccache
+          key: ccache-linux-${{ matrix.compiler }}-${{ matrix.config }}-${{ steps.cache-key.outputs.key }}
+          restore-keys: ccache-linux-${{ matrix.compiler }}-${{ matrix.config }}-
       - name: Build
         run: |
-          sudo apt install libgl-dev
           cd bgfx
-          make -j$(nproc) linux-${{ matrix.compiler }}-${{ matrix.config }}64
+          make -j$(nproc) linux-${{ matrix.compiler }}-${{ matrix.config }}64 CC="ccache ${{ matrix.cc }}" CXX="ccache ${{ matrix.cxx }}"
+          ccache -s
       - name: Check
         run: |
           cd bgfx
@@ -158,10 +209,22 @@ jobs:
           path: bimg
       - name: Select Xcode
         run: sudo xcode-select -s /Applications/Xcode_16.2.app
+      - name: Prepare
+        run: brew install ccache
+      - name: Cache key
+        id: cache-key
+        run: echo "key=$(clang --version | head -n1 | cksum | cut -d' ' -f1)-$(git -C bgfx rev-parse HEAD:3rdparty)-$(git -C bimg rev-parse HEAD:3rdparty)" >> "$GITHUB_OUTPUT"
+      - name: Cache
+        uses: actions/cache@v6
+        with:
+          path: .ccache
+          key: ccache-${{ matrix.arch }}-${{ matrix.config }}-${{ steps.cache-key.outputs.key }}
+          restore-keys: ccache-${{ matrix.arch }}-${{ matrix.config }}-
       - name: Build
         run: |
           cd bgfx
-          make -j$(sysctl -n hw.physicalcpu) ${{ matrix.arch }}-${{ matrix.config }}
+          make -j$(sysctl -n hw.physicalcpu) ${{ matrix.arch }}-${{ matrix.config }} CC="ccache clang" CXX="ccache clang++"
+          ccache -s
       - name: Check
         run: |
           cd bgfx
@@ -232,8 +295,74 @@ jobs:
           path: bimg
       - uses: mymindstorm/setup-emsdk@v14
         with:
-          version: 5.0.2
+          version: 6.0.9
+          actions-cache-folder: emsdk-cache
       - name: Build
         run: |
           cd bgfx
           make -j$(nproc) wasm-${{ matrix.config }} EMSCRIPTEN=$EMSDK/upstream/emscripten
+  amalgamated:
+    strategy:
+      fail-fast: true
+      matrix:
+        include: [
+          { name: msvc,          runs-on: windows-latest },
+          { name: linux-gcc,     runs-on: ubuntu-24.04,   os: linux,  config: release64 },
+          { name: linux-clang,   runs-on: ubuntu-24.04,   os: linux,  config: release64 },
+          { name: osx-arm64,     runs-on: macos-15,       os: darwin, config: release },
+          { name: android-arm64, runs-on: ubuntu-24.04,   os: linux,  config: release },
+          { name: wasm,          runs-on: ubuntu-24.04,   os: linux,  config: debug,     make-args: 'EMSCRIPTEN=$EMSDK/upstream/emscripten' },
+        ]
+    name: amalgamated-${{ matrix.name }}
+    runs-on: ${{ matrix.runs-on }}
+    steps:
+      - name: Checkout bgfx
+        uses: actions/checkout@v6
+        with:
+          path: bgfx
+      - name: Checkout bx
+        uses: actions/checkout@v6
+        with:
+          repository: bkaradzic/bx
+          path: bx
+      - name: Checkout bimg
+        uses: actions/checkout@v6
+        with:
+          repository: bkaradzic/bimg
+          path: bimg
+      - name: Prepare
+        if: matrix.name == 'msvc'
+        uses: microsoft/setup-msbuild@v2
+      - name: Prepare
+        if: startsWith(matrix.name, 'linux')
+        run: sudo apt install libgl-dev
+      - name: Select Xcode
+        if: startsWith(matrix.name, 'osx')
+        run: sudo xcode-select -s /Applications/Xcode_16.2.app
+      - uses: nttld/setup-ndk@v1
+        if: startsWith(matrix.name, 'android')
+        id: setup-ndk
+        with:
+          ndk-version: r27c
+      - uses: mymindstorm/setup-emsdk@v14
+        if: matrix.name == 'wasm'
+        with:
+          version: 6.0.9
+          actions-cache-folder: emsdk-cache
+      - name: Build
+        if: matrix.name == 'msvc'
+        shell: cmd
+        run: |
+          cd bgfx
+          ..\bx\tools\bin\windows\genie.exe --with-amalgamated vs2022
+          msbuild ".build/projects/vs2022/bgfx.vcxproj" /m /v:minimal /p:Configuration=Release /p:Platform=x64
+      - name: Build
+        if: matrix.name != 'msvc'
+        env:
+          ANDROID_NDK_ROOT: ${{ steps.setup-ndk.outputs.ndk-path }}
+          ANDROID_NDK_ARM: ${{ steps.setup-ndk.outputs.ndk-path }}
+          ANDROID_NDK_ARM64: ${{ steps.setup-ndk.outputs.ndk-path }}
+        run: |
+          cd bgfx
+          ../bx/tools/bin/${{ matrix.os }}/genie --with-amalgamated --gcc=${{ matrix.name }} gmake
+          make -C .build/projects/gmake-${{ matrix.name }} config=${{ matrix.config }} -j$(getconf _NPROCESSORS_ONLN) ${{ matrix.make-args }} bgfx

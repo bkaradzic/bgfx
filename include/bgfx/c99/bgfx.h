@@ -859,14 +859,26 @@ typedef struct bgfx_init_limits_s
     
     /**
      * Number of frames the draw-call peak (high-water mark) is observed
-     * before unused storage is released. Also used for resource command
-     * buffers and uniform buffers. Set to 0 to keep whatever has been
-     * allocated for the lifetime of the context. With
+     * before unused storage is released. Also used for view storage,
+     * resource command buffers and uniform buffers. Set to 0 to keep
+     * whatever has been allocated for the lifetime of the context. With
      * `BGFX_CONFIG_DYNAMIC_FRAME_STORAGE` disabled draw/blit/rect storage
      * is not resized; unused uniform and resource command buffer space
      * is still released.
      */
     uint32_t             numDrawCallPeakFrames;
+    
+    /**
+     * Minimum number of views to keep state for. Rounded up to a
+     * multiple of 64. This is a reservation, not a limit: a view past it
+     * gets storage when it is first set, up to
+     * `Caps::Limits::maxViews`, and that storage is released again once
+     * the views sharing it are all reset. Per-frame view data is sized
+     * by the views used in a frame, see `numDrawCallPeakFrames`. With
+     * `BGFX_CONFIG_DYNAMIC_FRAME_STORAGE` disabled storage for all views
+     * is allocated up front.
+     */
+    uint32_t             minViews;
     uint32_t             minResourceCbSize;  /** Minimum resource command buffer size.    */
     uint32_t             maxTransientVbSize; /** Maximum transient vertex buffer size.    */
     uint32_t             maxTransientIbSize; /** Maximum transient index buffer size.     */
@@ -2835,10 +2847,10 @@ BGFX_C_API void bgfx_set_palette_color_rgba8(uint8_t _index, uint32_t _rgba);
  *
  *   In graphics debugger view name will appear as:
  *
- *       "nnnc <view name>"
- *        ^  ^ ^
- *        |  +--- compute (C)
- *        +------ view id
+ *       "nnnnc <view name>"
+ *        ^   ^ ^
+ *        |   +--- compute (C)
+ *        +------- view id
  *
  * @param[in] _id View id.
  * @param[in] _name View name.
@@ -2987,7 +2999,9 @@ BGFX_C_API void bgfx_set_view_frame_buffer(bgfx_view_id_t _id, bgfx_frame_buffer
 BGFX_C_API void bgfx_set_view_transform(bgfx_view_id_t _id, const void* _view, const void* _proj);
 
 /**
- * Post submit view reordering.
+ * Post submit view reordering. A view in `_order` that currently renders
+ * outside the remapped range swaps places with the view it displaces, so the
+ * order stays a permutation of all view ids.
  *
  * @param[in] _id First view id.
  * @param[in] _num Number of views to remap.
@@ -3009,7 +3023,7 @@ BGFX_C_API void bgfx_set_view_order(bgfx_view_id_t _id, uint16_t _num, const bgf
 BGFX_C_API void bgfx_set_view_shading_rate(bgfx_view_id_t _id, bgfx_shading_rate_t _shadingRate);
 
 /**
- * Reset all view settings to default.
+ * Reset all view settings to default, including the view name.
  *
  * @param[in] _id _id View id.
  *

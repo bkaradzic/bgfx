@@ -9,7 +9,7 @@ import bindbc.common.types: c_int64, c_uint64, va_list;
 import bindbc.bgfx.config;
 static import bgfx.impl;
 
-enum uint apiVersion = 162;
+enum uint apiVersion = 164;
 
 alias ViewID = ushort;
 
@@ -541,16 +541,17 @@ enum CapFlags: CapFlags_{
 	index32                = 0x0000_0000_0000_0200, ///32-bit indices are supported.
 	primitiveID            = 0x0000_0000_0000_0400, ///PrimitiveID is available in fragment shader.
 	rendererMultithreaded  = 0x0000_0000_0000_0800, ///Renderer is on separate thread.
-	swapChain              = 0x0000_0000_0000_1000, ///Multiple windows are supported.
-	textureCubeArray       = 0x0000_0000_0000_2000, ///Cubemap texture array is supported.
-	textureDirectAccess    = 0x0000_0000_0000_4000, ///CPU direct access to GPU texture memory.
-	textureExternal        = 0x0000_0000_0000_8000, ///External texture is supported.
-	textureExternalShared  = 0x0000_0000_0001_0000, ///External shared texture is supported.
-	transparentBackbuffer  = 0x0000_0000_0002_0000, ///Transparent back buffer supported.
-	variableRateShading    = 0x0000_0000_0004_0000, ///Variable Rate Shading
-	vertexAttribUint10     = 0x0000_0000_0008_0000, ///Vertex attribute 10_10_10_2 is supported.
-	videoDecode            = 0x0000_0000_0010_0000, ///Hardware video decode is supported.
-	viewportLayerArray     = 0x0000_0000_0020_0000, ///Viewport layer is available in vertex shader.
+	shaderF16              = 0x0000_0000_0000_1000, ///16-bit floats are supported in shaders.
+	swapChain              = 0x0000_0000_0000_2000, ///Multiple windows are supported.
+	textureCubeArray       = 0x0000_0000_0000_4000, ///Cubemap texture array is supported.
+	textureDirectAccess    = 0x0000_0000_0000_8000, ///CPU direct access to GPU texture memory.
+	textureExternal        = 0x0000_0000_0001_0000, ///External texture is supported.
+	textureExternalShared  = 0x0000_0000_0002_0000, ///External shared texture is supported.
+	transparentBackbuffer  = 0x0000_0000_0004_0000, ///Transparent back buffer supported.
+	variableRateShading    = 0x0000_0000_0008_0000, ///Variable Rate Shading
+	vertexAttribUint10     = 0x0000_0000_0010_0000, ///Vertex attribute 10_10_10_2 is supported.
+	videoDecode            = 0x0000_0000_0020_0000, ///Hardware video decode is supported.
+	viewportLayerArray     = 0x0000_0000_0040_0000, ///Viewport layer is available in vertex shader.
 }
 
 alias CapsFormat_ = uint;
@@ -1360,14 +1361,26 @@ extern(C++, "bgfx") struct Init{
 		
 		/**
 		Number of frames the draw-call peak (high-water mark) is observed
-		before unused storage is released. Also used for resource command
-		buffers and uniform buffers. Set to 0 to keep whatever has been
-		allocated for the lifetime of the context. With
+		before unused storage is released. Also used for view storage,
+		resource command buffers and uniform buffers. Set to 0 to keep
+		whatever has been allocated for the lifetime of the context. With
 		`BGFX_CONFIG_DYNAMIC_FRAME_STORAGE` disabled draw/blit/rect storage
 		is not resized; unused uniform and resource command buffer space
 		is still released.
 		*/
 		uint numDrawCallPeakFrames;
+		
+		/**
+		Minimum number of views to keep state for. Rounded up to a
+		multiple of 64. This is a reservation, not a limit: a view past it
+		gets storage when it is first set, up to
+		`Caps::Limits::maxViews`, and that storage is released again once
+		the views sharing it are all reset. Per-frame view data is sized
+		by the views used in a frame, see `numDrawCallPeakFrames`. With
+		`BGFX_CONFIG_DYNAMIC_FRAME_STORAGE` disabled storage for all views
+		is allocated up front.
+		*/
+		uint minViews;
 		uint minResourceCBSize; ///Minimum resource command buffer size.
 		uint maxTransientVBSize; ///Maximum transient vertex buffer size.
 		uint maxTransientIBSize; ///Maximum transient index buffer size.
@@ -3676,10 +3689,10 @@ mixin(joinFnBinds((){
 		* 
 		*   In graphics debugger view name will appear as:
 		* 
-		*       "nnnc <view name>"
-		*        ^  ^ ^
-		*        |  +--- compute (C)
-		*        +------ view id
+		*       "nnnnc <view name>"
+		*        ^   ^ ^
+		*        |   +--- compute (C)
+		*        +------- view id
 		* 
 		Params:
 			id = View id.
@@ -3820,7 +3833,9 @@ mixin(joinFnBinds((){
 		{q{void}, q{setViewTransform}, q{ViewID id, const(void)* view, const(void)* proj}, ext: `C++, "bgfx"`},
 		
 		/**
-		* Post submit view reordering.
+		* Post submit view reordering. A view in `_order` that currently renders
+		* outside the remapped range swaps places with the view it displaces, so the
+		* order stays a permutation of all view ids.
 		Params:
 			id = First view id.
 			num = Number of views to remap.
@@ -3841,7 +3856,7 @@ mixin(joinFnBinds((){
 		{q{void}, q{setViewShadingRate}, q{ViewID id, bgfx.impl.ShadingRate.Enum shadingRate=ShadingRate.rate1x1}, ext: `C++, "bgfx"`},
 		
 		/**
-		* Reset all view settings to default.
+		* Reset all view settings to default, including the view name.
 		Params:
 			id = _id View id.
 		*/
