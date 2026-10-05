@@ -84,6 +84,42 @@ namespace bgfx
 		_control.resize(int32_t(_size) - int32_t(_control.getSize() ) );
 	}
 
+	template<typename QueryT>
+	class TimerQueryArrayT
+	{
+	public:
+		TimerQueryArrayT(uint32_t _num)
+			: m_query(NULL)
+			, m_num(0)
+		{
+			resize(_num);
+		}
+
+		~TimerQueryArrayT()
+		{
+			bx::free(g_allocator, m_query);
+		}
+
+		void resize(uint32_t _num)
+		{
+			if (_num != m_num)
+			{
+				m_query = (QueryT*)bx::realloc(g_allocator, m_query, sizeof(QueryT)*_num);
+				m_num   = _num;
+			}
+		}
+
+		QueryT& operator[](uint32_t _idx)
+		{
+			BX_ASSERT(_idx < m_num, "Timer query index %d out of range %d.", _idx, m_num);
+			return m_query[_idx];
+		}
+
+	private:
+		QueryT*  m_query;
+		uint32_t m_num;
+	};
+
 	template<typename ResultT>
 	class TimerResultT
 	{

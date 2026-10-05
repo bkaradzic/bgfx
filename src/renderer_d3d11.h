@@ -480,7 +480,8 @@ namespace bgfx { namespace d3d11
 	struct TimerQueryD3D11
 	{
 		TimerQueryD3D11()
-			: m_control(kMinTimerQueries)
+			: m_query(kMinTimerQueries)
+			, m_control(kMinTimerQueries)
 		{
 		}
 
@@ -523,7 +524,7 @@ namespace bgfx { namespace d3d11
 
 		TimerResultT<Result> m_result;
 
-		Query m_query[kMaxTimerQueries];
+		TimerQueryArrayT<Query> m_query;
 		bx::RingBufferControl m_control;
 	};
 

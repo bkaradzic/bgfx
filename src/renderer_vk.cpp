@@ -6443,6 +6443,7 @@ VK_DESTROY
 		s_renderVK->recycleMemory(m_readbackMemory);
 
 		bgfx::resize(m_control, _size);
+		m_query.resize(m_control.getSize() );
 		VK_CHECK(create() );
 
 		m_result.resetPending();

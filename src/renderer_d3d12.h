@@ -750,7 +750,8 @@ namespace bgfx { namespace d3d12
 	struct TimerQueryD3D12
 	{
 		TimerQueryD3D12()
-			: m_control(kMinTimerQueries)
+			: m_query(kMinTimerQueries)
+			, m_control(kMinTimerQueries)
 		{
 		}
 
@@ -789,7 +790,7 @@ namespace bgfx { namespace d3d12
 		uint64_t m_frequency;
 
 		TimerResultT<Result> m_result;
-		Query m_query[kMaxTimerQueries];
+		TimerQueryArrayT<Query> m_query;
 
 		ID3D12Resource*  m_readback;
 		ID3D12QueryHeap* m_queryHeap;
