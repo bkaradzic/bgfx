@@ -6,6 +6,7 @@
 #ifndef BGFX_NVAPI_H_HEADER_GUARD
 #define BGFX_NVAPI_H_HEADER_GUARD
 
+struct IUnknown;
 struct ID3D11Device;
 struct ID3D11DeviceContext;
 struct ID3D11Buffer;
@@ -69,11 +70,31 @@ namespace bgfx
 		void setMarker(const bx::StringView& _marker);
 
 		///
+		bool initReflex(IUnknown* _device);
+
+		///
+		void shutdownReflex();
+
+		///
+		void setSleepMode(bool _lowLatency, bool _boost);
+
+		///
+		void sleep();
+
+		///
+		void setLatencyMarker(LatencyMarker::Enum _marker, uint64_t _frameId);
+
+		///
+		bool getLatencyReport(LatencyReport& _report);
+
+		///
 		void* m_nvApiDll;
 		NvPhysicalGpuHandle* m_nvGpu;
 
 		void* m_nvAftermathDll;
 		NvAftermathContextHandle* m_aftermathHandle;
+
+		IUnknown* m_reflexDevice;
 
 		PFN_NVAPI_MULTIDRAWINDIRECT nvApiD3D11MultiDrawInstancedIndirect;
 		PFN_NVAPI_MULTIDRAWINDIRECT nvApiD3D11MultiDrawIndexedInstancedIndirect;

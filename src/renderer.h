@@ -38,6 +38,24 @@ namespace bgfx
 		_control.resize(int32_t(_size) - int32_t(_control.getSize() ) );
 	}
 
+	inline int64_t getLatencyTime(uint64_t _beginUs, uint64_t _endUs)
+	{
+		return _endUs > _beginUs
+			? int64_t(_endUs - _beginUs) * bx::getHPFrequency() / 1000000
+			: 0
+			;
+	}
+
+	inline void setLatencyStats(Stats& _stats, const LatencyReport& _report)
+	{
+		_stats.latencyTotal        = getLatencyTime(_report.simulationStart,   _report.gpuRenderEnd);
+		_stats.latencySimulation   = getLatencyTime(_report.simulationStart,   _report.simulationEnd);
+		_stats.latencyRenderSubmit = getLatencyTime(_report.renderSubmitStart, _report.renderSubmitEnd);
+		_stats.latencyPresent      = getLatencyTime(_report.presentStart,      _report.presentEnd);
+		_stats.latencyQueue        = getLatencyTime(_report.presentEnd,        _report.gpuRenderStart);
+		_stats.latencyGpu          = getLatencyTime(_report.gpuRenderStart,    _report.gpuRenderEnd);
+	}
+
 	template<typename ResultT>
 	class TimerResultT
 	{

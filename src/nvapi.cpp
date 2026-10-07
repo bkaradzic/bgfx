@@ -47,12 +47,107 @@ namespace bgfx
 		uint32_t curAvailableDedicatedVideoMemory;
 	};
 
+	/*
+	 * NVIDIA Reflex
+	 *
+	 * Reference(s):
+	 * - https://github.com/NVIDIA/nvapi/blob/main/nvapi.h
+	 * - https://developer.nvidia.com/performance-rendering-tools/reflex
+	 */
+
+	enum NvLatencyMarkerType
+	{
+		NV_SIMULATION_START   = 0,
+		NV_SIMULATION_END     = 1,
+		NV_RENDERSUBMIT_START = 2,
+		NV_RENDERSUBMIT_END   = 3,
+		NV_PRESENT_START      = 4,
+		NV_PRESENT_END        = 5,
+	};
+
+	static const NvLatencyMarkerType s_nvLatencyMarker[] =
+	{
+		NV_SIMULATION_START,
+		NV_SIMULATION_END,
+		NV_RENDERSUBMIT_START,
+		NV_RENDERSUBMIT_END,
+		NV_PRESENT_START,
+		NV_PRESENT_END,
+	};
+
+	struct NvSetSleepModeParamsV1
+	{
+		NvSetSleepModeParamsV1()
+		{
+			bx::memSet(this, 0, sizeof(NvSetSleepModeParamsV1) );
+			version = sizeof(NvSetSleepModeParamsV1) | (1 << 16);
+		}
+
+		uint32_t version;
+		uint8_t  lowLatencyMode;
+		uint8_t  lowLatencyBoost;
+		uint32_t minimumIntervalUs;
+		uint8_t  useMarkersToOptimize;
+		uint8_t  useMinQueueTime;
+		uint8_t  reserved[30];
+	};
+
+	struct NvLatencyMarkerParamsV1
+	{
+		NvLatencyMarkerParamsV1()
+		{
+			bx::memSet(this, 0, sizeof(NvLatencyMarkerParamsV1) );
+			version = sizeof(NvLatencyMarkerParamsV1) | (1 << 16);
+		}
+
+		uint32_t version;
+		uint64_t frameId;
+		NvLatencyMarkerType markerType;
+		uint64_t reserved0;
+		uint8_t  reserved[56];
+	};
+
+	struct NvLatencyFrameReport
+	{
+		uint64_t frameId;
+		uint64_t inputSampleTime;
+		uint64_t simStartTime;
+		uint64_t simEndTime;
+		uint64_t renderSubmitStartTime;
+		uint64_t renderSubmitEndTime;
+		uint64_t presentStartTime;
+		uint64_t presentEndTime;
+		uint64_t driverStartTime;
+		uint64_t driverEndTime;
+		uint64_t osRenderQueueStartTime;
+		uint64_t osRenderQueueEndTime;
+		uint64_t gpuRenderStartTime;
+		uint64_t gpuRenderEndTime;
+		uint8_t  reserved[128];
+	};
+
+	struct NvLatencyResultParamsV1
+	{
+		NvLatencyResultParamsV1()
+			: version(sizeof(NvLatencyResultParamsV1) | (1 << 16) )
+		{
+		}
+
+		uint32_t version;
+		NvLatencyFrameReport frameReport[64];
+		uint8_t  reserved[32];
+	};
+
 	typedef void*       (NVAPICALL* PFN_NVAPI_QUERYINTERFACE)(uint32_t _functionOffset);
 	typedef NvApiStatus (NVAPICALL* PFN_NVAPI_INITIALIZE)();
 	typedef NvApiStatus (NVAPICALL* PFN_NVAPI_UNLOAD)();
 	typedef NvApiStatus (NVAPICALL* PFN_NVAPI_ENUMPHYSICALGPUS)(NvPhysicalGpuHandle* _handle[NVAPI_MAX_PHYSICAL_GPUS], uint32_t* _gpuCount);
 	typedef NvApiStatus (NVAPICALL* PFN_NVAPI_GPUGETMEMORYINFO)(NvPhysicalGpuHandle* _handle, NvMemoryInfoV2* _memoryInfo);
 	typedef NvApiStatus (NVAPICALL* PFN_NVAPI_GPUGETFULLNAME)(NvPhysicalGpuHandle* _physicalGpu, char _name[64]);
+	typedef NvApiStatus (NVAPICALL* PFN_NVAPI_D3DSETSLEEPMODE)(IUnknown* _device, NvSetSleepModeParamsV1* _params);
+	typedef NvApiStatus (NVAPICALL* PFN_NVAPI_D3DSLEEP)(IUnknown* _device);
+	typedef NvApiStatus (NVAPICALL* PFN_NVAPI_D3DSETLATENCYMARKER)(IUnknown* _device, NvLatencyMarkerParamsV1* _params);
+	typedef NvApiStatus (NVAPICALL* PFN_NVAPI_D3DGETLATENCY)(IUnknown* _device, NvLatencyResultParamsV1* _params);
 
 #define NVAPI_INITIALIZE                        UINT32_C(0x0150e828)
 #define NVAPI_UNLOAD                            UINT32_C(0xd22bdd7e)
@@ -61,13 +156,21 @@ namespace bgfx
 #define NVAPI_GPUGETFULLNAME                    UINT32_C(0xceee8e9f)
 #define NVAPI_MULTIDRAWINSTANCEDINDIRECT        UINT32_C(0xd4e26bbf)
 #define NVAPI_MULTIDRAWINDEXEDINSTANCEDINDIRECT UINT32_C(0x59e890f9)
+#define NVAPI_D3DSETSLEEPMODE                   UINT32_C(0xac1ca9e0)
+#define NVAPI_D3DSLEEP                          UINT32_C(0x852cd1d2)
+#define NVAPI_D3DSETLATENCYMARKER               UINT32_C(0xd9984c05)
+#define NVAPI_D3DGETLATENCY                     UINT32_C(0x1a587f9c)
 
-	static PFN_NVAPI_QUERYINTERFACE   nvApiQueryInterface;
-	static PFN_NVAPI_INITIALIZE       nvApiInitialize;
-	static PFN_NVAPI_UNLOAD           nvApiUnload;
-	static PFN_NVAPI_ENUMPHYSICALGPUS nvApiEnumPhysicalGPUs;
-	static PFN_NVAPI_GPUGETMEMORYINFO nvApiGpuGetMemoryInfo;
-	static PFN_NVAPI_GPUGETFULLNAME   nvApiGpuGetFullName;
+	static PFN_NVAPI_QUERYINTERFACE      nvApiQueryInterface;
+	static PFN_NVAPI_INITIALIZE          nvApiInitialize;
+	static PFN_NVAPI_UNLOAD              nvApiUnload;
+	static PFN_NVAPI_ENUMPHYSICALGPUS    nvApiEnumPhysicalGPUs;
+	static PFN_NVAPI_GPUGETMEMORYINFO    nvApiGpuGetMemoryInfo;
+	static PFN_NVAPI_GPUGETFULLNAME      nvApiGpuGetFullName;
+	static PFN_NVAPI_D3DSETSLEEPMODE     nvApiD3DSetSleepMode;
+	static PFN_NVAPI_D3DSLEEP            nvApiD3DSleep;
+	static PFN_NVAPI_D3DSETLATENCYMARKER nvApiD3DSetLatencyMarker;
+	static PFN_NVAPI_D3DGETLATENCY       nvApiD3DGetLatency;
 
 	/*
 	 * NVIDIA Aftermath
@@ -101,6 +204,7 @@ namespace bgfx
 		, m_nvGpu(NULL)
 		, m_nvAftermathDll(NULL)
 		, m_aftermathHandle(NULL)
+		, m_reflexDevice(NULL)
 	{
 	}
 
@@ -131,6 +235,11 @@ namespace bgfx
 
 				nvApiD3D11MultiDrawInstancedIndirect        = (PFN_NVAPI_MULTIDRAWINDIRECT)nvApiQueryInterface(NVAPI_MULTIDRAWINSTANCEDINDIRECT);
 				nvApiD3D11MultiDrawIndexedInstancedIndirect = (PFN_NVAPI_MULTIDRAWINDIRECT)nvApiQueryInterface(NVAPI_MULTIDRAWINDEXEDINSTANCEDINDIRECT);
+
+				nvApiD3DSetSleepMode     = (PFN_NVAPI_D3DSETSLEEPMODE    )nvApiQueryInterface(NVAPI_D3DSETSLEEPMODE);
+				nvApiD3DSleep            = (PFN_NVAPI_D3DSLEEP           )nvApiQueryInterface(NVAPI_D3DSLEEP);
+				nvApiD3DSetLatencyMarker = (PFN_NVAPI_D3DSETLATENCYMARKER)nvApiQueryInterface(NVAPI_D3DSETLATENCYMARKER);
+				nvApiD3DGetLatency       = (PFN_NVAPI_D3DGETLATENCY      )nvApiQueryInterface(NVAPI_D3DGETLATENCY);
 
 				initialized = true
 					&& NULL != nvApiInitialize
@@ -179,6 +288,8 @@ namespace bgfx
 
 	void NvApi::shutdown()
 	{
+		m_reflexDevice = NULL;
+
 		if (NULL != m_nvGpu)
 		{
 			nvApiUnload();
@@ -368,6 +479,113 @@ namespace bgfx
 		{
 			NVA_CHECK(nvAftermathSetEventMarker(m_aftermathHandle, _marker.getPtr(), _marker.getLength() ) );
 		}
+	}
+
+	bool NvApi::initReflex(IUnknown* _device)
+	{
+		m_reflexDevice = NULL;
+
+		// Reflex is available on Windows only.
+		if (!BX_ENABLED(BX_PLATFORM_WINDOWS)
+		||  !isInitialized()
+		||  NULL == nvApiD3DSetSleepMode
+		||  NULL == nvApiD3DSleep
+		||  NULL == nvApiD3DSetLatencyMarker
+		||  NULL == nvApiD3DGetLatency)
+		{
+			return false;
+		}
+
+		NvSetSleepModeParamsV1 params;
+		const NvApiStatus status = nvApiD3DSetSleepMode(_device, &params);
+
+		if (NVAPI_OK != status)
+		{
+			BX_TRACE("NVAPI: Reflex is not supported, NvAPI_D3D_SetSleepMode failed %d.", status);
+			return false;
+		}
+
+		BX_TRACE("NVAPI: Reflex supported.");
+
+		m_reflexDevice = _device;
+		return true;
+	}
+
+	void NvApi::shutdownReflex()
+	{
+		if (NULL != m_reflexDevice)
+		{
+			setSleepMode(false, false);
+			m_reflexDevice = NULL;
+		}
+	}
+
+	void NvApi::setSleepMode(bool _lowLatency, bool _boost)
+	{
+		if (NULL != m_reflexDevice)
+		{
+			NvSetSleepModeParamsV1 params;
+			params.lowLatencyMode  = _lowLatency;
+			params.lowLatencyBoost = _boost;
+
+			const NvApiStatus status = nvApiD3DSetSleepMode(m_reflexDevice, &params);
+			BX_WARN(NVAPI_OK == status, "NVAPI: NvAPI_D3D_SetSleepMode failed %d.", status); BX_UNUSED(status);
+		}
+	}
+
+	void NvApi::sleep()
+	{
+		if (NULL != m_reflexDevice)
+		{
+			nvApiD3DSleep(m_reflexDevice);
+		}
+	}
+
+	void NvApi::setLatencyMarker(LatencyMarker::Enum _marker, uint64_t _frameId)
+	{
+		if (NULL != m_reflexDevice)
+		{
+			NvLatencyMarkerParamsV1 params;
+			params.frameId    = _frameId;
+			params.markerType = s_nvLatencyMarker[_marker];
+
+			nvApiD3DSetLatencyMarker(m_reflexDevice, &params);
+		}
+	}
+
+	bool NvApi::getLatencyReport(LatencyReport& _report)
+	{
+		if (NULL == m_reflexDevice)
+		{
+			return false;
+		}
+
+		NvLatencyResultParamsV1 params;
+		if (NVAPI_OK != nvApiD3DGetLatency(m_reflexDevice, &params) )
+		{
+			return false;
+		}
+
+		for (uint32_t ii = BX_COUNTOF(params.frameReport); 0 < ii; --ii)
+		{
+			const NvLatencyFrameReport& frame = params.frameReport[ii-1];
+
+			if (0 != frame.simStartTime
+			&&  frame.gpuRenderEndTime > frame.simStartTime)
+			{
+				_report.simulationStart   = frame.simStartTime;
+				_report.simulationEnd     = frame.simEndTime;
+				_report.renderSubmitStart = frame.renderSubmitStartTime;
+				_report.renderSubmitEnd   = frame.renderSubmitEndTime;
+				_report.presentStart      = frame.presentStartTime;
+				_report.presentEnd        = frame.presentEndTime;
+				_report.gpuRenderStart    = frame.gpuRenderStartTime;
+				_report.gpuRenderEnd      = frame.gpuRenderEndTime;
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 } // namespace bgfx

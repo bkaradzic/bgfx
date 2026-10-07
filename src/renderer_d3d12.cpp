@@ -2060,6 +2060,18 @@ namespace bgfx { namespace d3d12
 				}
 			}
 
+			// Reflex paces the main swap chain only.
+			if (_init.lowLatency
+			&&  0 != (_init.capabilities & BGFX_CAPS_LOW_LATENCY)
+			&&  mainFrameBuffer().isSwapChain()
+			&&  m_nvapi.initReflex(m_device) )
+			{
+				g_caps.supported |= BGFX_CAPS_LOW_LATENCY;
+
+				const uint32_t lowLatency = m_reset & BGFX_RESET_LOW_LATENCY_MASK;
+				m_nvapi.setSleepMode(0 != lowLatency, BGFX_RESET_LOW_LATENCY_BOOST == lowLatency);
+			}
+
 			if (m_nvapi.isInitialized() )
 			{
 				finish();
@@ -2114,6 +2126,8 @@ namespace bgfx { namespace d3d12
 		{
 			finishAll(true);
 			m_batch.destroy();
+
+			m_nvapi.shutdownReflex();
 
 			DX_RELEASE(m_zeroInitBuffer, 0);
 
@@ -3033,6 +3047,16 @@ namespace bgfx { namespace d3d12
 			}
 		}
 
+		void latencySleep() override
+		{
+			m_nvapi.sleep();
+		}
+
+		void setLatencyMarker(LatencyMarker::Enum _marker, uint64_t _frameId) override
+		{
+			m_nvapi.setLatencyMarker(_marker, _frameId);
+		}
+
 		virtual void setName(Handle _handle, const char* _name, uint16_t _len) override
 		{
 			switch (_handle.type)
@@ -3263,10 +3287,22 @@ namespace bgfx { namespace d3d12
 			else
 				m_reset &= ~BGFX_RESET_VSYNC;
 
+			if (0 != ( (m_reset ^ _reset) & BGFX_RESET_LOW_LATENCY_MASK) )
+			{
+				m_reset = 0
+					| (m_reset & ~BGFX_RESET_LOW_LATENCY_MASK)
+					| ( _reset &  BGFX_RESET_LOW_LATENCY_MASK)
+					;
+
+				const uint32_t lowLatency = m_reset & BGFX_RESET_LOW_LATENCY_MASK;
+				m_nvapi.setSleepMode(0 != lowLatency, BGFX_RESET_LOW_LATENCY_BOOST == lowLatency);
+			}
+
 			const uint32_t maskFlags = ~(0
 				| BGFX_RESET_MAXANISOTROPY
 				| BGFX_RESET_SUSPEND
 				| BGFX_RESET_VSYNC
+				| BGFX_RESET_LOW_LATENCY_MASK
 				);
 
 			if (m_mainSwapChain.width              !=  _swapChain.width
@@ -10538,6 +10574,12 @@ namespace bgfx { namespace d3d12
 		perfStats.gpuMemoryMax  = int64_t(vmi[0].Budget);
 		perfStats.gpuMemoryUsed = int64_t(vmi[0].CurrentUsage);
 #endif // BX_PLATFORM_WINDOWS
+
+		LatencyReport latencyReport;
+		if (m_nvapi.getLatencyReport(latencyReport) )
+		{
+			setLatencyStats(perfStats, latencyReport);
+		}
 
 		if (_render->m_debug & (BGFX_DEBUG_IFH|BGFX_DEBUG_STATS) )
 		{
