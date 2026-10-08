@@ -1231,6 +1231,7 @@ typedef double GLdouble;
 
 #if !BGFX_CONFIG_RENDERER_OPENGL
 #	define glClearDepth glClearDepthf
+#	define glDepthRange glDepthRangef
 #endif // !BGFX_CONFIG_RENDERER_OPENGL
 
 namespace bgfx
@@ -1659,7 +1660,8 @@ namespace bgfx { namespace gl
 	struct TimerQueryGL
 	{
 		TimerQueryGL()
-			: m_control(kMinTimerQueries)
+			: m_query(kMinTimerQueries)
+			, m_control(kMinTimerQueries)
 		{
 		}
 
@@ -1710,7 +1712,10 @@ namespace bgfx { namespace gl
 			{
 				const uint32_t num = newSize - size;
 
-				bx::memMove(&m_query[write+num], &m_query[write], (size-write)*sizeof(Query) );
+				m_query.resize(newSize);
+
+				Query* query = &m_query[0];
+				bx::memMove(&query[write+num], &query[write], (size-write)*sizeof(Query) );
 				create(write, write+num);
 			}
 			else if (newSize < size)
@@ -1722,8 +1727,11 @@ namespace bgfx { namespace gl
 				destroy(write, write+back);
 				destroy(0, front);
 
-				bx::memMove(&m_query[write], &m_query[write+back], (size-write-back)*sizeof(Query) );
-				bx::memMove(&m_query[0], &m_query[front], newSize*sizeof(Query) );
+				Query* query = &m_query[0];
+				bx::memMove(&query[write], &query[write+back], (size-write-back)*sizeof(Query) );
+				bx::memMove(&query[0], &query[front], newSize*sizeof(Query) );
+
+				m_query.resize(newSize);
 			}
 		}
 
@@ -1843,7 +1851,7 @@ namespace bgfx { namespace gl
 
 		TimerResultT<Result> m_result;
 
-		Query m_query[kMaxTimerQueries];
+		TimerQueryArrayT<Query> m_query;
 		bx::RingBufferControl m_control;
 	};
 

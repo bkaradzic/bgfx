@@ -17,6 +17,7 @@ namespace bgfx
 {
 	struct NvPhysicalGpuHandle;
 	struct NvAftermathContextHandle;
+	struct NvLatencyResultParamsV1;
 
 	struct NvAftermathDeviceStatus
 	{
@@ -95,6 +96,7 @@ namespace bgfx
 		NvAftermathContextHandle* m_aftermathHandle;
 
 		IUnknown* m_reflexDevice;
+		NvLatencyResultParamsV1* m_latencyResult;
 
 		PFN_NVAPI_MULTIDRAWINDIRECT nvApiD3D11MultiDrawInstancedIndirect;
 		PFN_NVAPI_MULTIDRAWINDIRECT nvApiD3D11MultiDrawIndexedInstancedIndirect;

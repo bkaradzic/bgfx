@@ -15,7 +15,7 @@
 #ifndef BGFX_DEFINES_H_HEADER_GUARD
 #define BGFX_DEFINES_H_HEADER_GUARD
 
-#define BGFX_API_VERSION UINT32_C(164)
+#define BGFX_API_VERSION UINT32_C(166)
 
 /**
  * Color RGB/alpha/depth write. When it's not specified write will be disabled.
@@ -453,9 +453,9 @@
 #define BGFX_RESET_TRANSPARENT_BACKBUFFER         UINT32_C(0x00100000) //!< Transparent backbuffer. Availability depends on: `BGFX_CAPS_TRANSPARENT_BACKBUFFER`.
 
 #define BGFX_RESET_LOW_LATENCY_ON                 UINT32_C(0x00000400) //!< Enable low latency mode (NVIDIA Reflex). Availability depends on: `BGFX_CAPS_LOW_LATENCY`.
-#define BGFX_RESET_LOW_LATENCY_BOOST              UINT32_C(0x00000800) //!< Enable low latency mode, and keep GPU clocks high even when GPU is mostly idle.
-#define BGFX_RESET_LOW_LATENCY_SHIFT              10
-#define BGFX_RESET_LOW_LATENCY_MASK               UINT32_C(0x00000c00)
+#define BGFX_RESET_LOW_LATENCY_BOOST              UINT32_C(0x00000800) //!< Enable low latency mode, and keep GPU clocks high even when GPU is mostly idle. Availability depends on: `BGFX_CAPS_LOW_LATENCY`.
+#define BGFX_RESET_LOW_LATENCY_SHIFT              10                   //!< Low latency mode bit shift
+#define BGFX_RESET_LOW_LATENCY_MASK               UINT32_C(0x00000c00) //!< Low latency mode bit mask
 
 #define BGFX_RESET_FULLSCREEN_SHIFT               0
 #define BGFX_RESET_FULLSCREEN_MASK                UINT32_C(0x00000001)
@@ -493,16 +493,17 @@
 #define BGFX_CAPS_LOW_LATENCY                     UINT64_C(0x0000000000000400) //!< Low latency mode (NVIDIA Reflex) is supported.
 #define BGFX_CAPS_PRIMITIVE_ID                    UINT64_C(0x0000000000000800) //!< PrimitiveID is available in fragment shader.
 #define BGFX_CAPS_RENDERER_MULTITHREADED          UINT64_C(0x0000000000001000) //!< Renderer is on separate thread.
-#define BGFX_CAPS_SWAP_CHAIN                      UINT64_C(0x0000000000002000) //!< Multiple windows are supported.
-#define BGFX_CAPS_TEXTURE_CUBE_ARRAY              UINT64_C(0x0000000000004000) //!< Cubemap texture array is supported.
-#define BGFX_CAPS_TEXTURE_DIRECT_ACCESS           UINT64_C(0x0000000000008000) //!< CPU direct access to GPU texture memory.
-#define BGFX_CAPS_TEXTURE_EXTERNAL                UINT64_C(0x0000000000010000) //!< External texture is supported.
-#define BGFX_CAPS_TEXTURE_EXTERNAL_SHARED         UINT64_C(0x0000000000020000) //!< External shared texture is supported.
-#define BGFX_CAPS_TRANSPARENT_BACKBUFFER          UINT64_C(0x0000000000040000) //!< Transparent back buffer supported.
-#define BGFX_CAPS_VARIABLE_RATE_SHADING           UINT64_C(0x0000000000080000) //!< Variable Rate Shading
-#define BGFX_CAPS_VERTEX_ATTRIB_UINT10            UINT64_C(0x0000000000100000) //!< Vertex attribute 10_10_10_2 is supported.
-#define BGFX_CAPS_VIDEO_DECODE                    UINT64_C(0x0000000000200000) //!< Hardware video decode is supported.
-#define BGFX_CAPS_VIEWPORT_LAYER_ARRAY            UINT64_C(0x0000000000400000) //!< Viewport layer is available in vertex shader.
+#define BGFX_CAPS_SHADER_F16                      UINT64_C(0x0000000000002000) //!< 16-bit floats are supported in shaders.
+#define BGFX_CAPS_SWAP_CHAIN                      UINT64_C(0x0000000000004000) //!< Multiple windows are supported.
+#define BGFX_CAPS_TEXTURE_CUBE_ARRAY              UINT64_C(0x0000000000008000) //!< Cubemap texture array is supported.
+#define BGFX_CAPS_TEXTURE_DIRECT_ACCESS           UINT64_C(0x0000000000010000) //!< CPU direct access to GPU texture memory.
+#define BGFX_CAPS_TEXTURE_EXTERNAL                UINT64_C(0x0000000000020000) //!< External texture is supported.
+#define BGFX_CAPS_TEXTURE_EXTERNAL_SHARED         UINT64_C(0x0000000000040000) //!< External shared texture is supported.
+#define BGFX_CAPS_TRANSPARENT_BACKBUFFER          UINT64_C(0x0000000000080000) //!< Transparent back buffer supported.
+#define BGFX_CAPS_VARIABLE_RATE_SHADING           UINT64_C(0x0000000000100000) //!< Variable Rate Shading
+#define BGFX_CAPS_VERTEX_ATTRIB_UINT10            UINT64_C(0x0000000000200000) //!< Vertex attribute 10_10_10_2 is supported.
+#define BGFX_CAPS_VIDEO_DECODE                    UINT64_C(0x0000000000400000) //!< Hardware video decode is supported.
+#define BGFX_CAPS_VIEWPORT_LAYER_ARRAY            UINT64_C(0x0000000000800000) //!< Viewport layer is available in vertex shader.
 
 #define BGFX_CAPS_FORMAT_TEXTURE_NONE             UINT32_C(0x00000000) //!< Texture format is not supported.
 #define BGFX_CAPS_FORMAT_TEXTURE_2D               UINT32_C(0x00000001) //!< Texture format is supported.

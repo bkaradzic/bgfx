@@ -577,16 +577,17 @@ class CapsFlags(enum.IntFlag):
 	LowLatency = 0x400
 	PrimitiveId = 0x800
 	RendererMultithreaded = 0x1000
-	SwapChain = 0x2000
-	TextureCubeArray = 0x4000
-	TextureDirectAccess = 0x8000
-	TextureExternal = 0x10000
-	TextureExternalShared = 0x20000
-	TransparentBackbuffer = 0x40000
-	VariableRateShading = 0x80000
-	VertexAttribUint10 = 0x100000
-	VideoDecode = 0x200000
-	ViewportLayerArray = 0x400000
+	ShaderF16 = 0x2000
+	SwapChain = 0x4000
+	TextureCubeArray = 0x8000
+	TextureDirectAccess = 0x10000
+	TextureExternal = 0x20000
+	TextureExternalShared = 0x40000
+	TransparentBackbuffer = 0x80000
+	VariableRateShading = 0x100000
+	VertexAttribUint10 = 0x200000
+	VideoDecode = 0x400000
+	ViewportLayerArray = 0x800000
 
 class CapsFormatFlags(enum.IntFlag):
 	TextureNone = 0x0
@@ -864,6 +865,7 @@ CapsLimits._fields_ = [
 	("maxTransientVbSize", ctypes.c_uint32),
 	("maxTransientIbSize", ctypes.c_uint32),
 	("minUniformBufferSize", ctypes.c_uint32),
+	("minUniformCacheSize", ctypes.c_uint32),
 	("blitRowPitchAlign", ctypes.c_uint32),
 	("blitOffsetAlign", ctypes.c_uint32),
 ]
@@ -915,6 +917,7 @@ InitLimits._fields_ = [
 	("maxTransientVbSize", ctypes.c_uint32),
 	("maxTransientIbSize", ctypes.c_uint32),
 	("minUniformBufferSize", ctypes.c_uint32),
+	("minUniformCacheSize", ctypes.c_uint32),
 ]
 
 Init._fields_ = [
@@ -926,7 +929,6 @@ Init._fields_ = [
 	("profile", ctypes.c_bool),
 	("fallback", ctypes.c_bool),
 	("videoDecode", ctypes.c_bool),
-	("lowLatency", ctypes.c_bool),
 	("platformData", PlatformData),
 	("swapChain", SwapChain),
 	("reset", ctypes.c_uint32),

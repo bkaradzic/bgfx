@@ -9,6 +9,7 @@
 #include <bgfx/embedded_shader.h>
 #include <bx/file.h>
 #include <bx/mutex.h>
+#include <bx/superluminal.h>
 
 #include "topology.h"
 
@@ -68,99 +69,16 @@ namespace bgfx
 		}
 	}
 
-	struct Superluminal
-	{
-		struct SuppressTailCallOptimization
-		{
-			int64_t SuppressTailCall[3];
-		};
-
-		typedef void (*SuperluminalBeginEventtFn)(const char* _inID, const char* _inData, uint32_t _inColor);
-		typedef SuppressTailCallOptimization(*SuperluminalEndEventFn)();
-
-		static void stubSuperluminalBeginEvent(const char* _inID, const char* _inData, uint32_t _inColor)
-		{
-			BX_UNUSED(_inID, _inData, _inColor);
-		}
-
-		static SuppressTailCallOptimization stubSuperluminalEndEvent()
-		{
-			return {};
-		}
-
-		bool init()
-		{
-			if (!BX_ENABLED(BGFX_CONFIG_PROFILER) )
-			{
-				return false;
-			}
-
-			const char* superluminalDllName = "PerformanceAPI.dll";
-			superluminalDll = bx::dlopen(superluminalDllName);
-
-			if (NULL != superluminalDll)
-			{
-				void* funcPtrs[11];
-
-				typedef int (*PerformanceAPI_GetAPI)(int32_t _version, void** _funcPtrs);
-
-				constexpr int32_t version = 0x30000;
-
-				PerformanceAPI_GetAPI getApi = bx::dlsym<PerformanceAPI_GetAPI>(superluminalDll, "PerformanceAPI_GetAPI");
-				if (NULL == getApi)
-				{
-					BX_TRACE("Failed to obtain Superluminal's %s GetAPI function!", superluminalDllName);
-					bx::dlclose(superluminalDll);
-					return false;
-				}
-
-				if (getApi(version, funcPtrs) )
-				{
-					BX_TRACE("Superluminal's PerformanceAPI.dll is loaded!");
-					beginEvent = (SuperluminalBeginEventtFn)funcPtrs[2];
-					endEvent   = (SuperluminalEndEventFn   )funcPtrs[6];
-					return true;
-				}
-
-				BX_TRACE("Failed to obtain Superluminal's %s GetAPI function!", superluminalDllName);
-				bx::dlclose(superluminalDll);
-			}
-			else
-			{
-				BX_TRACE("Failed to load Superluminal's %s!", superluminalDllName);
-			}
-
-			return false;
-		}
-
-		void shutdown()
-		{
-			if (NULL != superluminalDll)
-			{
-				bx::dlclose(superluminalDll);
-				superluminalDll = NULL;
-				beginEvent = stubSuperluminalBeginEvent;
-				endEvent   = stubSuperluminalEndEvent;
-			}
-		}
-
-		void* superluminalDll = NULL;
-		SuperluminalBeginEventtFn beginEvent = stubSuperluminalBeginEvent;
-		SuperluminalEndEventFn    endEvent   = stubSuperluminalEndEvent;
-	};
-
 	struct CallbackStub : public CallbackI
 	{
-		Superluminal m_superluminal;
+		bx::Superluminal m_superluminal;
 
 		CallbackStub()
 		{
-			m_superluminal.init();
-		}
-
-		virtual ~CallbackStub()
-		{
-			m_superluminal.shutdown();
+			if (BX_ENABLED(BGFX_CONFIG_PROFILER) )
+			{
+				m_superluminal.load();
+			}
 		}
 
 		virtual void fatal(const char* _filePath, uint16_t _line, Fatal::Enum _code, const char* _str) override
@@ -1635,8 +1553,7 @@ namespace bgfx
 
 		uint64_t key = m_key.encodeDraw(type);
 
-		m_frame->m_sortKeys  [renderItemIdx] = key;
-		m_frame->m_sortValues[renderItemIdx] = RenderItemCount(renderItemIdx);
+		m_frame->m_submitKeys[renderItemIdx] = key;
 
 		m_draw.m_uniformIdx   = m_uniformIdx;
 		m_draw.m_uniformBegin = m_uniformBegin;
@@ -1714,8 +1631,7 @@ namespace bgfx
 		m_key.m_seq     = renderItemIdx;
 
 		uint64_t key = m_key.encodeCompute();
-		m_frame->m_sortKeys[renderItemIdx]   = key;
-		m_frame->m_sortValues[renderItemIdx] = RenderItemCount(renderItemIdx);
+		m_frame->m_submitKeys[renderItemIdx] = key;
 
 		m_compute.m_uniformIdx   = m_uniformIdx;
 		m_compute.m_uniformBegin = m_uniformBegin;
@@ -1788,9 +1704,14 @@ namespace bgfx
 
 		m_viewOrder[BGFX_CONFIG_MAX_VIEWS] = UINT16_MAX;
 
+		reserveSortKeys(m_numRenderItems);
+
+		const FrameArenaT<uint64_t, kDrawCallBlock>& submitKeys = m_submitKeys;
+
 		for (uint32_t ii = 0, num = m_numRenderItems; ii < num; ++ii)
 		{
-			m_sortKeys[ii] = SortKey::remapView(m_sortKeys[ii], m_viewOrder);
+			m_sortKeys[ii]   = SortKey::remapView(submitKeys[ii], m_viewOrder);
+			m_sortValues[ii] = RenderItemCount(ii);
 		}
 
 		s_ctx->reserveTemp(bx::max(
@@ -1976,6 +1897,7 @@ namespace bgfx
 		CAPS_FLAGS(BGFX_CAPS_LOW_LATENCY),
 		CAPS_FLAGS(BGFX_CAPS_PRIMITIVE_ID),
 		CAPS_FLAGS(BGFX_CAPS_RENDERER_MULTITHREADED),
+		CAPS_FLAGS(BGFX_CAPS_SHADER_F16),
 		CAPS_FLAGS(BGFX_CAPS_SWAP_CHAIN),
 		CAPS_FLAGS(BGFX_CAPS_TEXTURE_CUBE_ARRAY),
 		CAPS_FLAGS(BGFX_CAPS_TEXTURE_DIRECT_ACCESS),
@@ -2110,6 +2032,7 @@ namespace bgfx
 		LIMITS(maxTransientVbSize);
 		LIMITS(maxTransientIbSize);
 		LIMITS(minUniformBufferSize);
+		LIMITS(minUniformCacheSize);
 		LIMITS(blitRowPitchAlign);
 		LIMITS(blitOffsetAlign);
 #undef LIMITS
@@ -2412,6 +2335,8 @@ namespace bgfx
 
 		m_init = _init;
 
+		m_uniformCache.reserve(m_init.limits.minUniformCacheSize);
+
 		m_init.swapChain.flags |= _init.reset & kSwapChainFlagMask;
 		m_init.reset           &= ~kSwapChainFlagMask;
 		m_init.reset &= ~BGFX_RESET_INTERNAL_FORCE;
@@ -2686,65 +2611,75 @@ namespace bgfx
 
 		if (BX_ENABLED(BGFX_CONFIG_DEBUG) )
 		{
-#define CHECK_HANDLE_LEAK(_name, _handleAlloc)                                        \
-	BX_MACRO_BLOCK_BEGIN                                                              \
-		if (0 != _handleAlloc.getNumHandles() )                                       \
-		{                                                                             \
-			BX_TRACE("LEAK: %s %d (max: %d)"                                          \
-				, _name                                                               \
-				, _handleAlloc.getNumHandles()                                        \
-				, _handleAlloc.getMaxHandles()                                        \
-				);                                                                    \
-			for (uint16_t ii = 0, num = _handleAlloc.getNumHandles(); ii < num; ++ii) \
-			{                                                                         \
-				BX_TRACE("\t%3d: %4d", ii, _handleAlloc.getHandleAt(ii) );            \
-			}                                                                         \
-		}                                                                             \
+#define CHECK_HANDLE_LEAK(_name, _handleAlloc)           \
+	BX_MACRO_BLOCK_BEGIN                                 \
+		if (0 != _handleAlloc.getNumHandles() )          \
+		{                                                \
+			BX_TRACE("LEAK: %s %d (max: %d)"             \
+				, _name                                  \
+				, _handleAlloc.getNumHandles()           \
+				, _handleAlloc.getMaxHandles()           \
+				);                                       \
+			uint16_t ii = 0; BX_UNUSED(ii);              \
+			for (uint16_t idx = _handleAlloc.findFirst() \
+				; bx::kInvalidHandle != idx              \
+				; idx = _handleAlloc.findNext(idx), ++ii \
+				)                                        \
+			{                                            \
+				BX_TRACE("\t%3d: %4d", ii, idx);         \
+			}                                            \
+		}                                                \
 	BX_MACRO_BLOCK_END
 
-#define CHECK_HANDLE_LEAK_NAME(_name, _handleAlloc, _type, _ref)                      \
-	BX_MACRO_BLOCK_BEGIN                                                              \
-		if (0 != _handleAlloc.getNumHandles() )                                       \
-		{                                                                             \
-			BX_TRACE("LEAK: %s %d (max: %d)"                                          \
-				, _name                                                               \
-				, _handleAlloc.getNumHandles()                                        \
-				, _handleAlloc.getMaxHandles()                                        \
-				);                                                                    \
-			for (uint16_t ii = 0, num = _handleAlloc.getNumHandles(); ii < num; ++ii) \
-			{                                                                         \
-				uint16_t idx = _handleAlloc.getHandleAt(ii);                          \
-				const _type& ref = _ref[idx]; BX_UNUSED(ref);                         \
-				BX_TRACE("\t%3d: %4d %s"                                              \
-					, ii                                                              \
-					, idx                                                             \
-					, ref.m_name.getCPtr()                                            \
-					);                                                                \
-			}                                                                         \
-		}                                                                             \
+#define CHECK_HANDLE_LEAK_NAME(_name, _handleAlloc, _type, _ref) \
+	BX_MACRO_BLOCK_BEGIN                                         \
+		if (0 != _handleAlloc.getNumHandles() )                  \
+		{                                                        \
+			BX_TRACE("LEAK: %s %d (max: %d)"                     \
+				, _name                                          \
+				, _handleAlloc.getNumHandles()                   \
+				, _handleAlloc.getMaxHandles()                   \
+				);                                               \
+			uint16_t ii = 0; BX_UNUSED(ii);                      \
+			for (uint16_t idx = _handleAlloc.findFirst()         \
+				; bx::kInvalidHandle != idx                      \
+				; idx = _handleAlloc.findNext(idx), ++ii         \
+				)                                                \
+			{                                                    \
+				const _type& ref = _ref[idx]; BX_UNUSED(ref);    \
+				BX_TRACE("\t%3d: %4d %s"                         \
+					, ii                                         \
+					, idx                                        \
+					, ref.m_name.getCPtr()                       \
+					);                                           \
+			}                                                    \
+		}                                                        \
 	BX_MACRO_BLOCK_END
 
-#define CHECK_HANDLE_LEAK_RC_NAME(_name, _handleAlloc, _type, _ref)                   \
-	BX_MACRO_BLOCK_BEGIN                                                              \
-		if (0 != _handleAlloc.getNumHandles() )                                       \
-		{                                                                             \
-			BX_TRACE("LEAK: %s %d (max: %d)"                                          \
-				, _name                                                               \
-				, _handleAlloc.getNumHandles()                                        \
-				, _handleAlloc.getMaxHandles()                                        \
-				);                                                                    \
-			for (uint16_t ii = 0, num = _handleAlloc.getNumHandles(); ii < num; ++ii) \
-			{                                                                         \
-				uint16_t idx = _handleAlloc.getHandleAt(ii);                          \
-				const _type& ref = _ref[idx]; BX_UNUSED(ref);                         \
-				BX_TRACE("\t%3d: %4d %s (count %d)"                                   \
-					, ii                                                              \
-					, idx                                                             \
-					, ref.m_name.getCPtr()                                            \
-					, ref.m_refCount                                                  \
-					);                                                                \
-			}                                                                         \
-		}                                                                             \
+#define CHECK_HANDLE_LEAK_RC_NAME(_name, _handleAlloc, _type, _ref) \
+	BX_MACRO_BLOCK_BEGIN                                            \
+		if (0 != _handleAlloc.getNumHandles() )                     \
+		{                                                           \
+			BX_TRACE("LEAK: %s %d (max: %d)"                        \
+				, _name                                             \
+				, _handleAlloc.getNumHandles()                      \
+				, _handleAlloc.getMaxHandles()                      \
+				);                                                  \
+			uint16_t ii = 0; BX_UNUSED(ii);                         \
+			for (uint16_t idx = _handleAlloc.findFirst()            \
+				; bx::kInvalidHandle != idx                         \
+				; idx = _handleAlloc.findNext(idx), ++ii            \
+				)                                                   \
+			{                                                       \
+				const _type& ref = _ref[idx]; BX_UNUSED(ref);       \
+				BX_TRACE("\t%3d: %4d %s (count %d)"                 \
+					, ii                                            \
+					, idx                                           \
+					, ref.m_name.getCPtr()                          \
+					, ref.m_refCount                                \
+					);                                              \
+			}                                                       \
+		}                                                           \
 	BX_MACRO_BLOCK_END
 
 			CHECK_HANDLE_LEAK        ("DynamicIndexBufferHandle",  m_dynamicIndexBufferHandle                                  );
@@ -2765,17 +2700,17 @@ namespace bgfx
 
 	void Context::freeDynamicBuffers()
 	{
-		for (uint16_t ii = 0, num = m_numFreeDynamicIndexBufferHandles; ii < num; ++ii)
+		for (uint16_t ii = 0, num = m_freeDynamicIndexBuffer.getNumQueued(); ii < num; ++ii)
 		{
-			destroyDynamicIndexBufferInternal(m_freeDynamicIndexBufferHandle[ii]);
+			destroyDynamicIndexBufferInternal(m_freeDynamicIndexBuffer.get(ii) );
 		}
-		m_numFreeDynamicIndexBufferHandles = 0;
+		m_freeDynamicIndexBuffer.reset();
 
-		for (uint16_t ii = 0, num = m_numFreeDynamicVertexBufferHandles; ii < num; ++ii)
+		for (uint16_t ii = 0, num = m_freeDynamicVertexBuffer.getNumQueued(); ii < num; ++ii)
 		{
-			destroyDynamicVertexBufferInternal(m_freeDynamicVertexBufferHandle[ii]);
+			destroyDynamicVertexBufferInternal(m_freeDynamicVertexBuffer.get(ii) );
 		}
-		m_numFreeDynamicVertexBufferHandles = 0;
+		m_freeDynamicVertexBuffer.reset();
 
 		for (uint16_t ii = 0, num = m_numFreeOcclusionQueryHandles; ii < num; ++ii)
 		{
@@ -2788,6 +2723,7 @@ namespace bgfx
 	{
 		for (uint16_t ii = 0, num = _frame->m_freeIndexBuffer.getNumQueued(); ii < num; ++ii)
 		{
+			m_indexBuffers.release(_frame->m_freeIndexBuffer.get(ii).idx);
 			m_indexBufferHandle.free(_frame->m_freeIndexBuffer.get(ii).idx);
 		}
 
@@ -2803,6 +2739,7 @@ namespace bgfx
 
 		for (uint16_t ii = 0, num = _frame->m_freeShader.getNumQueued(); ii < num; ++ii)
 		{
+			m_shaderRef.release(_frame->m_freeShader.get(ii).idx);
 			m_shaderHandle.free(_frame->m_freeShader.get(ii).idx);
 		}
 
@@ -2813,11 +2750,13 @@ namespace bgfx
 
 		for (uint16_t ii = 0, num = _frame->m_freeTexture.getNumQueued(); ii < num; ++ii)
 		{
+			m_textureRef.release(_frame->m_freeTexture.get(ii).idx);
 			m_textureHandle.free(_frame->m_freeTexture.get(ii).idx);
 		}
 
 		for (uint16_t ii = 0, num = _frame->m_freeFrameBuffer.getNumQueued(); ii < num; ++ii)
 		{
+			m_frameBufferRef.release(_frame->m_freeFrameBuffer.get(ii).idx);
 			m_frameBufferHandle.free(_frame->m_freeFrameBuffer.get(ii).idx);
 		}
 
@@ -2825,6 +2764,7 @@ namespace bgfx
 		{
 			UniformHandle handle = _frame->m_freeUniform.get(ii);
 			m_uniformCache.invalidate(handle);
+			m_uniformRef.release(handle.idx);
 			m_uniformHandle.free(handle.idx);
 		}
 	}
@@ -2945,7 +2885,7 @@ namespace bgfx
 
 			const int64_t sleepBegin = bx::getHPCounter();
 			m_renderCtx->latencySleep();
-			m_submit->m_perfStats.latencySleep = bx::getHPCounter() - sleepBegin;
+			m_latencySleep = bx::getHPCounter() - sleepBegin;
 
 			++m_latencyFrameId;
 			m_renderCtx->setLatencyMarker(LatencyMarker::SimulationStart, m_latencyFrameId);
@@ -2998,6 +2938,19 @@ namespace bgfx
 		m_submit->m_perfStats.numViews = 0;
 		m_submit->reserveViewStats(0 != (m_debug & BGFX_DEBUG_PROFILER), m_submit->m_numUsedViews);
 
+		{
+			// Renderer writes latency stats only when driver returns a report.
+			Stats& perfStats = m_submit->m_perfStats;
+			perfStats.latencySleep        = m_latencySleep;
+			perfStats.latencyTotal        = 0;
+			perfStats.latencySimulation   = 0;
+			perfStats.latencyRenderSubmit = 0;
+			perfStats.latencyPresent      = 0;
+			perfStats.latencyQueue        = 0;
+			perfStats.latencyGpu          = 0;
+			m_latencySleep = 0;
+		}
+
 		m_uniformCache.frame(m_submit->m_uniformCacheFrame);
 
 		static_assert(bx::isTriviallyCopyable<View>(), "Must be memcopyiable...");
@@ -3017,10 +2970,18 @@ namespace bgfx
 					const ViewId   order = m_viewOrder[id];
 					bits &= bits - 1;
 
-					*dst++ = NULL != src
+					View& view = *dst++;
+					view = NULL != src
 						? src[bit]
 						: m_view.unset()
 						;
+
+					if (isValid(view.m_fbh)
+					&& !m_frameBufferHandle.isValid(view.m_fbh.idx) )
+					{
+						view.m_fbh = BGFX_INVALID_HANDLE;
+					}
+
 					m_submit->m_viewOrder[id]    = order;
 					m_submit->m_viewRemap[order] = id;
 
@@ -3037,6 +2998,14 @@ namespace bgfx
 		{
 			m_view.freeUnset();
 			m_viewNames.freeUnused();
+			m_textureRef.freeUnused();
+			m_shaderRef.freeUnused();
+			m_dynamicIndexBuffers.freeUnused();
+			m_dynamicVertexBuffers.freeUnused();
+			m_indexBuffers.freeUnused();
+			m_vertexBuffers.freeUnused();
+			m_uniformRef.freeUnused();
+			m_frameBufferRef.freeUnused();
 			m_viewObserve = 0;
 		}
 
@@ -4328,6 +4297,7 @@ namespace bgfx
 		, maxTransientVbSize(BGFX_CONFIG_MAX_TRANSIENT_VERTEX_BUFFER_SIZE)
 		, maxTransientIbSize(BGFX_CONFIG_MAX_TRANSIENT_INDEX_BUFFER_SIZE)
 		, minUniformBufferSize(BGFX_CONFIG_MIN_UNIFORM_BUFFER_SIZE)
+		, minUniformCacheSize(BGFX_CONFIG_MIN_UNIFORM_CACHE_SIZE)
 	{
 	}
 
@@ -4340,7 +4310,6 @@ namespace bgfx
 		, profile(BX_ENABLED(BGFX_CONFIG_DEBUG_ANNOTATION) )
 		, fallback(true)
 		, videoDecode(false)
-		, lowLatency(false)
 		, reset(BGFX_RESET_NONE)
 		, callback(NULL)
 		, allocator(NULL)
@@ -4440,6 +4409,7 @@ namespace bgfx
 		g_caps.limits.maxTransientVbSize      = init.limits.maxTransientVbSize;
 		g_caps.limits.maxTransientIbSize      = init.limits.maxTransientIbSize;
 		g_caps.limits.minUniformBufferSize    = init.limits.minUniformBufferSize;
+		g_caps.limits.minUniformCacheSize     = init.limits.minUniformCacheSize;
 		g_caps.limits.blitRowPitchAlign       = 1;
 		g_caps.limits.blitOffsetAlign         = 1;
 

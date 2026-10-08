@@ -684,6 +684,7 @@ typedef struct bgfx_caps_limits_s
     uint32_t             maxTransientVbSize; /** Maximum transient vertex buffer size.    */
     uint32_t             maxTransientIbSize; /** Maximum transient index buffer size.     */
     uint32_t             minUniformBufferSize; /** Mimimum uniform buffer size.             */
+    uint32_t             minUniformCacheSize; /** Minimum view and frame uniform cache size. */
     
     /**
      * Row pitch alignment, in bytes, that buffer to texture blit copies
@@ -882,6 +883,12 @@ typedef struct bgfx_init_limits_s
     uint32_t             maxTransientVbSize; /** Maximum transient vertex buffer size.    */
     uint32_t             maxTransientIbSize; /** Maximum transient index buffer size.     */
     uint32_t             minUniformBufferSize; /** Mimimum uniform buffer size.             */
+    
+    /**
+     * Minimum view and frame uniform cache size. This is a reservation,
+     * the cache grows on demand.
+     */
+    uint32_t             minUniformCacheSize;
 
 } bgfx_init_limits_t;
 
@@ -922,7 +929,6 @@ typedef struct bgfx_init_s
     bool                 profile;            /** Enable device for profiling.             */
     bool                 fallback;           /** Enable fallback to next available renderer. */
     bool                 videoDecode;        /** Enable video decoding.                   */
-    bool                 lowLatency;         /** Enable low latency support (NVIDIA Reflex). */
     bgfx_platform_data_t platformData;       /** Platform data.                           */
     
     /**
@@ -1619,7 +1625,11 @@ BGFX_C_API void bgfx_shutdown(void);
  *      occurs. Default behaviour is that flip occurs before rendering new
  *      frame. This flag only has effect when `BGFX_CONFIG_MULTITHREADED=0`.
  *    - `BGFX_RESET_LOW_LATENCY_ON` - Enable low latency mode (NVIDIA Reflex).
- *    - `BGFX_RESET_LOW_LATENCY_BOOST` - Low latency mode with GPU clocks kept high.
+ *      Availability depends on: `BGFX_CAPS_LOW_LATENCY`.
+ *    - `BGFX_RESET_LOW_LATENCY_BOOST` - Enable low latency mode, and keep GPU
+ *      clocks high even when GPU is mostly idle. Availability depends on:
+ *      `BGFX_CAPS_LOW_LATENCY`. Set either `BGFX_RESET_LOW_LATENCY_ON` or
+ *      `BGFX_RESET_LOW_LATENCY_BOOST`, not both.
  *  Per-surface settings are not here. `BGFX_SWAP_CHAIN_*` flags belong
  *  on `SwapChain::flags`, and are ignored if passed here.
  * @param[in] _swapChain Main window swap chain. When `NULL` the main window is left

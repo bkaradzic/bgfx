@@ -606,7 +606,7 @@ pub const ResetFlags_TransparentBackbuffer: ResetFlags  = 0x00100000;
 /// Enable low latency mode (NVIDIA Reflex). Availability depends on: `BGFX_CAPS_LOW_LATENCY`.
 pub const ResetFlags_LowLatencyOn: ResetFlags           = 0x00000400;
 
-/// Enable low latency mode, and keep GPU clocks high even when GPU is mostly idle.
+/// Enable low latency mode, and keep GPU clocks high even when GPU is mostly idle. Availability depends on: `BGFX_CAPS_LOW_LATENCY`.
 pub const ResetFlags_LowLatencyBoost: ResetFlags        = 0x00000800;
 pub const ResetFlags_LowLatencyShift: ResetFlags        = 10;
 pub const ResetFlags_LowLatencyMask: ResetFlags         = 0x00000c00;
@@ -690,35 +690,38 @@ pub const CapsFlags_PrimitiveId: CapsFlags            = 0x0000000000000800;
 /// Renderer is on separate thread.
 pub const CapsFlags_RendererMultithreaded: CapsFlags  = 0x0000000000001000;
 
+/// 16-bit floats are supported in shaders.
+pub const CapsFlags_ShaderF16: CapsFlags              = 0x0000000000002000;
+
 /// Multiple windows are supported.
-pub const CapsFlags_SwapChain: CapsFlags              = 0x0000000000002000;
+pub const CapsFlags_SwapChain: CapsFlags              = 0x0000000000004000;
 
 /// Cubemap texture array is supported.
-pub const CapsFlags_TextureCubeArray: CapsFlags       = 0x0000000000004000;
+pub const CapsFlags_TextureCubeArray: CapsFlags       = 0x0000000000008000;
 
 /// CPU direct access to GPU texture memory.
-pub const CapsFlags_TextureDirectAccess: CapsFlags    = 0x0000000000008000;
+pub const CapsFlags_TextureDirectAccess: CapsFlags    = 0x0000000000010000;
 
 /// External texture is supported.
-pub const CapsFlags_TextureExternal: CapsFlags        = 0x0000000000010000;
+pub const CapsFlags_TextureExternal: CapsFlags        = 0x0000000000020000;
 
 /// External shared texture is supported.
-pub const CapsFlags_TextureExternalShared: CapsFlags  = 0x0000000000020000;
+pub const CapsFlags_TextureExternalShared: CapsFlags  = 0x0000000000040000;
 
 /// Transparent back buffer supported.
-pub const CapsFlags_TransparentBackbuffer: CapsFlags  = 0x0000000000040000;
+pub const CapsFlags_TransparentBackbuffer: CapsFlags  = 0x0000000000080000;
 
 /// Variable Rate Shading
-pub const CapsFlags_VariableRateShading: CapsFlags    = 0x0000000000080000;
+pub const CapsFlags_VariableRateShading: CapsFlags    = 0x0000000000100000;
 
 /// Vertex attribute 10_10_10_2 is supported.
-pub const CapsFlags_VertexAttribUint10: CapsFlags     = 0x0000000000100000;
+pub const CapsFlags_VertexAttribUint10: CapsFlags     = 0x0000000000200000;
 
 /// Hardware video decode is supported.
-pub const CapsFlags_VideoDecode: CapsFlags            = 0x0000000000200000;
+pub const CapsFlags_VideoDecode: CapsFlags            = 0x0000000000400000;
 
 /// Viewport layer is available in vertex shader.
-pub const CapsFlags_ViewportLayerArray: CapsFlags     = 0x0000000000400000;
+pub const CapsFlags_ViewportLayerArray: CapsFlags     = 0x0000000000800000;
 
 pub const CapsFormatFlags = u32;
 /// Texture format is not supported.
@@ -1639,6 +1642,7 @@ pub const Caps = extern struct {
         maxTransientVbSize: u32,
         maxTransientIbSize: u32,
         minUniformBufferSize: u32,
+        minUniformCacheSize: u32,
         blitRowPitchAlign: u32,
         blitOffsetAlign: u32,
     };
@@ -1690,6 +1694,7 @@ pub const Init = extern struct {
         maxTransientVbSize: u32,
         maxTransientIbSize: u32,
         minUniformBufferSize: u32,
+        minUniformCacheSize: u32,
     };
 
         type: RendererType,
@@ -1700,7 +1705,6 @@ pub const Init = extern struct {
         profile: bool,
         fallback: bool,
         videoDecode: bool,
-        lowLatency: bool,
         platformData: PlatformData,
         swapChain: SwapChain,
         reset: u32,
@@ -2664,7 +2668,7 @@ extern fn bgfx_shutdown() void;
 /// @attention This call doesn’t change the window size, it just resizes
 ///   the back-buffer. Your windowing code controls the window size.
 /// 
-/// <param name="_flags">See: `BGFX_RESET_*` for more info.   - `BGFX_RESET_NONE` - No reset flags.   - `BGFX_RESET_VSYNC` - Enable V-Sync.   - `BGFX_RESET_MAXANISOTROPY` - Turn on/off max anisotropy.   - `BGFX_RESET_CAPTURE` - Begin screen capture.   - `BGFX_RESET_FLUSH_AFTER_RENDER` - Flush rendering after submitting to GPU.   - `BGFX_RESET_FLIP_AFTER_RENDER` - This flag  specifies where flip     occurs. Default behaviour is that flip occurs before rendering new     frame. This flag only has effect when `BGFX_CONFIG_MULTITHREADED=0`.   - `BGFX_RESET_LOW_LATENCY_ON` - Enable low latency mode (NVIDIA Reflex).   - `BGFX_RESET_LOW_LATENCY_BOOST` - Low latency mode with GPU clocks kept high. Per-surface settings are not here. `BGFX_SWAP_CHAIN_*` flags belong on `SwapChain::flags`, and are ignored if passed here.</param>
+/// <param name="_flags">See: `BGFX_RESET_*` for more info.   - `BGFX_RESET_NONE` - No reset flags.   - `BGFX_RESET_VSYNC` - Enable V-Sync.   - `BGFX_RESET_MAXANISOTROPY` - Turn on/off max anisotropy.   - `BGFX_RESET_CAPTURE` - Begin screen capture.   - `BGFX_RESET_FLUSH_AFTER_RENDER` - Flush rendering after submitting to GPU.   - `BGFX_RESET_FLIP_AFTER_RENDER` - This flag  specifies where flip     occurs. Default behaviour is that flip occurs before rendering new     frame. This flag only has effect when `BGFX_CONFIG_MULTITHREADED=0`.   - `BGFX_RESET_LOW_LATENCY_ON` - Enable low latency mode (NVIDIA Reflex).     Availability depends on: `BGFX_CAPS_LOW_LATENCY`.   - `BGFX_RESET_LOW_LATENCY_BOOST` - Enable low latency mode, and keep GPU     clocks high even when GPU is mostly idle. Availability depends on:     `BGFX_CAPS_LOW_LATENCY`. Set either `BGFX_RESET_LOW_LATENCY_ON` or     `BGFX_RESET_LOW_LATENCY_BOOST`, not both. Per-surface settings are not here. `BGFX_SWAP_CHAIN_*` flags belong on `SwapChain::flags`, and are ignored if passed here.</param>
 /// <param name="_swapChain">Main window swap chain. When `NULL` the main window is left untouched and only the device and frame globals above are applied, which is what an application driving its own swap chains wants. Otherwise the main window takes on this description: resize it, change its format, or change its per-surface flags. Fields left neutral keep their current value, and `nwh`/`ndt` are ignored -- main's are bgfx's own. Must be `NULL` when `bgfx::init` created no main window.</param>
 pub inline fn reset(_flags: u32, _swapChain: [*c]const SwapChain) void {
     return bgfx_reset(_flags, _swapChain);

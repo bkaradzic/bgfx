@@ -9,7 +9,7 @@ import bindbc.common.types: c_int64, c_uint64, va_list;
 import bindbc.bgfx.config;
 static import bgfx.impl;
 
-enum uint apiVersion = 164;
+enum uint apiVersion = 166;
 
 alias ViewID = ushort;
 
@@ -492,9 +492,9 @@ enum Reset: Reset_{
 alias ResetLowLatency_ = uint;
 enum ResetLowLatency: ResetLowLatency_{
 	on     = 0x0000_0400, ///Enable low latency mode (NVIDIA Reflex). Availability depends on: `BGFX_CAPS_LOW_LATENCY`.
-	boost  = 0x0000_0800, ///Enable low latency mode, and keep GPU clocks high even when GPU is mostly idle.
-	shift  = 10,
-	mask   = 0x0000_0C00,
+	boost  = 0x0000_0800, ///Enable low latency mode, and keep GPU clocks high even when GPU is mostly idle. Availability depends on: `BGFX_CAPS_LOW_LATENCY`.
+	shift  = 10, ///Low latency mode bit shift
+	mask   = 0x0000_0C00, ///Low latency mode bit mask
 }
 
 alias ResetFullscreen_ = uint;
@@ -550,16 +550,17 @@ enum CapFlags: CapFlags_{
 	lowLatency             = 0x0000_0000_0000_0400, ///Low latency mode (NVIDIA Reflex) is supported.
 	primitiveID            = 0x0000_0000_0000_0800, ///PrimitiveID is available in fragment shader.
 	rendererMultithreaded  = 0x0000_0000_0000_1000, ///Renderer is on separate thread.
-	swapChain              = 0x0000_0000_0000_2000, ///Multiple windows are supported.
-	textureCubeArray       = 0x0000_0000_0000_4000, ///Cubemap texture array is supported.
-	textureDirectAccess    = 0x0000_0000_0000_8000, ///CPU direct access to GPU texture memory.
-	textureExternal        = 0x0000_0000_0001_0000, ///External texture is supported.
-	textureExternalShared  = 0x0000_0000_0002_0000, ///External shared texture is supported.
-	transparentBackbuffer  = 0x0000_0000_0004_0000, ///Transparent back buffer supported.
-	variableRateShading    = 0x0000_0000_0008_0000, ///Variable Rate Shading
-	vertexAttribUint10     = 0x0000_0000_0010_0000, ///Vertex attribute 10_10_10_2 is supported.
-	videoDecode            = 0x0000_0000_0020_0000, ///Hardware video decode is supported.
-	viewportLayerArray     = 0x0000_0000_0040_0000, ///Viewport layer is available in vertex shader.
+	shaderF16              = 0x0000_0000_0000_2000, ///16-bit floats are supported in shaders.
+	swapChain              = 0x0000_0000_0000_4000, ///Multiple windows are supported.
+	textureCubeArray       = 0x0000_0000_0000_8000, ///Cubemap texture array is supported.
+	textureDirectAccess    = 0x0000_0000_0001_0000, ///CPU direct access to GPU texture memory.
+	textureExternal        = 0x0000_0000_0002_0000, ///External texture is supported.
+	textureExternalShared  = 0x0000_0000_0004_0000, ///External shared texture is supported.
+	transparentBackbuffer  = 0x0000_0000_0008_0000, ///Transparent back buffer supported.
+	variableRateShading    = 0x0000_0000_0010_0000, ///Variable Rate Shading
+	vertexAttribUint10     = 0x0000_0000_0020_0000, ///Vertex attribute 10_10_10_2 is supported.
+	videoDecode            = 0x0000_0000_0040_0000, ///Hardware video decode is supported.
+	viewportLayerArray     = 0x0000_0000_0080_0000, ///Viewport layer is available in vertex shader.
 }
 
 alias CapsFormat_ = uint;
@@ -1216,6 +1217,7 @@ extern(C++, "bgfx") struct Caps{
 		uint maxTransientVBSize; ///Maximum transient vertex buffer size.
 		uint maxTransientIBSize; ///Maximum transient index buffer size.
 		uint minUniformBufferSize; ///Mimimum uniform buffer size.
+		uint minUniformCacheSize; ///Minimum view and frame uniform cache size.
 		
 		/**
 		Row pitch alignment, in bytes, that buffer to texture blit copies
@@ -1393,6 +1395,12 @@ extern(C++, "bgfx") struct Init{
 		uint maxTransientVBSize; ///Maximum transient vertex buffer size.
 		uint maxTransientIBSize; ///Maximum transient index buffer size.
 		uint minUniformBufferSize; ///Mimimum uniform buffer size.
+		
+		/**
+		Minimum view and frame uniform cache size. This is a reservation,
+		the cache grows on demand.
+		*/
+		uint minUniformCacheSize;
 		extern(D) mixin(joinFnBinds((){
 			FnBind[] ret = [
 				{q{void}, q{this}, q{}, ext: `C++`},
@@ -1431,7 +1439,6 @@ extern(C++, "bgfx") struct Init{
 	bool profile; ///Enable device for profiling.
 	bool fallback; ///Enable fallback to next available renderer.
 	bool videoDecode; ///Enable video decoding.
-	bool lowLatency; ///Enable low latency support (NVIDIA Reflex).
 	PlatformData platformData; ///Platform data.
 	
 	/**
@@ -2648,7 +2655,11 @@ mixin(joinFnBinds((){
 		    occurs. Default behaviour is that flip occurs before rendering new
 		    frame. This flag only has effect when `BGFX_CONFIG_MULTITHREADED=0`.
 		  - `BGFX_RESET_LOW_LATENCY_ON` - Enable low latency mode (NVIDIA Reflex).
-		  - `BGFX_RESET_LOW_LATENCY_BOOST` - Low latency mode with GPU clocks kept high.
+		    Availability depends on: `BGFX_CAPS_LOW_LATENCY`.
+		  - `BGFX_RESET_LOW_LATENCY_BOOST` - Enable low latency mode, and keep GPU
+		    clocks high even when GPU is mostly idle. Availability depends on:
+		    `BGFX_CAPS_LOW_LATENCY`. Set either `BGFX_RESET_LOW_LATENCY_ON` or
+		    `BGFX_RESET_LOW_LATENCY_BOOST`, not both.
 		Per-surface settings are not here. `BGFX_SWAP_CHAIN_*` flags belong
 		on `SwapChain::flags`, and are ignored if passed here.
 			swapChain = Main window swap chain. When `NULL` the main window is left

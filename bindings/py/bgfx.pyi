@@ -933,7 +933,7 @@ class ResetFlags(enum.IntFlag):
 	TransparentBackbuffer = 0x100000
 	# Enable low latency mode (NVIDIA Reflex). Availability depends on: `BGFX_CAPS_LOW_LATENCY`.
 	LowLatencyOn = 0x400
-	# Enable low latency mode, and keep GPU clocks high even when GPU is mostly idle.
+	# Enable low latency mode, and keep GPU clocks high even when GPU is mostly idle. Availability depends on: `BGFX_CAPS_LOW_LATENCY`.
 	LowLatencyBoost = 0x800
 	LowLatencyShift = 0xa
 	LowLatencyMask = 0xc00
@@ -1064,26 +1064,28 @@ class CapsFlags(enum.IntFlag):
 	PrimitiveId = 0x800
 	# Renderer is on separate thread.
 	RendererMultithreaded = 0x1000
+	# 16-bit floats are supported in shaders.
+	ShaderF16 = 0x2000
 	# Multiple windows are supported.
-	SwapChain = 0x2000
+	SwapChain = 0x4000
 	# Cubemap texture array is supported.
-	TextureCubeArray = 0x4000
+	TextureCubeArray = 0x8000
 	# CPU direct access to GPU texture memory.
-	TextureDirectAccess = 0x8000
+	TextureDirectAccess = 0x10000
 	# External texture is supported.
-	TextureExternal = 0x10000
+	TextureExternal = 0x20000
 	# External shared texture is supported.
-	TextureExternalShared = 0x20000
+	TextureExternalShared = 0x40000
 	# Transparent back buffer supported.
-	TransparentBackbuffer = 0x40000
+	TransparentBackbuffer = 0x80000
 	# Variable Rate Shading
-	VariableRateShading = 0x80000
+	VariableRateShading = 0x100000
 	# Vertex attribute 10_10_10_2 is supported.
-	VertexAttribUint10 = 0x100000
+	VertexAttribUint10 = 0x200000
 	# Hardware video decode is supported.
-	VideoDecode = 0x200000
+	VideoDecode = 0x400000
 	# Viewport layer is available in vertex shader.
-	ViewportLayerArray = 0x400000
+	ViewportLayerArray = 0x800000
 
 class CapsFormatFlags(enum.IntFlag):
 	# Texture format is not supported.
@@ -1291,6 +1293,8 @@ class CapsLimits(ctypes.Structure):
 	maxTransientIbSize: int
 	# Mimimum uniform buffer size.
 	minUniformBufferSize: int
+	# Minimum view and frame uniform cache size.
+	minUniformCacheSize: int
 	# Row pitch alignment, in bytes, that buffer to texture blit copies
 	# natively. Any other `BufferRegion::rowPitch` is repacked internally.
 	blitRowPitchAlign: int
@@ -1443,6 +1447,9 @@ class InitLimits(ctypes.Structure):
 	maxTransientIbSize: int
 	# Mimimum uniform buffer size.
 	minUniformBufferSize: int
+	# Minimum view and frame uniform cache size. This is a reservation,
+	# the cache grows on demand.
+	minUniformCacheSize: int
 
 # Initialization parameters used by `bgfx::init`.
 class Init(ctypes.Structure):
@@ -1473,8 +1480,6 @@ class Init(ctypes.Structure):
 	fallback: bool
 	# Enable video decoding.
 	videoDecode: bool
-	# Enable low latency support (NVIDIA Reflex).
-	lowLatency: bool
 	# Platform data.
 	platformData: PlatformData
 	# Swap chain for the window bgfx creates its device on.

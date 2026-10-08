@@ -281,6 +281,7 @@ namespace bgfx
 		, backwardsCompatibility(false)
 		, warningsAreErrors(false)
 		, keepIntermediate(false)
+		, uses16BitTypes(false)
 		, optimize(false)
 		, optimizationLevel(3)
 	{
@@ -306,6 +307,7 @@ namespace bgfx
 			"\t  backwardsCompatibility: %s\n"
 			"\t  warningsAreErrors: %s\n"
 			"\t  keepIntermediate: %s\n"
+			"\t  uses16BitTypes: %s\n"
 			"\t  optimize: %s\n"
 			"\t  optimizationLevel: %d\n"
 
@@ -326,6 +328,7 @@ namespace bgfx
 			, backwardsCompatibility ? "true" : "false"
 			, warningsAreErrors ? "true" : "false"
 			, keepIntermediate ? "true" : "false"
+			, uses16BitTypes ? "true" : "false"
 			, optimize ? "true" : "false"
 			, optimizationLevel
 			);
@@ -1147,6 +1150,21 @@ namespace bgfx
 
 		const Profile* profile = &s_profiles[profileId];
 
+		if (_options.uses16BitTypes
+		&&  profile->lang == ShadingLang::Dxil
+		&&  profile->id   <  620)
+		{
+			for (uint32_t ii = 0; ii < BX_COUNTOF(s_profiles); ++ii)
+			{
+				if (s_profiles[ii].lang == ShadingLang::Dxil
+				&&  s_profiles[ii].id   == 620)
+				{
+					profile = &s_profiles[ii];
+					break;
+				}
+			}
+		}
+
 		// ESSL is compiled as desktop GLSL, and cross-compiled back down to the
 		// requested ESSL version by SPIR-V Cross. glslang's ESSL front-end is
 		// far stricter than the desktop one, and ESSL below 3.10 can't be
@@ -1522,6 +1540,12 @@ namespace bgfx
 		uint32_t outputHash = 0;
 		bx::ErrorAssert err;
 
+		if (_options.uses16BitTypes
+		&& (profile->lang == ShadingLang::SpirV || profile->lang == ShadingLang::Metal) )
+		{
+			preprocessor.setDefine("float16_t=half");
+		}
+
 		char* data;
 		char* input;
 		{
@@ -1775,6 +1799,14 @@ namespace bgfx
 							const uint32_t glsl_profile = bx::max<uint32_t>(profile->id, 430);
 
 							bx::stringPrintf(code, "#version %d\n", glsl_profile);
+
+							if (!bx::findIdentifierMatch(preprocessor.m_preprocessed.c_str(), "float16_t").isEmpty() )
+							{
+								bx::stringPrintf(code
+									, "#extension GL_AMD_gpu_shader_half_float : enable\n"
+									  "#extension GL_NV_gpu_shader5 : enable\n"
+									);
+							}
 
 							code += _comment;
 							code += preprocessor.m_preprocessed;
@@ -2334,6 +2366,14 @@ namespace bgfx
 									);
 							}
 
+							if (!bx::findIdentifierMatch(input, "float16_t").isEmpty() )
+							{
+								bx::stringPrintf(code
+									, "#extension GL_AMD_gpu_shader_half_float : enable\n"
+									  "#extension GL_NV_gpu_shader5 : enable\n"
+									);
+							}
+
 							if (!bx::findIdentifierMatch(input, "gl_FragColor").isEmpty() )
 							{
 								bx::stringPrintf(code
@@ -2719,6 +2759,8 @@ namespace bgfx
 					}
 				}
 
+				options.uses16BitTypes = !bx::findIdentifierMatch(data, "float16_t").isEmpty();
+
 				compiled = compileShader(
 						  varying
 						, commandLineComment.c_str()
@@ -2752,5 +2794,8 @@ namespace bgfx
 
 int main(int _argc, const char* _argv[])
 {
-	return bgfx::compileShader(_argc, _argv);
+	bx::DefaultAllocator allocator;
+	bx::CommandLineArgs args(&allocator, _argc, _argv);
+
+	return bgfx::compileShader(args.getArgc(), args.getArgv() );
 }
