@@ -922,12 +922,7 @@ typedef struct bgfx_init_s
     bool                 profile;            /** Enable device for profiling.             */
     bool                 fallback;           /** Enable fallback to next available renderer. */
     bool                 videoDecode;        /** Enable video decoding.                   */
-    
-    /**
-     * Enable low latency support (NVIDIA Reflex).
-     * Availability depends on: `BGFX_CAPS_LOW_LATENCY`.
-     */
-    bool                 lowLatency;
+    bool                 lowLatency;         /** Enable low latency support (NVIDIA Reflex). */
     bgfx_platform_data_t platformData;       /** Platform data.                           */
     
     /**
@@ -1256,25 +1251,25 @@ typedef struct bgfx_encoder_stats_s
  */
 typedef struct bgfx_stats_s
 {
-    int64_t              cpuTimeFrame;        /** CPU time between two `bgfx::frame` calls. */
-    int64_t              cpuTimeBegin;        /** Render thread CPU submit begin time.     */
-    int64_t              cpuTimeEnd;          /** Render thread CPU submit end time.       */
-    int64_t              cpuTimerFreq;        /** CPU timer frequency. Timestamps-per-second */
-    int64_t              gpuTimeBegin;        /** GPU frame begin time.                    */
-    int64_t              gpuTimeEnd;          /** GPU frame end time.                      */
-    int64_t              gpuTimerFreq;        /** GPU timer frequency.                     */
-    int64_t              waitRender;          /** Time spent waiting for render backend thread to finish issuing draw commands to underlying graphics API. */
-    int64_t              waitSubmit;          /** Time spent waiting for submit thread to advance to next frame. */
-    int64_t              latencySleep;        /** Time `bgfx::frame` slept in low latency mode. */
-    int64_t              latencyTotal;        /** Time from simulation start until GPU finished the frame. */
-    int64_t              latencySimulation;   /** Simulation, API thread time between `bgfx::frame` calls. */
+    int64_t              cpuTimeFrame;       /** CPU time between two `bgfx::frame` calls. */
+    int64_t              cpuTimeBegin;       /** Render thread CPU submit begin time.     */
+    int64_t              cpuTimeEnd;         /** Render thread CPU submit end time.       */
+    int64_t              cpuTimerFreq;       /** CPU timer frequency. Timestamps-per-second */
+    int64_t              gpuTimeBegin;       /** GPU frame begin time.                    */
+    int64_t              gpuTimeEnd;         /** GPU frame end time.                      */
+    int64_t              gpuTimerFreq;       /** GPU timer frequency.                     */
+    int64_t              waitRender;         /** Time spent waiting for render backend thread to finish issuing draw commands to underlying graphics API. */
+    int64_t              waitSubmit;         /** Time spent waiting for submit thread to advance to next frame. */
+    int64_t              latencySleep;       /** Time `bgfx::frame` slept in low latency mode. */
+    int64_t              latencyTotal;       /** Time from simulation start until GPU finished the frame. */
+    int64_t              latencySimulation;  /** Simulation, API thread time between `bgfx::frame` calls. */
     int64_t              latencyRenderSubmit; /** Render thread time issuing the frame to the graphics API. */
-    int64_t              latencyPresent;      /** Time spent in present.                   */
-    int64_t              latencyQueue;        /** Time between present and GPU starting the frame. */
-    int64_t              latencyGpu;          /** GPU time from start to end of the frame. */
-    uint32_t             numDraw;             /** Number of draw calls submitted.          */
-    uint32_t             numCompute;          /** Number of compute calls submitted.       */
-    uint32_t             numBlit;             /** Number of blit calls submitted.          */
+    int64_t              latencyPresent;     /** Time spent in present.                   */
+    int64_t              latencyQueue;       /** Time between present and GPU starting the frame. */
+    int64_t              latencyGpu;         /** GPU time from start to end of the frame. */
+    uint32_t             numDraw;            /** Number of draw calls submitted.          */
+    uint32_t             numCompute;         /** Number of compute calls submitted.       */
+    uint32_t             numBlit;            /** Number of blit calls submitted.          */
     
     /**
      * Number of buffer to texture blit calls that had to be repacked,

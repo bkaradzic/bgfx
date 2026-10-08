@@ -156,6 +156,7 @@ Individual capability flags.
 .. doxygendefine:: BGFX_CAPS_HDR10
 .. doxygendefine:: BGFX_CAPS_IMAGE_RW
 .. doxygendefine:: BGFX_CAPS_INDEX32
+.. doxygendefine:: BGFX_CAPS_LOW_LATENCY
 .. doxygendefine:: BGFX_CAPS_PRIMITIVE_ID
 .. doxygendefine:: BGFX_CAPS_RENDERER_MULTITHREADED
 .. doxygendefine:: BGFX_CAPS_SWAP_CHAIN

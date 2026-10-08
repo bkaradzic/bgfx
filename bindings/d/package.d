@@ -9,7 +9,7 @@ import bindbc.common.types: c_int64, c_uint64, va_list;
 import bindbc.bgfx.config;
 static import bgfx.impl;
 
-enum uint apiVersion = 163;
+enum uint apiVersion = 164;
 
 alias ViewID = ushort;
 
@@ -489,6 +489,14 @@ enum Reset: Reset_{
 	transparentBackbuffer  = 0x0010_0000, ///Transparent backbuffer. Availability depends on: `BGFX_CAPS_TRANSPARENT_BACKBUFFER`.
 }
 
+alias ResetLowLatency_ = uint;
+enum ResetLowLatency: ResetLowLatency_{
+	on     = 0x0000_0400, ///Enable low latency mode (NVIDIA Reflex). Availability depends on: `BGFX_CAPS_LOW_LATENCY`.
+	boost  = 0x0000_0800, ///Enable low latency mode, and keep GPU clocks high even when GPU is mostly idle.
+	shift  = 10,
+	mask   = 0x0000_0C00,
+}
+
 alias ResetFullscreen_ = uint;
 enum ResetFullscreen: ResetFullscreen_{
 	shift  = 0,
@@ -539,18 +547,19 @@ enum CapFlags: CapFlags_{
 	hdr10                  = 0x0000_0000_0000_0080, ///HDR10 rendering is supported.
 	imageRW                = 0x0000_0000_0000_0100, ///Image Read/Write is supported.
 	index32                = 0x0000_0000_0000_0200, ///32-bit indices are supported.
-	primitiveID            = 0x0000_0000_0000_0400, ///PrimitiveID is available in fragment shader.
-	rendererMultithreaded  = 0x0000_0000_0000_0800, ///Renderer is on separate thread.
-	swapChain              = 0x0000_0000_0000_1000, ///Multiple windows are supported.
-	textureCubeArray       = 0x0000_0000_0000_2000, ///Cubemap texture array is supported.
-	textureDirectAccess    = 0x0000_0000_0000_4000, ///CPU direct access to GPU texture memory.
-	textureExternal        = 0x0000_0000_0000_8000, ///External texture is supported.
-	textureExternalShared  = 0x0000_0000_0001_0000, ///External shared texture is supported.
-	transparentBackbuffer  = 0x0000_0000_0002_0000, ///Transparent back buffer supported.
-	variableRateShading    = 0x0000_0000_0004_0000, ///Variable Rate Shading
-	vertexAttribUint10     = 0x0000_0000_0008_0000, ///Vertex attribute 10_10_10_2 is supported.
-	videoDecode            = 0x0000_0000_0010_0000, ///Hardware video decode is supported.
-	viewportLayerArray     = 0x0000_0000_0020_0000, ///Viewport layer is available in vertex shader.
+	lowLatency             = 0x0000_0000_0000_0400, ///Low latency mode (NVIDIA Reflex) is supported.
+	primitiveID            = 0x0000_0000_0000_0800, ///PrimitiveID is available in fragment shader.
+	rendererMultithreaded  = 0x0000_0000_0000_1000, ///Renderer is on separate thread.
+	swapChain              = 0x0000_0000_0000_2000, ///Multiple windows are supported.
+	textureCubeArray       = 0x0000_0000_0000_4000, ///Cubemap texture array is supported.
+	textureDirectAccess    = 0x0000_0000_0000_8000, ///CPU direct access to GPU texture memory.
+	textureExternal        = 0x0000_0000_0001_0000, ///External texture is supported.
+	textureExternalShared  = 0x0000_0000_0002_0000, ///External shared texture is supported.
+	transparentBackbuffer  = 0x0000_0000_0004_0000, ///Transparent back buffer supported.
+	variableRateShading    = 0x0000_0000_0008_0000, ///Variable Rate Shading
+	vertexAttribUint10     = 0x0000_0000_0010_0000, ///Vertex attribute 10_10_10_2 is supported.
+	videoDecode            = 0x0000_0000_0020_0000, ///Hardware video decode is supported.
+	viewportLayerArray     = 0x0000_0000_0040_0000, ///Viewport layer is available in vertex shader.
 }
 
 alias CapsFormat_ = uint;
@@ -1422,6 +1431,7 @@ extern(C++, "bgfx") struct Init{
 	bool profile; ///Enable device for profiling.
 	bool fallback; ///Enable fallback to next available renderer.
 	bool videoDecode; ///Enable video decoding.
+	bool lowLatency; ///Enable low latency support (NVIDIA Reflex).
 	PlatformData platformData; ///Platform data.
 	
 	/**
@@ -1756,6 +1766,13 @@ extern(C++, "bgfx") struct Stats{
 	c_int64 gpuTimerFreq; ///GPU timer frequency.
 	c_int64 waitRender; ///Time spent waiting for render backend thread to finish issuing draw commands to underlying graphics API.
 	c_int64 waitSubmit; ///Time spent waiting for submit thread to advance to next frame.
+	c_int64 latencySleep; ///Time `bgfx::frame` slept in low latency mode.
+	c_int64 latencyTotal; ///Time from simulation start until GPU finished the frame.
+	c_int64 latencySimulation; ///Simulation, API thread time between `bgfx::frame` calls.
+	c_int64 latencyRenderSubmit; ///Render thread time issuing the frame to the graphics API.
+	c_int64 latencyPresent; ///Time spent in present.
+	c_int64 latencyQueue; ///Time between present and GPU starting the frame.
+	c_int64 latencyGpu; ///GPU time from start to end of the frame.
 	uint numDraw; ///Number of draw calls submitted.
 	uint numCompute; ///Number of compute calls submitted.
 	uint numBlit; ///Number of blit calls submitted.
@@ -2630,6 +2647,8 @@ mixin(joinFnBinds((){
 		  - `BGFX_RESET_FLIP_AFTER_RENDER` - This flag  specifies where flip
 		    occurs. Default behaviour is that flip occurs before rendering new
 		    frame. This flag only has effect when `BGFX_CONFIG_MULTITHREADED=0`.
+		  - `BGFX_RESET_LOW_LATENCY_ON` - Enable low latency mode (NVIDIA Reflex).
+		  - `BGFX_RESET_LOW_LATENCY_BOOST` - Low latency mode with GPU clocks kept high.
 		Per-surface settings are not here. `BGFX_SWAP_CHAIN_*` flags belong
 		on `SwapChain::flags`, and are ignored if passed here.
 			swapChain = Main window swap chain. When `NULL` the main window is left

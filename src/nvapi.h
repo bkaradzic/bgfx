@@ -76,7 +76,7 @@ namespace bgfx
 		void shutdownReflex();
 
 		///
-		void setSleepMode(bool _lowLatency, bool _boost);
+		void setSleepMode(LatencyMode::Enum _mode);
 
 		///
 		void sleep();

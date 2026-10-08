@@ -5538,6 +5538,26 @@ namespace bgfx
 		};
 	};
 
+	struct LatencyMode
+	{
+		enum Enum
+		{
+			Off,
+			On,
+			Boost,
+
+			Count
+		};
+	};
+
+	static_assert(LatencyMode::On    == BGFX_RESET_LOW_LATENCY_ON    >> BGFX_RESET_LOW_LATENCY_SHIFT);
+	static_assert(LatencyMode::Boost == BGFX_RESET_LOW_LATENCY_BOOST >> BGFX_RESET_LOW_LATENCY_SHIFT);
+
+	inline LatencyMode::Enum getLatencyMode(uint32_t _reset)
+	{
+		return LatencyMode::Enum( (_reset & BGFX_RESET_LOW_LATENCY_MASK) >> BGFX_RESET_LOW_LATENCY_SHIFT);
+	}
+
 	// Driver's latency report, microseconds.
 	struct LatencyReport
 	{

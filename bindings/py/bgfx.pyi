@@ -931,6 +931,12 @@ class ResetFlags(enum.IntFlag):
 	Suspend = 0x80000
 	# Transparent backbuffer. Availability depends on: `BGFX_CAPS_TRANSPARENT_BACKBUFFER`.
 	TransparentBackbuffer = 0x100000
+	# Enable low latency mode (NVIDIA Reflex). Availability depends on: `BGFX_CAPS_LOW_LATENCY`.
+	LowLatencyOn = 0x400
+	# Enable low latency mode, and keep GPU clocks high even when GPU is mostly idle.
+	LowLatencyBoost = 0x800
+	LowLatencyShift = 0xa
+	LowLatencyMask = 0xc00
 	FullscreenShift = 0x0
 	FullscreenMask = 0x1
 	ReservedShift = 0x1f
@@ -1052,30 +1058,32 @@ class CapsFlags(enum.IntFlag):
 	ImageRw = 0x100
 	# 32-bit indices are supported.
 	Index32 = 0x200
+	# Low latency mode (NVIDIA Reflex) is supported.
+	LowLatency = 0x400
 	# PrimitiveID is available in fragment shader.
-	PrimitiveId = 0x400
+	PrimitiveId = 0x800
 	# Renderer is on separate thread.
-	RendererMultithreaded = 0x800
+	RendererMultithreaded = 0x1000
 	# Multiple windows are supported.
-	SwapChain = 0x1000
+	SwapChain = 0x2000
 	# Cubemap texture array is supported.
-	TextureCubeArray = 0x2000
+	TextureCubeArray = 0x4000
 	# CPU direct access to GPU texture memory.
-	TextureDirectAccess = 0x4000
+	TextureDirectAccess = 0x8000
 	# External texture is supported.
-	TextureExternal = 0x8000
+	TextureExternal = 0x10000
 	# External shared texture is supported.
-	TextureExternalShared = 0x10000
+	TextureExternalShared = 0x20000
 	# Transparent back buffer supported.
-	TransparentBackbuffer = 0x20000
+	TransparentBackbuffer = 0x40000
 	# Variable Rate Shading
-	VariableRateShading = 0x40000
+	VariableRateShading = 0x80000
 	# Vertex attribute 10_10_10_2 is supported.
-	VertexAttribUint10 = 0x80000
+	VertexAttribUint10 = 0x100000
 	# Hardware video decode is supported.
-	VideoDecode = 0x100000
+	VideoDecode = 0x200000
 	# Viewport layer is available in vertex shader.
-	ViewportLayerArray = 0x200000
+	ViewportLayerArray = 0x400000
 
 class CapsFormatFlags(enum.IntFlag):
 	# Texture format is not supported.
@@ -1465,6 +1473,8 @@ class Init(ctypes.Structure):
 	fallback: bool
 	# Enable video decoding.
 	videoDecode: bool
+	# Enable low latency support (NVIDIA Reflex).
+	lowLatency: bool
 	# Platform data.
 	platformData: PlatformData
 	# Swap chain for the window bgfx creates its device on.
@@ -1752,6 +1762,20 @@ class Stats(ctypes.Structure):
 	waitRender: int
 	# Time spent waiting for submit thread to advance to next frame.
 	waitSubmit: int
+	# Time `bgfx::frame` slept in low latency mode.
+	latencySleep: int
+	# Time from simulation start until GPU finished the frame.
+	latencyTotal: int
+	# Simulation, API thread time between `bgfx::frame` calls.
+	latencySimulation: int
+	# Render thread time issuing the frame to the graphics API.
+	latencyRenderSubmit: int
+	# Time spent in present.
+	latencyPresent: int
+	# Time between present and GPU starting the frame.
+	latencyQueue: int
+	# GPU time from start to end of the frame.
+	latencyGpu: int
 	# Number of draw calls submitted.
 	numDraw: int
 	# Number of compute calls submitted.

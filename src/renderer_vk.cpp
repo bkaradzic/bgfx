@@ -1369,7 +1369,7 @@ VK_IMPORT_DEVICE
 			m_videoDecodeQueue = VK_NULL_HANDLE;
 
 			m_lowLatencySupported      = false;
-			m_lowLatencyMode           = _init.reset & BGFX_RESET_LOW_LATENCY_MASK;
+			m_lowLatencyMode           = getLatencyMode(_init.reset);
 			m_lowLatencySwapChain      = VK_NULL_HANDLE;
 			m_lowLatencySemaphore      = VK_NULL_HANDLE;
 			m_lowLatencySemaphoreValue = 0;
@@ -3160,7 +3160,7 @@ VK_IMPORT_DEVICE
 			}
 		}
 
-		void setLowLatencyMode(uint32_t _mode)
+		void setLowLatencyMode(LatencyMode::Enum _mode)
 		{
 			bx::MutexScope scope(m_lowLatencyMutex);
 
@@ -3177,8 +3177,8 @@ VK_IMPORT_DEVICE
 			VkLatencySleepModeInfoNV lsmi;
 			lsmi.sType = VK_STRUCTURE_TYPE_LATENCY_SLEEP_MODE_INFO_NV;
 			lsmi.pNext = NULL;
-			lsmi.lowLatencyMode    = 0 != m_lowLatencyMode;
-			lsmi.lowLatencyBoost   = BGFX_RESET_LOW_LATENCY_BOOST == m_lowLatencyMode;
+			lsmi.lowLatencyMode    = LatencyMode::Off   != m_lowLatencyMode;
+			lsmi.lowLatencyBoost   = LatencyMode::Boost == m_lowLatencyMode;
 			lsmi.minimumIntervalUs = 0;
 
 			VK_CHECK(vkSetLatencySleepModeNV(m_device, m_lowLatencySwapChain, &lsmi) );
@@ -3508,7 +3508,7 @@ VK_IMPORT_DEVICE
 				| BGFX_RESET_LOW_LATENCY_MASK
 				);
 
-			const uint32_t lowLatencyMode = _reset & BGFX_RESET_LOW_LATENCY_MASK;
+			const LatencyMode::Enum lowLatencyMode = getLatencyMode(_reset);
 
 			if (m_lowLatencySupported
 			&&  m_lowLatencyMode != lowLatencyMode)
@@ -5546,13 +5546,13 @@ VK_IMPORT_DEVICE
 
 		bool m_variableRateShadingSupported;
 
-		bool           m_lowLatencySupported;
-		uint32_t       m_lowLatencyMode;
-		VkSwapchainKHR m_lowLatencySwapChain;
-		VkSemaphore    m_lowLatencySemaphore;
-		uint64_t       m_lowLatencySemaphoreValue;
-		uint64_t       m_lowLatencyPresentId;
-		bx::Mutex      m_lowLatencyMutex;
+		bool              m_lowLatencySupported;
+		LatencyMode::Enum m_lowLatencyMode;
+		VkSwapchainKHR    m_lowLatencySwapChain;
+		VkSemaphore       m_lowLatencySemaphore;
+		uint64_t          m_lowLatencySemaphoreValue;
+		uint64_t          m_lowLatencyPresentId;
+		bx::Mutex         m_lowLatencyMutex;
 
 		TextVideoMem m_textVideoMem;
 

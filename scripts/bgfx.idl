@@ -1,7 +1,7 @@
 -- vim: syntax=lua
 -- bgfx interface
 
-version(163)
+version(164)
 
 typedef "bool"
 typedef "char"
@@ -361,6 +361,11 @@ flag.Reset { bits = 32, section = "Reset" }
 	.TransparentBackbuffer    (21) --- Transparent backbuffer. Availability depends on: `BGFX_CAPS_TRANSPARENT_BACKBUFFER`.
 	()
 
+flag.ResetLowLatency { bits = 32, shift = 10, range = 2, base = 1 }
+	.On    --- Enable low latency mode (NVIDIA Reflex). Availability depends on: `BGFX_CAPS_LOW_LATENCY`.
+	.Boost --- Enable low latency mode, and keep GPU clocks high even when GPU is mostly idle.
+	()
+
 flag.ResetFullscreen { bits = 32, shift = 0, range = 1, base = 1 }
 	()
 
@@ -396,6 +401,7 @@ flag.Caps { bits = 64, base = 1, name = "Caps", section = "Available Caps" }
 	.Hdr10                  --- HDR10 rendering is supported.
 	.ImageRw                --- Image Read/Write is supported.
 	.Index32                --- 32-bit indices are supported.
+	.LowLatency             --- Low latency mode (NVIDIA Reflex) is supported.
 	.PrimitiveId            --- PrimitiveID is available in fragment shader.
 	.RendererMultithreaded  --- Renderer is on separate thread.
 	.SwapChain              --- Multiple windows are supported.
@@ -997,6 +1003,7 @@ struct.Init { ctor, section = "Initialization and Shutdown" }
 	.profile      "bool"               --- Enable device for profiling.
 	.fallback     "bool"               --- Enable fallback to next available renderer.
 	.videoDecode  "bool"               --- Enable video decoding.
+	.lowLatency   "bool"               --- Enable low latency support (NVIDIA Reflex).
 	.platformData "PlatformData"       --- Platform data.
 	.swapChain    "SwapChain"          --- Swap chain for the window bgfx creates its device on.
 	                                   --- See: `bgfx::SwapChain`.
@@ -1259,6 +1266,14 @@ struct.Stats { section = "Statistics" }
 	.waitRender              "int64_t"       --- Time spent waiting for render backend thread to finish issuing draw commands to underlying graphics API.
 	.waitSubmit              "int64_t"       --- Time spent waiting for submit thread to advance to next frame.
 
+	.latencySleep            "int64_t"       --- Time `bgfx::frame` slept in low latency mode.
+	.latencyTotal            "int64_t"       --- Time from simulation start until GPU finished the frame.
+	.latencySimulation       "int64_t"       --- Simulation, API thread time between `bgfx::frame` calls.
+	.latencyRenderSubmit     "int64_t"       --- Render thread time issuing the frame to the graphics API.
+	.latencyPresent          "int64_t"       --- Time spent in present.
+	.latencyQueue            "int64_t"       --- Time between present and GPU starting the frame.
+	.latencyGpu              "int64_t"       --- GPU time from start to end of the frame.
+
 	.numDraw                 "uint32_t"      --- Number of draw calls submitted.
 	.numCompute              "uint32_t"      --- Number of compute calls submitted.
 	.numBlit                 "uint32_t"      --- Number of blit calls submitted.
@@ -1505,6 +1520,8 @@ func.reset { section = "Reset" }
 	                                 ---   - `BGFX_RESET_FLIP_AFTER_RENDER` - This flag  specifies where flip
 	                                 ---     occurs. Default behaviour is that flip occurs before rendering new
 	                                 ---     frame. This flag only has effect when `BGFX_CONFIG_MULTITHREADED=0`.
+	                                 ---   - `BGFX_RESET_LOW_LATENCY_ON` - Enable low latency mode (NVIDIA Reflex).
+	                                 ---   - `BGFX_RESET_LOW_LATENCY_BOOST` - Low latency mode with GPU clocks kept high.
 	                                 ---
 	                                 --- Per-surface settings are not here. `BGFX_SWAP_CHAIN_*` flags belong
 	                                 --- on `SwapChain::flags`, and are ignored if passed here.

@@ -515,18 +515,18 @@ namespace bgfx
 	{
 		if (NULL != m_reflexDevice)
 		{
-			setSleepMode(false, false);
+			setSleepMode(LatencyMode::Off);
 			m_reflexDevice = NULL;
 		}
 	}
 
-	void NvApi::setSleepMode(bool _lowLatency, bool _boost)
+	void NvApi::setSleepMode(LatencyMode::Enum _mode)
 	{
 		if (NULL != m_reflexDevice)
 		{
 			NvSetSleepModeParamsV1 params;
-			params.lowLatencyMode  = _lowLatency;
-			params.lowLatencyBoost = _boost;
+			params.lowLatencyMode  = LatencyMode::Off   != _mode;
+			params.lowLatencyBoost = LatencyMode::Boost == _mode;
 
 			const NvApiStatus status = nvApiD3DSetSleepMode(m_reflexDevice, &params);
 			BX_WARN(NVAPI_OK == status, "NVAPI: NvAPI_D3D_SetSleepMode failed %d.", status); BX_UNUSED(status);

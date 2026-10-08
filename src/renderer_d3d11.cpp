@@ -1655,8 +1655,7 @@ namespace bgfx { namespace d3d11
 			{
 				g_caps.supported |= BGFX_CAPS_LOW_LATENCY;
 
-				const uint32_t lowLatency = m_reset & BGFX_RESET_LOW_LATENCY_MASK;
-				m_nvapi.setSleepMode(0 != lowLatency, BGFX_RESET_LOW_LATENCY_BOOST == lowLatency);
+				m_nvapi.setSleepMode(getLatencyMode(m_reset) );
 			}
 
 			m_nvapi.initAftermath(m_device, m_deviceCtx);
@@ -2568,8 +2567,7 @@ namespace bgfx { namespace d3d11
 					| ( _reset &  BGFX_RESET_LOW_LATENCY_MASK)
 					;
 
-				const uint32_t lowLatency = m_reset & BGFX_RESET_LOW_LATENCY_MASK;
-				m_nvapi.setSleepMode(0 != lowLatency, BGFX_RESET_LOW_LATENCY_BOOST == lowLatency);
+				m_nvapi.setSleepMode(getLatencyMode(m_reset) );
 			}
 
 			const uint32_t maskFlags = ~(0

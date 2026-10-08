@@ -2408,6 +2408,8 @@ namespace bgfx
 			return false;
 		}
 
+		BX_ASSERT(BGFX_RESET_LOW_LATENCY_MASK != (_init.reset&BGFX_RESET_LOW_LATENCY_MASK), "Set either `BGFX_RESET_LOW_LATENCY_ON` or `BGFX_RESET_LOW_LATENCY_BOOST`, not both!");
+
 		m_init = _init;
 
 		m_init.swapChain.flags |= _init.reset & kSwapChainFlagMask;
@@ -4535,6 +4537,7 @@ namespace bgfx
 	{
 		BGFX_CHECK_API_THREAD();
 		BX_ASSERT(0 == (_flags&BGFX_RESET_RESERVED_MASK), "Do not set reset reserved flags!");
+		BX_ASSERT(BGFX_RESET_LOW_LATENCY_MASK != (_flags&BGFX_RESET_LOW_LATENCY_MASK), "Set either `BGFX_RESET_LOW_LATENCY_ON` or `BGFX_RESET_LOW_LATENCY_BOOST`, not both!");
 		s_ctx->reset(_flags, _swapChain);
 	}
 
