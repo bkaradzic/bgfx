@@ -129,8 +129,9 @@ namespace bgfx
 	struct NvLatencyResultParamsV1
 	{
 		NvLatencyResultParamsV1()
-			: version(sizeof(NvLatencyResultParamsV1) | (1 << 16) )
 		{
+			bx::memSet(this, 0, sizeof(NvLatencyResultParamsV1) );
+			version = sizeof(NvLatencyResultParamsV1) | (1 << 16);
 		}
 
 		uint32_t version;
@@ -205,6 +206,7 @@ namespace bgfx
 		, m_nvAftermathDll(NULL)
 		, m_aftermathHandle(NULL)
 		, m_reflexDevice(NULL)
+		, m_latencyResult(NULL)
 	{
 	}
 
@@ -289,6 +291,12 @@ namespace bgfx
 	void NvApi::shutdown()
 	{
 		m_reflexDevice = NULL;
+
+		if (NULL != m_latencyResult)
+		{
+			bx::deleteObject(g_allocator, m_latencyResult);
+			m_latencyResult = NULL;
+		}
 
 		if (NULL != m_nvGpu)
 		{
@@ -508,6 +516,13 @@ namespace bgfx
 		BX_TRACE("NVAPI: Reflex supported.");
 
 		m_reflexDevice = _device;
+
+		if (NULL == m_latencyResult)
+		{
+			// Latency result holds 64 frame reports, it's too big for the stack.
+			m_latencyResult = BX_NEW(g_allocator, NvLatencyResultParamsV1);
+		}
+
 		return true;
 	}
 
@@ -517,6 +532,12 @@ namespace bgfx
 		{
 			setSleepMode(LatencyMode::Off);
 			m_reflexDevice = NULL;
+		}
+
+		if (NULL != m_latencyResult)
+		{
+			bx::deleteObject(g_allocator, m_latencyResult);
+			m_latencyResult = NULL;
 		}
 	}
 
@@ -555,12 +576,13 @@ namespace bgfx
 
 	bool NvApi::getLatencyReport(LatencyReport& _report)
 	{
-		if (NULL == m_reflexDevice)
+		if (NULL == m_reflexDevice
+		||  NULL == m_latencyResult)
 		{
 			return false;
 		}
 
-		NvLatencyResultParamsV1 params;
+		NvLatencyResultParamsV1& params = *m_latencyResult;
 		if (NVAPI_OK != nvApiD3DGetLatency(m_reflexDevice, &params) )
 		{
 			return false;

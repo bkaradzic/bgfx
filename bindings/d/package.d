@@ -492,9 +492,9 @@ enum Reset: Reset_{
 alias ResetLowLatency_ = uint;
 enum ResetLowLatency: ResetLowLatency_{
 	on     = 0x0000_0400, ///Enable low latency mode (NVIDIA Reflex). Availability depends on: `BGFX_CAPS_LOW_LATENCY`.
-	boost  = 0x0000_0800, ///Enable low latency mode, and keep GPU clocks high even when GPU is mostly idle.
-	shift  = 10,
-	mask   = 0x0000_0C00,
+	boost  = 0x0000_0800, ///Enable low latency mode, and keep GPU clocks high even when GPU is mostly idle. Availability depends on: `BGFX_CAPS_LOW_LATENCY`.
+	shift  = 10, ///Low latency mode bit shift
+	mask   = 0x0000_0C00, ///Low latency mode bit mask
 }
 
 alias ResetFullscreen_ = uint;
@@ -1439,7 +1439,6 @@ extern(C++, "bgfx") struct Init{
 	bool profile; ///Enable device for profiling.
 	bool fallback; ///Enable fallback to next available renderer.
 	bool videoDecode; ///Enable video decoding.
-	bool lowLatency; ///Enable low latency support (NVIDIA Reflex).
 	PlatformData platformData; ///Platform data.
 	
 	/**
@@ -2656,7 +2655,11 @@ mixin(joinFnBinds((){
 		    occurs. Default behaviour is that flip occurs before rendering new
 		    frame. This flag only has effect when `BGFX_CONFIG_MULTITHREADED=0`.
 		  - `BGFX_RESET_LOW_LATENCY_ON` - Enable low latency mode (NVIDIA Reflex).
-		  - `BGFX_RESET_LOW_LATENCY_BOOST` - Low latency mode with GPU clocks kept high.
+		    Availability depends on: `BGFX_CAPS_LOW_LATENCY`.
+		  - `BGFX_RESET_LOW_LATENCY_BOOST` - Enable low latency mode, and keep GPU
+		    clocks high even when GPU is mostly idle. Availability depends on:
+		    `BGFX_CAPS_LOW_LATENCY`. Set either `BGFX_RESET_LOW_LATENCY_ON` or
+		    `BGFX_RESET_LOW_LATENCY_BOOST`, not both.
 		Per-surface settings are not here. `BGFX_SWAP_CHAIN_*` flags belong
 		on `SwapChain::flags`, and are ignored if passed here.
 			swapChain = Main window swap chain. When `NULL` the main window is left

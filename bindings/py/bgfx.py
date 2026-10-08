@@ -929,7 +929,6 @@ Init._fields_ = [
 	("profile", ctypes.c_bool),
 	("fallback", ctypes.c_bool),
 	("videoDecode", ctypes.c_bool),
-	("lowLatency", ctypes.c_bool),
 	("platformData", PlatformData),
 	("swapChain", SwapChain),
 	("reset", ctypes.c_uint32),

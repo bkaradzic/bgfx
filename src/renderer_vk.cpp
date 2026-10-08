@@ -1443,7 +1443,6 @@ VK_IMPORT
 				// NVIDIA Reflex is Windows only.
 				const bool lowLatency = true
 					&& BX_ENABLED(BX_PLATFORM_WINDOWS)
-					&& _init.lowLatency
 					&& 0 != (_init.capabilities & BGFX_CAPS_LOW_LATENCY)
 					&& !headless
 					&& NULL == g_platformData.context
@@ -1451,6 +1450,9 @@ VK_IMPORT
 
 				s_extension[Extension::KHR_present_id ].m_initialize = lowLatency;
 				s_extension[Extension::NV_low_latency2].m_initialize = lowLatency;
+
+				s_extension[Extension::KHR_present_id ].m_supported = false;
+				s_extension[Extension::NV_low_latency2].m_supported = false;
 
 				dumpExtensions(VK_NULL_HANDLE, s_extension);
 
@@ -3212,9 +3214,9 @@ VK_IMPORT_DEVICE
 				return false;
 			}
 
-			VkLatencyTimingsFrameReportNV timings[64];
+			VkLatencyTimingsFrameReportNV* timings = m_lowLatencyTimings;
 
-			for (uint32_t ii = 0; ii < BX_COUNTOF(timings); ++ii)
+			for (uint32_t ii = 0; ii < BX_COUNTOF(m_lowLatencyTimings); ++ii)
 			{
 				timings[ii].sType = VK_STRUCTURE_TYPE_LATENCY_TIMINGS_FRAME_REPORT_NV;
 				timings[ii].pNext = NULL;
@@ -3223,14 +3225,14 @@ VK_IMPORT_DEVICE
 			VkGetLatencyMarkerInfoNV glmi;
 			glmi.sType = VK_STRUCTURE_TYPE_GET_LATENCY_MARKER_INFO_NV;
 			glmi.pNext = NULL;
-			glmi.timingCount = BX_COUNTOF(timings);
+			glmi.timingCount = BX_COUNTOF(m_lowLatencyTimings);
 			glmi.pTimings    = timings;
 
 			vkGetLatencyTimingsNV(m_device, m_lowLatencySwapChain, &glmi);
 
 			const VkLatencyTimingsFrameReportNV* newest = NULL;
 
-			for (uint32_t ii = 0, num = bx::min<uint32_t>(glmi.timingCount, BX_COUNTOF(timings) ); ii < num; ++ii)
+			for (uint32_t ii = 0, num = bx::min<uint32_t>(glmi.timingCount, BX_COUNTOF(m_lowLatencyTimings) ); ii < num; ++ii)
 			{
 				const VkLatencyTimingsFrameReportNV& timing = timings[ii];
 
@@ -5565,6 +5567,8 @@ VK_IMPORT_DEVICE
 		uint64_t          m_lowLatencySemaphoreValue;
 		uint64_t          m_lowLatencyPresentId;
 		bx::Mutex         m_lowLatencyMutex;
+
+		VkLatencyTimingsFrameReportNV m_lowLatencyTimings[64];
 
 		TextVideoMem m_textVideoMem;
 
@@ -9051,11 +9055,6 @@ VK_DESTROY
 			return result;
 		}
 
-		if (lowLatency)
-		{
-			s_renderVK->setLowLatencySwapChain(m_swapChain);
-		}
-
 		m_sci.oldSwapchain = m_swapChain;
 
 		result = vkGetSwapchainImagesKHR(device, m_swapChain, &m_numSwapChainImages, NULL);
@@ -9159,6 +9158,11 @@ VK_DESTROY
 
 		m_needPresent = false;
 		m_needToRecreateSwapchain = false;
+
+		if (lowLatency)
+		{
+			s_renderVK->setLowLatencySwapChain(m_swapChain);
+		}
 
 		return result;
 	}

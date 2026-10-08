@@ -933,7 +933,7 @@ class ResetFlags(enum.IntFlag):
 	TransparentBackbuffer = 0x100000
 	# Enable low latency mode (NVIDIA Reflex). Availability depends on: `BGFX_CAPS_LOW_LATENCY`.
 	LowLatencyOn = 0x400
-	# Enable low latency mode, and keep GPU clocks high even when GPU is mostly idle.
+	# Enable low latency mode, and keep GPU clocks high even when GPU is mostly idle. Availability depends on: `BGFX_CAPS_LOW_LATENCY`.
 	LowLatencyBoost = 0x800
 	LowLatencyShift = 0xa
 	LowLatencyMask = 0xc00
@@ -1480,8 +1480,6 @@ class Init(ctypes.Structure):
 	fallback: bool
 	# Enable video decoding.
 	videoDecode: bool
-	# Enable low latency support (NVIDIA Reflex).
-	lowLatency: bool
 	# Platform data.
 	platformData: PlatformData
 	# Swap chain for the window bgfx creates its device on.

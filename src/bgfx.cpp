@@ -2885,7 +2885,7 @@ namespace bgfx
 
 			const int64_t sleepBegin = bx::getHPCounter();
 			m_renderCtx->latencySleep();
-			m_submit->m_perfStats.latencySleep = bx::getHPCounter() - sleepBegin;
+			m_latencySleep = bx::getHPCounter() - sleepBegin;
 
 			++m_latencyFrameId;
 			m_renderCtx->setLatencyMarker(LatencyMarker::SimulationStart, m_latencyFrameId);
@@ -2937,6 +2937,19 @@ namespace bgfx
 		m_submit->m_debugTextScale   = m_debugTextScale;
 		m_submit->m_perfStats.numViews = 0;
 		m_submit->reserveViewStats(0 != (m_debug & BGFX_DEBUG_PROFILER), m_submit->m_numUsedViews);
+
+		{
+			// Renderer writes latency stats only when driver returns a report.
+			Stats& perfStats = m_submit->m_perfStats;
+			perfStats.latencySleep        = m_latencySleep;
+			perfStats.latencyTotal        = 0;
+			perfStats.latencySimulation   = 0;
+			perfStats.latencyRenderSubmit = 0;
+			perfStats.latencyPresent      = 0;
+			perfStats.latencyQueue        = 0;
+			perfStats.latencyGpu          = 0;
+			m_latencySleep = 0;
+		}
 
 		m_uniformCache.frame(m_submit->m_uniformCacheFrame);
 
@@ -4297,7 +4310,6 @@ namespace bgfx
 		, profile(BX_ENABLED(BGFX_CONFIG_DEBUG_ANNOTATION) )
 		, fallback(true)
 		, videoDecode(false)
-		, lowLatency(false)
 		, reset(BGFX_RESET_NONE)
 		, callback(NULL)
 		, allocator(NULL)

@@ -57,6 +57,9 @@ Reset flags control back-buffer resolution, MSAA, vsync, and other global render
 .. doxygendefine:: BGFX_RESET_SUSPEND
 .. doxygendefine:: BGFX_RESET_TRANSPARENT_BACKBUFFER
 
+.. doxygendefine:: BGFX_RESET_LOW_LATENCY_ON
+.. doxygendefine:: BGFX_RESET_LOW_LATENCY_BOOST
+
 .. doxygenfunction:: bgfx::reset
 
 Swap Chain

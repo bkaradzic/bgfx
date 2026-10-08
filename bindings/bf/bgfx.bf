@@ -975,7 +975,7 @@ public static class bgfx
 		LowLatencyOn           = 0x00000400,
 	
 		/// <summary>
-		/// Enable low latency mode, and keep GPU clocks high even when GPU is mostly idle.
+		/// Enable low latency mode, and keep GPU clocks high even when GPU is mostly idle. Availability depends on: `BGFX_CAPS_LOW_LATENCY`.
 		/// </summary>
 		LowLatencyBoost        = 0x00000800,
 		LowLatencyShift        = 10,
@@ -2740,7 +2740,6 @@ public static class bgfx
 		public uint8 profile;
 		public uint8 fallback;
 		public uint8 videoDecode;
-		public uint8 lowLatency;
 		public PlatformData platformData;
 		public SwapChain swapChain;
 		public uint32 reset;
@@ -3278,7 +3277,7 @@ public static class bgfx
 	/// 
 	/// </summary>
 	///
-	/// <param name="_flags">See: `BGFX_RESET_*` for more info.   - `BGFX_RESET_NONE` - No reset flags.   - `BGFX_RESET_VSYNC` - Enable V-Sync.   - `BGFX_RESET_MAXANISOTROPY` - Turn on/off max anisotropy.   - `BGFX_RESET_CAPTURE` - Begin screen capture.   - `BGFX_RESET_FLUSH_AFTER_RENDER` - Flush rendering after submitting to GPU.   - `BGFX_RESET_FLIP_AFTER_RENDER` - This flag  specifies where flip     occurs. Default behaviour is that flip occurs before rendering new     frame. This flag only has effect when `BGFX_CONFIG_MULTITHREADED=0`.   - `BGFX_RESET_LOW_LATENCY_ON` - Enable low latency mode (NVIDIA Reflex).   - `BGFX_RESET_LOW_LATENCY_BOOST` - Low latency mode with GPU clocks kept high. Per-surface settings are not here. `BGFX_SWAP_CHAIN_*` flags belong on `SwapChain::flags`, and are ignored if passed here.</param>
+	/// <param name="_flags">See: `BGFX_RESET_*` for more info.   - `BGFX_RESET_NONE` - No reset flags.   - `BGFX_RESET_VSYNC` - Enable V-Sync.   - `BGFX_RESET_MAXANISOTROPY` - Turn on/off max anisotropy.   - `BGFX_RESET_CAPTURE` - Begin screen capture.   - `BGFX_RESET_FLUSH_AFTER_RENDER` - Flush rendering after submitting to GPU.   - `BGFX_RESET_FLIP_AFTER_RENDER` - This flag  specifies where flip     occurs. Default behaviour is that flip occurs before rendering new     frame. This flag only has effect when `BGFX_CONFIG_MULTITHREADED=0`.   - `BGFX_RESET_LOW_LATENCY_ON` - Enable low latency mode (NVIDIA Reflex).     Availability depends on: `BGFX_CAPS_LOW_LATENCY`.   - `BGFX_RESET_LOW_LATENCY_BOOST` - Enable low latency mode, and keep GPU     clocks high even when GPU is mostly idle. Availability depends on:     `BGFX_CAPS_LOW_LATENCY`. Set either `BGFX_RESET_LOW_LATENCY_ON` or     `BGFX_RESET_LOW_LATENCY_BOOST`, not both. Per-surface settings are not here. `BGFX_SWAP_CHAIN_*` flags belong on `SwapChain::flags`, and are ignored if passed here.</param>
 	/// <param name="_swapChain">Main window swap chain. When `NULL` the main window is left untouched and only the device and frame globals above are applied, which is what an application driving its own swap chains wants. Otherwise the main window takes on this description: resize it, change its format, or change its per-surface flags. Fields left neutral keep their current value, and `nwh`/`ndt` are ignored -- main's are bgfx's own. Must be `NULL` when `bgfx::init` created no main window.</param>
 	///
 	[LinkName("bgfx_reset")]

@@ -5984,6 +5984,7 @@ namespace bgfx
 			, m_lowLatency(false)
 			, m_latencyFrameId(0)
 			, m_latencyPresentFrameId(0)
+			, m_latencySleep(0)
 		{
 		}
 
@@ -8796,6 +8797,7 @@ namespace bgfx
 
 		uint64_t m_latencyFrameId;
 		uint64_t m_latencyPresentFrameId;
+		int64_t  m_latencySleep;
 
 		typedef UpdateBatchT<256> TextureUpdateBatch;
 		BX_ALIGN_DECL_CACHE_LINE(TextureUpdateBatch m_textureUpdateBatch);

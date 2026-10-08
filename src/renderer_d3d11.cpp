@@ -1657,8 +1657,7 @@ namespace bgfx { namespace d3d11
 			}
 
 			// Reflex paces the main swap chain only.
-			if (_init.lowLatency
-			&&  0 != (_init.capabilities & BGFX_CAPS_LOW_LATENCY)
+			if (0 != (_init.capabilities & BGFX_CAPS_LOW_LATENCY)
 			&&  mainFrameBuffer().isSwapChain()
 			&&  m_nvapi.initReflex(m_device) )
 			{

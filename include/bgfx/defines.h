@@ -453,9 +453,9 @@
 #define BGFX_RESET_TRANSPARENT_BACKBUFFER         UINT32_C(0x00100000) //!< Transparent backbuffer. Availability depends on: `BGFX_CAPS_TRANSPARENT_BACKBUFFER`.
 
 #define BGFX_RESET_LOW_LATENCY_ON                 UINT32_C(0x00000400) //!< Enable low latency mode (NVIDIA Reflex). Availability depends on: `BGFX_CAPS_LOW_LATENCY`.
-#define BGFX_RESET_LOW_LATENCY_BOOST              UINT32_C(0x00000800) //!< Enable low latency mode, and keep GPU clocks high even when GPU is mostly idle.
-#define BGFX_RESET_LOW_LATENCY_SHIFT              10
-#define BGFX_RESET_LOW_LATENCY_MASK               UINT32_C(0x00000c00)
+#define BGFX_RESET_LOW_LATENCY_BOOST              UINT32_C(0x00000800) //!< Enable low latency mode, and keep GPU clocks high even when GPU is mostly idle. Availability depends on: `BGFX_CAPS_LOW_LATENCY`.
+#define BGFX_RESET_LOW_LATENCY_SHIFT              10                   //!< Low latency mode bit shift
+#define BGFX_RESET_LOW_LATENCY_MASK               UINT32_C(0x00000c00) //!< Low latency mode bit mask
 
 #define BGFX_RESET_FULLSCREEN_SHIFT               0
 #define BGFX_RESET_FULLSCREEN_MASK                UINT32_C(0x00000001)
