@@ -634,6 +634,7 @@ namespace bgfx
 			uint32_t maxTransientVbSize;      //!< Maximum transient vertex buffer size.
 			uint32_t maxTransientIbSize;      //!< Maximum transient index buffer size.
 			uint32_t minUniformBufferSize;    //!< Mimimum uniform buffer size.
+			uint32_t minUniformCacheSize;     //!< Minimum view and frame uniform cache size.
 			uint32_t blitRowPitchAlign;       //!< Row pitch alignment, in bytes, that buffer to texture blit copies
 			                                  ///  natively. Any other `BufferRegion::rowPitch` is repacked internally.
 			uint32_t blitOffsetAlign;         //!< Offset alignment, in bytes, that buffer to texture blit copies
@@ -779,6 +780,8 @@ namespace bgfx
 			uint32_t maxTransientVbSize;    //!< Maximum transient vertex buffer size.
 			uint32_t maxTransientIbSize;    //!< Maximum transient index buffer size.
 			uint32_t minUniformBufferSize;  //!< Mimimum uniform buffer size.
+			uint32_t minUniformCacheSize;   //!< Minimum view and frame uniform cache size. This is a reservation,
+			                                ///  the cache grows on demand.
 		};
 
 		RendererType::Enum type;   //!< Select rendering backend. When set to RendererType::Count

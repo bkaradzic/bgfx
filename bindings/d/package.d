@@ -9,7 +9,7 @@ import bindbc.common.types: c_int64, c_uint64, va_list;
 import bindbc.bgfx.config;
 static import bgfx.impl;
 
-enum uint apiVersion = 164;
+enum uint apiVersion = 166;
 
 alias ViewID = ushort;
 
@@ -550,16 +550,17 @@ enum CapFlags: CapFlags_{
 	lowLatency             = 0x0000_0000_0000_0400, ///Low latency mode (NVIDIA Reflex) is supported.
 	primitiveID            = 0x0000_0000_0000_0800, ///PrimitiveID is available in fragment shader.
 	rendererMultithreaded  = 0x0000_0000_0000_1000, ///Renderer is on separate thread.
-	swapChain              = 0x0000_0000_0000_2000, ///Multiple windows are supported.
-	textureCubeArray       = 0x0000_0000_0000_4000, ///Cubemap texture array is supported.
-	textureDirectAccess    = 0x0000_0000_0000_8000, ///CPU direct access to GPU texture memory.
-	textureExternal        = 0x0000_0000_0001_0000, ///External texture is supported.
-	textureExternalShared  = 0x0000_0000_0002_0000, ///External shared texture is supported.
-	transparentBackbuffer  = 0x0000_0000_0004_0000, ///Transparent back buffer supported.
-	variableRateShading    = 0x0000_0000_0008_0000, ///Variable Rate Shading
-	vertexAttribUint10     = 0x0000_0000_0010_0000, ///Vertex attribute 10_10_10_2 is supported.
-	videoDecode            = 0x0000_0000_0020_0000, ///Hardware video decode is supported.
-	viewportLayerArray     = 0x0000_0000_0040_0000, ///Viewport layer is available in vertex shader.
+	shaderF16              = 0x0000_0000_0000_2000, ///16-bit floats are supported in shaders.
+	swapChain              = 0x0000_0000_0000_4000, ///Multiple windows are supported.
+	textureCubeArray       = 0x0000_0000_0000_8000, ///Cubemap texture array is supported.
+	textureDirectAccess    = 0x0000_0000_0001_0000, ///CPU direct access to GPU texture memory.
+	textureExternal        = 0x0000_0000_0002_0000, ///External texture is supported.
+	textureExternalShared  = 0x0000_0000_0004_0000, ///External shared texture is supported.
+	transparentBackbuffer  = 0x0000_0000_0008_0000, ///Transparent back buffer supported.
+	variableRateShading    = 0x0000_0000_0010_0000, ///Variable Rate Shading
+	vertexAttribUint10     = 0x0000_0000_0020_0000, ///Vertex attribute 10_10_10_2 is supported.
+	videoDecode            = 0x0000_0000_0040_0000, ///Hardware video decode is supported.
+	viewportLayerArray     = 0x0000_0000_0080_0000, ///Viewport layer is available in vertex shader.
 }
 
 alias CapsFormat_ = uint;
@@ -1216,6 +1217,7 @@ extern(C++, "bgfx") struct Caps{
 		uint maxTransientVBSize; ///Maximum transient vertex buffer size.
 		uint maxTransientIBSize; ///Maximum transient index buffer size.
 		uint minUniformBufferSize; ///Mimimum uniform buffer size.
+		uint minUniformCacheSize; ///Minimum view and frame uniform cache size.
 		
 		/**
 		Row pitch alignment, in bytes, that buffer to texture blit copies
@@ -1393,6 +1395,12 @@ extern(C++, "bgfx") struct Init{
 		uint maxTransientVBSize; ///Maximum transient vertex buffer size.
 		uint maxTransientIBSize; ///Maximum transient index buffer size.
 		uint minUniformBufferSize; ///Mimimum uniform buffer size.
+		
+		/**
+		Minimum view and frame uniform cache size. This is a reservation,
+		the cache grows on demand.
+		*/
+		uint minUniformCacheSize;
 		extern(D) mixin(joinFnBinds((){
 			FnBind[] ret = [
 				{q{void}, q{this}, q{}, ext: `C++`},

@@ -612,7 +612,8 @@ VK_DESTROY_FUNC(DescriptorSet);
 	struct TimerQueryVK
 	{
 		TimerQueryVK()
-			: m_control(kMinTimerQueries)
+			: m_query(kMinTimerQueries)
+			, m_control(kMinTimerQueries)
 		{
 		}
 
@@ -651,7 +652,7 @@ VK_DESTROY_FUNC(DescriptorSet);
 		uint64_t m_frequency;
 
 		TimerResultT<Result> m_result;
-		Query m_query[kMaxTimerQueries];
+		TimerQueryArrayT<Query> m_query;
 
 		VkBuffer m_readback;
 		DeviceMemoryAllocationVK m_readbackMemory;

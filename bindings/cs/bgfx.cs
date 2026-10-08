@@ -1112,54 +1112,59 @@ public static partial class bgfx
 		RendererMultithreaded  = 0x0000000000001000,
 	
 		/// <summary>
+		/// 16-bit floats are supported in shaders.
+		/// </summary>
+		ShaderF16              = 0x0000000000002000,
+	
+		/// <summary>
 		/// Multiple windows are supported.
 		/// </summary>
-		SwapChain              = 0x0000000000002000,
+		SwapChain              = 0x0000000000004000,
 	
 		/// <summary>
 		/// Cubemap texture array is supported.
 		/// </summary>
-		TextureCubeArray       = 0x0000000000004000,
+		TextureCubeArray       = 0x0000000000008000,
 	
 		/// <summary>
 		/// CPU direct access to GPU texture memory.
 		/// </summary>
-		TextureDirectAccess    = 0x0000000000008000,
+		TextureDirectAccess    = 0x0000000000010000,
 	
 		/// <summary>
 		/// External texture is supported.
 		/// </summary>
-		TextureExternal        = 0x0000000000010000,
+		TextureExternal        = 0x0000000000020000,
 	
 		/// <summary>
 		/// External shared texture is supported.
 		/// </summary>
-		TextureExternalShared  = 0x0000000000020000,
+		TextureExternalShared  = 0x0000000000040000,
 	
 		/// <summary>
 		/// Transparent back buffer supported.
 		/// </summary>
-		TransparentBackbuffer  = 0x0000000000040000,
+		TransparentBackbuffer  = 0x0000000000080000,
 	
 		/// <summary>
 		/// Variable Rate Shading
 		/// </summary>
-		VariableRateShading    = 0x0000000000080000,
+		VariableRateShading    = 0x0000000000100000,
 	
 		/// <summary>
 		/// Vertex attribute 10_10_10_2 is supported.
 		/// </summary>
-		VertexAttribUint10     = 0x0000000000100000,
+		VertexAttribUint10     = 0x0000000000200000,
 	
 		/// <summary>
 		/// Hardware video decode is supported.
 		/// </summary>
-		VideoDecode            = 0x0000000000200000,
+		VideoDecode            = 0x0000000000400000,
 	
 		/// <summary>
 		/// Viewport layer is available in vertex shader.
 		/// </summary>
-		ViewportLayerArray     = 0x0000000000400000,
+		ViewportLayerArray     = 0x0000000000800000,
 	}
 	
 	[Flags]
@@ -2640,6 +2645,7 @@ public static partial class bgfx
 			public uint maxTransientVbSize;
 			public uint maxTransientIbSize;
 			public uint minUniformBufferSize;
+			public uint minUniformCacheSize;
 			public uint blitRowPitchAlign;
 			public uint blitOffsetAlign;
 		}
@@ -2696,6 +2702,7 @@ public static partial class bgfx
 			public uint maxTransientVbSize;
 			public uint maxTransientIbSize;
 			public uint minUniformBufferSize;
+			public uint minUniformCacheSize;
 		}
 	
 		public RendererType type;

@@ -710,35 +710,38 @@ constdef CapsFlags : inline ulong
 	// Renderer is on separate thread.
 	RENDERERMULTITHREADED  = 0x0000000000001000,
 
+	// 16-bit floats are supported in shaders.
+	SHADERF16              = 0x0000000000002000,
+
 	// Multiple windows are supported.
-	SWAPCHAIN              = 0x0000000000002000,
+	SWAPCHAIN              = 0x0000000000004000,
 
 	// Cubemap texture array is supported.
-	TEXTURECUBEARRAY       = 0x0000000000004000,
+	TEXTURECUBEARRAY       = 0x0000000000008000,
 
 	// CPU direct access to GPU texture memory.
-	TEXTUREDIRECTACCESS    = 0x0000000000008000,
+	TEXTUREDIRECTACCESS    = 0x0000000000010000,
 
 	// External texture is supported.
-	TEXTUREEXTERNAL        = 0x0000000000010000,
+	TEXTUREEXTERNAL        = 0x0000000000020000,
 
 	// External shared texture is supported.
-	TEXTUREEXTERNALSHARED  = 0x0000000000020000,
+	TEXTUREEXTERNALSHARED  = 0x0000000000040000,
 
 	// Transparent back buffer supported.
-	TRANSPARENTBACKBUFFER  = 0x0000000000040000,
+	TRANSPARENTBACKBUFFER  = 0x0000000000080000,
 
 	// Variable Rate Shading
-	VARIABLERATESHADING    = 0x0000000000080000,
+	VARIABLERATESHADING    = 0x0000000000100000,
 
 	// Vertex attribute 10_10_10_2 is supported.
-	VERTEXATTRIBUINT10     = 0x0000000000100000,
+	VERTEXATTRIBUINT10     = 0x0000000000200000,
 
 	// Hardware video decode is supported.
-	VIDEODECODE            = 0x0000000000200000,
+	VIDEODECODE            = 0x0000000000400000,
 
 	// Viewport layer is available in vertex shader.
-	VIEWPORTLAYERARRAY     = 0x0000000000400000,
+	VIEWPORTLAYERARRAY     = 0x0000000000800000,
 }
 
 constdef CapsFormatFlags : inline uint
@@ -1726,6 +1729,8 @@ struct CapsLimits
 	uint maxTransientIbSize;
 	// Mimimum uniform buffer size.
 	uint minUniformBufferSize;
+	// Minimum view and frame uniform cache size.
+	uint minUniformCacheSize;
 	// Row pitch alignment, in bytes, that buffer to texture blit copies
 	// natively. Any other `BufferRegion::rowPitch` is repacked internally.
 	uint blitRowPitchAlign;
@@ -1888,6 +1893,9 @@ struct InitLimits
 	uint maxTransientIbSize;
 	// Mimimum uniform buffer size.
 	uint minUniformBufferSize;
+	// Minimum view and frame uniform cache size. This is a reservation,
+	// the cache grows on demand.
+	uint minUniformCacheSize;
 }
 
 // Initialization parameters used by `bgfx::init`.

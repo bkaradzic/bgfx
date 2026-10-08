@@ -684,6 +684,7 @@ typedef struct bgfx_caps_limits_s
     uint32_t             maxTransientVbSize; /** Maximum transient vertex buffer size.    */
     uint32_t             maxTransientIbSize; /** Maximum transient index buffer size.     */
     uint32_t             minUniformBufferSize; /** Mimimum uniform buffer size.             */
+    uint32_t             minUniformCacheSize; /** Minimum view and frame uniform cache size. */
     
     /**
      * Row pitch alignment, in bytes, that buffer to texture blit copies
@@ -882,6 +883,12 @@ typedef struct bgfx_init_limits_s
     uint32_t             maxTransientVbSize; /** Maximum transient vertex buffer size.    */
     uint32_t             maxTransientIbSize; /** Maximum transient index buffer size.     */
     uint32_t             minUniformBufferSize; /** Mimimum uniform buffer size.             */
+    
+    /**
+     * Minimum view and frame uniform cache size. This is a reservation,
+     * the cache grows on demand.
+     */
+    uint32_t             minUniformCacheSize;
 
 } bgfx_init_limits_t;
 
