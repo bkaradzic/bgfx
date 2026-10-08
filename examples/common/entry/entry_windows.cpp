@@ -9,6 +9,8 @@
 
 #include <bgfx/bgfx.h>
 
+#include <bx/allocator.h>
+#include <bx/commandline.h>
 #include <bx/mutex.h>
 #include <bx/handlealloc.h>
 #include <bx/os.h>
@@ -1193,7 +1195,11 @@ namespace entry
 int main(int _argc, const char* const* _argv)
 {
 	using namespace entry;
-	return s_ctx.run(_argc, _argv);
+
+	bx::DefaultAllocator allocator;
+	bx::CommandLineArgs args(&allocator, _argc, _argv);
+
+	return s_ctx.run(args.getArgc(), args.getArgv() );
 }
 
 #endif // BX_PLATFORM_WINDOWS
