@@ -1,7 +1,7 @@
 -- vim: syntax=lua
 -- bgfx interface
 
-version(164)
+version(165)
 
 typedef "bool"
 typedef "char"
@@ -852,6 +852,7 @@ struct.Limits  { namespace = "Caps" }
 	.maxTransientVbSize      "uint32_t" --- Maximum transient vertex buffer size.
 	.maxTransientIbSize      "uint32_t" --- Maximum transient index buffer size.
 	.minUniformBufferSize    "uint32_t" --- Mimimum uniform buffer size.
+	.minUniformCacheSize     "uint32_t" --- Minimum view and frame uniform cache size.
 	.blitRowPitchAlign       "uint32_t" --- Row pitch alignment, in bytes, that buffer to texture blit copies
 	                                    --- natively. Any other `BufferRegion::rowPitch` is repacked internally.
 	.blitOffsetAlign         "uint32_t" --- Offset alignment, in bytes, that buffer to texture blit copies
@@ -974,6 +975,8 @@ struct.Limits { ctor, namespace = "Init" }
 	.maxTransientVbSize   "uint32_t"  --- Maximum transient vertex buffer size.
 	.maxTransientIbSize   "uint32_t"  --- Maximum transient index buffer size.
 	.minUniformBufferSize "uint32_t"  --- Mimimum uniform buffer size.
+	.minUniformCacheSize  "uint32_t"  --- Minimum view and frame uniform cache size. This is a reservation,
+	                                  --- the cache grows on demand.
 
 --- Initialization parameters used by `bgfx::init`.
 struct.Init { ctor, section = "Initialization and Shutdown" }

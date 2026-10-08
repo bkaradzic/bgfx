@@ -860,6 +860,7 @@ CapsLimits._fields_ = [
 	("maxTransientVbSize", ctypes.c_uint32),
 	("maxTransientIbSize", ctypes.c_uint32),
 	("minUniformBufferSize", ctypes.c_uint32),
+	("minUniformCacheSize", ctypes.c_uint32),
 	("blitRowPitchAlign", ctypes.c_uint32),
 	("blitOffsetAlign", ctypes.c_uint32),
 ]
@@ -911,6 +912,7 @@ InitLimits._fields_ = [
 	("maxTransientVbSize", ctypes.c_uint32),
 	("maxTransientIbSize", ctypes.c_uint32),
 	("minUniformBufferSize", ctypes.c_uint32),
+	("minUniformCacheSize", ctypes.c_uint32),
 ]
 
 Init._fields_ = [

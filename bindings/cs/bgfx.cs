@@ -2628,6 +2628,7 @@ public static partial class bgfx
 			public uint maxTransientVbSize;
 			public uint maxTransientIbSize;
 			public uint minUniformBufferSize;
+			public uint minUniformCacheSize;
 			public uint blitRowPitchAlign;
 			public uint blitOffsetAlign;
 		}
@@ -2684,6 +2685,7 @@ public static partial class bgfx
 			public uint maxTransientVbSize;
 			public uint maxTransientIbSize;
 			public uint minUniformBufferSize;
+			public uint minUniformCacheSize;
 		}
 	
 		public RendererType type;

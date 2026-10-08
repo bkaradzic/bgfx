@@ -551,6 +551,11 @@ static_assert(BGFX_CONFIG_MAX_VERTEX_STREAMS < 32, "Must be less than 32!");
 #	define BGFX_CONFIG_MIN_UNIFORM_BUFFER_SIZE (128<<10)
 #endif // BGFX_CONFIG_MIN_UNIFORM_BUFFER_SIZE
 
+#ifndef BGFX_CONFIG_MIN_UNIFORM_CACHE_SIZE
+/// Minimum view and frame uniform cache size. The cache grows on demand.
+#	define BGFX_CONFIG_MIN_UNIFORM_CACHE_SIZE (64<<10)
+#endif // BGFX_CONFIG_MIN_UNIFORM_CACHE_SIZE
+
 #ifndef BGFX_CONFIG_UNIFORM_BUFFER_RESIZE_THRESHOLD_SIZE
 /// Max amount of unused uniform buffer space before uniform buffer resize.
 /// Must be at least as large as the largest single uniform record, since

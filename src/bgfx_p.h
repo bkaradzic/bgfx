@@ -4102,6 +4102,7 @@ namespace bgfx
 		Frame()
 			: m_sortKeys(NULL)
 			, m_sortValues(NULL)
+			, m_sortKeysCapacity(0)
 			, m_blitKeys(NULL)
 			, m_blitKeysCapacity(0)
 			, m_maxDrawCalls(0)
@@ -4147,17 +4148,42 @@ namespace bgfx
 			const uint32_t reserved = bx::min(_numReservedDrawCalls, _maxDrawCalls) + 1;
 			const uint32_t num      = m_maxDrawCalls + 1;
 
-			m_sortKeys   = (uint64_t*       )bx::alloc(g_allocator, sizeof(uint64_t       )*num);
-			m_sortValues = (RenderItemCount*)bx::alloc(g_allocator, sizeof(RenderItemCount)*num);
-
+			m_submitKeys.create(reserved, num);
 			m_renderItem.create(reserved, num);
 			m_renderBind.create(reserved, num);
 			m_view.create(kViewBlock, BGFX_CONFIG_MAX_VIEWS);
 
+			reserveSortKeys(BX_ENABLED(BGFX_CONFIG_DYNAMIC_FRAME_STORAGE) ? reserved : num);
+
 			m_blitItem.create(0, BGFX_CONFIG_MAX_BLIT_ITEMS);
 			reserveBlitKeys(0);
+		}
 
-			setSentinel();
+		void reserveSortKeys(uint32_t _num)
+		{
+			if (m_sortKeysCapacity < _num)
+			{
+				resizeSortKeys(_num);
+			}
+		}
+
+		void shrinkSortKeys(uint32_t _num)
+		{
+			if (BX_ENABLED(BGFX_CONFIG_DYNAMIC_FRAME_STORAGE)
+			&&  bx::alignUp(_num, kDrawCallBlock) < m_sortKeysCapacity)
+			{
+				resizeSortKeys(_num);
+			}
+		}
+
+		void resizeSortKeys(uint32_t _num)
+		{
+			bx::free(g_allocator, m_sortKeys);
+			bx::free(g_allocator, m_sortValues);
+
+			m_sortKeysCapacity = bx::alignUp(_num, kDrawCallBlock);
+			m_sortKeys         = (uint64_t*       )bx::alloc(g_allocator, sizeof(uint64_t       )*m_sortKeysCapacity);
+			m_sortValues       = (RenderItemCount*)bx::alloc(g_allocator, sizeof(RenderItemCount)*m_sortKeysCapacity);
 		}
 
 		void reserveBlitKeys(uint32_t _num)
@@ -4200,23 +4226,16 @@ namespace bgfx
 			m_sortKeys   = NULL;
 			m_sortValues = NULL;
 			m_blitKeys   = NULL;
+			m_sortKeysCapacity = 0;
 			m_blitKeysCapacity = 0;
 
 			reserveViewStats(false, 0);
 
+			m_submitKeys.destroy();
 			m_view.destroy();
 			m_renderItem.destroy();
 			m_renderBind.destroy();
 			m_blitItem.destroy();
-		}
-
-		void setSentinel()
-		{
-			SortKey term;
-			term.reset();
-			term.m_program = BGFX_INVALID_HANDLE;
-			m_sortKeys[m_maxDrawCalls]   = term.encodeDraw(SortKey::SortProgram);
-			m_sortValues[m_maxDrawCalls] = RenderItemCount(m_maxDrawCalls);
 		}
 
 		void adjustCapacity()
@@ -4236,8 +4255,10 @@ namespace bgfx
 			{
 				const uint32_t keep = bx::min<uint32_t>(m_maxDrawCalls + 1, m_peak + 1 + kDrawCallBlock);
 
+				m_submitKeys.shrink(keep);
 				m_renderItem.shrink(keep);
 				m_renderBind.shrink(keep);
+				shrinkSortKeys(keep);
 				m_blitItem.shrink(m_peakBlit + 1 + kBlitBlock);
 				m_frameCache.m_rectCache.shrink(m_peakRect + 1 + kRectBlock);
 				m_frameCache.m_depthBiasCache.shrink(m_peakDepthBias + 1 + kDepthControlBlock);
@@ -4466,12 +4487,14 @@ namespace bgfx
 
 		int32_t m_occlusion[BGFX_CONFIG_MAX_OCCLUSION_QUERIES];
 
+		FrameArenaT<uint64_t,   kDrawCallBlock> m_submitKeys;
 		FrameArenaT<RenderItem, kDrawCallBlock> m_renderItem;
 		FrameArenaT<RenderBind, kDrawCallBlock> m_renderBind;
 		FrameArenaT<BlitItem,   kBlitBlock>     m_blitItem;
 
 		uint64_t*        m_sortKeys;
 		RenderItemCount* m_sortValues;
+		uint32_t         m_sortKeysCapacity;
 		uint32_t*        m_blitKeys;
 		uint32_t         m_blitKeysCapacity;
 		uint32_t         m_maxDrawCalls;
@@ -5459,11 +5482,12 @@ namespace bgfx
 
 	struct UniformCache
 	{
+		static constexpr uint32_t kMinCapacity = 4<<10;
+
 		UniformCache()
+			: m_data(NULL)
+			, m_capacity(0)
 		{
-			const uint32_t size = 1<<20;
-			m_data = (uint8_t*)bx::alloc(g_allocator, size);
-			m_uniformStoreAlloc.add(0, size);
 		}
 
 		~UniformCache()
@@ -5579,7 +5603,13 @@ namespace bgfx
 			}
 			else
 			{
-				const uint64_t offset = m_uniformStoreAlloc.alloc(allocSize);
+				uint64_t offset = m_uniformStoreAlloc.alloc(allocSize);
+
+				if (NonLocalAllocator::kInvalidBlock == offset)
+				{
+					grow(allocSize);
+					offset = m_uniformStoreAlloc.alloc(allocSize);
+				}
 
 				if (NonLocalAllocator::kInvalidBlock == offset)
 				{
@@ -5725,6 +5755,31 @@ namespace bgfx
 			}
 		}
 
+		void reserve(uint32_t _size)
+		{
+			const uint32_t capacity = bx::alignUp(_size, kMinCapacity);
+
+			if (m_capacity < capacity)
+			{
+				setCapacity(capacity);
+			}
+		}
+
+		void grow(uint32_t _size)
+		{
+			setCapacity(bx::max(
+				  m_capacity*2
+				, m_capacity + bx::alignUp(_size, kMinCapacity)
+				) );
+		}
+
+		void setCapacity(uint32_t _capacity)
+		{
+			m_data = (uint8_t*)bx::realloc(g_allocator, m_data, _capacity);
+			m_uniformStoreAlloc.add(m_capacity, _capacity - m_capacity);
+			m_capacity = _capacity;
+		}
+
 		using UniformKeyHashMap = stl::unordered_map<uint32_t, uint32_t>;
 		using UniformEntryMap   = stl::unordered_map<uint32_t, UniformCacheEntry>;
 
@@ -5733,6 +5788,7 @@ namespace bgfx
 
 		NonLocalAllocator m_uniformStoreAlloc;
 		uint8_t* m_data;
+		uint32_t m_capacity;
 	};
 
 	struct BX_NO_VTABLE RendererContextI
@@ -5847,6 +5903,8 @@ namespace bgfx
 			, m_tempKeys(NULL)
 			, m_tempValues(NULL)
 			, m_tempCapacity(0)
+			, m_tempPeak(0)
+			, m_tempObserve(0)
 			, m_numDrawCallsPeak(0)
 			, m_numFreeOcclusionQueryHandles(0)
 			, m_numNewOcclusionQueryHandles(0)
@@ -5873,14 +5931,36 @@ namespace bgfx
 
 		void reserveTemp(uint32_t _num)
 		{
+			m_tempPeak = bx::max(m_tempPeak, _num);
+
+			const uint32_t numPeakFrames = m_init.limits.numDrawCallPeakFrames;
+
 			if (m_tempCapacity < _num)
 			{
-				bx::free(g_allocator, m_tempKeys);
-				bx::free(g_allocator, m_tempValues);
-				m_tempCapacity = _num;
-				m_tempKeys   = (uint64_t*       )bx::alloc(g_allocator, sizeof(uint64_t       )*_num);
-				m_tempValues = (RenderItemCount*)bx::alloc(g_allocator, sizeof(RenderItemCount)*_num);
+				resizeTemp(_num);
 			}
+			else if (BX_ENABLED(BGFX_CONFIG_DYNAMIC_FRAME_STORAGE)
+			&&  0 != numPeakFrames
+			&&  ++m_tempObserve >= numPeakFrames)
+			{
+				if (bx::alignUp(m_tempPeak, kDrawCallBlock) < m_tempCapacity)
+				{
+					resizeTemp(m_tempPeak);
+				}
+
+				m_tempPeak    = 0;
+				m_tempObserve = 0;
+			}
+		}
+
+		void resizeTemp(uint32_t _num)
+		{
+			bx::free(g_allocator, m_tempKeys);
+			bx::free(g_allocator, m_tempValues);
+
+			m_tempCapacity = bx::alignUp(_num, kDrawCallBlock);
+			m_tempKeys     = (uint64_t*       )bx::alloc(g_allocator, sizeof(uint64_t       )*m_tempCapacity);
+			m_tempValues   = (RenderItemCount*)bx::alloc(g_allocator, sizeof(RenderItemCount)*m_tempCapacity);
 		}
 
 #if BX_CONFIG_SUPPORTS_THREADING
@@ -8540,6 +8620,8 @@ namespace bgfx
 		uint64_t*        m_tempKeys;
 		RenderItemCount* m_tempValues;
 		uint32_t         m_tempCapacity;
+		uint32_t         m_tempPeak;
+		uint32_t         m_tempObserve;
 		uint32_t         m_numDrawCallsPeak;
 
 		typedef stl::unordered_map<uint32_t, uint32_t> BindHashMap;

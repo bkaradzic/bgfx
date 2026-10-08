@@ -1718,6 +1718,8 @@ struct CapsLimits
 	uint maxTransientIbSize;
 	// Mimimum uniform buffer size.
 	uint minUniformBufferSize;
+	// Minimum view and frame uniform cache size.
+	uint minUniformCacheSize;
 	// Row pitch alignment, in bytes, that buffer to texture blit copies
 	// natively. Any other `BufferRegion::rowPitch` is repacked internally.
 	uint blitRowPitchAlign;
@@ -1880,6 +1882,9 @@ struct InitLimits
 	uint maxTransientIbSize;
 	// Mimimum uniform buffer size.
 	uint minUniformBufferSize;
+	// Minimum view and frame uniform cache size. This is a reservation,
+	// the cache grows on demand.
+	uint minUniformCacheSize;
 }
 
 // Initialization parameters used by `bgfx::init`.
