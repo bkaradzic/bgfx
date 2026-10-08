@@ -9,7 +9,7 @@ import bindbc.common.types: c_int64, c_uint64, va_list;
 import bindbc.bgfx.config;
 static import bgfx.impl;
 
-enum uint apiVersion = 164;
+enum uint apiVersion = 165;
 
 alias ViewID = ushort;
 
@@ -1208,6 +1208,7 @@ extern(C++, "bgfx") struct Caps{
 		uint maxTransientVBSize; ///Maximum transient vertex buffer size.
 		uint maxTransientIBSize; ///Maximum transient index buffer size.
 		uint minUniformBufferSize; ///Mimimum uniform buffer size.
+		uint minUniformCacheSize; ///Minimum view and frame uniform cache size.
 		
 		/**
 		Row pitch alignment, in bytes, that buffer to texture blit copies
@@ -1385,6 +1386,12 @@ extern(C++, "bgfx") struct Init{
 		uint maxTransientVBSize; ///Maximum transient vertex buffer size.
 		uint maxTransientIBSize; ///Maximum transient index buffer size.
 		uint minUniformBufferSize; ///Mimimum uniform buffer size.
+		
+		/**
+		Minimum view and frame uniform cache size. This is a reservation,
+		the cache grows on demand.
+		*/
+		uint minUniformCacheSize;
 		extern(D) mixin(joinFnBinds((){
 			FnBind[] ret = [
 				{q{void}, q{this}, q{}, ext: `C++`},

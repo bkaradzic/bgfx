@@ -1285,6 +1285,8 @@ class CapsLimits(ctypes.Structure):
 	maxTransientIbSize: int
 	# Mimimum uniform buffer size.
 	minUniformBufferSize: int
+	# Minimum view and frame uniform cache size.
+	minUniformCacheSize: int
 	# Row pitch alignment, in bytes, that buffer to texture blit copies
 	# natively. Any other `BufferRegion::rowPitch` is repacked internally.
 	blitRowPitchAlign: int
@@ -1437,6 +1439,9 @@ class InitLimits(ctypes.Structure):
 	maxTransientIbSize: int
 	# Mimimum uniform buffer size.
 	minUniformBufferSize: int
+	# Minimum view and frame uniform cache size. This is a reservation,
+	# the cache grows on demand.
+	minUniformCacheSize: int
 
 # Initialization parameters used by `bgfx::init`.
 class Init(ctypes.Structure):

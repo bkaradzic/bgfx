@@ -1553,8 +1553,7 @@ namespace bgfx
 
 		uint64_t key = m_key.encodeDraw(type);
 
-		m_frame->m_sortKeys  [renderItemIdx] = key;
-		m_frame->m_sortValues[renderItemIdx] = RenderItemCount(renderItemIdx);
+		m_frame->m_submitKeys[renderItemIdx] = key;
 
 		m_draw.m_uniformIdx   = m_uniformIdx;
 		m_draw.m_uniformBegin = m_uniformBegin;
@@ -1632,8 +1631,7 @@ namespace bgfx
 		m_key.m_seq     = renderItemIdx;
 
 		uint64_t key = m_key.encodeCompute();
-		m_frame->m_sortKeys[renderItemIdx]   = key;
-		m_frame->m_sortValues[renderItemIdx] = RenderItemCount(renderItemIdx);
+		m_frame->m_submitKeys[renderItemIdx] = key;
 
 		m_compute.m_uniformIdx   = m_uniformIdx;
 		m_compute.m_uniformBegin = m_uniformBegin;
@@ -1706,9 +1704,14 @@ namespace bgfx
 
 		m_viewOrder[BGFX_CONFIG_MAX_VIEWS] = UINT16_MAX;
 
+		reserveSortKeys(m_numRenderItems);
+
+		const FrameArenaT<uint64_t, kDrawCallBlock>& submitKeys = m_submitKeys;
+
 		for (uint32_t ii = 0, num = m_numRenderItems; ii < num; ++ii)
 		{
-			m_sortKeys[ii] = SortKey::remapView(m_sortKeys[ii], m_viewOrder);
+			m_sortKeys[ii]   = SortKey::remapView(submitKeys[ii], m_viewOrder);
+			m_sortValues[ii] = RenderItemCount(ii);
 		}
 
 		s_ctx->reserveTemp(bx::max(
@@ -2028,6 +2031,7 @@ namespace bgfx
 		LIMITS(maxTransientVbSize);
 		LIMITS(maxTransientIbSize);
 		LIMITS(minUniformBufferSize);
+		LIMITS(minUniformCacheSize);
 		LIMITS(blitRowPitchAlign);
 		LIMITS(blitOffsetAlign);
 #undef LIMITS
@@ -2325,6 +2329,8 @@ namespace bgfx
 		}
 
 		m_init = _init;
+
+		m_uniformCache.reserve(m_init.limits.minUniformCacheSize);
 
 		m_init.swapChain.flags |= _init.reset & kSwapChainFlagMask;
 		m_init.reset           &= ~kSwapChainFlagMask;
@@ -4188,6 +4194,7 @@ namespace bgfx
 		, maxTransientVbSize(BGFX_CONFIG_MAX_TRANSIENT_VERTEX_BUFFER_SIZE)
 		, maxTransientIbSize(BGFX_CONFIG_MAX_TRANSIENT_INDEX_BUFFER_SIZE)
 		, minUniformBufferSize(BGFX_CONFIG_MIN_UNIFORM_BUFFER_SIZE)
+		, minUniformCacheSize(BGFX_CONFIG_MIN_UNIFORM_CACHE_SIZE)
 	{
 	}
 
@@ -4299,6 +4306,7 @@ namespace bgfx
 		g_caps.limits.maxTransientVbSize      = init.limits.maxTransientVbSize;
 		g_caps.limits.maxTransientIbSize      = init.limits.maxTransientIbSize;
 		g_caps.limits.minUniformBufferSize    = init.limits.minUniformBufferSize;
+		g_caps.limits.minUniformCacheSize     = init.limits.minUniformCacheSize;
 		g_caps.limits.blitRowPitchAlign       = 1;
 		g_caps.limits.blitOffsetAlign         = 1;
 

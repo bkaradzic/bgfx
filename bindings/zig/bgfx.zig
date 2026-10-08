@@ -1631,6 +1631,7 @@ pub const Caps = extern struct {
         maxTransientVbSize: u32,
         maxTransientIbSize: u32,
         minUniformBufferSize: u32,
+        minUniformCacheSize: u32,
         blitRowPitchAlign: u32,
         blitOffsetAlign: u32,
     };
@@ -1682,6 +1683,7 @@ pub const Init = extern struct {
         maxTransientVbSize: u32,
         maxTransientIbSize: u32,
         minUniformBufferSize: u32,
+        minUniformCacheSize: u32,
     };
 
         type: RendererType,
