@@ -2307,6 +2307,37 @@ namespace bgfx
 		TextureFormat::RGBA8, // D3D9 doesn't support RGBA8
 	};
 
+	static TextureFormat::Enum findBackBufferFormat(TextureFormat::Enum _format)
+	{
+		const TextureFormat::Enum preferred[] =
+		{
+			_format,
+			TextureFormat::BGRA8,
+			TextureFormat::RGBA8,
+		};
+
+		for (uint32_t ii = 0; ii < BX_COUNTOF(preferred); ++ii)
+		{
+			const TextureFormat::Enum format = preferred[ii];
+
+			if (TextureFormat::Count != format
+			&&  0 != (g_caps.formats[format] & BGFX_CAPS_FORMAT_TEXTURE_BACKBUFFER) )
+			{
+				return format;
+			}
+		}
+
+		for (uint32_t ii = 0; ii < TextureFormat::Count; ++ii)
+		{
+			if (0 != (g_caps.formats[ii] & BGFX_CAPS_FORMAT_TEXTURE_BACKBUFFER) )
+			{
+				return TextureFormat::Enum(ii);
+			}
+		}
+
+		return _format;
+	}
+
 	bool Context::init(const Init& _init)
 	{
 		if (m_rendererInitialized)
@@ -2492,6 +2523,16 @@ namespace bgfx
 			;
 
 		m_init.reset = checkResetFlags(m_init.reset);
+
+		const TextureFormat::Enum formatColor = findBackBufferFormat(m_init.swapChain.formatColor);
+
+		BX_WARN(formatColor == m_init.swapChain.formatColor
+			, "Back buffer format %s is not supported, using %s instead."
+			, TextureFormat::Count == m_init.swapChain.formatColor ? "Count" : getName(m_init.swapChain.formatColor)
+			, getName(formatColor)
+			);
+
+		m_init.swapChain.formatColor = formatColor;
 
 		dumpCaps();
 
