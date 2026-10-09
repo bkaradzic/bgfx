@@ -82,6 +82,7 @@ Languages:
  * [Go language API bindings](https://github.com/james4k/go-bgfx)
  * [Haskell language API bindings](https://github.com/haskell-game/bgfx)
  * [Lightweight Java Game Library 3 bindings](https://github.com/LWJGL/lwjgl3)
+ * [Java language API bindings](https://github.com/bkaradzic/bgfx/tree/master/bindings/java)
  * [Lua language API bindings](https://github.com/cloudwu/lua-bgfx)
  * [Nim language API bindings](https://github.com/puffball1567/bgfxim)
  * [Pascal language API bindings](https://github.com/Akira13641/PasBGFX)
