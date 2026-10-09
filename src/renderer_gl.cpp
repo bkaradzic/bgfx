@@ -2786,7 +2786,8 @@ namespace bgfx { namespace gl
 					g_caps.formats[ii] = supported;
 				}
 
-				g_caps.formats[TextureFormat::BGRA8] |= BGFX_CAPS_FORMAT_TEXTURE_BACKBUFFER;
+				g_caps.formats[TextureFormat::BGRA8  ] |= BGFX_CAPS_FORMAT_TEXTURE_BACKBUFFER;
+				g_caps.formats[TextureFormat::RGB10A2] |= BGFX_CAPS_FORMAT_TEXTURE_BACKBUFFER;
 
 				g_caps.supported |= BGFX_CAPS_VERTEX_ATTRIB_UINT10;
 				g_caps.supported |= (false

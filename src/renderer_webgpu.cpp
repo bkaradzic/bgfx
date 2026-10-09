@@ -1478,6 +1478,7 @@ WGPU_IMPORT
 						}
 
 						g_caps.formats[TextureFormat::BGRA8] |= BGFX_CAPS_FORMAT_TEXTURE_BACKBUFFER;
+						g_caps.formats[TextureFormat::RGBA8] |= BGFX_CAPS_FORMAT_TEXTURE_BACKBUFFER;
 					}
 				}
 

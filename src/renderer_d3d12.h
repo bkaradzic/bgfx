@@ -42,7 +42,11 @@ extern "C" struct PIXEventsThreadInfo* WINAPI bgfx_PIXGetThreadInfo();
 extern "C" uint64_t                    WINAPI bgfx_PIXEventsReplaceBlock(PIXEventsThreadInfo* _threadInfo, bool _getEarliestTime);
 #	endif // BX_PLATFORM_WINDOWS
 
+BX_PRAGMA_DIAGNOSTIC_PUSH();
+BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wundef");
+BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wunused-but-set-variable");
 #	include <pix3.h>
+BX_PRAGMA_DIAGNOSTIC_POP();
 
 #	define _PIX3_BEGINEVENT(_commandList, _color, _name) PIXBeginEvent(_commandList, toPixColor(_color), _name)
 #	define _PIX3_SETMARKER(_commandList, _color, _name)  PIXSetMarker(_commandList, toPixColor(_color), _name)
