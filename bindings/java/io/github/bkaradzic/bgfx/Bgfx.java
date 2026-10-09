@@ -645,7 +645,7 @@ public final class Bgfx {
 	 * <p>
 	 * <strong>Attention:</strong> This call doesn’t change the window size, it just resizes
 	 *   the back-buffer. Your windowing code controls the window size.
-	 * @param _flags See: {@code BGFX_RESET_*} for more info.   - {@code BGFX_RESET_NONE} - No reset flags.   - {@code BGFX_RESET_VSYNC} - Enable V-Sync.   - {@code BGFX_RESET_MAXANISOTROPY} - Turn on/off max anisotropy.   - {@code BGFX_RESET_CAPTURE} - Begin screen capture.   - {@code BGFX_RESET_FLUSH_AFTER_RENDER} - Flush rendering after submitting to GPU.   - {@code BGFX_RESET_FLIP_AFTER_RENDER} - This flag  specifies where flip     occurs. Default behaviour is that flip occurs before rendering new     frame. This flag only has effect when {@code BGFX_CONFIG_MULTITHREADED=0}. Per-surface settings are not here. {@code BGFX_SWAP_CHAIN_*} flags belong on {@code SwapChain.flags}, and are ignored if passed here.
+	 * @param _flags See: {@code BGFX_RESET_*} for more info.   - {@code BGFX_RESET_NONE} - No reset flags.   - {@code BGFX_RESET_VSYNC} - Enable V-Sync.   - {@code BGFX_RESET_MAXANISOTROPY} - Turn on/off max anisotropy.   - {@code BGFX_RESET_CAPTURE} - Begin screen capture.   - {@code BGFX_RESET_FLUSH_AFTER_RENDER} - Flush rendering after submitting to GPU.   - {@code BGFX_RESET_FLIP_AFTER_RENDER} - This flag  specifies where flip     occurs. Default behaviour is that flip occurs before rendering new     frame. This flag only has effect when {@code BGFX_CONFIG_MULTITHREADED=0}.   - {@code BGFX_RESET_LOW_LATENCY_ON} - Enable low latency mode (NVIDIA Reflex).     Availability depends on: {@code BGFX_CAPS_LOW_LATENCY}.   - {@code BGFX_RESET_LOW_LATENCY_BOOST} - Enable low latency mode, and keep GPU     clocks high even when GPU is mostly idle. Availability depends on:     {@code BGFX_CAPS_LOW_LATENCY}. Set either {@code BGFX_RESET_LOW_LATENCY_ON} or     {@code BGFX_RESET_LOW_LATENCY_BOOST}, not both. Per-surface settings are not here. {@code BGFX_SWAP_CHAIN_*} flags belong on {@code SwapChain.flags}, and are ignored if passed here.
 	 * @param _swapChain Main window swap chain. When {@code NULL} the main window is left untouched and only the device and frame globals above are applied, which is what an application driving its own swap chains wants. Otherwise the main window takes on this description: resize it, change its format, or change its per-surface flags. Fields left neutral keep their current value, and {@code nwh}/{@code ndt} are ignored -- main's are bgfx's own. Must be {@code NULL} when {@code init} created no main window.
 	 */
 	public static void reset(@Unsigned int _flags, @Nullable SwapChain _swapChain) {
@@ -4703,6 +4703,26 @@ public final class Bgfx {
 		public static final int TransparentBackbuffer = 0x00100000;
 
 		/**
+		 * Enable low latency mode (NVIDIA Reflex). Availability depends on: {@code BGFX_CAPS_LOW_LATENCY}.
+		 */
+		public static final int LowLatencyOn = 0x00000400;
+
+		/**
+		 * Enable low latency mode, and keep GPU clocks high even when GPU is mostly idle. Availability depends on: {@code BGFX_CAPS_LOW_LATENCY}.
+		 */
+		public static final int LowLatencyBoost = 0x00000800;
+
+		/**
+		 * Reset flag value {@code LowLatencyShift}.
+		 */
+		public static final int LowLatencyShift = 10;
+
+		/**
+		 * Reset flag value {@code LowLatencyMask}.
+		 */
+		public static final int LowLatencyMask = 0x00000c00;
+
+		/**
 		 * Reset flag value {@code FullscreenShift}.
 		 */
 		public static final int FullscreenShift = 0;
@@ -4872,69 +4892,74 @@ public final class Bgfx {
 		public static final long Index32 = 0x0000000000000200L;
 
 		/**
+		 * Low latency mode (NVIDIA Reflex) is supported.
+		 */
+		public static final long LowLatency = 0x0000000000000400L;
+
+		/**
 		 * PrimitiveID is available in fragment shader.
 		 */
-		public static final long PrimitiveId = 0x0000000000000400L;
+		public static final long PrimitiveId = 0x0000000000000800L;
 
 		/**
 		 * Renderer is on separate thread.
 		 */
-		public static final long RendererMultithreaded = 0x0000000000000800L;
+		public static final long RendererMultithreaded = 0x0000000000001000L;
 
 		/**
 		 * 16-bit floats are supported in shaders.
 		 */
-		public static final long ShaderF16 = 0x0000000000001000L;
+		public static final long ShaderF16 = 0x0000000000002000L;
 
 		/**
 		 * Multiple windows are supported.
 		 */
-		public static final long SwapChain = 0x0000000000002000L;
+		public static final long SwapChain = 0x0000000000004000L;
 
 		/**
 		 * Cubemap texture array is supported.
 		 */
-		public static final long TextureCubeArray = 0x0000000000004000L;
+		public static final long TextureCubeArray = 0x0000000000008000L;
 
 		/**
 		 * CPU direct access to GPU texture memory.
 		 */
-		public static final long TextureDirectAccess = 0x0000000000008000L;
+		public static final long TextureDirectAccess = 0x0000000000010000L;
 
 		/**
 		 * External texture is supported.
 		 */
-		public static final long TextureExternal = 0x0000000000010000L;
+		public static final long TextureExternal = 0x0000000000020000L;
 
 		/**
 		 * External shared texture is supported.
 		 */
-		public static final long TextureExternalShared = 0x0000000000020000L;
+		public static final long TextureExternalShared = 0x0000000000040000L;
 
 		/**
 		 * Transparent back buffer supported.
 		 */
-		public static final long TransparentBackbuffer = 0x0000000000040000L;
+		public static final long TransparentBackbuffer = 0x0000000000080000L;
 
 		/**
 		 * Variable Rate Shading
 		 */
-		public static final long VariableRateShading = 0x0000000000080000L;
+		public static final long VariableRateShading = 0x0000000000100000L;
 
 		/**
 		 * Vertex attribute 10_10_10_2 is supported.
 		 */
-		public static final long VertexAttribUint10 = 0x0000000000100000L;
+		public static final long VertexAttribUint10 = 0x0000000000200000L;
 
 		/**
 		 * Hardware video decode is supported.
 		 */
-		public static final long VideoDecode = 0x0000000000200000L;
+		public static final long VideoDecode = 0x0000000000400000L;
 
 		/**
 		 * Viewport layer is available in vertex shader.
 		 */
-		public static final long ViewportLayerArray = 0x0000000000400000L;
+		public static final long ViewportLayerArray = 0x0000000000800000L;
 	}
 
 	/**
@@ -7124,6 +7149,7 @@ public final class Bgfx {
 				ValueLayout.JAVA_INT.withName("maxTransientVbSize"),
 				ValueLayout.JAVA_INT.withName("maxTransientIbSize"),
 				ValueLayout.JAVA_INT.withName("minUniformBufferSize"),
+				ValueLayout.JAVA_INT.withName("minUniformCacheSize"),
 				ValueLayout.JAVA_INT.withName("blitRowPitchAlign"),
 				ValueLayout.JAVA_INT.withName("blitOffsetAlign"));
 			private static final VarHandle VH_MAXDRAWCALLS = LAYOUT.varHandle(
@@ -7180,6 +7206,8 @@ public final class Bgfx {
 				MemoryLayout.PathElement.groupElement("maxTransientIbSize"));
 			private static final VarHandle VH_MINUNIFORMBUFFERSIZE = LAYOUT.varHandle(
 				MemoryLayout.PathElement.groupElement("minUniformBufferSize"));
+			private static final VarHandle VH_MINUNIFORMCACHESIZE = LAYOUT.varHandle(
+				MemoryLayout.PathElement.groupElement("minUniformCacheSize"));
 			private static final VarHandle VH_BLITROWPITCHALIGN = LAYOUT.varHandle(
 				MemoryLayout.PathElement.groupElement("blitRowPitchAlign"));
 			private static final VarHandle VH_BLITOFFSETALIGN = LAYOUT.varHandle(
@@ -7656,6 +7684,23 @@ public final class Bgfx {
 			 */
 			public Limits minUniformBufferSize(@Unsigned int value) {
 				VH_MINUNIFORMBUFFERSIZE.set(segment(), 0L, value);
+				return this;
+			}
+
+			/**
+			 * Minimum view and frame uniform cache size.
+			 * @return the field value
+			 */
+			public @Unsigned int minUniformCacheSize() {
+				return (@Unsigned int) VH_MINUNIFORMCACHESIZE.get(segment(), 0L);
+			}
+
+			/**
+			 * Sets the native {@code minUniformCacheSize} field and returns {@code this}.
+			 * @param value the new field value
+			 */
+			public Limits minUniformCacheSize(@Unsigned int value) {
+				VH_MINUNIFORMCACHESIZE.set(segment(), 0L, value);
 				return this;
 			}
 
@@ -8453,7 +8498,8 @@ public final class Bgfx {
 				ValueLayout.JAVA_INT.withName("minResourceCbSize"),
 				ValueLayout.JAVA_INT.withName("maxTransientVbSize"),
 				ValueLayout.JAVA_INT.withName("maxTransientIbSize"),
-				ValueLayout.JAVA_INT.withName("minUniformBufferSize"));
+				ValueLayout.JAVA_INT.withName("minUniformBufferSize"),
+				ValueLayout.JAVA_INT.withName("minUniformCacheSize"));
 			private static final VarHandle VH_MAXENCODERS = LAYOUT.varHandle(
 				MemoryLayout.PathElement.groupElement("maxEncoders"));
 			private static final VarHandle VH_NUMDRAWCALLS = LAYOUT.varHandle(
@@ -8470,6 +8516,8 @@ public final class Bgfx {
 				MemoryLayout.PathElement.groupElement("maxTransientIbSize"));
 			private static final VarHandle VH_MINUNIFORMBUFFERSIZE = LAYOUT.varHandle(
 				MemoryLayout.PathElement.groupElement("minUniformBufferSize"));
+			private static final VarHandle VH_MINUNIFORMCACHESIZE = LAYOUT.varHandle(
+				MemoryLayout.PathElement.groupElement("minUniformCacheSize"));
 			/**
 			 * Wraps an existing native structure.
 			 * @param segment native memory segment
@@ -8648,6 +8696,24 @@ public final class Bgfx {
 			 */
 			public Limits minUniformBufferSize(@Unsigned int value) {
 				VH_MINUNIFORMBUFFERSIZE.set(segment(), 0L, value);
+				return this;
+			}
+
+			/**
+			 * Minimum view and frame uniform cache size. This is a reservation,
+			 * the cache grows on demand.
+			 * @return the field value
+			 */
+			public @Unsigned int minUniformCacheSize() {
+				return (@Unsigned int) VH_MINUNIFORMCACHESIZE.get(segment(), 0L);
+			}
+
+			/**
+			 * Sets the native {@code minUniformCacheSize} field and returns {@code this}.
+			 * @param value the new field value
+			 */
+			public Limits minUniformCacheSize(@Unsigned int value) {
+				VH_MINUNIFORMCACHESIZE.set(segment(), 0L, value);
 				return this;
 			}
 		}
@@ -10859,6 +10925,13 @@ public final class Bgfx {
 			ValueLayout.JAVA_LONG.withName("gpuTimerFreq"),
 			ValueLayout.JAVA_LONG.withName("waitRender"),
 			ValueLayout.JAVA_LONG.withName("waitSubmit"),
+			ValueLayout.JAVA_LONG.withName("latencySleep"),
+			ValueLayout.JAVA_LONG.withName("latencyTotal"),
+			ValueLayout.JAVA_LONG.withName("latencySimulation"),
+			ValueLayout.JAVA_LONG.withName("latencyRenderSubmit"),
+			ValueLayout.JAVA_LONG.withName("latencyPresent"),
+			ValueLayout.JAVA_LONG.withName("latencyQueue"),
+			ValueLayout.JAVA_LONG.withName("latencyGpu"),
 			ValueLayout.JAVA_INT.withName("numDraw"),
 			ValueLayout.JAVA_INT.withName("numCompute"),
 			ValueLayout.JAVA_INT.withName("numBlit"),
@@ -10910,6 +10983,20 @@ public final class Bgfx {
 			MemoryLayout.PathElement.groupElement("waitRender"));
 		private static final VarHandle VH_WAITSUBMIT = LAYOUT.varHandle(
 			MemoryLayout.PathElement.groupElement("waitSubmit"));
+		private static final VarHandle VH_LATENCYSLEEP = LAYOUT.varHandle(
+			MemoryLayout.PathElement.groupElement("latencySleep"));
+		private static final VarHandle VH_LATENCYTOTAL = LAYOUT.varHandle(
+			MemoryLayout.PathElement.groupElement("latencyTotal"));
+		private static final VarHandle VH_LATENCYSIMULATION = LAYOUT.varHandle(
+			MemoryLayout.PathElement.groupElement("latencySimulation"));
+		private static final VarHandle VH_LATENCYRENDERSUBMIT = LAYOUT.varHandle(
+			MemoryLayout.PathElement.groupElement("latencyRenderSubmit"));
+		private static final VarHandle VH_LATENCYPRESENT = LAYOUT.varHandle(
+			MemoryLayout.PathElement.groupElement("latencyPresent"));
+		private static final VarHandle VH_LATENCYQUEUE = LAYOUT.varHandle(
+			MemoryLayout.PathElement.groupElement("latencyQueue"));
+		private static final VarHandle VH_LATENCYGPU = LAYOUT.varHandle(
+			MemoryLayout.PathElement.groupElement("latencyGpu"));
 		private static final VarHandle VH_NUMDRAW = LAYOUT.varHandle(
 			MemoryLayout.PathElement.groupElement("numDraw"));
 		private static final VarHandle VH_NUMCOMPUTE = LAYOUT.varHandle(
@@ -11142,6 +11229,125 @@ public final class Bgfx {
 		 */
 		public Stats waitSubmit(long value) {
 			VH_WAITSUBMIT.set(segment(), 0L, value);
+			return this;
+		}
+
+		/**
+		 * Time {@code frame} slept in low latency mode.
+		 * @return the field value
+		 */
+		public long latencySleep() {
+			return (long) VH_LATENCYSLEEP.get(segment(), 0L);
+		}
+
+		/**
+		 * Sets the native {@code latencySleep} field and returns {@code this}.
+		 * @param value the new field value
+		 */
+		public Stats latencySleep(long value) {
+			VH_LATENCYSLEEP.set(segment(), 0L, value);
+			return this;
+		}
+
+		/**
+		 * Time from simulation start until GPU finished the frame.
+		 * @return the field value
+		 */
+		public long latencyTotal() {
+			return (long) VH_LATENCYTOTAL.get(segment(), 0L);
+		}
+
+		/**
+		 * Sets the native {@code latencyTotal} field and returns {@code this}.
+		 * @param value the new field value
+		 */
+		public Stats latencyTotal(long value) {
+			VH_LATENCYTOTAL.set(segment(), 0L, value);
+			return this;
+		}
+
+		/**
+		 * Simulation, API thread time between {@code frame} calls.
+		 * @return the field value
+		 */
+		public long latencySimulation() {
+			return (long) VH_LATENCYSIMULATION.get(segment(), 0L);
+		}
+
+		/**
+		 * Sets the native {@code latencySimulation} field and returns {@code this}.
+		 * @param value the new field value
+		 */
+		public Stats latencySimulation(long value) {
+			VH_LATENCYSIMULATION.set(segment(), 0L, value);
+			return this;
+		}
+
+		/**
+		 * Render thread time issuing the frame to the graphics API.
+		 * @return the field value
+		 */
+		public long latencyRenderSubmit() {
+			return (long) VH_LATENCYRENDERSUBMIT.get(segment(), 0L);
+		}
+
+		/**
+		 * Sets the native {@code latencyRenderSubmit} field and returns {@code this}.
+		 * @param value the new field value
+		 */
+		public Stats latencyRenderSubmit(long value) {
+			VH_LATENCYRENDERSUBMIT.set(segment(), 0L, value);
+			return this;
+		}
+
+		/**
+		 * Time spent in present.
+		 * @return the field value
+		 */
+		public long latencyPresent() {
+			return (long) VH_LATENCYPRESENT.get(segment(), 0L);
+		}
+
+		/**
+		 * Sets the native {@code latencyPresent} field and returns {@code this}.
+		 * @param value the new field value
+		 */
+		public Stats latencyPresent(long value) {
+			VH_LATENCYPRESENT.set(segment(), 0L, value);
+			return this;
+		}
+
+		/**
+		 * Time between present and GPU starting the frame.
+		 * @return the field value
+		 */
+		public long latencyQueue() {
+			return (long) VH_LATENCYQUEUE.get(segment(), 0L);
+		}
+
+		/**
+		 * Sets the native {@code latencyQueue} field and returns {@code this}.
+		 * @param value the new field value
+		 */
+		public Stats latencyQueue(long value) {
+			VH_LATENCYQUEUE.set(segment(), 0L, value);
+			return this;
+		}
+
+		/**
+		 * GPU time from start to end of the frame.
+		 * @return the field value
+		 */
+		public long latencyGpu() {
+			return (long) VH_LATENCYGPU.get(segment(), 0L);
+		}
+
+		/**
+		 * Sets the native {@code latencyGpu} field and returns {@code this}.
+		 * @param value the new field value
+		 */
+		public Stats latencyGpu(long value) {
+			VH_LATENCYGPU.set(segment(), 0L, value);
 			return this;
 		}
 
