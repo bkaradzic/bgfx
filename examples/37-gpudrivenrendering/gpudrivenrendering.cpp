@@ -863,7 +863,7 @@ public:
 		bgfx::setUniform(u_inputRTSize, inputRendertargetSize);
 
 		// store a rounded-up, power of two instance count for the stream compaction step
-		float noofInstancesPowOf2 = bx::pow(2.0f, bx::floor(bx::log(m_totalInstancesCount) / bx::log(2.0f) ) + 1.0f);
+		float noofInstancesPowOf2 = bx::pow(2.0f, bx::floor(bx::log(float(m_totalInstancesCount) ) / bx::log(2.0f) ) + 1.0f);
 
 		float cullingConfig[4] =
 		{
