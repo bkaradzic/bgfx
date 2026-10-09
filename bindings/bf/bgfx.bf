@@ -968,6 +968,18 @@ public static class bgfx
 		/// Transparent backbuffer. Availability depends on: `BGFX_CAPS_TRANSPARENT_BACKBUFFER`.
 		/// </summary>
 		TransparentBackbuffer  = 0x00100000,
+	
+		/// <summary>
+		/// Enable low latency mode (NVIDIA Reflex). Availability depends on: `BGFX_CAPS_LOW_LATENCY`.
+		/// </summary>
+		LowLatencyOn           = 0x00000400,
+	
+		/// <summary>
+		/// Enable low latency mode, and keep GPU clocks high even when GPU is mostly idle. Availability depends on: `BGFX_CAPS_LOW_LATENCY`.
+		/// </summary>
+		LowLatencyBoost        = 0x00000800,
+		LowLatencyShift        = 10,
+		LowLatencyMask         = 0x00000c00,
 		FullscreenShift        = 0,
 		FullscreenMask         = 0x00000001,
 		ReservedShift          = 31,
@@ -1086,69 +1098,74 @@ public static class bgfx
 		Index32                = 0x0000000000000200,
 	
 		/// <summary>
+		/// Low latency mode (NVIDIA Reflex) is supported.
+		/// </summary>
+		LowLatency             = 0x0000000000000400,
+	
+		/// <summary>
 		/// PrimitiveID is available in fragment shader.
 		/// </summary>
-		PrimitiveId            = 0x0000000000000400,
+		PrimitiveId            = 0x0000000000000800,
 	
 		/// <summary>
 		/// Renderer is on separate thread.
 		/// </summary>
-		RendererMultithreaded  = 0x0000000000000800,
+		RendererMultithreaded  = 0x0000000000001000,
 	
 		/// <summary>
 		/// 16-bit floats are supported in shaders.
 		/// </summary>
-		ShaderF16              = 0x0000000000001000,
+		ShaderF16              = 0x0000000000002000,
 	
 		/// <summary>
 		/// Multiple windows are supported.
 		/// </summary>
-		SwapChain              = 0x0000000000002000,
+		SwapChain              = 0x0000000000004000,
 	
 		/// <summary>
 		/// Cubemap texture array is supported.
 		/// </summary>
-		TextureCubeArray       = 0x0000000000004000,
+		TextureCubeArray       = 0x0000000000008000,
 	
 		/// <summary>
 		/// CPU direct access to GPU texture memory.
 		/// </summary>
-		TextureDirectAccess    = 0x0000000000008000,
+		TextureDirectAccess    = 0x0000000000010000,
 	
 		/// <summary>
 		/// External texture is supported.
 		/// </summary>
-		TextureExternal        = 0x0000000000010000,
+		TextureExternal        = 0x0000000000020000,
 	
 		/// <summary>
 		/// External shared texture is supported.
 		/// </summary>
-		TextureExternalShared  = 0x0000000000020000,
+		TextureExternalShared  = 0x0000000000040000,
 	
 		/// <summary>
 		/// Transparent back buffer supported.
 		/// </summary>
-		TransparentBackbuffer  = 0x0000000000040000,
+		TransparentBackbuffer  = 0x0000000000080000,
 	
 		/// <summary>
 		/// Variable Rate Shading
 		/// </summary>
-		VariableRateShading    = 0x0000000000080000,
+		VariableRateShading    = 0x0000000000100000,
 	
 		/// <summary>
 		/// Vertex attribute 10_10_10_2 is supported.
 		/// </summary>
-		VertexAttribUint10     = 0x0000000000100000,
+		VertexAttribUint10     = 0x0000000000200000,
 	
 		/// <summary>
 		/// Hardware video decode is supported.
 		/// </summary>
-		VideoDecode            = 0x0000000000200000,
+		VideoDecode            = 0x0000000000400000,
 	
 		/// <summary>
 		/// Viewport layer is available in vertex shader.
 		/// </summary>
-		ViewportLayerArray     = 0x0000000000400000,
+		ViewportLayerArray     = 0x0000000000800000,
 	}
 	
 	[AllowDuplicates]
@@ -2893,6 +2910,13 @@ public static class bgfx
 		public int64 gpuTimerFreq;
 		public int64 waitRender;
 		public int64 waitSubmit;
+		public int64 latencySleep;
+		public int64 latencyTotal;
+		public int64 latencySimulation;
+		public int64 latencyRenderSubmit;
+		public int64 latencyPresent;
+		public int64 latencyQueue;
+		public int64 latencyGpu;
 		public uint32 numDraw;
 		public uint32 numCompute;
 		public uint32 numBlit;
@@ -3253,7 +3277,7 @@ public static class bgfx
 	/// 
 	/// </summary>
 	///
-	/// <param name="_flags">See: `BGFX_RESET_*` for more info.   - `BGFX_RESET_NONE` - No reset flags.   - `BGFX_RESET_VSYNC` - Enable V-Sync.   - `BGFX_RESET_MAXANISOTROPY` - Turn on/off max anisotropy.   - `BGFX_RESET_CAPTURE` - Begin screen capture.   - `BGFX_RESET_FLUSH_AFTER_RENDER` - Flush rendering after submitting to GPU.   - `BGFX_RESET_FLIP_AFTER_RENDER` - This flag  specifies where flip     occurs. Default behaviour is that flip occurs before rendering new     frame. This flag only has effect when `BGFX_CONFIG_MULTITHREADED=0`. Per-surface settings are not here. `BGFX_SWAP_CHAIN_*` flags belong on `SwapChain::flags`, and are ignored if passed here.</param>
+	/// <param name="_flags">See: `BGFX_RESET_*` for more info.   - `BGFX_RESET_NONE` - No reset flags.   - `BGFX_RESET_VSYNC` - Enable V-Sync.   - `BGFX_RESET_MAXANISOTROPY` - Turn on/off max anisotropy.   - `BGFX_RESET_CAPTURE` - Begin screen capture.   - `BGFX_RESET_FLUSH_AFTER_RENDER` - Flush rendering after submitting to GPU.   - `BGFX_RESET_FLIP_AFTER_RENDER` - This flag  specifies where flip     occurs. Default behaviour is that flip occurs before rendering new     frame. This flag only has effect when `BGFX_CONFIG_MULTITHREADED=0`.   - `BGFX_RESET_LOW_LATENCY_ON` - Enable low latency mode (NVIDIA Reflex).     Availability depends on: `BGFX_CAPS_LOW_LATENCY`.   - `BGFX_RESET_LOW_LATENCY_BOOST` - Enable low latency mode, and keep GPU     clocks high even when GPU is mostly idle. Availability depends on:     `BGFX_CAPS_LOW_LATENCY`. Set either `BGFX_RESET_LOW_LATENCY_ON` or     `BGFX_RESET_LOW_LATENCY_BOOST`, not both. Per-surface settings are not here. `BGFX_SWAP_CHAIN_*` flags belong on `SwapChain::flags`, and are ignored if passed here.</param>
 	/// <param name="_swapChain">Main window swap chain. When `NULL` the main window is left untouched and only the device and frame globals above are applied, which is what an application driving its own swap chains wants. Otherwise the main window takes on this description: resize it, change its format, or change its per-surface flags. Fields left neutral keep their current value, and `nwh`/`ndt` are ignored -- main's are bgfx's own. Must be `NULL` when `bgfx::init` created no main window.</param>
 	///
 	[LinkName("bgfx_reset")]

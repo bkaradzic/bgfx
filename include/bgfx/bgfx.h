@@ -1146,6 +1146,13 @@ namespace bgfx
 		int64_t gpuTimerFreq;               //!< GPU timer frequency.
 		int64_t waitRender;                 //!< Time spent waiting for render backend thread to finish issuing draw commands to underlying graphics API.
 		int64_t waitSubmit;                 //!< Time spent waiting for submit thread to advance to next frame.
+		int64_t latencySleep;               //!< Time `bgfx::frame` slept in low latency mode.
+		int64_t latencyTotal;               //!< Time from simulation start until GPU finished the frame.
+		int64_t latencySimulation;          //!< Simulation, API thread time between `bgfx::frame` calls.
+		int64_t latencyRenderSubmit;        //!< Render thread time issuing the frame to the graphics API.
+		int64_t latencyPresent;             //!< Time spent in present.
+		int64_t latencyQueue;               //!< Time between present and GPU starting the frame.
+		int64_t latencyGpu;                 //!< GPU time from start to end of the frame.
 		uint32_t numDraw;                   //!< Number of draw calls submitted.
 		uint32_t numCompute;                //!< Number of compute calls submitted.
 		uint32_t numBlit;                   //!< Number of blit calls submitted.
@@ -2572,6 +2579,12 @@ namespace bgfx
 	///   - `BGFX_RESET_FLIP_AFTER_RENDER` - This flag  specifies where flip
 	///   occurs. Default behaviour is that flip occurs before rendering new
 	///   frame. This flag only has effect when `BGFX_CONFIG_MULTITHREADED=0`.
+	///   - `BGFX_RESET_LOW_LATENCY_ON` - Enable low latency mode (NVIDIA Reflex).
+	///   Availability depends on: `BGFX_CAPS_LOW_LATENCY`.
+	///   - `BGFX_RESET_LOW_LATENCY_BOOST` - Enable low latency mode, and keep GPU
+	///   clocks high even when GPU is mostly idle. Availability depends on:
+	///   `BGFX_CAPS_LOW_LATENCY`. Set either `BGFX_RESET_LOW_LATENCY_ON` or
+	///   `BGFX_RESET_LOW_LATENCY_BOOST`, not both.
 	///   Per-surface settings are not here. `BGFX_SWAP_CHAIN_*` flags belong
 	///   on `SwapChain::flags`, and are ignored if passed here.
 	/// @param[in] _swapChain Main window swap chain. When `NULL` the main window is left

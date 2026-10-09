@@ -1656,6 +1656,16 @@ namespace bgfx { namespace d3d11
 				postReset();
 			}
 
+			// Reflex paces the main swap chain only.
+			if (0 != (_init.capabilities & BGFX_CAPS_LOW_LATENCY)
+			&&  mainFrameBuffer().isSwapChain()
+			&&  m_nvapi.initReflex(m_device) )
+			{
+				g_caps.supported |= BGFX_CAPS_LOW_LATENCY;
+
+				m_nvapi.setSleepMode(getLatencyMode(m_reset) );
+			}
+
 			m_nvapi.initAftermath(m_device, m_deviceCtx);
 
 			g_internalData.context = m_device;
@@ -1718,6 +1728,8 @@ namespace bgfx { namespace d3d11
 		void shutdown()
 		{
 			preReset();
+
+			m_nvapi.shutdownReflex();
 
 			if (NULL != m_ags)
 			{
@@ -2224,6 +2236,16 @@ namespace bgfx { namespace d3d11
 			}
 		}
 
+		void latencySleep() override
+		{
+			m_nvapi.sleep();
+		}
+
+		void setLatencyMarker(LatencyMarker::Enum _marker, uint64_t _frameId) override
+		{
+			m_nvapi.setLatencyMarker(_marker, _frameId);
+		}
+
 		virtual void setName(Handle _handle, const char* _name, uint16_t _len) override
 		{
 			switch (_handle.type)
@@ -2535,10 +2557,21 @@ namespace bgfx { namespace d3d11
 			else
 				m_reset &= ~BGFX_RESET_VSYNC;
 
+			if (0 != ( (m_reset ^ _reset) & BGFX_RESET_LOW_LATENCY_MASK) )
+			{
+				m_reset = 0
+					| (m_reset & ~BGFX_RESET_LOW_LATENCY_MASK)
+					| ( _reset &  BGFX_RESET_LOW_LATENCY_MASK)
+					;
+
+				m_nvapi.setSleepMode(getLatencyMode(m_reset) );
+			}
+
 			const uint32_t maskFlags = ~(0
 				| BGFX_RESET_MAXANISOTROPY
 				| BGFX_RESET_SUSPEND
 				| BGFX_RESET_VSYNC
+				| BGFX_RESET_LOW_LATENCY_MASK
 				);
 
 			if (m_mainSwapChain.width              != _swapChain.width
@@ -7924,6 +7957,12 @@ namespace bgfx { namespace d3d11
 		perfStats.gpuFrameNum   = result.m_frameNum;
 		bx::memCopy(perfStats.numPrims, statsNumPrimsRendered, sizeof(perfStats.numPrims) );
 		m_nvapi.getMemoryInfo(perfStats.gpuMemoryUsed, perfStats.gpuMemoryMax);
+
+		LatencyReport latencyReport;
+		if (m_nvapi.getLatencyReport(latencyReport) )
+		{
+			setLatencyStats(perfStats, latencyReport);
+		}
 
 		if (_render->m_debug & (BGFX_DEBUG_IFH|BGFX_DEBUG_STATS) )
 		{

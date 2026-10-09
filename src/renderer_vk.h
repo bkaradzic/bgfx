@@ -232,6 +232,13 @@
 			VK_IMPORT_DEVICE_FUNC(true,  vkCmdDrawIndexedIndirectCountKHR);           \
 			/* VK_KHR_fragment_shading_rate */                                        \
 			VK_IMPORT_DEVICE_FUNC(true, vkCmdSetFragmentShadingRateKHR);              \
+			/* VK_NV_low_latency2 */                                                  \
+			VK_IMPORT_DEVICE_FUNC(true,  vkSetLatencySleepModeNV);                    \
+			VK_IMPORT_DEVICE_FUNC(true,  vkLatencySleepNV);                           \
+			VK_IMPORT_DEVICE_FUNC(true,  vkSetLatencyMarkerNV);                       \
+			VK_IMPORT_DEVICE_FUNC(true,  vkGetLatencyTimingsNV);                      \
+			/* 1.2 */                                                                 \
+			VK_IMPORT_DEVICE_FUNC(true,  vkWaitSemaphores);                           \
 			/* VK_KHR_video_queue / VK_KHR_video_decode_queue */                      \
 			VK_IMPORT_DEVICE_FUNC(true, vkCmdBeginVideoCodingKHR);                    \
 			VK_IMPORT_DEVICE_FUNC(true, vkCmdEndVideoCodingKHR);                      \
@@ -811,6 +818,8 @@ VK_DESTROY_FUNC(DescriptorSet);
 		void transitionImage(VkCommandBuffer _commandBuffer);
 
 		bool hasDepthStencil() const { return VK_NULL_HANDLE != m_backBufferDepthStencilImageView; }
+
+		bool isLowLatency() const;
 
 		VkQueue m_queue;
 		VkSwapchainCreateInfoKHR m_sci;

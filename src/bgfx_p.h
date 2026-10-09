@@ -4118,6 +4118,7 @@ namespace bgfx
 			, m_waitSubmit(0)
 			, m_waitRender(0)
 			, m_frameNum(0)
+			, m_latencyFrameId(0)
 			, m_capture(false)
 			, m_flush(false)
 			, m_needBindDedup(false)
@@ -4130,6 +4131,7 @@ namespace bgfx
 			bx::memSet(m_viewUsed, 0, sizeof(m_viewUsed) );
 			bx::memSet(m_viewUsedOffset, 0, sizeof(m_viewUsedOffset) );
 
+			bx::memSet(&m_perfStats, 0, sizeof(m_perfStats) );
 			m_perfStats.viewStats = m_viewStats;
 		}
 
@@ -4361,6 +4363,7 @@ namespace bgfx
 			m_flush   = false;
 			m_numScreenShots = 0;
 			m_frameNum = frameNum;
+			m_latencyFrameId = 0;
 
 			m_numUsedViews = 0;
 			bx::memSet(m_viewUsed, 0, sizeof(m_viewUsed) );
@@ -4553,6 +4556,7 @@ namespace bgfx
 		int64_t m_waitRender;
 
 		uint32_t m_frameNum;
+		uint64_t m_latencyFrameId;
 
 		bool m_capture;
 		bool m_flush;
@@ -5791,6 +5795,54 @@ namespace bgfx
 		uint32_t m_capacity;
 	};
 
+	struct LatencyMarker
+	{
+		enum Enum
+		{
+			SimulationStart,
+			SimulationEnd,
+			RenderSubmitStart,
+			RenderSubmitEnd,
+			PresentStart,
+			PresentEnd,
+
+			Count
+		};
+	};
+
+	struct LatencyMode
+	{
+		enum Enum
+		{
+			Off,
+			On,
+			Boost,
+
+			Count
+		};
+	};
+
+	static_assert(LatencyMode::On    == BGFX_RESET_LOW_LATENCY_ON    >> BGFX_RESET_LOW_LATENCY_SHIFT);
+	static_assert(LatencyMode::Boost == BGFX_RESET_LOW_LATENCY_BOOST >> BGFX_RESET_LOW_LATENCY_SHIFT);
+
+	inline LatencyMode::Enum getLatencyMode(uint32_t _reset)
+	{
+		return LatencyMode::Enum( (_reset & BGFX_RESET_LOW_LATENCY_MASK) >> BGFX_RESET_LOW_LATENCY_SHIFT);
+	}
+
+	// Driver's latency report, microseconds.
+	struct LatencyReport
+	{
+		uint64_t simulationStart;
+		uint64_t simulationEnd;
+		uint64_t renderSubmitStart;
+		uint64_t renderSubmitEnd;
+		uint64_t presentStart;
+		uint64_t presentEnd;
+		uint64_t gpuRenderStart;
+		uint64_t gpuRenderEnd;
+	};
+
 	struct BX_NO_VTABLE RendererContextI
 	{
 		RendererContextI()
@@ -5845,6 +5897,15 @@ namespace bgfx
 		virtual void dbgTextRenderBegin(TextVideoMemBlitter& _blitter, FrameBufferHandle _handle) = 0;
 		virtual void dbgTextRender(TextVideoMemBlitter& _blitter, uint32_t _numIndices) = 0;
 		virtual void dbgTextRenderEnd(TextVideoMemBlitter& _blitter) = 0;
+
+		virtual void latencySleep()
+		{
+		}
+
+		virtual void setLatencyMarker(LatencyMarker::Enum _marker, uint64_t _frameId)
+		{
+			BX_UNUSED(_marker, _frameId);
+		}
 
 		void createUniform(UniformHandle _handle, UniformType::Enum _type, uint16_t _num, const char* _name)
 		{
@@ -5920,6 +5981,10 @@ namespace bgfx
 			, m_flipAfterRender(false)
 			, m_singleThreaded(false)
 			, m_flushPrevFrame(false)
+			, m_lowLatency(false)
+			, m_latencyFrameId(0)
+			, m_latencyPresentFrameId(0)
+			, m_latencySleep(0)
 		{
 		}
 
@@ -5998,7 +6063,7 @@ namespace bgfx
 				, "Per-surface flags passed to `reset` are ignored. They belong on `SwapChain::flags`."
 				);
 
-			const uint32_t resetFlags = _flags & ~kSwapChainFlagMask;
+			const uint32_t resetFlags = checkResetFlags(_flags & ~kSwapChainFlagMask);
 
 			SwapChain swapChain = m_init.swapChain;
 
@@ -7977,6 +8042,22 @@ namespace bgfx
 			return flags;
 		}
 
+		static uint32_t checkResetFlags(uint32_t _flags)
+		{
+			const uint32_t maskFlags = ~(0
+				| (0 != (g_caps.supported & BGFX_CAPS_LOW_LATENCY) ? 0 : BGFX_RESET_LOW_LATENCY_MASK)
+				);
+
+			const uint32_t flags = _flags & maskFlags;
+
+			BX_WARN(_flags == flags
+				, "Reset flags `BGFX_RESET_LOW_LATENCY_*` will be ignored, because "
+				  "`BGFX_CAPS_LOW_LATENCY` is not supported."
+				);
+
+			return flags;
+		}
+
 		void checkSwapChainDepth(const SwapChain& _desc)
 		{
 			if (!isValid(_desc.depth) )
@@ -8483,6 +8564,8 @@ namespace bgfx
 		void frameNoRenderWait();
 		void swap();
 		void collectSubmitViewUsed();
+		void latencySimulationEnd();
+		void latencySimulationStart();
 
 		// render thread
 		void flip();
@@ -8575,6 +8658,7 @@ namespace bgfx
 		bx::Mutex     m_encoderApiLock;
 		bx::Mutex     m_encoderBeginLock;
 		bx::Mutex     m_resourceApiLock;
+		bx::Mutex     m_latencyLock;
 		bx::Thread    m_thread;
 #else
 		void apiSemPost()
@@ -8709,6 +8793,11 @@ namespace bgfx
 		bool m_singleThreaded;
 		bool m_flipped;
 		bool m_flushPrevFrame;
+		bool m_lowLatency;
+
+		uint64_t m_latencyFrameId;
+		uint64_t m_latencyPresentFrameId;
+		int64_t  m_latencySleep;
 
 		typedef UpdateBatchT<256> TextureUpdateBatch;
 		BX_ALIGN_DECL_CACHE_LINE(TextureUpdateBatch m_textureUpdateBatch);

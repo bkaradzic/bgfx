@@ -498,6 +498,10 @@ class ResetFlags(enum.IntFlag):
 	Hidpi = 0x20000
 	Suspend = 0x80000
 	TransparentBackbuffer = 0x100000
+	LowLatencyOn = 0x400
+	LowLatencyBoost = 0x800
+	LowLatencyShift = 0xa
+	LowLatencyMask = 0xc00
 	FullscreenShift = 0x0
 	FullscreenMask = 0x1
 	ReservedShift = 0x1f
@@ -570,19 +574,20 @@ class CapsFlags(enum.IntFlag):
 	Hdr10 = 0x80
 	ImageRw = 0x100
 	Index32 = 0x200
-	PrimitiveId = 0x400
-	RendererMultithreaded = 0x800
-	ShaderF16 = 0x1000
-	SwapChain = 0x2000
-	TextureCubeArray = 0x4000
-	TextureDirectAccess = 0x8000
-	TextureExternal = 0x10000
-	TextureExternalShared = 0x20000
-	TransparentBackbuffer = 0x40000
-	VariableRateShading = 0x80000
-	VertexAttribUint10 = 0x100000
-	VideoDecode = 0x200000
-	ViewportLayerArray = 0x400000
+	LowLatency = 0x400
+	PrimitiveId = 0x800
+	RendererMultithreaded = 0x1000
+	ShaderF16 = 0x2000
+	SwapChain = 0x4000
+	TextureCubeArray = 0x8000
+	TextureDirectAccess = 0x10000
+	TextureExternal = 0x20000
+	TextureExternalShared = 0x40000
+	TransparentBackbuffer = 0x80000
+	VariableRateShading = 0x100000
+	VertexAttribUint10 = 0x200000
+	VideoDecode = 0x400000
+	ViewportLayerArray = 0x800000
 
 class CapsFormatFlags(enum.IntFlag):
 	TextureNone = 0x0
@@ -1062,6 +1067,13 @@ Stats._fields_ = [
 	("gpuTimerFreq", ctypes.c_int64),
 	("waitRender", ctypes.c_int64),
 	("waitSubmit", ctypes.c_int64),
+	("latencySleep", ctypes.c_int64),
+	("latencyTotal", ctypes.c_int64),
+	("latencySimulation", ctypes.c_int64),
+	("latencyRenderSubmit", ctypes.c_int64),
+	("latencyPresent", ctypes.c_int64),
+	("latencyQueue", ctypes.c_int64),
+	("latencyGpu", ctypes.c_int64),
 	("numDraw", ctypes.c_uint32),
 	("numCompute", ctypes.c_uint32),
 	("numBlit", ctypes.c_uint32),
