@@ -115,6 +115,9 @@ For more info see: :doc:`bgfx`.
 .. note:: You can use ``--with-sdl`` when running GENie to enable SDL2 integration with examples:
           ``genie --with-sdl vs2012``
 
+.. note:: You can use ``--with-sdl3`` when running GENie to enable SDL3 integration with examples:
+          ``genie --with-sdl3 vs2012``
+
 .. note:: ``--with-glfw`` is also available, but it's just simple stub to be used to test GLFW
           integration API.
 
