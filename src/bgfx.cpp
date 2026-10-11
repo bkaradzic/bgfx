@@ -2967,8 +2967,41 @@ namespace bgfx
 		m_submit->collectUsedViews();
 	}
 
+	void Context::resolveDynamicBuffers()
+	{
+		for (uint32_t itemIndex = 0; itemIndex < m_submit->m_numRenderItems; ++itemIndex)
+		{
+			if (0 == (m_submit->m_submitKeys[itemIndex] & kSortKeyDrawBit) )
+			{
+				continue;
+			}
+
+			RenderDraw& draw = m_submit->m_renderItem[itemIndex].draw;
+			for (BitMaskToIndexIteratorT streamIt(draw.m_dynamicVertexBufferMask & draw.m_streamMask); !streamIt.isDone(); streamIt.next() )
+			{
+				Stream& stream = draw.m_stream[streamIt.idx];
+				const DynamicVertexBuffer& buffer = m_dynamicVertexBuffers[stream.m_handle.idx];
+				draw.m_numVertices = bx::min(draw.m_numVertices, bx::satSub<uint32_t>(buffer.m_numVertices, stream.m_startVertex) );
+				stream.m_startVertex += buffer.m_startVertex;
+				stream.m_handle = buffer.m_handle;
+			}
+			draw.m_dynamicVertexBufferMask = 0;
+
+			if (isValid(draw.m_dynamicIndexBuffer) )
+			{
+				const DynamicIndexBuffer& buffer = m_dynamicIndexBuffers[draw.m_dynamicIndexBuffer.idx];
+				const uint32_t indexSize = 0 == (buffer.m_flags & BGFX_BUFFER_INDEX32) ? 2 : 4;
+				draw.m_numIndices = bx::min(draw.m_numIndices, bx::satSub<uint32_t>(buffer.m_size/indexSize, draw.m_startIndex) );
+				draw.m_startIndex += buffer.m_startIndex;
+				draw.m_indexBuffer = buffer.m_handle;
+				draw.m_dynamicIndexBuffer = BGFX_INVALID_HANDLE;
+			}
+		}
+	}
+
 	void Context::swap()
 	{
+		resolveDynamicBuffers();
 		freeDynamicBuffers();
 		m_submit->m_mainSwapChain = m_init.swapChain;
 		m_submit->m_reset         = m_init.reset;
@@ -4661,7 +4694,7 @@ namespace bgfx
 	{
 		BGFX_CHECK_HANDLE("setIndexBuffer", s_ctx->m_dynamicIndexBufferHandle, _handle);
 		const DynamicIndexBuffer& dib = s_ctx->m_dynamicIndexBuffers[_handle.idx];
-		BGFX_ENCODER(setIndexBuffer(dib, _firstIndex, _numIndices) );
+		BGFX_ENCODER(setIndexBuffer(_handle, dib, _firstIndex, _numIndices) );
 	}
 
 	void Encoder::setIndexBuffer(const TransientIndexBuffer* _tib)
@@ -4711,7 +4744,7 @@ namespace bgfx
 			, s_ctx->m_vertexLayoutRef.m_stride[_layoutHandle.idx]
 			, dvb.m_stride
 			);
-		BGFX_ENCODER(setVertexBuffer(_stream, dvb, _startVertex, _numVertices, _layoutHandle) );
+		BGFX_ENCODER(setVertexBuffer(_stream, _handle, dvb, _startVertex, _numVertices, _layoutHandle) );
 	}
 
 	void Encoder::setVertexBuffer(uint8_t _stream, DynamicVertexBufferHandle _handle)
