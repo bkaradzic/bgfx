@@ -247,7 +247,8 @@ bool MovieAudio::seek(uint64_t _timeUs)
 	m_impl->submittedSamples = 0;
 	m_impl->firstSample = true;
 	m_impl->eof = false;
-	if (FAILED(m_impl->reader->SetCurrentPosition(GUID_NULL, position) )
+	const GUID nullGuid = {};
+	if (FAILED(m_impl->reader->SetCurrentPosition(nullGuid, position) )
 	||  FAILED(m_impl->engine->CreateSourceVoice(&m_impl->voice, m_impl->format) )
 	||  !m_impl->fill()
 	||  (!m_impl->paused && FAILED(m_impl->voice->Start() ) ) )
