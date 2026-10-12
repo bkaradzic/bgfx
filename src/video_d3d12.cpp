@@ -956,10 +956,30 @@ namespace bgfx { namespace d3d12
 
 			ID3D12Resource* refFrames[kNumDpbSlots]      = {};
 			UINT            refSubresources[kNumDpbSlots] = {};
-			for (uint32_t ii = 0; ii < m_numDpbSlots; ++ii)
+			refFrames[m_currentSlot]       = m_dpb;
+			refSubresources[m_currentSlot] = UINT(m_currentSlot);
+			D3D12_RESOURCE_BARRIER referenceBarriers[2 * kNumDpbSlots];
+			uint32_t numReferenceBarriers = 0;
+			for (uint32_t ii = 0; ii < m_numActiveRefs; ++ii)
 			{
-				refFrames[ii]       = m_dpb;
-				refSubresources[ii] = UINT(ii);
+				const uint32_t refSlot = m_referenceUsage[ii];
+				refFrames[refSlot]       = m_dpb;
+				refSubresources[refSlot] = UINT(refSlot);
+				for (uint32_t plane = 0; plane < 2; ++plane)
+				{
+					referenceBarriers[numReferenceBarriers++] =
+					{
+						.Type       = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION,
+						.Flags      = D3D12_RESOURCE_BARRIER_FLAG_NONE,
+						.Transition =
+						{
+							.pResource   = m_dpb,
+							.Subresource = plane * m_numDpbSlots + refSlot,
+							.StateBefore = m_dpbState[refSlot].state,
+							.StateAfter  = D3D12_RESOURCE_STATE_VIDEO_DECODE_READ,
+						},
+					};
+				}
 			}
 
 			D3D12_VIDEO_DECODE_INPUT_STREAM_ARGUMENTS input
@@ -973,7 +993,7 @@ namespace bgfx { namespace d3d12
 				},
 				.ReferenceFrames =
 				{
-					.NumTexture2Ds = kNumDpbSlots,
+					.NumTexture2Ds = m_numDpbSlots,
 					.ppTexture2Ds  = refFrames,
 					.pSubresources = refSubresources,
 					.ppHeaps       = NULL,
@@ -1009,7 +1029,21 @@ namespace bgfx { namespace d3d12
 				}
 				;
 
+			if (numReferenceBarriers > 0)
+			{
+				m_videoCmd->ResourceBarrier(numReferenceBarriers, referenceBarriers);
+			}
 			m_videoCmd->DecodeFrame(m_decoder, &output, &input);
+			if (numReferenceBarriers > 0)
+			{
+				for (uint32_t ii = 0; ii < numReferenceBarriers; ++ii)
+				{
+					const D3D12_RESOURCE_STATES previousState = referenceBarriers[ii].Transition.StateBefore;
+					referenceBarriers[ii].Transition.StateBefore = referenceBarriers[ii].Transition.StateAfter;
+					referenceBarriers[ii].Transition.StateAfter = previousState;
+				}
+				m_videoCmd->ResourceBarrier(numReferenceBarriers, referenceBarriers);
+			}
 
 			if (m_referenceOnly)
 			{

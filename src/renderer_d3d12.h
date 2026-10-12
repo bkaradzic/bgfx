@@ -593,7 +593,7 @@ namespace bgfx { namespace d3d12
 		uint64_t kick();
 		void finish(uint64_t _waitFence = UINT64_MAX, bool _finishAll = false);
 		bool tryFinish(uint64_t _waitFence);
-		void release(ID3D12Resource* _ptr);
+		void release(IUnknown* _ptr);
 		bool consume(uint32_t _ms = UINT32_MAX);
 
 		void addExternal(TextureHandle _handle);
@@ -649,7 +649,7 @@ namespace bgfx { namespace d3d12
 		uint64_t m_completedFence;
 		ID3D12Fence* m_fence;
 		CommandList m_commandList[kMaxCommandLists];
-		typedef stl::vector<ID3D12Resource*> ResourceArray;
+		typedef stl::vector<IUnknown*> ResourceArray;
 		ResourceArray m_release[kMaxCommandLists];
 		typedef stl::vector<TextureHandle> ExternalTextureArray;
 		ExternalTextureArray m_external;
