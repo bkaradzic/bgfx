@@ -2729,6 +2729,7 @@ namespace bgfx
 			{
 				m_numVertices = UINT32_MAX;
 				m_streamMask  = 0;
+				m_dynamicVertexBufferMask = 0;
 				m_stream[0].clear();
 			}
 
@@ -2737,6 +2738,7 @@ namespace bgfx
 				m_startIndex  = 0;
 				m_numIndices  = UINT32_MAX;
 				m_indexBuffer = BGFX_INVALID_HANDLE;
+				m_dynamicIndexBuffer = BGFX_INVALID_HANDLE;
 				m_submitFlags = 0;
 			}
 			else
@@ -2784,6 +2786,7 @@ namespace bgfx
 		uint32_t m_numIndirect;
 		uint32_t m_numIndirectIndex;
 		uint32_t m_streamMask;
+		uint32_t m_dynamicVertexBufferMask;
 		uint32_t m_bindIdx;
 		uint16_t m_instanceDataStride;
 		uint16_t m_numMatrices;
@@ -2792,6 +2795,7 @@ namespace bgfx
 		uint8_t  m_uniformIdx;
 
 		IndexBufferHandle    m_indexBuffer;
+		DynamicIndexBufferHandle m_dynamicIndexBuffer;
 		VertexBufferHandle   m_instanceDataBuffer;
 		IndirectBufferHandle m_indirectBuffer;
 		IndexBufferHandle    m_numIndirectBuffer;
@@ -4905,15 +4909,16 @@ namespace bgfx
 			m_draw.m_startIndex  = _firstIndex;
 			m_draw.m_numIndices  = _numIndices;
 			m_draw.m_indexBuffer = _handle;
+			m_draw.m_dynamicIndexBuffer = BGFX_INVALID_HANDLE;
 			m_draw.m_submitFlags |= 0 == (_ib.m_flags & BGFX_BUFFER_INDEX32) ? BGFX_SUBMIT_INTERNAL_NONE : BGFX_SUBMIT_INTERNAL_INDEX32;
 		}
 
-		void setIndexBuffer(const DynamicIndexBuffer& _dib, uint32_t _firstIndex, uint32_t _numIndices)
+		void setIndexBuffer(DynamicIndexBufferHandle _handle, const DynamicIndexBuffer& _dib, uint32_t _firstIndex, uint32_t _numIndices)
 		{
-			const uint32_t indexSize = 0 == (_dib.m_flags & BGFX_BUFFER_INDEX32) ? 2 : 4;
-			m_draw.m_startIndex  = _dib.m_startIndex + _firstIndex;
-			m_draw.m_numIndices  = bx::min(_numIndices, _dib.m_size/indexSize);
+			m_draw.m_startIndex  = _firstIndex;
+			m_draw.m_numIndices  = _numIndices;
 			m_draw.m_indexBuffer = _dib.m_handle;
+			m_draw.m_dynamicIndexBuffer = _handle;
 			m_draw.m_submitFlags |= 0 == (_dib.m_flags & BGFX_BUFFER_INDEX32) ? BGFX_SUBMIT_INTERNAL_NONE : BGFX_SUBMIT_INTERNAL_INDEX32;
 		}
 
@@ -4922,6 +4927,7 @@ namespace bgfx
 			const uint32_t indexSize  = _tib->isIndex16 ? 2 : 4;
 			const uint32_t numIndices = bx::min(_numIndices, _tib->size/indexSize);
 			m_draw.m_indexBuffer = _tib->handle;
+			m_draw.m_dynamicIndexBuffer = BGFX_INVALID_HANDLE;
 			m_draw.m_startIndex  = _tib->startIndex + _firstIndex;
 			m_draw.m_numIndices  = numIndices;
 			m_draw.m_submitFlags |= _tib->isIndex16 ? BGFX_SUBMIT_INTERNAL_NONE : BGFX_SUBMIT_INTERNAL_INDEX32;
@@ -4938,6 +4944,7 @@ namespace bgfx
 		{
 			BX_ASSERT(UINT32_MAX != m_draw.m_streamMask, "bgfx::setVertexCount was already called for this draw call.");
 			BX_ASSERT(_stream < BGFX_CONFIG_MAX_VERTEX_STREAMS, "Invalid stream %d (max %d).", _stream, BGFX_CONFIG_MAX_VERTEX_STREAMS);
+			m_draw.m_dynamicVertexBufferMask &= ~(uint32_t(1) << _stream);
 			if (m_draw.setStreamBit(_stream, _handle) )
 			{
 				Stream& stream = m_draw.m_stream[_stream];
@@ -4950,6 +4957,7 @@ namespace bgfx
 
 		void setVertexBuffer(
 			  uint8_t _stream
+			, DynamicVertexBufferHandle _handle
 			, const DynamicVertexBuffer& _dvb
 			, uint32_t _startVertex
 			, uint32_t _numVertices
@@ -4960,11 +4968,12 @@ namespace bgfx
 			BX_ASSERT(_stream < BGFX_CONFIG_MAX_VERTEX_STREAMS, "Invalid stream %d (max %d).", _stream, BGFX_CONFIG_MAX_VERTEX_STREAMS);
 			if (m_draw.setStreamBit(_stream, _dvb.m_handle) )
 			{
+				m_draw.m_dynamicVertexBufferMask |= uint32_t(1) << _stream;
 				Stream& stream = m_draw.m_stream[_stream];
-				stream.m_startVertex   = _dvb.m_startVertex + _startVertex;
-				stream.m_handle        = _dvb.m_handle;
+				stream.m_startVertex   = _startVertex;
+				stream.m_handle.idx    = _handle.idx;
 				stream.m_layoutHandle  = isValid(_layoutHandle) ? _layoutHandle : _dvb.m_layoutHandle;
-				m_numVertices[_stream] = bx::min<uint32_t>(bx::max<int32_t>(0, _dvb.m_numVertices - _startVertex), _numVertices);
+				m_numVertices[_stream] = _numVertices;
 			}
 		}
 
@@ -4978,6 +4987,7 @@ namespace bgfx
 		{
 			BX_ASSERT(UINT32_MAX != m_draw.m_streamMask, "bgfx::setVertexCount was already called for this draw call.");
 			BX_ASSERT(_stream < BGFX_CONFIG_MAX_VERTEX_STREAMS, "Invalid stream %d (max %d).", _stream, BGFX_CONFIG_MAX_VERTEX_STREAMS);
+			m_draw.m_dynamicVertexBufferMask &= ~(uint32_t(1) << _stream);
 			if (m_draw.setStreamBit(_stream, _tvb->handle) )
 			{
 				Stream& stream = m_draw.m_stream[_stream];
@@ -4992,6 +5002,7 @@ namespace bgfx
 		{
 			BX_ASSERT(0 == m_draw.m_streamMask, "Vertex buffer already set.");
 			m_draw.m_streamMask  = UINT32_MAX;
+			m_draw.m_dynamicVertexBufferMask = 0;
 			Stream& stream = m_draw.m_stream[0];
 			stream.m_startVertex        = 0;
 			stream.m_handle.idx         = kInvalidHandle;

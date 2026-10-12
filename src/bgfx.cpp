@@ -2983,12 +2983,6 @@ namespace bgfx
 
 	void Context::patchMovedDynamicBuffers()
 	{
-		if (m_dynamicVertexBufferMoves.empty()
-		&&  m_dynamicIndexBufferMoves.empty() )
-		{
-			return;
-		}
-
 		const FrameArenaT<uint64_t, kDrawCallBlock>& submitKeys = m_submit->m_submitKeys;
 
 		for (uint32_t ii = 0, num = m_submit->m_numRenderItems; ii < num; ++ii)
@@ -3000,29 +2994,18 @@ namespace bgfx
 
 			RenderDraw& draw = m_submit->m_renderItem[ii].draw;
 
+			for (BitMaskToIndexIteratorT it(draw.m_dynamicVertexBufferMask & draw.m_streamMask); !it.isDone(); it.next() )
+			{
+				Stream& stream = draw.m_stream[it.idx];
+				const DynamicVertexBuffer& buffer = m_dynamicVertexBuffers[stream.m_handle.idx];
+				draw.m_numVertices = bx::min(draw.m_numVertices, bx::satSub<uint32_t>(buffer.m_numVertices, stream.m_startVertex) );
+				stream.m_startVertex += buffer.m_startVertex;
+				stream.m_handle = buffer.m_handle;
+			}
+			draw.m_dynamicVertexBufferMask = 0;
+
 			for (const DynamicBufferMove& move : m_dynamicVertexBufferMoves)
 			{
-				if (UINT32_MAX != draw.m_streamMask)
-				{
-					for (BitMaskToIndexIteratorT it(draw.m_streamMask); !it.isDone(); it.next() )
-					{
-						Stream& stream = draw.m_stream[it.idx];
-
-						if (move.handle == stream.m_handle.idx
-						&&  isValid(stream.m_layoutHandle) )
-						{
-							const uint32_t stride = m_vertexLayoutRef.m_stride[stream.m_layoutHandle.idx];
-							const uint32_t offset = stream.m_startVertex*stride;
-
-							if (move.contains(offset) )
-							{
-								stream.m_handle.idx  = move.newHandle;
-								stream.m_startVertex = (offset - move.offset + move.newOffset)/stride;
-							}
-						}
-					}
-				}
-
 				if (move.handle == draw.m_instanceDataBuffer.idx
 				&&  move.contains(draw.m_instanceDataOffset) )
 				{
@@ -3031,19 +3014,21 @@ namespace bgfx
 				}
 			}
 
-			const uint32_t indexSize = 0 == (draw.m_submitFlags & BGFX_SUBMIT_INTERNAL_INDEX32) ? 2 : 4;
-
-			for (const DynamicBufferMove& move : m_dynamicIndexBufferMoves)
+			if (isValid(draw.m_dynamicIndexBuffer) )
 			{
-				const uint32_t offset = draw.m_startIndex*indexSize;
-
-				if (move.handle == draw.m_indexBuffer.idx
-				&&  move.contains(offset) )
-				{
-					draw.m_indexBuffer.idx = move.newHandle;
-					draw.m_startIndex      = (offset - move.offset + move.newOffset)/indexSize;
-				}
+				const DynamicIndexBuffer& buffer = m_dynamicIndexBuffers[draw.m_dynamicIndexBuffer.idx];
+				const uint32_t indexSize = 0 == (buffer.m_flags & BGFX_BUFFER_INDEX32) ? 2 : 4;
+				draw.m_numIndices = bx::min(draw.m_numIndices, bx::satSub<uint32_t>(buffer.m_size/indexSize, draw.m_startIndex) );
+				draw.m_startIndex += buffer.m_startIndex;
+				draw.m_indexBuffer = buffer.m_handle;
+				draw.m_dynamicIndexBuffer = BGFX_INVALID_HANDLE;
 			}
+		}
+
+		if (m_dynamicVertexBufferMoves.empty()
+		&&  m_dynamicIndexBufferMoves.empty() )
+		{
+			return;
 		}
 
 		for (uint32_t ii = 0, num = m_submit->m_numRenderBinds; ii < num; ++ii)
@@ -4788,7 +4773,7 @@ namespace bgfx
 	{
 		BGFX_CHECK_HANDLE("setIndexBuffer", s_ctx->m_dynamicIndexBufferHandle, _handle);
 		const DynamicIndexBuffer& dib = s_ctx->m_dynamicIndexBuffers[_handle.idx];
-		BGFX_ENCODER(setIndexBuffer(dib, _firstIndex, _numIndices) );
+		BGFX_ENCODER(setIndexBuffer(_handle, dib, _firstIndex, _numIndices) );
 	}
 
 	void Encoder::setIndexBuffer(const TransientIndexBuffer* _tib)
@@ -4838,7 +4823,7 @@ namespace bgfx
 			, s_ctx->m_vertexLayoutRef.m_stride[_layoutHandle.idx]
 			, dvb.m_stride
 			);
-		BGFX_ENCODER(setVertexBuffer(_stream, dvb, _startVertex, _numVertices, _layoutHandle) );
+		BGFX_ENCODER(setVertexBuffer(_stream, _handle, dvb, _startVertex, _numVertices, _layoutHandle) );
 	}
 
 	void Encoder::setVertexBuffer(uint8_t _stream, DynamicVertexBufferHandle _handle)
