@@ -122,12 +122,21 @@ static const uint64_t s_ptState[]
 };
 static_assert(BX_COUNTOF(s_ptState) == BX_COUNTOF(s_ptNames) );
 
+static const char* s_bufferModes[] =
+{
+	"Static",
+	"Dynamic resize: counts",
+	"Dynamic resize: offsets",
+};
+
 class ExampleCubes : public entry::AppI
 {
 public:
 	ExampleCubes(const char* _name, const char* _description, const char* _url)
 		: entry::AppI(_name, _description, _url)
 		, m_pt(0)
+		, m_bufferMode(0)
+		, m_uploadBeforeSubmit(false)
 		, m_r(true)
 		, m_g(true)
 		, m_b(true)
@@ -273,6 +282,15 @@ public:
 			ImGui::Text("Primitive topology:");
 			ImGui::Combo("##topology", (int*)&m_pt, s_ptNames, BX_COUNTOF(s_ptNames) );
 
+			if (0 == m_pt)
+			{
+				ImGui::Combo("Buffers", &m_bufferMode, s_bufferModes, BX_COUNTOF(s_bufferModes) );
+				if (0 != m_bufferMode)
+				{
+					ImGui::Checkbox("Upload before submit", &m_uploadBeforeSubmit);
+				}
+			}
+
 			ImGui::End();
 
 			imguiEndFrame();
@@ -298,6 +316,33 @@ public:
 			bgfx::touch(0);
 
 			bgfx::IndexBufferHandle ibh = m_ibh[m_pt];
+			bgfx::DynamicVertexBufferHandle dynamicVbh = BGFX_INVALID_HANDLE;
+			bgfx::DynamicIndexBufferHandle dynamicIbh = BGFX_INVALID_HANDLE;
+			const bgfx::Memory* vertexUpload = NULL;
+			const bgfx::Memory* indexUpload = NULL;
+			const uint32_t firstElement = 2 == m_bufferMode ? 1 : 0;
+			const bool dynamicBuffers = 0 == m_pt && 0 != m_bufferMode;
+
+			if (dynamicBuffers)
+			{
+				dynamicVbh = bgfx::createDynamicVertexBuffer(1, PosColorVertex::ms_layout, BGFX_BUFFER_ALLOW_RESIZE);
+				dynamicIbh = bgfx::createDynamicIndexBuffer(1, BGFX_BUFFER_ALLOW_RESIZE);
+				const uint32_t vertexOffset = firstElement * sizeof(PosColorVertex);
+				const uint32_t indexOffset = firstElement * sizeof(uint16_t);
+				vertexUpload = bgfx::alloc(vertexOffset + sizeof(s_cubeVertices) );
+				indexUpload = bgfx::alloc(indexOffset + sizeof(s_cubeTriList) );
+				bx::memSet(vertexUpload->data, 0, vertexUpload->size);
+				bx::memSet(indexUpload->data, 0, indexUpload->size);
+				bx::memCopy(vertexUpload->data + vertexOffset, s_cubeVertices, sizeof(s_cubeVertices) );
+				bx::memCopy(indexUpload->data + indexOffset, s_cubeTriList, sizeof(s_cubeTriList) );
+
+				if (m_uploadBeforeSubmit)
+				{
+					bgfx::update(dynamicVbh, 0, vertexUpload);
+					bgfx::update(dynamicIbh, 0, indexUpload);
+				}
+			}
+
 			uint64_t state = 0
 				| (m_r ? BGFX_STATE_WRITE_R : 0)
 				| (m_g ? BGFX_STATE_WRITE_G : 0)
@@ -325,8 +370,16 @@ public:
 					bgfx::setTransform(mtx);
 
 					// Set vertex and index buffer.
-					bgfx::setVertexBuffer(0, m_vbh);
-					bgfx::setIndexBuffer(ibh);
+					if (dynamicBuffers)
+					{
+						bgfx::setVertexBuffer(0, dynamicVbh, firstElement, BX_COUNTOF(s_cubeVertices) );
+						bgfx::setIndexBuffer(dynamicIbh, firstElement, UINT32_MAX);
+					}
+					else
+					{
+						bgfx::setVertexBuffer(0, m_vbh);
+						bgfx::setIndexBuffer(ibh);
+					}
 
 					// Set render states.
 					bgfx::setState(state);
@@ -334,6 +387,17 @@ public:
 					// Submit primitive for rendering to view 0.
 					bgfx::submit(0, m_program);
 				}
+			}
+
+			if (dynamicBuffers)
+			{
+				if (!m_uploadBeforeSubmit)
+				{
+					bgfx::update(dynamicVbh, 0, vertexUpload);
+					bgfx::update(dynamicIbh, 0, indexUpload);
+				}
+				bgfx::destroy(dynamicVbh);
+				bgfx::destroy(dynamicIbh);
 			}
 
 			// Advance to next frame. Rendering thread will be kicked to
@@ -359,6 +423,8 @@ public:
 	FrameTime m_frameTime;
 
 	int32_t m_pt;
+	int m_bufferMode;
+	bool m_uploadBeforeSubmit;
 
 	bool m_r;
 	bool m_g;
