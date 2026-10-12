@@ -1532,7 +1532,8 @@ namespace bgfx
 		}
 
 		if (0 == m_draw.m_numVertices
-		&&  0 == m_draw.m_numIndices)
+		&&  0 == m_draw.m_numIndices
+		&&  0 == m_dynamicMask)
 		{
 			discard(_flags);
 			++m_numDropped;
@@ -1601,7 +1602,30 @@ namespace bgfx
 		m_draw.m_bindIdx = bindStateIndexCached();
 		m_frame->m_renderItem[renderItemIdx].draw = m_draw;
 
+		if (0 != m_dynamicMask)
+		{
+			uint32_t numVertices = m_draw.m_numVertices;
+			if (0 != (m_dynamicMask & kDynamicStreamMask) )
+			{
+				numVertices = UINT32_MAX;
+				for (BitMaskToIndexIteratorT it(m_draw.m_streamMask); !it.isDone(); it.next() )
+				{
+					const uint32_t tmp0 = 0 != (m_dynamicMask & (UINT32_C(1)<<it.idx) )
+						? m_dynamicNumVertices[it.idx]
+						: m_numVertices[it.idx]
+						;
+					numVertices = bx::min(numVertices, tmp0);
+				}
+			}
+
+			m_dynamicRef.item        = renderItemIdx;
+			m_dynamicRef.mask        = m_dynamicMask;
+			m_dynamicRef.numVertices = numVertices;
+			m_dynamicBufferRefs.push_back(m_dynamicRef);
+		}
+
 		m_draw.clear(_flags);
+		clearDynamic(_flags);
 		clearBind(_flags);
 		if (_flags & BGFX_DISCARD_STATE)
 		{
@@ -1656,6 +1680,14 @@ namespace bgfx
 		m_compute.m_uniformEnd   = m_uniformEnd;
 		m_compute.m_bindIdx = bindStateIndexCached();
 		m_frame->m_renderItem[renderItemIdx].compute = m_compute;
+
+		if (0 != (m_dynamicMask & kDynamicIndexBit) )
+		{
+			DynamicBufferRef ref = m_dynamicRef;
+			ref.item = renderItemIdx;
+			ref.mask = kDynamicComputeBit;
+			m_dynamicBufferRefs.push_back(ref);
+		}
 
 		m_compute.clear(_flags);
 		clearBind(_flags);
@@ -2455,8 +2487,6 @@ namespace bgfx
 		CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::RendererInit);
 		cmdbuf.write(_init);
 
-		frameNoRenderWait();
-
 		m_encoderHandle = bx::createHandleAlloc(g_allocator, _init.limits.maxEncoders);
 		m_encoder       = (EncoderImpl*)bx::alignedAlloc(g_allocator, sizeof(EncoderImpl)*_init.limits.maxEncoders, BX_ALIGNOF(EncoderImpl) );
 		m_encoderStats  = (EncoderStats*)bx::alloc(g_allocator, sizeof(EncoderStats)*_init.limits.maxEncoders);
@@ -2464,6 +2494,8 @@ namespace bgfx
 		{
 			BX_PLACEMENT_NEW(&m_encoder[ii], EncoderImpl);
 		}
+
+		frameNoRenderWait();
 
 		uint16_t idx = m_encoderHandle->alloc();
 		BX_ASSERT(0 == idx, "Internal encoder handle is not 0 (idx %d).", idx); BX_UNUSED(idx);
@@ -2985,69 +3017,84 @@ namespace bgfx
 		m_submit->collectUsedViews();
 	}
 
+	void Context::resolveDynamicBuffers()
+	{
+		const bool moved = false
+			|| !m_dynamicVertexBufferMoves.empty()
+			|| !m_dynamicIndexBufferMoves.empty()
+			;
+
+		for (uint32_t ii = 0, num = g_caps.limits.maxEncoders; ii < num; ++ii)
+		{
+			stl::vector<DynamicBufferRef>& refs = m_encoder[ii].m_dynamicBufferRefs;
+
+			if (!moved)
+			{
+				refs.clear();
+				continue;
+			}
+
+			for (const DynamicBufferRef& ref : refs)
+			{
+				if (ref.item >= m_submit->m_numRenderItems)
+				{
+					continue;
+				}
+
+				RenderItem& item = m_submit->m_renderItem[ref.item];
+
+				if (0 != (ref.mask & kDynamicComputeBit) )
+				{
+					const DynamicIndexBuffer& dib = m_dynamicIndexBuffers[ref.handle[kDynamicIndexSlot] ];
+					item.compute.m_startIndex = dib.m_startIndex + ref.start[kDynamicIndexSlot];
+					continue;
+				}
+
+				RenderDraw& draw = item.draw;
+
+				if (0 != (ref.mask & kDynamicStreamMask) )
+				{
+					uint32_t numVertices = ref.numVertices;
+
+					for (BitMaskToIndexIteratorT it(ref.mask & kDynamicStreamMask); !it.isDone(); it.next() )
+					{
+						const DynamicVertexBuffer& dvb = m_dynamicVertexBuffers[ref.handle[it.idx] ];
+						Stream& stream = draw.m_stream[it.idx];
+						stream.m_startVertex = dvb.m_startVertex + ref.start[it.idx];
+						stream.m_handle      = dvb.m_handle;
+						numVertices = bx::min(numVertices, bx::satSub(dvb.m_numVertices, ref.start[it.idx]) );
+					}
+
+					draw.m_numVertices = numVertices;
+				}
+
+				if (0 != (ref.mask & kDynamicIndexBit) )
+				{
+					const DynamicIndexBuffer& dib = m_dynamicIndexBuffers[ref.handle[kDynamicIndexSlot] ];
+					const uint32_t indexSize = 0 == (dib.m_flags & BGFX_BUFFER_INDEX32) ? 2 : 4;
+					draw.m_startIndex  = dib.m_startIndex + ref.start[kDynamicIndexSlot];
+					draw.m_numIndices  = bx::min(ref.numIndices, bx::satSub(dib.m_size/indexSize, ref.start[kDynamicIndexSlot]) );
+					draw.m_indexBuffer = dib.m_handle;
+				}
+
+				if (0 != (ref.mask & kDynamicInstanceBit) )
+				{
+					const DynamicVertexBuffer& dvb = m_dynamicVertexBuffers[ref.handle[kDynamicInstanceSlot] ];
+					draw.m_instanceDataOffset = dvb.m_startVertex*dvb.m_stride + ref.start[kDynamicInstanceSlot];
+					draw.m_instanceDataBuffer = dvb.m_handle;
+				}
+			}
+
+			refs.clear();
+		}
+	}
+
 	void Context::patchMovedDynamicBuffers()
 	{
 		if (m_dynamicVertexBufferMoves.empty()
 		&&  m_dynamicIndexBufferMoves.empty() )
 		{
 			return;
-		}
-
-		const FrameArenaT<uint64_t, kDrawCallBlock>& submitKeys = m_submit->m_submitKeys;
-
-		for (uint32_t ii = 0, num = m_submit->m_numRenderItems; ii < num; ++ii)
-		{
-			if (0 == (submitKeys[ii] & kSortKeyDrawBit) )
-			{
-				continue;
-			}
-
-			RenderDraw& draw = m_submit->m_renderItem[ii].draw;
-
-			for (const DynamicBufferMove& move : m_dynamicVertexBufferMoves)
-			{
-				if (UINT32_MAX != draw.m_streamMask)
-				{
-					for (BitMaskToIndexIteratorT it(draw.m_streamMask); !it.isDone(); it.next() )
-					{
-						Stream& stream = draw.m_stream[it.idx];
-
-						if (move.handle == stream.m_handle.idx
-						&&  isValid(stream.m_layoutHandle) )
-						{
-							const uint32_t stride = m_vertexLayoutRef.m_stride[stream.m_layoutHandle.idx];
-							const uint32_t offset = stream.m_startVertex*stride;
-
-							if (move.contains(offset) )
-							{
-								stream.m_handle.idx  = move.newHandle;
-								stream.m_startVertex = (offset - move.offset + move.newOffset)/stride;
-							}
-						}
-					}
-				}
-
-				if (move.handle == draw.m_instanceDataBuffer.idx
-				&&  move.contains(draw.m_instanceDataOffset) )
-				{
-					draw.m_instanceDataBuffer.idx = move.newHandle;
-					draw.m_instanceDataOffset     = draw.m_instanceDataOffset - move.offset + move.newOffset;
-				}
-			}
-
-			const uint32_t indexSize = 0 == (draw.m_submitFlags & BGFX_SUBMIT_INTERNAL_INDEX32) ? 2 : 4;
-
-			for (const DynamicBufferMove& move : m_dynamicIndexBufferMoves)
-			{
-				const uint32_t offset = draw.m_startIndex*indexSize;
-
-				if (move.handle == draw.m_indexBuffer.idx
-				&&  move.contains(offset) )
-				{
-					draw.m_indexBuffer.idx = move.newHandle;
-					draw.m_startIndex      = (offset - move.offset + move.newOffset)/indexSize;
-				}
-			}
 		}
 
 		for (uint32_t ii = 0, num = m_submit->m_numRenderBinds; ii < num; ++ii)
@@ -3099,6 +3146,7 @@ namespace bgfx
 
 	void Context::swap()
 	{
+		resolveDynamicBuffers();
 		patchMovedDynamicBuffers();
 		freeDynamicBuffers();
 		m_submit->m_mainSwapChain = m_init.swapChain;
@@ -4792,7 +4840,7 @@ namespace bgfx
 	{
 		BGFX_CHECK_HANDLE("setIndexBuffer", s_ctx->m_dynamicIndexBufferHandle, _handle);
 		const DynamicIndexBuffer& dib = s_ctx->m_dynamicIndexBuffers[_handle.idx];
-		BGFX_ENCODER(setIndexBuffer(dib, _firstIndex, _numIndices) );
+		BGFX_ENCODER(setIndexBuffer(_handle, dib, _firstIndex, _numIndices) );
 	}
 
 	void Encoder::setIndexBuffer(const TransientIndexBuffer* _tib)
@@ -4842,7 +4890,7 @@ namespace bgfx
 			, s_ctx->m_vertexLayoutRef.m_stride[_layoutHandle.idx]
 			, dvb.m_stride
 			);
-		BGFX_ENCODER(setVertexBuffer(_stream, dvb, _startVertex, _numVertices, _layoutHandle) );
+		BGFX_ENCODER(setVertexBuffer(_stream, _handle, dvb, _startVertex, _numVertices, _layoutHandle) );
 	}
 
 	void Encoder::setVertexBuffer(uint8_t _stream, DynamicVertexBufferHandle _handle)
@@ -4902,11 +4950,7 @@ namespace bgfx
 	{
 		BGFX_CHECK_HANDLE("setInstanceDataBuffer", s_ctx->m_dynamicVertexBufferHandle, _handle);
 		const DynamicVertexBuffer& dvb = s_ctx->m_dynamicVertexBuffers[_handle.idx];
-		BGFX_ENCODER(setInstanceDataBuffer(dvb.m_handle
-			, dvb.m_startVertex + _startVertex
-			, _num
-			, dvb.m_stride
-			) );
+		BGFX_ENCODER(setInstanceDataBuffer(_handle, dvb, _startVertex, _num) );
 	}
 
 	void Encoder::setInstanceCount(uint32_t _numInstances)

@@ -4589,6 +4589,25 @@ namespace bgfx
 		uint32_t m_peakViews;
 	};
 
+	constexpr uint32_t kDynamicIndexSlot    = BGFX_CONFIG_MAX_VERTEX_STREAMS+0;
+	constexpr uint32_t kDynamicInstanceSlot = BGFX_CONFIG_MAX_VERTEX_STREAMS+1;
+	constexpr uint32_t kDynamicNumSlots     = BGFX_CONFIG_MAX_VERTEX_STREAMS+2;
+
+	constexpr uint32_t kDynamicStreamMask  = (UINT32_C(1)<<BGFX_CONFIG_MAX_VERTEX_STREAMS)-1;
+	constexpr uint32_t kDynamicIndexBit    = UINT32_C(1)<<kDynamicIndexSlot;
+	constexpr uint32_t kDynamicInstanceBit = UINT32_C(1)<<kDynamicInstanceSlot;
+	constexpr uint32_t kDynamicComputeBit  = UINT32_C(1)<<kDynamicNumSlots;
+
+	struct DynamicBufferRef
+	{
+		uint32_t item;
+		uint32_t mask;
+		uint32_t numVertices;
+		uint32_t numIndices;
+		uint32_t start[kDynamicNumSlots];
+		uint16_t handle[kDynamicNumSlots];
+	};
+
 	BX_ALIGN_DECL_CACHE_LINE(struct) EncoderImpl
 	{
 		EncoderImpl()
@@ -4602,6 +4621,8 @@ namespace bgfx
 
 			m_key.reset();
 			m_discard = false;
+			m_dynamicMask = 0;
+			m_dynamicRef  = {};
 			m_draw.clear(BGFX_DISCARD_ALL);
 			m_compute.clear(BGFX_DISCARD_ALL);
 			m_bind.clear(BGFX_DISCARD_ALL);
@@ -4902,17 +4923,23 @@ namespace bgfx
 
 		void setIndexBuffer(IndexBufferHandle _handle, const IndexBuffer& _ib, uint32_t _firstIndex, uint32_t _numIndices)
 		{
+			m_dynamicMask &= ~kDynamicIndexBit;
 			m_draw.m_startIndex  = _firstIndex;
 			m_draw.m_numIndices  = _numIndices;
 			m_draw.m_indexBuffer = _handle;
 			m_draw.m_submitFlags |= 0 == (_ib.m_flags & BGFX_BUFFER_INDEX32) ? BGFX_SUBMIT_INTERNAL_NONE : BGFX_SUBMIT_INTERNAL_INDEX32;
 		}
 
-		void setIndexBuffer(const DynamicIndexBuffer& _dib, uint32_t _firstIndex, uint32_t _numIndices)
+		void setIndexBuffer(DynamicIndexBufferHandle _handle, const DynamicIndexBuffer& _dib, uint32_t _firstIndex, uint32_t _numIndices)
 		{
 			const uint32_t indexSize = 0 == (_dib.m_flags & BGFX_BUFFER_INDEX32) ? 2 : 4;
+			const uint32_t resize    = 0 != (_dib.m_flags & BGFX_BUFFER_ALLOW_RESIZE) ? kDynamicIndexBit : 0;
+			m_dynamicMask = (m_dynamicMask & ~kDynamicIndexBit) | resize;
+			m_dynamicRef.start[kDynamicIndexSlot]  = _firstIndex;
+			m_dynamicRef.handle[kDynamicIndexSlot] = _handle.idx;
+			m_dynamicRef.numIndices = _numIndices;
 			m_draw.m_startIndex  = _dib.m_startIndex + _firstIndex;
-			m_draw.m_numIndices  = bx::min(_numIndices, _dib.m_size/indexSize);
+			m_draw.m_numIndices  = bx::min(_numIndices, bx::satSub(_dib.m_size/indexSize, _firstIndex) );
 			m_draw.m_indexBuffer = _dib.m_handle;
 			m_draw.m_submitFlags |= 0 == (_dib.m_flags & BGFX_BUFFER_INDEX32) ? BGFX_SUBMIT_INTERNAL_NONE : BGFX_SUBMIT_INTERNAL_INDEX32;
 		}
@@ -4921,6 +4948,7 @@ namespace bgfx
 		{
 			const uint32_t indexSize  = _tib->isIndex16 ? 2 : 4;
 			const uint32_t numIndices = bx::min(_numIndices, _tib->size/indexSize);
+			m_dynamicMask &= ~kDynamicIndexBit;
 			m_draw.m_indexBuffer = _tib->handle;
 			m_draw.m_startIndex  = _tib->startIndex + _firstIndex;
 			m_draw.m_numIndices  = numIndices;
@@ -4938,6 +4966,7 @@ namespace bgfx
 		{
 			BX_ASSERT(UINT32_MAX != m_draw.m_streamMask, "bgfx::setVertexCount was already called for this draw call.");
 			BX_ASSERT(_stream < BGFX_CONFIG_MAX_VERTEX_STREAMS, "Invalid stream %d (max %d).", _stream, BGFX_CONFIG_MAX_VERTEX_STREAMS);
+			m_dynamicMask &= ~(UINT32_C(1)<<_stream);
 			if (m_draw.setStreamBit(_stream, _handle) )
 			{
 				Stream& stream = m_draw.m_stream[_stream];
@@ -4950,6 +4979,7 @@ namespace bgfx
 
 		void setVertexBuffer(
 			  uint8_t _stream
+			, DynamicVertexBufferHandle _handle
 			, const DynamicVertexBuffer& _dvb
 			, uint32_t _startVertex
 			, uint32_t _numVertices
@@ -4958,13 +4988,18 @@ namespace bgfx
 		{
 			BX_ASSERT(UINT32_MAX != m_draw.m_streamMask, "bgfx::setVertexCount was already called for this draw call.");
 			BX_ASSERT(_stream < BGFX_CONFIG_MAX_VERTEX_STREAMS, "Invalid stream %d (max %d).", _stream, BGFX_CONFIG_MAX_VERTEX_STREAMS);
+			m_dynamicMask &= ~(UINT32_C(1)<<_stream);
 			if (m_draw.setStreamBit(_stream, _dvb.m_handle) )
 			{
+				m_dynamicMask |= 0 != (_dvb.m_flags & BGFX_BUFFER_ALLOW_RESIZE) ? UINT32_C(1)<<_stream : 0;
+				m_dynamicRef.start[_stream]  = _startVertex;
+				m_dynamicRef.handle[_stream] = _handle.idx;
+				m_dynamicNumVertices[_stream] = _numVertices;
 				Stream& stream = m_draw.m_stream[_stream];
 				stream.m_startVertex   = _dvb.m_startVertex + _startVertex;
 				stream.m_handle        = _dvb.m_handle;
 				stream.m_layoutHandle  = isValid(_layoutHandle) ? _layoutHandle : _dvb.m_layoutHandle;
-				m_numVertices[_stream] = bx::min<uint32_t>(bx::max<int32_t>(0, _dvb.m_numVertices - _startVertex), _numVertices);
+				m_numVertices[_stream] = bx::min(_numVertices, bx::satSub(_dvb.m_numVertices, _startVertex) );
 			}
 		}
 
@@ -4978,6 +5013,7 @@ namespace bgfx
 		{
 			BX_ASSERT(UINT32_MAX != m_draw.m_streamMask, "bgfx::setVertexCount was already called for this draw call.");
 			BX_ASSERT(_stream < BGFX_CONFIG_MAX_VERTEX_STREAMS, "Invalid stream %d (max %d).", _stream, BGFX_CONFIG_MAX_VERTEX_STREAMS);
+			m_dynamicMask &= ~(UINT32_C(1)<<_stream);
 			if (m_draw.setStreamBit(_stream, _tvb->handle) )
 			{
 				Stream& stream = m_draw.m_stream[_stream];
@@ -4991,6 +5027,7 @@ namespace bgfx
 		void setVertexCount(uint32_t _numVertices)
 		{
 			BX_ASSERT(0 == m_draw.m_streamMask, "Vertex buffer already set.");
+			m_dynamicMask &= ~kDynamicStreamMask;
 			m_draw.m_streamMask  = UINT32_MAX;
 			Stream& stream = m_draw.m_stream[0];
 			stream.m_startVertex        = 0;
@@ -5003,6 +5040,7 @@ namespace bgfx
 		{
 			const uint32_t start = bx::min(_start, _idb->num);
 			const uint32_t num   = bx::min(_idb->num - start, _num);
+			m_dynamicMask &= ~kDynamicInstanceBit;
 			m_draw.m_instanceDataOffset = _idb->offset + start*_idb->stride;
 			m_draw.m_instanceDataStride = _idb->stride;
 			m_draw.m_numInstances       = num;
@@ -5011,10 +5049,23 @@ namespace bgfx
 
 		void setInstanceDataBuffer(VertexBufferHandle _handle, uint32_t _startVertex, uint32_t _num, uint16_t _stride)
 		{
+			m_dynamicMask &= ~kDynamicInstanceBit;
 			m_draw.m_instanceDataOffset = _startVertex * _stride;
 			m_draw.m_instanceDataStride = _stride;
 			m_draw.m_numInstances       = _num;
 			m_draw.m_instanceDataBuffer = _handle;
+		}
+
+		void setInstanceDataBuffer(DynamicVertexBufferHandle _handle, const DynamicVertexBuffer& _dvb, uint32_t _startVertex, uint32_t _num)
+		{
+			const uint32_t resize = 0 != (_dvb.m_flags & BGFX_BUFFER_ALLOW_RESIZE) ? kDynamicInstanceBit : 0;
+			m_dynamicMask = (m_dynamicMask & ~kDynamicInstanceBit) | resize;
+			m_dynamicRef.start[kDynamicInstanceSlot]  = _startVertex * _dvb.m_stride;
+			m_dynamicRef.handle[kDynamicInstanceSlot] = _handle.idx;
+			m_draw.m_instanceDataOffset = (_dvb.m_startVertex + _startVertex) * _dvb.m_stride;
+			m_draw.m_instanceDataStride = _dvb.m_stride;
+			m_draw.m_numInstances       = _num;
+			m_draw.m_instanceDataBuffer = _dvb.m_handle;
 		}
 
 		void setInstanceCount(uint32_t _numInstances)
@@ -5110,6 +5161,16 @@ namespace bgfx
 			setBind(_stage, bind);
 		}
 
+		void clearDynamic(uint8_t _flags)
+		{
+			const uint32_t mask = 0
+				| (0 != (_flags & BGFX_DISCARD_VERTEX_STREAMS) ? kDynamicStreamMask  : 0)
+				| (0 != (_flags & BGFX_DISCARD_INDEX_BUFFER)   ? kDynamicIndexBit    : 0)
+				| (0 != (_flags & BGFX_DISCARD_INSTANCE_DATA)  ? kDynamicInstanceBit : 0)
+				;
+			m_dynamicMask &= ~mask;
+		}
+
 		void discard(uint8_t _flags)
 		{
 			if (BX_ENABLED(BGFX_CONFIG_DEBUG_UNIFORM) )
@@ -5119,6 +5180,7 @@ namespace bgfx
 
 			m_discard = false;
 			m_draw.clear(_flags);
+			clearDynamic(_flags);
 			m_compute.clear(_flags);
 			clearBind(_flags);
 
@@ -5174,8 +5236,13 @@ namespace bgfx
 		uint32_t m_uniformBegin;
 		uint32_t m_uniformEnd;
 		uint32_t m_numVertices[BGFX_CONFIG_MAX_VERTEX_STREAMS];
+		uint32_t m_dynamicNumVertices[BGFX_CONFIG_MAX_VERTEX_STREAMS];
+		uint32_t m_dynamicMask;
 		uint8_t  m_uniformIdx;
 		bool     m_discard;
+
+		DynamicBufferRef              m_dynamicRef;
+		stl::vector<DynamicBufferRef> m_dynamicBufferRefs;
 
 		typedef stl::unordered_set<uint16_t> HandleSet;
 		HandleSet m_uniformSet;
@@ -6608,13 +6675,8 @@ namespace bgfx
 				dib.m_size       = _mem->size;
 				dib.m_startIndex = bx::strideAlign(dib.m_offset, indexSize)/indexSize;
 
-				const uint32_t oldOffset = old.m_startIndex*indexSize;
-
 				m_dynamicIndexBufferMoves.push_back(
 				{
-					.offset    = oldOffset,
-					.size      = old.m_offset + old.m_size - oldOffset,
-					.newOffset = dib.m_startIndex*indexSize,
 					.handle    = old.m_handle.idx,
 					.newHandle = dib.m_handle.idx,
 					.dedicated = 0 != (old.m_flags & BGFX_BUFFER_COMPUTE_READ_WRITE),
@@ -6821,13 +6883,8 @@ namespace bgfx
 				dvb.m_numVertices = _mem->size / dvb.m_stride;
 				dvb.m_startVertex = bx::strideAlign(dvb.m_offset, dvb.m_stride)/dvb.m_stride;
 
-				const uint32_t oldOffset = old.m_startVertex*old.m_stride;
-
 				m_dynamicVertexBufferMoves.push_back(
 				{
-					.offset    = oldOffset,
-					.size      = old.m_offset + old.m_size - oldOffset,
-					.newOffset = dvb.m_startVertex*dvb.m_stride,
 					.handle    = old.m_handle.idx,
 					.newHandle = dvb.m_handle.idx,
 					.dedicated = 0 != (old.m_flags & BGFX_BUFFER_COMPUTE_READ_WRITE),
@@ -8669,6 +8726,7 @@ namespace bgfx
 		BGFX_API_FUNC(uint32_t frame(uint8_t _flags = BGFX_FRAME_NONE) );
 
 		void dumpViewStats();
+		void resolveDynamicBuffers();
 		void patchMovedDynamicBuffers();
 		void freeDynamicBuffers();
 		void freeAllHandles(Frame* _frame);
@@ -8835,14 +8893,6 @@ namespace bgfx
 
 		struct DynamicBufferMove
 		{
-			bool contains(uint32_t _offset) const
-			{
-				return _offset - offset < size;
-			}
-
-			uint32_t offset;
-			uint32_t size;
-			uint32_t newOffset;
 			uint16_t handle;
 			uint16_t newHandle;
 			bool     dedicated;
