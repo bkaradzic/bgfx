@@ -778,7 +778,8 @@ namespace bgfx { namespace d3d12
 
 	BX_NO_INLINE void setDebugObjectName(ID3D12Object* _object, const char* _format, ...)
 	{
-		if (BX_ENABLED(BGFX_CONFIG_DEBUG_OBJECT_NAME) )
+		if (BX_ENABLED(BGFX_CONFIG_DEBUG_OBJECT_NAME)
+		&&  NULL != _object)
 		{
 			char temp[2048];
 			va_list argList;
@@ -6245,7 +6246,13 @@ namespace bgfx { namespace d3d12
 		ID3D12Device* device = s_renderD3D12->m_device;
 		ID3D12GraphicsCommandList* commandList = s_renderD3D12->m_commandList;
 
-		m_ptr   = createCommittedResource(device, HeapProperty::Default, _size, D3D12_RESOURCE_FLAGS(flags) );
+		m_ptr = createCommittedResource(device, HeapProperty::Default, _size, D3D12_RESOURCE_FLAGS(flags) );
+
+		if (NULL == m_ptr)
+		{
+			return;
+		}
+
 		m_gpuVA = m_ptr->GetGPUVirtualAddress();
 		setState(commandList, drawIndirect
 			? D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT
@@ -6260,7 +6267,18 @@ namespace bgfx { namespace d3d12
 
 	void BufferD3D12::update(ID3D12GraphicsCommandList* _commandList, uint32_t _offset, uint32_t _size, void* _data, bool /*_discard*/)
 	{
+		if (NULL == m_ptr)
+		{
+			return;
+		}
+
 		ID3D12Resource* staging = createCommittedResource(s_renderD3D12->m_device, HeapProperty::Upload, _size);
+
+		if (NULL == staging)
+		{
+			return;
+		}
+
 		uint8_t* data;
 
 		D3D12_RANGE readRange = { 0, 0 };
@@ -7022,7 +7040,8 @@ namespace bgfx { namespace d3d12
 					resourceDesc.Flags     = savedFlags;
 				}
 
-				if (externalShared)
+				if (externalShared
+				&&  NULL != m_ptr)
 				{
 					DX_CHECK(device->CreateSharedHandle(
 						  m_ptr
@@ -7034,38 +7053,44 @@ namespace bgfx { namespace d3d12
 				}
 			}
 
-			if (directAccess)
+			if (NULL != m_ptr)
 			{
-				DX_CHECK(m_ptr->Map(0, NULL, &m_directAccessPtr) );
-			}
+				if (directAccess)
+				{
+					DX_CHECK(m_ptr->Map(0, NULL, &m_directAccessPtr) );
+				}
 
-			if (kk != 0)
-			{
-				uint64_t uploadBufferSize;
-				device->GetCopyableFootprints(&resourceDesc, 0, numSrd, 0, NULL, NULL, NULL, &uploadBufferSize);
+				if (kk != 0)
+				{
+					uint64_t uploadBufferSize;
+					device->GetCopyableFootprints(&resourceDesc, 0, numSrd, 0, NULL, NULL, NULL, &uploadBufferSize);
 
-				ID3D12Resource* staging = createCommittedResource(s_renderD3D12->m_device, HeapProperty::Upload, uint32_t(uploadBufferSize) );
+					ID3D12Resource* staging = createCommittedResource(s_renderD3D12->m_device, HeapProperty::Upload, uint32_t(uploadBufferSize) );
 
-				setState(commandList, D3D12_RESOURCE_STATE_COPY_DEST);
+					if (NULL != staging)
+					{
+						setState(commandList, D3D12_RESOURCE_STATE_COPY_DEST);
 
-				uint64_t result = updateSubresources(commandList
-					, m_ptr
-					, staging
-					, 0
-					, 0
-					, numSrd
-					, srd
-					);
-				BX_ASSERT(0 != result, "Invalid size"); BX_UNUSED(result);
-				BX_TRACE("Update subresource %" PRId64, result);
+						uint64_t result = updateSubresources(commandList
+							, m_ptr
+							, staging
+							, 0
+							, 0
+							, numSrd
+							, srd
+							);
+						BX_ASSERT(0 != result, "Invalid size"); BX_UNUSED(result);
+						BX_TRACE("Update subresource %" PRId64, result);
 
-				setState(commandList, state);
+						setState(commandList, state);
 
-				s_renderD3D12->m_cmd.release(staging);
-			}
-			else if (0 == _external)
-			{
-				setState(commandList, state);
+						s_renderD3D12->m_cmd.release(staging);
+					}
+				}
+				else if (0 == _external)
+				{
+					setState(commandList, state);
+				}
 			}
 
 			if (0 != kk)
@@ -7081,7 +7106,8 @@ namespace bgfx { namespace d3d12
 				}
 			}
 
-			if (needResolve)
+			if (NULL != m_ptr
+			&&  needResolve)
 			{
 				D3D12_RESOURCE_DESC rd = resourceDesc;
 
@@ -7098,7 +7124,8 @@ namespace bgfx { namespace d3d12
 				);
 			}
 
-			if (isVideoDecodeDst)
+			if (NULL != m_ptr
+			&&  isVideoDecodeDst)
 			{
 				BX_TRACE("TextureD3D12::create VIDEO_DECODE_DST imgSize=%u want=%zu"
 					, imageContainer.m_size, sizeof(VideoDecoderInit) );
@@ -7188,7 +7215,8 @@ namespace bgfx { namespace d3d12
 			void* ptr = NULL;
 			D3D12_RANGE readRange = { 0, 0 };
 
-			if (SUCCEEDED(zeroBuffer->Map(0, &readRange, &ptr) ) )
+			if (NULL != zeroBuffer
+			&&  SUCCEEDED(zeroBuffer->Map(0, &readRange, &ptr) ) )
 			{
 				bx::memSet(ptr, 0, kTextureZeroInitBudget);
 				zeroBuffer->Unmap(0, NULL);
@@ -7307,6 +7335,11 @@ namespace bgfx { namespace d3d12
 			return;
 		}
 
+		if (NULL == m_ptr)
+		{
+			return;
+		}
+
 		D3D12_RESOURCE_STATES state = setState(_commandList, D3D12_RESOURCE_STATE_COPY_DEST);
 
 		const uint32_t bpp    = bimg::getBitsPerPixel(bimg::TextureFormat::Enum(m_textureFormat) );
@@ -7393,6 +7426,19 @@ namespace bgfx { namespace d3d12
 		const uint32_t rowPitch = layout.Footprint.RowPitch;
 
 		ID3D12Resource* staging = createCommittedResource(s_renderD3D12->m_device, HeapProperty::Upload, totalBytes);
+
+		if (NULL == staging)
+		{
+			if (NULL != temp)
+			{
+				bx::free(g_allocator, temp);
+			}
+
+			setState(_commandList, state);
+
+			return;
+		}
+
 		uint8_t* dstData;
 
 		D3D12_RANGE readRange = { 0, 0 };
