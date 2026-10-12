@@ -77,7 +77,6 @@ namespace
 {
 	const uint32_t kMaxSubmitPerCall = 32;
 	const uint32_t kLookaheadFrames  = 10;
-	const int64_t  kSkipStepUs       = 8 * 1000000;
 	const float    kRateStepFactor   = 1.25892541f;
 	const float    kRateMin          = 0.1f;
 	const float    kRateMax          = 100.0f;
