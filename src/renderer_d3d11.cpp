@@ -597,7 +597,8 @@ namespace bgfx { namespace d3d11
 	template <typename Ty>
 	static BX_NO_INLINE void setDebugObjectName(Ty* _interface, const char* _format, ...)
 	{
-		if (BX_ENABLED(BGFX_CONFIG_DEBUG_OBJECT_NAME) )
+		if (BX_ENABLED(BGFX_CONFIG_DEBUG_OBJECT_NAME)
+		&&  NULL != _interface)
 		{
 			char temp[2048];
 			va_list argList;
