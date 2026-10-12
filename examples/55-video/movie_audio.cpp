@@ -11,6 +11,7 @@
 #include <mfreadwrite.h>
 #include <xaudio2.h>
 #include <wrl/client.h>
+#include <cstring>
 #include <vector>
 
 using Microsoft::WRL::ComPtr;
@@ -24,8 +25,15 @@ static HRESULT createXAudio2(IXAudio2** _engine)
 	{
 		return E_FAIL;
 	}
-	XAudio2CreateFn create = reinterpret_cast<XAudio2CreateFn>(GetProcAddress(module, "XAudio2Create") );
-	return NULL != create ? create(_engine, 0, XAUDIO2_DEFAULT_PROCESSOR) : E_FAIL;
+	FARPROC address = GetProcAddress(module, "XAudio2Create");
+	if (NULL == address)
+	{
+		return E_FAIL;
+	}
+	XAudio2CreateFn create = NULL;
+	static_assert(sizeof(create) == sizeof(address), "Function pointer sizes must match");
+	std::memcpy(&create, &address, sizeof(create));
+	return create(_engine, 0, XAUDIO2_DEFAULT_PROCESSOR);
 #else
 	return XAudio2Create(_engine, 0, XAUDIO2_DEFAULT_PROCESSOR);
 #endif
