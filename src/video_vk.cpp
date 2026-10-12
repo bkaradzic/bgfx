@@ -133,6 +133,7 @@ namespace bgfx { namespace vk
 		{
 			bx::memSet(m_referenceUsage, 0, sizeof(m_referenceUsage) );
 			bx::memSet(&m_spsActive, 0, sizeof(m_spsActive) );
+			bx::memSet(&m_picture, 0, sizeof(m_picture) );
 			bx::memSet(m_spsArray, 0, sizeof(m_spsArray) );
 			bx::memSet(m_ppsArray, 0, sizeof(m_ppsArray) );
 			bx::memSet(m_spsValid, 0, sizeof(m_spsValid) );
@@ -225,6 +226,7 @@ namespace bgfx { namespace vk
 			m_dstHeight = _height;
 			m_codedWidth = uint32_t(m_spsActive.pic_width_in_mbs_minus1 + 1) * 16;
 			m_codedHeight = uint32_t(m_spsActive.pic_height_in_map_units_minus1 + 1) * 16 * (m_spsActive.frame_mbs_only_flag ? 1 : 2);
+			m_picture = getPictureRect(m_spsActive);
 			m_numDpbSlots = bx::min<uint32_t>(bx::max<uint32_t>(uint32_t(m_spsActive.num_ref_frames) + 1, 2), kNumDpbSlots);
 
 			VkDevice device = s_videoVK.device;
@@ -1131,9 +1133,9 @@ namespace bgfx { namespace vk
 				&&  m_auQueue.minPts() < m_auQueue.maxPts()
 				   )
 				{
-					adjustedClock = bgfx::applyLoopWrap(adjustedClock, m_auQueue.minPts(), m_auQueue.maxPts() );
+					adjustedClock = bgfx::applyLoopWrap(adjustedClock, m_auQueue.minPts(), m_auQueue.maxPts(), m_auQueue.size() );
 
-					const bool poolCovers = bgfx::reorderPoolCovers(m_reorderPool, kVideoMaxReorderInFlight, adjustedClock, 500000);
+					const bool poolCovers = bgfx::reorderPoolCovers(m_auQueue, m_reorderPool, kVideoMaxReorderInFlight, adjustedClock);
 					const bool forwardCanCatchUp = true
 						&& !m_auQueue.empty()
 						&& m_auQueue.front().ptsUs <= adjustedClock + 500000
@@ -1150,10 +1152,8 @@ namespace bgfx { namespace vk
 							  {
 								  decodeOneAU(_bs, _bsSize, _pts);
 							  }
-							, [this]()
-							  {
-								  return bgfx::hasReorderSpace(m_reorderPool, kVideoMaxReorderInFlight);
-							  }
+							, m_reorderPool
+							, kVideoMaxReorderInFlight
 							);
 					}
 				}
@@ -1334,7 +1334,7 @@ namespace bgfx { namespace vk
 			h264::NALHeader  nal = {};
 			h264::SliceHeader sh = {};
 			bool isIdr = false;
-			if (!bgfx::parseSliceFromAccessUnit(m_spsArray, m_ppsArray, _bitstream, _bitstreamSize, nal, sh, isIdr) )
+			if (!bgfx::parseSliceFromAccessUnit(m_spsArray, m_ppsArray, _bitstream, _bitstreamSize, nal, sh, isIdr, m_spsValid, m_ppsValid) )
 			{
 				return false;
 			}
@@ -1924,19 +1924,21 @@ namespace bgfx { namespace vk
 			VkImage  srcImage = m_dpbCoincide ? m_dpbImage : m_decodeOutputImage;
 			uint32_t srcLayer = m_dpbCoincide ? m_currentSlot : 0;
 
-			const uint32_t reorderW = (m_dstWidth  + 1) & ~1u;
-			const uint32_t reorderH = (m_dstHeight + 1) & ~1u;
+			const uint32_t reorderW = m_picture.width;
+			const uint32_t reorderH = m_picture.height;
 
 			VkImageCopy cpy
 			{
 				.srcSubresource = { .aspectMask = VK_IMAGE_ASPECT_PLANE_0_BIT, .mipLevel = 0, .baseArrayLayer = srcLayer, .layerCount = 1 },
-				.srcOffset      = {},
+				.srcOffset      = { .x = int32_t(m_picture.x), .y = int32_t(m_picture.y), .z = 0 },
 				.dstSubresource = { .aspectMask = VK_IMAGE_ASPECT_PLANE_0_BIT, .mipLevel = 0, .baseArrayLayer = 0,        .layerCount = 1 },
 				.dstOffset      = {},
 				.extent         = { reorderW, reorderH, 1 },
 			};
 			vkCmdCopyImage(gfx, srcImage, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, reorder.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &cpy);
 
+			cpy.srcOffset.x   = int32_t(m_picture.x / 2);
+			cpy.srcOffset.y   = int32_t(m_picture.y / 2);
 			cpy.extent.width  = reorderW / 2;
 			cpy.extent.height = reorderH / 2;
 			cpy.srcSubresource.aspectMask = VK_IMAGE_ASPECT_PLANE_1_BIT;
@@ -2030,7 +2032,7 @@ namespace bgfx { namespace vk
 				.flags                 = VK_IMAGE_CREATE_MUTABLE_FORMAT_BIT,
 				.imageType             = VK_IMAGE_TYPE_2D,
 				.format                = VK_FORMAT_G8_B8R8_2PLANE_420_UNORM,
-				.extent                = { (m_dstWidth + 1) & ~1u, (m_dstHeight + 1) & ~1u, 1 },
+				.extent                = { m_picture.width, m_picture.height, 1 },
 				.mipLevels             = 1,
 				.arrayLayers           = 1,
 				.samples               = VK_SAMPLE_COUNT_1_BIT,
@@ -2669,6 +2671,8 @@ namespace bgfx { namespace vk
 
 		VkBuffer        m_yuvToRgbBuffer;
 		VkDeviceMemory  m_yuvToRgbBufferMemory;
+
+		VideoPictureRect m_picture;
 
 		VkCommandPool   m_videoCommandPool;
 		VkCommandBuffer m_videoCommandBuffer;

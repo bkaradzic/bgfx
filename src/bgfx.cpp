@@ -13,6 +13,10 @@
 
 #include "topology.h"
 
+#if BGFX_CONFIG_VIDEO
+#	include "video.h"
+#endif // BGFX_CONFIG_VIDEO
+
 #if BX_PLATFORM_OSX || BX_PLATFORM_IOS || BX_PLATFORM_VISIONOS
 #	include <objc/message.h>
 #elif BX_PLATFORM_WINDOWS
@@ -6524,6 +6528,55 @@ namespace bgfx
 			if (kVideoDecoderInitMagic == init.magic
 			&&  init.codec < VideoCodec::Count)
 			{
+				if (0 == (g_caps.supported & BGFX_CAPS_VIDEO_DECODE)
+				||  0 == g_caps.codecs[init.codec])
+				{
+					BX_WARN(false, "Video codec %d isn't supported by the renderer; video decoder not created.", init.codec);
+					release(_mem);
+
+					return BGFX_INVALID_HANDLE;
+				}
+
+#if BGFX_CONFIG_VIDEO
+				if (VideoCodec::H264 == init.codec)
+				{
+					h264::SPS sps = {};
+
+					bool valid = true
+						&& NULL != init.parameterSets
+						&& peekH264Sps(init.parameterSets, init.parameterSetsSize, sps)
+						&& isSpsInRange(sps)
+						;
+
+					if (valid)
+					{
+						const uint8_t chroma = 1 == sps.chroma_format_idc ? 0
+							: 2 == sps.chroma_format_idc ? 2
+							: 3 == sps.chroma_format_idc ? 4
+							: 1
+							;
+						const uint8_t  bitDepth    = uint8_t(8 + bx::max(sps.bit_depth_luma_minus8, sps.bit_depth_chroma_minus8) );
+						const uint32_t codedWidth  = uint32_t(sps.pic_width_in_mbs_minus1 + 1) * 16;
+						const uint32_t codedHeight = uint32_t(sps.pic_height_in_map_units_minus1 + 1) * 16 * (0 != sps.frame_mbs_only_flag ? 1 : 2);
+						const uint8_t  numRefs     = uint8_t(bx::clamp(sps.num_ref_frames, 0, 16) );
+
+						valid = true
+							&& codedWidth  <= UINT16_MAX
+							&& codedHeight <= UINT16_MAX
+							&& isVideoCodecValid(init.codec, chroma, bitDepth, uint16_t(codedWidth), uint16_t(codedHeight), numRefs + 1, numRefs)
+							;
+					}
+
+					if (!valid)
+					{
+						BX_WARN(false, "H.264 parameter sets describe a stream the renderer doesn't decode; video decoder not created.");
+						release(_mem);
+
+						return BGFX_INVALID_HANDLE;
+					}
+				}
+#endif // BGFX_CONFIG_VIDEO
+
 				flags |= BGFX_TEXTURE_INTERNAL_VIDEO_DECODE_DST;
 			}
 		}
