@@ -616,7 +616,9 @@ or _OPTIONS["with-combined-examples"] then
 		links { "l-smash" }
 		configuration { "vs20* or mingw*" }
 			defines { "WINVER=0x0a00", "_WIN32_WINNT=0x0a00" }
-			links { "comdlg32", "ole32", "mfplat", "mfreadwrite", "mfuuid", "xaudio2" }
+			links { "comdlg32", "ole32", "mfplat", "mfreadwrite", "mfuuid" }
+		configuration { "vs20*" }
+			links { "xaudio2" }
 		configuration {}
 
 	if premake.gcc.namestyle == nil or not premake.gcc.namestyle == "Emscripten" then

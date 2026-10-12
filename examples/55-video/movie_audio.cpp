@@ -15,6 +15,22 @@
 
 using Microsoft::WRL::ComPtr;
 
+static HRESULT createXAudio2(IXAudio2** _engine)
+{
+#if defined(__MINGW32__)
+	typedef HRESULT (WINAPI *XAudio2CreateFn)(IXAudio2**, UINT32, XAUDIO2_PROCESSOR);
+	static HMODULE module = LoadLibraryW(L"xaudio2_9.dll");
+	if (NULL == module)
+	{
+		return E_FAIL;
+	}
+	XAudio2CreateFn create = reinterpret_cast<XAudio2CreateFn>(GetProcAddress(module, "XAudio2Create") );
+	return NULL != create ? create(_engine, 0, XAUDIO2_DEFAULT_PROCESSOR) : E_FAIL;
+#else
+	return XAudio2Create(_engine, 0, XAUDIO2_DEFAULT_PROCESSOR);
+#endif
+}
+
 struct MovieAudio::Impl
 {
 	ComPtr<IMFSourceReader> reader;
@@ -164,7 +180,7 @@ bool MovieAudio::open(const char* _path)
 	||  FAILED(m_impl->reader->SetCurrentMediaType(DWORD(MF_SOURCE_READER_FIRST_AUDIO_STREAM), NULL, type.Get() ) )
 	||  FAILED(m_impl->reader->GetCurrentMediaType(DWORD(MF_SOURCE_READER_FIRST_AUDIO_STREAM), type.ReleaseAndGetAddressOf() ) )
 	||  FAILED(MFCreateWaveFormatExFromMFMediaType(type.Get(), &m_impl->format, &formatSize) )
-	||  FAILED(XAudio2Create(&m_impl->engine, 0, XAUDIO2_DEFAULT_PROCESSOR) )
+	||  FAILED(createXAudio2(&m_impl->engine) )
 	||  FAILED(m_impl->engine->CreateMasteringVoice(&m_impl->master) )
 	||  FAILED(m_impl->engine->CreateSourceVoice(&m_impl->voice, m_impl->format) )
 	||  !m_impl->fill()
