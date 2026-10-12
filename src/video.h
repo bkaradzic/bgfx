@@ -258,11 +258,6 @@ namespace bgfx
 		return poc;
 	}
 
-	inline bool isInRange(int32_t _value, int32_t _min, int32_t _max)
-	{
-		return _min <= _value && _value <= _max;
-	}
-
 	static constexpr int32_t kVideoMaxH264SizeInMbsMinus1 = 1023;
 
 	inline bool isDecodableProfile(int32_t _profileIdc)
@@ -278,17 +273,17 @@ namespace bgfx
 	{
 		return true
 			&& isDecodableProfile(_sps.profile_idc)
-			&& isInRange(_sps.seq_parameter_set_id,                  0, h264::MAX_SPS_ID)
-			&& isInRange(_sps.chroma_format_idc,                     0, h264::MAX_CHROMA_FORMAT_IDC)
-			&& isInRange(_sps.bit_depth_luma_minus8,                 0, h264::MAX_BIT_DEPTH_MINUS8)
-			&& isInRange(_sps.bit_depth_chroma_minus8,               0, h264::MAX_BIT_DEPTH_MINUS8)
-			&& isInRange(_sps.log2_max_frame_num_minus4,             0, h264::MAX_LOG2_MINUS4)
-			&& isInRange(_sps.pic_order_cnt_type,                    0, h264::MAX_PIC_ORDER_CNT_TYPE)
-			&& isInRange(_sps.log2_max_pic_order_cnt_lsb_minus4,     0, h264::MAX_LOG2_MINUS4)
-			&& isInRange(_sps.num_ref_frames_in_pic_order_cnt_cycle, 0, h264::MAX_NUM_REF_FRAMES_IN_PIC_ORDER_CNT_CYCLE)
-			&& isInRange(_sps.num_ref_frames,                        0, h264::MAX_NUM_REF_FRAMES)
-			&& isInRange(_sps.pic_width_in_mbs_minus1,               0, kVideoMaxH264SizeInMbsMinus1)
-			&& isInRange(_sps.pic_height_in_map_units_minus1,        0, kVideoMaxH264SizeInMbsMinus1)
+			&& bx::isInRange(_sps.seq_parameter_set_id,                  0, h264::MAX_SPS_ID)
+			&& bx::isInRange(_sps.chroma_format_idc,                     0, h264::MAX_CHROMA_FORMAT_IDC)
+			&& bx::isInRange(_sps.bit_depth_luma_minus8,                 0, h264::MAX_BIT_DEPTH_MINUS8)
+			&& bx::isInRange(_sps.bit_depth_chroma_minus8,               0, h264::MAX_BIT_DEPTH_MINUS8)
+			&& bx::isInRange(_sps.log2_max_frame_num_minus4,             0, h264::MAX_LOG2_MINUS4)
+			&& bx::isInRange(_sps.pic_order_cnt_type,                    0, h264::MAX_PIC_ORDER_CNT_TYPE)
+			&& bx::isInRange(_sps.log2_max_pic_order_cnt_lsb_minus4,     0, h264::MAX_LOG2_MINUS4)
+			&& bx::isInRange(_sps.num_ref_frames_in_pic_order_cnt_cycle, 0, h264::MAX_NUM_REF_FRAMES_IN_PIC_ORDER_CNT_CYCLE)
+			&& bx::isInRange(_sps.num_ref_frames,                        0, h264::MAX_NUM_REF_FRAMES)
+			&& bx::isInRange(_sps.pic_width_in_mbs_minus1,               0, kVideoMaxH264SizeInMbsMinus1)
+			&& bx::isInRange(_sps.pic_height_in_map_units_minus1,        0, kVideoMaxH264SizeInMbsMinus1)
 			;
 	}
 
@@ -298,16 +293,16 @@ namespace bgfx
 		const int32_t maxQpInit  = h264::MAX_QP - h264::PIC_INIT_QP;
 
 		return true
-			&& isInRange(_pps.pic_parameter_set_id,          0, h264::MAX_PPS_ID)
-			&& isInRange(_pps.seq_parameter_set_id,          0, h264::MAX_SPS_ID)
+			&& bx::isInRange(_pps.pic_parameter_set_id,          0, h264::MAX_PPS_ID)
+			&& bx::isInRange(_pps.seq_parameter_set_id,          0, h264::MAX_SPS_ID)
 			&& 0 == _pps.num_slice_groups_minus1
-			&& isInRange(_pps.num_ref_idx_l0_active_minus1,  0, h264::MAX_NUM_REF_IDX_ACTIVE_MINUS1)
-			&& isInRange(_pps.num_ref_idx_l1_active_minus1,  0, h264::MAX_NUM_REF_IDX_ACTIVE_MINUS1)
-			&& isInRange(_pps.weighted_bipred_idc,           0, h264::MAX_WEIGHTED_BIPRED_IDC)
-			&& isInRange(_pps.pic_init_qp_minus26,           -h264::PIC_INIT_QP - qpBdOffset,    maxQpInit)
-			&& isInRange(_pps.pic_init_qs_minus26,           -h264::PIC_INIT_QP,                 maxQpInit)
-			&& isInRange(_pps.chroma_qp_index_offset,        -h264::MAX_CHROMA_QP_INDEX_OFFSET, h264::MAX_CHROMA_QP_INDEX_OFFSET)
-			&& isInRange(_pps.second_chroma_qp_index_offset, -h264::MAX_CHROMA_QP_INDEX_OFFSET, h264::MAX_CHROMA_QP_INDEX_OFFSET)
+			&& bx::isInRange(_pps.num_ref_idx_l0_active_minus1,  0, h264::MAX_NUM_REF_IDX_ACTIVE_MINUS1)
+			&& bx::isInRange(_pps.num_ref_idx_l1_active_minus1,  0, h264::MAX_NUM_REF_IDX_ACTIVE_MINUS1)
+			&& bx::isInRange(_pps.weighted_bipred_idc,           0, h264::MAX_WEIGHTED_BIPRED_IDC)
+			&& bx::isInRange(_pps.pic_init_qp_minus26,           -h264::PIC_INIT_QP - qpBdOffset,    maxQpInit)
+			&& bx::isInRange(_pps.pic_init_qs_minus26,           -h264::PIC_INIT_QP,                 maxQpInit)
+			&& bx::isInRange(_pps.chroma_qp_index_offset,        -h264::MAX_CHROMA_QP_INDEX_OFFSET, h264::MAX_CHROMA_QP_INDEX_OFFSET)
+			&& bx::isInRange(_pps.second_chroma_qp_index_offset, -h264::MAX_CHROMA_QP_INDEX_OFFSET, h264::MAX_CHROMA_QP_INDEX_OFFSET)
 			;
 	}
 
@@ -320,17 +315,17 @@ namespace bgfx
 		const int32_t mbaff        = 0 != _sps.mb_adaptive_frame_field_flag && 0 == _sh.field_pic_flag ? 1 : 0;
 
 		return true
-			&& isInRange(_sh.first_mb_in_slice * (1 + mbaff), 0,           picSizeInMbs - 1)
-			&& isInRange(_sh.slice_type,                      0,           h264::MAX_SLICE_TYPE)
-			&& isInRange(sliceQp,                             -qpBdOffset, h264::MAX_QP)
-			&& isInRange(_sh.num_ref_idx_l0_active_minus1,    0,           h264::MAX_NUM_REF_IDX_ACTIVE_MINUS1)
-			&& isInRange(_sh.num_ref_idx_l1_active_minus1,    0,           h264::MAX_NUM_REF_IDX_ACTIVE_MINUS1)
-			&& isInRange(_sh.cabac_init_idc,                  0,           h264::MAX_CABAC_INIT_IDC)
-			&& isInRange(_sh.disable_deblocking_filter_idc,   0,           h264::MAX_DISABLE_DEBLOCKING_FILTER_IDC)
-			&& isInRange(_sh.slice_alpha_c0_offset_div2,      -h264::MAX_DEBLOCKING_OFFSET_DIV2, h264::MAX_DEBLOCKING_OFFSET_DIV2)
-			&& isInRange(_sh.slice_beta_offset_div2,          -h264::MAX_DEBLOCKING_OFFSET_DIV2, h264::MAX_DEBLOCKING_OFFSET_DIV2)
-			&& isInRange(_sh.idr_pic_id,                      0,           h264::MAX_IDR_PIC_ID)
-			&& isInRange(_sh.redundant_pic_cnt,               0,           h264::MAX_REDUNDANT_PIC_CNT)
+			&& bx::isInRange(_sh.first_mb_in_slice * (1 + mbaff), 0,           picSizeInMbs - 1)
+			&& bx::isInRange(_sh.slice_type,                      0,           h264::MAX_SLICE_TYPE)
+			&& bx::isInRange(sliceQp,                             -qpBdOffset, h264::MAX_QP)
+			&& bx::isInRange(_sh.num_ref_idx_l0_active_minus1,    0,           h264::MAX_NUM_REF_IDX_ACTIVE_MINUS1)
+			&& bx::isInRange(_sh.num_ref_idx_l1_active_minus1,    0,           h264::MAX_NUM_REF_IDX_ACTIVE_MINUS1)
+			&& bx::isInRange(_sh.cabac_init_idc,                  0,           h264::MAX_CABAC_INIT_IDC)
+			&& bx::isInRange(_sh.disable_deblocking_filter_idc,   0,           h264::MAX_DISABLE_DEBLOCKING_FILTER_IDC)
+			&& bx::isInRange(_sh.slice_alpha_c0_offset_div2,      -h264::MAX_DEBLOCKING_OFFSET_DIV2, h264::MAX_DEBLOCKING_OFFSET_DIV2)
+			&& bx::isInRange(_sh.slice_beta_offset_div2,          -h264::MAX_DEBLOCKING_OFFSET_DIV2, h264::MAX_DEBLOCKING_OFFSET_DIV2)
+			&& bx::isInRange(_sh.idr_pic_id,                      0,           h264::MAX_IDR_PIC_ID)
+			&& bx::isInRange(_sh.redundant_pic_cnt,               0,           h264::MAX_REDUNDANT_PIC_CNT)
 			;
 	}
 
@@ -434,7 +429,7 @@ namespace bgfx
 				h264::PPS pps = {};
 				h264::read_pps(&pps, &nalBs);
 
-				if (isInRange(pps.seq_parameter_set_id, 0, int32_t(_spsArrayLen) - 1)
+				if (bx::isInRange(pps.seq_parameter_set_id, 0, int32_t(_spsArrayLen) - 1)
 				&&  isPpsInRange(pps, _spsArray[pps.seq_parameter_set_id])
 				&&  pps.pic_parameter_set_id < (int)_ppsArrayLen)
 				{
