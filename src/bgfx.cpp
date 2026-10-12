@@ -2967,8 +2967,121 @@ namespace bgfx
 		m_submit->collectUsedViews();
 	}
 
+	void Context::patchMovedDynamicBuffers()
+	{
+		if (m_dynamicVertexBufferMoves.empty()
+		&&  m_dynamicIndexBufferMoves.empty() )
+		{
+			return;
+		}
+
+		const FrameArenaT<uint64_t, kDrawCallBlock>& submitKeys = m_submit->m_submitKeys;
+
+		for (uint32_t ii = 0, num = m_submit->m_numRenderItems; ii < num; ++ii)
+		{
+			if (0 == (submitKeys[ii] & kSortKeyDrawBit) )
+			{
+				continue;
+			}
+
+			RenderDraw& draw = m_submit->m_renderItem[ii].draw;
+
+			for (const DynamicBufferMove& move : m_dynamicVertexBufferMoves)
+			{
+				if (UINT32_MAX != draw.m_streamMask)
+				{
+					for (BitMaskToIndexIteratorT it(draw.m_streamMask); !it.isDone(); it.next() )
+					{
+						Stream& stream = draw.m_stream[it.idx];
+
+						if (move.handle == stream.m_handle.idx
+						&&  isValid(stream.m_layoutHandle) )
+						{
+							const uint32_t stride = m_vertexLayoutRef.m_stride[stream.m_layoutHandle.idx];
+							const uint32_t offset = stream.m_startVertex*stride;
+
+							if (move.contains(offset) )
+							{
+								stream.m_handle.idx  = move.newHandle;
+								stream.m_startVertex = (offset - move.offset + move.newOffset)/stride;
+							}
+						}
+					}
+				}
+
+				if (move.handle == draw.m_instanceDataBuffer.idx
+				&&  move.contains(draw.m_instanceDataOffset) )
+				{
+					draw.m_instanceDataBuffer.idx = move.newHandle;
+					draw.m_instanceDataOffset     = draw.m_instanceDataOffset - move.offset + move.newOffset;
+				}
+			}
+
+			const uint32_t indexSize = 0 == (draw.m_submitFlags & BGFX_SUBMIT_INTERNAL_INDEX32) ? 2 : 4;
+
+			for (const DynamicBufferMove& move : m_dynamicIndexBufferMoves)
+			{
+				const uint32_t offset = draw.m_startIndex*indexSize;
+
+				if (move.handle == draw.m_indexBuffer.idx
+				&&  move.contains(offset) )
+				{
+					draw.m_indexBuffer.idx = move.newHandle;
+					draw.m_startIndex      = (offset - move.offset + move.newOffset)/indexSize;
+				}
+			}
+		}
+
+		for (uint32_t ii = 0, num = m_submit->m_numRenderBinds; ii < num; ++ii)
+		{
+			RenderBind& renderBind = m_submit->m_renderBind[ii];
+
+			for (uint32_t stage = 0; stage < BX_COUNTOF(renderBind.m_bind); ++stage)
+			{
+				Binding& bind = renderBind.m_bind[stage];
+
+				const stl::vector<DynamicBufferMove>* moves = Binding::VertexBuffer == bind.m_type
+					? &m_dynamicVertexBufferMoves
+					: Binding::IndexBuffer == bind.m_type
+					? &m_dynamicIndexBufferMoves
+					: NULL
+					;
+
+				if (NULL == moves)
+				{
+					continue;
+				}
+
+				for (const DynamicBufferMove& move : *moves)
+				{
+					if (move.dedicated
+					&&  move.handle == bind.m_idx)
+					{
+						bind.m_idx = move.newHandle;
+					}
+				}
+			}
+		}
+
+		for (const DynamicVertexBuffer& dvb : m_movedDynamicVertexBuffers)
+		{
+			destroy(dvb);
+		}
+
+		for (const DynamicIndexBuffer& dib : m_movedDynamicIndexBuffers)
+		{
+			destroy(dib);
+		}
+
+		m_dynamicVertexBufferMoves.clear();
+		m_dynamicIndexBufferMoves.clear();
+		m_movedDynamicVertexBuffers.clear();
+		m_movedDynamicIndexBuffers.clear();
+	}
+
 	void Context::swap()
 	{
+		patchMovedDynamicBuffers();
 		freeDynamicBuffers();
 		m_submit->m_mainSwapChain = m_init.swapChain;
 		m_submit->m_reset         = m_init.reset;
