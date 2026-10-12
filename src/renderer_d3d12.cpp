@@ -4739,7 +4739,12 @@ namespace bgfx { namespace d3d12
 			, (void**)&heap
 			) );
 
-		DX_RELEASE(m_heap, 0);
+		if (NULL != m_heap)
+		{
+			BX_TRACE("D3D12 scratch heap grow: retired=%p size=%u replacement=%p size=%u queue=%u"
+				, m_heap, m_size, heap, _num, s_renderD3D12->m_cmd.m_control.m_current);
+			s_renderD3D12->m_cmd.release(m_heap);
+		}
 		m_heap = heap;
 		m_size = _num;
 		m_cpuHandleStart = getCPUHandleHeapStart(m_heap);
@@ -5564,7 +5569,7 @@ namespace bgfx { namespace d3d12
 		return false;
 	}
 
-	void CommandQueueD3D12::release(ID3D12Resource* _ptr)
+	void CommandQueueD3D12::release(IUnknown* _ptr)
 	{
 		m_release[m_control.m_current].push_back(_ptr);
 	}
