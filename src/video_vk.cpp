@@ -308,6 +308,11 @@ namespace bgfx { namespace vk
 			const uint32_t alignedW = (m_codedWidth  + granularity.width  - 1) / granularity.width  * granularity.width;
 			const uint32_t alignedH = (m_codedHeight + granularity.height - 1) / granularity.height * granularity.height;
 
+			const VkExtent2D maxCodedExtent = BGFX_PCI_ID_NVIDIA == s_videoVK.vendorId
+				? videoCaps.maxCodedExtent
+				: VkExtent2D{ .width = alignedW, .height = alignedH }
+				;
+
 			VkVideoSessionCreateInfoKHR sessionCi
 			{
 				.sType                      = VK_STRUCTURE_TYPE_VIDEO_SESSION_CREATE_INFO_KHR,
@@ -316,7 +321,7 @@ namespace bgfx { namespace vk
 				.flags                      = 0,
 				.pVideoProfile              = &m_videoProfile,
 				.pictureFormat              = VK_FORMAT_G8_B8R8_2PLANE_420_UNORM,
-				.maxCodedExtent             = { .width = alignedW, .height = alignedH },
+				.maxCodedExtent             = maxCodedExtent,
 				.referencePictureFormat     = VK_FORMAT_G8_B8R8_2PLANE_420_UNORM,
 				.maxDpbSlots                = m_numDpbSlots,
 				.maxActiveReferencePictures = bx::min<uint32_t>(uint32_t(m_spsActive.num_ref_frames) * 2, m_maxActiveRefs),
@@ -1370,10 +1375,6 @@ namespace bgfx { namespace vk
 				);
 			m_nextSlot = (m_currentSlot + 1) % m_numDpbSlots;
 
-			const uint32_t slot = bgfx::pickReorderSlotOrEvictOldest(m_reorderPool, kVideoMaxReorderInFlight);
-			m_reorderPool[slot].displayOrder = m_displayOrderNext++;
-			m_reorderPool[slot].ptsUs = _ptsUs;
-
 			const bool isIntra = false
 				|| isIdr
 				|| sh.slice_type == 2
@@ -1401,7 +1402,6 @@ namespace bgfx { namespace vk
 			VkDevice device = s_videoVK.device;
 
 			vkWaitForFences(device, 1, &m_videoFence, VK_TRUE, UINT64_MAX);
-			vkResetFences(device, 1, &m_videoFence);
 			vkResetCommandPool(device, m_videoCommandPool, 0);
 
 			if (m_haveCopyInFlight)
@@ -1803,7 +1803,13 @@ namespace bgfx { namespace vk
 					, 0, 0, NULL, 0, NULL, 1, &post);
 			}
 
-			vkEndCommandBuffer(m_videoCommandBuffer);
+			const VkResult eres = vkEndCommandBuffer(m_videoCommandBuffer);
+
+			if (VK_SUCCESS != eres)
+			{
+				BX_TRACE("VideoDecoderVK: vkEndCommandBuffer(video) failed (%d).", eres);
+				return false;
+			}
 
 			VkSubmitInfo submit
 			{
@@ -1818,6 +1824,7 @@ namespace bgfx { namespace vk
 				.pSignalSemaphores    = &m_videoSemaphoreRing[ringIdx],
 			};
 
+			vkResetFences(device, 1, &m_videoFence);
 			const VkResult sres = vkQueueSubmit(s_videoVK.videoDecodeQueue, 1, &submit, m_videoFence);
 
 			if (VK_SUCCESS != sres)
@@ -1869,6 +1876,10 @@ namespace bgfx { namespace vk
 			}
 
 			m_firstDecode = false;
+
+			const uint32_t slot = bgfx::pickReorderSlotOrEvictOldest(m_reorderPool, kVideoMaxReorderInFlight);
+			m_reorderPool[slot].displayOrder = m_displayOrderNext++;
+			m_reorderPool[slot].ptsUs = _ptsUs;
 
 			if (!createReorderImage(uint32_t(slot) ) )
 			{
