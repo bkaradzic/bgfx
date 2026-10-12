@@ -6574,7 +6574,8 @@ namespace bgfx
 			if (dib.m_size < _mem->size
 			&&  0 != (dib.m_flags & BGFX_BUFFER_ALLOW_RESIZE) )
 			{
-				destroy(dib);
+				const DynamicIndexBuffer old = dib;
+				m_movedDynamicIndexBuffers.push_back(old);
 
 				const uint64_t ptr = (0 != (dib.m_flags & BGFX_BUFFER_COMPUTE_READ) )
 					? allocIndexBuffer(_mem->size, dib.m_flags)
@@ -6585,6 +6586,18 @@ namespace bgfx
 				dib.m_offset     = uint32_t(ptr);
 				dib.m_size       = _mem->size;
 				dib.m_startIndex = bx::strideAlign(dib.m_offset, indexSize)/indexSize;
+
+				const uint32_t oldOffset = old.m_startIndex*indexSize;
+
+				m_dynamicIndexBufferMoves.push_back(
+				{
+					.offset    = oldOffset,
+					.size      = old.m_offset + old.m_size - oldOffset,
+					.newOffset = dib.m_startIndex*indexSize,
+					.handle    = old.m_handle.idx,
+					.newHandle = dib.m_handle.idx,
+					.dedicated = 0 != (old.m_flags & BGFX_BUFFER_COMPUTE_READ_WRITE),
+				});
 			}
 
 			const uint32_t offset = (dib.m_startIndex + _startIndex)*indexSize;
@@ -6771,7 +6784,8 @@ namespace bgfx
 			if (dvb.m_size < _mem->size
 			&&  0 != (dvb.m_flags & BGFX_BUFFER_ALLOW_RESIZE) )
 			{
-				destroy(dvb);
+				const DynamicVertexBuffer old = dvb;
+				m_movedDynamicVertexBuffers.push_back(old);
 
 				const uint32_t size = bx::strideAlign<16>(_mem->size, dvb.m_stride)+dvb.m_stride;
 
@@ -6785,6 +6799,18 @@ namespace bgfx
 				dvb.m_size        = size;
 				dvb.m_numVertices = _mem->size / dvb.m_stride;
 				dvb.m_startVertex = bx::strideAlign(dvb.m_offset, dvb.m_stride)/dvb.m_stride;
+
+				const uint32_t oldOffset = old.m_startVertex*old.m_stride;
+
+				m_dynamicVertexBufferMoves.push_back(
+				{
+					.offset    = oldOffset,
+					.size      = old.m_offset + old.m_size - oldOffset,
+					.newOffset = dvb.m_startVertex*dvb.m_stride,
+					.handle    = old.m_handle.idx,
+					.newHandle = dvb.m_handle.idx,
+					.dedicated = 0 != (old.m_flags & BGFX_BUFFER_COMPUTE_READ_WRITE),
+				});
 			}
 
 			const uint32_t offset = (dvb.m_startVertex + _startVertex)*dvb.m_stride;
@@ -8559,6 +8585,7 @@ namespace bgfx
 		BGFX_API_FUNC(uint32_t frame(uint8_t _flags = BGFX_FRAME_NONE) );
 
 		void dumpViewStats();
+		void patchMovedDynamicBuffers();
 		void freeDynamicBuffers();
 		void freeAllHandles(Frame* _frame);
 		void frameNoRenderWait();
@@ -8721,8 +8748,29 @@ namespace bgfx
 		uint16_t m_numNewOcclusionQueryHandles;
 		FreeHandle<DynamicIndexBufferHandle,  BGFX_CONFIG_MAX_DYNAMIC_INDEX_BUFFERS>  m_freeDynamicIndexBuffer;
 		FreeHandle<DynamicVertexBufferHandle, BGFX_CONFIG_MAX_DYNAMIC_VERTEX_BUFFERS> m_freeDynamicVertexBuffer;
-		OcclusionQueryHandle      m_freeOcclusionQueryHandle[BGFX_CONFIG_MAX_OCCLUSION_QUERIES];
-		OcclusionQueryHandle      m_newOcclusionQueryHandle[BGFX_CONFIG_MAX_OCCLUSION_QUERIES];
+
+		struct DynamicBufferMove
+		{
+			bool contains(uint32_t _offset) const
+			{
+				return _offset - offset < size;
+			}
+
+			uint32_t offset;
+			uint32_t size;
+			uint32_t newOffset;
+			uint16_t handle;
+			uint16_t newHandle;
+			bool     dedicated;
+		};
+
+		stl::vector<DynamicBufferMove>   m_dynamicVertexBufferMoves;
+		stl::vector<DynamicBufferMove>   m_dynamicIndexBufferMoves;
+		stl::vector<DynamicVertexBuffer> m_movedDynamicVertexBuffers;
+		stl::vector<DynamicIndexBuffer>  m_movedDynamicIndexBuffers;
+
+		OcclusionQueryHandle m_freeOcclusionQueryHandle[BGFX_CONFIG_MAX_OCCLUSION_QUERIES];
+		OcclusionQueryHandle m_newOcclusionQueryHandle[BGFX_CONFIG_MAX_OCCLUSION_QUERIES];
 
 		NonLocalAllocator m_dynIndexBufferAllocator;
 		bx::HandleAlloc2T<BGFX_CONFIG_MAX_DYNAMIC_INDEX_BUFFERS> m_dynamicIndexBufferHandle;
