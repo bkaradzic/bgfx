@@ -7,8 +7,6 @@
 
 #if SHADERC_CONFIG_HAS_TINT && SHADERC_CONFIG_HAS_GLSLANG
 
-#include <iostream> // std::cout
-
 BX_PRAGMA_DIAGNOSTIC_PUSH()
 BX_PRAGMA_DIAGNOSTIC_IGNORED_MSVC(4100) // error C4100: 'inclusionDepth' : unreferenced formal parameter
 BX_PRAGMA_DIAGNOSTIC_IGNORED_MSVC(4265) // error C4265: 'spv::spirvbin_t': class has virtual functions, but destructor is not virtual
@@ -190,15 +188,24 @@ namespace bgfx { namespace wgsl
 		return bgfx::TextureComponentType::Float;
 	}
 
-	bgfx::TextureDimension::Enum spirvDimToTextureViewDimension(spv::Dim _dim, bool _textureArray)
+	bgfx::TextureDimension::Enum spirvDimToTextureViewDimension(spv::Dim _dim, bool _textureArray, bool _multisampled)
 	{
 		switch (_dim)
 		{
 		case spv::Dim::Dim1D: return bgfx::TextureDimension::Dimension1D;
-		case spv::Dim::Dim2D: return _textureArray
-			? bgfx::TextureDimension::Dimension2DArray
-			: bgfx::TextureDimension::Dimension2D
-			;
+		case spv::Dim::Dim2D:
+			if (_multisampled)
+			{
+				return _textureArray
+					? bgfx::TextureDimension::Dimension2DMSArray
+					: bgfx::TextureDimension::Dimension2DMS
+					;
+			}
+
+			return _textureArray
+				? bgfx::TextureDimension::Dimension2DArray
+				: bgfx::TextureDimension::Dimension2D
+				;
 		case spv::Dim::Dim3D: return bgfx::TextureDimension::Dimension3D;
 
 		case spv::Dim::DimCube: return _textureArray
@@ -831,7 +838,7 @@ namespace bgfx { namespace wgsl
 									);
 
 							un.texComponent = textureComponentTypeToId(spirvCrossBaseTypeToFormatType(componentType, imageType.depth) );
-							un.texDimension = textureDimensionToId(spirvDimToTextureViewDimension(imageType.dim, imageType.arrayed) );
+							un.texDimension = textureDimensionToId(spirvDimToTextureViewDimension(imageType.dim, imageType.arrayed, imageType.ms) );
 							un.texFormat    = uint16_t(s_textureFormats[imageType.format]);
 
 							un.regIndex = uint16_t(binding_index);
@@ -861,7 +868,7 @@ namespace bgfx { namespace wgsl
 							un.type = type;
 
 							un.texComponent = textureComponentTypeToId(spirvCrossBaseTypeToFormatType(componentType, imageType.depth) );
-							un.texDimension = textureDimensionToId(spirvDimToTextureViewDimension(imageType.dim, imageType.arrayed) );
+							un.texDimension = textureDimensionToId(spirvDimToTextureViewDimension(imageType.dim, imageType.arrayed, imageType.ms) );
 							un.texFormat = uint16_t(s_textureFormats[imageType.format]);
 							un.texFormat |= 0
 								| (spv::AccessQualifierReadOnly  == imageType.access ? kAccessRead  : 0)

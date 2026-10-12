@@ -475,6 +475,9 @@ namespace bgfx
 #include "fs_clear5.bin.h"
 #include "fs_clear6.bin.h"
 #include "fs_clear7.bin.h"
+#include "vs_resolve_depth.bin.h"
+#include "fs_resolve_depth.bin.h"
+#include "fs_resolve_depth_array.bin.h"
 
 #if BGFX_CONFIG_MIP_GEN_FALLBACK
 #	include "cs_mipgen_pow2.bin.h"
@@ -508,6 +511,9 @@ namespace bgfx
 		BGFX_EMBEDDED_SHADER(fs_clear5),
 		BGFX_EMBEDDED_SHADER(fs_clear6),
 		BGFX_EMBEDDED_SHADER(fs_clear7),
+		BGFX_EMBEDDED_SHADER(vs_resolve_depth),
+		BGFX_EMBEDDED_SHADER(fs_resolve_depth),
+		BGFX_EMBEDDED_SHADER(fs_resolve_depth_array),
 
 #if BGFX_CONFIG_MIP_GEN_FALLBACK
 		BGFX_EMBEDDED_SHADER(cs_mipgen_pow2),
@@ -1134,6 +1140,57 @@ namespace bgfx
 	{
 	}
 #endif // BGFX_CONFIG_BLIT_FALLBACK
+
+	DepthResolve* g_depthResolve = NULL;
+
+	void DepthResolve::init()
+	{
+		BGFX_CHECK_API_THREAD();
+
+		const RendererType::Enum rendererType = g_caps.rendererType;
+
+		if (false
+		||  RendererType::Direct3D11 == rendererType
+		||  RendererType::Direct3D12 == rendererType
+		||  RendererType::Vulkan     == rendererType
+		||  RendererType::WebGPU     == rendererType
+		   )
+		{
+			static const char* fs_resolve_depth[] =
+			{
+				"fs_resolve_depth",
+				"fs_resolve_depth_array",
+			};
+
+			for (uint32_t ii = 0; ii < BX_COUNTOF(m_program); ++ii)
+			{
+				ShaderHandle vsh = createEmbeddedShader(s_embeddedShaders, rendererType, "vs_resolve_depth");
+				ShaderHandle fsh = createEmbeddedShader(s_embeddedShaders, rendererType, fs_resolve_depth[ii]);
+				BX_ASSERT(isValid(vsh) && isValid(fsh), "Failed to create depth resolve embedded shader \"%s\"", fs_resolve_depth[ii]);
+
+				m_program[ii] = createProgram(vsh, fsh, true);
+				BX_ASSERT(isValid(m_program[ii]), "Failed to create depth resolve program.");
+			}
+
+			g_depthResolve = this;
+		}
+	}
+
+	void DepthResolve::shutdown()
+	{
+		BGFX_CHECK_API_THREAD();
+
+		g_depthResolve = NULL;
+
+		for (uint32_t ii = 0; ii < BX_COUNTOF(m_program); ++ii)
+		{
+			if (isValid(m_program[ii]) )
+			{
+				destroy(m_program[ii]);
+				m_program[ii] = BGFX_INVALID_HANDLE;
+			}
+		}
+	}
 
 #if BGFX_CONFIG_VIDEO
 	VideoDecode* g_videoDecode = NULL;
@@ -2590,6 +2647,7 @@ namespace bgfx
 		m_clearQuad.init();
 		m_mipGen.init();
 		m_blitFallback.init();
+		m_depthResolve.init();
 		m_videoDecode.init();
 
 		m_submit->m_transientVb = createTransientVertexBuffer(_init.limits.maxTransientVbSize);
@@ -2628,6 +2686,7 @@ namespace bgfx
 		m_textVideoMemBlitter.shutdown();
 		m_clearQuad.shutdown();
 		m_mipGen.shutdown();
+		m_depthResolve.shutdown();
 		m_blitFallback.shutdown();
 		m_videoDecode.shutdown();
 		frame();
@@ -6075,19 +6134,6 @@ namespace bgfx
 			if (bimg::isDepth(bimg::TextureFormat::Enum(tr.m_format) ) )
 			{
 				++depth;
-
-				BGFX_ERROR_CHECK(
-					// if BGFX_TEXTURE_RT_MSAA_X2 or greater than either BGFX_TEXTURE_RT_WRITE_ONLY or BGFX_TEXTURE_MSAA_SAMPLE is required
-					// if BGFX_TEXTURE_RT with no MSSA then this is not required.
-					   (1 == ( (tr.m_flags & BGFX_TEXTURE_RT_MSAA_MASK) >> BGFX_TEXTURE_RT_MSAA_SHIFT) )
-					|| (0 !=   (tr.m_flags & (BGFX_TEXTURE_RT_WRITE_ONLY | BGFX_TEXTURE_MSAA_SAMPLE) ) )
-					, _err
-					, BGFX_ERROR_FRAME_BUFFER_VALIDATION
-					, "Frame buffer depth MSAA texture cannot be resolved. It must be created with either `BGFX_TEXTURE_RT_WRITE_ONLY` or `BGFX_TEXTURE_MSAA_SAMPLE` flag."
-					, "Attachment %d, texture flags 0x%016" PRIx64 "."
-					, ii
-					, tr.m_flags
-					);
 
 				BGFX_ERROR_CHECK(
 					0 == (at.flags & BGFX_ATTACHMENT_AUTO_GEN_MIPS)

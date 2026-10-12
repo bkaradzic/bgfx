@@ -537,6 +537,7 @@ VK_DESTROY_FUNC(DescriptorSet);
 	struct TextureBindInfo
 	{
 		VkImageViewType type;
+		bool msaa;
 	};
 
 	struct ShaderVK
@@ -601,6 +602,7 @@ VK_DESTROY_FUNC(DescriptorSet);
 
 		TextureBindInfo m_textures[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS];
 		uint8_t m_numTextures;
+		uint32_t m_msaaMask;
 
 		PredefinedUniform m_predefined[PredefinedUniform::Count * 2];
 		uint8_t m_numPredefined;
@@ -733,7 +735,7 @@ VK_DESTROY_FUNC(DescriptorSet);
 		void copyBufferToTexture(VkCommandBuffer _commandBuffer, VkBuffer _stagingBuffer, uint32_t _bufferImageCopyCount, VkBufferImageCopy* _bufferImageCopy);
 		void setState(VkCommandBuffer _commandBuffer, VkImageLayout _newImageLayout, bool _singleMsaaImage = false);
 
-		VkResult createView(uint32_t _layer, uint32_t _numLayers, uint32_t _mip, uint32_t _numMips, VkImageViewType _type, VkImageAspectFlags _aspectMask, bool _renderTarget, ::VkImageView* _view, VkFormat _format = VK_FORMAT_UNDEFINED) const;
+		VkResult createView(uint32_t _layer, uint32_t _numLayers, uint32_t _mip, uint32_t _numMips, VkImageViewType _type, VkImageAspectFlags _aspectMask, bool _renderTarget, ::VkImageView* _view, VkFormat _format = VK_FORMAT_UNDEFINED, bool _msaa = false) const;
 
 		VkFormat getViewFormat(uint32_t _flags, uint32_t _bit) const;
 

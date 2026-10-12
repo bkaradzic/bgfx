@@ -27,6 +27,9 @@ BIN = vs_debugfont.bin.h \
 	  cs_yuv_to_rgb_float.bin.h \
 	  cs_blit_texture_to_buffer.bin.h \
 	  cs_blit_buffer_to_texture.bin.h \
+	  vs_resolve_depth.bin.h \
+	  fs_resolve_depth.bin.h \
+	  fs_resolve_depth_array.bin.h \
 
 .PHONY: all
 all: $(BIN)
@@ -127,6 +130,15 @@ cs_blit_texture_to_buffer.bin.h : cs_blit_texture_to_buffer.sc
 
 cs_blit_buffer_to_texture.bin.h : cs_blit_buffer_to_texture.sc
 	$(call shader-embedded-compute)
+
+vs_resolve_depth.bin.h : vs_resolve_depth.sc
+	$(call shader-embedded, v)
+
+fs_resolve_depth.bin.h : fs_resolve_depth.sc
+	$(call shader-embedded, f)
+
+fs_resolve_depth_array.bin.h : fs_resolve_depth_array.sc
+	$(call shader-embedded, f)
 
 .PHONY: clean
 clean:

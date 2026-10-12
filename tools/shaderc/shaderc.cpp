@@ -14,7 +14,7 @@
 #include <tinystl/vector.h>
 namespace stl = tinystl;
 
-#define BGFX_SHADER_BIN_VERSION 12
+#define BGFX_SHADER_BIN_VERSION 13
 #define BGFX_CHUNK_MAGIC_CSH BX_MAKEFOURCC('C', 'S', 'H', BGFX_SHADER_BIN_VERSION)
 #define BGFX_CHUNK_MAGIC_FSH BX_MAKEFOURCC('F', 'S', 'H', BGFX_SHADER_BIN_VERSION)
 #define BGFX_CHUNK_MAGIC_VSH BX_MAKEFOURCC('V', 'S', 'H', BGFX_SHADER_BIN_VERSION)
@@ -399,7 +399,7 @@ namespace bgfx
 		return UniformType::Count;
 	}
 
-	uint8_t spirvDimToTextureDimensionId(uint32_t _dim, bool _arrayed)
+	uint8_t spirvDimToTextureDimensionId(uint32_t _dim, bool _arrayed, bool _multisampled)
 	{
 		switch (_dim)
 		{
@@ -407,6 +407,14 @@ namespace bgfx
 			return textureDimensionToId(TextureDimension::Dimension1D);
 
 		case 1: // spv::Dim::Dim2D
+			if (_multisampled)
+			{
+				return textureDimensionToId(_arrayed
+					? TextureDimension::Dimension2DMSArray
+					: TextureDimension::Dimension2DMS
+					);
+			}
+
 			return textureDimensionToId(_arrayed
 				? TextureDimension::Dimension2DArray
 				: TextureDimension::Dimension2D
@@ -425,7 +433,7 @@ namespace bgfx
 			break;
 		}
 
-		return textureDimensionToId(TextureDimension::Count);
+		return 0;
 	}
 
 	int32_t writef(bx::WriterI* _writer, const char* _format, ...)

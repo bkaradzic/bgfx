@@ -662,7 +662,7 @@ namespace bgfx { namespace metal
 						un.num = 0;			// needed?
 						un.regIndex = 0;	// needed?
 						un.regCount = 0;	// needed?
-						un.texDimension = spirvDimToTextureDimensionId(uint32_t(type.image.dim), type.image.arrayed);
+						un.texDimension = spirvDimToTextureDimensionId(uint32_t(type.image.dim), type.image.arrayed, type.image.ms);
 
 						uniforms.push_back(un);
 					}
