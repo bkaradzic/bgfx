@@ -517,6 +517,13 @@ BGFX_CONFIG = userdefines()
 
 bgfxProject("", "StaticLib", BGFX_CONFIG)
 
+if _OPTIONS["with-examples"]
+or _OPTIONS["with-combined-examples"]
+or _OPTIONS["with-tools"] then
+	group "libs"
+	dofile "l-smash.lua"
+end
+
 if _OPTIONS["with-shared-lib"] then
 	group "libs"
 	bgfxProject("-shared-lib", "SharedLib", BGFX_CONFIG)
@@ -591,8 +598,26 @@ or _OPTIONS["with-combined-examples"] then
 		, "52-layered"
 		, "53-sky2"
 		, "54-s2h"
+		, "55-video"
 		)
 
+	if _OPTIONS["with-combined-examples"] then
+		project "examples"
+	else
+		project "example-55-video"
+	end
+		files {
+			path.join(BGFX_DIR, "tools/texturev/video_player.cpp"),
+			path.join(BGFX_DIR, "tools/texturev/video_player.h"),
+		}
+		includedirs {
+			path.join(BGFX_DIR, "tools/texturev"),
+		}
+		links { "l-smash" }
+		configuration { "vs20* or mingw*" }
+			defines { "WINVER=0x0a00", "_WIN32_WINNT=0x0a00" }
+			links { "comdlg32", "ole32", "mfplat", "mfreadwrite", "mfuuid", "xaudio2" }
+		configuration {}
 
 	if premake.gcc.namestyle == nil or not premake.gcc.namestyle == "Emscripten" then
 		exampleProject(false, false, "17-drawstress") -- 17-drawstress requires multithreading, does not compile for singlethreaded wasm

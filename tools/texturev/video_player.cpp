@@ -14,6 +14,7 @@
 
 #include <entry/entry.h>
 
+#include <algorithm>
 #include <tinystl/vector.h>
 namespace stl = tinystl;
 
@@ -54,6 +55,7 @@ struct VideoPlayer::Impl
 	};
 
 	stl::vector<Frame> frames;
+	stl::vector<uint64_t> presentationTimes;
 
 	~Impl()
 	{
@@ -73,8 +75,8 @@ struct VideoPlayer::Impl
 
 namespace
 {
-	const uint32_t kMaxSubmitPerCall = 1;
-	const int64_t  kLookaheadUs      = 2 * 1000000;
+	const uint32_t kMaxSubmitPerCall = 32;
+	const uint32_t kLookaheadFrames  = 10;
 	const int64_t  kSkipStepUs       = 8 * 1000000;
 	const float    kRateStepFactor   = 1.25892541f;
 	const float    kRateMin          = 0.1f;
@@ -564,10 +566,13 @@ namespace
 			}
 
 			VideoPlayer::Impl::Frame frame = {};
-			frame.ptsUs      = s.cts * 1000000ull / timescale;
+			const int32_t compositionOffset = int32_t(uint32_t(s.cts - s.dts) );
+			const uint64_t presentationTime = uint64_t(bx::max<int64_t>(0, int64_t(s.dts) + compositionOffset) );
+			frame.ptsUs      = presentationTime * 1000000ull / timescale;
 			frame.isKeyframe = 0 != (s.prop.ra_flags & ISOM_SAMPLE_RANDOM_ACCESS_FLAG_SYNC);
 
 			_video.frames.push_back(frame);
+			_video.presentationTimes.push_back(frame.ptsUs);
 		}
 
 		lsmash_cleanup_summary(sum);
@@ -579,6 +584,8 @@ namespace
 
 			return false;
 		}
+
+		std::sort(_video.presentationTimes.begin(), _video.presentationTimes.end() );
 
 		_video.root       = root;
 		_video.fp         = fp;
@@ -603,6 +610,7 @@ VideoPlayer::VideoPlayer()
 	, m_playbackTimeUs(0)
 	, m_lastTickHpc(0)
 	, m_nextAuToSubmit(0)
+	, m_nextPresentation(0)
 	, m_lastSetIdr(UINT32_MAX)
 	, m_playbackRate(1.0f)
 	, m_aMarkerUs(-1)
@@ -715,20 +723,26 @@ bool VideoPlayer::open(const char* _filePath)
 		return false;
 	}
 
-	m_durationUs     = m_impl->frames.back().ptsUs;
+	m_durationUs     = m_impl->presentationTimes.back();
 	m_playbackTimeUs = 0;
 	m_lastTickHpc    = bx::getHPCounter();
 	m_nextAuToSubmit = 0;
+	m_nextPresentation = 0;
 	m_lastSetIdr     = UINT32_MAX;
 	m_playbackRate   = 1.0f;
 	m_paused         = false;
-	m_pendingSet     = false;
+	m_pendingSet     = true;
 	m_aMarkerUs      = -1;
 	m_bMarkerUs      = -1;
 	m_isOpen         = true;
 	m_hasError       = false;
 
-	submitAccessUnitsUpTo(kLookaheadUs);
+	submitAccessUnitsUpTo(int64_t(m_impl->presentationTimes[bx::min(kLookaheadFrames, uint32_t(m_impl->presentationTimes.size() ) - 1)] ) );
+	BX_TRACE("Video opened: frames=%u firstPts=%llu us lastPts=%llu us"
+		, uint32_t(m_impl->frames.size() )
+		, (unsigned long long)m_impl->presentationTimes.front()
+		, (unsigned long long)m_durationUs
+		);
 
 	return true;
 }
@@ -756,6 +770,7 @@ void VideoPlayer::close()
 	m_durationUs     = 0;
 	m_playbackTimeUs = 0;
 	m_nextAuToSubmit = 0;
+	m_nextPresentation = 0;
 	m_lastSetIdr     = UINT32_MAX;
 	m_playbackRate   = 1.0f;
 	m_aMarkerUs      = -1;
@@ -878,19 +893,23 @@ void VideoPlayer::submitDecodeFrame(uint32_t _index, bool _setPosition)
 	dstPayload->frame.bitstream          = dstBitstream;
 	dstPayload->frame.aus                = &dstPayload->au;
 	dstPayload->frame.numAus             = 1;
-	dstPayload->frame.presentationTimeUs = 0;
+	dstPayload->frame.presentationTimeUs = int64_t(m_playbackTimeUs);
 	dstPayload->frame.flags              = _setPosition
 		? BGFX_VIDEO_DECODE_FRAME_SET
 		: BGFX_VIDEO_DECODE_FRAME_NONE
 		;
+	if (_index + 1 == m_impl->frames.size() )
+	{
+		dstPayload->frame.flags |= BGFX_VIDEO_DECODE_FRAME_FINAL;
+	}
 
 	bgfx::updateTexture2D(
 		  m_videoTexture
 		, 0
 		, 0
 		, 0, 0
-		, m_width
-		, m_height
+		, 1
+		, 1
 		, mem
 		);
 
@@ -932,13 +951,13 @@ void VideoPlayer::submitPresentationTick(int64_t _presentationTimeUs)
 		, 0
 		, 0
 		, 0, 0
-		, m_width
-		, m_height
+		, 1
+		, 1
 		, bgfx::copy(&desc, sizeof(desc) )
 		);
 }
 
-void VideoPlayer::tick()
+void VideoPlayer::tick(int64_t _presentationTimeUs)
 {
 	if (!m_isOpen)
 	{
@@ -948,13 +967,16 @@ void VideoPlayer::tick()
 	const int64_t nowHpc   = bx::getHPCounter();
 	const int64_t deltaHpc = nowHpc - m_lastTickHpc;
 	m_lastTickHpc = nowHpc;
+	const uint64_t previousTimeUs = m_playbackTimeUs;
 
 	if (!m_paused)
 	{
 		m_lastSetIdr = UINT32_MAX;
 
 		const uint64_t deltaUs = uint64_t(double(deltaHpc) * 1000000.0 * double(m_playbackRate) / double(bx::getHPFrequency() ) );
-		m_playbackTimeUs += deltaUs;
+		m_playbackTimeUs = _presentationTimeUs >= 0
+			? uint64_t(_presentationTimeUs)
+			: m_playbackTimeUs + deltaUs;
 
 		if (m_aMarkerUs >= 0
 		&&  m_bMarkerUs >  m_aMarkerUs
@@ -968,8 +990,31 @@ void VideoPlayer::tick()
 		}
 	}
 
-	submitPresentationTick(int64_t(m_playbackTimeUs) );
-	submitAccessUnitsUpTo(int64_t(m_playbackTimeUs) + kLookaheadUs);
+	const uint32_t numPresentations = uint32_t(m_impl->presentationTimes.size() );
+	bool presented = false;
+	while (m_nextPresentation < numPresentations
+	&&     m_impl->presentationTimes[m_nextPresentation] <= m_playbackTimeUs)
+	{
+		const uint32_t lookahead = bx::min(m_nextPresentation + kLookaheadFrames, numPresentations - 1);
+		submitAccessUnitsUpTo(int64_t(m_impl->presentationTimes[lookahead]) );
+		submitPresentationTick(int64_t(m_impl->presentationTimes[m_nextPresentation]) );
+		++m_nextPresentation;
+		presented = true;
+	}
+	if (!presented)
+	{
+		const uint32_t lookahead = bx::min(m_nextPresentation + kLookaheadFrames, numPresentations - 1);
+		submitAccessUnitsUpTo(int64_t(m_impl->presentationTimes[lookahead]) );
+		submitPresentationTick(int64_t(m_playbackTimeUs) );
+	}
+	if (previousTimeUs / 1000000 != m_playbackTimeUs / 1000000)
+	{
+		BX_TRACE("Video progress: clock=%llu us submitted=%u/%u presented=%u/%u"
+			, (unsigned long long)m_playbackTimeUs
+			, m_nextAuToSubmit, uint32_t(m_impl->frames.size() )
+			, m_nextPresentation, numPresentations
+			);
+	}
 }
 
 void VideoPlayer::seekTo(uint64_t _targetUs)
@@ -1001,6 +1046,8 @@ void VideoPlayer::seekTo(uint64_t _targetUs)
 		? target
 		: m_impl->frames[idr].ptsUs
 		;
+	m_nextPresentation = uint32_t(std::lower_bound(m_impl->presentationTimes.begin(), m_impl->presentationTimes.end(), m_playbackTimeUs)
+		- m_impl->presentationTimes.begin() );
 	m_lastTickHpc    = bx::getHPCounter();
 }
 
@@ -1051,6 +1098,8 @@ void VideoPlayer::seekRelative(int64_t _deltaUs)
 				m_pendingSet     = true;
 				m_lastSetIdr     = idrAfter;
 				m_playbackTimeUs = m_impl->frames[idrAfter].ptsUs;
+				m_nextPresentation = uint32_t(std::lower_bound(m_impl->presentationTimes.begin(), m_impl->presentationTimes.end(), m_playbackTimeUs)
+					- m_impl->presentationTimes.begin() );
 				m_lastTickHpc    = bx::getHPCounter();
 				return;
 			}

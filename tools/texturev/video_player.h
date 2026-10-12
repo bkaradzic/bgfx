@@ -26,7 +26,7 @@ public:
 	uint16_t height()   const { return m_height; }
 	bgfx::TextureHandle texture() const { return m_videoTexture; }
 
-	void tick();
+	void tick(int64_t _presentationTimeUs = -1);
 
 	bool isActive() const { return m_isOpen && !m_paused; }
 
@@ -79,6 +79,7 @@ private:
 	uint64_t m_playbackTimeUs;
 	int64_t  m_lastTickHpc;
 	uint32_t m_nextAuToSubmit;
+	uint32_t m_nextPresentation;
 
 	uint32_t m_lastSetIdr;
 	float    m_playbackRate;
