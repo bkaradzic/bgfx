@@ -201,13 +201,21 @@ namespace bgfx { namespace spirv
 		}
 	}
 
-	bgfx::TextureDimension::Enum SpirvDimToTextureViewDimension(spv::Dim _dim, bool _arrayed)
+	bgfx::TextureDimension::Enum SpirvDimToTextureViewDimension(spv::Dim _dim, bool _arrayed, bool _multisampled)
 	{
 		switch (_dim)
 		{
 		case spv::Dim::Dim1D:
 			return bgfx::TextureDimension::Dimension1D;
 		case spv::Dim::Dim2D:
+			if (_multisampled)
+			{
+				return _arrayed
+					? bgfx::TextureDimension::Dimension2DMSArray
+					: bgfx::TextureDimension::Dimension2DMS
+					;
+			}
+
 			return _arrayed
 				? bgfx::TextureDimension::Dimension2DArray
 				: bgfx::TextureDimension::Dimension2D
@@ -806,7 +814,7 @@ namespace bgfx { namespace spirv
 								);
 
 						un.texComponent = textureComponentTypeToId(SpirvCrossBaseTypeToFormatType(componentType, imageType.depth) );
-						un.texDimension = textureDimensionToId(SpirvDimToTextureViewDimension(imageType.dim, imageType.arrayed) );
+						un.texDimension = textureDimensionToId(SpirvDimToTextureViewDimension(imageType.dim, imageType.arrayed, imageType.ms) );
 						un.texFormat = uint16_t(s_textureFormats[imageType.format]);
 
 						un.regIndex = uint16_t(binding_index);
@@ -835,7 +843,7 @@ namespace bgfx { namespace spirv
 						un.type = type;
 
 						un.texComponent = textureComponentTypeToId(SpirvCrossBaseTypeToFormatType(componentType, imageType.depth) );
-						un.texDimension = textureDimensionToId(SpirvDimToTextureViewDimension(imageType.dim, imageType.arrayed) );
+						un.texDimension = textureDimensionToId(SpirvDimToTextureViewDimension(imageType.dim, imageType.arrayed, imageType.ms) );
 						un.texFormat = uint16_t(s_textureFormats[imageType.format]);
 
 						un.regIndex = uint16_t(binding_index);

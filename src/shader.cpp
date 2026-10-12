@@ -91,6 +91,8 @@ namespace bgfx
 		{ TextureDimension::DimensionCube,      0x04 },
 		{ TextureDimension::DimensionCubeArray, 0x05 },
 		{ TextureDimension::Dimension3D,        0x06 },
+		{ TextureDimension::Dimension2DMS,      0x07 },
+		{ TextureDimension::Dimension2DMSArray, 0x08 },
 	};
 	static_assert(BX_COUNTOF(s_textureDimensionToId) == TextureDimension::Count);
 

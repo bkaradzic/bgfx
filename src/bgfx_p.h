@@ -1088,6 +1088,25 @@ namespace bgfx
 	extern BlitFallback* g_blitFallback;
 
 	///
+	struct DepthResolve
+	{
+		void init();
+		void shutdown();
+
+		enum Enum
+		{
+			Texture2D,
+			Texture2DArray,
+
+			Count
+		};
+
+		ProgramHandle m_program[Count] = { BGFX_INVALID_HANDLE, BGFX_INVALID_HANDLE };
+	};
+
+	extern DepthResolve* g_depthResolve;
+
+	///
 	struct VideoDecode
 	{
 		VideoDecode()
@@ -8964,6 +8983,7 @@ namespace bgfx
 		ClearQuad m_clearQuad;
 		MipGen m_mipGen;
 		BlitFallback m_blitFallback;
+		DepthResolve m_depthResolve;
 		VideoDecode m_videoDecode;
 
 		RendererContextI* m_renderCtx;

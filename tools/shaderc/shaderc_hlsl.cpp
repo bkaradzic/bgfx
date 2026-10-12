@@ -324,12 +324,16 @@ namespace bgfx { namespace hlsl
 			return TextureDimension::Dimension1D;
 
 		case D3D_SRV_DIMENSION_TEXTURE2D:
-		case D3D_SRV_DIMENSION_TEXTURE2DMS:
 			return TextureDimension::Dimension2D;
 
 		case D3D_SRV_DIMENSION_TEXTURE2DARRAY:
-		case D3D_SRV_DIMENSION_TEXTURE2DMSARRAY:
 			return TextureDimension::Dimension2DArray;
+
+		case D3D_SRV_DIMENSION_TEXTURE2DMS:
+			return TextureDimension::Dimension2DMS;
+
+		case D3D_SRV_DIMENSION_TEXTURE2DMSARRAY:
+			return TextureDimension::Dimension2DMSArray;
 
 		case D3D_SRV_DIMENSION_TEXTURE3D:
 			return TextureDimension::Dimension3D;
@@ -477,7 +481,14 @@ namespace bgfx { namespace hlsl
 
 		BX_TRACE("Bound:");
 
-		std::unordered_map<std::string, uint8_t> textureDimension;
+		struct TextureBinding
+		{
+			uint8_t  dimension;
+			uint16_t regIndex;
+			uint16_t regCount;
+		};
+
+		std::unordered_map<std::string, TextureBinding> textureBinding;
 
 		for (uint32_t ii = 0; ii < desc.BoundResources; ++ii)
 		{
@@ -492,8 +503,12 @@ namespace bgfx { namespace hlsl
 				if (!end.isEmpty()
 				&&  TextureDimension::Count != dimension)
 				{
-					textureDimension[std::string(bindDesc.Name, end.getPtr() - bindDesc.Name)] =
-						textureDimensionToId(dimension);
+					textureBinding[std::string(bindDesc.Name, end.getPtr() - bindDesc.Name)] =
+					{
+						.dimension = textureDimensionToId(dimension),
+						.regIndex  = uint16_t(bindDesc.BindPoint),
+						.regCount  = uint16_t(bindDesc.BindCount),
+					};
 				}
 			}
 		}
@@ -533,15 +548,49 @@ namespace bgfx { namespace hlsl
 						un.regIndex = uint16_t(bindDesc.BindPoint);
 						un.regCount = uint16_t(bindDesc.BindCount);
 
-						const auto it = textureDimension.find(un.name);
+						const auto it = textureBinding.find(un.name);
 
-						if (it != textureDimension.end() )
+						if (it != textureBinding.end() )
 						{
-							un.texDimension = it->second;
+							un.texDimension = it->second.dimension;
+							textureBinding.erase(it);
 						}
 
 						_uniforms.push_back(un);
 					}
+				}
+			}
+		}
+
+		for (uint32_t ii = 0; ii < desc.BoundResources; ++ii)
+		{
+			D3D11_SHADER_INPUT_BIND_DESC bindDesc;
+
+			if (SUCCEEDED(reflect->GetResourceBindingDesc(ii, &bindDesc) )
+			&&  D3D_SIT_TEXTURE == bindDesc.Type)
+			{
+				const bx::StringView end = bx::strFind(bindDesc.Name, "Texture");
+
+				if (end.isEmpty() )
+				{
+					continue;
+				}
+
+				const std::string name(bindDesc.Name, end.getPtr() - bindDesc.Name);
+				const auto it = textureBinding.find(name);
+
+				if (it != textureBinding.end() )
+				{
+					Uniform un;
+					un.name = name;
+					un.type = UniformType::Enum(kUniformSamplerBit | UniformType::Sampler);
+					un.num  = 1;
+					un.regIndex     = it->second.regIndex;
+					un.regCount     = it->second.regCount;
+					un.texDimension = it->second.dimension;
+
+					_uniforms.push_back(un);
+					textureBinding.erase(it);
 				}
 			}
 		}

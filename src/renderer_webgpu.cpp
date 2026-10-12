@@ -213,6 +213,8 @@ namespace bgfx { namespace wgpu
 		WGPUTextureViewDimension_Cube,
 		WGPUTextureViewDimension_CubeArray,
 		WGPUTextureViewDimension_3D,
+		WGPUTextureViewDimension_2D,
+		WGPUTextureViewDimension_2DArray,
 	};
 	static_assert(TextureDimension::Count == BX_COUNTOF(s_textureDimension) );
 
@@ -2492,6 +2494,176 @@ WGPU_IMPORT
 			wgpuRelease(blitRenderPassEncoder);
 		}
 
+		void resolveDepth(WGPUCommandEncoder _cmdEncoder, TextureHandle _textureHandle, uint32_t _mip)
+		{
+			const TextureWGPU& texture = m_textures[_textureHandle.idx];
+			const ProgramHandle programHandle = g_depthResolve->m_program[DepthResolve::Texture2D];
+			const ProgramWGPU& program = m_program[programHandle.idx];
+
+			RenderBind renderBind;
+			renderBind.clear();
+			renderBind.m_bind[0].setTexture(_textureHandle, BGFX_SAMPLER_POINT|BGFX_SAMPLER_UVW_CLAMP);
+
+			bx::HashMurmur3 murmur;
+			murmur.begin();
+			murmur.add(programHandle.idx);
+			murmur.add(texture.m_fmt);
+			const uint32_t hash = murmur.end();
+
+			RenderPipeline* renderPipeline = m_renderPipelineCache.find(hash);
+
+			if (NULL == renderPipeline)
+			{
+				WGPUBindGroupLayoutEntry entries[2 + BGFX_CONFIG_MAX_TEXTURE_SAMPLERS * 3];
+				const uint8_t entryCount = fillBindGroupLayoutEntry(entries, program, renderBind, false);
+
+				const WGPUBindGroupLayoutDescriptor bindGroupLayoutDesc =
+				{
+					.nextInChain = NULL,
+					.label       = WGPU_STRING_VIEW_INIT,
+					.entryCount  = entryCount,
+					.entries     = entries,
+				};
+
+				WGPUBindGroupLayout bindGroupLayout = WGPU_CHECK(wgpuDeviceCreateBindGroupLayout(m_device, &bindGroupLayoutDesc) );
+
+				const WGPUPipelineLayoutDescriptor pipelineLayoutDesc =
+				{
+					.nextInChain          = NULL,
+					.label                = WGPU_STRING_VIEW_INIT,
+					.bindGroupLayoutCount = 1,
+					.bindGroupLayouts     = &bindGroupLayout,
+					.immediateSize        = 0,
+				};
+
+				WGPUPipelineLayout pipelineLayout = WGPU_CHECK(wgpuDeviceCreatePipelineLayout(m_device, &pipelineLayoutDesc) );
+
+				WGPUDepthStencilState depthStencilState;
+				setDepthStencilState(depthStencilState
+					, TextureFormat::Enum(texture.m_textureFormat)
+					, BGFX_STATE_DEPTH_TEST_ALWAYS|BGFX_STATE_WRITE_Z
+					, 0
+					, false
+					, false
+					);
+
+				const WGPUFragmentState fragmentState =
+				{
+					.nextInChain   = NULL,
+					.module        = program.m_fsh->getModule(false),
+					.entryPoint    = WGPU_STRING_VIEW_INIT,
+					.constantCount = 0,
+					.constants     = NULL,
+					.targetCount   = 0,
+					.targets       = NULL,
+				};
+
+				const WGPURenderPipelineDescriptor renderPipelineDesc =
+				{
+					.nextInChain = NULL,
+					.label       = WGPU_STRING_VIEW_INIT,
+					.layout      = pipelineLayout,
+					.vertex =
+					{
+						.nextInChain   = NULL,
+						.module        = program.m_vsh->getModule(false),
+						.entryPoint    = WGPU_STRING_VIEW_INIT,
+						.constantCount = 0,
+						.constants     = NULL,
+						.bufferCount   = 0,
+						.buffers       = NULL,
+					},
+					.primitive =
+					{
+						.nextInChain      = NULL,
+						.topology         = WGPUPrimitiveTopology_TriangleList,
+						.stripIndexFormat = WGPUIndexFormat_Undefined,
+						.frontFace        = WGPUFrontFace_CCW,
+						.cullMode         = WGPUCullMode_None,
+						.unclippedDepth   = false,
+					},
+					.depthStencil = &depthStencilState,
+					.multisample =
+					{
+						.nextInChain            = NULL,
+						.count                  = 1,
+						.mask                   = UINT32_MAX,
+						.alphaToCoverageEnabled = false,
+					},
+					.fragment = &fragmentState,
+				};
+
+				const WGPURenderPipeline pipeline = WGPU_CHECK(wgpuDeviceCreateRenderPipeline(m_device, &renderPipelineDesc) );
+
+				renderPipeline = m_renderPipelineCache.add(
+					  hash
+					, {
+						.bindGroupLayout = bindGroupLayout,
+						.pipeline        = pipeline,
+					}
+					, 0
+					);
+				wgpuRelease(pipelineLayout);
+			}
+
+			const WGPUTextureViewDescriptor textureViewDesc =
+			{
+				.nextInChain     = NULL,
+				.label           = WGPU_STRING_VIEW_INIT,
+				.format          = texture.m_fmt,
+				.dimension       = WGPUTextureViewDimension_2D,
+				.baseMipLevel    = _mip,
+				.mipLevelCount   = 1,
+				.baseArrayLayer  = 0,
+				.arrayLayerCount = 1,
+				.aspect          = WGPUTextureAspect_All,
+				.usage           = WGPUTextureUsage_RenderAttachment,
+			};
+
+			WGPUTextureView depthView = WGPU_CHECK(wgpuTextureCreateView(texture.m_texture, &textureViewDesc) );
+
+			const bool stencil = hasStencil(TextureFormat::Enum(texture.m_textureFormat) );
+
+			const WGPURenderPassDepthStencilAttachment depthStencilAttachment =
+			{
+				.nextInChain       = NULL,
+				.view              = depthView,
+				.depthLoadOp       = WGPULoadOp_Load,
+				.depthStoreOp      = WGPUStoreOp_Store,
+				.depthClearValue   = 0.0f,
+				.depthReadOnly     = false,
+				.stencilLoadOp     = stencil ? WGPULoadOp_Load   : WGPULoadOp_Undefined,
+				.stencilStoreOp    = stencil ? WGPUStoreOp_Store : WGPUStoreOp_Undefined,
+				.stencilClearValue = 0,
+				.stencilReadOnly   = false,
+			};
+
+			const WGPURenderPassDescriptor renderPassDesc =
+			{
+				.nextInChain            = NULL,
+				.label                  = WGPU_STRING_VIEW_INIT,
+				.colorAttachmentCount   = 0,
+				.colorAttachments       = NULL,
+				.depthStencilAttachment = &depthStencilAttachment,
+				.occlusionQuerySet      = NULL,
+				.timestampWrites        = NULL,
+			};
+
+			ChunkedScratchBufferOffset sbo;
+			bx::memSet(&sbo, 0, sizeof(sbo) );
+			BindGroup bindGroup = createBindGroup(renderPipeline->bindGroupLayout, program, renderBind, sbo, false);
+
+			WGPURenderPassEncoder renderPassEncoder = WGPU_CHECK(wgpuCommandEncoderBeginRenderPass(_cmdEncoder, &renderPassDesc) );
+			WGPU_CHECK(wgpuRenderPassEncoderSetPipeline(renderPassEncoder, renderPipeline->pipeline) );
+			WGPU_CHECK(wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, bindGroup.bindGroup, bindGroup.numOffsets, sbo.offsets) );
+			WGPU_CHECK(wgpuRenderPassEncoderDraw(renderPassEncoder, 3, 1, 0, 0) );
+			WGPU_CHECK(wgpuRenderPassEncoderEnd(renderPassEncoder) );
+			wgpuRelease(renderPassEncoder);
+
+			release(bindGroup);
+			wgpuRelease(depthView);
+		}
+
 		bool clearIntegerColor(WGPUCommandEncoder _commandEncoder, const FrameBufferWGPU& _fb, const Rect& _rect, const Clear& _clear, const float _palette[][4])
 		{
 			if (0 == (_clear.m_flags & BGFX_CLEAR_COLOR)
@@ -2955,7 +3127,7 @@ WGPU_IMPORT
 			};
 		}
 
-		void initTextureBinding(WGPUBindGroupLayoutEntry& _out, uint32_t _binding, WGPUShaderStage _visibility, WGPUTextureSampleType _sampleType, WGPUTextureViewDimension _viewDimension)
+		void initTextureBinding(WGPUBindGroupLayoutEntry& _out, uint32_t _binding, WGPUShaderStage _visibility, WGPUTextureSampleType _sampleType, WGPUTextureViewDimension _viewDimension, bool _multisampled)
 		{
 			_out =
 			{
@@ -2970,7 +3142,7 @@ WGPU_IMPORT
 					.nextInChain   = NULL,
 					.sampleType    = _sampleType,
 					.viewDimension = _viewDimension,
-					.multisampled  = false,
+					.multisampled  = _multisampled,
 				},
 				.storageTexture = {},
 			};
@@ -3100,6 +3272,7 @@ WGPU_IMPORT
 							, WGPUTextureViewDimension_Undefined != shaderBind.viewDimension
 								? shaderBind.viewDimension
 								: m_textures[bind.m_idx].m_viewDimension
+							, shaderBind.multisampled
 							);
 
 						initSamplerBinding(
@@ -3706,6 +3879,7 @@ WGPU_IMPORT
 									, Binding::Texture == bind.m_type
 										? texture.getViewFormat(resolvedFlags, BGFX_SAMPLER_SRGB)
 										: WGPUTextureFormat_Undefined
+									, shaderBind.multisampled && NULL != texture.m_textureMsaa
 									),
 							};
 
@@ -4369,10 +4543,19 @@ WGPU_IMPORT
 						shaderBind.binding          = regIndex;
 						shaderBind.samplerBinding   = regIndex + kSpirvSamplerShift;
 
-						if (hasTexData)
+						const TextureDimension::Enum dimension = hasTexData
+							? idToTextureDimension(texDimension)
+							: TextureDimension::Count
+							;
+
+						if (TextureDimension::Count != dimension)
 						{
-							shaderBind.viewDimension = s_textureDimension[idToTextureDimension(texDimension)];
+							shaderBind.viewDimension = s_textureDimension[dimension];
 							shaderBind.sampleType    = s_textureComponentType[idToTextureComponentType(texComponent)];
+							shaderBind.multisampled  = false
+								|| TextureDimension::Dimension2DMS      == dimension
+								|| TextureDimension::Dimension2DMSArray == dimension
+								;
 						}
 						else
 						{
@@ -4829,7 +5012,10 @@ WGPU_IMPORT
 
 			if (needResolve)
 			{
-				textureDesc.usage           = WGPUTextureUsage_RenderAttachment;
+				textureDesc.usage           = 0
+					| WGPUTextureUsage_RenderAttachment
+					| (bimg::isDepth(bimg::TextureFormat::Enum(m_textureFormat) ) ? WGPUTextureUsage_TextureBinding : 0)
+					;
 				textureDesc.mipLevelCount   = 1;
 				textureDesc.sampleCount     = m_msaaCount;
 				textureDesc.viewFormatCount = 0;
@@ -5181,7 +5367,7 @@ WGPU_IMPORT
 		return WGPUTextureFormat_Undefined != format ? format : m_fmt;
 	}
 
-	WGPUTextureView TextureWGPU::getTextureView(uint8_t _baseMipLevel, uint8_t _mipLevelCount, bool _storage, uint16_t _baseArrayLayer, uint16_t _arrayLayerCount, WGPUTextureViewDimension _viewDimension, bool _stencil, WGPUTextureFormat _format) const
+	WGPUTextureView TextureWGPU::getTextureView(uint8_t _baseMipLevel, uint8_t _mipLevelCount, bool _storage, uint16_t _baseArrayLayer, uint16_t _arrayLayerCount, WGPUTextureViewDimension _viewDimension, bool _stencil, WGPUTextureFormat _format, bool _msaa) const
 	{
 		const bimg::ImageBlockInfo& blockInfo = bimg::getBlockInfo(bimg::TextureFormat::Enum(m_textureFormat) );
 		const bool depthOnly = !_stencil
@@ -5209,6 +5395,7 @@ WGPU_IMPORT
 		murmur.add(_viewDimension);
 		murmur.add(_stencil);
 		murmur.add(format);
+		murmur.add(_msaa);
 		const uint32_t hash = murmur.end();
 
 		WGPUTextureView textureView = s_renderWGPU->m_textureViewStateCache.find(hash);
@@ -5256,8 +5443,8 @@ WGPU_IMPORT
 				.label           = WGPU_STRING_VIEW_INIT,
 				.format          = format,
 				.dimension       = tvd,
-				.baseMipLevel    = _baseMipLevel,
-				.mipLevelCount   = UINT8_MAX == _mipLevelCount ? WGPU_MIP_LEVEL_COUNT_UNDEFINED : _mipLevelCount,
+				.baseMipLevel    = _msaa ? 0u : _baseMipLevel,
+				.mipLevelCount   = _msaa ? 1u : UINT8_MAX == _mipLevelCount ? WGPU_MIP_LEVEL_COUNT_UNDEFINED : _mipLevelCount,
 				.baseArrayLayer  = baseArrayLayer,
 				.arrayLayerCount = arrayLayerCount,
 				.aspect          = _stencil
@@ -5272,7 +5459,7 @@ WGPU_IMPORT
 					,
 			};
 
-			textureView = WGPU_CHECK(wgpuTextureCreateView(m_texture, &textureViewDesc) );
+			textureView = WGPU_CHECK(wgpuTextureCreateView(_msaa ? m_textureMsaa : m_texture, &textureViewDesc) );
 			s_renderWGPU->m_textureViewStateCache.add(hash, textureView, s_renderWGPU->m_textures.indexOf(*this) );
 		}
 
@@ -5970,6 +6157,17 @@ WGPU_IMPORT
 		for (uint32_t ii = 0; ii < m_numAttachments; ++ii)
 		{
 			const Attachment& at = m_attachment[ii];
+
+			if (isValid(at.handle) )
+			{
+				const TextureWGPU& texture = s_renderWGPU->m_textures[at.handle.idx];
+
+				if (NULL != texture.m_textureMsaa
+				&&  bimg::isDepth(bimg::TextureFormat::Enum(texture.m_textureFormat) ) )
+				{
+					s_renderWGPU->resolveDepth(_cmdEncoder, at.handle, at.mip);
+				}
+			}
 
 			if (isValid(at.handle)
 			&&  0 != (at.flags & BGFX_ATTACHMENT_AUTO_GEN_MIPS) )

@@ -6383,6 +6383,31 @@ namespace bgfx { namespace gl
 					return false;
 				}
 			}
+
+			if (msaaSample
+			&&  !writeOnly
+			&&  GL_TEXTURE_2D_MULTISAMPLE == m_target
+			&&  bimg::isDepth(bimg::TextureFormat::Enum(m_textureFormat) ) )
+			{
+				const TextureFormatInfo& tfi = s_textureFormat[m_textureFormat];
+
+				GL_CHECK(glGenTextures(1, &m_idResolve) );
+				BX_ASSERT(0 != m_idResolve, "Failed to generate texture id.");
+				GL_CHECK(glBindTexture(GL_TEXTURE_2D, m_idResolve) );
+				GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST) );
+				GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST) );
+				GL_CHECK(glTexImage2D(GL_TEXTURE_2D
+					, 0
+					, tfi.m_internalFmt
+					, _width
+					, _height
+					, 0
+					, tfi.m_fmt
+					, tfi.m_type
+					, NULL
+					) );
+				GL_CHECK(glBindTexture(GL_TEXTURE_2D, 0) );
+			}
 		}
 
 		return true;
@@ -6827,6 +6852,12 @@ namespace bgfx { namespace gl
 			GL_CHECK(glDeleteRenderbuffers(1, &m_rbo) );
 			m_rbo = 0;
 		}
+
+		if (0 != m_idResolve)
+		{
+			GL_CHECK(glDeleteTextures(1, &m_idResolve) );
+			m_idResolve = 0;
+		}
 	}
 
 	void TextureGL::update(uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem)
@@ -7208,6 +7239,11 @@ namespace bgfx { namespace gl
 
 		GL_CHECK(glActiveTexture(GL_TEXTURE0+_stage) );
 		GL_CHECK(glBindTexture(target, id) );
+
+		if (0 != m_idResolve)
+		{
+			GL_CHECK(glBindTexture(GL_TEXTURE_2D, m_idResolve) );
+		}
 
 		m_depthStencilTexturing |= 0 != (flags & BGFX_SAMPLER_SAMPLE_STENCIL);
 
@@ -7739,7 +7775,10 @@ namespace bgfx { namespace gl
 						}
 					}
 
-					needResolve |= (0 != texture.m_rbo) && (0 != texture.m_id);
+					needResolve |= false
+						|| (0 != texture.m_rbo && 0 != texture.m_id)
+						||  0 != texture.m_idResolve
+						;
 				}
 			}
 
@@ -7795,6 +7834,15 @@ namespace bgfx { namespace gl
 								, target
 								, texture.m_id
 								, at.mip
+								) );
+						}
+						else if (0 != texture.m_idResolve)
+						{
+							GL_CHECK(glFramebufferTexture2D(GL_FRAMEBUFFER
+								, attachmentFor(TextureFormat::Enum(texture.m_textureFormat) )
+								, GL_TEXTURE_2D
+								, texture.m_idResolve
+								, 0
 								) );
 						}
 					}
@@ -8152,7 +8200,12 @@ namespace bgfx { namespace gl
 					const bool writeOnly = 0 != (texture.m_flags&BGFX_TEXTURE_RT_WRITE_ONLY);
 					bimg::TextureFormat::Enum format = bimg::TextureFormat::Enum(texture.m_textureFormat);
 
-					if (!bimg::isDepth(format) )
+					if (!bimg::isDepth(format)
+					&&  0 == texture.m_rbo)
+					{
+						colorIdx++;
+					}
+					else if (!bimg::isDepth(format) )
 					{
 						GL_CHECK(glDisable(GL_SCISSOR_TEST) );
 

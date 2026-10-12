@@ -66,6 +66,8 @@ namespace bgfx
 			DimensionCube,
 			DimensionCubeArray,
 			Dimension3D,
+			Dimension2DMS,
+			Dimension2DMSArray,
 
 			Count
 		};

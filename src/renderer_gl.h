@@ -1482,6 +1482,7 @@ namespace bgfx { namespace gl
 		TextureGL()
 			: m_id(0)
 			, m_rbo(0)
+			, m_idResolve(0)
 			, m_target(GL_TEXTURE_2D)
 			, m_fmt(GL_ZERO)
 			, m_type(GL_ZERO)
@@ -1532,6 +1533,7 @@ namespace bgfx { namespace gl
 
 		GLuint m_id;
 		GLuint m_rbo;
+		GLuint m_idResolve;
 		GLenum m_target;
 		GLenum m_fmt;
 		GLenum m_type;
