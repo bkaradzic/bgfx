@@ -118,6 +118,8 @@ namespace bgfx { namespace vk
 			, m_bitstreamBufferSize(0)
 			, m_bitstreamMapped(NULL)
 			, m_bitstreamAlignment(1)
+			, m_yuvToRgbBuffer(VK_NULL_HANDLE)
+			, m_yuvToRgbBufferMemory(VK_NULL_HANDLE)
 			, m_videoCommandPool(VK_NULL_HANDLE)
 			, m_videoCommandBuffer(VK_NULL_HANDLE)
 			, m_videoFence(VK_NULL_HANDLE)
@@ -149,7 +151,7 @@ namespace bgfx { namespace vk
 
 			m_dpbImage       = VK_NULL_HANDLE;
 			m_dpbImageMemory = VK_NULL_HANDLE;
-			bx::memSet(m_dpbImageView,   0, sizeof(m_dpbImageView) );
+			m_dpbImageView   = VK_NULL_HANDLE;
 
 			for (uint32_t ii = 0; ii < kNumDpbSlots; ++ii)
 			{
@@ -476,43 +478,40 @@ namespace bgfx { namespace vk
 
 				vkBindImageMemory(device, m_dpbImage, m_dpbImageMemory, 0);
 
-				for (uint32_t slot = 0; slot < m_numDpbSlots; ++slot)
+				VkImageViewUsageCreateInfo viewUsage
 				{
-					VkImageViewUsageCreateInfo viewUsage
-					{
-						.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_USAGE_CREATE_INFO,
-						.pNext = NULL,
-						.usage = m_dpbCoincide
-							? VkImageUsageFlags(VK_IMAGE_USAGE_VIDEO_DECODE_DPB_BIT_KHR | VK_IMAGE_USAGE_VIDEO_DECODE_DST_BIT_KHR)
-							: VkImageUsageFlags(VK_IMAGE_USAGE_VIDEO_DECODE_DPB_BIT_KHR),
-					};
+					.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_USAGE_CREATE_INFO,
+					.pNext = NULL,
+					.usage = m_dpbCoincide
+						? VkImageUsageFlags(VK_IMAGE_USAGE_VIDEO_DECODE_DPB_BIT_KHR | VK_IMAGE_USAGE_VIDEO_DECODE_DST_BIT_KHR)
+						: VkImageUsageFlags(VK_IMAGE_USAGE_VIDEO_DECODE_DPB_BIT_KHR),
+				};
 
-					VkImageViewCreateInfo vci
+				VkImageViewCreateInfo vci
+				{
+					.sType            = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+					.pNext            = &viewUsage,
+					.flags            = 0,
+					.image            = m_dpbImage,
+					.viewType         = VK_IMAGE_VIEW_TYPE_2D_ARRAY,
+					.format           = VK_FORMAT_G8_B8R8_2PLANE_420_UNORM,
+					.components       = {},
+					.subresourceRange =
 					{
-						.sType            = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
-						.pNext            = &viewUsage,
-						.flags            = 0,
-						.image            = m_dpbImage,
-						.viewType         = VK_IMAGE_VIEW_TYPE_2D,
-						.format           = VK_FORMAT_G8_B8R8_2PLANE_420_UNORM,
-						.components       = {},
-						.subresourceRange =
-						{
-							.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT,
-							.baseMipLevel   = 0,
-							.levelCount     = 1,
-							.baseArrayLayer = slot,
-							.layerCount     = 1,
-						},
-					};
-					result = vkCreateImageView(device, &vci, allocCb, &m_dpbImageView[slot]);
+						.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT,
+						.baseMipLevel   = 0,
+						.levelCount     = 1,
+						.baseArrayLayer = 0,
+						.layerCount     = m_numDpbSlots,
+					},
+				};
+				result = vkCreateImageView(device, &vci, allocCb, &m_dpbImageView);
 
-					if (VK_SUCCESS != result)
-					{
-						BX_TRACE("VideoDecoderVK: vkCreateImageView(DPB[%u]) failed (%d).", slot, result);
-						destroy();
-						return false;
-					}
+				if (VK_SUCCESS != result)
+				{
+					BX_TRACE("VideoDecoderVK: vkCreateImageView(DPB) failed (%d).", result);
+					destroy();
+					return false;
 				}
 			}
 
@@ -676,6 +675,78 @@ namespace bgfx { namespace vk
 					destroy();
 					return false;
 				}
+			}
+
+			{
+				float yuvToRgb[12];
+				getYuvToRgb(yuvToRgb, m_spsActive);
+
+				VkBufferCreateInfo bi
+				{
+					.sType                 = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
+					.pNext                 = NULL,
+					.flags                 = 0,
+					.size                  = sizeof(yuvToRgb),
+					.usage                 = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+					.sharingMode           = VK_SHARING_MODE_EXCLUSIVE,
+					.queueFamilyIndexCount = 0,
+					.pQueueFamilyIndices   = NULL,
+				};
+				result = vkCreateBuffer(device, &bi, allocCb, &m_yuvToRgbBuffer);
+
+				if (VK_SUCCESS != result)
+				{
+					BX_TRACE("VideoDecoderVK: vkCreateBuffer(YUV->RGB) failed (%d).", result);
+					destroy();
+					return false;
+				}
+
+				VkMemoryRequirements req = {};
+				vkGetBufferMemoryRequirements(device, m_yuvToRgbBuffer, &req);
+
+				const int32_t typeIdx = videoSelectMemoryType(
+					  m_renderer
+					, req.memoryTypeBits
+					, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
+					);
+
+				if (-1 == typeIdx)
+				{
+					BX_TRACE("VideoDecoderVK: no host-visible memory type for YUV->RGB buffer.");
+					destroy();
+					return false;
+				}
+
+				VkMemoryAllocateInfo ai
+				{
+					.sType           = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
+					.pNext           = NULL,
+					.allocationSize  = req.size,
+					.memoryTypeIndex = uint32_t(typeIdx),
+				};
+				result = vkAllocateMemory(device, &ai, allocCb, &m_yuvToRgbBufferMemory);
+
+				if (VK_SUCCESS != result)
+				{
+					BX_TRACE("VideoDecoderVK: vkAllocateMemory(YUV->RGB) failed (%d).", result);
+					destroy();
+					return false;
+				}
+
+				vkBindBufferMemory(device, m_yuvToRgbBuffer, m_yuvToRgbBufferMemory, 0);
+
+				void* data = NULL;
+				result = vkMapMemory(device, m_yuvToRgbBufferMemory, 0, VK_WHOLE_SIZE, 0, &data);
+
+				if (VK_SUCCESS != result)
+				{
+					BX_TRACE("VideoDecoderVK: vkMapMemory(YUV->RGB) failed (%d).", result);
+					destroy();
+					return false;
+				}
+
+				bx::memCopy(data, yuvToRgb, sizeof(yuvToRgb) );
+				vkUnmapMemory(device, m_yuvToRgbBufferMemory);
 			}
 
 			{
@@ -898,6 +969,18 @@ namespace bgfx { namespace vk
 				m_bitstreamBufferMemory = VK_NULL_HANDLE;
 			}
 
+			if (VK_NULL_HANDLE != m_yuvToRgbBuffer)
+			{
+				vkDestroyBuffer(device, m_yuvToRgbBuffer, allocCb);
+				m_yuvToRgbBuffer = VK_NULL_HANDLE;
+			}
+
+			if (VK_NULL_HANDLE != m_yuvToRgbBufferMemory)
+			{
+				vkFreeMemory(device, m_yuvToRgbBufferMemory, allocCb);
+				m_yuvToRgbBufferMemory = VK_NULL_HANDLE;
+			}
+
 			if (VK_NULL_HANDLE != m_decodeOutputImageView)
 			{
 				vkDestroyImageView(device, m_decodeOutputImageView, allocCb);
@@ -947,13 +1030,10 @@ namespace bgfx { namespace vk
 				pic.layout = VK_IMAGE_LAYOUT_UNDEFINED;
 			}
 
-			for (uint32_t ii = 0; ii < kNumDpbSlots; ++ii)
+			if (VK_NULL_HANDLE != m_dpbImageView)
 			{
-				if (VK_NULL_HANDLE != m_dpbImageView[ii])
-				{
-					vkDestroyImageView(device, m_dpbImageView[ii], allocCb);
-					m_dpbImageView[ii] = VK_NULL_HANDLE;
-				}
+				vkDestroyImageView(device, m_dpbImageView, allocCb);
+				m_dpbImageView = VK_NULL_HANDLE;
 			}
 
 			if (VK_NULL_HANDLE != m_dpbImage)
@@ -1561,8 +1641,8 @@ namespace bgfx { namespace vk
 					.pNext            = NULL,
 					.codedOffset      = {},
 					.codedExtent      = m_codedExtent,
-					.baseArrayLayer   = 0,
-					.imageViewBinding = m_dpbImageView[ii],
+					.baseArrayLayer   = ii,
+					.imageViewBinding = m_dpbImageView,
 				};
 
 				slotRef[ii].FrameNum       = uint16_t(m_frameNumStatus[ii]);
@@ -2041,15 +2121,15 @@ namespace bgfx { namespace vk
 
 		bool dispatchYuvToRgb(uint32_t _displaySlot, TextureVK& _dst)
 		{
-			BX_ASSERT(NULL != g_videoDecode && isValid(g_videoDecode->m_program), "Video decode program not initialized.");
+			BX_ASSERT(NULL != g_videoDecode && isValid(g_videoDecode->m_program[VideoDecode::Unorm]), "Video decode program not initialized.");
 
-			VkPipeline pso = videoGetPipeline(m_renderer, g_videoDecode->m_program);
+			VkPipeline pso = videoGetPipeline(m_renderer, g_videoDecode->m_program[VideoDecode::Unorm]);
 			if (VK_NULL_HANDLE == pso)
 			{
 				return false;
 			}
 
-			const ProgramVK& prog = videoGetProgram(m_renderer, g_videoDecode->m_program);
+			const ProgramVK& prog = videoGetProgram(m_renderer, g_videoDecode->m_program[VideoDecode::Unorm]);
 			VkDevice device = s_videoVK.device;
 			VkCommandBuffer commandBuffer = videoGetCommandBuffer(m_renderer);
 
@@ -2057,11 +2137,12 @@ namespace bgfx { namespace vk
 			{
 				const VkAllocationCallbacks* allocCb = s_videoVK.allocCb;
 
-				VkDescriptorPoolSize poolSizes[3]
+				VkDescriptorPoolSize poolSizes[]
 				{
-					{ .type = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, .descriptorCount = kYuvDescriptorRingSize     },
-					{ .type = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, .descriptorCount = kYuvDescriptorRingSize * 2 },
-					{ .type = VK_DESCRIPTOR_TYPE_SAMPLER,       .descriptorCount = kYuvDescriptorRingSize * 2 },
+					{ .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, .descriptorCount = kYuvDescriptorRingSize     },
+					{ .type = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,          .descriptorCount = kYuvDescriptorRingSize     },
+					{ .type = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,          .descriptorCount = kYuvDescriptorRingSize * 2 },
+					{ .type = VK_DESCRIPTOR_TYPE_SAMPLER,                .descriptorCount = kYuvDescriptorRingSize * 2 },
 				};
 
 				VkDescriptorPoolCreateInfo dpci
@@ -2164,43 +2245,100 @@ namespace bgfx { namespace vk
 
 				if (BindType::Image == bindInfo.type)
 				{
-					imageInfo[imageCount].imageLayout = VK_IMAGE_LAYOUT_GENERAL;
-					imageInfo[imageCount].imageView   = dstView;
-					imageInfo[imageCount].sampler     = VK_NULL_HANDLE;
+					imageInfo[imageCount] =
+					{
+						.sampler     = VK_NULL_HANDLE,
+						.imageView   = dstView,
+						.imageLayout = VK_IMAGE_LAYOUT_GENERAL,
+					};
 
-					writes[writeCount].sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-					writes[writeCount].dstSet          = descriptorSet;
-					writes[writeCount].dstBinding      = bindInfo.binding;
-					writes[writeCount].descriptorCount = 1;
-					writes[writeCount].descriptorType  = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
-					writes[writeCount].pImageInfo      = &imageInfo[imageCount];
+					writes[writeCount] =
+					{
+						.sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+						.pNext            = NULL,
+						.dstSet           = descriptorSet,
+						.dstBinding       = bindInfo.binding,
+						.dstArrayElement  = 0,
+						.descriptorCount  = 1,
+						.descriptorType   = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
+						.pImageInfo       = &imageInfo[imageCount],
+						.pBufferInfo      = NULL,
+						.pTexelBufferView = NULL,
+					};
 					++writeCount;
 					++imageCount;
 				}
 				else if (BindType::Sampler == bindInfo.type)
 				{
 					const bool yPlane = 1 == stage;
-					imageInfo[imageCount].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-					imageInfo[imageCount].imageView   = yPlane ? m_reorderPool[_displaySlot].yView : m_reorderPool[_displaySlot].cbcrView;
-					imageInfo[imageCount].sampler     = yPlane ? ySampler : cbcrSampler;
 
-					writes[writeCount].sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-					writes[writeCount].dstSet          = descriptorSet;
-					writes[writeCount].dstBinding      = bindInfo.binding;
-					writes[writeCount].descriptorCount = 1;
-					writes[writeCount].descriptorType  = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-					writes[writeCount].pImageInfo      = &imageInfo[imageCount];
+					imageInfo[imageCount] =
+					{
+						.sampler     = yPlane ? ySampler : cbcrSampler,
+						.imageView   = yPlane ? m_reorderPool[_displaySlot].yView : m_reorderPool[_displaySlot].cbcrView,
+						.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+					};
+
+					writes[writeCount] =
+					{
+						.sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+						.pNext            = NULL,
+						.dstSet           = descriptorSet,
+						.dstBinding       = bindInfo.binding,
+						.dstArrayElement  = 0,
+						.descriptorCount  = 1,
+						.descriptorType   = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
+						.pImageInfo       = &imageInfo[imageCount],
+						.pBufferInfo      = NULL,
+						.pTexelBufferView = NULL,
+					};
 					++writeCount;
 
-					writes[writeCount].sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-					writes[writeCount].dstSet          = descriptorSet;
-					writes[writeCount].dstBinding      = bindInfo.samplerBinding;
-					writes[writeCount].descriptorCount = 1;
-					writes[writeCount].descriptorType  = VK_DESCRIPTOR_TYPE_SAMPLER;
-					writes[writeCount].pImageInfo      = &imageInfo[imageCount];
+					writes[writeCount] =
+					{
+						.sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+						.pNext            = NULL,
+						.dstSet           = descriptorSet,
+						.dstBinding       = bindInfo.samplerBinding,
+						.dstArrayElement  = 0,
+						.descriptorCount  = 1,
+						.descriptorType   = VK_DESCRIPTOR_TYPE_SAMPLER,
+						.pImageInfo       = &imageInfo[imageCount],
+						.pBufferInfo      = NULL,
+						.pTexelBufferView = NULL,
+					};
 					++writeCount;
 					++imageCount;
 				}
+			}
+
+			VkDescriptorBufferInfo bufferInfo
+			{
+				.buffer = m_yuvToRgbBuffer,
+				.offset = 0,
+				.range  = prog.m_vsh->m_size,
+			};
+
+			const uint32_t dynamicOffset = 0;
+			uint32_t numDynamicOffsets = 0;
+
+			if (0 < prog.m_vsh->m_size)
+			{
+				writes[writeCount] =
+				{
+					.sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+					.pNext            = NULL,
+					.dstSet           = descriptorSet,
+					.dstBinding       = prog.m_vsh->m_uniformBinding,
+					.dstArrayElement  = 0,
+					.descriptorCount  = 1,
+					.descriptorType   = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC,
+					.pImageInfo       = NULL,
+					.pBufferInfo      = &bufferInfo,
+					.pTexelBufferView = NULL,
+				};
+				++writeCount;
+				++numDynamicOffsets;
 			}
 
 			vkUpdateDescriptorSets(device, writeCount, writes, 0, NULL);
@@ -2237,7 +2375,7 @@ namespace bgfx { namespace vk
 			}
 
 			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, pso);
-			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, prog.m_pipelineLayout, 0, 1, &descriptorSet, 0, NULL);
+			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, prog.m_pipelineLayout, 0, 1, &descriptorSet, numDynamicOffsets, &dynamicOffset);
 			vkCmdDispatch(commandBuffer, bx::max<uint32_t>((m_dstWidth + 7) / 8, 1), bx::max<uint32_t>((m_dstHeight + 7) / 8, 1), 1);
 
 			{
@@ -2298,43 +2436,53 @@ namespace bgfx { namespace vk
 				}
 
 				const h264::SPS& sps = m_spsArray[ii];
-				StdVideoH264SequenceParameterSet& vk = vkSpsArr[numSps++];
 
-				vk.flags.constraint_set0_flag                 = sps.constraint_set0_flag;
-				vk.flags.constraint_set1_flag                 = sps.constraint_set1_flag;
-				vk.flags.constraint_set2_flag                 = sps.constraint_set2_flag;
-				vk.flags.constraint_set3_flag                 = sps.constraint_set3_flag;
-				vk.flags.constraint_set4_flag                 = sps.constraint_set4_flag;
-				vk.flags.constraint_set5_flag                 = sps.constraint_set5_flag;
-				vk.flags.direct_8x8_inference_flag            = sps.direct_8x8_inference_flag;
-				vk.flags.mb_adaptive_frame_field_flag         = sps.mb_adaptive_frame_field_flag;
-				vk.flags.frame_mbs_only_flag                  = sps.frame_mbs_only_flag;
-				vk.flags.delta_pic_order_always_zero_flag     = sps.delta_pic_order_always_zero_flag;
-				vk.flags.separate_colour_plane_flag           = sps.separate_colour_plane_flag;
-				vk.flags.gaps_in_frame_num_value_allowed_flag = sps.gaps_in_frame_num_value_allowed_flag;
-				vk.flags.qpprime_y_zero_transform_bypass_flag = sps.qpprime_y_zero_transform_bypass_flag;
-				vk.flags.frame_cropping_flag                  = sps.frame_cropping_flag;
-				vk.flags.seq_scaling_matrix_present_flag      = sps.seq_scaling_matrix_present_flag;
-				vk.flags.vui_parameters_present_flag          = 0; // skip VUI; we don't need it for decode
-				vk.profile_idc                                = StdVideoH264ProfileIdc(sps.profile_idc);
-				vk.level_idc                                  = translateH264Level(sps.level_idc);
-				vk.chroma_format_idc                          = STD_VIDEO_H264_CHROMA_FORMAT_IDC_420;
-				vk.seq_parameter_set_id                       = uint8_t(sps.seq_parameter_set_id);
-				vk.bit_depth_luma_minus8                      = uint8_t(sps.bit_depth_luma_minus8);
-				vk.bit_depth_chroma_minus8                    = uint8_t(sps.bit_depth_chroma_minus8);
-				vk.log2_max_frame_num_minus4                  = uint8_t(sps.log2_max_frame_num_minus4);
-				vk.pic_order_cnt_type                         = StdVideoH264PocType(sps.pic_order_cnt_type);
-				vk.offset_for_non_ref_pic                     = sps.offset_for_non_ref_pic;
-				vk.offset_for_top_to_bottom_field             = sps.offset_for_top_to_bottom_field;
-				vk.log2_max_pic_order_cnt_lsb_minus4          = uint8_t(sps.log2_max_pic_order_cnt_lsb_minus4);
-				vk.num_ref_frames_in_pic_order_cnt_cycle      = uint8_t(sps.num_ref_frames_in_pic_order_cnt_cycle);
-				vk.max_num_ref_frames                         = uint8_t(sps.num_ref_frames);
-				vk.pic_width_in_mbs_minus1                    = uint32_t(sps.pic_width_in_mbs_minus1);
-				vk.pic_height_in_map_units_minus1             = uint32_t(sps.pic_height_in_map_units_minus1);
-				vk.frame_crop_left_offset                     = uint32_t(sps.frame_crop_left_offset);
-				vk.frame_crop_right_offset                    = uint32_t(sps.frame_crop_right_offset);
-				vk.frame_crop_top_offset                      = uint32_t(sps.frame_crop_top_offset);
-				vk.frame_crop_bottom_offset                   = uint32_t(sps.frame_crop_bottom_offset);
+				vkSpsArr[numSps++] =
+				{
+					.flags =
+					{
+						.constraint_set0_flag                 = uint32_t(sps.constraint_set0_flag),
+						.constraint_set1_flag                 = uint32_t(sps.constraint_set1_flag),
+						.constraint_set2_flag                 = uint32_t(sps.constraint_set2_flag),
+						.constraint_set3_flag                 = uint32_t(sps.constraint_set3_flag),
+						.constraint_set4_flag                 = uint32_t(sps.constraint_set4_flag),
+						.constraint_set5_flag                 = uint32_t(sps.constraint_set5_flag),
+						.direct_8x8_inference_flag            = uint32_t(sps.direct_8x8_inference_flag),
+						.mb_adaptive_frame_field_flag         = uint32_t(sps.mb_adaptive_frame_field_flag),
+						.frame_mbs_only_flag                  = uint32_t(sps.frame_mbs_only_flag),
+						.delta_pic_order_always_zero_flag     = uint32_t(sps.delta_pic_order_always_zero_flag),
+						.separate_colour_plane_flag           = uint32_t(sps.separate_colour_plane_flag),
+						.gaps_in_frame_num_value_allowed_flag = uint32_t(sps.gaps_in_frame_num_value_allowed_flag),
+						.qpprime_y_zero_transform_bypass_flag = uint32_t(sps.qpprime_y_zero_transform_bypass_flag),
+						.frame_cropping_flag                  = uint32_t(sps.frame_cropping_flag),
+						.seq_scaling_matrix_present_flag      = uint32_t(sps.seq_scaling_matrix_present_flag),
+						.vui_parameters_present_flag          = 0,
+					},
+					.profile_idc                           = StdVideoH264ProfileIdc(sps.profile_idc),
+					.level_idc                             = translateH264Level(sps.level_idc),
+					.chroma_format_idc                     = STD_VIDEO_H264_CHROMA_FORMAT_IDC_420,
+					.seq_parameter_set_id                  = uint8_t(sps.seq_parameter_set_id),
+					.bit_depth_luma_minus8                 = uint8_t(sps.bit_depth_luma_minus8),
+					.bit_depth_chroma_minus8               = uint8_t(sps.bit_depth_chroma_minus8),
+					.log2_max_frame_num_minus4             = uint8_t(sps.log2_max_frame_num_minus4),
+					.pic_order_cnt_type                    = StdVideoH264PocType(sps.pic_order_cnt_type),
+					.offset_for_non_ref_pic                = int32_t(sps.offset_for_non_ref_pic),
+					.offset_for_top_to_bottom_field        = int32_t(sps.offset_for_top_to_bottom_field),
+					.log2_max_pic_order_cnt_lsb_minus4     = uint8_t(sps.log2_max_pic_order_cnt_lsb_minus4),
+					.num_ref_frames_in_pic_order_cnt_cycle = uint8_t(sps.num_ref_frames_in_pic_order_cnt_cycle),
+					.max_num_ref_frames                    = uint8_t(sps.num_ref_frames),
+					.reserved1                             = 0,
+					.pic_width_in_mbs_minus1               = uint32_t(sps.pic_width_in_mbs_minus1),
+					.pic_height_in_map_units_minus1        = uint32_t(sps.pic_height_in_map_units_minus1),
+					.frame_crop_left_offset                = uint32_t(sps.frame_crop_left_offset),
+					.frame_crop_right_offset               = uint32_t(sps.frame_crop_right_offset),
+					.frame_crop_top_offset                 = uint32_t(sps.frame_crop_top_offset),
+					.frame_crop_bottom_offset              = uint32_t(sps.frame_crop_bottom_offset),
+					.reserved2                             = 0,
+					.pOffsetForRefFrame                    = NULL,
+					.pScalingLists                         = NULL,
+					.pSequenceParameterSetVui              = NULL,
+				};
 			}
 
 			for (uint32_t ii = 0; ii < BX_COUNTOF(m_ppsArray); ++ii)
@@ -2344,27 +2492,32 @@ namespace bgfx { namespace vk
 					continue;
 				}
 				const h264::PPS& pps = m_ppsArray[ii];
-				StdVideoH264PictureParameterSet& vk = vkPpsArr[numPps];
 				StdVideoH264ScalingLists& vkScaling = vkPpsScalingArr[numPps];
-				++numPps;
 
-				vk.flags.transform_8x8_mode_flag                      = pps.transform_8x8_mode_flag;
-				vk.flags.redundant_pic_cnt_present_flag               = pps.redundant_pic_cnt_present_flag;
-				vk.flags.constrained_intra_pred_flag                  = pps.constrained_intra_pred_flag;
-				vk.flags.deblocking_filter_control_present_flag       = pps.deblocking_filter_control_present_flag;
-				vk.flags.weighted_pred_flag                           = pps.weighted_pred_flag;
-				vk.flags.bottom_field_pic_order_in_frame_present_flag = pps.pic_order_present_flag;
-				vk.flags.entropy_coding_mode_flag                     = pps.entropy_coding_mode_flag;
-				vk.flags.pic_scaling_matrix_present_flag              = pps.pic_scaling_matrix_present_flag;
-				vk.seq_parameter_set_id                               = uint8_t(pps.seq_parameter_set_id);
-				vk.pic_parameter_set_id                               = uint8_t(pps.pic_parameter_set_id);
-				vk.num_ref_idx_l0_default_active_minus1               = uint8_t(pps.num_ref_idx_l0_active_minus1);
-				vk.num_ref_idx_l1_default_active_minus1               = uint8_t(pps.num_ref_idx_l1_active_minus1);
-				vk.weighted_bipred_idc                                = StdVideoH264WeightedBipredIdc(pps.weighted_bipred_idc);
-				vk.pic_init_qp_minus26                                = int8_t(pps.pic_init_qp_minus26);
-				vk.pic_init_qs_minus26                                = int8_t(pps.pic_init_qs_minus26);
-				vk.chroma_qp_index_offset                             = int8_t(pps.chroma_qp_index_offset);
-				vk.second_chroma_qp_index_offset                      = int8_t(pps.second_chroma_qp_index_offset);
+				vkPpsArr[numPps++] =
+				{
+					.flags =
+					{
+						.transform_8x8_mode_flag                      = uint32_t(pps.transform_8x8_mode_flag),
+						.redundant_pic_cnt_present_flag               = uint32_t(pps.redundant_pic_cnt_present_flag),
+						.constrained_intra_pred_flag                  = uint32_t(pps.constrained_intra_pred_flag),
+						.deblocking_filter_control_present_flag       = uint32_t(pps.deblocking_filter_control_present_flag),
+						.weighted_pred_flag                           = uint32_t(pps.weighted_pred_flag),
+						.bottom_field_pic_order_in_frame_present_flag = uint32_t(pps.pic_order_present_flag),
+						.entropy_coding_mode_flag                     = uint32_t(pps.entropy_coding_mode_flag),
+						.pic_scaling_matrix_present_flag              = uint32_t(pps.pic_scaling_matrix_present_flag),
+					},
+					.seq_parameter_set_id                 = uint8_t(pps.seq_parameter_set_id),
+					.pic_parameter_set_id                 = uint8_t(pps.pic_parameter_set_id),
+					.num_ref_idx_l0_default_active_minus1 = uint8_t(pps.num_ref_idx_l0_active_minus1),
+					.num_ref_idx_l1_default_active_minus1 = uint8_t(pps.num_ref_idx_l1_active_minus1),
+					.weighted_bipred_idc                  = StdVideoH264WeightedBipredIdc(pps.weighted_bipred_idc),
+					.pic_init_qp_minus26                  = int8_t(pps.pic_init_qp_minus26),
+					.pic_init_qs_minus26                  = int8_t(pps.pic_init_qs_minus26),
+					.chroma_qp_index_offset               = int8_t(pps.chroma_qp_index_offset),
+					.second_chroma_qp_index_offset        = int8_t(pps.second_chroma_qp_index_offset),
+					.pScalingLists                        = &vkScaling,
+				};
 
 				vkScaling = {};
 
@@ -2393,8 +2546,6 @@ namespace bgfx { namespace vk
 						vkScaling.ScalingList8x8[jj][kk] = uint8_t(pps.ScalingList8x8[jj][kk]);
 					}
 				}
-
-				vk.pScalingLists = &vkScaling;
 			}
 
 			if (0 == numSps
@@ -2501,7 +2652,7 @@ namespace bgfx { namespace vk
 
 		VkImage         m_dpbImage;
 		VkDeviceMemory  m_dpbImageMemory;
-		VkImageView     m_dpbImageView[kNumDpbSlots];
+		VkImageView     m_dpbImageView;
 		VkImageLayout   m_dpbLayouts[kNumDpbSlots];
 		bool            m_dpbCoincide;
 
@@ -2515,6 +2666,9 @@ namespace bgfx { namespace vk
 		VkDeviceSize    m_bitstreamBufferSize;
 		void*           m_bitstreamMapped;
 		uint32_t        m_bitstreamAlignment;
+
+		VkBuffer        m_yuvToRgbBuffer;
+		VkDeviceMemory  m_yuvToRgbBufferMemory;
 
 		VkCommandPool   m_videoCommandPool;
 		VkCommandBuffer m_videoCommandBuffer;
@@ -2762,8 +2916,8 @@ namespace bgfx { namespace vk
 
 			if (VK_SUCCESS == result)
 			{
-				g_caps.codecs[probe.codec] |= probe.caps;
-				anySupported = true;
+				g_caps.codecs[probe.codec] |= probe.caps & getDecodableCodecCaps(probe.codec);
+				anySupported |= 0 != (probe.caps & getDecodableCodecCaps(probe.codec) );
 
 				BX_TRACE("[VK] Video decode supported: codec=%d caps=0x%08x"
 					, probe.codec
@@ -2778,10 +2932,7 @@ namespace bgfx { namespace vk
 
 			const TextureFormat::Enum dstFormats[] =
 			{
-				TextureFormat::BGRA8,
 				TextureFormat::RGBA8,
-				TextureFormat::RGB10A2,
-				TextureFormat::RGBA16F,
 			};
 
 			for (uint32_t ii = 0; ii < BX_COUNTOF(dstFormats); ++ii)

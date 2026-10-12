@@ -2496,15 +2496,18 @@ int _main_(int _argc, char** _argv)
 						texture = videoPlayer.texture();
 						videoOwnsTexture = true;
 
-						view.m_textureInfo.format       = bgfx::TextureFormat::BGRA8;
-						view.m_textureInfo.storageSize  = 0;
-						view.m_textureInfo.width        = uint16_t(videoPlayer.width() );
-						view.m_textureInfo.height       = uint16_t(videoPlayer.height() );
-						view.m_textureInfo.depth        = 1;
-						view.m_textureInfo.numLayers    = 1;
-						view.m_textureInfo.numMips      = 1;
-						view.m_textureInfo.bitsPerPixel = 32;
-						view.m_textureInfo.cubeMap      = false;
+						view.m_textureInfo =
+						{
+							.format       = videoPlayer.format(),
+							.storageSize  = 0,
+							.width        = uint16_t(videoPlayer.width() ),
+							.height       = uint16_t(videoPlayer.height() ),
+							.depth        = 1,
+							.numLayers    = 1,
+							.numMips      = 1,
+							.bitsPerPixel = 32,
+							.cubeMap      = false,
+						};
 						view.m_inLinear = false;
 
 						cmdExec("view orientation\nview orientation z 0");

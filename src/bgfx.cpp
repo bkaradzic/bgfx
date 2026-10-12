@@ -481,6 +481,7 @@ namespace bgfx
 
 #if BGFX_CONFIG_VIDEO
 #	include "cs_yuv_to_rgb.bin.h"
+#	include "cs_yuv_to_rgb_float.bin.h"
 #endif // BGFX_CONFIG_VIDEO
 
 #if BGFX_CONFIG_BLIT_FALLBACK
@@ -513,6 +514,7 @@ namespace bgfx
 
 #if BGFX_CONFIG_VIDEO
 		BGFX_EMBEDDED_SHADER(cs_yuv_to_rgb),
+		BGFX_EMBEDDED_SHADER(cs_yuv_to_rgb_float),
 #endif // BGFX_CONFIG_VIDEO
 
 #if BGFX_CONFIG_BLIT_FALLBACK
@@ -1148,13 +1150,22 @@ namespace bgfx
 			return;
 		}
 
-		ShaderHandle csh = createEmbeddedShader(s_embeddedShaders, g_caps.rendererType, "cs_yuv_to_rgb");
-		BX_ASSERT(isValid(csh), "Failed to create video decode embedded compute shader.");
-
-		if (isValid(csh) )
+		static const char* cs_yuv_to_rgb[] =
 		{
-			m_program = createProgram(csh, true);
-			BX_ASSERT(isValid(m_program), "Failed to create video decode program.");
+			"cs_yuv_to_rgb",
+			"cs_yuv_to_rgb_float",
+		};
+
+		for (uint32_t ii = 0; ii < BX_COUNTOF(m_program); ++ii)
+		{
+			ShaderHandle csh = createEmbeddedShader(s_embeddedShaders, g_caps.rendererType, cs_yuv_to_rgb[ii]);
+			BX_ASSERT(isValid(csh), "Failed to create video decode embedded compute shader \"%s\".", cs_yuv_to_rgb[ii]);
+
+			if (isValid(csh) )
+			{
+				m_program[ii] = createProgram(csh, true);
+				BX_ASSERT(isValid(m_program[ii]), "Failed to create video decode program.");
+			}
 		}
 
 		s_texY      = createUniform("bgfx_texY",      bgfx::UniformType::Sampler);
@@ -1169,10 +1180,13 @@ namespace bgfx
 
 		g_videoDecode = NULL;
 
-		if (isValid(m_program) )
+		for (uint32_t ii = 0; ii < BX_COUNTOF(m_program); ++ii)
 		{
-			destroy(m_program);
-			m_program = BGFX_INVALID_HANDLE;
+			if (isValid(m_program[ii]) )
+			{
+				destroy(m_program[ii]);
+				m_program[ii] = BGFX_INVALID_HANDLE;
+			}
 		}
 
 		if (isValid(s_texY) )
@@ -5109,10 +5123,15 @@ namespace bgfx
 		const uint32_t numRows    = calcTextureRegionNumRows(_format, _height);
 		const uint32_t numSlices  = bx::max<uint32_t>(1, _depth);
 
-		BufferLayout layout;
-		layout.m_rowPitch   = 0 == _region.rowPitch   ? tightPitch                : _region.rowPitch;
-		layout.m_slicePitch = 0 == _region.slicePitch ? layout.m_rowPitch*numRows : _region.slicePitch;
-		layout.m_size       = layout.m_slicePitch*(numSlices - 1) + layout.m_rowPitch*numRows;
+		const uint32_t rowPitch   = 0 == _region.rowPitch   ? tightPitch       : _region.rowPitch;
+		const uint32_t slicePitch = 0 == _region.slicePitch ? rowPitch*numRows : _region.slicePitch;
+
+		const BufferLayout layout =
+		{
+			.m_rowPitch   = rowPitch,
+			.m_slicePitch = slicePitch,
+			.m_size       = slicePitch*(numSlices - 1) + rowPitch*numRows,
+		};
 
 		BX_ASSERT(layout.m_rowPitch >= tightPitch
 			, "Blit buffer row pitch is too small (%d < %d)."
@@ -6146,6 +6165,16 @@ namespace bgfx
 			);
 
 		BGFX_ERROR_CHECK(false
+			|| 0 == (_flags & BGFX_TEXTURE_INTERNAL_VIDEO_DECODE_DST)
+			|| 0 != (g_caps.formats[_format] & BGFX_CAPS_FORMAT_TEXTURE_VIDEO_DECODE_DST)
+			, _err
+			, BGFX_ERROR_TEXTURE_VALIDATION
+			, "Texture format can't be used as video decode destination."
+			, "Texture format: %s."
+			, getName(_format)
+			);
+
+		BGFX_ERROR_CHECK(false
 			|| _numLayers <= g_caps.limits.maxTextureLayers
 			, _err
 			, BGFX_ERROR_TEXTURE_VALIDATION
@@ -6528,15 +6557,17 @@ namespace bgfx
 		bx::StaticMemoryBlockWriter writer(mem->data, mem->size);
 		bx::write(&writer, kChunkMagicTex, bx::ErrorAssert{});
 
-		TextureCreate tc;
-		tc.m_width     = _width;
-		tc.m_height    = _height;
-		tc.m_depth     = 0;
-		tc.m_numLayers = _numLayers;
-		tc.m_numMips   = numMips;
-		tc.m_format    = _format;
-		tc.m_cubeMap   = false;
-		tc.m_mem       = _mem;
+		const TextureCreate tc =
+		{
+			.m_format    = _format,
+			.m_width     = _width,
+			.m_height    = _height,
+			.m_depth     = 0,
+			.m_numLayers = _numLayers,
+			.m_numMips   = numMips,
+			.m_cubeMap   = false,
+			.m_mem       = _mem,
+		};
 		bx::write(&writer, tc, bx::ErrorAssert{});
 
 		const bool immutable = true
@@ -6601,15 +6632,17 @@ namespace bgfx
 		bx::StaticMemoryBlockWriter writer(mem->data, mem->size);
 		bx::write(&writer, kChunkMagicTex, bx::ErrorAssert{});
 
-		TextureCreate tc;
-		tc.m_width     = _width;
-		tc.m_height    = _height;
-		tc.m_depth     = _depth;
-		tc.m_numLayers = 1;
-		tc.m_numMips   = numMips;
-		tc.m_format    = _format;
-		tc.m_cubeMap   = false;
-		tc.m_mem       = _mem;
+		const TextureCreate tc =
+		{
+			.m_format    = _format,
+			.m_width     = _width,
+			.m_height    = _height,
+			.m_depth     = _depth,
+			.m_numLayers = 1,
+			.m_numMips   = numMips,
+			.m_cubeMap   = false,
+			.m_mem       = _mem,
+		};
 		bx::write(&writer, tc, bx::ErrorAssert{});
 
 		return s_ctx->createTexture(mem, _flags, 0, NULL, BackbufferRatio::Count, NULL != _mem, _external);
@@ -6653,15 +6686,17 @@ namespace bgfx
 		bx::StaticMemoryBlockWriter writer(mem->data, mem->size);
 		bx::write(&writer, kChunkMagicTex, bx::ErrorAssert{});
 
-		TextureCreate tc;
-		tc.m_width     = _size;
-		tc.m_height    = _size;
-		tc.m_depth     = 0;
-		tc.m_numLayers = _numLayers;
-		tc.m_numMips   = numMips;
-		tc.m_format    = _format;
-		tc.m_cubeMap   = true;
-		tc.m_mem       = _mem;
+		const TextureCreate tc =
+		{
+			.m_format    = _format,
+			.m_width     = _size,
+			.m_height    = _size,
+			.m_depth     = 0,
+			.m_numLayers = _numLayers,
+			.m_numMips   = numMips,
+			.m_cubeMap   = true,
+			.m_mem       = _mem,
+		};
 		bx::write(&writer, tc, bx::ErrorAssert{});
 
 		return s_ctx->createTexture(mem, _flags, 0, NULL, BackbufferRatio::Count, NULL != _mem, _external);

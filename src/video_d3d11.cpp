@@ -86,12 +86,16 @@ namespace bgfx { namespace d3d11
 			bx::memSet(&m_spsActive,      0, sizeof(m_spsActive) );
 			bx::memSet(m_spsArray,        0, sizeof(m_spsArray) );
 			bx::memSet(m_ppsArray,        0, sizeof(m_ppsArray) );
+			bx::memSet(m_yuvToRgb,        0, sizeof(m_yuvToRgb) );
 
 			for (uint32_t ii = 0; ii < kVideoMaxReorderInFlight; ++ii)
 			{
-				m_reorderPool[ii].slotIndex    = -1;
-				m_reorderPool[ii].displayOrder = -1;
-				m_reorderPool[ii].ptsUs        = 0;
+				m_reorderPool[ii] =
+				{
+					.slotIndex    = -1,
+					.displayOrder = -1,
+					.ptsUs        = 0,
+				};
 			}
 		}
 
@@ -131,6 +135,8 @@ namespace bgfx { namespace d3d11
 				BX_TRACE("VideoDecoderD3D11: only 8-bit 4:2:0 (NV12) is supported.");
 				return false;
 			}
+
+			getYuvToRgb(m_yuvToRgb, m_spsActive);
 
 			m_dstWidth    = _width;
 			m_dstHeight   = _height;
@@ -417,9 +423,12 @@ namespace bgfx { namespace d3d11
 
 			for (uint32_t ii = 0; ii < kVideoMaxReorderInFlight; ++ii)
 			{
-				m_reorderPool[ii].slotIndex    = -1;
-				m_reorderPool[ii].displayOrder = -1;
-				m_reorderPool[ii].ptsUs        = 0;
+				m_reorderPool[ii] =
+				{
+					.slotIndex    = -1,
+					.displayOrder = -1,
+					.ptsUs        = 0,
+				};
 			}
 		}
 
@@ -512,9 +521,12 @@ namespace bgfx { namespace d3d11
 
 			for (uint32_t ii = 0; ii < kVideoMaxReorderInFlight; ++ii)
 			{
-				m_reorderPool[ii].slotIndex    = -1;
-				m_reorderPool[ii].displayOrder = -1;
-				m_reorderPool[ii].ptsUs        = 0;
+				m_reorderPool[ii] =
+				{
+					.slotIndex    = -1,
+					.displayOrder = -1,
+					.ptsUs        = 0,
+				};
 			}
 
 			m_displayedSlot     = -1;
@@ -584,9 +596,12 @@ namespace bgfx { namespace d3d11
 			m_dpbState[m_currentSlot].frameNum = sh.frame_num;
 
 			const uint32_t poolIdx = pickReorderSlotOrEvictOldest(m_reorderPool, kVideoMaxReorderInFlight);
-			m_reorderPool[poolIdx].slotIndex    = int32_t(m_currentSlot);
-			m_reorderPool[poolIdx].displayOrder = displayOrder;
-			m_reorderPool[poolIdx].ptsUs        = _ptsUs;
+			m_reorderPool[poolIdx] =
+			{
+				.slotIndex    = int32_t(m_currentSlot),
+				.displayOrder = displayOrder,
+				.ptsUs        = _ptsUs,
+			};
 
 			DXVA_PicParams_H264 picParams = {};
 			DXVA_Qmatrix_H264   qmatrix   = {};
@@ -859,13 +874,15 @@ namespace bgfx { namespace d3d11
 
 				ID3D11DeviceContext* deviceCtx = s_videoD3D11.deviceCtx;
 
-				D3D11_BOX boxY;
-				boxY.left   = 0;
-				boxY.top    = 0;
-				boxY.front  = 0;
-				boxY.right  = srcW;
-				boxY.bottom = srcH;
-				boxY.back   = 1;
+				const D3D11_BOX boxY =
+				{
+					.left   = 0,
+					.top    = 0,
+					.front  = 0,
+					.right  = srcW,
+					.bottom = srcH,
+					.back   = 1,
+				};
 				deviceCtx->CopySubresourceRegion(
 					  m_reorderTex[poolIdx], 0
 					, 0, 0, 0
@@ -873,13 +890,15 @@ namespace bgfx { namespace d3d11
 					, &boxY
 					);
 
-				D3D11_BOX boxUV;
-				boxUV.left   = 0;
-				boxUV.top    = 0;
-				boxUV.front  = 0;
-				boxUV.right  = srcW / 2;
-				boxUV.bottom = srcH / 2;
-				boxUV.back   = 1;
+				const D3D11_BOX boxUV =
+				{
+					.left   = 0,
+					.top    = 0,
+					.front  = 0,
+					.right  = srcW / 2,
+					.bottom = srcH / 2,
+					.back   = 1,
+				};
 				deviceCtx->CopySubresourceRegion(
 					  m_reorderTex[poolIdx], 1
 					, 0, 0, 0
@@ -947,11 +966,11 @@ namespace bgfx { namespace d3d11
 
 		void dispatchYuvToRgb(uint32_t _poolIdx, TextureD3D11& _dst)
 		{
-			BX_ASSERT(NULL != g_videoDecode && isValid(g_videoDecode->m_program), "Video decode program not initialized.");
+			BX_ASSERT(NULL != g_videoDecode, "Video decode program not initialized.");
 			BX_ASSERT(_poolIdx < kVideoMaxReorderInFlight, "Reorder pool index out of range.");
 
 			ID3D11DeviceContext*  deviceCtx = s_videoD3D11.deviceCtx;
-			const ProgramD3D11&   program   = videoGetProgram(m_renderer, g_videoDecode->m_program);
+			const ProgramD3D11&   program   = videoGetProgram(m_renderer, g_videoDecode->getProgram(TextureFormat::Enum(_dst.m_textureFormat) ) );
 
 			if (NULL == program.m_vsh
 			||  NULL == program.m_vsh->m_computeShader
@@ -977,6 +996,14 @@ namespace bgfx { namespace d3d11
 			ID3D11UnorderedAccessView* uav = _dst.m_uav;
 			deviceCtx->CSSetUnorderedAccessViews(0, 1, &uav, NULL);
 
+			ID3D11Buffer* cb = program.m_vsh->m_buffer;
+
+			if (NULL != cb)
+			{
+				deviceCtx->UpdateSubresource(cb, 0, NULL, m_yuvToRgb, 0, 0);
+				deviceCtx->CSSetConstantBuffers(0, 1, &cb);
+			}
+
 			deviceCtx->Dispatch(
 				  bx::max<uint32_t>( (m_dstWidth  + 7) / 8, 1)
 				, bx::max<uint32_t>( (m_dstHeight + 7) / 8, 1)
@@ -991,6 +1018,9 @@ namespace bgfx { namespace d3d11
 
 			ID3D11SamplerState* nullSamplers[3] = { NULL, NULL, NULL };
 			deviceCtx->CSSetSamplers(0, 3, nullSamplers);
+
+			ID3D11Buffer* nullCb = NULL;
+			deviceCtx->CSSetConstantBuffers(0, 1, &nullCb);
 
 			deviceCtx->CSSetShader(NULL, NULL, 0);
 		}
@@ -1027,6 +1057,8 @@ namespace bgfx { namespace d3d11
 		ReorderedPicture m_reorderPool[kVideoMaxReorderInFlight];
 		int32_t  m_displayedSlot;
 		int32_t  m_prevDisplayedSlot;
+
+		float m_yuvToRgb[12];
 
 		uint32_t m_statusReportFeedback;
 
@@ -1132,8 +1164,8 @@ namespace bgfx { namespace d3d11
 					if (SUCCEEDED(hr)
 					&&  supported)
 					{
-						g_caps.codecs[s_profiles[jj].codec] |= s_profiles[jj].caps;
-						anySupported = true;
+						g_caps.codecs[s_profiles[jj].codec] |= s_profiles[jj].caps & getDecodableCodecCaps(s_profiles[jj].codec);
+						anySupported |= 0 != (s_profiles[jj].caps & getDecodableCodecCaps(s_profiles[jj].codec) );
 					}
 
 					supported = false;
@@ -1142,8 +1174,8 @@ namespace bgfx { namespace d3d11
 					if (SUCCEEDED(hr)
 					&&  supported)
 					{
-						g_caps.codecs[s_profiles[jj].codec] |= s_profiles[jj].caps;
-						anySupported = true;
+						g_caps.codecs[s_profiles[jj].codec] |= s_profiles[jj].caps & getDecodableCodecCaps(s_profiles[jj].codec);
+						anySupported |= 0 != (s_profiles[jj].caps & getDecodableCodecCaps(s_profiles[jj].codec) );
 					}
 
 					break;
@@ -1157,7 +1189,6 @@ namespace bgfx { namespace d3d11
 
 			const TextureFormat::Enum dstFormats[] =
 			{
-				TextureFormat::BGRA8,
 				TextureFormat::RGBA8,
 				TextureFormat::RGB10A2,
 				TextureFormat::RGBA16F,

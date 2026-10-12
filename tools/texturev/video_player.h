@@ -25,6 +25,7 @@ public:
 	uint16_t width()    const { return m_width; }
 	uint16_t height()   const { return m_height; }
 	bgfx::TextureHandle texture() const { return m_videoTexture; }
+	bgfx::TextureFormat::Enum format() const { return m_format; }
 
 	void tick();
 
@@ -86,7 +87,8 @@ private:
 	int64_t  m_aMarkerUs;
 	int64_t  m_bMarkerUs;
 
-	bgfx::TextureHandle m_videoTexture;
+	bgfx::TextureHandle       m_videoTexture;
+	bgfx::TextureFormat::Enum m_format;
 };
 
 #endif // TEXTUREV_VIDEO_PLAYER_H_HEADER_GUARD
