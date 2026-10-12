@@ -18,6 +18,47 @@ namespace bgfx
 			;
 	}
 
+	struct VideoPictureRect
+	{
+		uint32_t x;
+		uint32_t y;
+		uint32_t width;
+		uint32_t height;
+	};
+
+	inline VideoPictureRect getPictureRect(const h264::SPS& _sps)
+	{
+		const uint32_t frameMbsOnly = 0 != _sps.frame_mbs_only_flag ? 1 : 0;
+		const uint32_t codedWidth   = uint32_t(_sps.pic_width_in_mbs_minus1 + 1) * 16;
+		const uint32_t codedHeight  = uint32_t(_sps.pic_height_in_map_units_minus1 + 1) * 16 * (2 - frameMbsOnly);
+
+		if (0 == _sps.frame_cropping_flag)
+		{
+			return { .x = 0, .y = 0, .width = codedWidth, .height = codedHeight };
+		}
+
+		const uint32_t cropUnitX = 2;
+		const uint32_t cropUnitY = 2 * (2 - frameMbsOnly);
+		const uint32_t left      = uint32_t(_sps.frame_crop_left_offset)   * cropUnitX;
+		const uint32_t right     = uint32_t(_sps.frame_crop_right_offset)  * cropUnitX;
+		const uint32_t top       = uint32_t(_sps.frame_crop_top_offset)    * cropUnitY;
+		const uint32_t bottom    = uint32_t(_sps.frame_crop_bottom_offset) * cropUnitY;
+
+		if (left + right  >= codedWidth
+		||  top  + bottom >= codedHeight)
+		{
+			return { .x = 0, .y = 0, .width = codedWidth, .height = codedHeight };
+		}
+
+		return
+		{
+			.x      = left,
+			.y      = top,
+			.width  = codedWidth  - left - right,
+			.height = codedHeight - top  - bottom,
+		};
+	}
+
 	inline void getYuvToRgb(float _result[12], uint8_t _matrixCoefficients, bool _fullRange)
 	{
 		float kr = 0.2126f;
@@ -217,6 +258,116 @@ namespace bgfx
 		return poc;
 	}
 
+	inline bool isInRange(int32_t _value, int32_t _min, int32_t _max)
+	{
+		return _min <= _value && _value <= _max;
+	}
+
+	static constexpr int32_t kVideoMaxH264SizeInMbsMinus1 = 1023;
+
+	inline bool isDecodableProfile(int32_t _profileIdc)
+	{
+		return false
+			|| h264::PROFILE_IDC_BASELINE == _profileIdc
+			|| h264::PROFILE_IDC_MAIN     == _profileIdc
+			|| h264::PROFILE_IDC_HIGH     == _profileIdc
+			;
+	}
+
+	inline bool isSpsInRange(const h264::SPS& _sps)
+	{
+		return true
+			&& isDecodableProfile(_sps.profile_idc)
+			&& isInRange(_sps.seq_parameter_set_id,                  0, h264::MAX_SPS_ID)
+			&& isInRange(_sps.chroma_format_idc,                     0, h264::MAX_CHROMA_FORMAT_IDC)
+			&& isInRange(_sps.bit_depth_luma_minus8,                 0, h264::MAX_BIT_DEPTH_MINUS8)
+			&& isInRange(_sps.bit_depth_chroma_minus8,               0, h264::MAX_BIT_DEPTH_MINUS8)
+			&& isInRange(_sps.log2_max_frame_num_minus4,             0, h264::MAX_LOG2_MINUS4)
+			&& isInRange(_sps.pic_order_cnt_type,                    0, h264::MAX_PIC_ORDER_CNT_TYPE)
+			&& isInRange(_sps.log2_max_pic_order_cnt_lsb_minus4,     0, h264::MAX_LOG2_MINUS4)
+			&& isInRange(_sps.num_ref_frames_in_pic_order_cnt_cycle, 0, h264::MAX_NUM_REF_FRAMES_IN_PIC_ORDER_CNT_CYCLE)
+			&& isInRange(_sps.num_ref_frames,                        0, h264::MAX_NUM_REF_FRAMES)
+			&& isInRange(_sps.pic_width_in_mbs_minus1,               0, kVideoMaxH264SizeInMbsMinus1)
+			&& isInRange(_sps.pic_height_in_map_units_minus1,        0, kVideoMaxH264SizeInMbsMinus1)
+			;
+	}
+
+	inline bool isPpsInRange(const h264::PPS& _pps, const h264::SPS& _sps)
+	{
+		const int32_t qpBdOffset = h264::QP_BD_OFFSET_PER_BIT*_sps.bit_depth_luma_minus8;
+		const int32_t maxQpInit  = h264::MAX_QP - h264::PIC_INIT_QP;
+
+		return true
+			&& isInRange(_pps.pic_parameter_set_id,          0, h264::MAX_PPS_ID)
+			&& isInRange(_pps.seq_parameter_set_id,          0, h264::MAX_SPS_ID)
+			&& 0 == _pps.num_slice_groups_minus1
+			&& isInRange(_pps.num_ref_idx_l0_active_minus1,  0, h264::MAX_NUM_REF_IDX_ACTIVE_MINUS1)
+			&& isInRange(_pps.num_ref_idx_l1_active_minus1,  0, h264::MAX_NUM_REF_IDX_ACTIVE_MINUS1)
+			&& isInRange(_pps.weighted_bipred_idc,           0, h264::MAX_WEIGHTED_BIPRED_IDC)
+			&& isInRange(_pps.pic_init_qp_minus26,           -h264::PIC_INIT_QP - qpBdOffset,    maxQpInit)
+			&& isInRange(_pps.pic_init_qs_minus26,           -h264::PIC_INIT_QP,                 maxQpInit)
+			&& isInRange(_pps.chroma_qp_index_offset,        -h264::MAX_CHROMA_QP_INDEX_OFFSET, h264::MAX_CHROMA_QP_INDEX_OFFSET)
+			&& isInRange(_pps.second_chroma_qp_index_offset, -h264::MAX_CHROMA_QP_INDEX_OFFSET, h264::MAX_CHROMA_QP_INDEX_OFFSET)
+			;
+	}
+
+	inline bool isSliceHeaderInRange(const h264::SliceHeader& _sh, const h264::PPS& _pps, const h264::SPS& _sps)
+	{
+		const int32_t qpBdOffset   = h264::QP_BD_OFFSET_PER_BIT*_sps.bit_depth_luma_minus8;
+		const int32_t sliceQp      = h264::PIC_INIT_QP + _pps.pic_init_qp_minus26 + _sh.slice_qp_delta;
+		const int32_t frameHeight  = (_sps.pic_height_in_map_units_minus1 + 1) * (0 != _sps.frame_mbs_only_flag ? 1 : 2);
+		const int32_t picSizeInMbs = (_sps.pic_width_in_mbs_minus1 + 1) * frameHeight;
+		const int32_t mbaff        = 0 != _sps.mb_adaptive_frame_field_flag && 0 == _sh.field_pic_flag ? 1 : 0;
+
+		return true
+			&& isInRange(_sh.first_mb_in_slice * (1 + mbaff), 0,           picSizeInMbs - 1)
+			&& isInRange(_sh.slice_type,                      0,           h264::MAX_SLICE_TYPE)
+			&& isInRange(sliceQp,                             -qpBdOffset, h264::MAX_QP)
+			&& isInRange(_sh.num_ref_idx_l0_active_minus1,    0,           h264::MAX_NUM_REF_IDX_ACTIVE_MINUS1)
+			&& isInRange(_sh.num_ref_idx_l1_active_minus1,    0,           h264::MAX_NUM_REF_IDX_ACTIVE_MINUS1)
+			&& isInRange(_sh.cabac_init_idc,                  0,           h264::MAX_CABAC_INIT_IDC)
+			&& isInRange(_sh.disable_deblocking_filter_idc,   0,           h264::MAX_DISABLE_DEBLOCKING_FILTER_IDC)
+			&& isInRange(_sh.slice_alpha_c0_offset_div2,      -h264::MAX_DEBLOCKING_OFFSET_DIV2, h264::MAX_DEBLOCKING_OFFSET_DIV2)
+			&& isInRange(_sh.slice_beta_offset_div2,          -h264::MAX_DEBLOCKING_OFFSET_DIV2, h264::MAX_DEBLOCKING_OFFSET_DIV2)
+			&& isInRange(_sh.idr_pic_id,                      0,           h264::MAX_IDR_PIC_ID)
+			&& isInRange(_sh.redundant_pic_cnt,               0,           h264::MAX_REDUNDANT_PIC_CNT)
+			;
+	}
+
+	inline bool peekH264Sps(const uint8_t* _data, uint32_t _size, h264::SPS& _outSps)
+	{
+		h264::Bitstream bs;
+		bs.init(_data, _size);
+
+		while (h264::find_next_nal(&bs) )
+		{
+			const uint8_t* nalStart = bs.p;
+			const uint32_t nalSize  = nalUnitSize(nalStart, uint32_t(bs.end - bs.p) );
+
+			uint8_t rbsp[1024];
+			const uint32_t rbspSize = stripEmulationPrevention(rbsp, nalStart, bx::min<uint32_t>(nalSize, sizeof(rbsp) ) );
+
+			h264::Bitstream nalBs;
+			nalBs.init(rbsp, rbspSize);
+
+			h264::NALHeader nal = {};
+
+			if (h264::read_nal_header(&nal, &nalBs)
+			&&  h264::NAL_UNIT_TYPE_SPS == nal.type)
+			{
+				_outSps = {};
+				h264::read_sps(&_outSps, &nalBs);
+
+				return true;
+			}
+
+			bs.p         = nalStart + nalSize;
+			bs.bits_left = 8;
+		}
+
+		return false;
+	}
+
 	inline bool parseParameterSets(
 		  h264::SPS* _spsArray
 		, uint32_t _spsArrayLen
@@ -264,7 +415,8 @@ namespace bgfx
 				h264::SPS sps = {};
 				h264::read_sps(&sps, &nalBs);
 
-				if (sps.seq_parameter_set_id < (int)_spsArrayLen)
+				if (isSpsInRange(sps)
+				&&  sps.seq_parameter_set_id < (int)_spsArrayLen)
 				{
 					_spsArray[sps.seq_parameter_set_id] = sps;
 
@@ -282,7 +434,9 @@ namespace bgfx
 				h264::PPS pps = {};
 				h264::read_pps(&pps, &nalBs);
 
-				if (pps.pic_parameter_set_id < (int)_ppsArrayLen)
+				if (isInRange(pps.seq_parameter_set_id, 0, int32_t(_spsArrayLen) - 1)
+				&&  isPpsInRange(pps, _spsArray[pps.seq_parameter_set_id])
+				&&  pps.pic_parameter_set_id < (int)_ppsArrayLen)
 				{
 					_ppsArray[pps.pic_parameter_set_id] = pps;
 
@@ -411,6 +565,8 @@ namespace bgfx
 		, h264::NALHeader& _outNal
 		, h264::SliceHeader& _outSlice
 		, bool& _outIsIdr
+		, const bool* _spsValid
+		, const bool* _ppsValid
 		)
 	{
 		h264::Bitstream bs;
@@ -435,43 +591,37 @@ namespace bgfx
 				return false;
 			}
 
-			if (h264::NAL_UNIT_TYPE_SPS == nal.type)
-			{
-				h264::SPS sps = {};
-				h264::read_sps(&sps, &nalBs);
-
-				if (sps.seq_parameter_set_id < 32)
-				{
-					const_cast<h264::SPS*>(_spsArray)[sps.seq_parameter_set_id] = sps;
-				}
-
-				bs.p = nalStart + nalSize;
-				bs.bits_left = 8;
-
-				continue;
-			}
-
-			if (h264::NAL_UNIT_TYPE_PPS == nal.type)
-			{
-				h264::PPS pps = {};
-				h264::read_pps(&pps, &nalBs);
-
-				if (pps.pic_parameter_set_id < 256)
-				{
-					_ppsArray[pps.pic_parameter_set_id] = pps;
-				}
-
-				bs.p = nalStart + nalSize;
-				bs.bits_left = 8;
-
-				continue;
-			}
-
 			if (h264::NAL_UNIT_TYPE_CODED_SLICE_NON_IDR == nal.type
 			||  h264::NAL_UNIT_TYPE_CODED_SLICE_IDR     == nal.type)
 			{
+				h264::Bitstream peek = nalBs;
+				peek.ue();
+				const uint32_t sliceType = peek.ue();
+				const uint32_t ppsId     = peek.ue();
+
+				if (uint32_t(h264::MAX_SLICE_TYPE) < sliceType
+				||  uint32_t(h264::MAX_PPS_ID)     < ppsId
+				||  !_ppsValid[ppsId])
+				{
+					return false;
+				}
+
+				const uint32_t spsId = uint32_t(_ppsArray[ppsId].seq_parameter_set_id);
+
+				if (uint32_t(h264::MAX_SPS_ID) < spsId
+				||  !_spsValid[spsId])
+				{
+					return false;
+				}
+
 				h264::SliceHeader sh = {};
 				h264::read_slice_header(&sh, &nal, _ppsArray, const_cast<h264::SPS*>(_spsArray), &nalBs);
+
+				if (0 != sh.field_pic_flag
+				||  !isSliceHeaderInRange(sh, _ppsArray[ppsId], _spsArray[spsId]) )
+				{
+					return false;
+				}
 
 				_outNal   = nal;
 				_outSlice = sh;
@@ -803,6 +953,8 @@ namespace bgfx
 				return;
 			}
 
+			dropOverSoftCap();
+
 			if (m_head == m_items.size() && m_head > 0)
 			{
 				m_items.clear();
@@ -834,6 +986,44 @@ namespace bgfx
 				m_items.resize(remaining);
 				m_head = 0;
 				m_totalBytes -= uint32_t(freedBytes);
+			}
+		}
+
+		void dropOverSoftCap()
+		{
+			if (0 == m_softCapBytes)
+			{
+				return;
+			}
+
+			size_t pendingBytes = 0;
+
+			for (size_t ii = m_head; ii < m_items.size(); ++ii)
+			{
+				pendingBytes += m_items[ii].data.size();
+			}
+
+			while (pendingBytes > m_softCapBytes)
+			{
+				size_t nextIdr = m_head + 1;
+
+				while (nextIdr < m_items.size()
+				&&     !m_items[nextIdr].isIdr)
+				{
+					++nextIdr;
+				}
+
+				if (nextIdr >= m_items.size() )
+				{
+					break;
+				}
+
+				for (size_t ii = m_head; ii < nextIdr; ++ii)
+				{
+					pendingBytes -= m_items[ii].data.size();
+				}
+
+				m_head = nextIdr;
 			}
 		}
 
@@ -902,52 +1092,94 @@ namespace bgfx
 
 	typedef AuCache AuQueue;
 
-	inline int64_t applyLoopWrap(int64_t _ptsUs, int64_t _minPts, int64_t _maxPts)
+	inline int64_t applyLoopWrap(int64_t _ptsUs, int64_t _minPts, int64_t _maxPts, uint32_t _numAus)
 	{
 		if (_minPts >= _maxPts
-		||  _ptsUs  <= _maxPts)
+		||  _ptsUs  <= _maxPts
+		||  2 > _numAus)
 		{
 			return _ptsUs;
 		}
 
-		const int64_t span = _maxPts - _minPts + 1;
+		const int64_t duration = (_maxPts - _minPts) / int64_t(_numAus - 1);
+		const int64_t span     = _maxPts - _minPts + duration;
 		const int64_t wrapped = ( (_ptsUs - _minPts) % span) + _minPts;
 		return wrapped;
 	}
 
 	template <typename ReorderEntryT>
 	inline bool reorderPoolCovers(
-		  const ReorderEntryT* _pool
+		  const AuCache&       _cache
+		, const ReorderEntryT* _pool
 		, uint32_t             _count
 		, int64_t              _ptsUs
-		, int64_t              _toleranceUs
 		)
 	{
-		for (uint32_t ii = 0; ii < _count; ++ii)
-		{
-			if (-1 != _pool[ii].displayOrder)
-			{
-				const int64_t diff = _pool[ii].ptsUs >= _ptsUs
-					? _pool[ii].ptsUs - _ptsUs
-					: _ptsUs - _pool[ii].ptsUs
-					;
+		int64_t targetPts = INT64_MIN;
 
-				if (diff <= _toleranceUs)
-				{
-					return true;
-				}
+		for (uint32_t ii = 0; ii < _cache.size(); ++ii)
+		{
+			const int64_t pts = _cache.at(ii).ptsUs;
+
+			if (pts <= _ptsUs
+			&&  pts >  targetPts)
+			{
+				targetPts = pts;
 			}
 		}
+
+		if (INT64_MIN == targetPts)
+		{
+			return true;
+		}
+
+		for (uint32_t ii = 0; ii < _count; ++ii)
+		{
+			if (-1 != _pool[ii].displayOrder
+			&&  targetPts == _pool[ii].ptsUs)
+			{
+				return true;
+			}
+		}
+
 		return false;
 	}
 
-	template <typename ResetFn, typename DecodeOneFn, typename HasSpaceFn>
+	template <typename ReorderEntryT>
+	inline bool hasReorderSpace(const ReorderEntryT* _pool, uint32_t _count)
+	{
+		for (uint32_t ii = 0; ii < _count; ++ii)
+		{
+			if (-1 == _pool[ii].displayOrder)
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	template <typename ReorderEntryT>
+	inline void releaseReorderBefore(ReorderEntryT* _pool, uint32_t _count, int64_t _ptsUs)
+	{
+		for (uint32_t ii = 0; ii < _count; ++ii)
+		{
+			if (-1 != _pool[ii].displayOrder
+			&&  _pool[ii].ptsUs < _ptsUs)
+			{
+				_pool[ii].displayOrder = -1;
+			}
+		}
+	}
+
+	template <typename ReorderEntryT, typename ResetFn, typename DecodeOneFn>
 	inline bool faultInFromCache(
-		  AuCache&    _cache
-		, int64_t     _ptsUs
-		, ResetFn     _reset
-		, DecodeOneFn _decodeOne
-		, HasSpaceFn  _hasReorderSpace
+		  AuCache&       _cache
+		, int64_t        _ptsUs
+		, ResetFn        _reset
+		, DecodeOneFn    _decodeOne
+		, ReorderEntryT* _pool
+		, uint32_t       _count
 		)
 	{
 		if (!_cache.isRetaining()
@@ -966,36 +1198,26 @@ namespace bgfx
 		_reset();
 		_cache.rewindTo(uint32_t(idx) );
 
+		int64_t bestPts = INT64_MIN;
+
 		while (!_cache.empty()
-		&&     _hasReorderSpace() )
+		&&     hasReorderSpace(_pool, _count) )
 		{
 			const PendingAU& au = _cache.front();
-			_decodeOne(au.data.data(), uint32_t(au.data.size() ), au.ptsUs);
+			const int64_t    pts = au.ptsUs;
 
-			const bool reachedTarget = au.ptsUs >= _ptsUs;
+			_decodeOne(au.data.data(), uint32_t(au.data.size() ), pts);
 			_cache.pop();
 
-			if (reachedTarget)
+			if (pts <= _ptsUs
+			&&  pts >  bestPts)
 			{
-				break;
+				bestPts = pts;
+				releaseReorderBefore(_pool, _count, bestPts);
 			}
 		}
 
 		return true;
-	}
-
-	template <typename ReorderEntryT>
-	inline bool hasReorderSpace(const ReorderEntryT* _pool, uint32_t _count)
-	{
-		for (uint32_t ii = 0; ii < _count; ++ii)
-		{
-			if (-1 == _pool[ii].displayOrder)
-			{
-				return true;
-			}
-		}
-
-		return false;
 	}
 
 	template <typename ReorderEntryT>
@@ -1093,154 +1315,75 @@ namespace bgfx
 		, DispatchFn     _dispatch
 		)
 	{
-		if (-1 == _displayedSlot)
-		{
-			int32_t bestSlot = -1;
-			int64_t minPts   = INT64_MAX;
-			int64_t maxPts   = INT64_MIN;
-
-			for (uint32_t ii = 0; ii < _poolCount; ++ii)
-			{
-				if (-1 != _pool[ii].displayOrder)
-				{
-					if (_pool[ii].ptsUs < minPts)
-					{
-						minPts   = _pool[ii].ptsUs;
-						bestSlot = int32_t(ii);
-					}
-
-					if (_pool[ii].ptsUs > maxPts)
-					{
-						maxPts = _pool[ii].ptsUs;
-					}
-				}
-			}
-
-			if (-1 == bestSlot)
-			{
-				return;
-			}
-
-			if (minPts == maxPts
-			&& !_streamDrained)
-			{
-				return;
-			}
-
-			_displayedSlot = bestSlot;
-			_dispatch(uint32_t(_displayedSlot) );
-
-			return;
-		}
-
-		const int64_t curPts = _pool[_displayedSlot].ptsUs;
-
-		if (_presentationTimeUs + 500000 < curPts)
-		{
-			int32_t snapSlot = -1;
-			int64_t minPts   = INT64_MAX;
-			for (uint32_t ii = 0; ii < _poolCount; ++ii)
-			{
-				if (-1 != _pool[ii].displayOrder
-				&&  _pool[ii].ptsUs <  curPts
-				&&  _pool[ii].ptsUs <  minPts)
-				{
-					minPts   = _pool[ii].ptsUs;
-					snapSlot = int32_t(ii);
-				}
-			}
-
-			if (-1 == snapSlot)
-			{
-				return;
-			}
-
-			if (-1 != _prevDisplayedSlot)
-			{
-				_pool[_prevDisplayedSlot].displayOrder = -1;
-			}
-
-			_prevDisplayedSlot = _displayedSlot;
-			_displayedSlot     = snapSlot;
-			_dispatch(uint32_t(_displayedSlot) );
-
-			return;
-		}
-
-		if (_presentationTimeUs > curPts + 500000)
-		{
-			int32_t jumpSlot = -1;
-			int64_t bestPts  = curPts;
-			for (uint32_t ii = 0; ii < _poolCount; ++ii)
-			{
-				if (-1 != _pool[ii].displayOrder
-				&&  _pool[ii].ptsUs >  bestPts
-				&&  _pool[ii].ptsUs <= _presentationTimeUs)
-				{
-					bestPts  = _pool[ii].ptsUs;
-					jumpSlot = int32_t(ii);
-				}
-			}
-
-			if (-1 != jumpSlot)
-			{
-				if (-1 != _prevDisplayedSlot)
-				{
-					_pool[_prevDisplayedSlot].displayOrder = -1;
-				}
-
-				_prevDisplayedSlot = _displayedSlot;
-				_displayedSlot     = jumpSlot;
-				_dispatch(uint32_t(_displayedSlot) );
-
-				return;
-			}
-		}
-
-		int32_t nextSlot = -1;
-		int64_t nextPts  = INT64_MAX;
+		int32_t minSlot  = -1;
+		int64_t minPts   = INT64_MAX;
 		int64_t maxPts   = INT64_MIN;
 
 		for (uint32_t ii = 0; ii < _poolCount; ++ii)
 		{
 			if (-1 != _pool[ii].displayOrder)
 			{
-				if (_pool[ii].ptsUs > maxPts)
+				if (_pool[ii].ptsUs < minPts)
 				{
-					maxPts = _pool[ii].ptsUs;
+					minPts  = _pool[ii].ptsUs;
+					minSlot = int32_t(ii);
 				}
 
-				if (_pool[ii].ptsUs >  curPts
-				&&  _pool[ii].ptsUs <  nextPts)
-				{
-					nextPts  = _pool[ii].ptsUs;
-					nextSlot = int32_t(ii);
-				}
+				maxPts = bx::max(maxPts, _pool[ii].ptsUs);
 			}
 		}
 
-		if (-1 == nextSlot)
+		if (-1 == minSlot)
 		{
 			return;
 		}
 
-		if (_presentationTimeUs < nextPts)
+		int32_t pickSlot = -1;
+		int64_t pickPts  = INT64_MIN;
+
+		for (uint32_t ii = 0; ii < _poolCount; ++ii)
+		{
+			const int64_t pts = _pool[ii].ptsUs;
+
+			if (-1 != _pool[ii].displayOrder
+			&&  pts >  pickPts
+			&&  pts <= _presentationTimeUs
+			&& (pts <  maxPts || _streamDrained) )
+			{
+				pickPts  = pts;
+				pickSlot = int32_t(ii);
+			}
+		}
+
+		if (-1 == pickSlot)
+		{
+			if (-1 != _displayedSlot
+			|| (minPts == maxPts && !_streamDrained) )
+			{
+				return;
+			}
+
+			pickPts  = minPts;
+			pickSlot = minSlot;
+		}
+
+		if (pickSlot == _displayedSlot)
 		{
 			return;
 		}
 
-		if (nextPts == maxPts && !_streamDrained)
+		for (uint32_t ii = 0; ii < _poolCount; ++ii)
 		{
-			return;
-		}
-
-		if (-1 != _prevDisplayedSlot)
-		{
-			_pool[_prevDisplayedSlot].displayOrder = -1;
+			if (int32_t(ii) != _displayedSlot
+			&&  -1 != _pool[ii].displayOrder
+			&&  _pool[ii].ptsUs < pickPts)
+			{
+				_pool[ii].displayOrder = -1;
+			}
 		}
 
 		_prevDisplayedSlot = _displayedSlot;
-		_displayedSlot     = nextSlot;
+		_displayedSlot     = pickSlot;
 		_dispatch(uint32_t(_displayedSlot) );
 	}
 }

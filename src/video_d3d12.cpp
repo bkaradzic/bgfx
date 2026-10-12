@@ -109,6 +109,9 @@ namespace bgfx { namespace d3d12
 			bx::memSet(m_dpbState, 0, sizeof(m_dpbState) );
 			bx::memSet(m_referenceUsage, 0, sizeof(m_referenceUsage) );
 			bx::memSet(&m_spsActive, 0, sizeof(m_spsActive) );
+			bx::memSet(m_spsValid, 0, sizeof(m_spsValid) );
+			bx::memSet(m_ppsValid, 0, sizeof(m_ppsValid) );
+			bx::memSet(&m_picture,   0, sizeof(m_picture) );
 
 			for (uint32_t ii = 0; ii < kBitstreamRingFrames; ++ii)
 			{
@@ -160,7 +163,7 @@ namespace bgfx { namespace d3d12
 			}
 
 			h264::PPS ppsActive = {};
-			if (!bgfx::parseParameterSets(m_spsArray, BX_COUNTOF(m_spsArray), m_ppsArray, BX_COUNTOF(m_ppsArray), m_spsActive, ppsActive, _init.parameterSets, _init.parameterSetsSize) )
+			if (!bgfx::parseParameterSets(m_spsArray, BX_COUNTOF(m_spsArray), m_ppsArray, BX_COUNTOF(m_ppsArray), m_spsActive, ppsActive, _init.parameterSets, _init.parameterSetsSize, m_spsValid, m_ppsValid) )
 			{
 				BX_TRACE("VideoDecoderD3D12: failed to parse SPS/PPS from parameter sets.");
 				return false;
@@ -187,6 +190,7 @@ namespace bgfx { namespace d3d12
 
 			m_codedWidth  = (m_spsActive.pic_width_in_mbs_minus1 + 1) * 16;
 			m_codedHeight = (m_spsActive.pic_height_in_map_units_minus1 + 1) * 16 * (m_spsActive.frame_mbs_only_flag ? 1 : 2);
+			m_picture     = getPictureRect(m_spsActive);
 
 			m_numDpbSlots = bx::clamp<uint32_t>(uint32_t(m_spsActive.num_ref_frames) + 1, 2, kNumDpbSlots);
 			const DXGI_FORMAT decodeFormat = DXGI_FORMAT_NV12;
@@ -636,7 +640,8 @@ namespace bgfx { namespace d3d12
 
 		bool decode(const VideoDecoderFrame& _frame, TextureD3D12& _dst)
 		{
-			if (NULL == m_decoder)
+			if (NULL == m_decoder
+			||  FAILED(s_videoD3D12.device->GetDeviceRemovedReason() ) )
 			{
 				return false;
 			}
@@ -677,9 +682,9 @@ namespace bgfx { namespace d3d12
 				&&  m_auQueue.isRetaining()
 				&&  m_auQueue.minPts() < m_auQueue.maxPts() )
 				{
-					adjustedClock = bgfx::applyLoopWrap(adjustedClock, m_auQueue.minPts(), m_auQueue.maxPts() );
+					adjustedClock = bgfx::applyLoopWrap(adjustedClock, m_auQueue.minPts(), m_auQueue.maxPts(), m_auQueue.size() );
 
-					const bool poolCovers = bgfx::reorderPoolCovers(m_reorderPool, kVideoMaxReorderInFlight, adjustedClock, 500000);
+					const bool poolCovers = bgfx::reorderPoolCovers(m_auQueue, m_reorderPool, kVideoMaxReorderInFlight, adjustedClock);
 					const bool forwardCanCatchUp = true
 						&& !m_auQueue.empty()
 						&& m_auQueue.front().ptsUs <= adjustedClock + 500000
@@ -696,10 +701,8 @@ namespace bgfx { namespace d3d12
 							  {
 								  decodeOneAU(_bs, _bsSize, _pts);
 							  }
-							, [this]()
-							  {
-								  return bgfx::hasReorderSpace(m_reorderPool, kVideoMaxReorderInFlight);
-							  }
+							, m_reorderPool
+							, kVideoMaxReorderInFlight
 							);
 					}
 				}
@@ -750,7 +753,7 @@ namespace bgfx { namespace d3d12
 			h264::NALHeader nal = {};
 			h264::SliceHeader sh = {};
 			bool isIdr = false;
-			if (!bgfx::parseSliceFromAccessUnit(m_spsArray, m_ppsArray, _bitstream, _bitstreamSize, nal, sh, isIdr) )
+			if (!bgfx::parseSliceFromAccessUnit(m_spsArray, m_ppsArray, _bitstream, _bitstreamSize, nal, sh, isIdr, m_spsValid, m_ppsValid) )
 			{
 				BX_TRACE("VideoDecoderD3D12: no slice NAL found in access unit.");
 				return false;
@@ -820,10 +823,17 @@ namespace bgfx { namespace d3d12
 
 			HRESULT hr = m_videoCmdAllocator[allocIdx]->Reset();
 			BX_WARN(SUCCEEDED(hr), "VideoDecoderD3D12: video allocator Reset failed (0x%08x).", hr);
-			BX_UNUSED(hr);
 
-			hr = m_videoCmd->Reset(m_videoCmdAllocator[allocIdx]);
-			BX_WARN(SUCCEEDED(hr), "VideoDecoderD3D12: video cmdlist Reset failed (0x%08x).", hr);
+			if (SUCCEEDED(hr) )
+			{
+				hr = m_videoCmd->Reset(m_videoCmdAllocator[allocIdx]);
+				BX_WARN(SUCCEEDED(hr), "VideoDecoderD3D12: video cmdlist Reset failed (0x%08x).", hr);
+			}
+
+			if (FAILED(hr) )
+			{
+				return false;
+			}
 
 			if (m_dpbState[m_currentSlot].state != D3D12_RESOURCE_STATE_VIDEO_DECODE_WRITE)
 			{
@@ -878,9 +888,9 @@ namespace bgfx { namespace d3d12
 			DXVA_Slice_H264_Short sliceCtl  = {};
 
 			picParams.wFrameWidthInMbsMinus1                 = uint16_t(sps.pic_width_in_mbs_minus1);
-			picParams.wFrameHeightInMbsMinus1                = uint16_t(sps.pic_height_in_map_units_minus1);
+			picParams.wFrameHeightInMbsMinus1                = uint16_t( (sps.pic_height_in_map_units_minus1 + 1) * (0 != sps.frame_mbs_only_flag ? 1 : 2) - 1);
 			picParams.IntraPicFlag                           = isIdr ? 1 : 0;
-			picParams.MbaffFrameFlag                         = 0;
+			picParams.MbaffFrameFlag                         = 0 != sps.mb_adaptive_frame_field_flag ? 1 : 0;
 			picParams.field_pic_flag                         = 0;
 			picParams.chroma_format_idc                      = 1;
 			picParams.bit_depth_chroma_minus8                = uint8_t(sps.bit_depth_chroma_minus8);
@@ -1053,6 +1063,12 @@ namespace bgfx { namespace d3d12
 			{
 				m_videoCmd->ResourceBarrier(numReferenceBarriers, referenceBarriers);
 			}
+			if (FAILED(s_videoD3D12.device->GetDeviceRemovedReason() ) )
+			{
+				m_videoCmd->Close();
+				return false;
+			}
+
 			m_videoCmd->DecodeFrame(m_decoder, &output, &input);
 			if (numReferenceBarriers > 0)
 			{
@@ -1218,8 +1234,16 @@ namespace bgfx { namespace d3d12
 			hr = m_copyCmdAllocator[copyRingIdx]->Reset();
 			BX_WARN(SUCCEEDED(hr), "VideoDecoderD3D12: copy allocator Reset failed (0x%08x).", hr);
 
-			hr = m_copyCmdList->Reset(m_copyCmdAllocator[copyRingIdx], NULL);
-			BX_WARN(SUCCEEDED(hr), "VideoDecoderD3D12: copy cmdlist Reset failed (0x%08x).", hr);
+			if (SUCCEEDED(hr) )
+			{
+				hr = m_copyCmdList->Reset(m_copyCmdAllocator[copyRingIdx], NULL);
+				BX_WARN(SUCCEEDED(hr), "VideoDecoderD3D12: copy cmdlist Reset failed (0x%08x).", hr);
+			}
+
+			if (FAILED(hr) )
+			{
+				return false;
+			}
 
 			ID3D12GraphicsCommandList* commandList = m_copyCmdList;
 
@@ -1299,11 +1323,13 @@ namespace bgfx { namespace d3d12
 			}
 
 			{
-				const uint32_t reorderW = (m_dstWidth  + 1) & ~1u;
-				const uint32_t reorderH = (m_dstHeight + 1) & ~1u;
+				const uint32_t x0 = m_picture.x;
+				const uint32_t y0 = m_picture.y;
+				const uint32_t x1 = m_picture.x + m_picture.width;
+				const uint32_t y1 = m_picture.y + m_picture.height;
 
-				const D3D12_BOX lumaBox   = { 0, 0, 0, reorderW,     reorderH,     1 };
-				const D3D12_BOX chromaBox = { 0, 0, 0, reorderW / 2, reorderH / 2, 1 };
+				const D3D12_BOX lumaBox   = { .left = x0,     .top = y0,     .front = 0, .right = x1,     .bottom = y1,     .back = 1 };
+				const D3D12_BOX chromaBox = { .left = x0 / 2, .top = y0 / 2, .front = 0, .right = x1 / 2, .bottom = y1 / 2, .back = 1 };
 
 				{
 					D3D12_TEXTURE_COPY_LOCATION dst
@@ -1449,8 +1475,8 @@ namespace bgfx { namespace d3d12
 			{
 				.Dimension        = D3D12_RESOURCE_DIMENSION_TEXTURE2D,
 				.Alignment        = 0,
-				.Width            = (m_dstWidth  + 1) & ~1u,
-				.Height           = (m_dstHeight + 1) & ~1u,
+				.Width            = m_picture.width,
+				.Height           = m_picture.height,
 				.DepthOrArraySize = 1,
 				.MipLevels        = 1,
 				.Format           = DXGI_FORMAT_NV12,
@@ -1654,6 +1680,8 @@ namespace bgfx { namespace d3d12
 		uint64_t        m_bitstreamCursor;
 		ID3D12Resource* m_yuvToRgbCbv;
 
+		VideoPictureRect m_picture;
+
 		ID3D12Resource* m_dpb;
 		ID3D12Resource* m_dpbOutput;
 		bool            m_referenceOnly;
@@ -1687,6 +1715,8 @@ namespace bgfx { namespace d3d12
 		h264::SPS m_spsActive;
 		h264::SPS m_spsArray[kVideoMaxH264SpsCount];
 		h264::PPS m_ppsArray[kVideoMaxH264PpsCount];
+		bool      m_spsValid[kVideoMaxH264SpsCount];
+		bool      m_ppsValid[kVideoMaxH264PpsCount];
 	};
 
 	VideoDecoderD3D12* videoDecoderCreate(const VideoDecoderInit& _init, RendererContextD3D12* _renderer, uint16_t _width, uint16_t _height)

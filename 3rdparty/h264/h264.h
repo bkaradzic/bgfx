@@ -282,6 +282,41 @@ namespace h264 {
 
 	};
 
+	enum PROFILE_IDC
+	{
+		PROFILE_IDC_BASELINE = 66,
+		PROFILE_IDC_MAIN = 77,
+		PROFILE_IDC_EXTENDED = 88,
+		PROFILE_IDC_HIGH = 100,
+		PROFILE_IDC_HIGH_10 = 110,
+		PROFILE_IDC_HIGH_422 = 122,
+		PROFILE_IDC_HIGH_444 = 244,
+	};
+
+	enum LIMIT
+	{
+		MAX_SPS_ID = 31,
+		MAX_PPS_ID = 255,
+		MAX_CHROMA_FORMAT_IDC = 3,
+		MAX_BIT_DEPTH_MINUS8 = 6,
+		MAX_LOG2_MINUS4 = 12,
+		MAX_PIC_ORDER_CNT_TYPE = 2,
+		MAX_NUM_REF_FRAMES_IN_PIC_ORDER_CNT_CYCLE = 255,
+		MAX_NUM_REF_FRAMES = 16,
+		MAX_NUM_REF_IDX_ACTIVE_MINUS1 = 31,
+		MAX_WEIGHTED_BIPRED_IDC = 2,
+		PIC_INIT_QP = 26,
+		MAX_QP = 51,
+		QP_BD_OFFSET_PER_BIT = 6,
+		MAX_CHROMA_QP_INDEX_OFFSET = 12,
+		MAX_SLICE_TYPE = 9,
+		MAX_CABAC_INIT_IDC = 2,
+		MAX_DISABLE_DEBLOCKING_FILTER_IDC = 2,
+		MAX_DEBLOCKING_OFFSET_DIV2 = 6,
+		MAX_IDR_PIC_ID = 65535,
+		MAX_REDUNDANT_PIC_CNT = 127,
+	};
+
 	enum NAL_REF_IDC
 	{
 		NAL_REF_IDC_PRIORITY_HIGHEST = 3,
@@ -635,7 +670,7 @@ namespace h264 {
 			sps->offset_for_non_ref_pic = b->se();
 			sps->offset_for_top_to_bottom_field = b->se();
 			sps->num_ref_frames_in_pic_order_cnt_cycle = b->ue();
-			for (int i = 0; i < sps->num_ref_frames_in_pic_order_cnt_cycle; i++)
+			for (int i = 0; i < sps->num_ref_frames_in_pic_order_cnt_cycle && i < 256; i++)
 			{
 				sps->offset_for_ref_frame[i] = b->se();
 			}
@@ -678,14 +713,14 @@ namespace h264 {
 			pps->slice_group_map_type = b->ue();
 			if (pps->slice_group_map_type == 0)
 			{
-				for (int i_group = 0; i_group <= pps->num_slice_groups_minus1; i_group++)
+				for (int i_group = 0; i_group <= pps->num_slice_groups_minus1 && i_group < 8; i_group++)
 				{
 					pps->run_length_minus1[i_group] = b->ue();
 				}
 			}
 			else if (pps->slice_group_map_type == 2)
 			{
-				for (int i_group = 0; i_group < pps->num_slice_groups_minus1; i_group++)
+				for (int i_group = 0; i_group < pps->num_slice_groups_minus1 && i_group < 8; i_group++)
 				{
 					pps->top_left[i_group] = b->ue();
 					pps->bottom_right[i_group] = b->ue();
@@ -701,7 +736,7 @@ namespace h264 {
 			else if (pps->slice_group_map_type == 6)
 			{
 				pps->pic_size_in_map_units_minus1 = b->ue();
-				for (int i = 0; i <= pps->pic_size_in_map_units_minus1; i++)
+				for (int i = 0; i <= pps->pic_size_in_map_units_minus1 && i < 256; i++)
 				{
 					int v = intlog2(pps->num_slice_groups_minus1 + 1);
 					pps->slice_group_id[i] = b->u(v);
@@ -786,7 +821,7 @@ namespace h264 {
 					{
 						sh->rplr.reorder_l0.long_term_pic_num[n] = b->ue();
 					}
-				} while (sh->rplr.reorder_l0.reordering_of_pic_nums_idc[n] != 3 && !b->eof());
+				} while (sh->rplr.reorder_l0.reordering_of_pic_nums_idc[n] != 3 && !b->eof() && n < 63);
 			}
 		}
 		if (is_slice_type(sh->slice_type, SH_SLICE_TYPE_B))
@@ -808,7 +843,7 @@ namespace h264 {
 					{
 						sh->rplr.reorder_l1.long_term_pic_num[n] = b->ue();
 					}
-				} while (sh->rplr.reorder_l1.reordering_of_pic_nums_idc[n] != 3 && !b->eof());
+				} while (sh->rplr.reorder_l1.reordering_of_pic_nums_idc[n] != 3 && !b->eof() && n < 63);
 			}
 		}
 	}
@@ -820,7 +855,7 @@ namespace h264 {
 		{
 			sh->pwt.chroma_log2_weight_denom = b->ue();
 		}
-		for (int i = 0; i <= sh->num_ref_idx_l0_active_minus1; i++)
+		for (int i = 0; i <= sh->num_ref_idx_l0_active_minus1 && i < 64; i++)
 		{
 			sh->pwt.luma_weight_l0_flag[i] = b->u1();
 			if (sh->pwt.luma_weight_l0_flag[i])
@@ -843,7 +878,7 @@ namespace h264 {
 		}
 		if (is_slice_type(sh->slice_type, SH_SLICE_TYPE_B))
 		{
-			for (int i = 0; i <= sh->num_ref_idx_l1_active_minus1; i++)
+			for (int i = 0; i <= sh->num_ref_idx_l1_active_minus1 && i < 64; i++)
 			{
 				sh->pwt.luma_weight_l1_flag[i] = b->u1();
 				if (sh->pwt.luma_weight_l1_flag[i])
@@ -901,7 +936,7 @@ namespace h264 {
 					{
 						sh->drpm.max_long_term_frame_idx_plus1[n] = b->ue();
 					}
-				} while (sh->drpm.memory_management_control_operation[n] != 0 && !b->eof());
+				} while (sh->drpm.memory_management_control_operation[n] != 0 && !b->eof() && n < 63);
 			}
 		}
 	}

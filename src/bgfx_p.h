@@ -7935,6 +7935,33 @@ namespace bgfx
 
 					return;
 				}
+
+				const VideoDecoderFrame* frame = (const VideoDecoderFrame*)_mem->data;
+
+				if (kVideoDecoderFrameMagic != frame->magic)
+				{
+					BX_WARN(false
+						, "Video decode update has invalid magic 0x%08x (expected 0x%08x); skipping."
+						, frame->magic
+						, kVideoDecoderFrameMagic
+						);
+					release(_mem);
+
+					return;
+				}
+
+				if (0 != frame->numAus
+				&& (NULL == frame->bitstream || NULL == frame->aus) )
+				{
+					BX_WARN(false
+						, "Video decode update has %d access units but no %s; skipping."
+						, frame->numAus
+						, NULL == frame->bitstream ? "bitstream" : "access unit array"
+						);
+					release(_mem);
+
+					return;
+				}
 			}
 			else
 			{
