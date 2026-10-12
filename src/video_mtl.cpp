@@ -101,6 +101,31 @@ namespace bgfx { namespace mtl
 		return outPos;
 	}
 
+	static uint8_t getMatrixCoefficients(CMVideoFormatDescriptionRef _formatDesc)
+	{
+		CFTypeRef matrix = CMFormatDescriptionGetExtension(_formatDesc, kCMFormatDescriptionExtension_YCbCrMatrix);
+
+		if (NULL != matrix)
+		{
+			if (CFEqual(matrix, kCMFormatDescriptionYCbCrMatrix_ITU_R_601_4) )
+			{
+				return 6;
+			}
+
+			if (CFEqual(matrix, kCMFormatDescriptionYCbCrMatrix_SMPTE_240M_1995) )
+			{
+				return 7;
+			}
+
+			if (CFEqual(matrix, kCMFormatDescriptionYCbCrMatrix_ITU_R_2020) )
+			{
+				return 9;
+			}
+		}
+
+		return 1;
+	}
+
 	struct VideoDecoderMtl
 	{
 		VideoDecoderMtl()
@@ -119,6 +144,7 @@ namespace bgfx { namespace mtl
 			, m_lastDisplayedPts(INT64_MIN)
 		{
 			bx::memSet(m_queue, 0, sizeof(m_queue) );
+			bx::memSet(m_yuvToRgb, 0, sizeof(m_yuvToRgb) );
 		}
 
 		bool create(const VideoDecoderInit& _init, RendererContextMtl* _renderer, MTL::Device* _device, uint16_t _width, uint16_t _height)
@@ -226,6 +252,8 @@ namespace bgfx { namespace mtl
 
 				return false;
 			}
+
+			getYuvToRgb(m_yuvToRgb, getMatrixCoefficients(m_formatDesc), false);
 
 			if (!createSession() )
 			{
@@ -424,10 +452,12 @@ namespace bgfx { namespace mtl
 
 				const int64_t synthesizedDtsUs = int64_t(++m_dtsCounter * 1000ull);
 
-				CMSampleTimingInfo timing;
-				timing.duration = kCMTimeInvalid;
-				timing.presentationTimeStamp = CMTimeMake(auPts,            1000000);
-				timing.decodeTimeStamp       = CMTimeMake(synthesizedDtsUs, 1000000);
+				const CMSampleTimingInfo timing =
+				{
+					.duration              = kCMTimeInvalid,
+					.presentationTimeStamp = CMTimeMake(auPts,            1000000),
+					.decodeTimeStamp       = CMTimeMake(synthesizedDtsUs, 1000000),
+				};
 
 				status = CMSampleBufferCreate(
 					  kCFAllocatorDefault
@@ -593,7 +623,7 @@ namespace bgfx { namespace mtl
 			MTL::Texture* cTex = (MTL::Texture*)CVMetalTextureGetTexture(cMtlTex);
 
 			BX_ASSERT(NULL != g_videoDecode, "g_videoDecode not initialized.");
-			PipelineStateMtl* pso = videoGetComputePipelineState(m_renderer, g_videoDecode->m_program);
+			PipelineStateMtl* pso = videoGetComputePipelineState(m_renderer, g_videoDecode->m_program[VideoDecode::Unorm]);
 
 			if (NULL == pso)
 			{
@@ -621,6 +651,7 @@ namespace bgfx { namespace mtl
 			cce->setSamplerState(linearClamp, 1);
 			cce->setTexture(cTex, 2);
 			cce->setSamplerState(linearClamp, 2);
+			cce->setBytes(m_yuvToRgb, sizeof(m_yuvToRgb), 0);
 
 			const MTL::Size threadsPerGroup = MTL::Size::Make(8, 8, 1);
 			const MTL::Size groupCount      = MTL::Size::Make(
@@ -742,6 +773,7 @@ namespace bgfx { namespace mtl
 		uint32_t   m_cachedAuBytes;
 		uint64_t   m_dtsCounter;
 		int64_t    m_lastDisplayedPts;
+		float      m_yuvToRgb[12];
 	};
 
 	VideoDecoderMtl* videoDecoderCreate(const VideoDecoderInit& _init, RendererContextMtl* _renderer, MTL::Device* _device, uint16_t _width, uint16_t _height)

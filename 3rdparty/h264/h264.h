@@ -752,6 +752,10 @@ namespace h264 {
 			}
 			pps->second_chroma_qp_index_offset = b->se();
 		}
+		else
+		{
+			pps->second_chroma_qp_index_offset = pps->chroma_qp_index_offset;
+		}
 		read_rbsp_trailing_bits(b);
 	}
 	constexpr int is_slice_type(int slice_type, int cmp_type)

@@ -4741,8 +4741,6 @@ namespace bgfx { namespace d3d12
 
 		if (NULL != m_heap)
 		{
-			BX_TRACE("D3D12 scratch heap grow: retired=%p size=%u replacement=%p size=%u queue=%u"
-				, m_heap, m_size, heap, _num, s_renderD3D12->m_cmd.m_control.m_current);
 			s_renderD3D12->m_cmd.release(m_heap);
 		}
 		m_heap = heap;

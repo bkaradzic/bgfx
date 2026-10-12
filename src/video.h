@@ -10,6 +10,79 @@
 
 namespace bgfx
 {
+	inline uint32_t getDecodableCodecCaps(VideoCodec::Enum _codec)
+	{
+		return VideoCodec::H264 == _codec
+			? BGFX_CAPS_VIDEO_CODEC_BIT_8 | BGFX_CAPS_VIDEO_CODEC_CHROMA_420
+			: 0
+			;
+	}
+
+	inline void getYuvToRgb(float _result[12], uint8_t _matrixCoefficients, bool _fullRange)
+	{
+		float kr = 0.2126f;
+		float kb = 0.0722f;
+
+		switch (_matrixCoefficients)
+		{
+		case 4:  kr = 0.30f;   kb = 0.11f;   break;
+		case 5:
+		case 6:  kr = 0.299f;  kb = 0.114f;  break;
+		case 7:  kr = 0.212f;  kb = 0.087f;  break;
+		case 9:
+		case 10: kr = 0.2627f; kb = 0.0593f; break;
+		default: break;
+		}
+
+		const float kg  = 1.0f - kr - kb;
+		const float crR =  2.0f * (1.0f - kr);
+		const float cbG = -2.0f * kb * (1.0f - kb) / kg;
+		const float crG = -2.0f * kr * (1.0f - kr) / kg;
+		const float cbB =  2.0f * (1.0f - kb);
+
+		const float yScale  = _fullRange ? 1.0f : 255.0f/219.0f;
+		const float yOffset = _fullRange ? 0.0f :  16.0f/255.0f;
+		const float cScale  = _fullRange ? 1.0f : 255.0f/224.0f;
+		const float cOffset = 128.0f/255.0f;
+
+		const float tmp0 = -yScale * yOffset;
+		const float tmp1 =  cScale * cOffset;
+
+		_result[ 0] = yScale;
+		_result[ 1] = 0.0f;
+		_result[ 2] = crR * cScale;
+		_result[ 3] = tmp0 - crR * tmp1;
+
+		_result[ 4] = yScale;
+		_result[ 5] = cbG * cScale;
+		_result[ 6] = crG * cScale;
+		_result[ 7] = tmp0 - (cbG + crG) * tmp1;
+
+		_result[ 8] = yScale;
+		_result[ 9] = cbB * cScale;
+		_result[10] = 0.0f;
+		_result[11] = tmp0 - cbB * tmp1;
+	}
+
+	inline void getYuvToRgb(float _result[12], const h264::SPS& _sps)
+	{
+		const bool signalType = true
+			&& 0 != _sps.vui_parameters_present_flag
+			&& 0 != _sps.vui.video_signal_type_present_flag
+			;
+
+		const bool colourDescription = true
+			&& signalType
+			&& 0 != _sps.vui.colour_description_present_flag
+			;
+
+		getYuvToRgb(
+			  _result
+			, colourDescription ? uint8_t(_sps.vui.matrix_coefficients) : 2
+			, signalType && 0 != _sps.vui.video_full_range_flag
+			);
+	}
+
 	inline uint32_t stripEmulationPrevention(uint8_t* _dst, const uint8_t* _src, uint32_t _size)
 	{
 		uint32_t dstIdx = 0;

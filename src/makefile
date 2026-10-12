@@ -24,6 +24,7 @@ BIN = vs_debugfont.bin.h \
 	  cs_mipgen_oddy.bin.h \
 	  cs_mipgen_oddxy.bin.h \
 	  cs_yuv_to_rgb.bin.h \
+	  cs_yuv_to_rgb_float.bin.h \
 	  cs_blit_texture_to_buffer.bin.h \
 	  cs_blit_buffer_to_texture.bin.h \
 
@@ -115,7 +116,10 @@ cs_mipgen_oddy.bin.h : cs_mipgen_oddy.sc cs_mipgen.sh
 cs_mipgen_oddxy.bin.h : cs_mipgen_oddxy.sc cs_mipgen.sh
 	$(call shader-embedded-compute)
 
-cs_yuv_to_rgb.bin.h : cs_yuv_to_rgb.sc
+cs_yuv_to_rgb.bin.h : cs_yuv_to_rgb.sc cs_yuv_to_rgb.sh
+	$(call shader-embedded-compute)
+
+cs_yuv_to_rgb_float.bin.h : cs_yuv_to_rgb_float.sc cs_yuv_to_rgb.sh
 	$(call shader-embedded-compute)
 
 cs_blit_texture_to_buffer.bin.h : cs_blit_texture_to_buffer.sc

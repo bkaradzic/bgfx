@@ -1091,16 +1091,32 @@ namespace bgfx
 	struct VideoDecode
 	{
 		VideoDecode()
-			: m_program(BGFX_INVALID_HANDLE)
-			, s_texY(BGFX_INVALID_HANDLE)
+			: s_texY(BGFX_INVALID_HANDLE)
 			, s_texCbCr(BGFX_INVALID_HANDLE)
 		{
+			for (uint32_t ii = 0; ii < BX_COUNTOF(m_program); ++ii)
+			{
+				m_program[ii] = BGFX_INVALID_HANDLE;
+			}
 		}
 
 		void init();
 		void shutdown();
 
-		ProgramHandle m_program;
+		ProgramHandle getProgram(TextureFormat::Enum _format) const
+		{
+			return m_program[TextureFormat::RGBA16F == _format ? Float : Unorm];
+		}
+
+		enum Enum
+		{
+			Unorm,
+			Float,
+
+			Count
+		};
+
+		ProgramHandle m_program[Count];
 		UniformHandle s_texY;
 		UniformHandle s_texCbCr;
 	};
@@ -3154,11 +3170,13 @@ namespace bgfx
 				return UINT16_MAX;
 			}
 
-			DepthControl& db = m_cache[first];
-			db.m_constant   = _constant;
-			db.m_slopeScale = _slopeScale;
-			db.m_clamp      = _clamp;
-			db.m_depthClamp = _depthClamp;
+			m_cache[first] =
+			{
+				.m_constant   = _constant,
+				.m_slopeScale = _slopeScale,
+				.m_clamp      = _clamp,
+				.m_depthClamp = _depthClamp,
+			};
 
 			return first;
 		}
@@ -3202,10 +3220,13 @@ namespace bgfx
 
 		void setDepthBias(int32_t _constant, float _slopeScale, float _clamp)
 		{
-			m_depthBias.m_constant   = _constant;
-			m_depthBias.m_slopeScale = _slopeScale;
-			m_depthBias.m_clamp      = _clamp;
-			m_depthBias.m_depthClamp = false;
+			m_depthBias =
+			{
+				.m_constant   = _constant,
+				.m_slopeScale = _slopeScale,
+				.m_clamp      = _clamp,
+				.m_depthClamp = false,
+			};
 		}
 
 		void setScissor(uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height)
@@ -6913,9 +6934,14 @@ namespace bgfx
 					+ bx::alignUp(_size, 16)
 					;
 				tib = (TransientIndexBuffer*)bx::alignedAlloc(g_allocator, size, 16);
-				tib->data   = (uint8_t *)tib + bx::alignUp(sizeof(TransientIndexBuffer), 16);
-				tib->size   = _size;
-				tib->handle = handle;
+				*tib =
+				{
+					.data       = (uint8_t*)tib + bx::alignUp(sizeof(TransientIndexBuffer), 16),
+					.size       = _size,
+					.startIndex = 0,
+					.handle     = handle,
+					.isIndex16  = false,
+				};
 
 				setDebugNameForHandle(handle, "Transient Index Buffer");
 			}
@@ -6942,11 +6968,14 @@ namespace bgfx
 
 			TransientIndexBuffer& tib = *m_submit->m_transientIb;
 
-			_tib->data       = &tib.data[offset];
-			_tib->size       = _num * indexSize;
-			_tib->handle     = tib.handle;
-			_tib->startIndex = bx::strideAlign(offset, indexSize) / indexSize;
-			_tib->isIndex16  = isIndex16;
+			*_tib =
+			{
+				.data       = &tib.data[offset],
+				.size       = _num * indexSize,
+				.startIndex = bx::strideAlign(offset, indexSize) / indexSize,
+				.handle     = tib.handle,
+				.isIndex16  = isIndex16,
+			};
 		}
 
 		TransientVertexBuffer* createTransientVertexBuffer(uint32_t _size, const VertexLayout* _layout = NULL)
@@ -6982,12 +7011,15 @@ namespace bgfx
 					+ bx::alignUp(_size, 16)
 					;
 				tvb = (TransientVertexBuffer*)bx::alignedAlloc(g_allocator, size, 16);
-				tvb->data = (uint8_t *)tvb + bx::alignUp(sizeof(TransientVertexBuffer), 16);
-				tvb->size = _size;
-				tvb->startVertex = 0;
-				tvb->stride = stride;
-				tvb->handle = handle;
-				tvb->layoutHandle = layoutHandle;
+				*tvb =
+				{
+					.data         = (uint8_t*)tvb + bx::alignUp(sizeof(TransientVertexBuffer), 16),
+					.size         = _size,
+					.startVertex  = 0,
+					.stride       = stride,
+					.handle       = handle,
+					.layoutHandle = layoutHandle,
+				};
 
 				setDebugNameForHandle(handle, "Transient Vertex Buffer");
 			}
@@ -7011,12 +7043,15 @@ namespace bgfx
 			const uint32_t offset = m_submit->allocTransientVertexBuffer(_num, _stride);
 			const TransientVertexBuffer& dvb = *m_submit->m_transientVb;
 
-			_tvb->data         = &dvb.data[offset];
-			_tvb->size         = _num * _stride;
-			_tvb->startVertex  = bx::strideAlign(offset, _stride)/_stride;
-			_tvb->stride       = _stride;
-			_tvb->handle       = dvb.handle;
-			_tvb->layoutHandle = _layoutHandle;
+			*_tvb =
+			{
+				.data         = &dvb.data[offset],
+				.size         = _num * _stride,
+				.startVertex  = bx::strideAlign(offset, _stride)/_stride,
+				.stride       = _stride,
+				.handle       = dvb.handle,
+				.layoutHandle = _layoutHandle,
+			};
 		}
 
 		BGFX_API_FUNC(void allocInstanceDataBuffer(InstanceDataBuffer* _idb, uint32_t _num, uint16_t _stride) )
@@ -7027,12 +7062,15 @@ namespace bgfx
 			const uint32_t offset = m_submit->allocTransientVertexBuffer(_num, stride);
 
 			TransientVertexBuffer& dvb = *m_submit->m_transientVb;
-			_idb->data   = &dvb.data[offset];
-			_idb->size   = _num * stride;
-			_idb->offset = offset;
-			_idb->num    = _num;
-			_idb->stride = stride;
-			_idb->handle = dvb.handle;
+			*_idb =
+			{
+				.data   = &dvb.data[offset],
+				.size   = _num * stride,
+				.offset = offset,
+				.num    = _num,
+				.stride = stride,
+				.handle = dvb.handle,
+			};
 		}
 
 		IndirectBufferHandle createIndirectBuffer(uint32_t _num)
@@ -7558,14 +7596,18 @@ namespace bgfx
 			}
 			else
 			{
-				_info->format = TextureFormat::Unknown;
-				_info->storageSize = 0;
-				_info->width   = 0;
-				_info->height  = 0;
-				_info->depth   = 0;
-				_info->numMips = 0;
-				_info->bitsPerPixel = 0;
-				_info->cubeMap = false;
+				*_info =
+				{
+					.format       = TextureFormat::Unknown,
+					.storageSize  = 0,
+					.width        = 0,
+					.height       = 0,
+					.depth        = 0,
+					.numLayers    = 0,
+					.numMips      = 0,
+					.bitsPerPixel = 0,
+					.cubeMap      = false,
+				};
 
 				return BGFX_INVALID_HANDLE;
 			}
@@ -7880,6 +7922,21 @@ namespace bgfx
 				return;
 			}
 
+			if (0 != (ref.m_flags & BGFX_TEXTURE_INTERNAL_VIDEO_DECODE_DST) )
+			{
+				if (_mem->size < sizeof(VideoDecoderFrame) )
+				{
+					BX_WARN(false
+						, "Video decode update memory is too small (%d bytes, needs %d); skipping."
+						, _mem->size
+						, uint32_t(sizeof(VideoDecoderFrame) )
+						);
+					release(_mem);
+
+					return;
+				}
+			}
+			else
 			{
 				const bimg::TextureFormat::Enum format = bimg::TextureFormat::Enum(ref.m_format);
 				const bimg::ImageBlockInfo& blockInfo = bimg::getBlockInfo(format);

@@ -85,7 +85,7 @@ namespace bgfx { namespace d3d12
 			, m_bitstreamMapped(NULL)
 			, m_bitstreamCapacity(0)
 			, m_bitstreamCursor(0)
-			, m_dummyCbv(NULL)
+			, m_yuvToRgbCbv(NULL)
 			, m_dpb(NULL)
 			, m_dpbOutput(NULL)
 			, m_referenceOnly(false)
@@ -448,14 +448,31 @@ namespace bgfx { namespace d3d12
 					.VisibleNodeMask      = 0,
 				};
 
-				hr = s_videoD3D12.device->CreateCommittedResource(&heap, D3D12_HEAP_FLAG_NONE, &desc, D3D12_RESOURCE_STATE_GENERIC_READ, NULL, IID_ID3D12Resource, (void**)&m_dummyCbv);
+				hr = s_videoD3D12.device->CreateCommittedResource(&heap, D3D12_HEAP_FLAG_NONE, &desc, D3D12_RESOURCE_STATE_GENERIC_READ, NULL, IID_ID3D12Resource, (void**)&m_yuvToRgbCbv);
 
 				if (FAILED(hr) )
 				{
-					BX_TRACE("VideoDecoderD3D12: dummy CBV create failed (0x%08x).", hr);
+					BX_TRACE("VideoDecoderD3D12: YUV to RGB CBV create failed (0x%08x).", hr);
 					destroy();
 					return false;
 				}
+
+				float yuvToRgb[12];
+				getYuvToRgb(yuvToRgb, m_spsActive);
+
+				void* data = NULL;
+				const D3D12_RANGE readRange = { 0, 0 };
+				hr = m_yuvToRgbCbv->Map(0, &readRange, &data);
+
+				if (FAILED(hr) )
+				{
+					BX_TRACE("VideoDecoderD3D12: YUV to RGB CBV map failed (0x%08x).", hr);
+					destroy();
+					return false;
+				}
+
+				bx::memCopy(data, yuvToRgb, sizeof(yuvToRgb) );
+				m_yuvToRgbCbv->Unmap(0, NULL);
 			}
 
 			{
@@ -594,7 +611,7 @@ namespace bgfx { namespace d3d12
 			}
 
 			DX_RELEASE(m_bitstreamBuffer, 0);
-			DX_RELEASE(m_dummyCbv, 0);
+			DX_RELEASE(m_yuvToRgbCbv, 0);
 			DX_RELEASE(m_dpbOutput, 0);
 			DX_RELEASE(m_dpb, 0);
 
@@ -950,9 +967,12 @@ namespace bgfx { namespace d3d12
 				bx::memSet(&qmatrix, 16, sizeof(qmatrix) );
 			}
 
-			sliceCtl.BSNALunitDataLocation = 0;
-			sliceCtl.SliceBytesInBuffer    = sliceBitstreamSize;
-			sliceCtl.wBadSliceChopping     = 0;
+			sliceCtl =
+			{
+				.BSNALunitDataLocation = 0,
+				.SliceBytesInBuffer    = sliceBitstreamSize,
+				.wBadSliceChopping     = 0,
+			};
 
 			ID3D12Resource* refFrames[kNumDpbSlots]      = {};
 			UINT            refSubresources[kNumDpbSlots] = {};
@@ -1460,9 +1480,9 @@ namespace bgfx { namespace d3d12
 
 		void dispatchYuvToRgb(ID3D12GraphicsCommandList* _commandList, ID3D12Resource* _nv12, TextureD3D12& _dst)
 		{
-			BX_ASSERT(NULL != g_videoDecode && isValid(g_videoDecode->m_program), "Video decode program not initialized.");
+			BX_ASSERT(NULL != g_videoDecode, "Video decode program not initialized.");
 
-			ID3D12PipelineState* pso = videoGetPipelineState(m_renderer, g_videoDecode->m_program);
+			ID3D12PipelineState* pso = videoGetPipelineState(m_renderer, g_videoDecode->getProgram(TextureFormat::Enum(_dst.m_textureFormat) ) );
 
 			if (NULL == pso)
 			{
@@ -1516,7 +1536,7 @@ namespace bgfx { namespace d3d12
 			samplerFlags[2] = BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP | BGFX_SAMPLER_W_CLAMP;
 			_commandList->SetComputeRootDescriptorTable(ComputeRp::Sampler, videoGetSamplerHandle(m_renderer, samplerFlags) );
 
-			D3D12_GPU_VIRTUAL_ADDRESS cbvAddress = m_dummyCbv->GetGPUVirtualAddress();
+			D3D12_GPU_VIRTUAL_ADDRESS cbvAddress = m_yuvToRgbCbv->GetGPUVirtualAddress();
 			_commandList->SetComputeRootConstantBufferView(ComputeRp::CBV, cbvAddress);
 
 			D3D12_GPU_DESCRIPTOR_HANDLE srvHandle[BGFX_MAX_COMPUTE_BINDINGS] = {};
@@ -1632,7 +1652,7 @@ namespace bgfx { namespace d3d12
 		uint8_t*        m_bitstreamMapped;
 		uint64_t        m_bitstreamCapacity;
 		uint64_t        m_bitstreamCursor;
-		ID3D12Resource* m_dummyCbv;
+		ID3D12Resource* m_yuvToRgbCbv;
 
 		ID3D12Resource* m_dpb;
 		ID3D12Resource* m_dpbOutput;
@@ -1811,8 +1831,8 @@ namespace bgfx { namespace d3d12
 				if (SUCCEEDED(hr)
 				&&  0 != (support.SupportFlags & D3D12_VIDEO_DECODE_SUPPORT_FLAG_SUPPORTED) )
 				{
-					g_caps.codecs[s_profiles[jj].codec] |= s_profiles[jj].caps;
-					anySupported = true;
+					g_caps.codecs[s_profiles[jj].codec] |= s_profiles[jj].caps & getDecodableCodecCaps(s_profiles[jj].codec);
+					anySupported |= 0 != (s_profiles[jj].caps & getDecodableCodecCaps(s_profiles[jj].codec) );
 				}
 
 				break;
@@ -1825,7 +1845,6 @@ namespace bgfx { namespace d3d12
 
 			const TextureFormat::Enum dstFormats[] =
 			{
-				TextureFormat::BGRA8,
 				TextureFormat::RGBA8,
 				TextureFormat::RGB10A2,
 				TextureFormat::RGBA16F,

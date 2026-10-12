@@ -608,6 +608,7 @@ VideoPlayer::VideoPlayer()
 	, m_aMarkerUs(-1)
 	, m_bMarkerUs(-1)
 	, m_videoTexture(BGFX_INVALID_HANDLE)
+	, m_format(bgfx::TextureFormat::Count)
 {
 }
 
@@ -655,7 +656,12 @@ bool VideoPlayer::open(const char* _filePath)
 		&& 0 != (codecCaps       & BGFX_CAPS_VIDEO_CODEC_BIT_8)
 		&& 0 != (codecCaps       & BGFX_CAPS_VIDEO_CODEC_CHROMA_420)
 		;
-	const bool targetSupported = 0 != (caps->formats[bgfx::TextureFormat::BGRA8] & BGFX_CAPS_FORMAT_TEXTURE_VIDEO_DECODE_DST);
+	m_format = 0 != (caps->formats[bgfx::TextureFormat::RGBA8] & BGFX_CAPS_FORMAT_TEXTURE_VIDEO_DECODE_DST)
+		? bgfx::TextureFormat::RGBA8
+		: bgfx::TextureFormat::BGRA8
+		;
+
+	const bool targetSupported = 0 != (caps->formats[m_format] & BGFX_CAPS_FORMAT_TEXTURE_VIDEO_DECODE_DST);
 	const bool codecValid = bgfx::isVideoCodecValid(
 		  m_impl->codec
 		, m_impl->chroma
@@ -682,12 +688,15 @@ bool VideoPlayer::open(const char* _filePath)
 	const bgfx::Memory* mem = bgfx::alloc(totalSize);
 
 	bgfx::VideoDecoderInit* decInit = (bgfx::VideoDecoderInit*)mem->data;
-	decInit->magic             = BX_MAKEFOURCC('V', 'D', 'I', 0x0);
-	decInit->codec             = m_impl->codec;
-	decInit->parameterSets     = mem->data + sizeof(bgfx::VideoDecoderInit);
-	decInit->parameterSetsSize = psSize;
-	decInit->flags             = 0;
-	decInit->cachedAuBytes     = 0;
+	*decInit =
+	{
+		.magic             = BX_MAKEFOURCC('V', 'D', 'I', 0x0),
+		.codec             = m_impl->codec,
+		.parameterSets     = mem->data + sizeof(bgfx::VideoDecoderInit),
+		.parameterSetsSize = psSize,
+		.cachedAuBytes     = 0,
+		.flags             = 0,
+	};
 
 	bx::memCopy(
 		  mem->data + sizeof(bgfx::VideoDecoderInit)
@@ -700,7 +709,7 @@ bool VideoPlayer::open(const char* _filePath)
 		, m_height
 		, false
 		, 1
-		, bgfx::TextureFormat::BGRA8
+		, m_format
 		, BGFX_SAMPLER_U_CLAMP
 		| BGFX_SAMPLER_V_CLAMP
 		, mem
@@ -872,17 +881,24 @@ void VideoPlayer::submitDecodeFrame(uint32_t _index, bool _setPosition)
 
 	bx::memCopy(dstBitstream, scratch.data(), bitstreamSize);
 
-	dstPayload->au.size                  = bitstreamSize;
-	dstPayload->au.ptsUs                 = int64_t(f.ptsUs);
-	dstPayload->frame.magic              = BX_MAKEFOURCC('V', 'D', 'F', 0x0);
-	dstPayload->frame.bitstream          = dstBitstream;
-	dstPayload->frame.aus                = &dstPayload->au;
-	dstPayload->frame.numAus             = 1;
-	dstPayload->frame.presentationTimeUs = 0;
-	dstPayload->frame.flags              = _setPosition
-		? BGFX_VIDEO_DECODE_FRAME_SET
-		: BGFX_VIDEO_DECODE_FRAME_NONE
-		;
+	dstPayload->au =
+	{
+		.size  = bitstreamSize,
+		.ptsUs = int64_t(f.ptsUs),
+	};
+
+	dstPayload->frame =
+	{
+		.magic              = BX_MAKEFOURCC('V', 'D', 'F', 0x0),
+		.bitstream          = dstBitstream,
+		.aus                = &dstPayload->au,
+		.numAus             = 1,
+		.presentationTimeUs = 0,
+		.flags              = uint8_t(_setPosition
+			? BGFX_VIDEO_DECODE_FRAME_SET
+			: BGFX_VIDEO_DECODE_FRAME_NONE
+			),
+	};
 
 	bgfx::updateTexture2D(
 		  m_videoTexture
@@ -919,13 +935,15 @@ void VideoPlayer::submitAccessUnitsUpTo(int64_t _untilPtsUs)
 
 void VideoPlayer::submitPresentationTick(int64_t _presentationTimeUs)
 {
-	bgfx::VideoDecoderFrame desc = {};
-	desc.magic              = BX_MAKEFOURCC('V', 'D', 'F', 0x0);
-	desc.bitstream          = NULL;
-	desc.aus                = NULL;
-	desc.numAus             = 0;
-	desc.presentationTimeUs = _presentationTimeUs;
-	desc.flags              = BGFX_VIDEO_DECODE_FRAME_NONE;
+	const bgfx::VideoDecoderFrame desc =
+	{
+		.magic              = BX_MAKEFOURCC('V', 'D', 'F', 0x0),
+		.bitstream          = NULL,
+		.aus                = NULL,
+		.numAus             = 0,
+		.presentationTimeUs = _presentationTimeUs,
+		.flags              = BGFX_VIDEO_DECODE_FRAME_NONE,
+	};
 
 	bgfx::updateTexture2D(
 		  m_videoTexture
