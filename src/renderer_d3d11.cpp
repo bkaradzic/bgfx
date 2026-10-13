@@ -3815,7 +3815,7 @@ namespace bgfx { namespace d3d11
 		{
 			ID3D11DeviceContext* deviceCtx = m_deviceCtx;
 
-			ID3D11RenderTargetView* rtv[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS] = {};
+			ID3D11RenderTargetView* rtv[D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT] = {};
 			ID3D11DepthStencilView* dsv = NULL;
 			deviceCtx->OMGetRenderTargets(BX_COUNTOF(rtv), rtv, &dsv);
 
@@ -5722,9 +5722,9 @@ namespace bgfx { namespace d3d11
 				, _firstLayer
 				, numLayers
 				, false
+				, 0 != (flags & BGFX_SAMPLER_SAMPLE_STENCIL)
 				, false
-				, false
-				, SrgbSelect::Native
+				, srgb
 				, true
 				);
 		}
