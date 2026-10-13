@@ -5013,9 +5013,16 @@ namespace bgfx { namespace d3d12
 				|| 0 != _firstLayer
 				;
 
+			const DXGI_FORMAT format = !_stencil
+				? _texture.getSrvFormat(_srgb)
+				: DXGI_FORMAT_R32G8X24_TYPELESS == s_textureFormat[_texture.m_textureFormat].m_fmt
+				? DXGI_FORMAT_X32_TYPELESS_G8X24_UINT
+				: DXGI_FORMAT_X24_TYPELESS_G8_UINT
+				;
+
 			const D3D12_SHADER_RESOURCE_VIEW_DESC desc =
 			{
-				.Format                  = _texture.getSrvFormat(),
+				.Format                  = format,
 				.ViewDimension           = array ? D3D12_SRV_DIMENSION_TEXTURE2DMSARRAY : D3D12_SRV_DIMENSION_TEXTURE2DMS,
 				.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING,
 				.Texture2DMSArray =
