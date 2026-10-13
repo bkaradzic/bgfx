@@ -275,23 +275,89 @@ static const InputBinding* s_binding[] =
 };
 static_assert(Binding::Count == BX_COUNTOF(s_binding) );
 
-static const char* s_filter = ""
-	"All Image Formats (bmp, dds, exr, gif, gnf, jpg, jpeg, hdr, ktx, ktx2, pgm, png, ppm, psd, pvr, tga, webp) | *.bmp *.dds *.exr *.gif *.gnf *.jpg *.jpeg *.hdr *.ktx *.ktx2 *.pgm *.png *.ppm *.psd *.pvr *.tga *.webp\n"
-	"Windows Bitmap (bmp) | *.bmp\n"
-	"Direct Draw Surface (dds) | *.dds\n"
-	"OpenEXR (exr) | *.exr\n"
-	"Graphics Interchange Format (gif) | *.gif\n"
-	"JPEG Interchange Format (jpg, jpeg) | *.jpg *.jpeg\n"
-	"Radiance RGBE (hdr) | *.hdr\n"
-	"Khronos Texture (ktx) | *.ktx\n"
-	"Khronos Texture 2 (ktx2) | *.ktx2\n"
-	"Portable Graymap/Pixmap Format (pgm, ppm) | *.pgm *.ppm\n"
-	"Portable Network Graphics (png) | *.png\n"
-	"Photoshop Document (psd) | *.psd\n"
-	"PowerVR (pvr) | *.pvr\n"
-	"Truevision TGA (tga) | *.tga\n"
-	"WebP (webp) | *.webp\n"
-	;
+struct FileFormat
+{
+	const char* name;
+	const char* ext[4];
+};
+
+static const FileFormat s_fileFormat[] =
+{
+	{ "AV1 Image File Format",             { "avif"                } },
+	{ "Windows Bitmap",                    { "bmp"                 } },
+	{ "Direct Draw Surface",               { "dds"                 } },
+	{ "OpenEXR",                           { "exr"                 } },
+	{ "Graphics Interchange Format",       { "gif"                 } },
+	{ "High Efficiency Image File Format", { "heic"                } },
+	{ "JPEG Interchange Format",           { "jpg", "jpeg"         } },
+	{ "Radiance RGBE",                     { "hdr"                 } },
+	{ "Khronos Texture",                   { "ktx"                 } },
+	{ "Khronos Texture 2",                 { "ktx2"                } },
+	{ "Portable Graymap/Pixmap Format",    { "pgm", "ppm"          } },
+	{ "Portable Network Graphics",         { "png"                 } },
+	{ "Photoshop Document",                { "psd"                 } },
+	{ "PowerVR",                           { "pvr"                 } },
+	{ "Scalable Vector Graphics",          { "svg"                 } },
+	{ "Truevision TGA",                    { "tga"                 } },
+	{ "WebP",                              { "webp"                } },
+	{ "MPEG-4/QuickTime Video",            { "mp4", "m4v", "mov"   } },
+	{ "H.264 Video",                       { "264", "h264"         } },
+	{ "H.265 Video",                       { "265", "h265", "hevc" } },
+	{ "AV1 Video",                         { "av1", "obu", "ivf"   } },
+};
+
+static char s_filter[4096];
+
+static void writeFilterLine(bx::WriterI* _writer, const char* _name, const bx::StringView* _ext, uint32_t _num, bx::Error* _err)
+{
+	bx::write(_writer, _err, "%s (", _name);
+
+	for (uint32_t ii = 0; ii < _num; ++ii)
+	{
+		bx::write(_writer, _err, "%s%S", 0 == ii ? "" : ", ", &_ext[ii]);
+	}
+
+	bx::write(_writer, _err, ") |");
+
+	for (uint32_t ii = 0; ii < _num; ++ii)
+	{
+		bx::write(_writer, _err, " *.%S", &_ext[ii]);
+	}
+
+	bx::write(_writer, '\n', _err);
+}
+
+static void initFilter()
+{
+	bx::StaticMemoryBlockWriter writer(s_filter, sizeof(s_filter)-1);
+	bx::Error err;
+
+	writeFilterLine(&writer, "All Supported Formats", s_supportedExt, s_numSupportedExt, &err);
+
+	for (uint32_t ii = 0; ii < BX_COUNTOF(s_fileFormat); ++ii)
+	{
+		const FileFormat& format = s_fileFormat[ii];
+
+		bx::StringView ext[BX_COUNTOF(format.ext)];
+		uint32_t num = 0;
+
+		for (uint32_t jj = 0; jj < BX_COUNTOF(format.ext) && NULL != format.ext[jj]; ++jj)
+		{
+			if (isExtSupported(format.ext[jj]) )
+			{
+				ext[num++] = format.ext[jj];
+			}
+		}
+
+		if (0 < num)
+		{
+			writeFilterLine(&writer, format.name, ext, num, &err);
+		}
+	}
+
+	BX_ASSERT(err.isOk(), "s_filter array is too small.");
+	s_filter[bx::seek(&writer)] = '\0';
+}
 
 #if BX_PLATFORM_WINDOWS
 
@@ -1627,6 +1693,8 @@ int _main_(int _argc, char** _argv)
 
 		bx::quickSort(s_supportedExt, s_numSupportedExt, sizeof(s_supportedExt[0]), compareExt);
 	}
+
+	initFilter();
 
 	bgfx::UniformHandle s_texColor = bgfx::createUniform("s_texColor", bgfx::UniformType::Sampler);
 	bgfx::UniformHandle u_mtx      = bgfx::createUniform("u_mtx",      bgfx::UniformType::Mat4);
