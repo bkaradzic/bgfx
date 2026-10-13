@@ -7,7 +7,7 @@
 #define TEXTUREV_VIDEO_PLAYER_H_HEADER_GUARD
 
 #include <bgfx/bgfx.h>
-#include <bx/string.h>
+#include <bx/filepath.h>
 
 class VideoPlayer
 {
@@ -15,7 +15,7 @@ public:
 	VideoPlayer();
 	~VideoPlayer();
 
-	static bool isVideoExt(const bx::StringView& _ext);
+	static bool isVideoFile(const bx::FilePath& _filePath);
 
 	bool open(const char* _filePath);
 	void close();

@@ -71,7 +71,7 @@ static const bgfx::EmbeddedShader s_embeddedShaders[] =
 	BGFX_EMBEDDED_SHADER_END()
 };
 
-static bx::StringView s_supportedExt[32];
+static bx::StringView s_supportedExt[64];
 static uint32_t       s_numSupportedExt = 0;
 
 static int32_t compareExt(const void* _lhs, const void* _rhs)
@@ -850,28 +850,54 @@ struct View
 			&&  bx::FileType::File == fi.type)
 			{
 				bx::StringView ext = fi.filePath.getExt();
+				bool supported = false;
 
 				if (!ext.isEmpty() )
 				{
 					ext.set(ext.getPtr()+1, ext.getTerm() );
+					supported = isExtSupported(ext);
+				}
+				else
+				{
+					bx::FilePath fullPath = m_path;
+					fullPath.join(fi.filePath.getFileName() );
+					supported = VideoPlayer::isVideoFile(fullPath);
+				}
 
-					if (isExtSupported(ext) )
-					{
-						const bx::StringView fileName = fi.filePath.getFileName();
-						m_fileList.push_back(std::string(fileName.getPtr(), fileName.getTerm() ) );
-					}
+				if (supported)
+				{
+					const bx::StringView fileName = fi.filePath.getFileName();
+					m_fileList.push_back(std::string(fileName.getPtr(), fileName.getTerm() ) );
 				}
 			}
 		}
 
 		bx::close(&dr);
 
+		const bx::StringView fileName = _filePath.getFileName();
+
+		{
+			bx::FileInfo fi;
+			bool listed = false;
+
+			for (FileList::const_iterator it = m_fileList.begin(); it != m_fileList.end(); ++it)
+			{
+				listed |= 0 == bx::strCmp(it->c_str(), fileName);
+			}
+
+			if (!listed
+			&&  !fileName.isEmpty()
+			&&  bx::stat(fi, _filePath)
+			&&  bx::FileType::File == fi.type)
+			{
+				m_fileList.push_back(std::string(fileName.getPtr(), fileName.getTerm() ) );
+			}
+		}
+
 		std::sort(m_fileList.begin(), m_fileList.end(), sortNameAscending);
 
 		m_fileIndex = 0;
 		uint32_t idx = 0;
-
-		const bx::StringView fileName = _filePath.getFileName();
 
 		for (FileList::const_iterator it = m_fileList.begin(); it != m_fileList.end(); ++it, ++idx)
 		{
@@ -1564,7 +1590,41 @@ int _main_(int _argc, char** _argv)
 
 	if (0 != (caps->supported & BGFX_CAPS_VIDEO_DECODE) )
 	{
-		s_supportedExt[s_numSupportedExt++] = "mp4";
+		struct CodecExt
+		{
+			bgfx::VideoCodec::Enum codec;
+			const char* const* ext;
+		};
+
+		static const char* const s_containerExt[] = { "mp4", "m4v",  "mov",  NULL };
+		static const char* const s_h264Ext[]      = { "264", "h264",         NULL };
+		static const char* const s_h265Ext[]      = { "265", "h265", "hevc", NULL };
+		static const char* const s_av1Ext[]       = { "av1", "obu",  "ivf",  NULL };
+
+		static const CodecExt s_codecExt[] =
+		{
+			{ bgfx::VideoCodec::Count, s_containerExt },
+			{ bgfx::VideoCodec::H264,  s_h264Ext      },
+			{ bgfx::VideoCodec::H265,  s_h265Ext      },
+			{ bgfx::VideoCodec::AV1,   s_av1Ext       },
+		};
+
+		for (uint32_t ii = 0; ii < BX_COUNTOF(s_codecExt); ++ii)
+		{
+			const CodecExt& codecExt = s_codecExt[ii];
+
+			if (bgfx::VideoCodec::Count != codecExt.codec
+			&&  0 == caps->codecs[codecExt.codec])
+			{
+				continue;
+			}
+
+			for (const char* const* ext = codecExt.ext; NULL != *ext && s_numSupportedExt < BX_COUNTOF(s_supportedExt); ++ext)
+			{
+				s_supportedExt[s_numSupportedExt++] = *ext;
+			}
+		}
+
 		bx::quickSort(s_supportedExt, s_numSupportedExt, sizeof(s_supportedExt[0]), compareExt);
 	}
 
@@ -2453,18 +2513,7 @@ int _main_(int _argc, char** _argv)
 				bx::FilePath fp = view.m_path;
 				fp.join(view.m_fileList[view.m_fileIndex].c_str() );
 
-				bx::StringView fileName(view.m_fileList[view.m_fileIndex].c_str() );
-
-				bx::StringView ext;
-				if (fileName.getLength() >= 4)
-				{
-					ext.set(fileName.getTerm() - 4, fileName.getTerm() );
-				}
-
-				const bool nextIsVideo = false
-					|| 0 == bx::strCmpI(ext, ".mp4")
-					|| 0 == bx::strCmpI(ext, ".m4v")
-					;
+				const bool nextIsVideo = VideoPlayer::isVideoFile(fp);
 
 				if (videoOwnsTexture)
 				{
