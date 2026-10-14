@@ -1038,7 +1038,7 @@ WL_EGL_IMPORT
 		if (NULL != m_display
 		&&  EGL_NO_SURFACE != m_surface)
 		{
-			EGL_CHECK(eglSwapInterval(m_display, m_swapInterval) );
+			eglSwapInterval(m_display, m_swapInterval);
 		}
 	}
 
@@ -1123,7 +1123,7 @@ WL_EGL_IMPORT
 			if (NULL != m_display
 			&&  (NULL != _swapChain || EGL_NO_SURFACE != m_surface) )
 			{
-				EGL_CHECK(eglSwapInterval(m_display, m_swapInterval) );
+				eglSwapInterval(m_display, m_swapInterval);
 			}
 		}
 	}
