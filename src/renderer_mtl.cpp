@@ -908,6 +908,8 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			CHECK_FEATURE_AVAILABLE(m_hasSynchronizeResource, macOS 10.11, macCatalyst 13.0, *);
 			CHECK_FEATURE_AVAILABLE(m_hasVSync, macOS 10.13, macCatalyst 13.1, *);
 			CHECK_FEATURE_AVAILABLE(m_hasMaximumDrawableCount, iOS 11.2, macOS 10.13.2, macCatalyst 13.1, tvOS 11.2, VISION_OS_MINIMUM *);
+			CHECK_FEATURE_AVAILABLE(m_hasCurrentAllocatedSize, iOS 11.0, macOS 10.13, macCatalyst 13.1, tvOS 11.0, VISION_OS_MINIMUM *);
+			CHECK_FEATURE_AVAILABLE(m_hasRecommendedMaxWorkingSetSize, iOS 16.0, macOS 10.12, macCatalyst 13.1, tvOS 16.0, VISION_OS_MINIMUM *);
 
 			m_fbh = BGFX_INVALID_HANDLE;
 			m_mainSwapChain = _init.swapChain;
@@ -3741,6 +3743,8 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 		bool m_usesMTLBindings;
 		bool m_hasVSync;
 		bool m_hasMaximumDrawableCount;
+		bool m_hasCurrentAllocatedSize;
+		bool m_hasRecommendedMaxWorkingSetSize;
 
 		ChunkedScratchBufferMtl m_uniformScratchBuffer;
 
@@ -7332,8 +7336,14 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 		perfStats.maxGpuLatency = maxGpuLatency;
 		perfStats.gpuFrameNum   = m_gpuTimer.m_frameNum;
 		bx::memCopy(perfStats.numPrims, statsNumPrimsRendered, sizeof(perfStats.numPrims) );
-		perfStats.gpuMemoryMax  = -INT64_MAX;
-		perfStats.gpuMemoryUsed = -INT64_MAX;
+		perfStats.gpuMemoryMax  = m_hasRecommendedMaxWorkingSetSize
+			? int64_t(m_device->recommendedMaxWorkingSetSize() )
+			: -INT64_MAX
+			;
+		perfStats.gpuMemoryUsed = m_hasCurrentAllocatedSize
+			? int64_t(m_device->currentAllocatedSize() )
+			: -INT64_MAX
+			;
 
 		const bool backbufferInUse = false
 			||  NULL != m_renderCommandEncoder
@@ -7379,6 +7389,26 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 					, BGFX_API_VERSION
 					, BGFX_REV_NUMBER
 					);
+
+				tvm.printf(0, pos++, 0x8f, " Device: %s (%s memory)"
+					, m_device->name()->utf8String()
+					, m_device->hasUnifiedMemory() ? "unified" : "discrete"
+					);
+
+				if (0 <= perfStats.gpuMemoryMax
+				&&  0 <= perfStats.gpuMemoryUsed)
+				{
+					char workingSet[16];
+					bx::prettify(workingSet, BX_COUNTOF(workingSet), perfStats.gpuMemoryMax);
+
+					char allocated[16];
+					bx::prettify(allocated, BX_COUNTOF(allocated), perfStats.gpuMemoryUsed);
+
+					tvm.printf(0, pos++, 0x8f, " Memory: %s, Allocated: %s "
+						, workingSet
+						, allocated
+						);
+				}
 
 				pos = 10;
 				tvm.printf(10, pos++, 0x8b, "        Frame: %7.3f, % 7.3f \x1f, % 7.3f \x1e [ms] / % 6.2f FPS "
