@@ -612,7 +612,7 @@ namespace bgfx { namespace vk
 			{
 				const VkDeviceSize pixelFootprint = VkDeviceSize(m_codedWidth) * VkDeviceSize(m_codedHeight) * 3 / 2;
 				m_bitstreamBufferSize = bx::max<VkDeviceSize>(4 * 1024 * 1024, pixelFootprint);
-				m_bitstreamBufferSize = bx::alignUp<VkDeviceSize>(m_bitstreamBufferSize, bx::max<VkDeviceSize>(m_bitstreamAlignment, 1) );
+				m_bitstreamBufferSize = bx::alignUp<VkDeviceSize>(m_bitstreamBufferSize, size_t(bx::max<VkDeviceSize>(m_bitstreamAlignment, 1) ) );
 
 				VkBufferCreateInfo bi
 				{

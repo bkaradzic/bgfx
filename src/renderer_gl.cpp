@@ -6685,7 +6685,7 @@ namespace bgfx { namespace gl
 			uint8_t* temp = NULL;
 			if (convert)
 			{
-				temp = (uint8_t*)bx::alloc(g_allocator, ti.width*ti.height*4);
+				temp = (uint8_t*)bx::alloc(g_allocator, ti.width*ti.height*ti.depth*4);
 			}
 
 			const uint16_t numSides = ti.numLayers * (imageContainer.m_cubeMap ? 6 : 1);
@@ -6733,12 +6733,13 @@ namespace bgfx { namespace gl
 							if (convert)
 							{
 								imageDecodeToRgba8(
-									  g_allocator
-									, temp
+									  temp
 									, mip.m_data
 									, mip.m_width
 									, mip.m_height
+									, mip.m_depth
 									, mip.m_width*4
+									, mip.m_width*4*mip.m_height
 									, mip.m_format
 									);
 								data = temp;
@@ -6919,7 +6920,7 @@ namespace bgfx { namespace gl
 		||  !unpackRowLength
 		||  (compressed && UINT16_MAX != _pitch && srcPitch != rectPitch) )
 		{
-			temp = (uint8_t*)bx::alloc(g_allocator, rectPitch*height);
+			temp = (uint8_t*)bx::alloc(g_allocator, rectPitch*height*_depth);
 		}
 		else if (unpackRowLength
 		     &&  !compressed)
@@ -6962,7 +6963,7 @@ namespace bgfx { namespace gl
 
 			if (convert)
 			{
-				bimg::imageDecodeToRgba8(g_allocator, temp, data, width, height, rectPitch, bimg::TextureFormat::Enum(m_requestedFormat) );
+				imageDecodeToRgba8(temp, data, width, height, _depth, rectPitch, rectPitch*height, bimg::TextureFormat::Enum(m_requestedFormat) );
 				data = temp;
 				srcPitch = rectPitch;
 			}

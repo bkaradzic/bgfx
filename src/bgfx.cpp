@@ -1559,8 +1559,7 @@ namespace bgfx
 
 	void EncoderImpl::submit(ViewId _id, ProgramHandle _program, OcclusionQueryHandle _occlusionQuery, uint32_t _depth, uint8_t _flags)
 	{
-		if (BX_ENABLED(BGFX_CONFIG_DEBUG_UNIFORM)
-		&& (_flags & BGFX_DISCARD_STATE))
+		if (BX_ENABLED(BGFX_CONFIG_DEBUG_UNIFORM) )
 		{
 			m_uniformSet.clear();
 		}
@@ -2319,6 +2318,34 @@ namespace bgfx
 		}
 
 		return TextureFormat::Enum(_imageContainer.m_format);
+	}
+
+	typedef void (*ImageDecodeFn)(bx::AllocatorI*, void*, const void*, uint32_t, uint32_t, uint32_t, bimg::TextureFormat::Enum);
+
+	static void imageDecodeSlices(ImageDecodeFn _fn, void* _dst, const void* _src, uint32_t _width, uint32_t _height, uint32_t _depth, uint32_t _dstPitch, uint32_t _dstSlicePitch, bimg::TextureFormat::Enum _srcFormat)
+	{
+		const uint32_t srcSlicePitch = uint32_t(bimg::imageGetSize(NULL, _width, _height, 1, false, false, 1, _srcFormat) );
+
+		uint8_t*       dst = (uint8_t*)_dst;
+		const uint8_t* src = (const uint8_t*)_src;
+
+		for (uint32_t zz = 0; zz < _depth; ++zz)
+		{
+			_fn(g_allocator, dst, src, _width, _height, _dstPitch, _srcFormat);
+
+			dst += _dstSlicePitch;
+			src += srcSlicePitch;
+		}
+	}
+
+	void imageDecodeToBgra8(void* _dst, const void* _src, uint32_t _width, uint32_t _height, uint32_t _depth, uint32_t _dstPitch, uint32_t _dstSlicePitch, bimg::TextureFormat::Enum _srcFormat)
+	{
+		imageDecodeSlices(bimg::imageDecodeToBgra8, _dst, _src, _width, _height, _depth, _dstPitch, _dstSlicePitch, _srcFormat);
+	}
+
+	void imageDecodeToRgba8(void* _dst, const void* _src, uint32_t _width, uint32_t _height, uint32_t _depth, uint32_t _dstPitch, uint32_t _dstSlicePitch, bimg::TextureFormat::Enum _srcFormat)
+	{
+		imageDecodeSlices(bimg::imageDecodeToRgba8, _dst, _src, _width, _height, _depth, _dstPitch, _dstSlicePitch, _srcFormat);
 	}
 
 	const char* getName(TextureFormat::Enum _fmt)

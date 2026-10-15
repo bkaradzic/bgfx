@@ -5042,8 +5042,6 @@ WGPU_IMPORT
 				.aspect = WGPUTextureAspect_All,
 			};
 
-			uint8_t* temp = convert ? (uint8_t*)bx::alloc(g_allocator, m_width*m_height*bpp/8) : NULL;
-
 			for (uint16_t side = 0; side < m_numSides; ++side)
 			{
 				copyTextureDst.origin.z = side;
@@ -5057,20 +5055,21 @@ WGPU_IMPORT
 					{
 						if (convert)
 						{
-							const uint32_t mipWidth    = bx::max<uint32_t>(mip.m_width,  4);
-							const uint32_t mipHeight   = bx::max<uint32_t>(mip.m_height, 4);
-							const uint32_t bytesPerRow = mipWidth*bpp/8;
+							const uint32_t bytesPerRow = mip.m_width*bpp/8;
 							const uint32_t width       = bx::max<uint32_t>(m_width  >> lod, 1);
 							const uint32_t height      = bx::max<uint32_t>(m_height >> lod, 1);
-							const uint32_t size        = bytesPerRow*height*mip.m_depth;
+							const uint32_t size        = bytesPerRow*mip.m_height*mip.m_depth;
 
-							bimg::imageDecodeToBgra8(
-								  g_allocator
-								, temp
+							uint8_t* temp = (uint8_t*)bx::alloc(g_allocator, size);
+
+							imageDecodeToBgra8(
+								  temp
 								, mip.m_data
-								, mipWidth
-								, mipHeight
+								, mip.m_width
+								, mip.m_height
+								, mip.m_depth
 								, bytesPerRow
+								, bytesPerRow*mip.m_height
 								, bimg::TextureFormat::Enum(m_requestedFormat)
 								);
 
@@ -5081,13 +5080,15 @@ WGPU_IMPORT
 								, {
 									.offset       = 0,
 									.bytesPerRow  = bytesPerRow,
-									.rowsPerImage = height,
+									.rowsPerImage = mip.m_height,
 								}
 								, {
 									.width              = width,
 									.height             = height,
 									.depthOrArrayLayers = mip.m_depth,
 								});
+
+							bx::free(g_allocator, temp);
 						}
 						else if (compressed)
 						{
@@ -5133,11 +5134,6 @@ WGPU_IMPORT
 						}
 					}
 				}
-			}
-
-			if (NULL != temp)
-			{
-				bx::free(g_allocator, temp);
 			}
 		}
 	}
@@ -5249,8 +5245,8 @@ WGPU_IMPORT
 		if (convert)
 		{
 			bytesPerRow = rectPitch;
-			temp = (uint8_t*)bx::alloc(g_allocator, slicePitch);
-			bimg::imageDecodeToBgra8(g_allocator, temp, srcData, _rect.m_width, _rect.m_height, rectPitch, bimg::TextureFormat::Enum(m_requestedFormat) );
+			temp = (uint8_t*)bx::alloc(g_allocator, slicePitch*bx::max<uint32_t>(1, _depth) );
+			imageDecodeToBgra8(temp, srcData, _rect.m_width, _rect.m_height, bx::max<uint32_t>(1, _depth), rectPitch, slicePitch, bimg::TextureFormat::Enum(m_requestedFormat) );
 			srcData = temp;
 		}
 
@@ -6495,7 +6491,7 @@ WGPU_IMPORT
 			  m_readback
 			, WGPUMapMode_Read
 			, 0
-			, getBufferSize()
+			, size_t(getBufferSize() )
 			, {
 				.nextInChain = NULL,
 				.mode        = WGPUCallbackMode_AllowProcessEvents,
@@ -6507,7 +6503,7 @@ WGPU_IMPORT
 
 	void TimerQueryWGPU::consumeResults()
 	{
-		const uint64_t* timestamp = (const uint64_t*)wgpuBufferGetConstMappedRange(m_readback, 0, getBufferSize() );
+		const uint64_t* timestamp = (const uint64_t*)wgpuBufferGetConstMappedRange(m_readback, 0, size_t(getBufferSize() ) );
 
 		if (NULL != timestamp)
 		{

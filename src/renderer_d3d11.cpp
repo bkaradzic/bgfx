@@ -5024,8 +5024,8 @@ namespace bgfx { namespace d3d11
 						if (convert)
 						{
 							uint32_t srcpitch = mip.m_width*bpp/8;
-							temp = (uint8_t*)bx::alloc(g_allocator, srcpitch*mip.m_height);
-							bimg::imageDecodeToBgra8(g_allocator, temp, mip.m_data, mip.m_width, mip.m_height, srcpitch, mip.m_format);
+							temp = (uint8_t*)bx::alloc(g_allocator, srcpitch*mip.m_height*mip.m_depth);
+							imageDecodeToBgra8(temp, mip.m_data, mip.m_width, mip.m_height, mip.m_depth, srcpitch, srcpitch*mip.m_height, mip.m_format);
 
 							srd[kk].pSysMem = temp;
 							srd[kk].SysMemPitch = srcpitch;
@@ -5042,18 +5042,18 @@ namespace bgfx { namespace d3d11
 							switch (m_textureFormat)
 							{
 							case TextureFormat::R5G6B5:
-								temp = (uint8_t*)bx::alloc(g_allocator, srd[kk].SysMemPitch*mip.m_height);
-								bimg::imageConvert(temp, 16, bx::packB5G6R5, mip.m_data, bx::unpackR5G6B5, srd[kk].SysMemPitch*mip.m_height);
+								temp = (uint8_t*)bx::alloc(g_allocator, mip.m_size);
+								bimg::imageConvert(temp, 16, bx::packB5G6R5, mip.m_data, bx::unpackR5G6B5, mip.m_size);
 								srd[kk].pSysMem = temp;
 								break;
 							case TextureFormat::RGBA4:
-								temp = (uint8_t*)bx::alloc(g_allocator, srd[kk].SysMemPitch*mip.m_height);
-								bimg::imageConvert(temp, 16, bx::packBgra4, mip.m_data, bx::unpackRgba4, srd[kk].SysMemPitch*mip.m_height);
+								temp = (uint8_t*)bx::alloc(g_allocator, mip.m_size);
+								bimg::imageConvert(temp, 16, bx::packBgra4, mip.m_data, bx::unpackRgba4, mip.m_size);
 								srd[kk].pSysMem = temp;
 								break;
 							case TextureFormat::RGB5A1:
-								temp = (uint8_t*)bx::alloc(g_allocator, srd[kk].SysMemPitch*mip.m_height);
-								bimg::imageConvert(temp, 16, bx::packBgr5a1, mip.m_data, bx::unpackRgb5a1, srd[kk].SysMemPitch*mip.m_height);
+								temp = (uint8_t*)bx::alloc(g_allocator, mip.m_size);
+								bimg::imageConvert(temp, 16, bx::packBgr5a1, mip.m_data, bx::unpackRgb5a1, mip.m_size);
 								srd[kk].pSysMem = temp;
 								break;
 							}
@@ -5551,6 +5551,7 @@ namespace bgfx { namespace d3d11
 
 		const uint32_t srcPitch   = UINT16_MAX == _pitch ? rectPitch : _pitch;
 		const uint32_t slicePitch = rectPitch*srcRows;
+		const uint32_t numSlices  = box.back - box.front;
 
 		const bool convert = m_textureFormat != m_requestedFormat;
 
@@ -5562,8 +5563,8 @@ namespace bgfx { namespace d3d11
 		if (convert)
 		{
 			copyPitch = rectPitch;
-			temp = (uint8_t*)bx::alloc(g_allocator, slicePitch);
-			bimg::imageDecodeToBgra8(g_allocator, temp, data, _rect.m_width, _rect.m_height, copyPitch, bimg::TextureFormat::Enum(m_requestedFormat) );
+			temp = (uint8_t*)bx::alloc(g_allocator, slicePitch*numSlices);
+			imageDecodeToBgra8(temp, data, _rect.m_width, _rect.m_height, numSlices, copyPitch, slicePitch, bimg::TextureFormat::Enum(m_requestedFormat) );
 			data = temp;
 
 			box.right  = bx::clamp<uint32_t>(box.right,  box.left, bx::max(1u, m_width  >> _mip) );
@@ -5574,20 +5575,20 @@ namespace bgfx { namespace d3d11
 			switch (m_textureFormat)
 			{
 			case TextureFormat::R5G6B5:
-				temp = (uint8_t*)bx::alloc(g_allocator, slicePitch);
-				bimg::imageConvert(temp, 16, bx::packB5G6R5, data, bx::unpackR5G6B5, slicePitch);
+				temp = (uint8_t*)bx::alloc(g_allocator, slicePitch*numSlices);
+				bimg::imageConvert(temp, 16, bx::packB5G6R5, data, bx::unpackR5G6B5, slicePitch*numSlices);
 				data = temp;
 				break;
 
 			case TextureFormat::RGBA4:
-				temp = (uint8_t*)bx::alloc(g_allocator, slicePitch);
-				bimg::imageConvert(temp, 16, bx::packBgra4, data, bx::unpackRgba4, slicePitch);
+				temp = (uint8_t*)bx::alloc(g_allocator, slicePitch*numSlices);
+				bimg::imageConvert(temp, 16, bx::packBgra4, data, bx::unpackRgba4, slicePitch*numSlices);
 				data = temp;
 				break;
 
 			case TextureFormat::RGB5A1:
-				temp = (uint8_t*)bx::alloc(g_allocator, slicePitch);
-				bimg::imageConvert(temp, 16, bx::packBgr5a1, data, bx::unpackRgb5a1, slicePitch);
+				temp = (uint8_t*)bx::alloc(g_allocator, slicePitch*numSlices);
+				bimg::imageConvert(temp, 16, bx::packBgr5a1, data, bx::unpackRgb5a1, slicePitch*numSlices);
 				data = temp;
 				break;
 
@@ -5602,7 +5603,6 @@ namespace bgfx { namespace d3d11
 				? bx::max<uint32_t>(1, (box.bottom - box.top + blockInfo.blockHeight - 1) / blockInfo.blockHeight)
 				: (box.bottom - box.top)
 				;
-			const uint32_t numSlices = TextureD3D11::Texture3D == m_type ? (box.back - box.front) : 1;
 			const uint32_t needed    = (numSlices - 1) * slicePitch + (numRows - 1) * copyPitch + rectPitch;
 
 			if (_mem->size < needed)

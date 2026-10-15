@@ -5044,7 +5044,7 @@ VK_IMPORT_DEVICE
 			dsai.pSetLayouts        = &_layout;
 
 			VkDescriptorSet descriptorSet = VK_NULL_HANDLE;
-			const VkResult result = vkAllocateDescriptorSets(m_device, &dsai, &descriptorSet);
+			VkResult result = vkAllocateDescriptorSets(m_device, &dsai, &descriptorSet);
 
 			if (VK_SUCCESS != result
 			&&  uint32_t(m_descriptorPoolIdx + 1) < kMaxDescriptorPoolChunks)
@@ -5058,7 +5058,7 @@ VK_IMPORT_DEVICE
 				}
 
 				dsai.descriptorPool = m_descriptorPool[frame][m_descriptorPoolIdx];
-				VK_CHECK(vkAllocateDescriptorSets(m_device, &dsai, &descriptorSet) );
+				result = vkAllocateDescriptorSets(m_device, &dsai, &descriptorSet);
 			}
 
 			BX_ASSERT(VK_SUCCESS == result
@@ -7857,13 +7857,14 @@ VK_DESTROY
 							const uint32_t size  = slice * mip.m_depth;
 
 							uint8_t* temp = (uint8_t*)bx::alloc(g_allocator, size);
-							bimg::imageDecodeToBgra8(
-								  g_allocator
-								, temp
+							imageDecodeToBgra8(
+								  temp
 								, mip.m_data
 								, mip.m_width
 								, mip.m_height
+								, mip.m_depth
 								, pitch
+								, slice
 								, mip.m_format
 								);
 
@@ -8159,8 +8160,8 @@ VK_DESTROY
 
 		if (convert)
 		{
-			temp = (uint8_t*)bx::alloc(g_allocator, slicePitch);
-			bimg::imageDecodeToBgra8(g_allocator, temp, data, _rect.m_width, _rect.m_height, rectPitch, bimg::TextureFormat::Enum(m_requestedFormat) );
+			temp = (uint8_t*)bx::alloc(g_allocator, slicePitch * _depth);
+			imageDecodeToBgra8(temp, data, _rect.m_width, _rect.m_height, _depth, rectPitch, slicePitch, bimg::TextureFormat::Enum(m_requestedFormat) );
 			data = temp;
 		}
 		else if (repackPitch)
