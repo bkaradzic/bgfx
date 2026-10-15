@@ -74,7 +74,12 @@ namespace entry
 
 			MainThreadEntry* self = (MainThreadEntry*)_userData;
 			uint32_t result = main(self->m_argc, self->m_argv);
-			[NSApp terminate:nil];
+
+			dispatch_async(dispatch_get_main_queue()
+				, ^(void){
+					[NSApp terminate:nil];
+				});
+
 			return result;
 		}
 	};
@@ -375,9 +380,11 @@ namespace entry
 						// Returning false means that we take care of the key (instead of the default behavior)
 						if (key != Key::None)
 						{
-							if (key == Key::KeyQ && (modifiers & Modifier::RightMeta) )
+							if (key == Key::KeyQ
+							&&  0 != (modifiers & (Modifier::LeftMeta | Modifier::RightMeta) ) )
 							{
-								m_eventQueue.postExitEvent();
+								[NSApp terminate:nil];
+								return false;
 							}
 							else
 							{
