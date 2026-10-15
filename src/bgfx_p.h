@@ -694,6 +694,8 @@ namespace bgfx
 	const char* getAttribNameShort(Attrib::Enum _attr);
 	void getTextureSizeFromRatio(BackbufferRatio::Enum _ratio, uint16_t& _width, uint16_t& _height);
 	TextureFormat::Enum getViableTextureFormat(const bimg::ImageContainer& _imageContainer);
+	void imageDecodeToBgra8(void* _dst, const void* _src, uint32_t _width, uint32_t _height, uint32_t _depth, uint32_t _dstPitch, uint32_t _dstSlicePitch, bimg::TextureFormat::Enum _srcFormat);
+	void imageDecodeToRgba8(void* _dst, const void* _src, uint32_t _width, uint32_t _height, uint32_t _depth, uint32_t _dstPitch, uint32_t _dstSlicePitch, bimg::TextureFormat::Enum _srcFormat);
 	const char* getName(TextureFormat::Enum _fmt);
 	const char* getName(UniformHandle _handle);
 	const char* getName(ShaderHandle _handle);

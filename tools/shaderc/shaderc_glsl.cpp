@@ -340,7 +340,7 @@ namespace bgfx { namespace glsl
 
 				Uniform un;
 				un.name         = compiler.get_name(resource.id);
-				un.type         = UniformType::Sampler;
+				un.type         = UniformType::Enum(kUniformSamplerBit | UniformType::Sampler);
 				un.num          = 1;
 				un.regIndex     = 0;
 				un.regCount     = 1;

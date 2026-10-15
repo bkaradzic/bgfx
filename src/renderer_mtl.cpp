@@ -4501,7 +4501,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			uint8_t* temp = NULL;
 			if (convert)
 			{
-				temp = (uint8_t*)bx::alloc(g_allocator, ti.width*ti.height*4);
+				temp = (uint8_t*)bx::alloc(g_allocator, ti.width*ti.height*ti.depth*4);
 			}
 
 			for (uint16_t side = 0; side < numSides; ++side)
@@ -4523,13 +4523,14 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 						if (convert)
 						{
-							bimg::imageDecodeToBgra8(
-								  g_allocator
-								, temp
+							imageDecodeToBgra8(
+								  temp
 								, mip.m_data
 								, mip.m_width
 								, mip.m_height
+								, mip.m_depth
 								, mip.m_width*4
+								, mip.m_width*4*mip.m_height
 								, mip.m_format
 								);
 							data = temp;
@@ -4663,14 +4664,15 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 		if (convert)
 		{
-			temp = (uint8_t*)bx::alloc(g_allocator, rectpitch*_rect.m_height);
-			bimg::imageDecodeToBgra8(
-				  g_allocator
-				, temp
+			temp = (uint8_t*)bx::alloc(g_allocator, rectpitch*_rect.m_height*_depth);
+			imageDecodeToBgra8(
+				  temp
 				, data
 				, _rect.m_width
 				, _rect.m_height
+				, _depth
 				, srcpitch
+				, srcpitch*_rect.m_height
 				, bimg::TextureFormat::Enum(m_requestedFormat)
 				);
 			data = temp;

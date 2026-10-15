@@ -6947,13 +6947,14 @@ namespace bgfx { namespace d3d12
 							const uint32_t size  = slice*mip.m_depth;
 
 							uint8_t* temp = (uint8_t*)bx::alloc(g_allocator, size);
-							bimg::imageDecodeToBgra8(
-								  g_allocator
-								, temp
+							imageDecodeToBgra8(
+								  temp
 								, mip.m_data
 								, mip.m_width
 								, mip.m_height
+								, mip.m_depth
 								, pitch
+								, slice
 								, mip.m_format
 								);
 
@@ -7597,8 +7598,8 @@ namespace bgfx { namespace d3d12
 		if (convert)
 		{
 			copyPitch = rectPitch;
-			temp = (uint8_t*)bx::alloc(g_allocator, slicePitch);
-			bimg::imageDecodeToBgra8(g_allocator, temp, srcData, _rect.m_width, _rect.m_height, copyPitch, bimg::TextureFormat::Enum(m_requestedFormat) );
+			temp = (uint8_t*)bx::alloc(g_allocator, slicePitch*_depth);
+			imageDecodeToBgra8(temp, srcData, _rect.m_width, _rect.m_height, _depth, copyPitch, slicePitch, bimg::TextureFormat::Enum(m_requestedFormat) );
 			srcData = temp;
 
 			box.right  = bx::clamp<uint32_t>(box.right,  box.left, bx::max(1u, m_width  >> _mip) - _rect.m_x);
@@ -7651,9 +7652,7 @@ namespace bgfx { namespace d3d12
 
 		const uint32_t dstSlicePitch = rowPitch  * numRows;
 		const uint32_t srcSlicePitch = copyPitch * numRows;
-		const uint32_t numSlices     = convert ? 1 : _depth;
-
-		for (uint32_t zz = 0; zz < numSlices; ++zz)
+		for (uint32_t zz = 0; zz < _depth; ++zz)
 		{
 			bx::memCopy(dstData + zz*dstSlicePitch, rowPitch, srcData + zz*srcSlicePitch, copyPitch, rectPitch, numRows);
 		}
