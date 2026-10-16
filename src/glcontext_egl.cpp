@@ -978,8 +978,6 @@ WL_EGL_IMPORT
 
 	void GlContext::resize(const SwapChain& _swapChain, uint32_t _reset)
 	{
-		BX_UNUSED(_swapChain);
-
 		if (!m_ownsContext
 		&&  m_context == eglGetCurrentContext() )
 		{
@@ -987,20 +985,48 @@ WL_EGL_IMPORT
 			m_readSurface = eglGetCurrentSurface(EGL_READ);
 		}
 
+		const bool hasWindow = true
+			&& m_ownsContext
+			&& NULL != m_display
+			&& NULL != m_nwh
+			&& NULL != _swapChain.nwh
+			;
+
+		bool recreateSurface = hasWindow
+			&& m_nwh != _swapChain.nwh
+			;
+
 #	if BX_PLATFORM_ANDROID
-		if (m_ownsContext
-		&&  NULL != m_display
-		&&  NULL != m_nwh)
+		recreateSurface |= hasWindow;
+#	endif // BX_PLATFORM_ANDROID
+
+		if (recreateSurface)
 		{
-			// A new Android window can replace the EGLSurface without destroying the EGLContext.
-			if (m_nwh != _swapChain.nwh)
-			{
-				BX_TRACE("Android EGL window changed: %p -> %p", m_nwh, _swapChain.nwh);
-				m_nwh = _swapChain.nwh;
-			}
-			EGLNativeWindowType nwh = (EGLNativeWindowType )m_nwh;
+			BX_TRACE("EGL window changed: %p -> %p", m_nwh, _swapChain.nwh);
+			m_nwh = _swapChain.nwh;
+
 			eglMakeCurrent(m_display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
 			eglDestroySurface(m_display, m_surface);
+
+			EGLNativeWindowType nwh = (EGLNativeWindowType)m_nwh;
+
+#	if BX_PLATFORM_LINUX
+			if (NULL != m_eglWindow)
+			{
+				wl_egl_window_destroy(m_eglWindow);
+				m_eglWindow = NULL;
+			}
+
+			if (g_platformData.type == NativeWindowHandleType::Wayland)
+			{
+				m_eglWindow = wl_egl_window_create(
+					  (wl_surface*)nwh
+					, _swapChain.width
+					, _swapChain.height
+					);
+				nwh = (EGLNativeWindowType)m_eglWindow;
+			}
+#	endif // BX_PLATFORM_LINUX
 
 			m_surface = eglCreateWindowSurface(m_display, m_config, nwh, NULL);
 			BGFX_FATAL(m_surface != EGL_NO_SURFACE, Fatal::UnableToInitialize, "Failed to create surface.");
@@ -1008,7 +1034,11 @@ WL_EGL_IMPORT
 
 			EGLBoolean success = eglMakeCurrent(m_display, m_surface, m_surface, m_context);
 			BGFX_FATAL(success, Fatal::UnableToInitialize, "Failed to set context.");
+		}
 
+#	if BX_PLATFORM_ANDROID
+		if (hasWindow)
+		{
 			EGLint format;
 			eglGetConfigAttrib(m_display, m_config, EGL_NATIVE_VISUAL_ID, &format);
 			ANativeWindow_setBuffersGeometry(

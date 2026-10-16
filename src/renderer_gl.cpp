@@ -2786,6 +2786,7 @@ namespace bgfx { namespace gl
 					g_caps.formats[ii] = supported;
 				}
 
+				g_caps.formats[TextureFormat::RGBA8  ] |= BGFX_CAPS_FORMAT_TEXTURE_BACKBUFFER;
 				g_caps.formats[TextureFormat::BGRA8  ] |= BGFX_CAPS_FORMAT_TEXTURE_BACKBUFFER;
 				g_caps.formats[TextureFormat::RGB10A2] |= BGFX_CAPS_FORMAT_TEXTURE_BACKBUFFER;
 
@@ -3852,11 +3853,21 @@ namespace bgfx { namespace gl
 				, data
 				) );
 
-			TextureFormat::Enum format = TextureFormat::BGRA8;
+			TextureFormat::Enum format = GL_RGBA == m_readPixelsFmt
+				? TextureFormat::RGBA8
+				: TextureFormat::BGRA8
+				;
 
-			if (GL_RGBA == m_readPixelsFmt)
+			const TextureFormat::Enum wanted = isValid(_handle)
+				? m_frameBuffers[_handle.idx].m_desc.formatColor
+				: m_mainSwapChain.formatColor
+				;
+
+			if (wanted != format
+			&& (TextureFormat::RGBA8 == wanted || TextureFormat::BGRA8 == wanted) )
 			{
-				format = TextureFormat::RGBA8;
+				bimg::imageSwizzleBgra8(data, width*4, width, height, data, width*4);
+				format = wanted;
 			}
 
 			g_callback->screenShot(_filePath
