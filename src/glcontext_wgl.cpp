@@ -575,7 +575,26 @@ namespace bgfx { namespace gl
 
 	void GlContext::resize(const SwapChain& _swapChain, uint32_t _reset)
 	{
-		BX_UNUSED(_swapChain);
+		if (m_ownsContext
+		&&  NULL == m_dummyHwnd
+		&&  NULL != _swapChain.nwh
+		&&  m_nwh != _swapChain.nwh)
+		{
+			wglMakeCurrent(NULL, NULL);
+			ReleaseDC( (HWND)m_nwh, m_hdc);
+
+			m_nwh = _swapChain.nwh;
+			m_hdc = GetDC( (HWND)m_nwh);
+			BGFX_FATAL(NULL != m_hdc, Fatal::UnableToInitialize, "GetDC failed for the new window (last err: 0x%08x).", GetLastError() );
+
+			int result = SetPixelFormat(m_hdc, m_pixelFormat, &m_pfd);
+			BGFX_FATAL(0 != result, Fatal::UnableToInitialize, "SetPixelFormat failed for the new window (last err: 0x%08x).", GetLastError() );
+
+			result = wglMakeCurrent(m_hdc, m_context);
+			BGFX_FATAL(0 != result, Fatal::UnableToInitialize, "wglMakeCurrent failed for the new window (last err: 0x%08x).", GetLastError() );
+
+			m_current = NULL;
+		}
 
 		const bool vsync = !!(_reset & BGFX_RESET_VSYNC);
 		m_swapInterval = vsync ? 1 : 0;

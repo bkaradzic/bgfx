@@ -2668,7 +2668,10 @@ mixin(joinFnBinds((){
 		chains wants. Otherwise the main window takes on this
 		description: resize it, change its format, or change its
 		per-surface flags. Fields left neutral keep their current
-		value, and `nwh`/`ndt` are ignored -- main's are bgfx's own.
+		value. A new `nwh` moves the main window to another native
+		window: the renderer recreates the main swap chain for it and
+		keeps the device, context and every GPU resource. `ndt` must
+		stay what `bgfx::init` received.
 		Must be `NULL` when `bgfx::init` created no main window.
 		*/
 		{q{void}, q{reset}, q{uint flags=Reset.none, const(SwapChain)* swapChain=null}, ext: `C++, "bgfx"`},

@@ -2593,10 +2593,10 @@ namespace bgfx
 	///   chains wants. Otherwise the main window takes on this
 	///   description: resize it, change its format, or change its
 	///   per-surface flags. Fields left neutral keep their current
-	///   value. On Android with a bgfx-owned EGL context, a new `nwh`
-	///   recreates the EGL window surface while preserving the context and
-	///   GPU resources. Native window replacement is not guaranteed on other
-	///   platforms; `ndt` must remain unchanged.
+	///   value. A new `nwh` moves the main window to another native
+	///   window: the renderer recreates the main swap chain for it and
+	///   keeps the device, context and every GPU resource. `ndt` must
+	///   stay what `bgfx::init` received.
 	///   Must be `NULL` when `bgfx::init` created no main window.
 	///
 	/// @attention This call doesn’t change the window size, it just resizes

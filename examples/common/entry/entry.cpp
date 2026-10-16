@@ -29,9 +29,8 @@ namespace entry
 	static uint32_t s_width = ENTRY_DEFAULT_WIDTH;
 	static uint32_t s_height = ENTRY_DEFAULT_HEIGHT;
 	static bool s_exit = false;
-#if BX_PLATFORM_ANDROID
-	extern WindowState s_window[ENTRY_CONFIG_MAX_WINDOWS];
-#endif // BX_PLATFORM_ANDROID
+
+	WindowState s_window[ENTRY_CONFIG_MAX_WINDOWS];
 
 	static void resetMainWindow(uint32_t _width, uint32_t _height, uint32_t _reset)
 	{
@@ -48,9 +47,7 @@ namespace entry
 		swapChain.width  = _width;
 		swapChain.height = _height;
 		swapChain.flags  = _reset &  kSwapChainFlags;
-#if BX_PLATFORM_ANDROID
-		swapChain.nwh = s_window[0].m_nwh;
-#endif // BX_PLATFORM_ANDROID
+		swapChain.nwh    = s_window[0].m_nwh;
 
 		bgfx::reset(_reset & ~kSwapChainFlags, &swapChain);
 	}
@@ -809,8 +806,6 @@ restart:
 		return result;
 	}
 
-	WindowState s_window[ENTRY_CONFIG_MAX_WINDOWS];
-
 	bool processEvents(uint32_t& _width, uint32_t& _height, uint32_t& _debug, uint32_t& _reset, MouseState* _mouse)
 	{
 		bool needReset = s_reset != _reset;
@@ -908,20 +903,23 @@ restart:
 					break;
 
 				case Event::Window:
-#if BX_PLATFORM_ANDROID
 					{
 						const WindowEvent* window = static_cast<const WindowEvent*>(ev);
-						if (window->m_handle.idx == 0)
+						if (0 == window->m_handle.idx)
 						{
-							s_window[0].m_nwh = window->m_nwh;
-							if (NULL != window->m_nwh)
+							WindowState& win = s_window[0];
+
+							if (NULL != window->m_nwh
+							&&  win.m_nwh != window->m_nwh)
 							{
-								handle = window->m_handle;
+								handle    = window->m_handle;
 								needReset = true;
 							}
+
+							win.m_handle = window->m_handle;
+							win.m_nwh    = window->m_nwh;
 						}
 					}
-#endif // BX_PLATFORM_ANDROID
 					break;
 
 				case Event::Suspend:

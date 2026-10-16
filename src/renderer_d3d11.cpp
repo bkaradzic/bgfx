@@ -2587,8 +2587,14 @@ namespace bgfx { namespace d3d11
 			{
 				uint32_t flags = _reset & (~BGFX_RESET_INTERNAL_FORCE);
 
+				const bool newWindow = true
+					&& !BX_ENABLED(BX_PLATFORM_WINRT)
+					&& (m_mainSwapChain.nwh != _swapChain.nwh || m_mainSwapChain.ndt != _swapChain.ndt)
+					;
+
 				bool resize = true
 					&& !BX_ENABLED(BX_PLATFORM_XBOXONE)
+					&& !newWindow
 					&& (m_mainSwapChain.flags&BGFX_SWAP_CHAIN_MSAA_MASK) == (_swapChain.flags&BGFX_SWAP_CHAIN_MSAA_MASK)
 					;
 
@@ -2624,11 +2630,30 @@ namespace bgfx { namespace d3d11
 						m_dxgi.removeSwapChain(m_scd);
 
 						DX_RELEASE(mainFrameBuffer().m_swapChain, 0);
+
+						if (newWindow)
+						{
+							m_scd.nwh = _swapChain.nwh;
+							m_scd.ndt = _swapChain.ndt;
+						}
+
 						HRESULT hr = m_dxgi.createSwapChain(m_device
 							, m_scd
 							, &mainFrameBuffer().m_swapChain
 							);
 						BGFX_FATAL(SUCCEEDED(hr), bgfx::Fatal::UnableToInitialize, "Failed to create swap chain.");
+
+						mainFrameBuffer().m_nwh = m_scd.nwh;
+
+#if BX_PLATFORM_WINDOWS
+						if (newWindow)
+						{
+							DX_CHECK(m_dxgi.m_factory->MakeWindowAssociation( (HWND)m_scd.nwh, 0
+								| DXGI_MWA_NO_WINDOW_CHANGES
+								| DXGI_MWA_NO_ALT_ENTER
+								) );
+						}
+#endif // BX_PLATFORM_WINDOWS
 					}
 				}
 
