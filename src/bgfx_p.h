@@ -597,10 +597,7 @@ namespace bgfx
 
 		bool isZero() const
 		{
-			static_assert(8 == sizeof(Rect), "");
-
-			uint64_t ui64 = *( (uint64_t*)this);
-			return UINT64_C(0) == ui64;
+			return 0 == (m_x|m_y|m_width|m_height);
 		}
 
 		bool isZeroArea() const

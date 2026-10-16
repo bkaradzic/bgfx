@@ -43,6 +43,8 @@ project "tint-core"
 		"TINT_BUILD_IS_WIN=0",
 
 		"TINT_ENABLE_IR_VALIDATION=0",
+		"TINT_ENABLE_IR_DUMPING=0",
+		"TINT_ENABLE_IR_VALIDATION_ASSERTS=0",
 	}
 
 	files {
@@ -53,6 +55,11 @@ project "tint-core"
 		path.join(TINT, "src/tint/lang/null/**.cc"),
 		path.join(TINT, "src/tint/lang/null/**.h"),
 	}
+
+	configuration { "mingw* or linux* or osx*" }
+		buildoptions {
+			"-Wno-shadow",
+		}
 
 	configuration { "osx*" }
 		buildoptions {
@@ -241,6 +248,7 @@ project "spirv-opt"
 
 	configuration { "mingw* or linux* or osx*" }
 		buildoptions {
+			"-Wno-missing-field-initializers",
 			"-Wno-switch",
 		}
 
@@ -300,6 +308,10 @@ project "spirv-cross"
 			"-Wno-type-limits",
 		}
 
+	configuration { "mingw* or linux-gcc-*" }
+		buildoptions {
+			"-Wno-deprecated",
+		}
 
 	configuration { "osx*" }
 		buildoptions {

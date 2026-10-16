@@ -3510,6 +3510,8 @@ bool HlslGrammar::acceptPostfixExpression(TIntermTyped*& node)
             // DEC_OP
             node = intermediate.addUnaryMath(postOp, node, loc);
             node = parseContext.handleLvalue(loc, "unary operator", node);
+            if (node == nullptr)
+                return false;
             break;
         default:
             assert(0);
