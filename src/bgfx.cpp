@@ -5184,6 +5184,13 @@ namespace bgfx
 				, _handle.idx
 				, &ref.m_name
 				);
+			BX_ASSERT(false
+				|| Access::Read == _access
+				|| 0 != (ref.m_flags & BGFX_TEXTURE_COMPUTE_WRITE)
+				, "Can't write to texture (handle %d, '%S') which was created without BGFX_TEXTURE_COMPUTE_WRITE flag."
+				, _handle.idx
+				, &ref.m_name
+				);
 			BX_UNUSED(ref);
 		}
 

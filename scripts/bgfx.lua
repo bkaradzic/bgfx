@@ -71,6 +71,9 @@ function bgfxProjectBase(_kind, _defines)
 
 		configuration { "android*" }
 			targetextension ".so"
+			linkoptions {
+				"-shared",
+			}
 
 		configuration { "android*" ,"Debug"}
 			linkoptions {

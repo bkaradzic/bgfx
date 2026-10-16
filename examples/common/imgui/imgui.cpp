@@ -558,6 +558,13 @@ struct OcornutImguiContext
 			io.AddKeyEvent(m_keyMap[ii], inputGetKeyState(entry::Key::Enum(ii) ) );
 			io.SetKeyEventNativeData(m_keyMap[ii], 0, 0, ii);
 		}
+
+		for (const uint8_t* utf8 = inputGetChar(); NULL != utf8; utf8 = inputGetChar() )
+		{
+			uint32_t ch;
+			ImTextCharFromUtf8(&ch, (const char*)utf8, (const char*)utf8 + 4);
+			io.AddInputCharacter(ch);
+		}
 #endif // USE_ENTRY
 
 		ImGui::NewFrame();
@@ -613,7 +620,7 @@ void imguiDestroy()
 
 void imguiBeginFrame(int32_t _mx, int32_t _my, uint8_t _button, int32_t _scroll, uint16_t _width, uint16_t _height, int _inputChar, bgfx::ViewId _viewId)
 {
-	s_ctx.beginFrame(_mx, _my, _button, _scroll, _width, _height, _inputChar, bx::min(_viewId, bgfx::getCaps()->limits.maxViews-1) );
+	s_ctx.beginFrame(_mx, _my, _button, _scroll, _width, _height, _inputChar, bgfx::ViewId(bx::min<uint32_t>(_viewId, bgfx::getCaps()->limits.maxViews-1) ) );
 }
 
 void imguiEndFrame()

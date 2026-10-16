@@ -450,10 +450,11 @@ public:
 			const double toMs = 1000.0/freq;
 
 			m_deltaTimeNs += frameTime*1000000/hpFreq;
+			++m_numFrames;
 
 			if (m_deltaTimeNs > 1000000)
 			{
-				m_deltaTimeAvgNs = m_deltaTimeNs / bx::max<int64_t>(1, m_numFrames);
+				m_deltaTimeAvgNs = m_deltaTimeNs / m_numFrames;
 
 				if (m_autoAdjust)
 				{
@@ -469,10 +470,6 @@ public:
 
 				m_deltaTimeNs = 0;
 				m_numFrames   = 0;
-			}
-			else
-			{
-				++m_numFrames;
 			}
 
 			imguiBeginFrame(m_mouseState.m_mx

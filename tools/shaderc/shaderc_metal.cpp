@@ -389,7 +389,7 @@ namespace bgfx { namespace metal
 			| EShMsgVulkanRules
 			| EShMsgSpvRules
 			| EShMsgDebugInfo
-			| (_options.uses16BitTypes ? EShMsgHlslEnable16BitTypes : 0)
+			| (_options.uses16BitTypes ? EShMsgHlslEnable16BitTypes : EShMsgDefault)
 			);
 
 		shader->setEntryPoint("main");
