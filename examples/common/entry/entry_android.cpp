@@ -226,6 +226,7 @@ namespace entry
 
 						DBG("ANativeWindow width %d, height %d", width, height);
 						WindowHandle defaultWindow = { 0 };
+						m_eventQueue.postWindowEvent(defaultWindow, m_window);
 						m_eventQueue.postSizeEvent(defaultWindow, width, height);
 
 						if (!m_thread.isRunning() )
@@ -240,6 +241,8 @@ namespace entry
 					// terminated.  Upon receiving this command, android_app->window still
 					// contains the existing window; after calling android_app_exec_cmd
 					// it will be set to NULL.
+					m_window = NULL;
+					m_eventQueue.postWindowEvent({ 0 });
 					break;
 
 				case APP_CMD_WINDOW_RESIZED:

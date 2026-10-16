@@ -992,6 +992,12 @@ WL_EGL_IMPORT
 		&&  NULL != m_display
 		&&  NULL != m_nwh)
 		{
+			// A new Android window can replace the EGLSurface without destroying the EGLContext.
+			if (m_nwh != _swapChain.nwh)
+			{
+				BX_TRACE("Android EGL window changed: %p -> %p", m_nwh, _swapChain.nwh);
+				m_nwh = _swapChain.nwh;
+			}
 			EGLNativeWindowType nwh = (EGLNativeWindowType )m_nwh;
 			eglMakeCurrent(m_display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
 			eglDestroySurface(m_display, m_surface);
