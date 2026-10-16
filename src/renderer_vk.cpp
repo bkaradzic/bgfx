@@ -3005,9 +3005,18 @@ VK_IMPORT_DEVICE
 				}
 			}
 
-			uint16_t denseIdx = m_numWindows++;
-			m_windows[denseIdx] = _handle;
-			VK_CHECK(m_frameBuffers.alloc(_handle.idx).create(denseIdx, _desc) );
+			const uint16_t denseIdx = m_numWindows;
+			const VkResult result = m_frameBuffers.alloc(_handle.idx).create(denseIdx, _desc);
+
+			if (VK_SUCCESS == result)
+			{
+				m_windows[denseIdx] = _handle;
+				++m_numWindows;
+			}
+			else
+			{
+				BX_ASSERT(false, "Failed to create a window frame buffer: VK error %d: %s", result, getName(result) );
+			}
 		}
 
 		void resizeFrameBuffer(FrameBufferHandle _handle, const SwapChain& _desc) override
@@ -3564,10 +3573,7 @@ VK_IMPORT_DEVICE
 			{
 				uint32_t flags = _reset & (~BGFX_RESET_INTERNAL_FORCE);
 
-				if (m_backBuffer.m_nwh != m_mainSwapChain.nwh)
-				{
-					m_backBuffer.m_nwh = m_mainSwapChain.nwh;
-				}
+				m_backBuffer.m_nwh = _swapChain.nwh;
 
 				m_mainSwapChain = _swapChain;
 				m_reset = flags;
@@ -10156,6 +10162,7 @@ VK_DESTROY
 
 		if (VK_SUCCESS != result)
 		{
+			m_swapChain.destroy();
 			return result;
 		}
 
