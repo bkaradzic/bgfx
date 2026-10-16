@@ -29,6 +29,9 @@ namespace entry
 	static uint32_t s_width = ENTRY_DEFAULT_WIDTH;
 	static uint32_t s_height = ENTRY_DEFAULT_HEIGHT;
 	static bool s_exit = false;
+#if BX_PLATFORM_ANDROID
+	extern WindowState s_window[ENTRY_CONFIG_MAX_WINDOWS];
+#endif // BX_PLATFORM_ANDROID
 
 	static void resetMainWindow(uint32_t _width, uint32_t _height, uint32_t _reset)
 	{
@@ -45,6 +48,9 @@ namespace entry
 		swapChain.width  = _width;
 		swapChain.height = _height;
 		swapChain.flags  = _reset &  kSwapChainFlags;
+#if BX_PLATFORM_ANDROID
+		swapChain.nwh = s_window[0].m_nwh;
+#endif // BX_PLATFORM_ANDROID
 
 		bgfx::reset(_reset & ~kSwapChainFlags, &swapChain);
 	}
@@ -902,6 +908,20 @@ restart:
 					break;
 
 				case Event::Window:
+#if BX_PLATFORM_ANDROID
+					{
+						const WindowEvent* window = static_cast<const WindowEvent*>(ev);
+						if (window->m_handle.idx == 0)
+						{
+							s_window[0].m_nwh = window->m_nwh;
+							if (NULL != window->m_nwh)
+							{
+								handle = window->m_handle;
+								needReset = true;
+							}
+						}
+					}
+#endif // BX_PLATFORM_ANDROID
 					break;
 
 				case Event::Suspend:
