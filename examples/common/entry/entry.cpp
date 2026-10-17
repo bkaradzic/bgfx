@@ -923,6 +923,14 @@ restart:
 					break;
 
 				case Event::Suspend:
+					{
+						const SuspendEvent* suspend = static_cast<const SuspendEvent*>(ev);
+
+						if (Suspend::DidSuspend == suspend->m_state)
+						{
+							inputReleaseKeys();
+						}
+					}
 					break;
 
 				case Event::DropFile:
@@ -1087,6 +1095,14 @@ restart:
 					break;
 
 				case Event::Suspend:
+					{
+						const SuspendEvent* suspend = static_cast<const SuspendEvent*>(ev);
+
+						if (Suspend::DidSuspend == suspend->m_state)
+						{
+							inputReleaseKeys();
+						}
+					}
 					break;
 
 				case Event::DropFile:

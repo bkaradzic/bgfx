@@ -415,6 +415,7 @@ namespace bgfx { namespace d3d11
 			, m_swapChain(NULL)
 			, m_msaaRt(NULL)
 			, m_nwh(NULL)
+			, m_frameLatencyWaitableObject(NULL)
 			, m_width(0)
 			, m_height(0)
 			, m_denseIdx(UINT16_MAX)
@@ -462,6 +463,7 @@ namespace bgfx { namespace d3d11
 		SwapChain m_desc;
 		SwapChain m_descPending;
 		void* m_nwh;
+		void* m_frameLatencyWaitableObject;
 		uint32_t m_width;
 		uint32_t m_height;
 

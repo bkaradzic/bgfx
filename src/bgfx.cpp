@@ -2536,8 +2536,8 @@ namespace bgfx
 		else
 		{
 			BX_TRACE("Creating rendering thread.");
-			m_thread.init(renderThread, this, 0, "bgfx - renderer backend thread");
 			m_singleThreaded = false;
+			m_thread.init(renderThread, this, 0, "bgfx - renderer backend thread");
 		}
 #else
 		BX_TRACE("Multithreaded renderer is disabled.");
@@ -3485,18 +3485,19 @@ namespace bgfx
 				rendererExecCommands(m_render->m_cmdPost);
 			}
 
+			m_flipAfterRender = 0 != (m_render->m_reset & BGFX_RESET_FLIP_AFTER_RENDER);
+			m_flushPrevFrame  = m_render->m_flush;
+
 			renderSemPost();
 
 			if (m_flipAfterRender)
 			{
-				if (!m_render->m_flush)
+				if (!m_flushPrevFrame)
 				{
 					BGFX_PROFILER_SCOPE("bgfx/flip", kColorSubmit);
 					flip();
 				}
 			}
-
-			m_flushPrevFrame = m_render->m_flush;
 		}
 		else
 		{

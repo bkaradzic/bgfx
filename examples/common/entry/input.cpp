@@ -325,6 +325,11 @@ bool inputGetKeyState(entry::Key::Enum _key, uint8_t* _modifiers)
 	return s_input->m_keyboard.getKeyState(_key, _modifiers);
 }
 
+void inputReleaseKeys()
+{
+	s_input->m_keyboard.reset();
+}
+
 uint8_t inputGetModifiersState()
 {
 	return s_input->m_keyboard.getModifiersState();

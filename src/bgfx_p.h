@@ -6240,8 +6240,6 @@ namespace bgfx
 
 			dump(m_init.swapChain, m_init.reset);
 
-			m_flipAfterRender = !!(resetFlags & BGFX_RESET_FLIP_AFTER_RENDER);
-
 			for (uint32_t ii = 0; ii < BGFX_CONFIG_MAX_VIEWS; ++ii)
 			{
 				View* view = m_view.find(ii);
@@ -8782,7 +8780,7 @@ namespace bgfx
 			if (ok)
 			{
 				m_render->m_waitSubmit = bx::getHPCounter()-start;
-				m_submit->m_perfStats.waitSubmit = m_submit->m_waitSubmit;
+				m_render->m_perfStats.waitSubmit = m_render->m_waitSubmit;
 				return true;
 			}
 
