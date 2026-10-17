@@ -3034,6 +3034,12 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 									: PipelineStateMtl::BindToVertexShader
 									;
 
+								if (MTL::TextureType2DMultisample      == arg->textureType()
+								||  MTL::TextureType2DMultisampleArray == arg->textureType() )
+								{
+									ps->m_bindingTypes[arg->index()] |= PipelineStateMtl::BindMultisample;
+								}
+
 								const UniformRegInfo* info = s_renderMtl->m_uniformReg.find(name);
 
 								if (info)
@@ -4778,7 +4784,21 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 		}
 	}
 
-	void TextureMtl::commit(uint8_t _stage, bool _vertex, bool _fragment, uint32_t _flags, uint8_t _mip, uint16_t _firstLayer, uint16_t _numLayers, uint8_t _firstMip, uint8_t _numMips, uint8_t _lodMin, uint8_t _lodMax)
+	MTL::Texture* TextureMtl::getMultisampleView(uint32_t _flags) const
+	{
+		if (NULL == m_ptrMsaa
+		||  0 == (m_flags & BGFX_TEXTURE_MSAA_SAMPLE) )
+		{
+			return NULL;
+		}
+
+		return useAltFormat(_flags, BGFX_SAMPLER_SRGB) && NULL != m_ptrMsaaAlt
+			? m_ptrMsaaAlt
+			: m_ptrMsaa
+			;
+	}
+
+	void TextureMtl::commit(uint8_t _stage, bool _vertex, bool _fragment, uint32_t _flags, uint8_t _mip, uint16_t _firstLayer, uint16_t _numLayers, uint8_t _firstMip, uint8_t _numMips, uint8_t _lodMin, uint8_t _lodMax, bool _multisample)
 	{
 		if (!_vertex
 		&&  !_fragment)
@@ -4792,10 +4812,18 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			;
 		const bool sampleStencil = 0 != (flags & BGFX_SAMPLER_SAMPLE_STENCIL);
 
-		MTL::Texture* ptr = _mip != UINT8_MAX
-			? getTextureImage(_mip, _firstLayer, _numLayers)
-			: getTextureView(_firstLayer, _numLayers, _firstMip, _numMips, sampleStencil, useAltFormat(flags, BGFX_SAMPLER_SRGB) )
+		MTL::Texture* ptr = _multisample && _mip == UINT8_MAX
+			? getMultisampleView(flags)
+			: NULL
 			;
+
+		if (NULL == ptr)
+		{
+			ptr = _mip != UINT8_MAX
+				? getTextureImage(_mip, _firstLayer, _numLayers)
+				: getTextureView(_firstLayer, _numLayers, _firstMip, _numMips, sampleStencil, useAltFormat(flags, BGFX_SAMPLER_SRGB) )
+				;
+		}
 
 		if (_vertex)
 		{
@@ -6776,8 +6804,14 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 										: uint32_t(texture.m_flags)
 										;
 
-									m_computeCommandEncoder->setTexture(
-										  texture.getTextureView(bind.m_firstLayer, bind.m_numLayers, bind.m_firstMip, bind.m_numMips, 0 != (resolvedFlags & BGFX_SAMPLER_SAMPLE_STENCIL) )
+									MTL::Texture* ptr = 0 != (currentPso->m_bindingTypes[stage] & PipelineStateMtl::BindMultisample)
+										? texture.getMultisampleView(resolvedFlags)
+										: NULL
+										;
+
+									m_computeCommandEncoder->setTexture(NULL != ptr
+										? ptr
+										: texture.getTextureView(bind.m_firstLayer, bind.m_numLayers, bind.m_firstMip, bind.m_numMips, 0 != (resolvedFlags & BGFX_SAMPLER_SAMPLE_STENCIL) )
 										, stage
 										);
 									m_computeCommandEncoder->setSamplerState(
@@ -7221,6 +7255,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 											, bind.m_numMips
 											, bind.m_lod.min
 											, bind.m_lod.max
+											, 0 != (bindingTypes[stage] & PipelineStateMtl::BindMultisample)
 											);
 									}
 									break;
