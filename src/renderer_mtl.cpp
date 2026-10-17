@@ -674,10 +674,11 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 			if (false
 			||  TextureFormat::BGRA8   == _fmt
+			||  TextureFormat::RGB10A2 == _fmt
 			||  TextureFormat::RGBA16F == _fmt
 			   )
 			{
-				// CAMetalLayer accepts BGRA8Unorm(_sRGB) and RGBA16Float as drawable pixel formats.
+				// CAMetalLayer accepts BGRA8Unorm(_sRGB), RGB10A2Unorm and RGBA16Float as drawable pixel formats.
 				caps |= BGFX_CAPS_FORMAT_TEXTURE_BACKBUFFER;
 			}
 
@@ -1010,6 +1011,19 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 				| BGFX_CAPS_TEXTURE_EXTERNAL
 				| BGFX_CAPS_VERTEX_ATTRIB_UINT10
 				);
+
+#if BX_PLATFORM_OSX
+			if (__builtin_available(macOS 11.0, *) )
+			{
+				void* screen = MtlObjAccess::send<void*>(objc_lookUpClass("NSScreen"), sel_registerName("mainScreen") );
+
+				if (NULL != screen
+				&&  1.0 < MtlObjAccess::send<double>(screen, sel_registerName("maximumPotentialExtendedDynamicRangeColorComponentValue") ) )
+				{
+					g_caps.supported |= BGFX_CAPS_HDR10;
+				}
+			}
+#endif // BX_PLATFORM_OSX
 
 			g_caps.supported |= (m_device->supportsFamily(MTL::GPUFamilyApple7) || m_device->supportsFamily(MTL::GPUFamilyMac2) )
 				? BGFX_CAPS_PRIMITIVE_ID
@@ -2048,12 +2062,12 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 				if (NULL != frameBuffer.m_swapChain
 				&&  frameBuffer.m_swapChain->m_drawableTexture)
 				{
-					MTL_RELEASE_I(frameBuffer.m_swapChain->m_drawableTexture);
+					MTL_RELEASE_DEFERRED(frameBuffer.m_swapChain->m_drawableTexture);
 
 					if (NULL != frameBuffer.m_swapChain->m_drawable)
 					{
 						presentCommandBuffer->presentDrawable( (MTL::Drawable*)frameBuffer.m_swapChain->m_drawable);
-						MTL_RELEASE_I(frameBuffer.m_swapChain->m_drawable);
+						MTL_RELEASE_DEFERRED(frameBuffer.m_swapChain->m_drawable);
 					}
 				}
 			}
@@ -2143,7 +2157,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			if (NULL == m_screenshotBlitRenderPipelineState
 			||  m_screenshotBlitPixelFormat != _pixelFormat)
 			{
-				MTL_RELEASE_I(m_screenshotBlitRenderPipelineState);
+				MTL_RELEASE_DEFERRED(m_screenshotBlitRenderPipelineState);
 				reset(m_renderPipelineDescriptor);
 
 				m_renderPipelineDescriptor->colorAttachments()->object(0)->setPixelFormat(_pixelFormat);
@@ -2437,7 +2451,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 					, MTL::Origin::Make(_rect.m_x, _rect.m_y, 0)
 					);
 
-				MTL_RELEASE_I(buffer);
+				MTL_RELEASE_DEFERRED(buffer);
 			}
 
 			endBlitEncoding();
@@ -3875,7 +3889,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 	void ChunkedScratchBufferMtl::destroyChunk(ChunkMtl& _chunk)
 	{
-		MTL_RELEASE_W(_chunk.buffer, 0);
+		MTL_RELEASE_DEFERRED(_chunk.buffer);
 	}
 
 	void ChunkedScratchBufferMtl::flushChunk(ChunkMtl& _chunk, uint32_t _size)
@@ -4569,7 +4583,33 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 								;
 						}
 
-						m_ptr->replaceRegion(region, lod, side, data, bytesPerRow, bytesPerImage);
+						if (MTL::StorageModePrivate == m_ptr->storageMode() )
+						{
+							const uint32_t size = convert
+								? width*height*depth*4
+								: mip.m_size
+								;
+
+							MTL::Buffer* staging = s_renderMtl->m_device->newBuffer(data, size, MTL::ResourceCPUCacheModeDefaultCache);
+
+							s_renderMtl->getBlitCommandEncoder()->copyFromBuffer(
+								  staging
+								, 0
+								, bytesPerRow
+								, bytesPerImage
+								, MTL::Size::Make(width, height, depth)
+								, m_ptr
+								, side
+								, lod
+								, MTL::Origin::Make(0, 0, 0)
+								);
+
+							s_renderMtl->m_cmd.release(staging);
+						}
+						else
+						{
+							m_ptr->replaceRegion(region, lod, side, data, bytesPerRow, bytesPerImage);
+						}
 					}
 
 					width  >>= 1;
@@ -4594,18 +4634,18 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 		if (0 == (m_flags & BGFX_SAMPLER_INTERNAL_SHARED) )
 		{
-			MTL_RELEASE_W(m_ptr, 0);
+			MTL_RELEASE_DEFERRED(m_ptr);
 		}
 
-		MTL_RELEASE_W(m_ptrMsaa, 0);
-		MTL_RELEASE_W(m_ptrStencil, 0);
-		MTL_RELEASE_W(m_ptrAlt, 0);
-		MTL_RELEASE_W(m_ptrMsaaAlt, 0);
+		MTL_RELEASE_DEFERRED(m_ptrMsaa);
+		MTL_RELEASE_DEFERRED(m_ptrStencil);
+		MTL_RELEASE_DEFERRED(m_ptrAlt);
+		MTL_RELEASE_DEFERRED(m_ptrMsaaAlt);
 
 		for (stl::unordered_map<uint64_t, MTL::Texture*>::iterator it = m_ptrViews.begin(), itEnd = m_ptrViews.end(); it != itEnd; ++it)
 		{
 			MTL::Texture* view = it->second;
-			MTL_RELEASE_W(view, 0);
+			MTL_RELEASE_DEFERRED(view);
 		}
 		m_ptrViews.clear();
 	}
@@ -4729,7 +4769,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 				);
 
 			MTL_RELEASE(desc, 0);
-			MTL_RELEASE(tempTexture, 1);
+			MTL_RELEASE_DEFERRED(tempTexture);
 		}
 
 		if (NULL != temp)
@@ -4958,10 +4998,10 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 	SwapChainMtl::~SwapChainMtl()
 	{
 		MTL_RELEASE(m_metalLayer, 2);
-		MTL_RELEASE(m_drawable, 0);
+		MTL_RELEASE_DEFERRED(m_drawable);
 
-		MTL_RELEASE(m_drawableTexture, 0);
-		MTL_RELEASE(m_screenshotTarget, 0);
+		MTL_RELEASE_DEFERRED(m_drawableTexture);
+		MTL_RELEASE_DEFERRED(m_screenshotTarget);
 
 		releaseBackBuffer();
 	}
@@ -5130,11 +5170,11 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 		}
 		else
 		{
-			MTL_RELEASE(m_backBufferStencil, m_backBufferDepth == m_backBufferStencil ? 1 : 0);
-			MTL_RELEASE_W(m_backBufferDepth, 0);
+			MTL_RELEASE_DEFERRED(m_backBufferStencil);
+			MTL_RELEASE_DEFERRED(m_backBufferDepth);
 		}
 
-		MTL_RELEASE_W(m_backBufferColorMsaa, 0);
+		MTL_RELEASE_DEFERRED(m_backBufferColorMsaa);
 	}
 
 	uint32_t SwapChainMtl::resize(const SwapChain& _desc)
@@ -5173,6 +5213,33 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 				? s_textureFormat[formatColor].fmtSrgb
 				: s_textureFormat[formatColor].fmt) )
 				;
+
+			const bool hdr10 = 0 != (_desc.flags & BGFX_SWAP_CHAIN_HDR10);
+
+			if (hdr10
+			||  m_hdr10)
+			{
+				if (__builtin_available(macOS 11.0, iOS 16.0, tvOS 16.0, macCatalyst 16.0, VISION_OS_MINIMUM *) )
+				{
+					CFStringRef colorSpaceName = !hdr10 ? NULL
+						: TextureFormat::RGB10A2 == formatColor ? kCGColorSpaceITUR_2100_PQ
+						: TextureFormat::RGBA16F == formatColor ? kCGColorSpaceExtendedLinearSRGB
+						: NULL
+						;
+
+					CGColorSpaceRef colorSpace = NULL != colorSpaceName
+						? CGColorSpaceCreateWithName(colorSpaceName)
+						: NULL
+						;
+
+					MtlObjAccess::send<void>(m_metalLayer, sel_registerName("setColorspace:"), colorSpace);
+					MtlObjAccess::send<void>(m_metalLayer, sel_registerName("setWantsExtendedDynamicRangeContent:"), NULL != colorSpace);
+
+					CGColorSpaceRelease(colorSpace);
+				}
+
+				m_hdr10 = hdr10;
+			}
 
 			const CGSize actualSize = m_metalLayer->drawableSize();
 			BX_WARN(true
@@ -5506,9 +5573,29 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 		{
 			NS::AutoreleasePool* pool = NS::AutoreleasePool::alloc()->init();
 
+			for (ReleaseArray::iterator it = m_release.begin(), itEnd = m_release.end(); it != itEnd; ++it)
+			{
+				MTL_RELEASE_I(it->ptr);
+			}
+
+			m_release.clear();
+
 			MTL_RELEASE(m_commandQueue, 0);
 
 			pool->release();
+		}
+	}
+
+	void deferredRelease(NS::Object* _obj)
+	{
+		if (NULL != s_renderMtl
+		&&  NULL != s_renderMtl->m_cmd.m_commandQueue)
+		{
+			s_renderMtl->m_cmd.release(_obj);
+		}
+		else
+		{
+			_obj->release();
 		}
 	}
 
@@ -5517,7 +5604,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 		{
 			NS::AutoreleasePool* pool = NS::AutoreleasePool::alloc()->init();
 
-			m_activeCommandBuffer = m_commandQueue->commandBuffer();
+			m_activeCommandBuffer = m_commandQueue->commandBufferWithUnretainedReferences();
 			retain(m_activeCommandBuffer);
 
 			pool->release();
@@ -5531,6 +5618,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 		if (queue)
 		{
+			bx::atomicFetchAndAdd<uint32_t>(&queue->m_completedFrames, 1);
 			queue->m_framesSemaphore.post();
 		}
 	}
@@ -5541,7 +5629,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 		{
 			if (_endFrame)
 			{
-				m_releaseWriteIndex = (m_releaseWriteIndex + 1) % BGFX_CONFIG_MAX_FRAME_LATENCY;
+				++m_submittedFrames;
 				m_activeCommandBuffer->addCompletedHandler(
 					MTL::HandlerFunction([this](MTL::CommandBuffer*) { commandBufferFinishedCallback(this); })
 					);
@@ -5588,22 +5676,23 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 	void CommandQueueMtl::release(NS::Object* _ptr)
 	{
-		m_release[m_releaseWriteIndex].push_back(_ptr);
+		m_release.push_back({ _ptr, m_submittedFrames });
 	}
 
 	void CommandQueueMtl::consume()
 	{
 		m_framesSemaphore.wait();
-		m_releaseReadIndex = (m_releaseReadIndex + 1) % BGFX_CONFIG_MAX_FRAME_LATENCY;
 
-		ResourceArray& ra = m_release[m_releaseReadIndex];
+		const uint32_t completedFrames = bx::atomicLoad(&m_completedFrames);
 
-		for (ResourceArray::iterator it = ra.begin(), itEnd = ra.end(); it != itEnd; ++it)
+		ReleaseArray::iterator it = m_release.begin();
+
+		for (ReleaseArray::iterator itEnd = m_release.end(); it != itEnd && 0 < int32_t(completedFrames - it->frame); ++it)
 		{
-			MTL_RELEASE_I(*it);
+			MTL_RELEASE_I(it->ptr);
 		}
 
-		ra.clear();
+		m_release.erase(m_release.begin(), it);
 	}
 
 	static constexpr uint64_t kNanosecondsPerSecond = UINT64_C(1000000000);
@@ -5681,7 +5770,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 	{
 		for (uint32_t ii = 0; ii < BX_COUNTOF(m_sampling); ++ii)
 		{
-			MTL_RELEASE_W(m_sampling[ii].m_sampleBuffer, 0);
+			MTL_RELEASE_DEFERRED(m_sampling[ii].m_sampleBuffer);
 		}
 	}
 
@@ -5877,7 +5966,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 	void OcclusionQueryMTL::postReset()
 	{
-		MTL_RELEASE_W(m_buffer, 0);
+		MTL_RELEASE_DEFERRED(m_buffer);
 	}
 
 	void OcclusionQueryMTL::preReset()
@@ -5894,8 +5983,9 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 		Query& query = m_query[m_control.m_current];
 		query.m_handle  = _handle;
+		query.m_frame   = s_renderMtl->m_cmd.m_submittedFrames;
 		uint32_t offset = _handle.idx * 8;
-		_rce->setVisibilityResultMode( (MTL::VisibilityResultMode)MTL::VisibilityResultModeBoolean, offset);
+		_rce->setVisibilityResultMode( (MTL::VisibilityResultMode)MTL::VisibilityResultModeCounting, offset);
 	}
 
 	void OcclusionQueryMTL::end(MTL::RenderCommandEncoder*& _rce)
@@ -5908,11 +5998,18 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 	void OcclusionQueryMTL::resolve(Frame* _render, bool _wait)
 	{
-		BX_UNUSED(_wait);
+		const uint32_t completedFrames = bx::atomicLoad(&s_renderMtl->m_cmd.m_completedFrames);
 
 		while (0 != m_control.getNumUsed() )
 		{
 			Query& query = m_query[m_control.m_read];
+
+			if (!_wait
+			&&  isValid(query.m_handle)
+			&&  int32_t(completedFrames - query.m_frame) <= 0)
+			{
+				break;
+			}
 
 			if (isValid(query.m_handle) )
 			{
@@ -6161,7 +6258,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 				&& (swapChain->m_screenshotTarget->width()  != width
 				||  swapChain->m_screenshotTarget->height() != height) )
 				{
-					MTL_RELEASE(swapChain->m_screenshotTarget, 0);
+					MTL_RELEASE_DEFERRED(swapChain->m_screenshotTarget);
 				}
 
 				if (NULL == swapChain->m_screenshotTarget)
@@ -6197,7 +6294,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			}
 			else
 			{
-				MTL_RELEASE(swapChain->m_screenshotTarget, 0);
+				MTL_RELEASE_DEFERRED(swapChain->m_screenshotTarget);
 			}
 		}
 

@@ -9,13 +9,7 @@
 
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
-#import <QuartzCore/CAEAGLLayer.h>
-
-#if __IPHONE_8_0 && !TARGET_IPHONE_SIMULATOR  // check if sdk/target supports metal
-#   import <Metal/Metal.h>
-#   import <QuartzCore/CAMetalLayer.h>
-#   define HAS_METAL_SDK
-#endif
+#import <QuartzCore/CAMetalLayer.h>
 
 #include <bgfx/bgfx.h>
 
@@ -190,21 +184,7 @@ using namespace entry;
 
 + (Class)layerClass
 {
-#ifdef HAS_METAL_SDK
-	static id<MTLDevice> device = NULL;
-	Class metalClass = NSClassFromString(@"CAMetalLayer");    //is metal runtime sdk available
-	if ( metalClass != nil)
-	{
-		device = MTLCreateSystemDefaultDevice(); // is metal supported on this device (is there a better way to do this - without creating device ?)
-		if (NULL != device)
-		{
-			[device retain];
-			return metalClass;
-		}
-	}
-#endif
-
-	return [CAEAGLLayer class];
+	return [CAMetalLayer class];
 }
 
 - (id)initWithFrame:(CGRect)rect

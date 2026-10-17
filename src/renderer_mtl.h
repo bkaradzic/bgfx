@@ -72,6 +72,15 @@
 #define MTL_RELEASE_W(_obj, _expected) _MTL_RELEASE(_obj, _expected, BX_WARN)
 #define MTL_RELEASE_I(_obj)            _MTL_RELEASE(_obj, 0, BX_NOOP)
 
+#define MTL_RELEASE_DEFERRED(_obj)                                \
+	BX_MACRO_BLOCK_BEGIN                                          \
+		if (NULL != _obj)                                         \
+		{                                                         \
+			bgfx::mtl::deferredRelease( (NS::Object*)(void*)_obj); \
+			_obj = NULL;                                          \
+		}                                                         \
+	BX_MACRO_BLOCK_END
+
 namespace bgfx { namespace mtl
 {
 	// Helper to access NS::Object's protected sendMessage for label retrieval
@@ -243,6 +252,8 @@ namespace bgfx { namespace mtl
 		return MTL::RasterizationRateMapDescriptor::alloc()->init();
 	}
 
+	void deferredRelease(NS::Object* _obj);
+
 	//helper functions
 	template<typename T>
 	inline void release(T* _obj)
@@ -277,7 +288,7 @@ namespace bgfx { namespace mtl
 
 		void destroy()
 		{
-			MTL_RELEASE_W(m_ptr, 0);
+			MTL_RELEASE_DEFERRED(m_ptr);
 
 			if (NULL != m_dynamic)
 			{
@@ -324,13 +335,13 @@ namespace bgfx { namespace mtl
 		{
 			for (FunctionMap::iterator it = m_functions.begin(), itEnd = m_functions.end(); it != itEnd; ++it)
 			{
-				MTL_RELEASE_W(it->second, 0);
+				MTL_RELEASE_DEFERRED(it->second);
 			}
 
 			m_functions.clear();
 			m_function = NULL;
 
-			MTL_RELEASE_W(m_lib, 0);
+			MTL_RELEASE_DEFERRED(m_lib);
 		}
 
 		typedef stl::unordered_map<uint32_t, MTL::Function*> FunctionMap;
@@ -403,8 +414,8 @@ namespace bgfx { namespace mtl
 				m_fshConstantBuffer = NULL;
 			}
 
-			MTL_RELEASE_W(m_rps, 0);
-			MTL_RELEASE_W(m_cps, 0);
+			MTL_RELEASE_DEFERRED(m_rps);
+			MTL_RELEASE_DEFERRED(m_cps);
 		}
 
 		UniformBuffer* m_vshConstantBuffer;
@@ -434,6 +445,17 @@ namespace bgfx { namespace mtl
 	inline void release(PipelineStateMtl* _ptr)
 	{
 		bx::deleteObject(g_allocator, _ptr);
+	}
+
+	template<typename T>
+	inline void evict(T* _ptr)
+	{
+		deferredRelease( (NS::Object*)(void*)_ptr);
+	}
+
+	inline void evict(PipelineStateMtl* _ptr)
+	{
+		release(_ptr);
 	}
 
 	struct VideoDecoderMtl;
@@ -530,6 +552,7 @@ namespace bgfx { namespace mtl
 			, m_maxAnisotropy(0)
 			, m_colorFormat(TextureFormat::Count)
 			, m_borrowedDepth(false)
+			, m_hdr10(false)
 		{
 		}
 
@@ -557,6 +580,7 @@ namespace bgfx { namespace mtl
 		void* m_nwh;
 		TextureFormat::Enum m_colorFormat;
 		bool m_borrowedDepth;
+		bool m_hdr10;
 	};
 
 	struct FrameBufferMtl
@@ -598,9 +622,9 @@ namespace bgfx { namespace mtl
 		CommandQueueMtl()
 			: m_commandQueue(NULL)
 			, m_activeCommandBuffer(NULL)
-			, m_releaseWriteIndex(0)
-			, m_releaseReadIndex(0)
 			, m_maxFrameLatency(BGFX_CONFIG_MAX_FRAME_LATENCY)
+			, m_submittedFrames(0)
+			, m_completedFrames(0)
 		{
 		}
 
@@ -621,11 +645,17 @@ namespace bgfx { namespace mtl
 		MTL::CommandQueue*  m_commandQueue;
 		MTL::CommandBuffer* m_activeCommandBuffer;
 
-		int m_releaseWriteIndex;
-		int m_releaseReadIndex;
 		uint32_t m_maxFrameLatency;
-		typedef stl::vector<NS::Object*> ResourceArray;
-		ResourceArray m_release[BGFX_CONFIG_MAX_FRAME_LATENCY];
+		uint32_t m_submittedFrames;
+		volatile uint32_t m_completedFrames;
+		struct Release
+		{
+			NS::Object* ptr;
+			uint32_t    frame;
+		};
+
+		typedef stl::vector<Release> ReleaseArray;
+		ReleaseArray m_release;
 	};
 
 	struct TimerQueryMtl
@@ -720,6 +750,7 @@ namespace bgfx { namespace mtl
 		struct Query
 		{
 			OcclusionQueryHandle m_handle;
+			uint32_t m_frame;
 		};
 
 		MTL::Buffer* m_buffer;
@@ -736,7 +767,7 @@ namespace bgfx
 	{
 		static void evict(Ty* _ptr)
 		{
-			mtl::release(_ptr);
+			mtl::evict(_ptr);
 		}
 
 		static void validate(Ty* /*_ptr*/, uint64_t /*_key*/)

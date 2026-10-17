@@ -403,9 +403,9 @@ function exampleProjectDefaults()
 		kind "ConsoleApp"
 		linkoptions {
 			"-framework CoreFoundation",
+			"-framework CoreGraphics",
 			"-framework Foundation",
 			"-framework IOKit",
-			"-framework OpenGLES",
 			"-framework QuartzCore",
 			"-framework UIKit",
 			"-weak_framework Metal",
@@ -591,6 +591,7 @@ or _OPTIONS["with-combined-examples"] then
 		, "52-layered"
 		, "53-sky2"
 		, "54-s2h"
+		, "55-hdr10"
 		)
 
 

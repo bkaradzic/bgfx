@@ -187,7 +187,7 @@ namespace bgfx
 						, 1
 						);
 
-					bimg::imageWriteTga(&writer, _width, _height, _pitch, _data, false, _yflip);
+					bimg::imageWriteTga(&writer, _width, _height, dstPitch, dst, false, _yflip);
 
 					bx::free(g_allocator, dst);
 				}

@@ -149,11 +149,15 @@ project ("geometryv")
 		kind "ConsoleApp"
 		linkoptions {
 			"-framework CoreFoundation",
+			"-framework CoreGraphics",
 			"-framework Foundation",
 			"-framework IOKit",
-			"-framework OpenGLES",
 			"-framework QuartzCore",
 			"-framework UIKit",
+			"-weak_framework Metal",
+			"-weak_framework VideoToolbox",
+			"-weak_framework CoreMedia",
+			"-weak_framework CoreVideo",
 		}
 
 	configuration { "xcode4", "ios" }

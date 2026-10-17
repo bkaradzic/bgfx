@@ -139,6 +139,9 @@ function bgfxProjectBase(_kind, _defines)
 			"-Wno-microsoft-const-init", -- default initialization of an object of const type '' without a user-provided default constructor is a Microsoft extension
 		}
 
+	configuration { "ios* or tvos* or xros*" }
+		buildoptions { "-x objective-c++" }
+
 	configuration { "osx*" }
 		buildoptions { "-x objective-c++" }  -- additional build option for osx
 		linkoptions {
