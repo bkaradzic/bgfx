@@ -9022,7 +9022,7 @@ namespace bgfx { namespace d3d12
 
 		m_handle[m_control.m_current] = _handle;
 		_commandList->BeginQuery(m_queryHeap
-			, D3D12_QUERY_TYPE_BINARY_OCCLUSION
+			, D3D12_QUERY_TYPE_OCCLUSION
 			, _handle.idx
 			);
 	}
@@ -9032,11 +9032,11 @@ namespace bgfx { namespace d3d12
 		const uint32_t idx = m_control.m_current;
 		OcclusionQueryHandle handle = m_handle[idx];
 		_commandList->EndQuery(m_queryHeap
-			, D3D12_QUERY_TYPE_BINARY_OCCLUSION
+			, D3D12_QUERY_TYPE_OCCLUSION
 			, handle.idx
 			);
 		_commandList->ResolveQueryData(m_queryHeap
-			, D3D12_QUERY_TYPE_BINARY_OCCLUSION
+			, D3D12_QUERY_TYPE_OCCLUSION
 			, handle.idx
 			, 1
 			, m_readback
