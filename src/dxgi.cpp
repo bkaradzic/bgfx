@@ -666,18 +666,27 @@ namespace bgfx
 
 		if (SUCCEEDED(hr) )
 		{
+			const bool hdr10 = true
+				&& _scd.hdr10
+				&& 0 != (g_caps.supported & BGFX_CAPS_HDR10)
+				;
+
 			const DXGI_COLOR_SPACE_TYPE colorSpace =
-				  _scd.format == DXGI_FORMAT_R10G10B10A2_UNORM  ? DXGI_COLOR_SPACE_RGB_FULL_G2084_NONE_P2020
+				  !hdr10                                        ? DXGI_COLOR_SPACE_RGB_FULL_G22_NONE_P709
+				: _scd.format == DXGI_FORMAT_R10G10B10A2_UNORM  ? DXGI_COLOR_SPACE_RGB_FULL_G2084_NONE_P2020
 				: _scd.format == DXGI_FORMAT_R16G16B16A16_FLOAT ? DXGI_COLOR_SPACE_RGB_FULL_G10_NONE_P709
 				:                                                 DXGI_COLOR_SPACE_RGB_FULL_G22_NONE_P709
 				;
 
 			hr = swapChain4->SetColorSpace1(colorSpace);
 
-			if (SUCCEEDED(hr) )
+			if (SUCCEEDED(hr)
+			&&  DXGI_COLOR_SPACE_RGB_FULL_G2084_NONE_P2020 != colorSpace)
 			{
-				DXGI_OUTPUT_DESC1 desc;
-
+				swapChain4->SetHDRMetaData(DXGI_HDR_METADATA_TYPE_NONE, 0, NULL);
+			}
+			else if (SUCCEEDED(hr) )
+			{
 				IDXGIOutput* output;
 				hr = _swapChain->GetContainingOutput(&output);
 				if (SUCCEEDED(hr) )
@@ -686,6 +695,7 @@ namespace bgfx
 					hr = output->QueryInterface(IID_IDXGIOutput6, (void**)&output6);
 					if (SUCCEEDED(hr) )
 					{
+						DXGI_OUTPUT_DESC1 desc;
 						hr = output6->GetDesc1(&desc);
 						if (SUCCEEDED(hr) )
 						{
@@ -701,6 +711,21 @@ namespace bgfx
 							BX_TRACE("\t         MinLuminance: %f", desc.MinLuminance);
 							BX_TRACE("\t         MaxLuminance: %f", desc.MaxLuminance);
 							BX_TRACE("\tMaxFullFrameLuminance: %f", desc.MaxFullFrameLuminance);
+
+							DXGI_HDR_METADATA_HDR10 metaData;
+							metaData.RedPrimary[0]   = uint16_t(desc.RedPrimary[0]   * 50000.0f);
+							metaData.RedPrimary[1]   = uint16_t(desc.RedPrimary[1]   * 50000.0f);
+							metaData.GreenPrimary[0] = uint16_t(desc.GreenPrimary[0] * 50000.0f);
+							metaData.GreenPrimary[1] = uint16_t(desc.GreenPrimary[1] * 50000.0f);
+							metaData.BluePrimary[0]  = uint16_t(desc.BluePrimary[0]  * 50000.0f);
+							metaData.BluePrimary[1]  = uint16_t(desc.BluePrimary[1]  * 50000.0f);
+							metaData.WhitePoint[0]   = uint16_t(desc.WhitePoint[0]   * 50000.0f);
+							metaData.WhitePoint[1]   = uint16_t(desc.WhitePoint[1]   * 50000.0f);
+							metaData.MaxMasteringLuminance     = uint32_t(desc.MaxLuminance * 10000.0f);
+							metaData.MinMasteringLuminance     = uint32_t(desc.MinLuminance * 10000.0f);
+							metaData.MaxContentLightLevel      = uint16_t(desc.MaxFullFrameLuminance);
+							metaData.MaxFrameAverageLightLevel = uint16_t(desc.MaxFullFrameLuminance);
+							swapChain4->SetHDRMetaData(DXGI_HDR_METADATA_TYPE_HDR10, sizeof(DXGI_HDR_METADATA_HDR10), &metaData);
 						}
 
 						DX_RELEASE(output6, 1);
@@ -708,21 +733,6 @@ namespace bgfx
 
 					DX_RELEASE(output, 0);
 				}
-
-				DXGI_HDR_METADATA_HDR10 hdr10;
-				hdr10.RedPrimary[0]   = uint16_t(desc.RedPrimary[0]   * 50000.0f);
-				hdr10.RedPrimary[1]   = uint16_t(desc.RedPrimary[1]   * 50000.0f);
-				hdr10.GreenPrimary[0] = uint16_t(desc.GreenPrimary[0] * 50000.0f);
-				hdr10.GreenPrimary[1] = uint16_t(desc.GreenPrimary[1] * 50000.0f);
-				hdr10.BluePrimary[0]  = uint16_t(desc.BluePrimary[0]  * 50000.0f);
-				hdr10.BluePrimary[1]  = uint16_t(desc.BluePrimary[1]  * 50000.0f);
-				hdr10.WhitePoint[0]   = uint16_t(desc.WhitePoint[0]   * 50000.0f);
-				hdr10.WhitePoint[1]   = uint16_t(desc.WhitePoint[1]   * 50000.0f);
-				hdr10.MaxMasteringLuminance     = uint32_t(desc.MaxLuminance * 10000.0f);
-				hdr10.MinMasteringLuminance     = uint32_t(desc.MinLuminance * 10000.0f);
-				hdr10.MaxContentLightLevel      = uint16_t(desc.MaxFullFrameLuminance);
-				hdr10.MaxFrameAverageLightLevel = uint16_t(desc.MaxFullFrameLuminance);
-				hr = swapChain4->SetHDRMetaData(DXGI_HDR_METADATA_TYPE_HDR10, sizeof(DXGI_HDR_METADATA_HDR10), &hdr10);
 			}
 
 			DX_RELEASE(swapChain4, 1);

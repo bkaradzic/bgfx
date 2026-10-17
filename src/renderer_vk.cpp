@@ -390,6 +390,7 @@ VK_IMPORT_DEVICE
 			EXT_memory_budget,
 			EXT_shader_viewport_index_layer,
 			EXT_surface_maintenance1,
+			EXT_swapchain_colorspace,
 			EXT_swapchain_maintenance1,
 			KHR_16bit_storage,
 			KHR_draw_indirect_count,
@@ -442,6 +443,7 @@ VK_IMPORT_DEVICE
 		{ "VK_EXT_memory_budget",                   1, false, false, true,                                                          Layer::Count },
 		{ "VK_EXT_shader_viewport_index_layer",     1, false, false, true,                                                          Layer::Count },
 		{ "VK_EXT_surface_maintenance1",            1, false, false, true,                                                          Layer::Count },
+		{ "VK_EXT_swapchain_colorspace",            1, false, false, true,                                                          Layer::Count },
 		{ "VK_EXT_swapchain_maintenance1",          1, false, false, true,                                                          Layer::Count },
 		{ "VK_KHR_16bit_storage",                   1, false, false, true,                                                          Layer::Count },
 		{ "VK_KHR_draw_indirect_count",             1, false, false, true,                                                          Layer::Count },
@@ -1105,6 +1107,14 @@ VK_IMPORT_DEVICE
 			|| VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL            == _layout
 			|| VK_IMAGE_LAYOUT_DEPTH_READ_ONLY_STENCIL_ATTACHMENT_OPTIMAL == _layout
 			|| VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL == _layout
+			;
+	}
+
+	VkColorSpaceKHR getHdr10ColorSpace(TextureFormat::Enum _format)
+	{
+		return TextureFormat::RGB10A2 == _format ? VK_COLOR_SPACE_HDR10_ST2084_EXT
+			:  TextureFormat::RGBA16F == _format ? VK_COLOR_SPACE_EXTENDED_SRGB_LINEAR_EXT
+			:                                      VK_COLOR_SPACE_SRGB_NONLINEAR_KHR
 			;
 	}
 
@@ -2470,6 +2480,22 @@ VK_IMPORT_DEVICE
 							for (uint32_t sfidx = 0; sfidx < numSurfaceFormats; ++sfidx)
 							{
 								const VkSurfaceFormatKHR& surfaceFormat = surfaceFormats[sfidx];
+
+								static const TextureFormat::Enum hdr10Formats[] =
+								{
+									TextureFormat::RGB10A2,
+									TextureFormat::RGBA16F,
+								};
+
+								for (TextureFormat::Enum format : hdr10Formats)
+								{
+									if (s_extension[Extension::EXT_swapchain_colorspace].m_supported
+									&&  surfaceFormat.format     == s_textureFormat[format].m_fmt
+									&&  surfaceFormat.colorSpace == getHdr10ColorSpace(format) )
+									{
+										g_caps.supported |= BGFX_CAPS_HDR10;
+									}
+								}
 
 								for (uint32_t ii = TextureFormat::Unknown+1; ii < TextureFormat::UnknownDepth; ++ii)
 								{
@@ -8926,7 +8952,7 @@ VK_DESTROY
 		const VkPhysicalDevice physicalDevice = s_renderVK->m_physicalDevice;
 
 		const uint64_t recreateSurfaceMask     = BGFX_SWAP_CHAIN_HIDPI;
-		const uint64_t recreateSwapchainMask   = BGFX_SWAP_CHAIN_SRGB_BACKBUFFER;
+		const uint64_t recreateSwapchainMask   = BGFX_SWAP_CHAIN_SRGB_BACKBUFFER | BGFX_SWAP_CHAIN_HDR10;
 		const uint64_t recreateAttachmentsMask = BGFX_SWAP_CHAIN_MSAA_MASK;
 
 		const bool vsync = !!(s_renderVK->m_reset & BGFX_RESET_VSYNC);
@@ -9263,9 +9289,21 @@ VK_DESTROY
 
 		const uint32_t swapBufferCount = bx::clamp<uint32_t>(m_desc.numBackBuffers, minSwapBufferCount, maxSwapBufferCount);
 
-		const VkColorSpaceKHR surfaceColorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
-
 		const bool srgb = !!(m_desc.flags & BGFX_SWAP_CHAIN_SRGB_BACKBUFFER);
+
+		const VkColorSpaceKHR hdr10ColorSpace = getHdr10ColorSpace(m_desc.formatColor);
+		const bool hdr10 = true
+			&& 0 != (m_desc.flags & BGFX_SWAP_CHAIN_HDR10)
+			&& s_extension[Extension::EXT_swapchain_colorspace].m_supported
+			&& VK_COLOR_SPACE_SRGB_NONLINEAR_KHR != hdr10ColorSpace
+			&& m_desc.formatColor == findSurfaceFormat(m_desc.formatColor, hdr10ColorSpace, srgb)
+			;
+
+		const VkColorSpaceKHR surfaceColorSpace = hdr10
+			? hdr10ColorSpace
+			: VK_COLOR_SPACE_SRGB_NONLINEAR_KHR
+			;
+
 		m_colorFormat = findSurfaceFormat(m_desc.formatColor, surfaceColorSpace, srgb);
 		m_depthFormat = bgfx::TextureFormat::UnknownDepth;
 

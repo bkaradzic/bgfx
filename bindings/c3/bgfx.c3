@@ -3494,7 +3494,7 @@ extern fn void set_view_uniform(ushort _id, UniformHandle _handle, void* _value,
 
 // Set shader uniform parameter for frame.
 // 
-// @attention Uniform must be created with `bgfx::UniformFreq::View` argument.
+// @attention Uniform must be created with `bgfx::UniformFreq::Frame` argument.
 // 
 // _handle : `Uniform.`
 // _value : `Pointer to uniform data.`

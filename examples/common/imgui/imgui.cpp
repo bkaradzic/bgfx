@@ -154,6 +154,7 @@ struct OcornutImguiContext
 			bx::mtxOrtho(ortho, x, x + width, y + height, y, 0.0f, 1000.0f, 0.0f, caps->homogeneousDepth);
 			bgfx::setViewTransform(m_viewId, NULL, ortho);
 			bgfx::setViewRect(m_viewId, 0, 0, uint16_t(width), uint16_t(height) );
+			bgfx::setFrameUniform(u_imguiOutput, m_output);
 		}
 
 		const ImVec2 clipPos   = _drawData->DisplayPos;       // (0,0) unless using multi-viewports
@@ -274,6 +275,8 @@ struct OcornutImguiContext
 		m_viewId = 255;
 		m_lastScroll = 0;
 		m_last = bx::getHPCounter();
+
+		setOutput(ImguiOutput::Srgb, 1.0f);
 
 		ImGui::SetAllocatorFunctions(memAlloc, memFree, NULL);
 
@@ -414,6 +417,7 @@ struct OcornutImguiContext
 			);
 
 		u_imageLodEnabled = bgfx::createUniform("u_imageLodEnabled", bgfx::UniformType::Vec4);
+		u_imguiOutput     = bgfx::createUniform("u_imguiOutput",     bgfx::UniformFreq::Frame, bgfx::UniformType::Vec4);
 		m_imageProgram = bgfx::createProgram(
 			  bgfx::createEmbeddedShader(s_embeddedShaders, type, "vs_imgui_image")
 			, bgfx::createEmbeddedShader(s_embeddedShaders, type, "fs_imgui_image")
@@ -480,6 +484,7 @@ struct OcornutImguiContext
 		bgfx::destroy(s_tex);
 
 		bgfx::destroy(u_imageLodEnabled);
+		bgfx::destroy(u_imguiOutput);
 		bgfx::destroy(m_imageProgram);
 		bgfx::destroy(m_program);
 
@@ -578,6 +583,14 @@ struct OcornutImguiContext
 		render(ImGui::GetDrawData() );
 	}
 
+	void setOutput(ImguiOutput::Enum _output, float _white)
+	{
+		m_output[0] = float(_output);
+		m_output[1] = ImguiOutput::Pq == _output ? _white/10000.0f : _white;
+		m_output[2] = 0.0f;
+		m_output[3] = 0.0f;
+	}
+
 	ImGuiContext*       m_imgui;
 	bx::AllocatorI*     m_allocator;
 	bgfx::VertexLayout  m_layout;
@@ -585,6 +598,8 @@ struct OcornutImguiContext
 	bgfx::ProgramHandle m_imageProgram;
 	bgfx::UniformHandle s_tex;
 	bgfx::UniformHandle u_imageLodEnabled;
+	bgfx::UniformHandle u_imguiOutput;
+	float m_output[4];
 	ImFont* m_font[ImGui::Font::Count];
 	int64_t m_last;
 	int32_t m_lastScroll;
@@ -626,6 +641,11 @@ void imguiBeginFrame(int32_t _mx, int32_t _my, uint8_t _button, int32_t _scroll,
 void imguiEndFrame()
 {
 	s_ctx.endFrame();
+}
+
+void imguiSetOutput(ImguiOutput::Enum _output, float _white)
+{
+	s_ctx.setOutput(_output, _white);
 }
 
 namespace ImGui

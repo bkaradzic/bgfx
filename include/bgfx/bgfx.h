@@ -4429,7 +4429,7 @@ namespace bgfx
 	/// @param[in] _num Number of elements. Passing `UINT16_MAX` will
 	///   use the _num passed on uniform creation.
 	///
-	/// @attention Uniform must be created with `bgfx::UniformFreq::View` argument.
+	/// @attention Uniform must be created with `bgfx::UniformFreq::Frame` argument.
 	///
 	/// @attention C99's equivalent binding is `bgfx_set_frame_uniform`.
 	///
