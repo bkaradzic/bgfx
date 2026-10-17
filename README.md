@@ -375,13 +375,6 @@ target="_blank"><img src="http://img.youtube.com/vi/U4lv_nQ4PUY/0.jpg"
 alt="Nira 2025"
 width="640" height="480" border="0" /></a>
 
-## openblack
-
-https://github.com/openblack/openblack#openblack - An open-source
-reimplementation of the game Black & White (2001).
-
-![openblack screenshot](https://user-images.githubusercontent.com/32263167/184559293-56cfc6a7-a7da-4876-8fce-434ba8827eae.png)
-
 ## Cluster
 
 https://github.com/pezcode/Cluster#cluster - Implementation of Clustered Shading
