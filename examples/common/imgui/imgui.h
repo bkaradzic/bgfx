@@ -34,6 +34,20 @@ void imguiDestroy();
 void imguiBeginFrame(int32_t _mx, int32_t _my, uint8_t _button, int32_t _scroll, uint16_t _width, uint16_t _height, int _inputChar = -1, bgfx::ViewId _view = UINT16_MAX);
 void imguiEndFrame();
 
+struct ImguiOutput
+{
+	enum Enum
+	{
+		Srgb,
+		Linear,
+		Pq,
+
+		Count
+	};
+};
+
+void imguiSetOutput(ImguiOutput::Enum _output, float _white);
+
 namespace entry { class AppI; }
 void showExampleDialog(entry::AppI* _app, const char* _errorText = NULL);
 

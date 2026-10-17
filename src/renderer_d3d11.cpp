@@ -1186,6 +1186,7 @@ namespace bgfx { namespace d3d11
 					m_scd.nwh             = _init.swapChain.nwh;
 					m_scd.ndt             = _init.swapChain.ndt;
 					m_scd.windowed        = true;
+					m_scd.hdr10           = 0 != (_init.swapChain.flags & BGFX_SWAP_CHAIN_HDR10);
 
 					if (NULL != m_scd.nwh)
 					{
@@ -2608,6 +2609,7 @@ namespace bgfx { namespace d3d11
 				m_scd.height = _swapChain.height;
 				// see comment in init() about why we don't worry about BGFX_RESET_SRGB_BACKBUFFER here
 				m_scd.format = s_textureFormat[_swapChain.formatColor].m_fmt;
+				m_scd.hdr10  = 0 != (_swapChain.flags & BGFX_SWAP_CHAIN_HDR10);
 
 				preReset();
 
@@ -6003,6 +6005,7 @@ namespace bgfx { namespace d3d11
 		scd.nwh        = m_desc.nwh;
 		scd.ndt        = m_desc.ndt;
 		scd.sampleDesc = s_msaa[(m_desc.flags&BGFX_SWAP_CHAIN_MSAA_MASK)>>BGFX_SWAP_CHAIN_MSAA_SHIFT];
+		scd.hdr10      = 0 != (m_desc.flags & BGFX_SWAP_CHAIN_HDR10);
 
 		return scd;
 	}

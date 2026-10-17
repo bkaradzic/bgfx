@@ -46,6 +46,7 @@ namespace bgfx
 		void* nwh;
 		void* ndt;
 		bool windowed;
+		bool hdr10;
 	};
 
 	struct DxgiSwapChain

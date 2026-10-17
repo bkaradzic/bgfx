@@ -3963,7 +3963,7 @@ mixin(joinFnBinds((){
 		/**
 		* Set shader uniform parameter for frame.
 		* 
-		* Attention: Uniform must be created with `bgfx::UniformFreq::View` argument.
+		* Attention: Uniform must be created with `bgfx::UniformFreq::Frame` argument.
 		* 
 		Params:
 			handle = Uniform.

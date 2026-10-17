@@ -227,6 +227,18 @@ public:
 			);
 		imguiLabel(m_width*0.5f, m_height - 10.0f, "status", text);
 
+		const bool hdr10Output = true
+			&& hdr10
+			&& 0 != (caps->supported & BGFX_CAPS_HDR10)
+			;
+
+		imguiSetOutput(
+			  !hdr10Output ? ImguiOutput::Srgb
+			: m_pq         ? ImguiOutput::Pq
+			:                ImguiOutput::Linear
+			, m_pq ? kBarNits : 1.0f
+			);
+
 		imguiEndFrame();
 
 		m_reset = (m_reset & ~BGFX_RESET_HDR10) | (hdr10 ? BGFX_RESET_HDR10 : 0);

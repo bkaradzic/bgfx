@@ -3301,7 +3301,7 @@ BGFX_C_API void bgfx_set_view_uniform(bgfx_view_id_t _id, bgfx_uniform_handle_t 
 /**
  * Set shader uniform parameter for frame.
  *
- * @attention Uniform must be created with `bgfx::UniformFreq::View` argument.
+ * @attention Uniform must be created with `bgfx::UniformFreq::Frame` argument.
  *
  * @param[in] _handle Uniform.
  * @param[in] _value Pointer to uniform data.

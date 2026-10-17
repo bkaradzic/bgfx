@@ -4744,7 +4744,7 @@ public static partial class bgfx
 	/// <summary>
 	/// Set shader uniform parameter for frame.
 	/// 
-	/// @attention Uniform must be created with `bgfx::UniformFreq::View` argument.
+	/// @attention Uniform must be created with `bgfx::UniformFreq::Frame` argument.
 	/// 
 	/// </summary>
 	///

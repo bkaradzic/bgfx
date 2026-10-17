@@ -2825,7 +2825,7 @@ def bgfx_set_view_uniform(_id: int, _handle: UniformHandle, _value: Any, _num: i
 
 # Set shader uniform parameter for frame.
 # 
-# @attention Uniform must be created with `bgfx::UniformFreq::View` argument.
+# @attention Uniform must be created with `bgfx::UniformFreq::Frame` argument.
 # 
 def bgfx_set_frame_uniform(_handle: UniformHandle, _value: Any, _num: int, /) -> None: ...
 

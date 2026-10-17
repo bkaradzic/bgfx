@@ -1465,6 +1465,7 @@ namespace bgfx { namespace d3d12
 				m_scd.nwh             = _init.swapChain.nwh;
 				m_scd.ndt             = _init.swapChain.ndt;
 				m_scd.windowed        = true;
+				m_scd.hdr10           = 0 != (_init.swapChain.flags & BGFX_SWAP_CHAIN_HDR10);
 
 				m_backBufferColorIdx = m_scd.bufferCount-1;
 
@@ -3329,6 +3330,7 @@ namespace bgfx { namespace d3d12
 				m_scd.width  = _swapChain.width;
 				m_scd.height = _swapChain.height;
 				m_scd.format = s_textureFormat[_swapChain.formatColor].m_fmt;
+				m_scd.hdr10  = 0 != (_swapChain.flags & BGFX_SWAP_CHAIN_HDR10);
 
 				preReset();
 
@@ -8132,6 +8134,7 @@ namespace bgfx { namespace d3d12
 		scd.nwh        = m_desc.nwh;
 		scd.ndt        = m_desc.ndt;
 		scd.sampleDesc = s_msaa[(m_desc.flags&BGFX_SWAP_CHAIN_MSAA_MASK)>>BGFX_SWAP_CHAIN_MSAA_SHIFT];
+		scd.hdr10      = 0 != (m_desc.flags & BGFX_SWAP_CHAIN_HDR10);
 		scd.waitable   = true;
 
 		return scd;

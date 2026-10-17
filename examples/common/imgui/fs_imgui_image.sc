@@ -6,6 +6,7 @@ $input v_texcoord0
  */
 
 #include <bgfx_shader.sh>
+#include "imgui_output.sh"
 
 uniform vec4 u_imageLodEnabled;
 SAMPLER2D(s_texColor, 0);
@@ -17,5 +18,5 @@ void main()
 {
 	vec3 color = texture2DLod(s_texColor, v_texcoord0, u_imageLod).xyz;
 	float alpha = 0.2 + 0.8*u_imageEnabled;
-	gl_FragColor = vec4(color, alpha);
+	gl_FragColor = vec4(imguiOutput(color), alpha);
 }
