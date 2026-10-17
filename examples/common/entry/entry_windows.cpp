@@ -742,6 +742,22 @@ namespace entry
 					}
 					break;
 
+				case WM_SETFOCUS:
+					{
+						WindowHandle handle = findHandle(_hwnd);
+						m_eventQueue.postSuspendEvent(handle, Suspend::WillResume);
+						m_eventQueue.postSuspendEvent(handle, Suspend::DidResume);
+					}
+					break;
+
+				case WM_KILLFOCUS:
+					{
+						WindowHandle handle = findHandle(_hwnd);
+						m_eventQueue.postSuspendEvent(handle, Suspend::WillSuspend);
+						m_eventQueue.postSuspendEvent(handle, Suspend::DidSuspend);
+					}
+					break;
+
 				case WM_SYSCOMMAND:
 					switch (_wparam)
 					{

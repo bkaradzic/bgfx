@@ -5944,6 +5944,11 @@ namespace bgfx { namespace d3d11
 		}
 
 #if BX_PLATFORM_WINDOWS
+		if (scd.waitable)
+		{
+			m_frameLatencyWaitableObject = m_swapChain->GetFrameLatencyWaitableObject();
+		}
+
 		DX_CHECK(s_renderD3D11->m_dxgi.m_factory->MakeWindowAssociation(
 			  (HWND)_desc.nwh
 			, 0
@@ -6006,6 +6011,10 @@ namespace bgfx { namespace d3d11
 		scd.ndt        = m_desc.ndt;
 		scd.sampleDesc = s_msaa[(m_desc.flags&BGFX_SWAP_CHAIN_MSAA_MASK)>>BGFX_SWAP_CHAIN_MSAA_SHIFT];
 		scd.hdr10      = 0 != (m_desc.flags & BGFX_SWAP_CHAIN_HDR10);
+		scd.waitable   = false
+			|| DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL == scd.swapEffect
+			|| DXGI_SWAP_EFFECT_FLIP_DISCARD    == scd.swapEffect
+			;
 
 		return scd;
 	}
@@ -6120,6 +6129,14 @@ namespace bgfx { namespace d3d11
 
 	uint16_t FrameBufferD3D11::destroy()
 	{
+#if BX_PLATFORM_WINDOWS
+		if (NULL != m_frameLatencyWaitableObject)
+		{
+			CloseHandle( (HANDLE)m_frameLatencyWaitableObject);
+			m_frameLatencyWaitableObject = NULL;
+		}
+#endif // BX_PLATFORM_WINDOWS
+
 		if (isSwapChain() )
 		{
 			destroySwapChainViews();
@@ -6492,6 +6509,13 @@ namespace bgfx { namespace d3d11
 		HRESULT hr = m_swapChain->Present(_syncInterval, _flags);
 		hr = !isLost(hr) ? S_OK : hr;
 		m_needPresent = false;
+
+#if BX_PLATFORM_WINDOWS
+		if (NULL != m_frameLatencyWaitableObject)
+		{
+			WaitForSingleObjectEx( (HANDLE)m_frameLatencyWaitableObject, 1000, TRUE);
+		}
+#endif // BX_PLATFORM_WINDOWS
 
 		return hr;
 	}

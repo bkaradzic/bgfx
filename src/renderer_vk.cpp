@@ -1317,6 +1317,36 @@ VK_IMPORT_DEVICE
 			);
 	}
 
+	VkResult createSurface(VkInstance _instance, const VkAllocationCallbacks* _allocatorCb, void* _nwh, void* _ndt, uint32_t _flags, ::VkSurfaceKHR* _surface);
+
+	bool canPresent(VkPhysicalDevice _physicalDevice, VkSurfaceKHR _surface)
+	{
+		VkQueueFamilyProperties queueFamilyProperties[16];
+		uint32_t queueFamilyPropertyCount = BX_COUNTOF(queueFamilyProperties);
+		vkGetPhysicalDeviceQueueFamilyProperties(_physicalDevice, &queueFamilyPropertyCount, queueFamilyProperties);
+
+		constexpr VkQueueFlags requiredFlags = 0
+			| VK_QUEUE_GRAPHICS_BIT
+			| VK_QUEUE_COMPUTE_BIT
+			;
+
+		for (uint32_t ii = 0; ii < queueFamilyPropertyCount; ++ii)
+		{
+			if (requiredFlags == (requiredFlags & queueFamilyProperties[ii].queueFlags) )
+			{
+				VkBool32 surfaceSupported = VK_FALSE;
+				const VkResult result = vkGetPhysicalDeviceSurfaceSupportKHR(_physicalDevice, ii, _surface, &surfaceSupported);
+
+				return true
+					&& VK_SUCCESS == result
+					&& VK_FALSE != surfaceSupported
+					;
+			}
+		}
+
+		return false;
+	}
+
 	struct TextureVK;
 
 	struct RendererContextVK : public RendererContextI
@@ -1677,6 +1707,26 @@ VK_IMPORT_INSTANCE
 
 				uint32_t physicalDeviceIdx         = UINT32_MAX;
 				uint32_t fallbackPhysicalDeviceIdx = UINT32_MAX;
+				bool matchedPhysicalDevice         = false;
+
+				VkSurfaceKHR surface = VK_NULL_HANDLE;
+
+				if (!headless
+				&&  BX_ENABLED(BX_PLATFORM_WINDOWS || BX_PLATFORM_LINUX) )
+				{
+					const VkResult surfaceResult = createSurface(m_instance
+						, m_allocatorCb
+						, _init.swapChain.nwh
+						, _init.swapChain.ndt
+						, _init.swapChain.flags
+						, &surface
+						);
+
+					if (VK_SUCCESS != surfaceResult)
+					{
+						surface = VK_NULL_HANDLE;
+					}
+				}
 
 				for (uint32_t ii = 0; ii < numPhysicalDevices; ++ii)
 				{
@@ -1718,7 +1768,13 @@ VK_IMPORT_INSTANCE
 					{
 						BX_TRACE("\tSkipped: Vulkan 1.1 or newer is required.");
 					}
-					else if ( (BGFX_PCI_ID_NONE != g_caps.vendorId ||            0 != g_caps.deviceId)
+					else if (VK_NULL_HANDLE != surface
+					&&  !canPresent(physicalDevices[ii], surface) )
+					{
+						BX_TRACE("\tSkipped: Can't present to the window.");
+					}
+					else if (!matchedPhysicalDevice
+					&&   (BGFX_PCI_ID_NONE != g_caps.vendorId ||            0 != g_caps.deviceId)
 					&&   (BGFX_PCI_ID_NONE == g_caps.vendorId || pdp.vendorID == g_caps.vendorId)
 					&&   (               0 == g_caps.deviceId || pdp.deviceID == g_caps.deviceId) )
 					{
@@ -1728,7 +1784,8 @@ VK_IMPORT_INSTANCE
 							fallbackPhysicalDeviceIdx = ii;
 						}
 
-						physicalDeviceIdx = ii;
+						physicalDeviceIdx     = ii;
+						matchedPhysicalDevice = true;
 					}
 					else if (UINT32_MAX == physicalDeviceIdx)
 					{
@@ -1769,6 +1826,11 @@ VK_IMPORT_INSTANCE
 
 					bx::memCopy(&physicalDeviceExtensions[ii][0], &s_extension[0], sizeof(s_extension) );
 					dumpExtensions(physicalDevices[ii], physicalDeviceExtensions[ii]);
+				}
+
+				if (VK_NULL_HANDLE != surface)
+				{
+					vkDestroySurfaceKHR(m_instance, surface, m_allocatorCb);
 				}
 
 				if (UINT32_MAX == physicalDeviceIdx)
@@ -9056,14 +9118,11 @@ VK_DESTROY
 		}
 	}
 
-	VkResult SwapChainVK::createSurface()
+	VkResult createSurface(VkInstance _instance, const VkAllocationCallbacks* _allocatorCb, void* _nwh, void* _ndt, uint32_t _flags, ::VkSurfaceKHR* _surface)
 	{
-		BGFX_PROFILER_SCOPE("SwapChainVK::createSurface", kColorFrame);
-
 		VkResult result = VK_ERROR_EXTENSION_NOT_PRESENT;
 
-		const VkInstance instance = s_renderVK->m_instance;
-		const VkAllocationCallbacks* allocatorCb = s_renderVK->m_allocatorCb;
+		BX_UNUSED(_ndt, _flags);
 
 #if BX_PLATFORM_WINDOWS
 		{
@@ -9074,8 +9133,8 @@ VK_DESTROY
 				sci.pNext = NULL;
 				sci.flags     = 0;
 				sci.hinstance = (HINSTANCE)GetModuleHandle(NULL);
-				sci.hwnd      = (HWND)m_nwh;
-				result = vkCreateWin32SurfaceKHR(instance, &sci, allocatorCb, &m_surface);
+				sci.hwnd      = (HWND)_nwh;
+				result = vkCreateWin32SurfaceKHR(_instance, &sci, _allocatorCb, _surface);
 				BX_WARN(VK_SUCCESS == result, "vkCreateWin32SurfaceKHR failed %d: %s.", result, getName(result) );
 			}
 		}
@@ -9087,8 +9146,8 @@ VK_DESTROY
 				sci.sType = VK_STRUCTURE_TYPE_ANDROID_SURFACE_CREATE_INFO_KHR;
 				sci.pNext = NULL;
 				sci.flags = 0;
-				sci.window = (ANativeWindow*)m_nwh;
-				result = vkCreateAndroidSurfaceKHR(instance, &sci, allocatorCb, &m_surface);
+				sci.window = (ANativeWindow*)_nwh;
+				result = vkCreateAndroidSurfaceKHR(_instance, &sci, _allocatorCb, _surface);
 				BX_WARN(VK_SUCCESS == result, "vkCreateAndroidSurfaceKHR failed %d: %s.", result, getName(result) );
 			}
 		}
@@ -9105,9 +9164,9 @@ VK_DESTROY
 					sci.sType = VK_STRUCTURE_TYPE_WAYLAND_SURFACE_CREATE_INFO_KHR;
 					sci.pNext = NULL;
 					sci.flags = 0;
-					sci.display = (wl_display*)m_desc.ndt;
-					sci.surface = (wl_surface*)m_nwh;
-					result = vkCreateWaylandSurfaceKHR(instance, &sci, allocatorCb, &m_surface);
+					sci.display = (wl_display*)_ndt;
+					sci.surface = (wl_surface*)_nwh;
+					result = vkCreateWaylandSurfaceKHR(_instance, &sci, _allocatorCb, _surface);
 					BX_WARN(VK_SUCCESS == result, "vkCreateWaylandSurfaceKHR failed %d: %s.", result, getName(result) );
 				}
 			}
@@ -9122,9 +9181,9 @@ VK_DESTROY
 					sci.sType = VK_STRUCTURE_TYPE_XLIB_SURFACE_CREATE_INFO_KHR;
 					sci.pNext = NULL;
 					sci.flags  = 0;
-					sci.dpy    = (Display*)m_desc.ndt;
-					sci.window = (Window)m_nwh;
-					result = vkCreateXlibSurfaceKHR(instance, &sci, allocatorCb, &m_surface);
+					sci.dpy    = (Display*)_ndt;
+					sci.window = (Window)_nwh;
+					result = vkCreateXlibSurfaceKHR(_instance, &sci, _allocatorCb, _surface);
 					BX_WARN(VK_SUCCESS == result, "vkCreateXlibSurfaceKHR failed %d: %s.", result, getName(result) );
 				}
 
@@ -9147,11 +9206,11 @@ VK_DESTROY
 							sci.sType      = VK_STRUCTURE_TYPE_XCB_SURFACE_CREATE_INFO_KHR;
 							sci.pNext      = NULL;
 							sci.flags      = 0;
-							sci.connection = XGetXCBConnection( (Display*)m_desc.ndt);
+							sci.connection = XGetXCBConnection( (Display*)_ndt);
 							if (NULL != sci.connection)
 							{
-								sci.window     = bx::narrowCast<xcb_window_t>(uintptr_t(m_nwh) );
-								result = vkCreateXcbSurfaceKHR(instance, &sci, allocatorCb, &m_surface);
+								sci.window     = bx::narrowCast<xcb_window_t>(uintptr_t(_nwh) );
+								result = vkCreateXcbSurfaceKHR(_instance, &sci, _allocatorCb, _surface);
 								BX_WARN(VK_SUCCESS == result, "vkCreateXcbSurfaceKHR failed %d: %s.", result, getName(result) );
 							}
 						}
@@ -9165,8 +9224,8 @@ VK_DESTROY
 		{
 			if (NULL != vkCreateMacOSSurfaceMVK)
 			{
-				NSWindow* window    = (NSWindow*)(m_nwh);
-				CAMetalLayer* layer = (CAMetalLayer*)(m_nwh);
+				NSWindow* window    = (NSWindow*)(_nwh);
+				CAMetalLayer* layer = (CAMetalLayer*)(_nwh);
 
 				if ([window isKindOfClass:[NSWindow class]])
 				{
@@ -9187,7 +9246,7 @@ VK_DESTROY
 					return result;
 				}
 
-				if (m_desc.flags & BGFX_SWAP_CHAIN_HIDPI)
+				if (_flags & BGFX_SWAP_CHAIN_HIDPI)
 				{
 					layer.contentsScale = [window backingScaleFactor];
 				}
@@ -9197,7 +9256,7 @@ VK_DESTROY
 				sci.pNext = NULL;
 				sci.flags = 0;
 				sci.pView = (__bridge void*)layer;
-				result = vkCreateMacOSSurfaceMVK(instance, &sci, allocatorCb, &m_surface);
+				result = vkCreateMacOSSurfaceMVK(_instance, &sci, _allocatorCb, _surface);
 				BX_WARN(VK_SUCCESS == result, "vkCreateMacOSSurfaceMVK failed %d: %s.", result, getName(result) );
 			}
 		}
@@ -9208,13 +9267,29 @@ VK_DESTROY
 			sci.sType  = VK_STRUCTURE_TYPE_VI_SURFACE_CREATE_INFO_NN;
 			sci.pNext  = NULL;
 			sci.flags  = 0;
-			sci.window = m_nwh;
-			result = vkCreateViSurfaceNN(instance, &sci, allocatorCb, &m_surface);
+			sci.window = _nwh;
+			result = vkCreateViSurfaceNN(_instance, &sci, _allocatorCb, _surface);
 			BX_WARN(VK_SUCCESS == result, "vkCreateViSurfaceNN failed %d: %s.", result, getName(result) );
 		}
 #else
 #	error "Figure out KHR surface..."
 #endif // BX_PLATFORM_
+
+		return result;
+	}
+
+	VkResult SwapChainVK::createSurface()
+	{
+		BGFX_PROFILER_SCOPE("SwapChainVK::createSurface", kColorFrame);
+
+		VkResult result = bgfx::vk::createSurface(
+			  s_renderVK->m_instance
+			, s_renderVK->m_allocatorCb
+			, m_nwh
+			, m_desc.ndt
+			, m_desc.flags
+			, &m_surface
+			);
 
 		m_needToRecreateSurface = false;
 

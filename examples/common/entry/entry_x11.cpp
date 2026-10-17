@@ -559,8 +559,22 @@ namespace entry
 							}
 							break;
 
+						case FocusIn:
+							{
+								WindowHandle handle = findHandle(event.xfocus.window);
+								m_eventQueue.postSuspendEvent(handle, Suspend::WillResume);
+								m_eventQueue.postSuspendEvent(handle, Suspend::DidResume);
+							}
+							break;
+
 						case FocusOut:
-							m_modifiers = Modifier::None;
+							{
+								m_modifiers = Modifier::None;
+
+								WindowHandle handle = findHandle(event.xfocus.window);
+								m_eventQueue.postSuspendEvent(handle, Suspend::WillSuspend);
+								m_eventQueue.postSuspendEvent(handle, Suspend::DidSuspend);
+							}
 							break;
 
 						case MappingNotify:
