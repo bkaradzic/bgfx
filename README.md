@@ -724,6 +724,15 @@ https://store.steampowered.com/app/2492670/METAL_GEAR_SOLID_4_Guns_of_the_Patrio
 
 <img width="1800" height="1013" alt="mgs4_cover" src="https://github.com/user-attachments/assets/cea9ec8a-f71b-4bf9-b826-0be898ca8658" />
 
+## MyTin2
+
+https://www.mytin2.eu - MyTin2 is a cross-platform fantasy MMORPG for Windows,
+macOS, iOS and Android, where PC and mobile players share the same servers.
+Its client renders with bgfx: Direct3D 11 on Windows, OpenGL ES on Android
+and Metal on iOS and macOS.
+
+<img width="1920" height="960" alt="mytin2-cross-platform-" src="https://github.com/user-attachments/assets/56468125-f220-40a2-9655-357447b4b264" />
+
 [License (BSD 2-clause)](https://bkaradzic.github.io/bgfx/license.html)
 -----------------------------------------------------------------------
 
