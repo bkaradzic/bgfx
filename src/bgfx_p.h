@@ -975,37 +975,6 @@ namespace bgfx
 		uint32_t m_values[maxKeys];
 	};
 
-	template<typename MaskT>
-	struct BitMaskToIndexIteratorT
-	{
-		BitMaskToIndexIteratorT(MaskT _mask)
-			: mask(0)
-			, idx(0)
-		{
-			const uint8_t ntz = bx::countTrailingZeros<MaskT>(_mask);
-			mask = 0 == _mask ? MaskT(0) : MaskT(_mask >> ntz);
-			idx  = ntz;
-		}
-
-		void next()
-		{
-			mask = MaskT(mask >> 1);
-			idx += 1;
-
-			const uint8_t ntz = bx::countTrailingZeros<MaskT>(mask);
-			mask = 0 == mask ? MaskT(0) : MaskT(mask >> ntz);
-			idx += ntz;
-		}
-
-		bool isDone() const
-		{
-			return 0 == mask;
-		}
-
-		MaskT   mask;
-		uint8_t idx;
-	};
-
 	struct ClearQuad
 	{
 		ClearQuad()
@@ -2632,9 +2601,9 @@ namespace bgfx
 
 		murmur.add(_mask);
 
-		for (BitMaskToIndexIteratorT<uint32_t> it(_mask); !it.isDone(); it.next() )
+		for (bx::BitMaskToIndexIteratorT<uint32_t> it(_mask); !it.isDone(); it.next() )
 		{
-			murmur.add(_bind[it.idx]);
+			murmur.add(_bind[it.getIndex()]);
 		}
 
 		return murmur.end();
@@ -2657,9 +2626,11 @@ namespace bgfx
 			return false;
 		}
 
-		for (BitMaskToIndexIteratorT<uint32_t> it(mask); !it.isDone(); it.next() )
+		for (bx::BitMaskToIndexIteratorT<uint32_t> it(mask); !it.isDone(); it.next() )
 		{
-			if (0 != bx::memCmp(&_lhs[it.idx], &_rhs[it.idx], sizeof(Binding) ) )
+			const uint8_t idx = it.getIndex();
+
+			if (0 != bx::memCmp(&_lhs[idx], &_rhs[idx], sizeof(Binding) ) )
 			{
 				return false;
 			}
@@ -2700,9 +2671,9 @@ namespace bgfx
 		{
 			if (0 != (_flags & BGFX_DISCARD_BINDINGS) )
 			{
-				for (BitMaskToIndexIteratorT<uint32_t> it(_mask); !it.isDone(); it.next() )
+				for (bx::BitMaskToIndexIteratorT<uint32_t> it(_mask); !it.isDone(); it.next() )
 				{
-					Binding& bind = m_bind[it.idx];
+					Binding& bind = m_bind[it.getIndex()];
 					bind.reset();
 				}
 			}

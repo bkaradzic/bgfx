@@ -1637,9 +1637,9 @@ namespace bgfx
 		if (UINT32_MAX != m_draw.m_streamMask)
 		{
 			uint32_t numVertices = UINT32_MAX;
-			for (BitMaskToIndexIteratorT it(m_draw.m_streamMask); !it.isDone(); it.next() )
+			for (bx::BitMaskToIndexIteratorT it(m_draw.m_streamMask); !it.isDone(); it.next() )
 			{
-				numVertices = bx::min(numVertices, m_numVertices[it.idx]);
+				numVertices = bx::min(numVertices, m_numVertices[it.getIndex()]);
 			}
 
 			m_draw.m_numVertices = numVertices;
@@ -1664,11 +1664,12 @@ namespace bgfx
 			if (0 != (m_dynamicMask & kDynamicStreamMask) )
 			{
 				numVertices = UINT32_MAX;
-				for (BitMaskToIndexIteratorT it(m_draw.m_streamMask); !it.isDone(); it.next() )
+				for (bx::BitMaskToIndexIteratorT it(m_draw.m_streamMask); !it.isDone(); it.next() )
 				{
-					const uint32_t tmp0 = 0 != (m_dynamicMask & (UINT32_C(1)<<it.idx) )
-						? m_dynamicNumVertices[it.idx]
-						: m_numVertices[it.idx]
+					const uint8_t   idx = it.getIndex();
+					const uint32_t tmp0 = 0 != (m_dynamicMask & (UINT32_C(1)<<idx) )
+						? m_dynamicNumVertices[idx]
+						: m_numVertices[idx]
 						;
 					numVertices = bx::min(numVertices, tmp0);
 				}
@@ -3142,13 +3143,14 @@ namespace bgfx
 				{
 					uint32_t numVertices = ref.numVertices;
 
-					for (BitMaskToIndexIteratorT it(ref.mask & kDynamicStreamMask); !it.isDone(); it.next() )
+					for (bx::BitMaskToIndexIteratorT it(ref.mask & kDynamicStreamMask); !it.isDone(); it.next() )
 					{
-						const DynamicVertexBuffer& dvb = m_dynamicVertexBuffers[ref.handle[it.idx] ];
-						Stream& stream = draw.m_stream[it.idx];
-						stream.m_startVertex = dvb.m_startVertex + ref.start[it.idx];
+						const uint8_t idx = it.getIndex();
+						const DynamicVertexBuffer& dvb = m_dynamicVertexBuffers[ref.handle[idx] ];
+						Stream& stream = draw.m_stream[idx];
+						stream.m_startVertex = dvb.m_startVertex + ref.start[idx];
 						stream.m_handle      = dvb.m_handle;
-						numVertices = bx::min(numVertices, bx::satSub(dvb.m_numVertices, ref.start[it.idx]) );
+						numVertices = bx::min(numVertices, bx::satSub(dvb.m_numVertices, ref.start[idx]) );
 					}
 
 					draw.m_numVertices = numVertices;

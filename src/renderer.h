@@ -1005,9 +1005,9 @@ namespace bgfx
 
 		if (UINT32_MAX != _new.m_streamMask)
 		{
-			for (BitMaskToIndexIteratorT it(_new.m_streamMask); !it.isDone(); it.next() )
+			for (bx::BitMaskToIndexIteratorT it(_new.m_streamMask); !it.isDone(); it.next() )
 			{
-				const uint8_t idx = it.idx;
+				const uint8_t idx = it.getIndex();
 
 				if (_current.m_stream[idx].m_handle.idx       != _new.m_stream[idx].m_handle.idx
 				||  _current.m_stream[idx].m_startVertex      != _new.m_stream[idx].m_startVertex

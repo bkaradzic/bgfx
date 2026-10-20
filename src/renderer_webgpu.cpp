@@ -3490,8 +3490,8 @@ WGPU_IMPORT
 			if (0 < numVertexStreams
 			&&  UINT32_MAX != _streamMask)
 			{
-				const uint8_t firstStream = BitMaskToIndexIteratorT(_streamMask).idx;
-				const uint16_t layoutIdx = isValid(_stream[firstStream].m_layoutHandle)
+				const uint8_t firstStream = bx::BitMaskToIndexIteratorT(_streamMask).getIndex();
+				const uint16_t layoutIdx  = isValid(_stream[firstStream].m_layoutHandle)
 					? _stream[firstStream].m_layoutHandle.idx
 					: m_vertexBuffers[_stream[firstStream].m_handle.idx].m_layoutHandle.idx
 					;
@@ -3533,9 +3533,9 @@ WGPU_IMPORT
 
 			if (UINT32_MAX != _streamMask)
 			{
-				for (BitMaskToIndexIteratorT it(_streamMask); !it.isDone(); it.next() )
+				for (bx::BitMaskToIndexIteratorT it(_streamMask); !it.isDone(); it.next() )
 				{
-					const uint8_t idx = it.idx;
+					const uint8_t idx = it.getIndex();
 
 					uint16_t handle = _stream[idx].m_handle.idx;
 					const VertexBufferWGPU& vb = m_vertexBuffers[handle];
@@ -3590,12 +3590,12 @@ WGPU_IMPORT
 
 				if (UINT32_MAX != _streamMask)
 				{
-					for (BitMaskToIndexIteratorT it(_streamMask)
+					for (bx::BitMaskToIndexIteratorT it(_streamMask)
 						; !it.isDone()
 						; it.next(), numStreams++
 						)
 					{
-						const uint8_t idx = it.idx;
+						const uint8_t idx = it.getIndex();
 
 						const uint16_t handle = _stream[idx].m_handle.idx;
 						const VertexBufferWGPU& vb = m_vertexBuffers[handle];
@@ -8003,12 +8003,12 @@ WGPU_IMPORT
 
 					if (UINT32_MAX != draw.m_streamMask)
 					{
-						for (BitMaskToIndexIteratorT it(draw.m_streamMask)
+						for (bx::BitMaskToIndexIteratorT it(draw.m_streamMask)
 							; !it.isDone()
 							; it.next(), numStreams++
 							)
 						{
-							const uint8_t idx = it.idx;
+							const uint8_t idx = it.getIndex();
 
 							currentState.m_stream[idx].m_layoutHandle = draw.m_stream[idx].m_layoutHandle;
 							currentState.m_stream[idx].m_handle       = draw.m_stream[idx].m_handle;
@@ -8078,9 +8078,9 @@ WGPU_IMPORT
 
 					if (UINT32_MAX == numVertices)
 					{
-						for (BitMaskToIndexIteratorT it(currentState.m_streamMask); !it.isDone(); it.next() )
+						for (bx::BitMaskToIndexIteratorT it(currentState.m_streamMask); !it.isDone(); it.next() )
 						{
-							const uint8_t idx = it.idx;
+							const uint8_t idx = it.getIndex();
 							const VertexBufferWGPU& vb = m_vertexBuffers[currentState.m_stream[idx].m_handle.idx];
 							const uint16_t decl = isValid(draw.m_stream[idx].m_layoutHandle) ? draw.m_stream[idx].m_layoutHandle.idx : vb.m_layoutHandle.idx;
 							const VertexLayout& layout = m_vertexLayouts[decl];

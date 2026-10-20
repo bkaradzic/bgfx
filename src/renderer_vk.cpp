@@ -5599,9 +5599,9 @@ VK_IMPORT_DEVICE
 			{
 				const uint8_t colorMask = uint8_t(~_clear.getColorSkipMask(numMrt) & ( (1<<numMrt)-1) );
 
-				for (BitMaskToIndexIteratorT it(colorMask); !it.isDone(); it.next() )
+				for (bx::BitMaskToIndexIteratorT it(colorMask); !it.isDone(); it.next() )
 				{
-					const uint32_t ii = it.idx;
+					const uint32_t ii = it.getIndex();
 
 					attachments[mrt].colorAttachment = ii;
 					attachments[mrt].aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -11969,12 +11969,12 @@ VK_DESTROY
 					uint32_t numVertices = draw.m_numVertices;
 					if (UINT32_MAX != draw.m_streamMask)
 					{
-						for (BitMaskToIndexIteratorT it(draw.m_streamMask)
+						for (bx::BitMaskToIndexIteratorT it(draw.m_streamMask)
 							; !it.isDone()
 							; it.next(), numStreams++
 							)
 						{
-							const uint8_t idx = it.idx;
+							const uint8_t idx = it.getIndex();
 
 							currentState.m_stream[idx] = draw.m_stream[idx];
 
