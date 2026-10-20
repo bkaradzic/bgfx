@@ -677,6 +677,15 @@ namespace bgfx { namespace spirv
 				}
 
 				UniformArray uniforms;
+				int uniformBlockIndex = -1;
+				for (int ii = 0; ii < program->getNumLiveUniformBlocks(); ++ii)
+				{
+					if (0 == bx::strCmp(program->getUniformBlockName(ii), "UniformBlock"))
+					{
+						uniformBlockIndex = ii;
+						break;
+					}
+				}
 
 				{
 					uint16_t count = (uint16_t)program->getNumLiveUniformVariables();
@@ -718,6 +727,20 @@ namespace bgfx { namespace spirv
 
 						default:
 							continue;
+						}
+
+						// At the moment UniformBlock is only supported, this if should handle, the situation in which uniform variable is implicitly promoted to $Global uniform
+						const int blockIndex = program->getUniformBlockIndex(ii);
+						if (blockIndex != uniformBlockIndex)
+						{
+							const char *blockName = blockIndex >= 0 && blockIndex < program->getNumLiveUniformBlocks()
+														? program->getUniformBlockName(blockIndex)
+														: "<none>";
+							bx::write(_messageWriter, &messageErr, "Error: Uniform '%s' belongs to unsupported block '%s'. Only the stage UniformBlock is supported. Use 'uniform' for application-provided data. For shader-owned data, use a local variable or a 'static const' global with a constant constructor initializer. Avoid function-call initializers on globals; they can trigger a glslang compilation failure even with 'static const'.\n", un.name.c_str(), blockName);
+							delete program;
+							delete shader;
+							glslang::FinalizeProcess();
+							return false;
 						}
 
 						uniforms.push_back(un);
