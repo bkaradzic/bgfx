@@ -3233,6 +3233,19 @@ namespace bgfx { namespace gl
 		{
 			if (m_flip)
 			{
+				uint32_t lastPresent = 0;
+
+				if (!m_needPresent)
+				{
+					for (uint32_t ii = 1, num = m_numWindows; ii < num; ++ii)
+					{
+						if (m_frameBuffers[m_windows[ii].idx].m_needPresent)
+						{
+							lastPresent = ii;
+						}
+					}
+				}
+
 				for (uint32_t ii = 1, num = m_numWindows; ii < num; ++ii)
 				{
 					FrameBufferGL& frameBuffer = m_frameBuffers[m_windows[ii].idx];
@@ -3244,7 +3257,7 @@ namespace bgfx { namespace gl
 							frameBuffer.blitSwapChainFbo();
 						}
 
-						m_glctx.swap(frameBuffer.m_swapChain);
+						m_glctx.swap(frameBuffer.m_swapChain, lastPresent == ii);
 						frameBuffer.m_needPresent = false;
 					}
 				}
@@ -8641,11 +8654,6 @@ namespace bgfx { namespace gl
 
 	static void blitBufferToTexture(const TextureGL& _dst, GLuint _src, const BlitItem& _bi)
 	{
-		if (NULL == glBindBuffer)
-		{
-			return;
-		}
-
 		if (NULL != glMemoryBarrier)
 		{
 			GL_CHECK(glMemoryBarrier(GL_BUFFER_UPDATE_BARRIER_BIT) );
@@ -8713,11 +8721,6 @@ namespace bgfx { namespace gl
 
 	static void blitTextureToBuffer(GLuint _dst, const TextureGL& _src, const BlitItem& _bi)
 	{
-		if (NULL == glBindBuffer)
-		{
-			return;
-		}
-
 		if (NULL == glGetTextureSubImage)
 		{
 			BX_WARN(false, "Blit texture into buffer is not supported. glGetTextureSubImage is unavailable.");

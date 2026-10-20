@@ -193,7 +193,7 @@ namespace bgfx { namespace gl
 		bx::deleteObject(g_allocator, _swapChain);
 	}
 
-	void GlContext::swap(SwapChainGL* /* _swapChain */)
+	void GlContext::swap(SwapChainGL* /* _swapChain */, bool /* _vsync */)
 	{
 	}
 

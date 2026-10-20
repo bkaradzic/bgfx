@@ -9110,7 +9110,18 @@ VK_DESTROY
 					return;
 				}
 
-				VK_CHECK(createSwapChain() );
+				result = createSwapChain();
+
+				if (VK_SUCCESS != result)
+				{
+					releaseSwapChain();
+
+					m_sci.oldSwapchain = VK_NULL_HANDLE;
+					s_renderVK->kick(true);
+
+					m_needToRecreateSwapchain = true;
+					return;
+				}
 			}
 
 			VK_CHECK(createAttachments(_commandBuffer) );
@@ -9662,6 +9673,7 @@ VK_DESTROY
 		}
 
 		release(m_swapChain);
+		m_numSwapChainImages = 0;
 	}
 
 	VkResult SwapChainVK::createAttachments(VkCommandBuffer _commandBuffer)
@@ -10077,8 +10089,11 @@ VK_DESTROY
 				m_needToRecreateSwapchain = true;
 				return false;
 
-			case VK_ERROR_OUT_OF_DATE_KHR:
 			case VK_SUBOPTIMAL_KHR:
+				m_needToRecreateSwapchain = !BX_ENABLED(BX_PLATFORM_ANDROID);
+				break;
+
+			case VK_ERROR_OUT_OF_DATE_KHR:
 				m_needToRecreateSwapchain = true;
 				return false;
 
@@ -10189,8 +10204,11 @@ VK_DESTROY
 				m_needToRecreateSwapchain = true;
 				break;
 
-			case VK_ERROR_OUT_OF_DATE_KHR:
 			case VK_SUBOPTIMAL_KHR:
+				m_needToRecreateSwapchain = !BX_ENABLED(BX_PLATFORM_ANDROID);
+				break;
+
+			case VK_ERROR_OUT_OF_DATE_KHR:
 				m_needToRecreateSwapchain = true;
 				break;
 
