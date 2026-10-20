@@ -1116,9 +1116,21 @@ WL_EGL_IMPORT
 		bx::deleteObject(g_allocator, _swapChain);
 	}
 
-	void GlContext::swap(SwapChainGL* _swapChain)
+	void GlContext::swap(SwapChainGL* _swapChain, bool _vsync)
 	{
 		makeCurrent(_swapChain);
+
+		const bool noWait = true
+			&& !_vsync
+			&& 0 != m_swapInterval
+			&& NULL != m_display
+			&& (NULL != _swapChain || EGL_NO_SURFACE != m_surface)
+			;
+
+		if (noWait)
+		{
+			eglSwapInterval(m_display, 0);
+		}
 
 		if (NULL == _swapChain)
 		{
@@ -1131,6 +1143,11 @@ WL_EGL_IMPORT
 		else
 		{
 			_swapChain->swapBuffers();
+		}
+
+		if (noWait)
+		{
+			eglSwapInterval(m_display, m_swapInterval);
 		}
 	}
 

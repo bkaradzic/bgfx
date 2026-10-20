@@ -28,6 +28,7 @@ namespace bgfx { namespace gl
 	PFNWGLCHOOSEPIXELFORMATARBPROC wglChoosePixelFormatARB;
 	PFNWGLCREATECONTEXTATTRIBSARBPROC wglCreateContextAttribsARB;
 	PFNWGLSWAPINTERVALEXTPROC wglSwapIntervalEXT;
+	PFNDWMFLUSHPROC DwmFlush;
 
 #	define GL_IMPORT(_optional, _proto, _func, _import) _proto _func
 #	include "glimports.h"
@@ -50,7 +51,6 @@ namespace bgfx { namespace gl
 		~SwapChainGL()
 		{
 			wglMakeCurrent(NULL, NULL);
-			wglDeleteContext(m_context);
 			ReleaseDC(m_hwnd, m_hdc);
 		}
 
@@ -200,6 +200,13 @@ namespace bgfx { namespace gl
 			goto error;
 		}
 
+		m_dwmapidll = bx::dlopen("dwmapi.dll");
+
+		if (NULL != m_dwmapidll)
+		{
+			DwmFlush = bx::dlsym<PFNDWMFLUSHPROC>(m_dwmapidll, "DwmFlush");
+		}
+
 		// If g_platformHooks.nwh is NULL, the assumption is that GL context was created
 		// by user (for example, using SDL, GLFW, etc.)
 		BX_WARN(NULL != _swapChain.nwh
@@ -294,19 +301,6 @@ namespace bgfx { namespace gl
 				BX_TRACE("WGL extensions:");
 				dumpExtensions(extensions);
 			}
-
-			// Attributes for the contexts SwapChainGL shares with this one.
-			const int32_t contextAttrs[9] =
-			{
-				WGL_CONTEXT_MAJOR_VERSION_ARB, BGFX_WGL_CONTEXT_VERSION / 10,
-				WGL_CONTEXT_MINOR_VERSION_ARB, BGFX_WGL_CONTEXT_VERSION % 10,
-				WGL_CONTEXT_FLAGS_ARB, BGFX_CONFIG_DEBUG ? WGL_CONTEXT_DEBUG_BIT_ARB : 0,
-				WGL_CONTEXT_PROFILE_MASK_ARB, BGFX_WGL_CONTEXT_PROFILE_BIT,
-				0
-			};
-
-			static_assert(sizeof(contextAttrs) == sizeof(m_contextAttrs) );
-			bx::memCopy(m_contextAttrs, contextAttrs, sizeof(contextAttrs) );
 
 			m_current = NULL;
 
@@ -463,9 +457,6 @@ namespace bgfx { namespace gl
 
 					goto error;
 				}
-
-				static_assert(sizeof(contextAttrs) == sizeof(m_contextAttrs) );
-				bx::memCopy(m_contextAttrs, contextAttrs, sizeof(contextAttrs) );
 			}
 
 			wglMakeCurrent(NULL, NULL);
@@ -530,6 +521,10 @@ namespace bgfx { namespace gl
 				m_dummyHwnd = NULL;
 			}
 
+			bx::dlclose(m_dwmapidll);
+			m_dwmapidll = NULL;
+			DwmFlush    = NULL;
+
 			bx::dlclose(m_opengl32dll);
 			m_opengl32dll = NULL;
 			[[fallthrough]];
@@ -569,6 +564,10 @@ namespace bgfx { namespace gl
 			m_dummyHwnd = NULL;
 		}
 
+		bx::dlclose(m_dwmapidll);
+		m_dwmapidll = NULL;
+		DwmFlush    = NULL;
+
 		bx::dlclose(m_opengl32dll);
 		m_opengl32dll = NULL;
 	}
@@ -601,10 +600,7 @@ namespace bgfx { namespace gl
 
 		if (NULL != wglSwapIntervalEXT)
 		{
-			// Apply to the currently-bound (main) context. Secondary SwapChainGL contexts
-			// get the value applied lazily in makeCurrent() when they become current, since
-			// wglSwapIntervalEXT is per-context on Windows.
-			wglSwapIntervalEXT(m_swapInterval);
+			wglSwapIntervalEXT(swapInterval() );
 		}
 	}
 
@@ -632,18 +628,32 @@ namespace bgfx { namespace gl
 		int result = SetPixelFormat(swapChain->m_hdc, m_pixelFormat, &m_pfd);
 		BX_WARN(result, "SetPixelFormat failed (last err: 0x%08x)!", GetLastError() ); BX_UNUSED(result);
 
-		swapChain->m_context = wglCreateContextAttribsARB(swapChain->m_hdc, m_context, m_contextAttrs);
-		BX_ASSERT(NULL != swapChain->m_context, "Create swap chain failed: %x", glGetError() );
+		swapChain->m_context = m_context;
+		++m_numSwapChains;
+
+		if (NULL != wglSwapIntervalEXT)
+		{
+			wglSwapIntervalEXT(swapInterval() );
+		}
+
 		return swapChain;
 	}
 
 	void GlContext::destroySwapChain(SwapChainGL*  _swapChain)
 	{
 		bx::deleteObject(g_allocator, _swapChain);
+		--m_numSwapChains;
+
 		wglMakeCurrent(m_hdc, m_context);
+		m_current = NULL;
+
+		if (NULL != wglSwapIntervalEXT)
+		{
+			wglSwapIntervalEXT(swapInterval() );
+		}
 	}
 
-	void GlContext::swap(SwapChainGL* _swapChain)
+	void GlContext::swap(SwapChainGL* _swapChain, bool _vsync)
 	{
 		makeCurrent(_swapChain);
 
@@ -657,6 +667,14 @@ namespace bgfx { namespace gl
 		else
 		{
 			_swapChain->swapBuffers();
+		}
+
+		if (true
+		&&  _vsync
+		&&  0 != m_swapInterval
+		&&  0 == swapInterval() )
+		{
+			DwmFlush();
 		}
 	}
 
@@ -677,14 +695,16 @@ namespace bgfx { namespace gl
 				_swapChain->makeCurrent();
 			}
 
-			// wglSwapIntervalEXT is per-context on Windows, so re-apply the cached interval
-			// every time a different context becomes current. Without this, secondary swap
-			// chains keep their driver default (typically vsync ON) even after resize().
 			if (NULL != wglSwapIntervalEXT)
 			{
-				wglSwapIntervalEXT(m_swapInterval);
+				wglSwapIntervalEXT(swapInterval() );
 			}
 		}
+	}
+
+	int GlContext::swapInterval() const
+	{
+		return 0 != m_numSwapChains && NULL != DwmFlush ? 0 : m_swapInterval;
 	}
 
 	bool GlContext::import()

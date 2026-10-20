@@ -28,7 +28,7 @@ namespace bgfx { namespace gl
 		uint64_t getCaps() const;
 		SwapChainGL* createSwapChain(void* _nwh, int32_t _width, int32_t _height);
 		void destroySwapChain(SwapChainGL*  _swapChain);
-		void swap(SwapChainGL* _swapChain = NULL);
+		void swap(SwapChainGL* _swapChain = NULL, bool _vsync = true);
 		void makeCurrent(SwapChainGL* _swapChain = NULL);
 
 		bool import();
