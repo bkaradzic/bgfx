@@ -7078,12 +7078,12 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 					if (UINT32_MAX != draw.m_streamMask)
 					{
-						for (BitMaskToIndexIteratorT it(draw.m_streamMask)
+						for (bx::BitMaskToIndexIteratorT it(draw.m_streamMask)
 							; !it.isDone()
 							; it.next(), numStreams++
 							)
 						{
-							const uint8_t idx = it.idx;
+							const uint8_t idx = it.getIndex();
 
 							currentState.m_stream[idx].m_layoutHandle   = draw.m_stream[idx].m_layoutHandle;
 							currentState.m_stream[idx].m_handle         = draw.m_stream[idx].m_handle;
@@ -7295,9 +7295,9 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 					if (UINT32_MAX == numVertices)
 					{
-						for (BitMaskToIndexIteratorT it(currentState.m_streamMask); !it.isDone(); it.next() )
+						for (bx::BitMaskToIndexIteratorT it(currentState.m_streamMask); !it.isDone(); it.next() )
 						{
-							const uint8_t idx = it.idx;
+							const uint8_t idx = it.getIndex();
 							const VertexBufferMtl& vb = m_vertexBuffers[currentState.m_stream[idx].m_handle.idx];
 							const uint16_t decl = isValid(draw.m_stream[idx].m_layoutHandle) ? draw.m_stream[idx].m_layoutHandle.idx : vb.m_layoutHandle.idx;
 							const VertexLayout& layout = m_vertexLayouts[decl];

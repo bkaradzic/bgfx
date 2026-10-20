@@ -5979,12 +5979,12 @@ namespace bgfx { namespace d3d12
 
 		if (UINT32_MAX != _draw.m_streamMask)
 		{
-			for (BitMaskToIndexIteratorT it(_draw.m_streamMask)
+			for (bx::BitMaskToIndexIteratorT it(_draw.m_streamMask)
 				; !it.isDone()
 				; it.next(), numStreams++
 				)
 			{
-				const uint8_t idx = it.idx;
+				const uint8_t idx = it.getIndex();
 				const Stream& stream = _draw.m_stream[idx];
 
 				uint16_t handle = stream.m_handle.idx;
@@ -10441,12 +10441,12 @@ namespace bgfx { namespace d3d12
 					uint8_t numStreams = 0;
 					if (UINT32_MAX != draw.m_streamMask)
 					{
-						for (BitMaskToIndexIteratorT it(draw.m_streamMask)
+						for (bx::BitMaskToIndexIteratorT it(draw.m_streamMask)
 							; !it.isDone()
 							; it.next(), numStreams++
 							)
 						{
-							const uint8_t idx = it.idx;
+							const uint8_t idx = it.getIndex();
 
 							currentState.m_stream[idx].m_layoutHandle = draw.m_stream[idx].m_layoutHandle;
 							currentState.m_stream[idx].m_handle       = draw.m_stream[idx].m_handle;

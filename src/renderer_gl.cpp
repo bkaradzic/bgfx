@@ -9973,9 +9973,9 @@ namespace bgfx { namespace gl
 					{
 						if (UINT32_MAX != draw.m_streamMask)
 						{
-							for (BitMaskToIndexIteratorT it(draw.m_streamMask); !it.isDone(); it.next() )
+							for (bx::BitMaskToIndexIteratorT it(draw.m_streamMask); !it.isDone(); it.next() )
 							{
-								const uint8_t idx = it.idx;
+								const uint8_t idx = it.getIndex();
 
 								if (currentState.m_stream[idx].m_handle.idx != draw.m_stream[idx].m_handle.idx)
 								{
@@ -10049,9 +10049,9 @@ namespace bgfx { namespace gl
 								{
 									const uint8_t lastStream = uint8_t(31 - bx::countLeadingZeros<uint32_t>(draw.m_streamMask) );
 
-									for (BitMaskToIndexIteratorT it(draw.m_streamMask); !it.isDone(); it.next() )
+									for (bx::BitMaskToIndexIteratorT it(draw.m_streamMask); !it.isDone(); it.next() )
 									{
-										const uint8_t idx = it.idx;
+										const uint8_t idx = it.getIndex();
 
 										const VertexBufferGL& vb = m_vertexBuffers[draw.m_stream[idx].m_handle.idx];
 										const uint16_t decl = isValid(draw.m_stream[idx].m_layoutHandle)
@@ -10079,9 +10079,9 @@ namespace bgfx { namespace gl
 
 						if (UINT32_MAX == numVertices)
 						{
-							for (BitMaskToIndexIteratorT it(draw.m_streamMask); !it.isDone(); it.next() )
+							for (bx::BitMaskToIndexIteratorT it(draw.m_streamMask); !it.isDone(); it.next() )
 							{
-								const uint8_t idx = it.idx;
+								const uint8_t idx = it.getIndex();
 
 								const VertexBufferGL& vb = m_vertexBuffers[draw.m_stream[idx].m_handle.idx];
 								uint16_t decl = isValid(draw.m_stream[idx].m_layoutHandle) ? draw.m_stream[idx].m_layoutHandle.idx : vb.m_layoutHandle.idx;
