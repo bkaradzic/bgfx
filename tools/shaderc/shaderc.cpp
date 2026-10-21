@@ -1730,6 +1730,22 @@ namespace bgfx
 
 					*const_cast<char*>(entry.getPtr() + 4) = '_';
 
+					const bool hasNumWorkGroups = !bx::strFind(input, "gl_NumWorkGroups").isEmpty();
+					if (hasNumWorkGroups
+					&&  (profile->lang == ShadingLang::HLSL
+					||   profile->lang == ShadingLang::Dxil
+					||   profile->lang == ShadingLang::SpirV
+					||   profile->lang == ShadingLang::Metal
+					||   profile->lang == ShadingLang::WGSL) )
+					{
+						// These backends take HLSL input with no dispatch-size semantic.
+						// The renderer supplies the counts for direct dispatches.
+						preprocessor.writef(
+							"uniform float4 u_numWorkGroups;\n"
+							"#define gl_NumWorkGroups uint3(u_numWorkGroups.xyz)\n"
+							);
+					}
+
 					preprocessor.writef("#define void_main()");
 					preprocessor.writef(" \\\n\tvoid main(");
 

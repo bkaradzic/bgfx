@@ -546,6 +546,7 @@ VK_DESTROY_FUNC(DescriptorSet);
 			: m_module(VK_NULL_HANDLE)
 			, m_constantBuffer(NULL)
 			, m_hash(0)
+			, m_numWorkGroupsLoc(UINT32_MAX)
 			, m_numUniforms(0)
 			, m_numPredefined(0)
 			, m_uniformBinding(0)
@@ -565,6 +566,7 @@ VK_DESTROY_FUNC(DescriptorSet);
 		uint8_t m_attrRemap[Attrib::Count];
 
 		uint32_t m_hash;
+		uint32_t m_numWorkGroupsLoc;
 		uint16_t m_numUniforms;
 		uint16_t m_size;
 		uint8_t m_numPredefined;

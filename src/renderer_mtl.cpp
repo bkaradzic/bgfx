@@ -2984,6 +2984,14 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 										const PredefinedUniform::Enum predefined = nameToPredefinedUniformEnum(name);
 
+										if (0 == shaderType
+										&&  0 == bx::strCmp(name, "u_numWorkGroups")
+										&&  MTL::DataTypeFloat4 == dataType
+										&&  1 == num)
+										{
+											ps->m_numWorkGroupsLoc = uint32_t(uniform->offset() );
+										}
+
 										if (PredefinedUniform::Count != predefined)
 										{
 											ps->m_predefined[ps->m_numPredefined].m_loc   = uint32_t(uniform->offset() );
@@ -6804,6 +6812,16 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 						}
 
 						viewState.setPredefined<4>(this, view, *renderView, *currentPso, _render, compute);
+
+						if (UINT32_MAX != currentPso->m_numWorkGroupsLoc
+						&&  !isValid(compute.m_indirectBuffer) )
+						{
+							const float numWorkGroups[4] =
+							{
+								float(compute.m_numX), float(compute.m_numY), float(compute.m_numZ), 0.0f
+							};
+							setShaderUniform(0, currentPso->m_numWorkGroupsLoc, numWorkGroups, 1);
+						}
 
 						if (0 != vertexUniformBufferSize)
 						{

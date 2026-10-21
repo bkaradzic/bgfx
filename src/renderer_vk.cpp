@@ -6515,6 +6515,7 @@ VK_DESTROY
 
 	void ShaderVK::create(const Memory* _mem)
 	{
+		m_numWorkGroupsLoc = UINT32_MAX;
 		bx::MemoryReader reader(_mem->data, _mem->size);
 
 		bx::ErrorAssert err;
@@ -6646,6 +6647,14 @@ VK_DESTROY
 
 				if (UINT16_MAX != regIndex)
 				{
+					if (isShaderType(magic, 'C')
+					&&  0 == bx::strCmp(name, "u_numWorkGroups")
+					&&  UniformType::Vec4 == UniformType::Enum(type & ~kUniformMask)
+					&&  1 == regCount)
+					{
+						m_numWorkGroupsLoc = regIndex;
+					}
+
 					PredefinedUniform::Enum predefined = nameToPredefinedUniformEnum(name);
 					if (PredefinedUniform::Count != predefined)
 					{
@@ -6890,6 +6899,7 @@ VK_DESTROY
 
 	void ShaderVK::destroy()
 	{
+		m_numWorkGroupsLoc = UINT32_MAX;
 		if (NULL != m_constantBuffer)
 		{
 			UniformBuffer::destroy(m_constantBuffer);
@@ -11832,6 +11842,18 @@ VK_DESTROY
 					}
 
 					const ProgramVK& program = m_program[currentProgram.idx];
+
+					const uint32_t numWorkGroupsLoc = program.m_vsh->m_numWorkGroupsLoc;
+					if (UINT32_MAX != numWorkGroupsLoc
+					&&  !isValid(compute.m_indirectBuffer) )
+					{
+						const float numWorkGroups[4] =
+						{
+							float(compute.m_numX), float(compute.m_numY), float(compute.m_numZ), 0.0f
+						};
+						setShaderUniform(0, numWorkGroupsLoc, numWorkGroups, 1);
+						constantsChanged = true;
+					}
 
 					if (constantsChanged
 					||  hasPredefined)

@@ -155,6 +155,7 @@ namespace bgfx { namespace d3d11
 			, m_hash(0)
 			, m_rawSrvMask(0)
 			, m_rawUavMask(0)
+			, m_numWorkGroupsLoc(UINT32_MAX)
 			, m_numUniforms(0)
 			, m_numPredefined(0)
 		{
@@ -183,6 +184,7 @@ namespace bgfx { namespace d3d11
 
 		void destroy()
 		{
+			m_numWorkGroupsLoc = UINT32_MAX;
 			if (NULL != m_constantBuffer)
 			{
 				UniformBuffer::destroy(m_constantBuffer);
@@ -224,6 +226,7 @@ namespace bgfx { namespace d3d11
 
 		uint32_t m_rawSrvMask;
 		uint32_t m_rawUavMask;
+		uint32_t m_numWorkGroupsLoc;
 
 		uint8_t m_textureDimension[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS];
 

@@ -523,6 +523,7 @@ namespace wgpu {
 			, m_constantBuffer(NULL)
 			, m_hash(0)
 			, m_numUniforms(0)
+			, m_numWorkGroupsLoc(UINT32_MAX)
 			, m_numPredefined(0)
 		{
 		}
@@ -543,6 +544,7 @@ namespace wgpu {
 
 		uint32_t m_hash;
 		uint16_t m_numUniforms;
+		uint32_t m_numWorkGroupsLoc;
 		uint16_t m_size;
 		uint16_t m_blockSize;
 		uint8_t  m_numPredefined;

@@ -386,6 +386,7 @@ namespace bgfx { namespace mtl
 			, m_vshConstantBufferAlignment(0)
 			, m_fshConstantBufferSize(0)
 			, m_fshConstantBufferAlignment(0)
+			, m_numWorkGroupsLoc(UINT32_MAX)
 			, m_numPredefined(0)
 			, m_rps(NULL)
 			, m_cps(NULL)
@@ -426,6 +427,7 @@ namespace bgfx { namespace mtl
 		uint32_t m_vshConstantBufferAlignment;
 		uint32_t m_fshConstantBufferSize;
 		uint32_t m_fshConstantBufferAlignment;
+		uint32_t m_numWorkGroupsLoc;
 
 		enum
 		{

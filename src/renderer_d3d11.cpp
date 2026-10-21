@@ -4563,6 +4563,7 @@ namespace bgfx { namespace d3d11
 
 	void ShaderD3D11::create(const Memory* _mem)
 	{
+		m_numWorkGroupsLoc = UINT32_MAX;
 		bx::MemoryReader reader(_mem->data, _mem->size);
 
 		bx::ErrorAssert err;
@@ -4643,6 +4644,14 @@ namespace bgfx { namespace d3d11
 				BX_UNUSED(texComponent);
 
 				const char* kind = "invalid";
+
+				if (isShaderType(magic, 'C')
+				&&  0 == bx::strCmp(name, "u_numWorkGroups")
+				&&  UniformType::Vec4 == UniformType::Enum(type & ~kUniformMask)
+				&&  1 == regCount)
+				{
+					m_numWorkGroupsLoc = regIndex;
+				}
 
 				PredefinedUniform::Enum predefined = nameToPredefinedUniformEnum(name);
 				if (PredefinedUniform::Count != predefined)
@@ -7365,9 +7374,22 @@ namespace bgfx { namespace d3d11
 							}
 						}
 
+						const uint32_t numWorkGroupsLoc = program.m_vsh->m_numWorkGroupsLoc;
+						const bool autoNumWorkGroups = UINT32_MAX != numWorkGroupsLoc
+							&& !isValid(compute.m_indirectBuffer);
+						if (autoNumWorkGroups)
+						{
+							const float numWorkGroups[4] =
+							{
+								float(compute.m_numX), float(compute.m_numY), float(compute.m_numZ), 0.0f
+							};
+							setShaderUniform(0, numWorkGroupsLoc, numWorkGroups, 1);
+						}
+
 						viewState.setPredefined<4>(this, view, *renderView, program, _render, compute);
 
 						if (constantsChanged
+						||  autoNumWorkGroups
 						||  program.m_numPredefined > 0)
 						{
 							commitShaderConstants();
