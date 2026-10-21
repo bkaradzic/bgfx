@@ -2752,22 +2752,35 @@ namespace bgfx { namespace gl
 
 					if (NULL != glGetInternalformativ)
 					{
-						GLint maxSamples = 0;
+						GLint sampleCounts[16] = {};
 						glGetInternalformativ(GL_RENDERBUFFER
 							, s_textureFormat[ii].m_internalFmt
 							, GL_SAMPLES
-							, 1
-							, &maxSamples
+							, BX_COUNTOF(sampleCounts)
+							, sampleCounts
 							);
 						GLenum err = getGlError();
-						supported |= 0 == err && maxSamples > 0
+
+						for (uint32_t jj = 0; jj < BX_COUNTOF(sampleCounts) && 0 == err; ++jj)
+						{
+							const uint32_t numSamples = uint32_t(sampleCounts[jj]);
+
+							if (2 <= numSamples
+							&&  16 >= numSamples
+							&&  bx::isPowerOf2(numSamples) )
+							{
+								supported |= BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA_X2 << (bx::countTrailingZeros(numSamples) - 1);
+							}
+						}
+
+						supported |= 0 != (supported & kCapsFormatTextureFramebufferMsaaMask)
 							? BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA
 							: BGFX_CAPS_FORMAT_TEXTURE_NONE
 							;
 
 						if (m_textureMultisampleSupport)
 						{
-							maxSamples = 0;
+							GLint maxSamples = 0;
 							glGetInternalformativ(
 								  GL_TEXTURE_2D_MULTISAMPLE
 								, s_textureFormat[ii].m_internalFmt
@@ -6367,9 +6380,8 @@ namespace bgfx { namespace gl
 
 		if (renderTarget)
 		{
-			uint32_t msaaQuality = ( (m_flags&BGFX_TEXTURE_RT_MSAA_MASK)>>BGFX_TEXTURE_RT_MSAA_SHIFT);
-			msaaQuality = bx::satSub<uint32_t>(msaaQuality, 1u);
-			msaaQuality = bx::min(s_renderGL->m_maxMsaa, msaaQuality == 0 ? 0 : 1<<msaaQuality);
+			const uint32_t numSamples = getTextureMsaaSamples(TextureFormat::Enum(m_textureFormat), m_flags);
+			const uint32_t msaaQuality = 1 == numSamples ? 0 : bx::min<uint32_t>(s_renderGL->m_maxMsaa, numSamples);
 			const bool msaaSample = 0 != (m_flags&BGFX_TEXTURE_MSAA_SAMPLE);
 
 			if (!msaaSample
@@ -6616,9 +6628,8 @@ namespace bgfx { namespace gl
 			const bool computeWrite = 0 != (_flags&BGFX_TEXTURE_COMPUTE_WRITE);
 			const bool srgb         = 0 != (_flags&BGFX_TEXTURE_SRGB);
 			const bool msaaSample   = 0 != (_flags&BGFX_TEXTURE_MSAA_SAMPLE);
-			uint32_t msaaQuality = ( (_flags&BGFX_TEXTURE_RT_MSAA_MASK)>>BGFX_TEXTURE_RT_MSAA_SHIFT);
-			msaaQuality = bx::satSub<uint32_t>(msaaQuality, 1u);
-			msaaQuality = bx::min(s_renderGL->m_maxMsaa, msaaQuality == 0 ? 0 : 1<<msaaQuality);
+			const uint32_t numSamples = getTextureMsaaSamples(TextureFormat::Enum(m_textureFormat), _flags);
+			const uint32_t msaaQuality = 1 == numSamples ? 0 : bx::min<uint32_t>(s_renderGL->m_maxMsaa, numSamples);
 
 			GLenum target = msaaSample ? GL_TEXTURE_2D_MULTISAMPLE : GL_TEXTURE_2D;
 			if (imageContainer.m_cubeMap)

@@ -1265,6 +1265,26 @@ public static class bgfx
 		/// Texture format can be used as video decode destination.
 		/// </summary>
 		TextureVideoDecodeDst  = 0x00020000,
+	
+		/// <summary>
+		/// Texture format can be used as MSAA frame buffer with 2 samples.
+		/// </summary>
+		TextureFramebufferMsaaX2 = 0x00040000,
+	
+		/// <summary>
+		/// Texture format can be used as MSAA frame buffer with 4 samples.
+		/// </summary>
+		TextureFramebufferMsaaX4 = 0x00080000,
+	
+		/// <summary>
+		/// Texture format can be used as MSAA frame buffer with 8 samples.
+		/// </summary>
+		TextureFramebufferMsaaX8 = 0x00100000,
+	
+		/// <summary>
+		/// Texture format can be used as MSAA frame buffer with 16 samples.
+		/// </summary>
+		TextureFramebufferMsaaX16 = 0x00200000,
 	}
 	
 	[AllowDuplicates]

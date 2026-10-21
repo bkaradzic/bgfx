@@ -3000,6 +3000,39 @@ namespace bgfx
 		int16_t           m_refCount;
 	};
 
+	constexpr uint32_t kCapsFormatTextureFramebufferMsaaMask = 0
+		| BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA_X2
+		| BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA_X4
+		| BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA_X8
+		| BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA_X16
+		;
+
+	inline uint64_t clampTextureMsaa(TextureFormat::Enum _format, uint64_t _flags)
+	{
+		const uint32_t rt = uint32_t( (_flags & BGFX_TEXTURE_RT_MSAA_MASK) >> BGFX_TEXTURE_RT_MSAA_SHIFT);
+
+		if (1 >= rt)
+		{
+			return _flags;
+		}
+
+		uint32_t msaa = rt - 1;
+
+		while (0 < msaa
+		&&     0 == (g_caps.formats[_format] & (BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA_X2 << (msaa - 1) ) ) )
+		{
+			--msaa;
+		}
+
+		return (_flags & ~BGFX_TEXTURE_RT_MSAA_MASK) | (uint64_t(msaa + 1) << BGFX_TEXTURE_RT_MSAA_SHIFT);
+	}
+
+	inline uint8_t getTextureMsaaSamples(TextureFormat::Enum _format, uint64_t _flags)
+	{
+		const uint64_t flags = clampTextureMsaa(_format, _flags);
+		return uint8_t(1 << bx::satSub<uint32_t>(uint32_t( (flags & BGFX_TEXTURE_RT_MSAA_MASK) >> BGFX_TEXTURE_RT_MSAA_SHIFT), 1u) );
+	}
+
 	struct TextureRef
 	{
 		void init(
@@ -7657,6 +7690,7 @@ namespace bgfx
 			}
 
 			_flags |= imageContainer.m_srgb ? BGFX_TEXTURE_SRGB : 0;
+			_flags  = clampTextureMsaa(_info->format, _flags);
 
 			TextureHandle handle = { m_textureHandle.alloc() };
 			BX_WARN(isValid(handle), "Failed to allocate texture handle.");
@@ -8243,7 +8277,10 @@ namespace bgfx
 				);
 
 			const uint32_t msaa = (_desc.flags & BGFX_SWAP_CHAIN_MSAA_MASK) >> BGFX_SWAP_CHAIN_MSAA_SHIFT;
-			const uint32_t numSamples = 0 == msaa ? 1 : 1<<msaa;
+			const uint32_t numSamples = getTextureMsaaSamples(
+				  TextureFormat::Enum(ref.m_format)
+				, uint64_t(msaa + 1) << BGFX_TEXTURE_RT_MSAA_SHIFT
+				);
 
 			BX_ASSERT(ref.m_numSamples == numSamples
 				, "SwapChain::depth has %d sample(s), but the swap chain has %d."

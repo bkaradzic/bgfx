@@ -15,7 +15,7 @@
 #ifndef BGFX_DEFINES_H_HEADER_GUARD
 #define BGFX_DEFINES_H_HEADER_GUARD
 
-#define BGFX_API_VERSION UINT32_C(166)
+#define BGFX_API_VERSION UINT32_C(167)
 
 /**
  * Color RGB/alpha/depth write. When it's not specified write will be disabled.
@@ -524,6 +524,10 @@
 #define BGFX_CAPS_FORMAT_TEXTURE_MIP_AUTOGEN      UINT32_C(0x00008000) //!< Texture format supports auto-generated mips.
 #define BGFX_CAPS_FORMAT_TEXTURE_BACKBUFFER       UINT32_C(0x00010000) //!< Texture format can be used as back buffer format.
 #define BGFX_CAPS_FORMAT_TEXTURE_VIDEO_DECODE_DST UINT32_C(0x00020000) //!< Texture format can be used as video decode destination.
+#define BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA_X2 UINT32_C(0x00040000) //!< Texture format can be used as MSAA frame buffer with 2 samples.
+#define BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA_X4 UINT32_C(0x00080000) //!< Texture format can be used as MSAA frame buffer with 4 samples.
+#define BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA_X8 UINT32_C(0x00100000) //!< Texture format can be used as MSAA frame buffer with 8 samples.
+#define BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA_X16 UINT32_C(0x00200000) //!< Texture format can be used as MSAA frame buffer with 16 samples.
 
 #define BGFX_CAPS_VIDEO_CODEC_NONE                UINT32_C(0x00000000) //!< Video codec is not supported.
 #define BGFX_CAPS_VIDEO_CODEC_BIT_8               UINT32_C(0x00000001) //!< 8-bit sample depth is supported.

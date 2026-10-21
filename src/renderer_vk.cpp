@@ -2242,6 +2242,14 @@ VK_IMPORT_INSTANCE
 											| BGFX_CAPS_FORMAT_TEXTURE_MIP_AUTOGEN
 											| (multisample ? BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA : 0)
 											;
+
+										for (uint32_t kk = 1; kk < BX_COUNTOF(s_msaa); ++kk)
+										{
+											support |= 0 != (ifp.sampleCounts & VkSampleCountFlags(1 << kk) )
+												? BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA_X2 << (kk - 1)
+												: 0
+												;
+										}
 									}
 								}
 							}
@@ -7839,7 +7847,9 @@ VK_DESTROY
 			const uint8_t bpp = bimg::getBitsPerPixel(bimg::TextureFormat::Enum(m_textureFormat) );
 
 			m_aspectFlags = getAspectMask(m_format);
-			m_sampler = s_msaa[bx::satSub<uint32_t>(uint32_t( (m_flags & BGFX_TEXTURE_RT_MSAA_MASK) >> BGFX_TEXTURE_RT_MSAA_SHIFT ), 1u)];
+
+			const uint8_t numSamples = getTextureMsaaSamples(TextureFormat::Enum(m_textureFormat), m_flags);
+			m_sampler = { numSamples, VkSampleCountFlagBits(numSamples) };
 
 			if (imageContainer.m_cubeMap)
 			{
