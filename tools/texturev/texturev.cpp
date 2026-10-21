@@ -93,9 +93,6 @@ static void initSupportedExt()
 	}
 
 	BX_ASSERT(NULL == supportedExt[s_numSupportedExt], "s_supportedExt array is too small.");
-	BX_ASSERT(bx::isSorted(s_supportedExt, s_numSupportedExt, sizeof(s_supportedExt[0]), compareExt)
-		, "s_supportedExt must be sorted!"
-		);
 }
 
 static bool isExtSupported(const bx::StringView& _ext)

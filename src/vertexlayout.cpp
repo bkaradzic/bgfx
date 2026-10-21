@@ -187,7 +187,7 @@ namespace bgfx
 		uint16_t id;
 	};
 
-	static AttribToId s_attribToId[] =
+	static constexpr AttribToId s_attribToId[] =
 	{
 		// NOTICE:
 		// Attrib must be in order how it appears in Attrib::Enum! id is
@@ -220,6 +220,7 @@ namespace bgfx
 		{ Attrib::TexCoord15, 0x0021 },
 	};
 	static_assert(BX_COUNTOF(s_attribToId) == Attrib::Count);
+	static_assert(bx::isSorted(s_attribToId, BX_COUNTOF(s_attribToId), [](const AttribToId& _lhs, const AttribToId& _rhs) { return _lhs.attr <= _rhs.attr; }) );
 
 	Attrib::Enum idToAttrib(uint16_t id)
 	{
@@ -245,7 +246,7 @@ namespace bgfx
 		uint16_t id;
 	};
 
-	static AttribTypeToId s_attribTypeToId[] =
+	static constexpr AttribTypeToId s_attribTypeToId[] =
 	{
 		// NOTICE:
 		// AttribType must be in order how it appears in AttribType::Enum!
@@ -262,6 +263,7 @@ namespace bgfx
 		{ AttribType::Uint32, 0x0009 },
 	};
 	static_assert(BX_COUNTOF(s_attribTypeToId) == AttribType::Count);
+	static_assert(bx::isSorted(s_attribTypeToId, BX_COUNTOF(s_attribTypeToId), [](const AttribTypeToId& _lhs, const AttribTypeToId& _rhs) { return _lhs.type <= _rhs.type; }) );
 
 	AttribType::Enum idToAttribType(uint16_t id)
 	{
