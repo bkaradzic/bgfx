@@ -788,32 +788,32 @@ constdef CapsFormatFlags : inline uint
 	// Texture format can be used as frame buffer.
 	TEXTUREFRAMEBUFFER     = 0x00001000,
 
-	// Texture format can be used as MSAA frame buffer.
-	TEXTUREFRAMEBUFFERMSAA = 0x00002000,
-
 	// Texture can be sampled as MSAA.
-	TEXTUREMSAA            = 0x00004000,
+	TEXTUREMSAA            = 0x00002000,
 
 	// Texture format supports auto-generated mips.
-	TEXTUREMIPAUTOGEN      = 0x00008000,
+	TEXTUREMIPAUTOGEN      = 0x00004000,
 
 	// Texture format can be used as back buffer format.
-	TEXTUREBACKBUFFER      = 0x00010000,
+	TEXTUREBACKBUFFER      = 0x00008000,
 
 	// Texture format can be used as video decode destination.
-	TEXTUREVIDEODECODEDST  = 0x00020000,
+	TEXTUREVIDEODECODEDST  = 0x00010000,
 
 	// Texture format can be used as MSAA frame buffer with 2 samples.
-	TEXTUREFRAMEBUFFERMSAAX2 = 0x00040000,
+	TEXTUREFRAMEBUFFERMSAAX2 = 0x00020000,
 
 	// Texture format can be used as MSAA frame buffer with 4 samples.
-	TEXTUREFRAMEBUFFERMSAAX4 = 0x00080000,
+	TEXTUREFRAMEBUFFERMSAAX4 = 0x00040000,
 
 	// Texture format can be used as MSAA frame buffer with 8 samples.
-	TEXTUREFRAMEBUFFERMSAAX8 = 0x00100000,
+	TEXTUREFRAMEBUFFERMSAAX8 = 0x00080000,
 
 	// Texture format can be used as MSAA frame buffer with 16 samples.
-	TEXTUREFRAMEBUFFERMSAAX16 = 0x00200000,
+	TEXTUREFRAMEBUFFERMSAAX16 = 0x00100000,
+
+	// Texture format can be used as MSAA frame buffer with any sample count.
+	TEXTUREFRAMEBUFFERMSAA = 0x001e0000,
 }
 
 constdef CapsVideoCodecFlags : inline uint
@@ -1791,8 +1791,10 @@ struct Caps
 	//     and written to.
 	//   - `BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER` - Texture format can be used as frame
 	//     buffer.
-	//   - `BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA` - Texture format can be used as MSAA
-	//     frame buffer.
+	//   - `BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA_X2`, `_X4`, `_X8`, `_X16` - Texture
+	//     format can be used as MSAA frame buffer with that many samples. A
+	//     `BGFX_TEXTURE_RT_MSAA_X*` request is clamped to the highest one set.
+	//     `BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA` is the mask of all of them.
 	//   - `BGFX_CAPS_FORMAT_TEXTURE_MSAA` - Texture can be sampled as MSAA.
 	//   - `BGFX_CAPS_FORMAT_TEXTURE_MIP_AUTOGEN` - Texture format supports auto-generated
 	//     mips.

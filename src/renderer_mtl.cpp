@@ -1151,8 +1151,8 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 				if (0 != (formatCaps & BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA) )
 				{
+					formatCaps &= ~BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA;
 					formatCaps |= msaaCaps;
-					formatCaps &= 0 != msaaCaps ? UINT32_MAX : ~BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA;
 				}
 
 				g_caps.formats[ii] = formatCaps;

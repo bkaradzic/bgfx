@@ -519,15 +519,22 @@
 #define BGFX_CAPS_FORMAT_TEXTURE_IMAGE_READ       UINT32_C(0x00000400) //!< Texture format can be used as image and read from.
 #define BGFX_CAPS_FORMAT_TEXTURE_IMAGE_WRITE      UINT32_C(0x00000800) //!< Texture format can be used as image and written to.
 #define BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER      UINT32_C(0x00001000) //!< Texture format can be used as frame buffer.
-#define BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA UINT32_C(0x00002000) //!< Texture format can be used as MSAA frame buffer.
-#define BGFX_CAPS_FORMAT_TEXTURE_MSAA             UINT32_C(0x00004000) //!< Texture can be sampled as MSAA.
-#define BGFX_CAPS_FORMAT_TEXTURE_MIP_AUTOGEN      UINT32_C(0x00008000) //!< Texture format supports auto-generated mips.
-#define BGFX_CAPS_FORMAT_TEXTURE_BACKBUFFER       UINT32_C(0x00010000) //!< Texture format can be used as back buffer format.
-#define BGFX_CAPS_FORMAT_TEXTURE_VIDEO_DECODE_DST UINT32_C(0x00020000) //!< Texture format can be used as video decode destination.
-#define BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA_X2 UINT32_C(0x00040000) //!< Texture format can be used as MSAA frame buffer with 2 samples.
-#define BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA_X4 UINT32_C(0x00080000) //!< Texture format can be used as MSAA frame buffer with 4 samples.
-#define BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA_X8 UINT32_C(0x00100000) //!< Texture format can be used as MSAA frame buffer with 8 samples.
-#define BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA_X16 UINT32_C(0x00200000) //!< Texture format can be used as MSAA frame buffer with 16 samples.
+#define BGFX_CAPS_FORMAT_TEXTURE_MSAA             UINT32_C(0x00002000) //!< Texture can be sampled as MSAA.
+#define BGFX_CAPS_FORMAT_TEXTURE_MIP_AUTOGEN      UINT32_C(0x00004000) //!< Texture format supports auto-generated mips.
+#define BGFX_CAPS_FORMAT_TEXTURE_BACKBUFFER       UINT32_C(0x00008000) //!< Texture format can be used as back buffer format.
+#define BGFX_CAPS_FORMAT_TEXTURE_VIDEO_DECODE_DST UINT32_C(0x00010000) //!< Texture format can be used as video decode destination.
+#define BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA_X2 UINT32_C(0x00020000) //!< Texture format can be used as MSAA frame buffer with 2 samples.
+#define BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA_X4 UINT32_C(0x00040000) //!< Texture format can be used as MSAA frame buffer with 4 samples.
+#define BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA_X8 UINT32_C(0x00080000) //!< Texture format can be used as MSAA frame buffer with 8 samples.
+#define BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA_X16 UINT32_C(0x00100000) //!< Texture format can be used as MSAA frame buffer with 16 samples.
+/// Texture format can be used as MSAA frame buffer with any sample count.
+#define BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA (0 \
+	| BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA_X2 \
+	| BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA_X4 \
+	| BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA_X8 \
+	| BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA_X16 \
+	)
+
 
 #define BGFX_CAPS_VIDEO_CODEC_NONE                UINT32_C(0x00000000) //!< Video codec is not supported.
 #define BGFX_CAPS_VIDEO_CODEC_BIT_8               UINT32_C(0x00000001) //!< 8-bit sample depth is supported.

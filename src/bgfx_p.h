@@ -3000,13 +3000,6 @@ namespace bgfx
 		int16_t           m_refCount;
 	};
 
-	constexpr uint32_t kCapsFormatTextureFramebufferMsaaMask = 0
-		| BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA_X2
-		| BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA_X4
-		| BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA_X8
-		| BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA_X16
-		;
-
 	inline uint64_t clampTextureMsaa(TextureFormat::Enum _format, uint64_t _flags)
 	{
 		const uint32_t rt = uint32_t( (_flags & BGFX_TEXTURE_RT_MSAA_MASK) >> BGFX_TEXTURE_RT_MSAA_SHIFT);

@@ -723,8 +723,7 @@ namespace bgfx { namespace wgpu
 
 			if (multisample)
 			{
-				caps |= BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA
-					 |  BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA_X4
+				caps |= BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA_X4
 					 |  BGFX_CAPS_FORMAT_TEXTURE_MSAA
 					 ;
 			}

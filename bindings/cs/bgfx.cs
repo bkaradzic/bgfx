@@ -1241,49 +1241,49 @@ public static partial class bgfx
 		TextureFramebuffer     = 0x00001000,
 	
 		/// <summary>
-		/// Texture format can be used as MSAA frame buffer.
-		/// </summary>
-		TextureFramebufferMsaa = 0x00002000,
-	
-		/// <summary>
 		/// Texture can be sampled as MSAA.
 		/// </summary>
-		TextureMsaa            = 0x00004000,
+		TextureMsaa            = 0x00002000,
 	
 		/// <summary>
 		/// Texture format supports auto-generated mips.
 		/// </summary>
-		TextureMipAutogen      = 0x00008000,
+		TextureMipAutogen      = 0x00004000,
 	
 		/// <summary>
 		/// Texture format can be used as back buffer format.
 		/// </summary>
-		TextureBackbuffer      = 0x00010000,
+		TextureBackbuffer      = 0x00008000,
 	
 		/// <summary>
 		/// Texture format can be used as video decode destination.
 		/// </summary>
-		TextureVideoDecodeDst  = 0x00020000,
+		TextureVideoDecodeDst  = 0x00010000,
 	
 		/// <summary>
 		/// Texture format can be used as MSAA frame buffer with 2 samples.
 		/// </summary>
-		TextureFramebufferMsaaX2 = 0x00040000,
+		TextureFramebufferMsaaX2 = 0x00020000,
 	
 		/// <summary>
 		/// Texture format can be used as MSAA frame buffer with 4 samples.
 		/// </summary>
-		TextureFramebufferMsaaX4 = 0x00080000,
+		TextureFramebufferMsaaX4 = 0x00040000,
 	
 		/// <summary>
 		/// Texture format can be used as MSAA frame buffer with 8 samples.
 		/// </summary>
-		TextureFramebufferMsaaX8 = 0x00100000,
+		TextureFramebufferMsaaX8 = 0x00080000,
 	
 		/// <summary>
 		/// Texture format can be used as MSAA frame buffer with 16 samples.
 		/// </summary>
-		TextureFramebufferMsaaX16 = 0x00200000,
+		TextureFramebufferMsaaX16 = 0x00100000,
+	
+		/// <summary>
+		/// Texture format can be used as MSAA frame buffer with any sample count.
+		/// </summary>
+		TextureFramebufferMsaa = 0x001e0000,
 	}
 	
 	[Flags]

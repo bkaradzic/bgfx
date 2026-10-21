@@ -766,32 +766,32 @@ pub const CapsFormatFlags_TextureImageWrite: CapsFormatFlags      = 0x00000800;
 /// Texture format can be used as frame buffer.
 pub const CapsFormatFlags_TextureFramebuffer: CapsFormatFlags     = 0x00001000;
 
-/// Texture format can be used as MSAA frame buffer.
-pub const CapsFormatFlags_TextureFramebufferMsaa: CapsFormatFlags = 0x00002000;
-
 /// Texture can be sampled as MSAA.
-pub const CapsFormatFlags_TextureMsaa: CapsFormatFlags            = 0x00004000;
+pub const CapsFormatFlags_TextureMsaa: CapsFormatFlags            = 0x00002000;
 
 /// Texture format supports auto-generated mips.
-pub const CapsFormatFlags_TextureMipAutogen: CapsFormatFlags      = 0x00008000;
+pub const CapsFormatFlags_TextureMipAutogen: CapsFormatFlags      = 0x00004000;
 
 /// Texture format can be used as back buffer format.
-pub const CapsFormatFlags_TextureBackbuffer: CapsFormatFlags      = 0x00010000;
+pub const CapsFormatFlags_TextureBackbuffer: CapsFormatFlags      = 0x00008000;
 
 /// Texture format can be used as video decode destination.
-pub const CapsFormatFlags_TextureVideoDecodeDst: CapsFormatFlags  = 0x00020000;
+pub const CapsFormatFlags_TextureVideoDecodeDst: CapsFormatFlags  = 0x00010000;
 
 /// Texture format can be used as MSAA frame buffer with 2 samples.
-pub const CapsFormatFlags_TextureFramebufferMsaaX2: CapsFormatFlags = 0x00040000;
+pub const CapsFormatFlags_TextureFramebufferMsaaX2: CapsFormatFlags = 0x00020000;
 
 /// Texture format can be used as MSAA frame buffer with 4 samples.
-pub const CapsFormatFlags_TextureFramebufferMsaaX4: CapsFormatFlags = 0x00080000;
+pub const CapsFormatFlags_TextureFramebufferMsaaX4: CapsFormatFlags = 0x00040000;
 
 /// Texture format can be used as MSAA frame buffer with 8 samples.
-pub const CapsFormatFlags_TextureFramebufferMsaaX8: CapsFormatFlags = 0x00100000;
+pub const CapsFormatFlags_TextureFramebufferMsaaX8: CapsFormatFlags = 0x00080000;
 
 /// Texture format can be used as MSAA frame buffer with 16 samples.
-pub const CapsFormatFlags_TextureFramebufferMsaaX16: CapsFormatFlags = 0x00200000;
+pub const CapsFormatFlags_TextureFramebufferMsaaX16: CapsFormatFlags = 0x00100000;
+
+/// Texture format can be used as MSAA frame buffer with any sample count.
+pub const CapsFormatFlags_TextureFramebufferMsaa: CapsFormatFlags = 0x001e0000;
 
 pub const CapsVideoCodecFlags = u32;
 /// Video codec is not supported.

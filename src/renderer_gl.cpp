@@ -2773,11 +2773,6 @@ namespace bgfx { namespace gl
 							}
 						}
 
-						supported |= 0 != (supported & kCapsFormatTextureFramebufferMsaaMask)
-							? BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA
-							: BGFX_CAPS_FORMAT_TEXTURE_NONE
-							;
-
 						if (m_textureMultisampleSupport)
 						{
 							GLint maxSamples = 0;

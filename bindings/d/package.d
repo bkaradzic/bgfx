@@ -579,15 +579,15 @@ enum CapsFormat: CapsFormat_{
 	textureImageRead           = 0x0000_0400, ///Texture format can be used as image and read from.
 	textureImageWrite          = 0x0000_0800, ///Texture format can be used as image and written to.
 	textureFramebuffer         = 0x0000_1000, ///Texture format can be used as frame buffer.
-	textureFramebufferMSAA     = 0x0000_2000, ///Texture format can be used as MSAA frame buffer.
-	textureMSAA                = 0x0000_4000, ///Texture can be sampled as MSAA.
-	textureMIPAutogen          = 0x0000_8000, ///Texture format supports auto-generated mips.
-	textureBackbuffer          = 0x0001_0000, ///Texture format can be used as back buffer format.
-	textureVideoDecodeDst      = 0x0002_0000, ///Texture format can be used as video decode destination.
-	textureFramebufferMSAAX2   = 0x0004_0000, ///Texture format can be used as MSAA frame buffer with 2 samples.
-	textureFramebufferMSAAX4   = 0x0008_0000, ///Texture format can be used as MSAA frame buffer with 4 samples.
-	textureFramebufferMSAAX8   = 0x0010_0000, ///Texture format can be used as MSAA frame buffer with 8 samples.
-	textureFramebufferMSAAX16  = 0x0020_0000, ///Texture format can be used as MSAA frame buffer with 16 samples.
+	textureMSAA                = 0x0000_2000, ///Texture can be sampled as MSAA.
+	textureMIPAutogen          = 0x0000_4000, ///Texture format supports auto-generated mips.
+	textureBackbuffer          = 0x0000_8000, ///Texture format can be used as back buffer format.
+	textureVideoDecodeDst      = 0x0001_0000, ///Texture format can be used as video decode destination.
+	textureFramebufferMSAAX2   = 0x0002_0000, ///Texture format can be used as MSAA frame buffer with 2 samples.
+	textureFramebufferMSAAX4   = 0x0004_0000, ///Texture format can be used as MSAA frame buffer with 4 samples.
+	textureFramebufferMSAAX8   = 0x0008_0000, ///Texture format can be used as MSAA frame buffer with 8 samples.
+	textureFramebufferMSAAX16  = 0x0010_0000, ///Texture format can be used as MSAA frame buffer with 16 samples.
+	textureFramebufferMSAA     = 0x001E_0000, ///Texture format can be used as MSAA frame buffer with any sample count.
 }
 
 alias CapsVideoCodec_ = uint;
@@ -1270,8 +1270,10 @@ extern(C++, "bgfx") struct Caps{
 	    and written to.
 	  - `BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER` - Texture format can be used as frame
 	    buffer.
-	  - `BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA` - Texture format can be used as MSAA
-	    frame buffer.
+	  - `BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA_X2`, `_X4`, `_X8`, `_X16` - Texture
+	    format can be used as MSAA frame buffer with that many samples. A
+	    `BGFX_TEXTURE_RT_MSAA_X*` request is clamped to the highest one set.
+	    `BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA` is the mask of all of them.
 	  - `BGFX_CAPS_FORMAT_TEXTURE_MSAA` - Texture can be sampled as MSAA.
 	  - `BGFX_CAPS_FORMAT_TEXTURE_MIP_AUTOGEN` - Texture format supports auto-generated
 	    mips.
