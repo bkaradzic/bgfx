@@ -61,6 +61,11 @@ project "tint-core"
 			"-Wno-shadow",
 		}
 
+	configuration { "mingw-gcc or linux-gcc" }
+		buildoptions {
+			"-Wno-dangling-pointer",
+		}
+
 	configuration { "osx*" }
 		buildoptions {
 			"-Wno-unknown-warning-option",
@@ -106,6 +111,12 @@ project "tint-lang"
 		path.join(TINT, "src/tint/lang/wgsl/**.h"),
 	}
 
+	configuration { "mingw-gcc or linux-gcc" }
+		buildoptions {
+			"-Wno-dangling-pointer",
+			"-Wno-maybe-uninitialized",
+		}
+
 	configuration { "osx*" }
 		buildoptions {
 			"-Wno-unknown-warning-option",
@@ -148,6 +159,11 @@ project "tint-api"
 		path.join(TINT, "src/tint/api/**.cc"),
 		path.join(TINT, "src/tint/api/**.h"),
 	}
+
+	configuration { "mingw-gcc or linux-gcc" }
+		buildoptions {
+			"-Wno-dangling-pointer",
+		}
 
 	configuration { "osx*" }
 		buildoptions {
