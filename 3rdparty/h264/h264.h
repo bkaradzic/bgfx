@@ -57,6 +57,34 @@ namespace h264 {
 
 	static constexpr unsigned char nal_start_code[] = { 0,0,1 };
 
+	enum LIMIT
+	{
+		MAX_SPS_ID = 31,
+		MAX_PPS_ID = 255,
+		MAX_CHROMA_FORMAT_IDC = 3,
+		MAX_BIT_DEPTH_MINUS8 = 6,
+		MAX_LOG2_MINUS4 = 12,
+		MAX_PIC_ORDER_CNT_TYPE = 2,
+		MAX_NUM_REF_FRAMES_IN_PIC_ORDER_CNT_CYCLE = 255,
+		MAX_NUM_REF_FRAMES = 16,
+		MAX_NUM_REF_IDX_ACTIVE_MINUS1 = 31,
+		MAX_CPB_CNT_MINUS1 = 31,
+		MAX_NUM_SLICE_GROUPS_MINUS1 = 7,
+		MAX_WEIGHTED_BIPRED_IDC = 2,
+		PIC_INIT_QP = 26,
+		MAX_QP = 51,
+		QP_BD_OFFSET_PER_BIT = 6,
+		MAX_CHROMA_QP_INDEX_OFFSET = 12,
+		MAX_SLICE_TYPE = 9,
+		MAX_CABAC_INIT_IDC = 2,
+		MAX_DISABLE_DEBLOCKING_FILTER_IDC = 2,
+		MAX_DEBLOCKING_OFFSET_DIV2 = 6,
+		MAX_IDR_PIC_ID = 65535,
+		MAX_REDUNDANT_PIC_CNT = 127,
+		MAX_MEMORY_MANAGEMENT_CONTROL_OPS = 64,
+		MAX_SLICE_GROUP_IDS = 256,
+	};
+
 	struct SPS
 	{
 		int profile_idc;
@@ -87,7 +115,7 @@ namespace h264 {
 		int offset_for_non_ref_pic;
 		int offset_for_top_to_bottom_field;
 		int num_ref_frames_in_pic_order_cnt_cycle;
-		int offset_for_ref_frame[256];
+		int offset_for_ref_frame[MAX_NUM_REF_FRAMES_IN_PIC_ORDER_CNT_CYCLE + 1];
 		int num_ref_frames;
 		int gaps_in_frame_num_value_allowed_flag;
 		int pic_width_in_mbs_minus1;
@@ -143,9 +171,9 @@ namespace h264 {
 			int cpb_cnt_minus1;
 			int bit_rate_scale;
 			int cpb_size_scale;
-			int bit_rate_value_minus1[32];
-			int cpb_size_value_minus1[32];
-			int cbr_flag[32];
+			int bit_rate_value_minus1[MAX_CPB_CNT_MINUS1 + 1];
+			int cpb_size_value_minus1[MAX_CPB_CNT_MINUS1 + 1];
+			int cbr_flag[MAX_CPB_CNT_MINUS1 + 1];
 			int initial_cpb_removal_delay_length_minus1;
 			int cpb_removal_delay_length_minus1;
 			int dpb_output_delay_length_minus1;
@@ -161,13 +189,13 @@ namespace h264 {
 		int pic_order_present_flag;
 		int num_slice_groups_minus1;
 		int slice_group_map_type;
-		int run_length_minus1[8];
-		int top_left[8];
-		int bottom_right[8];
+		int run_length_minus1[MAX_NUM_SLICE_GROUPS_MINUS1 + 1];
+		int top_left[MAX_NUM_SLICE_GROUPS_MINUS1 + 1];
+		int bottom_right[MAX_NUM_SLICE_GROUPS_MINUS1 + 1];
 		int slice_group_change_direction_flag;
 		int slice_group_change_rate_minus1;
 		int pic_size_in_map_units_minus1;
-		int slice_group_id[256];
+		int slice_group_id[MAX_SLICE_GROUP_IDS];
 		int num_ref_idx_l0_active_minus1;
 		int num_ref_idx_l1_active_minus1;
 		int weighted_pred_flag;
@@ -236,18 +264,18 @@ namespace h264 {
 		{
 			int luma_log2_weight_denom;
 			int chroma_log2_weight_denom;
-			int luma_weight_l0_flag[64];
-			int luma_weight_l0[64];
-			int luma_offset_l0[64];
-			int chroma_weight_l0_flag[64];
-			int chroma_weight_l0[64][2];
-			int chroma_offset_l0[64][2];
-			int luma_weight_l1_flag[64];
-			int luma_weight_l1[64];
-			int luma_offset_l1[64];
-			int chroma_weight_l1_flag[64];
-			int chroma_weight_l1[64][2];
-			int chroma_offset_l1[64][2];
+			int luma_weight_l0_flag[MAX_NUM_REF_IDX_ACTIVE_MINUS1 + 1];
+			int luma_weight_l0[MAX_NUM_REF_IDX_ACTIVE_MINUS1 + 1];
+			int luma_offset_l0[MAX_NUM_REF_IDX_ACTIVE_MINUS1 + 1];
+			int chroma_weight_l0_flag[MAX_NUM_REF_IDX_ACTIVE_MINUS1 + 1];
+			int chroma_weight_l0[MAX_NUM_REF_IDX_ACTIVE_MINUS1 + 1][2];
+			int chroma_offset_l0[MAX_NUM_REF_IDX_ACTIVE_MINUS1 + 1][2];
+			int luma_weight_l1_flag[MAX_NUM_REF_IDX_ACTIVE_MINUS1 + 1];
+			int luma_weight_l1[MAX_NUM_REF_IDX_ACTIVE_MINUS1 + 1];
+			int luma_offset_l1[MAX_NUM_REF_IDX_ACTIVE_MINUS1 + 1];
+			int chroma_weight_l1_flag[MAX_NUM_REF_IDX_ACTIVE_MINUS1 + 1];
+			int chroma_weight_l1[MAX_NUM_REF_IDX_ACTIVE_MINUS1 + 1][2];
+			int chroma_offset_l1[MAX_NUM_REF_IDX_ACTIVE_MINUS1 + 1][2];
 		} pwt; // predictive weight table
 
 		struct
@@ -255,16 +283,16 @@ namespace h264 {
 			int ref_pic_list_reordering_flag_l0;
 			struct
 			{
-				int reordering_of_pic_nums_idc[64];
-				int abs_diff_pic_num_minus1[64];
-				int long_term_pic_num[64];
+				int reordering_of_pic_nums_idc[MAX_NUM_REF_IDX_ACTIVE_MINUS1 + 2];
+				int abs_diff_pic_num_minus1[MAX_NUM_REF_IDX_ACTIVE_MINUS1 + 2];
+				int long_term_pic_num[MAX_NUM_REF_IDX_ACTIVE_MINUS1 + 2];
 			} reorder_l0;
 			int ref_pic_list_reordering_flag_l1;
 			struct
 			{
-				int reordering_of_pic_nums_idc[64];
-				int abs_diff_pic_num_minus1[64];
-				int long_term_pic_num[64];
+				int reordering_of_pic_nums_idc[MAX_NUM_REF_IDX_ACTIVE_MINUS1 + 2];
+				int abs_diff_pic_num_minus1[MAX_NUM_REF_IDX_ACTIVE_MINUS1 + 2];
+				int long_term_pic_num[MAX_NUM_REF_IDX_ACTIVE_MINUS1 + 2];
 			} reorder_l1;
 		} rplr; // ref pic list reorder
 
@@ -273,11 +301,11 @@ namespace h264 {
 			int no_output_of_prior_pics_flag;
 			int long_term_reference_flag;
 			int adaptive_ref_pic_marking_mode_flag;
-			int memory_management_control_operation[64];
-			int difference_of_pic_nums_minus1[64];
-			int long_term_pic_num[64];
-			int long_term_frame_idx[64];
-			int max_long_term_frame_idx_plus1[64];
+			int memory_management_control_operation[MAX_MEMORY_MANAGEMENT_CONTROL_OPS];
+			int difference_of_pic_nums_minus1[MAX_MEMORY_MANAGEMENT_CONTROL_OPS];
+			int long_term_pic_num[MAX_MEMORY_MANAGEMENT_CONTROL_OPS];
+			int long_term_frame_idx[MAX_MEMORY_MANAGEMENT_CONTROL_OPS];
+			int max_long_term_frame_idx_plus1[MAX_MEMORY_MANAGEMENT_CONTROL_OPS];
 		} drpm; // decoded ref pic marking
 
 	};
@@ -291,30 +319,6 @@ namespace h264 {
 		PROFILE_IDC_HIGH_10 = 110,
 		PROFILE_IDC_HIGH_422 = 122,
 		PROFILE_IDC_HIGH_444 = 244,
-	};
-
-	enum LIMIT
-	{
-		MAX_SPS_ID = 31,
-		MAX_PPS_ID = 255,
-		MAX_CHROMA_FORMAT_IDC = 3,
-		MAX_BIT_DEPTH_MINUS8 = 6,
-		MAX_LOG2_MINUS4 = 12,
-		MAX_PIC_ORDER_CNT_TYPE = 2,
-		MAX_NUM_REF_FRAMES_IN_PIC_ORDER_CNT_CYCLE = 255,
-		MAX_NUM_REF_FRAMES = 16,
-		MAX_NUM_REF_IDX_ACTIVE_MINUS1 = 31,
-		MAX_WEIGHTED_BIPRED_IDC = 2,
-		PIC_INIT_QP = 26,
-		MAX_QP = 51,
-		QP_BD_OFFSET_PER_BIT = 6,
-		MAX_CHROMA_QP_INDEX_OFFSET = 12,
-		MAX_SLICE_TYPE = 9,
-		MAX_CABAC_INIT_IDC = 2,
-		MAX_DISABLE_DEBLOCKING_FILTER_IDC = 2,
-		MAX_DEBLOCKING_OFFSET_DIV2 = 6,
-		MAX_IDR_PIC_ID = 65535,
-		MAX_REDUNDANT_PIC_CNT = 127,
 	};
 
 	enum NAL_REF_IDC
@@ -485,7 +489,7 @@ namespace h264 {
 		sps->hrd.cpb_cnt_minus1 = b->ue();
 		sps->hrd.bit_rate_scale = b->u(4);
 		sps->hrd.cpb_size_scale = b->u(4);
-		for (int SchedSelIdx = 0; SchedSelIdx <= sps->hrd.cpb_cnt_minus1; SchedSelIdx++)
+		for (int SchedSelIdx = 0; SchedSelIdx <= sps->hrd.cpb_cnt_minus1 && SchedSelIdx <= MAX_CPB_CNT_MINUS1; SchedSelIdx++)
 		{
 			sps->hrd.bit_rate_value_minus1[SchedSelIdx] = b->ue();
 			sps->hrd.cpb_size_value_minus1[SchedSelIdx] = b->ue();
@@ -670,7 +674,7 @@ namespace h264 {
 			sps->offset_for_non_ref_pic = b->se();
 			sps->offset_for_top_to_bottom_field = b->se();
 			sps->num_ref_frames_in_pic_order_cnt_cycle = b->ue();
-			for (int i = 0; i < sps->num_ref_frames_in_pic_order_cnt_cycle && i < 256; i++)
+			for (int i = 0; i < sps->num_ref_frames_in_pic_order_cnt_cycle && i <= MAX_NUM_REF_FRAMES_IN_PIC_ORDER_CNT_CYCLE; i++)
 			{
 				sps->offset_for_ref_frame[i] = b->se();
 			}
@@ -713,14 +717,14 @@ namespace h264 {
 			pps->slice_group_map_type = b->ue();
 			if (pps->slice_group_map_type == 0)
 			{
-				for (int i_group = 0; i_group <= pps->num_slice_groups_minus1 && i_group < 8; i_group++)
+				for (int i_group = 0; i_group <= pps->num_slice_groups_minus1 && i_group <= MAX_NUM_SLICE_GROUPS_MINUS1; i_group++)
 				{
 					pps->run_length_minus1[i_group] = b->ue();
 				}
 			}
 			else if (pps->slice_group_map_type == 2)
 			{
-				for (int i_group = 0; i_group < pps->num_slice_groups_minus1 && i_group < 8; i_group++)
+				for (int i_group = 0; i_group < pps->num_slice_groups_minus1 && i_group <= MAX_NUM_SLICE_GROUPS_MINUS1; i_group++)
 				{
 					pps->top_left[i_group] = b->ue();
 					pps->bottom_right[i_group] = b->ue();
@@ -736,7 +740,7 @@ namespace h264 {
 			else if (pps->slice_group_map_type == 6)
 			{
 				pps->pic_size_in_map_units_minus1 = b->ue();
-				for (int i = 0; i <= pps->pic_size_in_map_units_minus1 && i < 256; i++)
+				for (int i = 0; i <= pps->pic_size_in_map_units_minus1 && i < MAX_SLICE_GROUP_IDS; i++)
 				{
 					int v = intlog2(pps->num_slice_groups_minus1 + 1);
 					pps->slice_group_id[i] = b->u(v);
@@ -821,7 +825,7 @@ namespace h264 {
 					{
 						sh->rplr.reorder_l0.long_term_pic_num[n] = b->ue();
 					}
-				} while (sh->rplr.reorder_l0.reordering_of_pic_nums_idc[n] != 3 && !b->eof() && n < 63);
+				} while (sh->rplr.reorder_l0.reordering_of_pic_nums_idc[n] != 3 && !b->eof() && n < MAX_NUM_REF_IDX_ACTIVE_MINUS1 + 1);
 			}
 		}
 		if (is_slice_type(sh->slice_type, SH_SLICE_TYPE_B))
@@ -843,7 +847,7 @@ namespace h264 {
 					{
 						sh->rplr.reorder_l1.long_term_pic_num[n] = b->ue();
 					}
-				} while (sh->rplr.reorder_l1.reordering_of_pic_nums_idc[n] != 3 && !b->eof() && n < 63);
+				} while (sh->rplr.reorder_l1.reordering_of_pic_nums_idc[n] != 3 && !b->eof() && n < MAX_NUM_REF_IDX_ACTIVE_MINUS1 + 1);
 			}
 		}
 	}
@@ -855,7 +859,7 @@ namespace h264 {
 		{
 			sh->pwt.chroma_log2_weight_denom = b->ue();
 		}
-		for (int i = 0; i <= sh->num_ref_idx_l0_active_minus1 && i < 64; i++)
+		for (int i = 0; i <= sh->num_ref_idx_l0_active_minus1 && i <= MAX_NUM_REF_IDX_ACTIVE_MINUS1; i++)
 		{
 			sh->pwt.luma_weight_l0_flag[i] = b->u1();
 			if (sh->pwt.luma_weight_l0_flag[i])
@@ -878,7 +882,7 @@ namespace h264 {
 		}
 		if (is_slice_type(sh->slice_type, SH_SLICE_TYPE_B))
 		{
-			for (int i = 0; i <= sh->num_ref_idx_l1_active_minus1 && i < 64; i++)
+			for (int i = 0; i <= sh->num_ref_idx_l1_active_minus1 && i <= MAX_NUM_REF_IDX_ACTIVE_MINUS1; i++)
 			{
 				sh->pwt.luma_weight_l1_flag[i] = b->u1();
 				if (sh->pwt.luma_weight_l1_flag[i])
@@ -936,7 +940,7 @@ namespace h264 {
 					{
 						sh->drpm.max_long_term_frame_idx_plus1[n] = b->ue();
 					}
-				} while (sh->drpm.memory_management_control_operation[n] != 0 && !b->eof() && n < 63);
+				} while (sh->drpm.memory_management_control_operation[n] != 0 && !b->eof() && n < MAX_MEMORY_MANAGEMENT_CONTROL_OPS - 1);
 			}
 		}
 	}
