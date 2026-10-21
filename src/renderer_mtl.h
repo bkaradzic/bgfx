@@ -397,6 +397,7 @@ namespace bgfx { namespace mtl
 			for (uint32_t ii = 0; ii < BGFX_CONFIG_MAX_TEXTURE_SAMPLERS; ++ii)
 			{
 				m_bindingTypes[ii] = 0;
+				m_textureTypes[ii] = kTextureTypeAny;
 			}
 		}
 
@@ -430,9 +431,11 @@ namespace bgfx { namespace mtl
 		{
 			BindToVertexShader   = 1 << 0,
 			BindToFragmentShader = 1 << 1,
-			BindMultisample      = 1 << 2,
 		};
 		uint8_t m_bindingTypes[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS];
+
+		static constexpr uint8_t kTextureTypeAny = UINT8_MAX;
+		uint8_t m_textureTypes[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS];
 
 		uint16_t m_numThreads[3];
 
@@ -512,13 +515,14 @@ namespace bgfx { namespace mtl
 			, uint8_t _numMips = UINT8_MAX
 			, uint8_t _lodMin = 0
 			, uint8_t _lodMax = UINT8_MAX
-			, bool _multisample = false
+			, uint8_t _textureType = UINT8_MAX
 			);
 
 		MTL::Texture* getMultisampleView(uint32_t _flags) const;
+		MTL::Texture* getSampledView(uint8_t _textureType, uint32_t _flags, uint16_t _firstLayer, uint16_t _numLayers, uint8_t _firstMip, uint8_t _numMips, bool _stencil);
 
 		MTL::Texture* getTextureImage(uint8_t _mip, uint16_t _firstLayer = 0, uint16_t _numLayers = UINT16_MAX);
-		MTL::Texture* getTextureView(uint16_t _firstLayer, uint16_t _numLayers, uint8_t _firstMip, uint8_t _numMips, bool _stencil = false, bool _alt = false);
+		MTL::Texture* getTextureView(uint16_t _firstLayer, uint16_t _numLayers, uint8_t _firstMip, uint8_t _numMips, bool _stencil = false, bool _alt = false, uint8_t _textureType = UINT8_MAX);
 
 		bool useAltFormat(uint32_t _flags, uint32_t _bit) const;
 		MTL::PixelFormat getAttachmentPixelFormat(uint8_t _flags) const;
