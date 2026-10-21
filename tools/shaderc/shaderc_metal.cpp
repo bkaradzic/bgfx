@@ -347,9 +347,6 @@ namespace bgfx { namespace metal
 
 		switch (_version)
 		{
-		case 1000:
-		case 1110:
-		case 1210:
 		case 2011:
 		case 2111:
 		case 2211:
@@ -359,8 +356,8 @@ namespace bgfx { namespace metal
 		case 3114:
 			return;
 		default:
-			bx::write(_messageWriter, &err, "Warning: Unknown MSL version requested. Returning 1.0 as default.\n");
-			_major = 1;
+			bx::write(_messageWriter, &err, "Warning: Unknown MSL version requested. Returning 3.0 as default.\n");
+			_major = 3;
 			_minor = 0;
 		}
 	}
