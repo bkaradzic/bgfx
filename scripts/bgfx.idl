@@ -1,7 +1,7 @@
 -- vim: syntax=lua
 -- bgfx interface
 
-version(166)
+version(167)
 
 typedef "bool"
 typedef "char"
@@ -437,6 +437,10 @@ flag.CapsFormat { bits = 32 }
 	.TextureMipAutogen       --- Texture format supports auto-generated mips.
 	.TextureBackbuffer       --- Texture format can be used as back buffer format.
 	.TextureVideoDecodeDst   --- Texture format can be used as video decode destination.
+	.TextureFramebufferMsaaX2  --- Texture format can be used as MSAA frame buffer with 2 samples.
+	.TextureFramebufferMsaaX4  --- Texture format can be used as MSAA frame buffer with 4 samples.
+	.TextureFramebufferMsaaX8  --- Texture format can be used as MSAA frame buffer with 8 samples.
+	.TextureFramebufferMsaaX16 --- Texture format can be used as MSAA frame buffer with 16 samples.
 	()
 
 flag.CapsVideoCodec { bits = 32 }

@@ -1935,6 +1935,32 @@ namespace bgfx { namespace d3d12
 							}
 						}
 
+						if (0 != (support & BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA) )
+						{
+							for (uint32_t jj = 1; jj < BX_COUNTOF(s_checkMsaa); ++jj)
+							{
+								D3D12_FEATURE_DATA_MULTISAMPLE_QUALITY_LEVELS msaaData =
+								{
+									.Format           = fmt,
+									.SampleCount      = s_checkMsaa[jj],
+									.Flags            = D3D12_MULTISAMPLE_QUALITY_LEVELS_FLAG_NONE,
+									.NumQualityLevels = 0,
+								};
+								hr = m_device->CheckFeatureSupport(D3D12_FEATURE_MULTISAMPLE_QUALITY_LEVELS, &msaaData, sizeof(msaaData) );
+
+								if (SUCCEEDED(hr)
+								&&  0 < msaaData.NumQualityLevels)
+								{
+									support |= BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA_X2 << (jj - 1);
+								}
+							}
+
+							if (0 == (support & kCapsFormatTextureFramebufferMsaaMask) )
+							{
+								support &= ~BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA;
+							}
+						}
+
 						if (0 != (support & BGFX_CAPS_FORMAT_TEXTURE_IMAGE_READ) )
 						{
 							// clear image flag for additional testing
@@ -3247,7 +3273,6 @@ namespace bgfx { namespace d3d12
 				&&  0 < data.NumQualityLevels)
 				{
 					s_msaa[ii].Count   = data.SampleCount;
-					s_msaa[ii].Quality = data.NumQualityLevels-1;
 					last = ii;
 				}
 				else
@@ -4234,10 +4259,7 @@ namespace bgfx { namespace d3d12
 						? frameBuffer.m_texture[0]
 						: frameBuffer.m_depth
 						;
-					const uint64_t flags = m_textures[th.idx].m_flags;
-					const uint32_t msaaQuality = bx::satSub<uint32_t>(uint32_t( (flags & BGFX_TEXTURE_RT_MSAA_MASK) >> BGFX_TEXTURE_RT_MSAA_SHIFT), 1u);
-
-					desc.SampleDesc = s_msaa[msaaQuality];
+					desc.SampleDesc = m_textures[th.idx].m_sampleDesc;
 				}
 			}
 
@@ -6936,10 +6958,11 @@ namespace bgfx { namespace d3d12
 			const bool blit           = 0 != (m_flags & BGFX_TEXTURE_BLIT_DST);
 			const bool externalShared = 0 != (m_flags & BGFX_TEXTURE_EXTERNAL_SHARED);
 
-			const uint32_t msaaQuality = bx::satSub<uint32_t>(uint32_t( (m_flags & BGFX_TEXTURE_RT_MSAA_MASK) >> BGFX_TEXTURE_RT_MSAA_SHIFT ), 1u);
-			const DXGI_SAMPLE_DESC& msaa = s_msaa[msaaQuality];
-
 			const bool depth = bimg::isDepth(bimg::TextureFormat::Enum(m_textureFormat) );
+
+			m_sampleDesc = { getTextureMsaaSamples(TextureFormat::Enum(m_textureFormat), m_flags), 0 };
+
+			const DXGI_SAMPLE_DESC& msaa = m_sampleDesc;
 
 			const bool needResolve = true
 				&& 1 < msaa.Count
@@ -7796,9 +7819,8 @@ namespace bgfx { namespace d3d12
 
 	bool TextureD3D12::isMsaaSurface() const
 	{
-		const uint32_t msaaQuality = bx::satSub<uint32_t>(uint32_t( (m_flags&BGFX_TEXTURE_RT_MSAA_MASK) >> BGFX_TEXTURE_RT_MSAA_SHIFT), 1u);
 		return true
-			&& 1  < s_msaa[msaaQuality].Count
+			&& 1  < m_sampleDesc.Count
 			&& 0 != (m_flags & BGFX_TEXTURE_MSAA_SAMPLE)
 			&& !bimg::isDepth(bimg::TextureFormat::Enum(m_textureFormat) )
 			;
@@ -7806,8 +7828,7 @@ namespace bgfx { namespace d3d12
 
 	bool TextureD3D12::isMultisampled() const
 	{
-		const uint32_t msaaQuality = bx::satSub<uint32_t>(uint32_t( (m_flags&BGFX_TEXTURE_RT_MSAA_MASK) >> BGFX_TEXTURE_RT_MSAA_SHIFT), 1u);
-		return 1 < s_msaa[msaaQuality].Count;
+		return 1 < m_sampleDesc.Count;
 	}
 
 	uint32_t TextureD3D12::getNumSlices() const
@@ -8542,8 +8563,7 @@ namespace bgfx { namespace d3d12
 						m_height = bx::max<uint32_t>(1, uint32_t(desc.Height) >> at.mip);
 					}
 
-					const uint32_t msaaQuality = bx::satSub<uint32_t>(uint32_t( (texture.m_flags & BGFX_TEXTURE_RT_MSAA_MASK) >> BGFX_TEXTURE_RT_MSAA_SHIFT ), 1u);
-					const DXGI_SAMPLE_DESC& msaa = s_msaa[msaaQuality];
+					const DXGI_SAMPLE_DESC& msaa = texture.m_sampleDesc;
 
 					if (bimg::isDepth(bimg::TextureFormat::Enum(texture.m_textureFormat) ) )
 					{

@@ -462,6 +462,7 @@ namespace bgfx { namespace d3d12
 			bx::memSet(&m_srvd, 0, sizeof(m_srvd) );
 			bx::memSet(&m_uavd, 0, sizeof(m_uavd) );
 			m_srvHandle.ptr = 0;
+			m_sampleDesc = { 1, 0 };
 		}
 
 		void* create(const Memory* _mem, uint64_t _flags, uint8_t _skip, uint64_t _external);
@@ -493,6 +494,7 @@ namespace bgfx { namespace d3d12
 		void* m_directAccessPtr;
 		D3D12_RESOURCE_STATES m_state;
 		D3D12_RESOURCE_STATES* m_subStates;
+		DXGI_SAMPLE_DESC m_sampleDesc;
 		uint64_t m_flags;
 		uint32_t m_width;
 		uint32_t m_height;

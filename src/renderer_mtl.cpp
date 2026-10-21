@@ -1135,9 +1135,27 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 			TextureFormatCaps textureFormatCaps(m_device, hasPacked16Formats, hasPixelFormatDepth32Float_Stencil8);
 
+			uint32_t msaaCaps = 0;
+
+			for (uint32_t ii = 1; ii < BX_COUNTOF(s_msaa); ++ii)
+			{
+				msaaCaps |= m_device->supportsTextureSampleCount(1<<ii)
+					? BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA_X2 << (ii - 1)
+					: 0
+					;
+			}
+
 			for (uint32_t ii = 0; ii < TextureFormat::Count; ++ii)
 			{
-				g_caps.formats[ii] = textureFormatCaps.getCaps(TextureFormat::Enum(ii) );
+				uint32_t formatCaps = textureFormatCaps.getCaps(TextureFormat::Enum(ii) );
+
+				if (0 != (formatCaps & BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA) )
+				{
+					formatCaps |= msaaCaps;
+					formatCaps &= 0 != msaaCaps ? UINT32_MAX : ~BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA;
+				}
+
+				g_caps.formats[ii] = formatCaps;
 			}
 
 			for (uint32_t ii = 0; ii < TextureFormat::Count; ++ii)
@@ -4370,8 +4388,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 				, srgb         ? 'x' : ' '
 				);
 
-			const uint32_t msaaQuality = bx::satSub<uint32_t>(uint32_t( (_flags&BGFX_TEXTURE_RT_MSAA_MASK) >> BGFX_TEXTURE_RT_MSAA_SHIFT ), 1u);
-			const int32_t  sampleCount = s_msaa[msaaQuality];
+			const int32_t sampleCount = getTextureMsaaSamples(TextureFormat::Enum(m_textureFormat), _flags);
 
 			const bool isVideoDecodeDst = 0 != (_flags & BGFX_TEXTURE_INTERNAL_VIDEO_DECODE_DST);
 
@@ -5481,8 +5498,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 		}
 
 		const TextureMtl &firstTexture = s_renderMtl->m_textures[_attachment[0].handle.idx];
-		const uint32_t msaaQuality = bx::satSub<uint32_t>(uint32_t( (firstTexture.m_flags&BGFX_TEXTURE_RT_MSAA_MASK) >> BGFX_TEXTURE_RT_MSAA_SHIFT ), 1u);
-		const int32_t sampleCount = s_msaa[msaaQuality];
+		const int32_t sampleCount = getTextureMsaaSamples(TextureFormat::Enum(firstTexture.m_textureFormat), firstTexture.m_flags);
 		murmur.add(sampleCount);
 
 		m_pixelFormatHash = murmur.end();

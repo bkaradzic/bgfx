@@ -724,6 +724,7 @@ namespace bgfx { namespace wgpu
 			if (multisample)
 			{
 				caps |= BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA
+					 |  BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA_X4
 					 |  BGFX_CAPS_FORMAT_TEXTURE_MSAA
 					 ;
 			}
@@ -4924,10 +4925,8 @@ WGPU_IMPORT
 				;
 			const bool blit         = 0 != (m_flags&BGFX_TEXTURE_BLIT_DST);
 
-			const uint32_t msaaQuality = bx::satSub<uint32_t>(uint32_t( (m_flags & BGFX_TEXTURE_RT_MSAA_MASK) >> BGFX_TEXTURE_RT_MSAA_SHIFT ), 1u);
-
 			m_msaaCount = 1 == depthOrArrayLayers && WGPUTextureDimension_2D == dimension
-				? s_msaa[msaaQuality]
+				? getTextureMsaaSamples(TextureFormat::Enum(m_textureFormat), m_flags)
 				: 1
 				;
 

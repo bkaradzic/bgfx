@@ -2648,6 +2648,20 @@ namespace bgfx
 			g_caps.formats[ii] |= 0 == (g_caps.formats[ii] & BGFX_CAPS_FORMAT_TEXTURE_CUBE) && convertable ? BGFX_CAPS_FORMAT_TEXTURE_CUBE_EMULATED : 0;
 		}
 
+		for (uint32_t ii = 0; ii < TextureFormat::Count; ++ii)
+		{
+			uint32_t& formatCaps = g_caps.formats[ii];
+
+			if (0 == (formatCaps & BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA) )
+			{
+				formatCaps &= ~kCapsFormatTextureFramebufferMsaaMask;
+			}
+			else if (0 == (formatCaps & kCapsFormatTextureFramebufferMsaaMask) )
+			{
+				formatCaps |= kCapsFormatTextureFramebufferMsaaMask;
+			}
+		}
+
 		g_caps.rendererType = m_renderCtx->getRendererType();
 		initAttribTypeSizeTable(g_caps.rendererType);
 

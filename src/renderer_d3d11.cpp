@@ -1495,6 +1495,26 @@ namespace bgfx { namespace d3d11
 								}
 							}
 
+							if (0 != (support & BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA) )
+							{
+								for (uint32_t jj = 1; jj < BX_COUNTOF(s_checkMsaa); ++jj)
+								{
+									UINT quality = 0;
+									hr = m_device->CheckMultisampleQualityLevels(fmt, s_checkMsaa[jj], &quality);
+
+									if (SUCCEEDED(hr)
+									&&  0 < quality)
+									{
+										support |= BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA_X2 << (jj - 1);
+									}
+								}
+
+								if (0 == (support & kCapsFormatTextureFramebufferMsaaMask) )
+								{
+									support &= ~BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA;
+								}
+							}
+
 							if (0 != (support & BGFX_CAPS_FORMAT_TEXTURE_IMAGE_READ) )
 							{
 								D3D11_FEATURE_DATA_FORMAT_SUPPORT2 data2;
@@ -2493,7 +2513,6 @@ namespace bgfx { namespace d3d11
 				&&  0 < quality)
 				{
 					s_msaa[ii].Count = msaa;
-					s_msaa[ii].Quality = quality - 1;
 					last = ii;
 				}
 				else
@@ -5102,8 +5121,7 @@ namespace bgfx { namespace d3d11
 			const bool readBack       = 0 != (m_flags & BGFX_TEXTURE_READ_BACK);
 			const bool externalShared = 0 != (m_flags & BGFX_TEXTURE_EXTERNAL_SHARED);
 
-			const uint32_t msaaQuality = bx::satSub<uint32_t>(uint32_t( (m_flags&BGFX_TEXTURE_RT_MSAA_MASK) >> BGFX_TEXTURE_RT_MSAA_SHIFT ), 1u);
-			const DXGI_SAMPLE_DESC& msaa = s_msaa[msaaQuality];
+			const DXGI_SAMPLE_DESC msaa = { getTextureMsaaSamples(TextureFormat::Enum(m_textureFormat), m_flags), 0 };
 
 			const bool blitUav = true
 				&& blit
@@ -5851,9 +5869,8 @@ namespace bgfx { namespace d3d11
 
 	bool TextureD3D11::isMsaaSurface() const
 	{
-		const uint32_t msaaQuality = bx::satSub<uint32_t>(uint32_t( (m_flags&BGFX_TEXTURE_RT_MSAA_MASK) >> BGFX_TEXTURE_RT_MSAA_SHIFT), 1u);
 		return true
-			&& 1 < s_msaa[msaaQuality].Count
+			&& 1 < getTextureMsaaSamples(TextureFormat::Enum(m_textureFormat), m_flags)
 			&& 0 != (m_flags & BGFX_TEXTURE_MSAA_SAMPLE)
 			&& !bimg::isDepth(bimg::TextureFormat::Enum(m_textureFormat) )
 			;
@@ -6234,8 +6251,7 @@ namespace bgfx { namespace d3d11
 						}
 					}
 
-					const uint32_t msaaQuality = bx::satSub<uint32_t>(uint32_t( (texture.m_flags&BGFX_TEXTURE_RT_MSAA_MASK) >> BGFX_TEXTURE_RT_MSAA_SHIFT ), 1u);
-					const DXGI_SAMPLE_DESC& msaa = s_msaa[msaaQuality];
+					const DXGI_SAMPLE_DESC msaa = { getTextureMsaaSamples(TextureFormat::Enum(texture.m_textureFormat), texture.m_flags), 0 };
 
 					if (bimg::isDepth(bimg::TextureFormat::Enum(texture.m_textureFormat) ) )
 					{

@@ -781,6 +781,18 @@ pub const CapsFormatFlags_TextureBackbuffer: CapsFormatFlags      = 0x00010000;
 /// Texture format can be used as video decode destination.
 pub const CapsFormatFlags_TextureVideoDecodeDst: CapsFormatFlags  = 0x00020000;
 
+/// Texture format can be used as MSAA frame buffer with 2 samples.
+pub const CapsFormatFlags_TextureFramebufferMsaaX2: CapsFormatFlags = 0x00040000;
+
+/// Texture format can be used as MSAA frame buffer with 4 samples.
+pub const CapsFormatFlags_TextureFramebufferMsaaX4: CapsFormatFlags = 0x00080000;
+
+/// Texture format can be used as MSAA frame buffer with 8 samples.
+pub const CapsFormatFlags_TextureFramebufferMsaaX8: CapsFormatFlags = 0x00100000;
+
+/// Texture format can be used as MSAA frame buffer with 16 samples.
+pub const CapsFormatFlags_TextureFramebufferMsaaX16: CapsFormatFlags = 0x00200000;
+
 pub const CapsVideoCodecFlags = u32;
 /// Video codec is not supported.
 pub const CapsVideoCodecFlags_None: CapsVideoCodecFlags                   = 0x00000000;

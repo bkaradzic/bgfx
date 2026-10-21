@@ -1126,6 +1126,14 @@ class CapsFormatFlags(enum.IntFlag):
 	TextureBackbuffer = 0x10000
 	# Texture format can be used as video decode destination.
 	TextureVideoDecodeDst = 0x20000
+	# Texture format can be used as MSAA frame buffer with 2 samples.
+	TextureFramebufferMsaaX2 = 0x40000
+	# Texture format can be used as MSAA frame buffer with 4 samples.
+	TextureFramebufferMsaaX4 = 0x80000
+	# Texture format can be used as MSAA frame buffer with 8 samples.
+	TextureFramebufferMsaaX8 = 0x100000
+	# Texture format can be used as MSAA frame buffer with 16 samples.
+	TextureFramebufferMsaaX16 = 0x200000
 
 class CapsVideoCodecFlags(enum.IntFlag):
 	# Video codec is not supported.

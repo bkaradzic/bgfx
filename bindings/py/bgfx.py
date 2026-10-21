@@ -609,6 +609,10 @@ class CapsFormatFlags(enum.IntFlag):
 	TextureMipAutogen = 0x8000
 	TextureBackbuffer = 0x10000
 	TextureVideoDecodeDst = 0x20000
+	TextureFramebufferMsaaX2 = 0x40000
+	TextureFramebufferMsaaX4 = 0x80000
+	TextureFramebufferMsaaX8 = 0x100000
+	TextureFramebufferMsaaX16 = 0x200000
 
 class CapsVideoCodecFlags(enum.IntFlag):
 	None_ = 0x0

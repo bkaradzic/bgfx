@@ -802,6 +802,18 @@ constdef CapsFormatFlags : inline uint
 
 	// Texture format can be used as video decode destination.
 	TEXTUREVIDEODECODEDST  = 0x00020000,
+
+	// Texture format can be used as MSAA frame buffer with 2 samples.
+	TEXTUREFRAMEBUFFERMSAAX2 = 0x00040000,
+
+	// Texture format can be used as MSAA frame buffer with 4 samples.
+	TEXTUREFRAMEBUFFERMSAAX4 = 0x00080000,
+
+	// Texture format can be used as MSAA frame buffer with 8 samples.
+	TEXTUREFRAMEBUFFERMSAAX8 = 0x00100000,
+
+	// Texture format can be used as MSAA frame buffer with 16 samples.
+	TEXTUREFRAMEBUFFERMSAAX16 = 0x00200000,
 }
 
 constdef CapsVideoCodecFlags : inline uint
