@@ -3052,11 +3052,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 									: PipelineStateMtl::BindToVertexShader
 									;
 
-								if (MTL::TextureType2DMultisample      == arg->textureType()
-								||  MTL::TextureType2DMultisampleArray == arg->textureType() )
-								{
-									ps->m_bindingTypes[arg->index()] |= PipelineStateMtl::BindMultisample;
-								}
+								ps->m_textureTypes[arg->index()] = uint8_t(arg->textureType() );
 
 								const UniformRegInfo* info = s_renderMtl->m_uniformReg.find(name);
 
@@ -4815,7 +4811,23 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			;
 	}
 
-	void TextureMtl::commit(uint8_t _stage, bool _vertex, bool _fragment, uint32_t _flags, uint8_t _mip, uint16_t _firstLayer, uint16_t _numLayers, uint8_t _firstMip, uint8_t _numMips, uint8_t _lodMin, uint8_t _lodMax, bool _multisample)
+	MTL::Texture* TextureMtl::getSampledView(uint8_t _textureType, uint32_t _flags, uint16_t _firstLayer, uint16_t _numLayers, uint8_t _firstMip, uint8_t _numMips, bool _stencil)
+	{
+		if (MTL::TextureType2DMultisample      == _textureType
+		||  MTL::TextureType2DMultisampleArray == _textureType)
+		{
+			MTL::Texture* ptr = getMultisampleView(_flags);
+
+			if (NULL != ptr)
+			{
+				return ptr;
+			}
+		}
+
+		return getTextureView(_firstLayer, _numLayers, _firstMip, _numMips, _stencil, useAltFormat(_flags, BGFX_SAMPLER_SRGB), _textureType);
+	}
+
+	void TextureMtl::commit(uint8_t _stage, bool _vertex, bool _fragment, uint32_t _flags, uint8_t _mip, uint16_t _firstLayer, uint16_t _numLayers, uint8_t _firstMip, uint8_t _numMips, uint8_t _lodMin, uint8_t _lodMax, uint8_t _textureType)
 	{
 		if (!_vertex
 		&&  !_fragment)
@@ -4829,18 +4841,10 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			;
 		const bool sampleStencil = 0 != (flags & BGFX_SAMPLER_SAMPLE_STENCIL);
 
-		MTL::Texture* ptr = _multisample && _mip == UINT8_MAX
-			? getMultisampleView(flags)
-			: NULL
+		MTL::Texture* ptr = _mip != UINT8_MAX
+			? getTextureImage(_mip, _firstLayer, _numLayers)
+			: getSampledView(_textureType, flags, _firstLayer, _numLayers, _firstMip, _numMips, sampleStencil)
 			;
-
-		if (NULL == ptr)
-		{
-			ptr = _mip != UINT8_MAX
-				? getTextureImage(_mip, _firstLayer, _numLayers)
-				: getTextureView(_firstLayer, _numLayers, _firstMip, _numMips, sampleStencil, useAltFormat(flags, BGFX_SAMPLER_SRGB) )
-				;
-		}
 
 		if (_vertex)
 		{
@@ -4884,7 +4888,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			;
 	}
 
-	MTL::Texture* TextureMtl::getTextureView(uint16_t _firstLayer, uint16_t _numLayers, uint8_t _firstMip, uint8_t _numMips, bool _stencil, bool _alt)
+	MTL::Texture* TextureMtl::getTextureView(uint16_t _firstLayer, uint16_t _numLayers, uint8_t _firstMip, uint8_t _numMips, bool _stencil, bool _alt, uint8_t _textureType)
 	{
 		MTL::Texture* ptr = _stencil && NULL != m_ptrStencil
 			? m_ptrStencil
@@ -4931,10 +4935,37 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 		const uint32_t firstLayer = firstUnit * rangeScale;
 		const uint32_t numLayers  = numUnits  * rangeScale;
 
+		MTL::TextureType type = ptr->textureType();
+
+		if (isCube)
+		{
+			type = 1 == numUnits
+				? (MTL::TextureType)MTL::TextureTypeCube
+				: (MTL::TextureType)MTL::TextureTypeCubeArray
+				;
+		}
+		else if (MTL::TextureType2DArray == type
+		     &&  1 == numLayers)
+		{
+			type = (MTL::TextureType)MTL::TextureType2D;
+		}
+
+		const bool arrayOf2D   = MTL::TextureType2D   == type || MTL::TextureType2DArray   == type;
+		const bool arrayOfCube = MTL::TextureTypeCube == type || MTL::TextureTypeCubeArray == type;
+		const bool wants2D     = MTL::TextureType2D   == _textureType || MTL::TextureType2DArray   == _textureType;
+		const bool wantsCube   = MTL::TextureTypeCube == _textureType || MTL::TextureTypeCubeArray == _textureType;
+
+		if ( (arrayOf2D   && wants2D   && (MTL::TextureType2DArray   == _textureType || 1 == numLayers) )
+		||   (arrayOfCube && wantsCube && (MTL::TextureTypeCubeArray == _textureType || 1 == numUnits ) ) )
+		{
+			type = MTL::TextureType(_textureType);
+		}
+
 		const bool fullRange = 0 == firstMip
 			&& 0 == firstLayer
 			&& numMips   >= m_numMips
 			&& numLayers >= totalLayers
+			&& type == ptr->textureType()
 			;
 
 		if (fullRange
@@ -4954,6 +4985,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			| (uint64_t(numMips)    <<  8)
 			| (uint64_t(firstLayer) << 16)
 			| (uint64_t(numLayers)  << 32)
+			| (uint64_t(type)       << 48)
 			| (uint64_t(alt)        << 62)
 			| (uint64_t(_stencil)   << 63)
 			;
@@ -4962,21 +4994,6 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 		if (it != m_ptrViews.end() )
 		{
 			return it->second;
-		}
-
-		MTL::TextureType type = ptr->textureType();
-
-		if (isCube)
-		{
-			type = 1 == numUnits
-				? (MTL::TextureType)MTL::TextureTypeCube
-				: (MTL::TextureType)MTL::TextureTypeCubeArray
-				;
-		}
-		else if (MTL::TextureType2DArray == type
-		     &&  1 == numLayers)
-		{
-			type = (MTL::TextureType)MTL::TextureType2D;
 		}
 
 		MTL::Texture* view = ptr->newTextureView(
@@ -6820,14 +6837,8 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 										: uint32_t(texture.m_flags)
 										;
 
-									MTL::Texture* ptr = 0 != (currentPso->m_bindingTypes[stage] & PipelineStateMtl::BindMultisample)
-										? texture.getMultisampleView(resolvedFlags)
-										: NULL
-										;
-
-									m_computeCommandEncoder->setTexture(NULL != ptr
-										? ptr
-										: texture.getTextureView(bind.m_firstLayer, bind.m_numLayers, bind.m_firstMip, bind.m_numMips, 0 != (resolvedFlags & BGFX_SAMPLER_SAMPLE_STENCIL) )
+									m_computeCommandEncoder->setTexture(
+										  texture.getSampledView(currentPso->m_textureTypes[stage], resolvedFlags, bind.m_firstLayer, bind.m_numLayers, bind.m_firstMip, bind.m_numMips, 0 != (resolvedFlags & BGFX_SAMPLER_SAMPLE_STENCIL) )
 										, stage
 										);
 									m_computeCommandEncoder->setSamplerState(
@@ -7271,7 +7282,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 											, bind.m_numMips
 											, bind.m_lod.min
 											, bind.m_lod.max
-											, 0 != (bindingTypes[stage] & PipelineStateMtl::BindMultisample)
+											, currentPso->m_textureTypes[stage]
 											);
 									}
 									break;
