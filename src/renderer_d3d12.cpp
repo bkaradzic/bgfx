@@ -1937,6 +1937,8 @@ namespace bgfx { namespace d3d12
 
 						if (0 != (support & BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA) )
 						{
+							support &= ~BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA;
+
 							for (uint32_t jj = 1; jj < BX_COUNTOF(s_checkMsaa); ++jj)
 							{
 								D3D12_FEATURE_DATA_MULTISAMPLE_QUALITY_LEVELS msaaData =
@@ -1953,11 +1955,6 @@ namespace bgfx { namespace d3d12
 								{
 									support |= BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA_X2 << (jj - 1);
 								}
-							}
-
-							if (0 == (support & kCapsFormatTextureFramebufferMsaaMask) )
-							{
-								support &= ~BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA;
 							}
 						}
 

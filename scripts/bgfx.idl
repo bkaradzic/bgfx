@@ -432,7 +432,6 @@ flag.CapsFormat { bits = 32 }
 	.TextureImageRead        --- Texture format can be used as image and read from.
 	.TextureImageWrite       --- Texture format can be used as image and written to.
 	.TextureFramebuffer      --- Texture format can be used as frame buffer.
-	.TextureFramebufferMsaa  --- Texture format can be used as MSAA frame buffer.
 	.TextureMsaa             --- Texture can be sampled as MSAA.
 	.TextureMipAutogen       --- Texture format supports auto-generated mips.
 	.TextureBackbuffer       --- Texture format can be used as back buffer format.
@@ -441,6 +440,12 @@ flag.CapsFormat { bits = 32 }
 	.TextureFramebufferMsaaX4  --- Texture format can be used as MSAA frame buffer with 4 samples.
 	.TextureFramebufferMsaaX8  --- Texture format can be used as MSAA frame buffer with 8 samples.
 	.TextureFramebufferMsaaX16 --- Texture format can be used as MSAA frame buffer with 16 samples.
+	.TextureFramebufferMsaa {
+		"TextureFramebufferMsaaX2",
+		"TextureFramebufferMsaaX4",
+		"TextureFramebufferMsaaX8",
+		"TextureFramebufferMsaaX16"
+	} --- Texture format can be used as MSAA frame buffer with any sample count.
 	()
 
 flag.CapsVideoCodec { bits = 32 }
@@ -899,8 +904,10 @@ struct.Caps { section = "Capabilities" }
 		---     and written to.
 		---   - `BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER` - Texture format can be used as frame
 		---     buffer.
-		---   - `BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA` - Texture format can be used as MSAA
-		---     frame buffer.
+		---   - `BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA_X2`, `_X4`, `_X8`, `_X16` - Texture
+		---     format can be used as MSAA frame buffer with that many samples. A
+		---     `BGFX_TEXTURE_RT_MSAA_X*` request is clamped to the highest one set.
+		---     `BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA` is the mask of all of them.
 		---   - `BGFX_CAPS_FORMAT_TEXTURE_MSAA` - Texture can be sampled as MSAA.
 		---   - `BGFX_CAPS_FORMAT_TEXTURE_MIP_AUTOGEN` - Texture format supports auto-generated
 		---     mips.

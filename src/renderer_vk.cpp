@@ -2238,10 +2238,7 @@ VK_IMPORT_INSTANCE
 
 									if (it.usage & (VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT) )
 									{
-										support |= 0
-											| BGFX_CAPS_FORMAT_TEXTURE_MIP_AUTOGEN
-											| (multisample ? BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA : 0)
-											;
+										support |= BGFX_CAPS_FORMAT_TEXTURE_MIP_AUTOGEN;
 
 										for (uint32_t kk = 1; kk < BX_COUNTOF(s_msaa); ++kk)
 										{
@@ -9696,7 +9693,7 @@ VK_DESTROY
 		const uint64_t textureFlags = (uint64_t(samplerIndex + 1) << BGFX_TEXTURE_RT_MSAA_SHIFT) | BGFX_TEXTURE_RT | BGFX_TEXTURE_RT_WRITE_ONLY;
 		m_sampler = s_msaa[samplerIndex];
 
-		const uint16_t requiredCaps = m_sampler.Count > 1
+		const uint32_t requiredCaps = m_sampler.Count > 1
 			? BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA
 			: BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER
 			;

@@ -669,17 +669,16 @@ namespace bgfx
 		                                        ///      and written to.
 		                                        ///    - `BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER` - Texture format can be used as frame
 		                                        ///      buffer.
-		                                        ///    - `BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA` - Texture format can be used as MSAA
-		                                        ///      frame buffer.
+		                                        ///    - `BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA_X2`, `_X4`, `_X8`, `_X16` - Texture
+		                                        ///      format can be used as MSAA frame buffer with that many samples. A
+		                                        ///      `BGFX_TEXTURE_RT_MSAA_X*` request is clamped to the highest one set.
+		                                        ///      `BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA` is the mask of all of them.
 		                                        ///    - `BGFX_CAPS_FORMAT_TEXTURE_MSAA` - Texture can be sampled as MSAA.
 		                                        ///    - `BGFX_CAPS_FORMAT_TEXTURE_MIP_AUTOGEN` - Texture format supports auto-generated
 		                                        ///      mips.
 		                                        ///    - `BGFX_CAPS_FORMAT_TEXTURE_BACKBUFFER` - Texture format can be used as back buffer format.
 		                                        ///    - `BGFX_CAPS_FORMAT_TEXTURE_VIDEO_DECODE_DST` - Texture format can be used as video
 		                                        ///      decode destination.
-		                                        ///    - `BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA_X2`, `_X4`, `_X8`, `_X16` - Texture
-		                                        ///      format can be used as MSAA frame buffer with that many samples. A
-		                                        ///      `BGFX_TEXTURE_RT_MSAA_X*` request is clamped to the highest one set.
 		uint32_t codecs[VideoCodec::Count];     //!< Supported video codec capabilities flags. A non-zero entry means the codec is
 		                                        ///  supported for hardware decode; bits describe sample depths and chroma
 		                                        ///  subsamplings:

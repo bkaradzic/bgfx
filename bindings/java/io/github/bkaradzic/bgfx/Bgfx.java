@@ -5040,49 +5040,49 @@ public final class Bgfx {
 		public static final int TextureFramebuffer = 0x00001000;
 
 		/**
-		 * Texture format can be used as MSAA frame buffer.
-		 */
-		public static final int TextureFramebufferMsaa = 0x00002000;
-
-		/**
 		 * Texture can be sampled as MSAA.
 		 */
-		public static final int TextureMsaa = 0x00004000;
+		public static final int TextureMsaa = 0x00002000;
 
 		/**
 		 * Texture format supports auto-generated mips.
 		 */
-		public static final int TextureMipAutogen = 0x00008000;
+		public static final int TextureMipAutogen = 0x00004000;
 
 		/**
 		 * Texture format can be used as back buffer format.
 		 */
-		public static final int TextureBackbuffer = 0x00010000;
+		public static final int TextureBackbuffer = 0x00008000;
 
 		/**
 		 * Texture format can be used as video decode destination.
 		 */
-		public static final int TextureVideoDecodeDst = 0x00020000;
+		public static final int TextureVideoDecodeDst = 0x00010000;
 
 		/**
 		 * Texture format can be used as MSAA frame buffer with 2 samples.
 		 */
-		public static final int TextureFramebufferMsaaX2 = 0x00040000;
+		public static final int TextureFramebufferMsaaX2 = 0x00020000;
 
 		/**
 		 * Texture format can be used as MSAA frame buffer with 4 samples.
 		 */
-		public static final int TextureFramebufferMsaaX4 = 0x00080000;
+		public static final int TextureFramebufferMsaaX4 = 0x00040000;
 
 		/**
 		 * Texture format can be used as MSAA frame buffer with 8 samples.
 		 */
-		public static final int TextureFramebufferMsaaX8 = 0x00100000;
+		public static final int TextureFramebufferMsaaX8 = 0x00080000;
 
 		/**
 		 * Texture format can be used as MSAA frame buffer with 16 samples.
 		 */
-		public static final int TextureFramebufferMsaaX16 = 0x00200000;
+		public static final int TextureFramebufferMsaaX16 = 0x00100000;
+
+		/**
+		 * Texture format can be used as MSAA frame buffer with any sample count.
+		 */
+		public static final int TextureFramebufferMsaa = 0x001e0000;
 	}
 
 	/**
@@ -7019,8 +7019,10 @@ public final class Bgfx {
 		 *     and written to.
 		 *   - {@code BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER} - Texture format can be used as frame
 		 *     buffer.
-		 *   - {@code BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA} - Texture format can be used as MSAA
-		 *     frame buffer.
+		 *   - {@code BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA_X2}, {@code _X4}, {@code _X8}, {@code _X16} - Texture
+		 *     format can be used as MSAA frame buffer with that many samples. A
+		 *     {@code BGFX_TEXTURE_RT_MSAA_X*} request is clamped to the highest one set.
+		 *     {@code BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA} is the mask of all of them.
 		 *   - {@code BGFX_CAPS_FORMAT_TEXTURE_MSAA} - Texture can be sampled as MSAA.
 		 *   - {@code BGFX_CAPS_FORMAT_TEXTURE_MIP_AUTOGEN} - Texture format supports auto-generated
 		 *     mips.

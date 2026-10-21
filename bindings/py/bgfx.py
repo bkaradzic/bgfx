@@ -604,15 +604,15 @@ class CapsFormatFlags(enum.IntFlag):
 	TextureImageRead = 0x400
 	TextureImageWrite = 0x800
 	TextureFramebuffer = 0x1000
-	TextureFramebufferMsaa = 0x2000
-	TextureMsaa = 0x4000
-	TextureMipAutogen = 0x8000
-	TextureBackbuffer = 0x10000
-	TextureVideoDecodeDst = 0x20000
-	TextureFramebufferMsaaX2 = 0x40000
-	TextureFramebufferMsaaX4 = 0x80000
-	TextureFramebufferMsaaX8 = 0x100000
-	TextureFramebufferMsaaX16 = 0x200000
+	TextureMsaa = 0x2000
+	TextureMipAutogen = 0x4000
+	TextureBackbuffer = 0x8000
+	TextureVideoDecodeDst = 0x10000
+	TextureFramebufferMsaaX2 = 0x20000
+	TextureFramebufferMsaaX4 = 0x40000
+	TextureFramebufferMsaaX8 = 0x80000
+	TextureFramebufferMsaaX16 = 0x100000
+	TextureFramebufferMsaa = 0x1e0000
 
 class CapsVideoCodecFlags(enum.IntFlag):
 	None_ = 0x0

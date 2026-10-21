@@ -1497,6 +1497,8 @@ namespace bgfx { namespace d3d11
 
 							if (0 != (support & BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA) )
 							{
+								support &= ~BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA;
+
 								for (uint32_t jj = 1; jj < BX_COUNTOF(s_checkMsaa); ++jj)
 								{
 									UINT quality = 0;
@@ -1507,11 +1509,6 @@ namespace bgfx { namespace d3d11
 									{
 										support |= BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA_X2 << (jj - 1);
 									}
-								}
-
-								if (0 == (support & kCapsFormatTextureFramebufferMsaaMask) )
-								{
-									support &= ~BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA;
 								}
 							}
 
