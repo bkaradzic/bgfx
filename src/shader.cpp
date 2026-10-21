@@ -13,7 +13,7 @@ namespace bgfx
 		uint16_t id;
 	};
 
-	static DescriptorTypeToId s_descriptorTypeToId[] =
+	static constexpr DescriptorTypeToId s_descriptorTypeToId[] =
 	{
 		// NOTICE:
 		// DescriptorType must be in order how it appears in DescriptorType::Enum! id is
@@ -22,6 +22,7 @@ namespace bgfx
 		{ DescriptorType::StorageImage,  0x0003 },
 	};
 	static_assert(BX_COUNTOF(s_descriptorTypeToId) == DescriptorType::Count);
+	static_assert(bx::isSorted(s_descriptorTypeToId, BX_COUNTOF(s_descriptorTypeToId), [](const DescriptorTypeToId& _lhs, const DescriptorTypeToId& _rhs) { return _lhs.type <= _rhs.type; }) );
 
 	DescriptorType::Enum idToDescriptorType(uint16_t _id)
 	{
@@ -47,7 +48,7 @@ namespace bgfx
 		uint8_t id;
 	};
 
-	static TextureComponentTypeToId s_textureComponentTypeToId[] =
+	static constexpr TextureComponentTypeToId s_textureComponentTypeToId[] =
 	{
 		// see comment in s_descriptorTypeToId
 		{ TextureComponentType::Float,             0x00 },
@@ -57,6 +58,7 @@ namespace bgfx
 		{ TextureComponentType::UnfilterableFloat, 0x04 },
 	};
 	static_assert(BX_COUNTOF(s_textureComponentTypeToId) == TextureComponentType::Count);
+	static_assert(bx::isSorted(s_textureComponentTypeToId, BX_COUNTOF(s_textureComponentTypeToId), [](const TextureComponentTypeToId& _lhs, const TextureComponentTypeToId& _rhs) { return _lhs.type <= _rhs.type; }) );
 
 	TextureComponentType::Enum idToTextureComponentType(uint8_t _id)
 	{
@@ -82,7 +84,7 @@ namespace bgfx
 		uint8_t id;
 	};
 
-	static TextureDimensionToId s_textureDimensionToId[] =
+	static constexpr TextureDimensionToId s_textureDimensionToId[] =
 	{
 		// see comment in s_descriptorTypeToId
 		{ TextureDimension::Dimension1D,        0x01 },
@@ -95,6 +97,7 @@ namespace bgfx
 		{ TextureDimension::Dimension2DMSArray, 0x08 },
 	};
 	static_assert(BX_COUNTOF(s_textureDimensionToId) == TextureDimension::Count);
+	static_assert(bx::isSorted(s_textureDimensionToId, BX_COUNTOF(s_textureDimensionToId), [](const TextureDimensionToId& _lhs, const TextureDimensionToId& _rhs) { return _lhs.dimension <= _rhs.dimension; }) );
 
 	TextureDimension::Enum idToTextureDimension(uint8_t _id)
 	{

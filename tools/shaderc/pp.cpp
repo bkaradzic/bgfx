@@ -745,9 +745,14 @@ namespace shaderc
 					, ( (const OpInfo*)_rhs)->lexeme
 					);
 			}
+
+			static constexpr bool lessFn(const OpInfo& _lhs, const OpInfo& _rhs)
+			{
+				return 0 >= bx::strCmp(_lhs.lexeme, _rhs.lexeme);
+			}
 		};
 
-		static const OpInfo s_ops[] =
+		static constexpr OpInfo s_ops[] =
 		{
 			{ "!=",  6 },
 			{ "%",  10 },
@@ -769,6 +774,7 @@ namespace shaderc
 			{ "||",  1 },
 		};
 		static_assert(uint8_t(Op::Count) == BX_COUNTOF(s_ops), "s_ops must match Op.");
+		static_assert(bx::isSorted(s_ops, BX_COUNTOF(s_ops), OpInfo::lessFn), "s_ops must be sorted!");
 
 		Op findOp(const bx::StringView& _lexeme)
 		{
@@ -2917,8 +2923,6 @@ namespace shaderc
 
 		bool run(const bx::StringView& _name, const bx::StringView& _source, bx::WriterI* _writer, bx::Error* _err)
 		{
-			BX_ASSERT(bx::isSorted(s_ops, BX_COUNTOF(s_ops), OpInfo::cmpFn), "s_ops must be sorted!");
-
 			m_out = _writer;
 			m_err.reset();
 			m_ok = true;
