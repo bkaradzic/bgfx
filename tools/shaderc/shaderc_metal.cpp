@@ -365,6 +365,35 @@ namespace bgfx { namespace metal
 		}
 	}
 
+	static bool isDeclaredUniform(const std::string& _code, const char* _name)
+	{
+		bx::LineReader reader(_code.c_str() );
+		while (!reader.isDone() )
+		{
+			bx::StringView strLine = reader.next();
+
+			if (strFind(strLine, "uniform ").isEmpty() )
+			{
+				continue;
+			}
+
+			bx::StringView lineEnd = strFind(strLine, ";");
+			while (lineEnd.isEmpty() && !reader.isDone() )
+			{
+				bx::StringView nextLine = reader.next();
+				strLine.set(strLine.getPtr(), nextLine.getTerm() );
+				lineEnd = strFind(nextLine, ";");
+			}
+
+			if (!bx::findIdentifierMatch(strLine, _name).isEmpty() )
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
+
 	static bool compile(const Options& _options, uint32_t _version, const std::string& _code, bx::WriterI* _shaderWriter, bx::WriterI* _messageWriter, bool _firstPass)
 	{
 		BX_UNUSED(_version);
@@ -546,6 +575,7 @@ namespace bgfx { namespace metal
 				}
 
 				UniformArray uniforms;
+				bool implicitUniform = false;
 
 				{
 					uint16_t count = (uint16_t)program->getNumLiveUniformVariables();
@@ -557,6 +587,17 @@ namespace bgfx { namespace metal
 
 						if (bx::hasSuffix(un.name.c_str(), ".@data") )
 						{
+							continue;
+						}
+
+						if (0 <= program->getUniformBlockIndex(ii)
+						&&  !isDeclaredUniform(_code, un.name.c_str() ) )
+						{
+							bx::write(_messageWriter, &messageErr
+								, "Error: Global '%s' is implicitly a uniform. Declare it 'static const', or make it a local variable.\n"
+								, un.name.c_str()
+								);
+							implicitUniform = true;
 							continue;
 						}
 
@@ -624,13 +665,18 @@ namespace bgfx { namespace metal
 				spvtools::ValidatorOptions validatorOptions;
 				validatorOptions.SetBeforeHlslLegalization(true);
 
-				if (!opt.Run(
-					  spirv.data()
-					, spirv.size()
-					, &spirv
-					, validatorOptions
-					, false
-					) )
+				const bool optimized = true
+					&& !implicitUniform
+					&& opt.Run(
+						  spirv.data()
+						, spirv.size()
+						, &spirv
+						, validatorOptions
+						, false
+						)
+					;
+
+				if (!optimized)
 				{
 					compiled = false;
 				}
