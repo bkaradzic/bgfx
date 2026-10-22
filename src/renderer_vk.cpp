@@ -2043,7 +2043,7 @@ VK_IMPORT_INSTANCE
 					.textureCompressionETC2                  = supportedFeatures.textureCompressionETC2,
 					.textureCompressionASTC_LDR              = VK_FALSE,
 					.textureCompressionBC                    = supportedFeatures.textureCompressionBC,
-					.occlusionQueryPrecise                   = VK_FALSE,
+					.occlusionQueryPrecise                   = supportedFeatures.occlusionQueryPrecise,
 					.pipelineStatisticsQuery                 = VK_FALSE,
 					.vertexPipelineStoresAndAtomics          = supportedFeatures.vertexPipelineStoresAndAtomics,
 					.fragmentStoresAndAtomics                = supportedFeatures.fragmentStoresAndAtomics,
@@ -7322,7 +7322,7 @@ VK_DESTROY
 		const VkCommandBuffer commandBuffer = s_renderVK->m_commandBuffer;
 
 		m_handle[m_control.m_current] = _handle;
-		vkCmdBeginQuery(commandBuffer, m_queryPool, _handle.idx, 0);
+		vkCmdBeginQuery(commandBuffer, m_queryPool, _handle.idx, s_renderVK->m_deviceFeatures.occlusionQueryPrecise ? VK_QUERY_CONTROL_PRECISE_BIT : 0);
 	}
 
 	void OcclusionQueryVK::end()
