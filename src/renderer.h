@@ -535,6 +535,25 @@ namespace bgfx
 					}
 					break;
 
+				case PredefinedUniform::NumWorkGroups:
+					if constexpr (bx::isSame<Draw, RenderCompute>() )
+					{
+						const bool direct = !isValid(_draw.m_indirectBuffer);
+						const float numWorkGroups[4] =
+						{
+							direct ? float(_draw.m_numX) : 0.0f,
+							direct ? float(_draw.m_numY) : 0.0f,
+							direct ? float(_draw.m_numZ) : 0.0f,
+							0.0f,
+						};
+						_renderer->setShaderUniform4f(flags
+							, predefined.m_loc
+							, numWorkGroups
+							, 1
+							);
+					}
+					break;
+
 				default:
 					BX_ASSERT(false, "predefined %d not handled", predefined.m_type);
 					break;

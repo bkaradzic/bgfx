@@ -1318,6 +1318,7 @@ namespace bgfx
 		"u_modelViewProj",
 		"u_alphaRef4",
 		"bgfx_indirectArgBase",
+		"bgfx_numWorkGroups",
 	};
 
 	const char* getPredefinedUniformName(PredefinedUniform::Enum _enum)
@@ -5219,6 +5220,9 @@ namespace bgfx
 		BGFX_CHECK_CAPS(BGFX_CAPS_COMPUTE, "Compute is not supported!");
 		BGFX_CHECK_HANDLE_INVALID_OK("dispatch", s_ctx->m_programHandle, _program);
 		BGFX_CHECK_HANDLE("dispatch", s_ctx->m_vertexBufferHandle, _indirectHandle);
+		BX_ASSERT(!isValid(_program) || !s_ctx->m_shaderRef[s_ctx->m_programRef[_program.idx].m_vsh.idx].m_hasNumWorkGroups
+			, "Compute shader uses gl_NumWorkGroups, which is not supported with indirect dispatch."
+			);
 		BGFX_ENCODER(dispatch(_id, _program, _indirectHandle, _start, _num, _flags) );
 	}
 

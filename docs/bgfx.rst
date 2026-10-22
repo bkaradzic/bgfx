@@ -494,6 +494,8 @@ Compute
 
 Compute state is not preserved between compute dispatches; all state is cleared after calling ``bgfx::dispatch``.
 
+``gl_NumWorkGroups`` can be used in compute shaders, but it's not supported with indirect dispatch.
+
 Buffers
 *******
 
