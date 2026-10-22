@@ -85,6 +85,10 @@ typedef double GLdouble;
 #	define GL_BGRA 0x80E1
 #endif // GL_BGRA
 
+#ifndef GL_BGRA8_EXT
+#	define GL_BGRA8_EXT 0x93A1
+#endif // GL_BGRA8_EXT
+
 #ifndef GL_R8
 #	define GL_R8 0x8229
 #endif // GL_R8
@@ -934,6 +938,10 @@ typedef double GLdouble;
 #	define GL_TEXTURE_SRGB_DECODE_EXT 0x8A48
 #endif // GL_TEXTURE_SRGB_DECODE_EXT
 
+#ifndef GL_TEXTURE_COMPRESSED
+#	define GL_TEXTURE_COMPRESSED 0x86A1
+#endif // GL_TEXTURE_COMPRESSED
+
 #ifndef GL_DECODE_EXT
 #	define GL_DECODE_EXT 0x8A49
 #endif // GL_DECODE_EXT
@@ -1501,9 +1509,9 @@ namespace bgfx { namespace gl
 		void clear(uint8_t _mip, uint8_t _numMips, uint16_t _layer, uint16_t _numLayers);
 		void clearAttached(uint8_t _mipBeg, uint8_t _mipEnd, uint16_t _layer, uint16_t _numLayers);
 		void setSamplerState(uint32_t _flags, const float _rgba[4], uint8_t _lodMin = 0, uint8_t _lodMax = UINT8_MAX);
-		void commit(uint32_t _stage, uint32_t _flags, const float _palette[][4], uint8_t _firstMip, uint8_t _numMips, uint16_t _firstLayer, uint16_t _numLayers, uint8_t _lodMin = 0, uint8_t _lodMax = UINT8_MAX);
-		GLenum getViewTarget(uint16_t _numLayers, bool _layered = false) const;
-		GLuint getViewId(uint8_t _firstMip, uint8_t _numMips, uint16_t _firstLayer, uint16_t _numLayers, GLenum* _target = NULL, bool _layered = false);
+		void commit(uint32_t _stage, uint32_t _flags, const float _palette[][4], uint8_t _firstMip, uint8_t _numMips, uint16_t _firstLayer, uint16_t _numLayers, uint8_t _lodMin = 0, uint8_t _lodMax = UINT8_MAX, GLenum _wantTarget = GL_ZERO);
+		GLenum getViewTarget(uint16_t _numLayers, bool _layered = false, GLenum _wantTarget = GL_ZERO) const;
+		GLuint getViewId(uint8_t _firstMip, uint8_t _numMips, uint16_t _firstLayer, uint16_t _numLayers, GLenum* _target = NULL, bool _layered = false, GLenum _wantTarget = GL_ZERO);
 		void resolve(uint8_t _resolve) const;
 
 		bool isCubeMap() const
@@ -1624,6 +1632,7 @@ namespace bgfx { namespace gl
 	{
 		ProgramGL()
 			: m_id(0)
+			, m_numSamplerTargets(0)
 			, m_constantBuffer(NULL)
 			, m_numPredefined(0)
 		{
@@ -1653,6 +1662,15 @@ namespace bgfx { namespace gl
 
 		GLint m_sampler[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS];
 		uint8_t m_numSamplers;
+
+		struct SamplerTarget
+		{
+			UniformHandle handle;
+			GLenum        target;
+		};
+
+		SamplerTarget m_samplerTarget[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS];
+		uint8_t m_numSamplerTargets;
 
 		UniformBuffer* m_constantBuffer;
 		PredefinedUniform m_predefined[PredefinedUniform::Count];
