@@ -8211,7 +8211,9 @@ namespace bgfx { namespace d3d12
 			return;
 		}
 
+#if BX_PLATFORM_WINDOWS
 		const SwapChain prev = m_desc;
+#endif // BX_PLATFORM_WINDOWS
 
 		m_desc = _desc;
 		m_nwh  = _desc.nwh;
@@ -8459,6 +8461,8 @@ namespace bgfx { namespace d3d12
 			DX_RELEASE(m_backBufferDepthStencil, 0);
 			DX_RELEASE(m_msaaRt, 0);
 		}
+#else
+		BX_UNUSED(_defer);
 #endif // BX_PLATFORM_WINDOWS
 	}
 
