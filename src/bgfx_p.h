@@ -1128,6 +1128,7 @@ namespace bgfx
 			ModelViewProj,
 			AlphaRef,
 			IndirectArgBase,
+			NumWorkGroups,
 
 			Count
 		};
@@ -2982,6 +2983,7 @@ namespace bgfx
 		uint16_t m_samplerUniform[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS];
 		uint8_t  m_samplerDimension[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS];
 		uint8_t  m_numSamplers;
+		bool     m_hasNumWorkGroups;
 	};
 
 	struct ProgramRef
@@ -7286,6 +7288,7 @@ namespace bgfx
 			sr.m_num      = 0;
 			sr.m_uniforms = NULL;
 			sr.m_numSamplers = 0;
+			sr.m_hasNumWorkGroups = false;
 
 			UniformHandle* uniforms = (UniformHandle*)BX_STACK_ALLOC(count*sizeof(UniformHandle) );
 
@@ -7329,6 +7332,8 @@ namespace bgfx
 				}
 
 				PredefinedUniform::Enum predefined = nameToPredefinedUniformEnum(name);
+				sr.m_hasNumWorkGroups |= PredefinedUniform::NumWorkGroups == predefined;
+
 				if (PredefinedUniform::Count == predefined
 				&&  UniformType::End != UniformType::Enum(type) )
 				{

@@ -7622,6 +7622,7 @@ WGPU_IMPORT
 
 						programChanged =
 							constantsChanged = true;
+						hasPredefined = 0 < m_program[currentProgram.idx].m_numPredefined;
 					}
 
 					const ProgramWGPU& program = m_program[currentProgram.idx];

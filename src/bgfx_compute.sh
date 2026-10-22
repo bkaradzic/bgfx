@@ -322,6 +322,9 @@ __IMAGE_IMPL_ATOMIC(uint, x, uvec4, xxxx)
 #define memoryBarrierShared()        GroupMemoryBarrierWithGroupSync()
 #define groupMemoryBarrier()         GroupMemoryBarrierWithGroupSync()
 
+uniform vec4 bgfx_numWorkGroups;
+#define gl_NumWorkGroups uvec3(bgfx_numWorkGroups.xyz)
+
 #endif // BGFX_SHADER_LANGUAGE_GLSL
 
 #define dispatchIndirect( \
