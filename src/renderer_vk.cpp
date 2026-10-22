@@ -1403,6 +1403,9 @@ VK_IMPORT_DEVICE
 			VkPhysicalDevice16BitStorageFeatures storage16BitFeatures = {};
 			VkPhysicalDeviceTimelineSemaphoreFeatures timelineSemaphoreFeatures = {};
 			VkPhysicalDevicePresentIdFeaturesKHR presentIdFeatures = {};
+			VkPhysicalDeviceVulkan12Features vulkan12Features = {};
+			bool vulkan12FeaturesChained = false;
+			bool shaderOutputLayer       = false;
 
 			m_fbh = BGFX_INVALID_HANDLE;
 			m_readOnlyDepthLayout = VK_IMAGE_LAYOUT_UNDEFINED;
@@ -1911,7 +1914,21 @@ VK_IMPORT_INSTANCE
 					storage16BitFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_16BIT_STORAGE_FEATURES;
 					storage16BitFeatures.pNext = NULL;
 
-					if (s_extension[Extension::KHR_shader_float16_int8].m_supported)
+					vulkan12FeaturesChained = true
+						&& !s_extension[Extension::EXT_shader_viewport_index_layer].m_supported
+						&& !!(_init.capabilities & BGFX_CAPS_VIEWPORT_LAYER_ARRAY)
+						&& VK_API_VERSION_1_2 <= m_instanceApiVersion
+						&& VK_API_VERSION_1_2 <= m_deviceProperties.apiVersion
+						;
+
+					if (vulkan12FeaturesChained)
+					{
+						next->pNext = (VkBaseOutStructure*)&vulkan12Features;
+						next = (VkBaseOutStructure*)&vulkan12Features;
+						vulkan12Features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES;
+						vulkan12Features.pNext = NULL;
+					}
+					else if (s_extension[Extension::KHR_shader_float16_int8].m_supported)
 					{
 						next->pNext = (VkBaseOutStructure*)&shaderFloat16Int8Features;
 						next = (VkBaseOutStructure*)&shaderFloat16Int8Features;
@@ -1923,6 +1940,27 @@ VK_IMPORT_INSTANCE
 
 					vkGetPhysicalDeviceFeatures2KHR(m_physicalDevice, &deviceFeatures2);
 					supportedFeatures = deviceFeatures2.features;
+
+					if (vulkan12FeaturesChained)
+					{
+						shaderOutputLayer = true
+							&& vulkan12Features.shaderOutputLayer
+							&& vulkan12Features.shaderOutputViewportIndex
+							;
+
+						shaderFloat16Int8Features.shaderFloat16 = vulkan12Features.shaderFloat16;
+						shaderFloat16Int8Features.shaderInt8    = vulkan12Features.shaderInt8;
+
+						void* pNext = vulkan12Features.pNext;
+						bx::memSet(&vulkan12Features, 0, sizeof(vulkan12Features) );
+						vulkan12Features.sType                     = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES;
+						vulkan12Features.pNext                     = pNext;
+						vulkan12Features.shaderFloat16             = shaderFloat16Int8Features.shaderFloat16;
+						vulkan12Features.shaderInt8                = shaderFloat16Int8Features.shaderInt8;
+						vulkan12Features.shaderOutputViewportIndex = shaderOutputLayer;
+						vulkan12Features.shaderOutputLayer         = shaderOutputLayer;
+						vulkan12Features.drawIndirectCount         = s_extension[Extension::KHR_draw_indirect_count].m_supported;
+					}
 				}
 				else
 				{
@@ -1996,7 +2034,16 @@ VK_IMPORT_INSTANCE
 					if (lowLatencySupported)
 					{
 						presentIdFeatures.pNext = (VkBaseOutStructure*)nextFeatures;
-						nextFeatures = &timelineSemaphoreFeatures;
+
+						if (vulkan12FeaturesChained)
+						{
+							vulkan12Features.timelineSemaphore = VK_TRUE;
+							nextFeatures = &presentIdFeatures;
+						}
+						else
+						{
+							nextFeatures = &timelineSemaphoreFeatures;
+						}
 					}
 
 					s_extension[Extension::KHR_present_id ].m_supported = lowLatencySupported;
@@ -2115,7 +2162,7 @@ VK_IMPORT_INSTANCE
 
 				g_caps.supported |= 0
 					| (s_extension[Extension::EXT_conservative_rasterization ].m_supported ? BGFX_CAPS_CONSERVATIVE_RASTER  : 0)
-					| (s_extension[Extension::EXT_shader_viewport_index_layer].m_supported ? BGFX_CAPS_VIEWPORT_LAYER_ARRAY : 0)
+					| (s_extension[Extension::EXT_shader_viewport_index_layer].m_supported || shaderOutputLayer ? BGFX_CAPS_VIEWPORT_LAYER_ARRAY : 0)
 					| (s_extension[Extension::KHR_draw_indirect_count        ].m_supported && indirectDrawSupport ? BGFX_CAPS_DRAW_INDIRECT_COUNT : 0)
 					| (s_extension[Extension::KHR_fragment_shading_rate      ].m_supported ? BGFX_CAPS_VARIABLE_RATE_SHADING : 0)
 					| (true
@@ -5752,6 +5799,11 @@ VK_IMPORT_DEVICE
 			while (result != VK_SUCCESS
 			   &&  searchIndex >= 0);
 
+			if (VK_SUCCESS == result)
+			{
+				m_heapAllocated[m_memoryProperties.memoryTypes[memory->memoryTypeIndex].heapIndex] += memory->size;
+			}
+
 			return result;
 		}
 
@@ -5909,6 +5961,7 @@ VK_IMPORT_DEVICE
 		int64_t m_presentElapsed;
 
 		MemoryLruVK m_memoryLru;
+		int64_t m_heapAllocated[VK_MAX_MEMORY_HEAPS] = {};
 
 		ChunkedScratchBufferVK m_uniformScratchBuffer;
 		StagingScratchBufferVK m_scratchStagingBuffer[BGFX_CONFIG_MAX_FRAME_LATENCY];
@@ -6115,6 +6168,12 @@ VK_DESTROY
 		s_renderVK->release(_obj);
 	}
 
+	static void freeDeviceMemory(DeviceMemoryAllocationVK& _alloc)
+	{
+		s_renderVK->m_heapAllocated[s_renderVK->m_memoryProperties.memoryTypes[_alloc.memoryTypeIndex].heapIndex] -= _alloc.size;
+		vkDestroy(_alloc.mem);
+	}
+
 	void MemoryLruVK::recycle(DeviceMemoryAllocationVK& _alloc)
 	{
 		if (kMaxEntries == lru.getNumHandles() )
@@ -6123,7 +6182,7 @@ VK_DESTROY
 			uint16_t handle = lru.getBack();
 			DeviceMemoryAllocationVK& alloc = entries[handle];
 			totalSizeCached -= alloc.size;
-			vkDestroy(alloc.mem);
+			freeDeviceMemory(alloc);
 
 			// Touch slot and overwrite
 			lru.touch(handle);
@@ -6143,7 +6202,7 @@ VK_DESTROY
 			uint16_t handle = lru.getBack();
 			DeviceMemoryAllocationVK& alloc = entries[handle];
 			totalSizeCached -= alloc.size;
-			vkDestroy(alloc.mem);
+			freeDeviceMemory(alloc);
 			lru.free(handle);
 		}
 	}
@@ -6212,7 +6271,7 @@ VK_DESTROY
 
 		while (slot != UINT16_MAX)
 		{
-			vkDestroy(entries[slot].mem);
+			freeDeviceMemory(entries[slot]);
 			slot = lru.getNext(slot);
 		}
 
@@ -12487,9 +12546,6 @@ VK_DESTROY
 		dmbp.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_BUDGET_PROPERTIES_EXT;
 		dmbp.pNext = NULL;
 
-		int64_t gpuMemoryAvailable = -INT64_MAX;
-		int64_t gpuMemoryUsed      = -INT64_MAX;
-
 		if (s_extension[Extension::EXT_memory_budget].m_supported)
 		{
 			VkPhysicalDeviceMemoryProperties2 pdmp2;
@@ -12497,17 +12553,25 @@ VK_DESTROY
 			pdmp2.pNext = &dmbp;
 
 			vkGetPhysicalDeviceMemoryProperties2KHR(m_physicalDevice, &pdmp2);
-
-			gpuMemoryAvailable = 0;
-			gpuMemoryUsed      = 0;
-
+		}
+		else
+		{
 			for (uint32_t ii = 0; ii < m_memoryProperties.memoryHeapCount; ++ii)
 			{
-				if (!!(m_memoryProperties.memoryHeaps[ii].flags & VK_MEMORY_HEAP_DEVICE_LOCAL_BIT) )
-				{
-					gpuMemoryAvailable += dmbp.heapBudget[ii];
-					gpuMemoryUsed += dmbp.heapUsage[ii];
-				}
+				dmbp.heapBudget[ii] = m_memoryProperties.memoryHeaps[ii].size;
+				dmbp.heapUsage[ii]  = uint64_t(m_heapAllocated[ii]);
+			}
+		}
+
+		int64_t gpuMemoryAvailable = 0;
+		int64_t gpuMemoryUsed      = 0;
+
+		for (uint32_t ii = 0; ii < m_memoryProperties.memoryHeapCount; ++ii)
+		{
+			if (!!(m_memoryProperties.memoryHeaps[ii].flags & VK_MEMORY_HEAP_DEVICE_LOCAL_BIT) )
+			{
+				gpuMemoryAvailable += dmbp.heapBudget[ii];
+				gpuMemoryUsed += dmbp.heapUsage[ii];
 			}
 		}
 
