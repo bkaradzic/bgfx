@@ -1366,6 +1366,7 @@ VK_IMPORT_DEVICE
 			, m_variableRateShadingSupported(false)
 			, m_lowLatencySupported(false)
 		{
+			bx::memSet(m_numDescriptorPools, 0, sizeof(m_numDescriptorPools) );
 		}
 
 		~RendererContextVK()
@@ -5154,6 +5155,17 @@ VK_IMPORT_DEVICE
 			return pipeline;
 		}
 
+		void resetDescriptorPools(uint32_t _frame)
+		{
+			for (uint32_t ii = 0; ii < m_numDescriptorPools[_frame]; ++ii)
+			{
+				vkResetDescriptorPool(m_device, m_descriptorPool[_frame][ii], 0);
+			}
+
+			m_descriptorPoolIdx = 0;
+			m_descriptorSetMap.clear();
+		}
+
 		VkDescriptorPool createDescriptorPool()
 		{
 			const VkDescriptorPoolSize dps[] =
@@ -7333,30 +7345,19 @@ VK_DESTROY
 		qpci.queryCount = count;
 		qpci.pipelineStatistics = 0;
 
-		result = vkCreateQueryPool(device, &qpci, s_renderVK->m_allocatorCb, &m_queryPool);
-
-		if (VK_SUCCESS != result)
+		for (uint32_t ii = 0, num = s_renderVK->m_maxFrameLatency; ii < num; ++ii)
 		{
-			BX_TRACE("Create occlusion query error: vkCreateQueryPool failed %d: %s.", result, getName(result) );
-			return result;
-		}
+			result = vkCreateQueryPool(device, &qpci, s_renderVK->m_allocatorCb, &m_queryPool[ii]);
 
-		vkCmdResetQueryPool(commandBuffer, m_queryPool, 0, count);
+			if (VK_SUCCESS != result)
+			{
+				BX_TRACE("Create occlusion query error: vkCreateQueryPool failed %d: %s.", result, getName(result) );
+				return result;
+			}
 
-		const uint32_t size = count * sizeof(uint32_t);
-		result = s_renderVK->createReadbackBuffer(size, &m_readback, &m_readbackMemory);
+			m_numQueryPools = ii + 1;
 
-		if (VK_SUCCESS != result)
-		{
-			return result;
-		}
-
-		result = vkMapMemory(device, m_readbackMemory.mem, m_readbackMemory.offset, VK_WHOLE_SIZE, 0, (void**)&m_queryResult);
-
-		if (VK_SUCCESS != result)
-		{
-			BX_TRACE("Create occlusion query error: vkMapMemory failed %d: %s.", result, getName(result) );
-			return result;
+			vkCmdResetQueryPool(commandBuffer, m_queryPool[ii], 0, count);
 		}
 
 		m_control.reset();
@@ -7366,10 +7367,12 @@ VK_DESTROY
 
 	void OcclusionQueryVK::shutdown()
 	{
-		vkDestroy(m_queryPool);
-		vkDestroy(m_readback);
-		vkUnmapMemory(s_renderVK->m_device, m_readbackMemory.mem);
-		s_renderVK->recycleMemory(m_readbackMemory);
+		for (uint32_t ii = 0; ii < m_numQueryPools; ++ii)
+		{
+			s_renderVK->release(m_queryPool[ii]);
+		}
+
+		m_numQueryPools = 0;
 	}
 
 	void OcclusionQueryVK::begin(OcclusionQueryHandle _handle)
@@ -7379,9 +7382,14 @@ VK_DESTROY
 		m_control.reserve(1);
 
 		const VkCommandBuffer commandBuffer = s_renderVK->m_commandBuffer;
+		const uint32_t frameInFlight = s_renderVK->m_cmd.m_currentFrameInFlight;
 
-		m_handle[m_control.m_current] = _handle;
-		vkCmdBeginQuery(commandBuffer, m_queryPool, _handle.idx, s_renderVK->m_deviceFeatures.occlusionQueryPrecise ? VK_QUERY_CONTROL_PRECISE_BIT : 0);
+		const uint32_t idx = m_control.m_current;
+		m_handle[idx]        = _handle;
+		m_frameInFlight[idx] = uint8_t(frameInFlight);
+		m_ready[idx]         = false;
+
+		vkCmdBeginQuery(commandBuffer, m_queryPool[frameInFlight], _handle.idx, s_renderVK->m_deviceFeatures.occlusionQueryPrecise ? VK_QUERY_CONTROL_PRECISE_BIT : 0);
 	}
 
 	void OcclusionQueryVK::end()
@@ -7390,64 +7398,64 @@ VK_DESTROY
 
 		const VkCommandBuffer commandBuffer = s_renderVK->m_commandBuffer;
 
-		const OcclusionQueryHandle handle = m_handle[m_control.m_current];
-		vkCmdEndQuery(commandBuffer, m_queryPool, handle.idx);
+		const uint32_t idx = m_control.m_current;
+		vkCmdEndQuery(commandBuffer, m_queryPool[m_frameInFlight[idx] ], m_handle[idx].idx);
 
 		m_control.commit(1);
+	}
+
+	void OcclusionQueryVK::reset(uint32_t _frameInFlight, VkCommandBuffer _commandBuffer)
+	{
+		if (_frameInFlight >= m_numQueryPools)
+		{
+			return;
+		}
+
+		BGFX_PROFILER_SCOPE("OcclusionQueryVK::reset", kColorFrame);
+
+		const VkDevice device = s_renderVK->m_device;
+		const VkQueryPool queryPool = m_queryPool[_frameInFlight];
+		const uint32_t size = m_control.m_size;
+
+		for (uint32_t ii = 0, num = m_control.getNumUsed(); ii < num; ++ii)
+		{
+			const uint32_t idx = (m_control.m_read + ii) % size;
+
+			if (!m_ready[idx]
+			&&  _frameInFlight == m_frameInFlight[idx])
+			{
+				const OcclusionQueryHandle handle = m_handle[idx];
+
+				uint32_t result = 0;
+
+				if (isValid(handle) )
+				{
+					vkGetQueryPoolResults(device, queryPool, handle.idx, 1, sizeof(result), &result, sizeof(result), 0);
+				}
+
+				m_result[idx] = result;
+				m_ready[idx]  = true;
+			}
+		}
+
+		vkCmdResetQueryPool(_commandBuffer, queryPool, 0, BX_COUNTOF(m_handle) );
 	}
 
 	void OcclusionQueryVK::flush(Frame* _render)
 	{
 		BGFX_PROFILER_SCOPE("OcclusionQueryVK::flush", kColorFrame);
 
-		if (0 < m_control.getNumUsed() )
+		while (0 != m_control.getNumUsed()
+		&&     m_ready[m_control.m_read])
 		{
-			VkCommandBuffer commandBuffer = s_renderVK->m_commandBuffer;
+			const uint32_t idx = m_control.m_read;
+			const OcclusionQueryHandle handle = m_handle[idx];
 
-			const uint32_t size = m_control.m_size;
-
-			// need to copy each result individually because VK_QUERY_RESULT_WAIT_BIT causes
-			// vkWaitForFences to hang indefinitely if we copy all results (including unavailable ones)
-			for (uint32_t ii = 0, num = m_control.getNumUsed(); ii < num; ++ii)
-			{
-				const OcclusionQueryHandle& handle = m_handle[(m_control.m_read + ii) % size];
-				if (isValid(handle) )
-				{
-					vkCmdCopyQueryPoolResults(
-						  commandBuffer
-						, m_queryPool
-						, handle.idx
-						, 1
-						, m_readback
-						, handle.idx * sizeof(uint32_t)
-						, sizeof(uint32_t)
-						, VK_QUERY_RESULT_WAIT_BIT
-						);
-				}
-			}
-
-			setMemoryBarrier(commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_HOST_BIT);
-			s_renderVK->kick(true);
-
-			commandBuffer = s_renderVK->m_commandBuffer;
-
-			// resetting in the new command buffer prevents a false positive validation layer error
-			const uint32_t count = BX_COUNTOF(m_handle);
-			vkCmdResetQueryPool(commandBuffer, m_queryPool, 0, count);
-
-			resolve(_render);
-		}
-	}
-
-	void OcclusionQueryVK::resolve(Frame* _render)
-	{
-		while (0 != m_control.getNumUsed() )
-		{
-			OcclusionQueryHandle handle = m_handle[m_control.m_read];
 			if (isValid(handle) )
 			{
-				_render->m_occlusion[handle.idx] = m_queryResult[handle.idx];
+				_render->m_occlusion[handle.idx] = int32_t(m_result[idx]);
 			}
+
 			m_control.consume(1);
 		}
 	}
@@ -10719,6 +10727,8 @@ VK_DESTROY
 				return result;
 			}
 
+			s_renderVK->resetDescriptorPools(m_currentFrameInFlight);
+
 			VkCommandBufferBeginInfo cbi;
 			cbi.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 			cbi.pNext = NULL;
@@ -10735,6 +10745,8 @@ VK_DESTROY
 
 			m_activeCommandBuffer = commandList.m_commandBuffer;
 			m_currentFence = commandList.m_fence;
+
+			s_renderVK->m_occlusionQuery.reset(m_currentFrameInFlight, m_activeCommandBuffer);
 		}
 
 		if (NULL != _outCommandBuffer)
@@ -11511,14 +11523,6 @@ VK_DESTROY
 		const uint64_t f5 = BGFX_STATE_BLEND_INV_FACTOR<<8;
 		const uint64_t f6 = BGFX_STATE_BLEND_FACTOR<<12;
 		const uint64_t f7 = BGFX_STATE_BLEND_INV_FACTOR<<12;
-
-		const uint32_t descriptorFrame = m_cmd.m_currentFrameInFlight;
-		for (uint32_t ii = 0; ii < m_numDescriptorPools[descriptorFrame]; ++ii)
-		{
-			vkResetDescriptorPool(m_device, m_descriptorPool[descriptorFrame][ii], 0);
-		}
-		m_descriptorPoolIdx = 0;
-		m_descriptorSetMap.clear();
 
 		ChunkedScratchBufferVK& uniformScratchBuffer = m_uniformScratchBuffer;
 		uniformScratchBuffer.begin();
