@@ -8221,11 +8221,6 @@ namespace bgfx { namespace gl
 		uint32_t msaa = (_desc.flags & BGFX_SWAP_CHAIN_MSAA_MASK)>>BGFX_SWAP_CHAIN_MSAA_SHIFT;
 		msaa = bx::min<uint32_t>(s_renderGL->m_maxMsaa, 0 == msaa ? 1 : 1<<msaa);
 
-		if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES) )
-		{
-			msaa = 1;
-		}
-
 		const bool srgb = 0 != (_desc.flags & BGFX_SWAP_CHAIN_SRGB_BACKBUFFER);
 
 		m_swapChainMsaa = msaa;

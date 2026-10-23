@@ -53,6 +53,8 @@ namespace bgfx { namespace gl
 #endif // BX_PLATFORM_*
 			, m_ownsContext(false)
 			, m_msaaContext(false)
+			, m_colorspaceSupport(false)
+			, m_srgb(false)
 			, m_swapInterval(0)
 		{
 		}
@@ -92,6 +94,8 @@ namespace bgfx { namespace gl
 
 		bool m_ownsContext;
 		bool m_msaaContext;
+		bool m_colorspaceSupport;
+		bool m_srgb;
 		int  m_swapInterval;
 	};
 } /* namespace gl */ } // namespace bgfx

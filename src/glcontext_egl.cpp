@@ -170,6 +170,28 @@ WL_EGL_IMPORT
 
 	static EGLint s_contextAttrs[16];
 
+	static EGLSurface createWindowSurface(EGLDisplay _display, EGLConfig _config, EGLNativeWindowType _nwh, bool _colorspaceSupport, bool _srgb)
+	{
+		if (_colorspaceSupport
+		&&  _srgb)
+		{
+			const EGLint attribs[] =
+			{
+				EGL_GL_COLORSPACE_KHR, EGL_GL_COLORSPACE_SRGB_KHR,
+				EGL_NONE
+			};
+
+			EGLSurface surface = eglCreateWindowSurface(_display, _config, _nwh, attribs);
+
+			if (EGL_NO_SURFACE != surface)
+			{
+				return surface;
+			}
+		}
+
+		return eglCreateWindowSurface(_display, _config, _nwh, NULL);
+	}
+
 	struct SwapChainGL
 	{
 		SwapChainGL(EGLDisplay _display, EGLConfig _config, EGLContext _context, EGLNativeWindowType _nwh, int32_t _width, int32_t _height)
@@ -358,6 +380,9 @@ WL_EGL_IMPORT
 			const char* extensions = eglQueryString(m_display, EGL_EXTENSIONS);
 			BX_TRACE("Supported EGL extensions:");
 			dumpExtensions(extensions);
+
+			m_colorspaceSupport = !bx::findIdentifierMatch(extensions, "EGL_KHR_gl_colorspace").isEmpty();
+			m_srgb = 0 != (_swapChain.flags & BGFX_SWAP_CHAIN_SRGB_BACKBUFFER);
 
 			if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) )
 			{
@@ -639,7 +664,7 @@ WL_EGL_IMPORT
 				}
 #	endif // BX_PLATFORM_LINUX
 
-				m_surface = eglCreateWindowSurface(m_display, m_config, nwh, NULL);
+				m_surface = createWindowSurface(m_display, m_config, nwh, m_colorspaceSupport, m_srgb);
 			}
 
 			if (EGL_NO_SURFACE == m_surface)
@@ -985,6 +1010,8 @@ WL_EGL_IMPORT
 			m_readSurface = eglGetCurrentSurface(EGL_READ);
 		}
 
+		const bool srgb = 0 != (_swapChain.flags & BGFX_SWAP_CHAIN_SRGB_BACKBUFFER);
+
 		const bool hasWindow = true
 			&& m_ownsContext
 			&& NULL != m_display
@@ -993,7 +1020,7 @@ WL_EGL_IMPORT
 			;
 
 		bool recreateSurface = hasWindow
-			&& m_nwh != _swapChain.nwh
+			&& (m_nwh != _swapChain.nwh || m_srgb != srgb)
 			;
 
 #	if BX_PLATFORM_ANDROID
@@ -1004,6 +1031,7 @@ WL_EGL_IMPORT
 		{
 			BX_TRACE("EGL window changed: %p -> %p", m_nwh, _swapChain.nwh);
 			m_nwh = _swapChain.nwh;
+			m_srgb = srgb;
 
 			eglMakeCurrent(m_display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
 			eglDestroySurface(m_display, m_surface);
@@ -1028,7 +1056,7 @@ WL_EGL_IMPORT
 			}
 #	endif // BX_PLATFORM_LINUX
 
-			m_surface = eglCreateWindowSurface(m_display, m_config, nwh, NULL);
+			m_surface = createWindowSurface(m_display, m_config, nwh, m_colorspaceSupport, m_srgb);
 			BGFX_FATAL(m_surface != EGL_NO_SURFACE, Fatal::UnableToInitialize, "Failed to create surface.");
 			m_readSurface = m_surface;
 
