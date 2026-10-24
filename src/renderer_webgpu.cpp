@@ -1302,6 +1302,11 @@ WGPU_IMPORT
 
 					BX_TRACE("");
 
+					const char* disabledToggles[] =
+					{
+						"timestamp_quantization",
+					};
+
 					WGPUDawnTogglesDescriptor dawnTogglesDescriptor =
 					{
 						.chain =
@@ -1311,8 +1316,8 @@ WGPU_IMPORT
 						},
 						.enabledToggleCount  = enabledTogglesCount,
 						.enabledToggles      = enabledToggles,
-						.disabledToggleCount = 0,
-						.disabledToggles     = NULL,
+						.disabledToggleCount = BX_COUNTOF(disabledToggles),
+						.disabledToggles     = disabledToggles,
 					};
 #endif // !BX_PLATFORM_EMSCRIPTEN
 
@@ -6585,15 +6590,23 @@ WGPU_IMPORT
 
 	WGPUCommandEncoder CommandQueueWGPU::alloc()
 	{
-		s_renderWGPU->m_uniformScratchBuffer.flush();
-
-		kick();
+		if (++m_numPasses >= kPassesPerKick)
+		{
+			kick();
+		}
 
 		return m_commandEncoder;
 	}
 
 	void CommandQueueWGPU::kick()
 	{
+		m_numPasses = 0;
+
+		if (0 != s_renderWGPU->m_uniformScratchBuffer.m_chunkPos)
+		{
+			s_renderWGPU->m_uniformScratchBuffer.flush();
+		}
+
 		WGPUCommandBuffer commandBuffer = WGPU_CHECK(wgpuCommandEncoderFinish(m_commandEncoder, NULL) );
 
 		WGPU_CHECK(wgpuQueueSubmit(m_queue, 1, &commandBuffer) );

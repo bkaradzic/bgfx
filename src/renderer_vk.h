@@ -485,6 +485,9 @@ VK_DESTROY_FUNC(DescriptorSet);
 			, m_size(0)
 			, m_flags(BGFX_BUFFER_NONE)
 			, m_dynamic(false)
+			, m_copyEpoch(0)
+			, m_copyBegin(0)
+			, m_copyEnd(0)
 		{
 		}
 
@@ -497,6 +500,9 @@ VK_DESTROY_FUNC(DescriptorSet);
 		uint32_t m_size;
 		uint16_t m_flags;
 		bool m_dynamic;
+		uint32_t m_copyEpoch;
+		uint32_t m_copyBegin;
+		uint32_t m_copyEnd;
 	};
 
 	typedef BufferVK IndexBufferVK;

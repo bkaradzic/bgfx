@@ -1358,6 +1358,8 @@ VK_IMPORT_DEVICE
 			, m_externalDevice(NULL)
 			, m_renderDocDll(NULL)
 			, m_vulkan1Dll(NULL)
+			, m_pipelineMruNum(0)
+			, m_pipelineMruNext(0)
 			, m_maxAnisotropy(1.0f)
 			, m_wireframe(false)
 			, m_captureBuffer(VK_NULL_HANDLE)
@@ -2798,6 +2800,7 @@ VK_IMPORT_DEVICE
 			preReset();
 
 			m_pipelineStateCache.invalidate();
+			pipelineMruReset();
 			m_pipelineLayoutCache.invalidate();
 			m_descriptorSetLayoutCache.invalidate();
 			m_renderPassCache.invalidate();
@@ -3909,6 +3912,7 @@ VK_IMPORT_DEVICE
 			{
 				m_wireframe = wireframe;
 				m_pipelineStateCache.invalidate();
+				pipelineMruReset();
 			}
 		}
 
@@ -4901,6 +4905,38 @@ VK_IMPORT_DEVICE
 
 			_stencil &= kStencilNoRefAndRwMask;
 
+			const FrameBufferVK& frameBuffer = getFrameBuffer(m_fbh);
+
+			PipelineMru key;
+			key.state           = _state;
+			key.stencil         = _stencil;
+			key.rgba            = _rgba;
+			key.sampleMask      = _sampleMask;
+			key.vshHash         = program.m_vsh->m_hash;
+			key.fshHash         = NULL != program.m_fsh ? program.m_fsh->m_hash : 0;
+			key.renderPassHash  = frameBuffer.m_renderPassHashKey;
+			key.depthBias       = _depthBias;
+			key.slopeScale      = _slopeScale;
+			key.biasClamp       = _biasClamp;
+			key.pipeline        = VK_NULL_HANDLE;
+			key.program         = _program.idx;
+			key.numStreams      = _numStreams;
+			key.numInstanceData = _numInstanceData;
+			key.depthClamp      = _depthClamp;
+
+			for (uint32_t ii = 0; ii < _numStreams; ++ii)
+			{
+				key.layoutHash[ii] = _layouts[ii]->m_hash;
+			}
+
+			for (uint32_t ii = 0; ii < m_pipelineMruNum; ++ii)
+			{
+				if (m_pipelineMru[ii].equals(key) )
+				{
+					return m_pipelineMru[ii].pipeline;
+				}
+			}
+
 			VertexLayout layout;
 			if (0 < _numStreams)
 			{
@@ -4914,8 +4950,6 @@ VK_IMPORT_DEVICE
 					layout.m_attributes[ii] = attr == 0 ? UINT16_MAX : attr == UINT16_MAX ? 0 : attr;
 				}
 			}
-
-			const FrameBufferVK& frameBuffer = getFrameBuffer(m_fbh);
 
 			bx::HashMurmur2A murmur;
 			murmur.begin();
@@ -4949,6 +4983,7 @@ VK_IMPORT_DEVICE
 
 			if (VK_NULL_HANDLE != pipeline)
 			{
+				pipelineMruAdd(key, pipeline);
 				return pipeline;
 			}
 
@@ -5129,6 +5164,7 @@ VK_IMPORT_DEVICE
 				);
 
 			m_pipelineStateCache.add(hash, pipeline);
+			pipelineMruAdd(key, pipeline);
 
 			size_t dataSize;
 			VK_CHECK(vkGetPipelineCacheData(m_device, cache, &dataSize, NULL) );
@@ -6016,6 +6052,78 @@ VK_IMPORT_DEVICE
 
 		Matrix4 m_predefinedUniforms[PredefinedUniform::Count];
 
+		struct PipelineMru
+		{
+			uint64_t   state;
+			uint64_t   stencil;
+			uint32_t   rgba;
+			uint32_t   sampleMask;
+			uint32_t   vshHash;
+			uint32_t   fshHash;
+			uint32_t   renderPassHash;
+			uint32_t   layoutHash[BGFX_CONFIG_MAX_VERTEX_STREAMS];
+			int32_t    depthBias;
+			float      slopeScale;
+			float      biasClamp;
+			VkPipeline pipeline;
+			uint16_t   program;
+			uint8_t    numStreams;
+			uint8_t    numInstanceData;
+			bool       depthClamp;
+
+			bool equals(const PipelineMru& _other) const
+			{
+				if (state           != _other.state
+				||  stencil         != _other.stencil
+				||  rgba            != _other.rgba
+				||  sampleMask      != _other.sampleMask
+				||  vshHash         != _other.vshHash
+				||  fshHash         != _other.fshHash
+				||  renderPassHash  != _other.renderPassHash
+				||  depthBias       != _other.depthBias
+				||  slopeScale      != _other.slopeScale
+				||  biasClamp       != _other.biasClamp
+				||  program         != _other.program
+				||  numStreams      != _other.numStreams
+				||  numInstanceData != _other.numInstanceData
+				||  depthClamp      != _other.depthClamp)
+				{
+					return false;
+				}
+
+				for (uint32_t ii = 0; ii < numStreams; ++ii)
+				{
+					if (layoutHash[ii] != _other.layoutHash[ii])
+					{
+						return false;
+					}
+				}
+
+				return true;
+			}
+		};
+
+		static constexpr uint32_t kPipelineMruSize = 16;
+		PipelineMru m_pipelineMru[kPipelineMruSize];
+		uint32_t    m_pipelineMruNum;
+		uint32_t    m_pipelineMruNext;
+
+		uint32_t m_copyEpoch = 1;
+
+		void pipelineMruReset()
+		{
+			m_pipelineMruNum  = 0;
+			m_pipelineMruNext = 0;
+		}
+
+		void pipelineMruAdd(const PipelineMru& _key, VkPipeline _pipeline)
+		{
+			m_pipelineMru[m_pipelineMruNext]          = _key;
+			m_pipelineMru[m_pipelineMruNext].pipeline = _pipeline;
+			m_pipelineMruNext = (m_pipelineMruNext + 1) % kPipelineMruSize;
+			m_pipelineMruNum  = bx::min(m_pipelineMruNum + 1, kPipelineMruSize);
+		}
+
 		StateCacheT<VkPipeline> m_pipelineStateCache;
 		StateCacheT<VkDescriptorSetLayout> m_descriptorSetLayoutCache;
 		StateCacheT<VkPipelineLayout> m_pipelineLayoutCache;
@@ -6504,6 +6612,7 @@ VK_DESTROY
 		m_size    = _size;
 		m_flags   = _flags;
 		m_dynamic = NULL == _data;
+		m_copyEpoch = 0;
 
 		const bool storage  = m_flags & BGFX_BUFFER_COMPUTE_READ_WRITE;
 		const bool indirect = m_flags & BGFX_BUFFER_DRAW_INDIRECT;
@@ -6548,17 +6657,38 @@ VK_DESTROY
 
 		StagingBufferVK stagingBuffer = s_renderVK->allocFromScratchStagingBuffer(_size, 16, _data);
 
+		uint32_t& epoch = s_renderVK->m_copyEpoch;
+
+		if (m_copyEpoch == epoch
+		&&  _offset < m_copyEnd
+		&&  _offset + _size > m_copyBegin)
+		{
+			setMemoryBarrier(
+				  _commandBuffer
+				, VK_PIPELINE_STAGE_TRANSFER_BIT
+				, VK_PIPELINE_STAGE_TRANSFER_BIT
+				);
+
+			++epoch;
+		}
+
+		if (m_copyEpoch == epoch)
+		{
+			m_copyBegin = bx::min(m_copyBegin, _offset);
+			m_copyEnd   = bx::max(m_copyEnd, _offset + _size);
+		}
+		else
+		{
+			m_copyEpoch = epoch;
+			m_copyBegin = _offset;
+			m_copyEnd   = _offset + _size;
+		}
+
 		VkBufferCopy region;
 		region.srcOffset = stagingBuffer.m_offset;
 		region.dstOffset = _offset;
 		region.size      = _size;
 		vkCmdCopyBuffer(_commandBuffer, stagingBuffer.m_buffer, m_buffer, 1, &region);
-
-		setMemoryBarrier(
-			  _commandBuffer
-			, VK_PIPELINE_STAGE_TRANSFER_BIT
-			, VK_PIPELINE_STAGE_TRANSFER_BIT
-			);
 
 		if (!stagingBuffer.m_isFromScratch)
 		{

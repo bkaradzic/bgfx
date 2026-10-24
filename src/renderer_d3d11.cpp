@@ -1776,6 +1776,8 @@ namespace bgfx { namespace d3d11
 
 			m_textures.each([](TextureD3D11& _texture) { _texture.destroy(); });
 
+			DX_RELEASE(m_uploadRing, 0);
+
 			DX_RELEASE_I(m_deviceCtx1);
 			DX_RELEASE(m_annotation, 1);
 			dumpInfoQueue();
@@ -4188,6 +4190,57 @@ namespace bgfx { namespace d3d11
 		ID3D11Texture2D* m_captureTexture;
 		ID3D11Texture2D* m_captureResolve;
 
+		static constexpr uint32_t kUploadRingSize = 4<<20;
+		ID3D11Buffer* m_uploadRing    = NULL;
+		uint32_t      m_uploadRingPos = 0;
+
+		ID3D11Buffer* writeUpload(const void* _data, uint32_t _size, uint32_t& _offset)
+		{
+			if (_size > kUploadRingSize)
+			{
+				return NULL;
+			}
+
+			if (NULL == m_uploadRing)
+			{
+				const D3D11_BUFFER_DESC desc =
+				{
+					.ByteWidth           = kUploadRingSize,
+					.Usage               = D3D11_USAGE_DYNAMIC,
+					.BindFlags           = D3D11_BIND_VERTEX_BUFFER,
+					.CPUAccessFlags      = D3D11_CPU_ACCESS_WRITE,
+					.MiscFlags           = 0,
+					.StructureByteStride = 0,
+				};
+
+				if (FAILED(m_device->CreateBuffer(&desc, NULL, &m_uploadRing) ) )
+				{
+					m_uploadRing = NULL;
+					return NULL;
+				}
+
+				m_uploadRingPos = kUploadRingSize;
+			}
+
+			uint32_t offset = bx::alignUp(m_uploadRingPos, 16);
+			D3D11_MAP map   = D3D11_MAP_WRITE_NO_OVERWRITE;
+
+			if (offset + _size > kUploadRingSize)
+			{
+				offset = 0;
+				map    = D3D11_MAP_WRITE_DISCARD;
+			}
+
+			D3D11_MAPPED_SUBRESOURCE mapped;
+			DX_CHECK(m_deviceCtx->Map(m_uploadRing, 0, map, 0, &mapped) );
+			bx::memCopy( (uint8_t*)mapped.pData + offset, _data, _size);
+			m_deviceCtx->Unmap(m_uploadRing, 0);
+
+			m_uploadRingPos = offset + _size;
+			_offset = offset;
+			return m_uploadRing;
+		}
+
 		SwapChain m_mainSwapChain;
 		uint32_t  m_reset;
 
@@ -4509,6 +4562,25 @@ namespace bgfx { namespace d3d11
 		}
 		else
 		{
+			uint32_t uploadOffset;
+			ID3D11Buffer* upload = s_renderD3D11->writeUpload(_data, _size, uploadOffset);
+
+			if (NULL != upload)
+			{
+				const D3D11_BOX srcBox =
+				{
+					.left   = uploadOffset,
+					.top    = 0,
+					.front  = 0,
+					.right  = uploadOffset + _size,
+					.bottom = 1,
+					.back   = 1,
+				};
+
+				deviceCtx->CopySubresourceRegion(m_ptr, 0, _offset, 0, 0, upload, 0, &srcBox);
+				return;
+			}
+
 			D3D11_BUFFER_DESC desc;
 			desc.ByteWidth = _size;
 			desc.Usage     = D3D11_USAGE_STAGING;
