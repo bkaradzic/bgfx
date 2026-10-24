@@ -200,6 +200,7 @@ WL_EGL_IMPORT
 #	if BX_PLATFORM_LINUX
 			, m_eglWindow(NULL)
 #	endif
+			, m_swapInterval(-1)
 		{
 			EGLSurface defaultDrawSurface = eglGetCurrentSurface(EGL_DRAW);
 			EGLSurface defaultReadSurface = eglGetCurrentSurface(EGL_READ);
@@ -275,6 +276,7 @@ WL_EGL_IMPORT
 #	if BX_PLATFORM_LINUX
 		wl_egl_window *m_eglWindow;
 #	endif
+		int m_swapInterval;
 	};
 
 #	if BX_PLATFORM_RPI
@@ -1102,6 +1104,7 @@ WL_EGL_IMPORT
 		if (NULL != m_display
 		&&  EGL_NO_SURFACE != m_surface)
 		{
+			makeCurrent(NULL);
 			eglSwapInterval(m_display, m_swapInterval);
 		}
 	}
@@ -1148,18 +1151,6 @@ WL_EGL_IMPORT
 	{
 		makeCurrent(_swapChain);
 
-		const bool noWait = true
-			&& !_vsync
-			&& 0 != m_swapInterval
-			&& NULL != m_display
-			&& (NULL != _swapChain || EGL_NO_SURFACE != m_surface)
-			;
-
-		if (noWait)
-		{
-			eglSwapInterval(m_display, 0);
-		}
-
 		if (NULL == _swapChain)
 		{
 			if (NULL != m_display
@@ -1170,12 +1161,15 @@ WL_EGL_IMPORT
 		}
 		else
 		{
-			_swapChain->swapBuffers();
-		}
+			const int swapInterval = _vsync ? m_swapInterval : 0;
 
-		if (noWait)
-		{
-			eglSwapInterval(m_display, m_swapInterval);
+			if (swapInterval != _swapChain->m_swapInterval)
+			{
+				_swapChain->m_swapInterval = swapInterval;
+				eglSwapInterval(m_display, swapInterval);
+			}
+
+			_swapChain->swapBuffers();
 		}
 	}
 
@@ -1195,16 +1189,6 @@ WL_EGL_IMPORT
 			else
 			{
 				_swapChain->makeCurrent();
-			}
-
-			// eglSwapInterval is per-surface, so re-apply the cached interval every time a
-			// different surface becomes current. Without this, secondary swap chains keep
-			// their driver default (typically vsync ON) even after resize().
-			// eglSwapInterval raises EGL_BAD_SURFACE when no surface is bound.
-			if (NULL != m_display
-			&&  (NULL != _swapChain || EGL_NO_SURFACE != m_surface) )
-			{
-				eglSwapInterval(m_display, m_swapInterval);
 			}
 		}
 	}

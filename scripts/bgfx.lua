@@ -57,6 +57,7 @@ function bgfxProjectBase(_kind, _defines)
 		configuration { "mingw*" }
 			linkoptions {
 				"-shared",
+				"-Wl,-u,_fpreset",
 			}
 
 		configuration { "linux-*" }

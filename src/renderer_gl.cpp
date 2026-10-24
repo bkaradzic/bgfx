@@ -2795,24 +2795,27 @@ namespace bgfx { namespace gl
 
 					if (NULL != glGetInternalformativ)
 					{
-						GLint sampleCounts[16] = {};
-						glGetInternalformativ(GL_RENDERBUFFER
-							, s_textureFormat[ii].m_internalFmt
-							, GL_SAMPLES
-							, BX_COUNTOF(sampleCounts)
-							, sampleCounts
-							);
-						GLenum err = getGlError();
-
-						for (uint32_t jj = 0; jj < BX_COUNTOF(sampleCounts) && 0 == err; ++jj)
+						if (0 != (supported & BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER) )
 						{
-							const uint32_t numSamples = uint32_t(sampleCounts[jj]);
+							GLint sampleCounts[16] = {};
+							glGetInternalformativ(GL_RENDERBUFFER
+								, s_textureFormat[ii].m_internalFmt
+								, GL_SAMPLES
+								, BX_COUNTOF(sampleCounts)
+								, sampleCounts
+								);
+							const GLenum err = getGlError();
 
-							if (2 <= numSamples
-							&&  16 >= numSamples
-							&&  bx::isPowerOf2(numSamples) )
+							for (uint32_t jj = 0; jj < BX_COUNTOF(sampleCounts) && 0 == err; ++jj)
 							{
-								supported |= BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA_X2 << (bx::countTrailingZeros(numSamples) - 1);
+								const uint32_t numSamples = uint32_t(sampleCounts[jj]);
+
+								if ( 2 <= numSamples
+								&&  16 >= numSamples
+								&&  bx::isPowerOf2(numSamples) )
+								{
+									supported |= BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA_X2 << (bx::countTrailingZeros(numSamples) - 1);
+								}
 							}
 						}
 
@@ -2826,7 +2829,7 @@ namespace bgfx { namespace gl
 								, 1
 								, &maxSamples
 								);
-							err = getGlError();
+							const GLenum err = getGlError();
 							supported |= 0 == err && maxSamples > 0
 								? BGFX_CAPS_FORMAT_TEXTURE_MSAA
 								: BGFX_CAPS_FORMAT_TEXTURE_NONE
