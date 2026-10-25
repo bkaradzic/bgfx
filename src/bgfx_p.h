@@ -7685,6 +7685,7 @@ namespace bgfx
 					.cubeMap      = false,
 				};
 
+				release(_mem);
 				return BGFX_INVALID_HANDLE;
 			}
 
@@ -7696,6 +7697,21 @@ namespace bgfx
 
 			if (!isValid(handle) )
 			{
+				bx::MemoryReader reader(_mem->data, _mem->size);
+				bx::Error err;
+				uint32_t magic = 0;
+				bx::read(&reader, magic, &err);
+
+				if (kChunkMagicTex == magic)
+				{
+					TextureCreate tc{};
+					bx::read(&reader, tc, &err);
+					if (err.isOk() && NULL != tc.m_mem)
+					{
+						release(tc.m_mem);
+					}
+				}
+
 				release(_mem);
 				return BGFX_INVALID_HANDLE;
 			}
