@@ -6489,6 +6489,7 @@ namespace bgfx
 				{
 					BX_TRACE("WARNING: Failed to allocate vertex layout handle (BGFX_CONFIG_MAX_VERTEX_LAYOUTS, max: %d).", BGFX_CONFIG_MAX_VERTEX_LAYOUTS);
 					m_vertexBufferHandle.free(handle.idx);
+					release(_mem);
 					return BGFX_INVALID_HANDLE;
 				}
 
