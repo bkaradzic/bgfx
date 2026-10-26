@@ -5937,6 +5937,11 @@ namespace bgfx { namespace d3d12
 			if (!_finishAll
 			&&  _waitFence <= m_completedFence)
 			{
+				while (0 < m_control.getNumUsed()
+				&&     consume(0) )
+				{
+				}
+
 				return;
 			}
 		}
