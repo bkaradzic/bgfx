@@ -6722,6 +6722,10 @@ namespace bgfx
 
 		if (!err.isOk() )
 		{
+			if (NULL != _mem)
+			{
+				release(_mem);
+			}
 			return BGFX_INVALID_HANDLE;
 		}
 
@@ -6799,6 +6803,10 @@ namespace bgfx
 
 		if (!err.isOk() )
 		{
+			if (NULL != _mem)
+			{
+				release(_mem);
+			}
 			return BGFX_INVALID_HANDLE;
 		}
 
@@ -6852,6 +6860,10 @@ namespace bgfx
 
 		if (!err.isOk() )
 		{
+			if (NULL != _mem)
+			{
+				release(_mem);
+			}
 			return BGFX_INVALID_HANDLE;
 		}
 
