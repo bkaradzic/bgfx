@@ -880,7 +880,8 @@ namespace bgfx { namespace d3d12
 			, m_wireframe(false)
 			, m_lost(false)
 			, m_maxAnisotropy(1)
-			, m_lastPso(NULL)
+			, m_psoMruNum(0)
+			, m_psoMruNext(0)
 			, m_backBufferColorIdx(0)
 			, m_rtMsaa(false)
 			, m_directAccessSupport(false)
@@ -2172,9 +2173,10 @@ namespace bgfx { namespace d3d12
 			}
 
 			m_uniformScratchBuffer.destroy();
+			destroyUploadPool();
 
 			m_pipelineStateCache.invalidate();
-			m_lastPso = NULL;
+			psoMruReset();
 
 			m_indexBuffers.each([](BufferD3D12& _indexBuffer) { _indexBuffer.destroy(); });
 
@@ -3248,7 +3250,7 @@ namespace bgfx { namespace d3d12
 		void invalidateCache()
 		{
 			m_pipelineStateCache.invalidate();
-			m_lastPso = NULL;
+			psoMruReset();
 
 			m_samplerAllocator.reset();
 		}
@@ -4003,49 +4005,35 @@ namespace bgfx { namespace d3d12
 
 			const uint32_t rgba = !!(BGFX_STATE_BLEND_INDEPENDENT & _state) ? _rgba : 0;
 
-			if (NULL != m_lastPso
-			&&  m_lastPsoState.state           == _state
-			&&  m_lastPsoState.stencil         == _stencil
-			&&  m_lastPsoState.rgba            == rgba
-			&&  m_lastPsoState.sampleMask      == _sampleMask
-			&&  m_lastPsoState.program         == _program.idx
-			&&  m_lastPsoState.numStreams      == _numStreams
-			&&  m_lastPsoState.numInstanceData == _numInstanceData
-			&&  m_lastPsoState.fbh             == m_fbh.idx
-			&&  m_lastPsoState.depthClamp      == _depthClamp
-			&&  m_lastPsoState.depthBias       == _depthBias
-			&&  m_lastPsoState.slopeScale      == _slopeScale
-			&&  m_lastPsoState.biasClamp       == _biasClamp
-			   )
-			{
-				bool match = true;
-				for (uint32_t ii = 0; ii < _numStreams && match; ++ii)
-				{
-					match &= _layouts[ii] == m_lastPsoState.layouts[ii];
-				}
-
-				if (match)
-				{
-					return m_lastPso;
-				}
-			}
-
-			m_lastPsoState.state           = _state;
-			m_lastPsoState.stencil         = _stencil;
-			m_lastPsoState.rgba            = rgba;
-			m_lastPsoState.sampleMask      = _sampleMask;
-			m_lastPsoState.program         = _program.idx;
-			m_lastPsoState.numStreams      = _numStreams;
-			m_lastPsoState.numInstanceData = _numInstanceData;
-			m_lastPsoState.fbh             = m_fbh.idx;
-			m_lastPsoState.depthClamp      = _depthClamp;
-			m_lastPsoState.depthBias       = _depthBias;
-			m_lastPsoState.slopeScale      = _slopeScale;
-			m_lastPsoState.biasClamp       = _biasClamp;
+			PsoState key;
+			key.state           = _state;
+			key.stencil         = _stencil;
+			key.rgba            = rgba;
+			key.sampleMask      = _sampleMask;
+			key.vshHash         = program.m_vsh->m_hash;
+			key.fshHash         = NULL != program.m_fsh ? program.m_fsh->m_hash : 0;
+			key.program         = _program.idx;
+			key.fbh             = m_fbh.idx;
+			key.numStreams      = _numStreams;
+			key.numInstanceData = _numInstanceData;
+			key.index32         = _index32;
+			key.depthClamp      = _depthClamp;
+			key.depthBias       = _depthBias;
+			key.slopeScale      = _slopeScale;
+			key.biasClamp       = _biasClamp;
+			key.pso             = NULL;
 
 			for (uint32_t ii = 0; ii < _numStreams; ++ii)
 			{
-				m_lastPsoState.layouts[ii] = _layouts[ii];
+				key.layouts[ii] = _layouts[ii];
+			}
+
+			for (uint32_t ii = 0; ii < m_psoMruNum; ++ii)
+			{
+				if (m_psoMru[ii].equals(key) )
+				{
+					return m_psoMru[ii].pso;
+				}
 			}
 
 			VertexLayout layout;
@@ -4136,7 +4124,7 @@ namespace bgfx { namespace d3d12
 
 			if (NULL != pso)
 			{
-				m_lastPso = pso;
+				psoMruAdd(key, pso);
 				return pso;
 			}
 
@@ -4322,7 +4310,7 @@ namespace bgfx { namespace d3d12
 				bx::free(g_allocator, cachedData);
 			}
 
-			m_lastPso = pso;
+			psoMruAdd(key, pso);
 			return pso;
 		}
 
@@ -4788,6 +4776,110 @@ namespace bgfx { namespace d3d12
 
 		ScratchBufferD3D12 m_scratchBuffer[BGFX_CONFIG_MAX_BACK_BUFFERS];
 		ChunkedScratchBufferD3D12 m_uniformScratchBuffer;
+
+		struct UploadChunk
+		{
+			ID3D12Resource* m_resource = NULL;
+			uint8_t* m_data = NULL;
+			uint64_t m_fence = 0;
+			uint32_t m_size = 0;
+			uint32_t m_pos  = 0;
+		};
+
+		static constexpr uint32_t kUploadChunkSize = 4<<20;
+		static constexpr uint32_t kUploadChunkPool = 4;
+		UploadChunk m_upload;
+		UploadChunk m_uploadRetired[kUploadChunkPool];
+		uint32_t    m_uploadRetiredNum = 0;
+
+		void retireUpload()
+		{
+			if (NULL == m_upload.m_resource)
+			{
+				return;
+			}
+
+			if (m_uploadRetiredNum < kUploadChunkPool
+			&&  m_upload.m_size   == kUploadChunkSize)
+			{
+				m_upload.m_fence = m_cmd.m_currentFence;
+				m_upload.m_pos   = 0;
+				m_uploadRetired[m_uploadRetiredNum++] = m_upload;
+			}
+			else
+			{
+				const D3D12_RANGE writeRange = { 0, m_upload.m_pos };
+				m_upload.m_resource->Unmap(0, &writeRange);
+				m_cmd.release(m_upload.m_resource);
+			}
+
+			m_upload = UploadChunk();
+		}
+
+		bool reuseUpload(uint32_t _size)
+		{
+			for (uint32_t ii = 0; ii < m_uploadRetiredNum; ++ii)
+			{
+				if (m_uploadRetired[ii].m_fence <  m_cmd.m_completedFence
+				&&  m_uploadRetired[ii].m_size  >= _size)
+				{
+					m_upload = m_uploadRetired[ii];
+					m_uploadRetired[ii] = m_uploadRetired[--m_uploadRetiredNum];
+					return true;
+				}
+			}
+
+			return false;
+		}
+
+		void destroyUploadPool()
+		{
+			retireUpload();
+
+			for (uint32_t ii = 0; ii < m_uploadRetiredNum; ++ii)
+			{
+				const D3D12_RANGE writeRange = { 0, 0 };
+				m_uploadRetired[ii].m_resource->Unmap(0, &writeRange);
+				DX_RELEASE(m_uploadRetired[ii].m_resource, 0);
+			}
+
+			m_uploadRetiredNum = 0;
+		}
+
+		ID3D12Resource* allocUpload(uint32_t _size, uint32_t _align, uint32_t& _offset, uint8_t*& _data)
+		{
+			uint32_t offset = bx::alignUp(m_upload.m_pos, _align);
+
+			if (NULL == m_upload.m_resource
+			||  offset + _size > m_upload.m_size)
+			{
+				retireUpload();
+
+				const uint32_t size = bx::max(kUploadChunkSize, _size);
+
+				if (!reuseUpload(size) )
+				{
+					m_upload.m_resource = createCommittedResource(m_device, HeapProperty::Upload, size);
+
+					if (NULL == m_upload.m_resource)
+					{
+						return NULL;
+					}
+
+					const D3D12_RANGE readRange = { 0, 0 };
+					DX_CHECK(m_upload.m_resource->Map(0, &readRange, (void**)&m_upload.m_data) );
+					m_upload.m_size = size;
+				}
+
+				m_upload.m_pos  = 0;
+				offset = 0;
+			}
+
+			m_upload.m_pos = offset + _size;
+			_offset = offset;
+			_data   = m_upload.m_data + offset;
+			return m_upload.m_resource;
+		}
 		DescriptorAllocatorD3D12 m_samplerAllocator;
 
 		ID3D12RootSignature*    m_rootSignature;
@@ -4823,19 +4915,71 @@ namespace bgfx { namespace d3d12
 			uint64_t stencil;
 			uint32_t rgba;
 			uint32_t sampleMask;
+			uint32_t vshHash;
+			uint32_t fshHash;
 			uint16_t program;
 			uint16_t fbh;
 			uint8_t  numStreams;
 			uint8_t  numInstanceData;
+			bool     index32;
 			bool     depthClamp;
 			int32_t  depthBias;
 			float    slopeScale;
 			float    biasClamp;
 			const VertexLayout* layouts[BGFX_CONFIG_MAX_VERTEX_STREAMS];
+			ID3D12PipelineState* pso;
+
+			bool equals(const PsoState& _other) const
+			{
+				if (state           != _other.state
+				||  stencil         != _other.stencil
+				||  rgba            != _other.rgba
+				||  sampleMask      != _other.sampleMask
+				||  vshHash         != _other.vshHash
+				||  fshHash         != _other.fshHash
+				||  program         != _other.program
+				||  fbh             != _other.fbh
+				||  numStreams      != _other.numStreams
+				||  numInstanceData != _other.numInstanceData
+				||  index32         != _other.index32
+				||  depthClamp      != _other.depthClamp
+				||  depthBias       != _other.depthBias
+				||  slopeScale      != _other.slopeScale
+				||  biasClamp       != _other.biasClamp)
+				{
+					return false;
+				}
+
+				for (uint32_t ii = 0; ii < numStreams; ++ii)
+				{
+					if (layouts[ii] != _other.layouts[ii])
+					{
+						return false;
+					}
+				}
+
+				return true;
+			}
 		};
 
-		PsoState m_lastPsoState;
-		ID3D12PipelineState* m_lastPso;
+		static constexpr uint32_t kPsoMruSize = 16;
+		PsoState m_psoMru[kPsoMruSize];
+		uint32_t m_psoMruNum;
+		uint32_t m_psoMruNext;
+
+		void psoMruReset()
+		{
+			m_psoMruNum  = 0;
+			m_psoMruNext = 0;
+		}
+
+		void psoMruAdd(const PsoState& _key, ID3D12PipelineState* _pso)
+		{
+			m_psoMru[m_psoMruNext]     = _key;
+			m_psoMru[m_psoMruNext].pso = _pso;
+			m_psoMruNext = (m_psoMruNext + 1) % kPsoMruSize;
+			m_psoMruNum  = bx::min(m_psoMruNum + 1, kPsoMruSize);
+		}
 
 		TextVideoMem m_textVideoMem;
 
@@ -6518,26 +6662,20 @@ namespace bgfx { namespace d3d12
 			return;
 		}
 
-		ID3D12Resource* staging = createCommittedResource(s_renderD3D12->m_device, HeapProperty::Upload, _size);
+		uint32_t stagingOffset;
+		uint8_t* data;
+		ID3D12Resource* staging = s_renderD3D12->allocUpload(_size, 16, stagingOffset, data);
 
 		if (NULL == staging)
 		{
 			return;
 		}
 
-		uint8_t* data;
-
-		D3D12_RANGE readRange = { 0, 0 };
-		DX_CHECK(staging->Map(0, &readRange, (void**)&data) );
 		bx::memCopy(data, _data, _size);
-		D3D12_RANGE writeRange = { 0, _size };
-		staging->Unmap(0, &writeRange);
 
 		D3D12_RESOURCE_STATES state = setState(_commandList, D3D12_RESOURCE_STATE_COPY_DEST);
-		_commandList->CopyBufferRegion(m_ptr, _offset, staging, 0, _size);
+		_commandList->CopyBufferRegion(m_ptr, _offset, staging, stagingOffset, _size);
 		setState(_commandList, state);
-
-		s_renderD3D12->m_cmd.release(staging);
 	}
 
 	void BufferD3D12::destroy()
@@ -7678,7 +7816,9 @@ namespace bgfx { namespace d3d12
 
 		const uint32_t rowPitch = layout.Footprint.RowPitch;
 
-		ID3D12Resource* staging = createCommittedResource(s_renderD3D12->m_device, HeapProperty::Upload, totalBytes);
+		uint32_t stagingOffset;
+		uint8_t* dstData;
+		ID3D12Resource* staging = s_renderD3D12->allocUpload(uint32_t(totalBytes), D3D12_TEXTURE_DATA_PLACEMENT_ALIGNMENT, stagingOffset, dstData);
 
 		if (NULL == staging)
 		{
@@ -7692,10 +7832,7 @@ namespace bgfx { namespace d3d12
 			return;
 		}
 
-		uint8_t* dstData;
-
-		D3D12_RANGE readRange = { 0, 0 };
-		DX_CHECK(staging->Map(0, &readRange, (void**)&dstData) );
+		layout.Offset = stagingOffset;
 
 		const uint32_t dstSlicePitch = rowPitch  * numRows;
 		const uint32_t srcSlicePitch = copyPitch * numRows;
@@ -7709,17 +7846,12 @@ namespace bgfx { namespace d3d12
 			bx::free(g_allocator, temp);
 		}
 
-		D3D12_RANGE writeRange = { 0, size_t(totalBytes) };
-		staging->Unmap(0, &writeRange);
-
 		D3D12_TEXTURE_COPY_LOCATION dst = { m_ptr,   D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX, {        } };
 		dst.SubresourceIndex = subres;
 		D3D12_TEXTURE_COPY_LOCATION src = { staging, D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT,  { layout } };
 		_commandList->CopyTextureRegion(&dst, _rect.m_x, _rect.m_y, dstZ, &src, &box);
 
 		setState(_commandList, state);
-
-		s_renderD3D12->m_cmd.release(staging);
 	}
 
 	void TextureD3D12::resolve(ID3D12GraphicsCommandList* _commandList, uint8_t _resolve, uint32_t _layer, uint32_t _numLayers, uint32_t _mip)
@@ -9845,8 +9977,10 @@ namespace bgfx { namespace d3d12
 		uint32_t currentTexDimHash      = 0;
 		bool     hasPredefined          = false;
 		bool     commandListChanged     = false;
+		static constexpr uint32_t kViewsPerKick = 64;
+		uint32_t viewsSinceKick         = 0;
 		ID3D12PipelineState* currentPso = NULL;
-		m_lastPso = NULL;
+		psoMruReset();
 		SortKey key;
 		uint16_t view = UINT16_MAX;
 		const View* renderView = &_render->view(0);
@@ -9973,7 +10107,14 @@ namespace bgfx { namespace d3d12
 				if (viewChanged)
 				{
 					m_batch.flush(m_commandList, true);
-					kick();
+
+					const bool firstView = UINT16_MAX == view;
+					if (firstView
+					||  ++viewsSinceKick >= kViewsPerKick)
+					{
+						kick();
+						viewsSinceKick = 0;
+					}
 
 					commandListChanged = true;
 
@@ -11158,6 +11299,7 @@ namespace bgfx { namespace d3d12
 #endif // BX_PLATFORM_WINDOWS
 
 		m_uniformScratchBuffer.end();
+		retireUpload();
 
 		m_backBufferColorFence[m_backBufferColorIdx] = kick();
 		m_cmd.m_pipelineStatsSum.reset();
