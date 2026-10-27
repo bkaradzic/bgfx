@@ -3281,11 +3281,6 @@ WGPU_IMPORT
 			{
 				flags &= ~BGFX_RESET_INTERNAL_FORCE;
 
-				if (m_backBuffer.m_swapChain.m_nwh != m_mainSwapChain.nwh)
-				{
-					m_backBuffer.m_swapChain.m_nwh = m_mainSwapChain.nwh;
-				}
-
 				m_mainSwapChain = _swapChain;
 				m_reset = flags;
 
@@ -6133,7 +6128,21 @@ WGPU_IMPORT
 
 	void SwapChainWGPU::update(void* _nwh, const SwapChain& _desc)
 	{
-		BX_UNUSED(_nwh);
+		if (NULL != _nwh
+		&& (m_nwh != _nwh || NULL == m_surface) )
+		{
+			if (NULL != m_surface)
+			{
+				destroy();
+			}
+
+			if (!createSurface(_nwh) )
+			{
+				m_descPending             = _desc;
+				m_needToRecreateSwapChain = true;
+				return;
+			}
+		}
 
 		wgpuRelease(m_textureView);
 		wgpuRelease(m_msaaTextureView);
@@ -6532,7 +6541,7 @@ WGPU_IMPORT
 
 	void FrameBufferWGPU::update(const SwapChain& _desc)
 	{
-		m_swapChain.update(m_swapChain.m_nwh, _desc);
+		m_swapChain.update(_desc.nwh, _desc);
 		m_width  = _desc.width;
 		m_height = _desc.height;
 		m_formatDepthStencil = m_swapChain.m_formatDepthStencil;
