@@ -3748,7 +3748,7 @@ WGPU_IMPORT
 					}
 					else
 					{
-						elem->format = WGPUVertexFormat_Float32x3;
+						elem->format = WGPUVertexFormat_Unorm8x4;
 						elem->offset = 0;
 					}
 
