@@ -7271,8 +7271,11 @@ namespace bgfx { namespace d3d12
 
 			if (writeOnly)
 			{
-				resourceDesc.Flags |= D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE;
-				state              &= ~D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+				resourceDesc.Flags |= depth
+					? D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE
+					: D3D12_RESOURCE_FLAG_NONE
+					;
+				state &= ~D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
 			}
 
 			if (computeWrite)
