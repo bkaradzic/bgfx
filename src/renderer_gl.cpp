@@ -8151,16 +8151,16 @@ namespace bgfx { namespace gl
 					{
 						const TextureGL& texture = s_renderGL->m_textures[at.handle.idx];
 
+						GLenum attachment = attachmentFor(TextureFormat::Enum(texture.m_textureFormat) );
+
+						if (GL_COLOR_ATTACHMENT0 == attachment)
+						{
+							attachment = GL_COLOR_ATTACHMENT0 + colorIdx;
+							++colorIdx;
+						}
+
 						if (0 != texture.m_rbo && 0 != texture.m_id)
 						{
-							GLenum attachment = attachmentFor(TextureFormat::Enum(texture.m_textureFormat) );
-
-							if (GL_COLOR_ATTACHMENT0 == attachment)
-							{
-								attachment = GL_COLOR_ATTACHMENT0 + colorIdx;
-								++colorIdx;
-							}
-
 							GLenum target = texture.isCubeMap()
 								? GL_TEXTURE_CUBE_MAP_POSITIVE_X + at.layer
 								: texture.m_target
@@ -8533,7 +8533,7 @@ namespace bgfx { namespace gl
 					bimg::TextureFormat::Enum format = bimg::TextureFormat::Enum(texture.m_textureFormat);
 
 					if (!bimg::isDepth(format)
-					&&  0 == texture.m_rbo)
+					&& (0 == texture.m_rbo || 0 == texture.m_id) )
 					{
 						colorIdx++;
 					}
