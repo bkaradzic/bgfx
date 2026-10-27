@@ -7902,12 +7902,10 @@ namespace bgfx { namespace d3d12
 
 			for (uint32_t ii = _layer, end = _layer + _numLayers; ii < end; ++ii)
 			{
-				const uint32_t resource = _mip + (ii * m_numMips);
-
 				_commandList->ResolveSubresource(m_singleMsaa
-					, resource
+					, _mip + (ii * m_numMips)
 					, m_ptr
-					, resource
+					, ii
 					, resolveFormat
 				);
 			}
