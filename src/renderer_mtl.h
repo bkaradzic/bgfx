@@ -338,6 +338,8 @@ namespace bgfx { namespace mtl
 
 		MTL::Function* getFunction(uint32_t _sampleMask) const;
 
+		UniformHandle findUniform(const char* _name) const;
+
 		void destroy()
 		{
 			for (FunctionMap::iterator it = m_functions.begin(), itEnd = m_functions.end(); it != itEnd; ++it)
@@ -347,15 +349,18 @@ namespace bgfx { namespace mtl
 
 			m_functions.clear();
 			m_function = NULL;
+			m_uniforms.clear();
 
 			MTL_RELEASE_DEFERRED(m_lib);
 		}
 
 		typedef stl::unordered_map<uint32_t, MTL::Function*> FunctionMap;
+		typedef stl::unordered_map<uint32_t, UniformHandle> UniformMap;
 
 		MTL::Library*  m_lib;
 		MTL::Function* m_function;
 		mutable FunctionMap m_functions;
+		UniformMap m_uniforms;
 		uint32_t m_hash;
 		uint16_t m_numThreads[3];
 	};
