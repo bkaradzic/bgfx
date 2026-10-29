@@ -2932,6 +2932,31 @@ namespace bgfx { namespace d3d11
 					curr->AlignedByteOffset = ii*16;
 				}
 
+				const D3D11_INPUT_ELEMENT_DESC fallback = { "TEXCOORD", 0, DXGI_FORMAT_R8G8B8A8_UNORM, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 };
+
+				const uint32_t numFallback = 0 < _numStreams ? BGFX_CONFIG_MAX_INSTANCE_DATA_COUNT : 0;
+
+				for (uint32_t ii = _numInstanceData; ii < numFallback && uint32_t(elem-vertexElements) < D3D11_IA_VERTEX_INPUT_STRUCTURE_ELEMENT_COUNT; ++ii)
+				{
+					const uint32_t index = BGFX_CONFIG_INSTANCE_DATA_FIRST_TEXCOORD - ii;
+
+					bool found = false;
+					for (const D3D11_INPUT_ELEMENT_DESC* curr = vertexElements; curr != elem && !found; ++curr)
+					{
+						found = true
+							&& 0 == bx::strCmp(curr->SemanticName, "TEXCOORD")
+							&& curr->SemanticIndex == index
+							;
+					}
+
+					if (!found)
+					{
+						bx::memCopy(elem, &fallback, sizeof(D3D11_INPUT_ELEMENT_DESC) );
+						elem->SemanticIndex = index;
+						++elem;
+					}
+				}
+
 				num = uint32_t(elem-vertexElements);
 				DX_CHECK(m_device->CreateInputLayout(vertexElements
 					, num
