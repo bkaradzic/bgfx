@@ -547,6 +547,14 @@ namespace bgfx { namespace wgpu
 		return 0 <= idx && s_feature[idx].supported;
 	}
 
+	static bool isMipGenFormat(TextureFormat::Enum _format)
+	{
+		return false
+			|| TextureFormat::RGBA8 == _format
+			|| TextureFormat::BGRA8 == _format
+			;
+	}
+
 	struct TextureFormatCaps
 	{
 		TextureFormatCaps()
@@ -735,7 +743,10 @@ namespace bgfx { namespace wgpu
 					 ;
 			}
 
-			if (MipGen::isSupported(_fmt) )
+			if (true
+			&&  storage
+			&&  isMipGenFormat(_fmt)
+			&&  MipGen::isSupported(_fmt) )
 			{
 				caps |= BGFX_CAPS_FORMAT_TEXTURE_MIP_AUTOGEN;
 			}
@@ -3957,10 +3968,25 @@ WGPU_IMPORT
 					}
 				}
 
+				const uint32_t firstInstanceLocation = maxShaderLocation + (0 < numStreams);
+				const uint32_t numFallback = 0 < numStreams ? program.m_vsh->m_numInstanceData : 0;
+
+				for (uint32_t ii = _numInstanceData; ii < numFallback; ++ii)
+				{
+					*elem =
+					{
+						.nextInChain    = NULL,
+						.format         = WGPUVertexFormat_Unorm8x4,
+						.offset         = 0,
+						.shaderLocation = firstInstanceLocation+ii,
+					};
+
+					++elem;
+					++vertexBufferLayout[numStreams-1].attributeCount;
+				}
+
 				if (0 < _numInstanceData)
 				{
-					maxShaderLocation += 0 < numStreams;
-
 					for (uint32_t ii = 0; ii < _numInstanceData; ++ii)
 					{
 						elem[ii] =
@@ -3968,7 +3994,7 @@ WGPU_IMPORT
 							.nextInChain = 0,
 							.format      = WGPUVertexFormat_Float32x4,
 							.offset      = ii*16ull,
-							.shaderLocation = maxShaderLocation+ii,
+							.shaderLocation = firstInstanceLocation+ii,
 						};
 					}
 
@@ -4962,6 +4988,8 @@ WGPU_IMPORT
 
 		bx::read(&reader, m_numAttrs, &err);
 
+		m_numInstanceData = 0;
+
 		for (uint8_t ii = 0; ii < m_numAttrs; ++ii)
 		{
 			uint16_t id;
@@ -4973,6 +5001,10 @@ WGPU_IMPORT
 			{
 				m_attrMask[attr]  = UINT16_MAX;
 				m_attrRemap[attr] = ii;
+			}
+			else
+			{
+				++m_numInstanceData;
 			}
 		}
 
@@ -5157,9 +5189,8 @@ WGPU_IMPORT
 	static bool canGenerateMips(TextureFormat::Enum _format)
 	{
 		return true
+			&& isMipGenFormat(_format)
 			&& 0 != (g_caps.formats[_format] & BGFX_CAPS_FORMAT_TEXTURE_IMAGE_WRITE)
-			&& !bimg::isDepth(bimg::TextureFormat::Enum(_format) )
-			&& !bimg::isCompressed(bimg::TextureFormat::Enum(_format) )
 			;
 	}
 

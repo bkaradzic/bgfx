@@ -2305,6 +2305,23 @@ VK_IMPORT_INSTANCE
 						fmt = s_textureFormat[ii].m_fmtSrgb;
 					}
 
+					if (0 != (support & BGFX_CAPS_FORMAT_TEXTURE_MIP_AUTOGEN) )
+					{
+						VkFormatProperties fp;
+						vkGetPhysicalDeviceFormatProperties(m_physicalDevice, depth ? s_textureFormat[ii].m_fmtDsv : s_textureFormat[ii].m_fmt, &fp);
+
+						const VkFormatFeatureFlags mipFeatures = 0
+							| VK_FORMAT_FEATURE_BLIT_SRC_BIT
+							| VK_FORMAT_FEATURE_BLIT_DST_BIT
+							| (depth ? 0 : VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT)
+							;
+
+						if (mipFeatures != (fp.optimalTilingFeatures & mipFeatures) )
+						{
+							support &= ~BGFX_CAPS_FORMAT_TEXTURE_MIP_AUTOGEN;
+						}
+					}
+
 					g_caps.formats[ii] = support;
 				}
 
@@ -4135,9 +4152,23 @@ VK_IMPORT_DEVICE
 				}
 			}
 
+			const uint32_t firstInstanceLocation = _vertexInputState.vertexAttributeDescriptionCount;
+
 			if (0 < _numInstanceData)
 			{
 				fillInstanceBinding(_program.m_vsh, _vertexInputState, _numInstanceData);
+			}
+
+			const uint32_t numFallback = 0 < _numStream ? _program.m_vsh->m_numInstanceData : 0;
+
+			for (uint32_t ii = _numInstanceData; ii < numFallback; ++ii)
+			{
+				VkVertexInputAttributeDescription* inputAttrib = const_cast<VkVertexInputAttributeDescription*>(_vertexInputState.pVertexAttributeDescriptions + _vertexInputState.vertexAttributeDescriptionCount);
+				inputAttrib->location = firstInstanceLocation + ii;
+				inputAttrib->binding  = 0;
+				inputAttrib->format   = VK_FORMAT_R8G8B8A8_UNORM;
+				inputAttrib->offset   = 0;
+				_vertexInputState.vertexAttributeDescriptionCount++;
 			}
 		}
 
@@ -7000,6 +7031,8 @@ VK_DESTROY
 
 		bx::read(&reader, m_numAttrs, &err);
 
+		m_numInstanceData = 0;
+
 		for (uint8_t ii = 0; ii < m_numAttrs; ++ii)
 		{
 			uint16_t id;
@@ -7011,6 +7044,10 @@ VK_DESTROY
 			{
 				m_attrMask[attr]  = UINT16_MAX;
 				m_attrRemap[attr] = ii;
+			}
+			else
+			{
+				++m_numInstanceData;
 			}
 		}
 

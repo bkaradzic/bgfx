@@ -3870,6 +3870,31 @@ namespace bgfx { namespace d3d12
 				curr->AlignedByteOffset = ii*16;
 			}
 
+			const D3D12_INPUT_ELEMENT_DESC fallback = { "TEXCOORD", 0, DXGI_FORMAT_R8G8B8A8_UNORM, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
+
+			const uint32_t numFallback = 0 < _numStreams ? BGFX_CONFIG_MAX_INSTANCE_DATA_COUNT : 0;
+
+			for (uint32_t ii = _numInstanceData; ii < numFallback && uint32_t(elem-_vertexElements) < D3D12_IA_VERTEX_INPUT_STRUCTURE_ELEMENT_COUNT; ++ii)
+			{
+				const uint32_t index = BGFX_CONFIG_INSTANCE_DATA_FIRST_TEXCOORD - ii;
+
+				bool found = false;
+				for (const D3D12_INPUT_ELEMENT_DESC* curr = _vertexElements; curr != elem && !found; ++curr)
+				{
+					found = true
+						&& 0 == bx::strCmp(curr->SemanticName, "TEXCOORD")
+						&& curr->SemanticIndex == index
+						;
+				}
+
+				if (!found)
+				{
+					bx::memCopy(elem, &fallback, sizeof(D3D12_INPUT_ELEMENT_DESC) );
+					elem->SemanticIndex = index;
+					++elem;
+				}
+			}
+
 			return uint32_t(elem-_vertexElements);
 		}
 
