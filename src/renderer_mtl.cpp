@@ -2892,6 +2892,8 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 		void processArguments(
 			  PipelineStateMtl* ps
+			, const ShaderMtl* _vsh
+			, const ShaderMtl* _fsh
 			, NS::Array* _vertexArgs
 			, NS::Array* _fragmentArgs
 			)
@@ -2905,6 +2907,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 					: ps->m_fshConstantBuffer
 					;
 				const int8_t fragmentBit = (1 == shaderType ? kUniformFragmentBit : 0);
+				const ShaderMtl* shader = shaderType == 0 ? _vsh : _fsh;
 
 				NS::Array* args = shaderType == 0 ? _vertexArgs : _fragmentArgs;
 				if (NULL == args)
@@ -2993,10 +2996,26 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 										}
 										else
 										{
-											const UniformRegInfo* info = s_renderMtl->m_uniformReg.find(name);
-											BX_WARN(NULL != info, "User defined uniform '%s' is not found, it won't be set.", name);
+											UniformHandle handle = BGFX_INVALID_HANDLE;
 
-											if (NULL != info)
+											if (NULL != shader)
+											{
+												handle = shader->findUniform(name);
+											}
+
+											if (!isValid(handle) )
+											{
+												const UniformRegInfo* info = s_renderMtl->m_uniformReg.find(name);
+
+												if (NULL != info)
+												{
+													handle = info->m_handle;
+												}
+											}
+
+											BX_WARN(isValid(handle), "User defined uniform '%s' is not found, it won't be set.", name);
+
+											if (isValid(handle) )
 											{
 												if (NULL == constantBuffer)
 												{
@@ -3004,8 +3023,8 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 												}
 
 												UniformType::Enum type = convertMtlType(dataType);
-												constantBuffer->writeUniformHandle(type|fragmentBit, uint32_t(uniform->offset() ), info->m_handle, uint16_t(num) );
-												BX_TRACE("store %s %d offset:%d", name, info->m_handle, uint32_t(uniform->offset() ) );
+												constantBuffer->writeUniformHandle(type|fragmentBit, uint32_t(uniform->offset() ), handle, uint16_t(num) );
+												BX_TRACE("store %s %d offset:%d", name, handle.idx, uint32_t(uniform->offset() ) );
 											}
 										}
 									}
@@ -3477,11 +3496,11 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 					{
 						if (m_usesMTLBindings)
 						{
-							processArguments(pso, reflection->vertexBindings(), reflection->fragmentBindings() );
+							processArguments(pso, program.m_vsh, program.m_fsh, reflection->vertexBindings(), reflection->fragmentBindings() );
 						}
 						else
 						{
-							processArguments(pso, reflection->vertexArguments(), reflection->fragmentArguments() );
+							processArguments(pso, program.m_vsh, program.m_fsh, reflection->vertexArguments(), reflection->fragmentArguments() );
 						}
 					}
 				}
@@ -3535,11 +3554,11 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 				if (m_usesMTLBindings)
 				{
-					processArguments(pso, reflection->bindings(), NULL);
+					processArguments(pso, program.m_vsh, NULL, reflection->bindings(), NULL);
 				}
 				else
 				{
-					processArguments(pso, reflection->arguments(), NULL);
+					processArguments(pso, program.m_vsh, NULL, reflection->arguments(), NULL);
 				}
 
 				for (uint32_t ii = 0; ii < 3; ++ii)
@@ -3960,6 +3979,19 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 		bx::write(_writer, _str, (int32_t)bx::strLen(_str), bx::ErrorAssert{});
 	}
 
+	UniformHandle ShaderMtl::findUniform(const char* _name) const
+	{
+		UniformHandle handle = BGFX_INVALID_HANDLE;
+
+		UniformMap::const_iterator it = m_uniforms.find(bx::hash<bx::HashMurmur2A>(_name) );
+		if (m_uniforms.end() != it)
+		{
+			handle = it->second;
+		}
+
+		return handle;
+	}
+
 	void ShaderMtl::create(const Memory* _mem)
 	{
 		bx::MemoryReader reader(_mem->data, _mem->size);
@@ -4016,6 +4048,16 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 			uint16_t regCount;
 			bx::read(&reader, regCount, &err);
+
+			if (PredefinedUniform::Count == nameToPredefinedUniformEnum(name) )
+			{
+				const UniformRegInfo* info = s_renderMtl->m_uniformReg.find(name);
+
+				if (NULL != info)
+				{
+					m_uniforms[bx::hash<bx::HashMurmur2A>(bx::StringView(name) )] = info->m_handle;
+				}
+			}
 
 			if (!isShaderVerLess(magic, 8) )
 			{
