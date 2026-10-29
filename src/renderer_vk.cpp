@@ -6830,8 +6830,7 @@ VK_DESTROY
 				uint8_t type = 0;
 				bx::read(&reader, type, &err);
 
-				uint8_t num;
-				bx::read(&reader, num, &err);
+				const uint16_t num = readUniformNum(&reader, magic, &err);
 
 				uint16_t regIndex;
 				bx::read(&reader, regIndex, &err);

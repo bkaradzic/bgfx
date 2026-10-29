@@ -101,6 +101,7 @@ namespace bgfx
 
 	const char* getUniformTypeName(UniformType::Enum _enum);
 	UniformType::Enum nameToUniformTypeEnum(const char* _name);
+	bool isUniformNumValid(const char* _name, uint32_t _num, bx::WriterI* _messageWriter);
 
 	/// Converts a SPIR-V `spv::Dim` (plus the arrayed and multisampled flags) into the texture
 	/// dimension id stored in `Uniform::texDimension`.
@@ -121,7 +122,7 @@ namespace bgfx
 
 		std::string name;
 		UniformType::Enum type;
-		uint8_t num;
+		uint16_t num;
 		uint16_t regIndex;
 		uint16_t regCount;
 		uint8_t texComponent;

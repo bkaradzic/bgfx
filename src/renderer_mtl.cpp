@@ -4009,8 +4009,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			uint8_t type;
 			bx::read(&reader, type, &err);
 
-			uint8_t num;
-			bx::read(&reader, num, &err);
+			readUniformNum(&reader, magic, &err);
 
 			uint16_t regIndex;
 			bx::read(&reader, regIndex, &err);
