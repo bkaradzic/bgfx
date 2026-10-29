@@ -448,10 +448,16 @@ namespace bgfx { namespace hlsl
 							if (UniformType::Count != uniformType
 							&&  0 != (varDesc.uFlags & D3D_SVF_USED) )
 							{
+								if (!isUniformNumValid(varDesc.Name, constDesc.Elements, _messageWriter) )
+								{
+									reflect->Release();
+									return false;
+								}
+
 								Uniform un;
 								un.name = varDesc.Name;
 								un.type = uniformType;
-								un.num = uint8_t(constDesc.Elements);
+								un.num = uint16_t(constDesc.Elements);
 								un.regIndex = uint16_t(varDesc.StartOffset);
 								un.regCount = uint16_t(bx::alignUp(varDesc.Size, 16) / 16);
 								_uniforms.push_back(un);

@@ -677,7 +677,7 @@ namespace bgfx { namespace spirv
 				}
 
 				UniformArray uniforms;
-				bool implicitUniform = false;
+				bool invalidUniform = false;
 
 				{
 					uint16_t count = (uint16_t)program->getNumLiveUniformVariables();
@@ -701,11 +701,19 @@ namespace bgfx { namespace spirv
 								, "Error: Global '%s' is implicitly a uniform. Declare it 'static const', or make it a local variable.\n"
 								, un.name.c_str()
 								);
-							implicitUniform = true;
+							invalidUniform = true;
 							continue;
 						}
 
-						un.num = uint8_t(program->getUniformArraySize(ii) );
+						const uint32_t arraySize = uint32_t(program->getUniformArraySize(ii) );
+
+						if (!isUniformNumValid(un.name.c_str(), arraySize, _messageWriter) )
+						{
+							invalidUniform = true;
+							continue;
+						}
+
+						un.num = uint16_t(arraySize);
 						const uint32_t offset = program->getUniformBufferOffset(ii);
 						un.regIndex = uint16_t(offset);
 						un.regCount = un.num;
@@ -774,7 +782,7 @@ namespace bgfx { namespace spirv
 				validatorOptions.SetBeforeHlslLegalization(true);
 
 				const bool optimized = true
-					&& !implicitUniform
+					&& !invalidUniform
 					&& opt.Run(
 						  spirv.data()
 						, spirv.size()

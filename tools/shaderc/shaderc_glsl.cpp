@@ -292,6 +292,7 @@ namespace bgfx { namespace glsl
 			}
 
 			UniformArray uniforms;
+			bool validUniforms = true;
 
 			for (const spirv_cross::Resource& resource : resources.gl_plain_uniforms)
 			{
@@ -311,7 +312,15 @@ namespace bgfx { namespace glsl
 					continue;
 				}
 
-				un.num      = uint8_t(type.array.empty() ? 1 : type.array[0]);
+				const uint32_t num = type.array.empty() ? 1 : type.array[0];
+
+				if (!isUniformNumValid(un.name.c_str(), num, _messageWriter) )
+				{
+					validUniforms = false;
+					continue;
+				}
+
+				un.num      = uint16_t(num);
 				un.regIndex = 0;
 				un.regCount = un.num;
 
@@ -384,7 +393,7 @@ namespace bgfx { namespace glsl
 				writeFile(disasmfp.c_str(), source.c_str(), shaderSize);
 			}
 
-			result = true;
+			result = validUniforms;
 		}
 
 		delete program;

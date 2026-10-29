@@ -470,6 +470,20 @@ namespace bgfx
 		return (_magic & BX_MAKEFOURCC(0, 0, 0, 0xff) ) < BX_MAKEFOURCC(0, 0, 0, _version);
 	}
 
+	inline uint16_t readUniformNum(bx::ReaderI* _reader, uint32_t _magic, bx::Error* _err)
+	{
+		if (isShaderVerLess(_magic, 14) )
+		{
+			uint8_t num = 0;
+			bx::read(_reader, num, _err);
+			return num;
+		}
+
+		uint16_t num = 0;
+		bx::read(_reader, num, _err);
+		return num;
+	}
+
 	inline bool hasReadOnlyDepth(const Attachment* _attachment, uint8_t _num)
 	{
 		for (uint8_t ii = 0; ii < _num; ++ii)
@@ -7303,8 +7317,7 @@ namespace bgfx
 				type &= ~kUniformMask;
 				const bool isSampler = UniformType::Sampler == UniformType::Enum(type);
 
-				uint8_t num;
-				bx::read(&reader, num, &err);
+				const uint16_t num = readUniformNum(&reader, magic, &err);
 
 				uint16_t regIndex;
 				bx::read(&reader, regIndex, &err);

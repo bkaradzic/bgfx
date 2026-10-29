@@ -680,6 +680,7 @@ namespace bgfx { namespace wgsl
 				}
 
 				UniformArray uniforms;
+				bool invalidUniform = false;
 				const uint16_t blockSize = bx::narrowCast<uint16_t>(bx::max<int32_t>(0, program->getUniformBlockSize(blockIndex) ) );
 
 				{
@@ -695,7 +696,15 @@ namespace bgfx { namespace wgsl
 							continue;
 						}
 
-						un.num = uint8_t(program->getUniformArraySize(ii) );
+						const uint32_t arraySize = uint32_t(program->getUniformArraySize(ii) );
+
+						if (!isUniformNumValid(un.name.c_str(), arraySize, _messageWriter) )
+						{
+							invalidUniform = true;
+							continue;
+						}
+
+						un.num = uint16_t(arraySize);
 						const uint32_t offset = program->getUniformBufferOffset(ii);
 						un.regIndex = uint16_t(offset);
 						un.regCount = un.num;
@@ -763,7 +772,9 @@ namespace bgfx { namespace wgsl
 				spvtools::ValidatorOptions validatorOptions;
 				validatorOptions.SetBeforeHlslLegalization(true);
 
-				if (!opt.Run(
+				if (false
+				||  invalidUniform
+				||  !opt.Run(
 					  spirv.data()
 					, spirv.size()
 					, &spirv

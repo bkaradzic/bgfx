@@ -14,7 +14,7 @@
 #include <tinystl/vector.h>
 namespace stl = tinystl;
 
-#define BGFX_SHADER_BIN_VERSION 13
+#define BGFX_SHADER_BIN_VERSION 14
 #define BGFX_CHUNK_MAGIC_CSH BX_MAKEFOURCC('C', 'S', 'H', BGFX_SHADER_BIN_VERSION)
 #define BGFX_CHUNK_MAGIC_FSH BX_MAKEFOURCC('F', 'S', 'H', BGFX_SHADER_BIN_VERSION)
 #define BGFX_CHUNK_MAGIC_VSH BX_MAKEFOURCC('V', 'S', 'H', BGFX_SHADER_BIN_VERSION)
@@ -394,6 +394,23 @@ namespace bgfx
 		}
 
 		return UniformType::Count;
+	}
+
+	bool isUniformNumValid(const char* _name, uint32_t _num, bx::WriterI* _messageWriter)
+	{
+		if (UINT16_MAX < _num)
+		{
+			bx::ErrorAssert err;
+			bx::write(_messageWriter, &err
+				, "Error: Uniform '%s' has %u elements, the limit is %u.\n"
+				, _name
+				, _num
+				, UINT16_MAX
+				);
+			return false;
+		}
+
+		return true;
 	}
 
 	uint8_t spirvDimToTextureDimensionId(uint32_t _dim, bool _arrayed, bool _multisampled)
