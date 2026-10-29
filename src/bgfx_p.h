@@ -1060,6 +1060,8 @@ namespace bgfx
 		{
 			TextureToBuffer,
 			BufferToTexture,
+			TextureToBufferUint,
+			BufferToTextureUint,
 
 			Count
 		};

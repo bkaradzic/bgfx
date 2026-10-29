@@ -2578,8 +2578,8 @@ namespace bgfx { namespace d3d12
 			const uint32_t blockWidth  = bx::max<uint32_t>(1, blockInfo.blockWidth);
 			const uint32_t blockHeight = bx::max<uint32_t>(1, blockInfo.blockHeight);
 
-			const uint32_t alignedWidth  = bx::alignUp(srcWidth,  blockWidth);
-			const uint32_t alignedHeight = bx::alignUp(srcHeight, blockHeight);
+			const uint32_t alignedWidth  = bx::strideAlign(srcWidth,  blockWidth);
+			const uint32_t alignedHeight = bx::strideAlign(srcHeight, blockHeight);
 
 			layout.Footprint.Width  = alignedWidth;
 			layout.Footprint.Height = alignedHeight;
@@ -7774,8 +7774,8 @@ namespace bgfx { namespace d3d12
 			const bimg::ImageBlockInfo& blockInfo = bimg::getBlockInfo(bimg::TextureFormat::Enum(m_textureFormat) );
 			const uint32_t blockW = blockInfo.blockWidth;
 			const uint32_t blockH = blockInfo.blockHeight;
-			boxWidth  = bx::max<uint32_t>(blockW, bx::alignUp(_rect.m_width,  blockW) );
-			boxHeight = bx::max<uint32_t>(blockH, bx::alignUp(_rect.m_height, blockH) );
+			boxWidth  = bx::max<uint32_t>(blockW, bx::strideAlign(_rect.m_width,  blockW) );
+			boxHeight = bx::max<uint32_t>(blockH, bx::strideAlign(_rect.m_height, blockH) );
 			rectPitch = (boxWidth / blockW) * blockInfo.blockSize;
 		}
 
@@ -9858,6 +9858,21 @@ namespace bgfx { namespace d3d12
 
 				const bool depthStencil = bimg::isDepth(bimg::TextureFormat::Enum(src.m_textureFormat) );
 
+				const bool sameTexture = true
+					&& blit.m_src.idx == blit.m_dst.idx
+					&& srcLocation.SubresourceIndex != dstLocation.SubresourceIndex
+					;
+
+				if (sameTexture)
+				{
+					setResourceBarrier(m_commandList
+						, dst.m_ptr
+						, D3D12_RESOURCE_STATE_COPY_SOURCE
+						, D3D12_RESOURCE_STATE_COPY_DEST
+						, dstLocation.SubresourceIndex
+						);
+				}
+
 				m_commandList->CopyTextureRegion(
 					  &dstLocation
 					, blit.m_dstX
@@ -9866,6 +9881,16 @@ namespace bgfx { namespace d3d12
 					, &srcLocation
 					, depthStencil ? NULL : &box
 					);
+
+				if (sameTexture)
+				{
+					setResourceBarrier(m_commandList
+						, dst.m_ptr
+						, D3D12_RESOURCE_STATE_COPY_DEST
+						, D3D12_RESOURCE_STATE_COPY_SOURCE
+						, dstLocation.SubresourceIndex
+						);
+				}
 
 				if (hasStencilPlane(TextureFormat::Enum(src.m_textureFormat) )
 				&&  hasStencilPlane(TextureFormat::Enum(dst.m_textureFormat) ) )

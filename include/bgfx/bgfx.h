@@ -2105,6 +2105,10 @@ namespace bgfx
 		///
 		/// @attention Destination texture must be created with `BGFX_TEXTURE_BLIT_DST` flag.
 		///
+		/// @attention A depth texture, or one created with `BGFX_TEXTURE_MSAA_SAMPLE`, can only
+		///   be blitted whole: both sides start at the origin of mips of the same size, and
+		///   the copy covers the whole mip.
+		///
 		/// @attention C99's equivalent binding is `bgfx_encoder_blit`.
 		///
 		void blit(
@@ -5307,6 +5311,10 @@ namespace bgfx
 	///   draw commands are executed after blit and compute commands.
 	///
 	/// @attention Destination texture must be created with `BGFX_TEXTURE_BLIT_DST` flag.
+	///
+	/// @attention A depth texture, or one created with `BGFX_TEXTURE_MSAA_SAMPLE`, can only
+	///   be blitted whole: both sides start at the origin of mips of the same size, and
+	///   the copy covers the whole mip.
 	///
 	/// @attention C99's equivalent binding is `bgfx_blit`.
 	///

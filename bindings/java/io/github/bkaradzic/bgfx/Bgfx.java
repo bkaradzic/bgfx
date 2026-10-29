@@ -3309,6 +3309,10 @@ public final class Bgfx {
 	 *   draw commands are executed after blit and compute commands.
 	 * <p>
 	 * <strong>Attention:</strong> Destination texture must be created with {@code BGFX_TEXTURE_BLIT_DST} flag.
+	 * <p>
+	 * <strong>Attention:</strong> A depth texture, or one created with {@code BGFX_TEXTURE_MSAA_SAMPLE}, can only
+	 *   be blitted whole: both sides start at the origin of mips of the same size, and
+	 *   the copy covers the whole mip.
 	 * @param _id View id.
 	 * @param _dst Destination texture region.
 	 * @param _src Source texture region.
@@ -13075,6 +13079,10 @@ public final class Bgfx {
 		 *   draw commands are executed after blit and compute commands.
 		 * <p>
 		 * <strong>Attention:</strong> Destination texture must be created with {@code BGFX_TEXTURE_BLIT_DST} flag.
+		 * <p>
+		 * <strong>Attention:</strong> A depth texture, or one created with {@code BGFX_TEXTURE_MSAA_SAMPLE}, can only
+		 *   be blitted whole: both sides start at the origin of mips of the same size, and
+		 *   the copy covers the whole mip.
 		 * @param _id View id.
 		 * @param _dst Destination texture region.
 		 * @param _src Source texture region.

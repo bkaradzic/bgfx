@@ -11238,6 +11238,11 @@ VK_DESTROY
 				const bool is3D = VK_IMAGE_VIEW_TYPE_3D == texture.m_type;
 				const uint32_t depth = bx::max<uint32_t>(1, blit.m_depth);
 				const uint16_t z = toBuffer ? blit.m_srcZ : blit.m_dstZ;
+				const uint8_t  mip = toBuffer ? blit.m_srcMip : blit.m_dstMip;
+				const uint16_t x   = toBuffer ? blit.m_srcX   : blit.m_dstX;
+				const uint16_t y   = toBuffer ? blit.m_srcY   : blit.m_dstY;
+				const uint32_t mipWidth  = bx::max<uint32_t>(1, texture.m_width  >> mip);
+				const uint32_t mipHeight = bx::max<uint32_t>(1, texture.m_height >> mip);
 
 				uint32_t rowLength, imageHeight;
 				calcTextureRegionTexelPitch(
@@ -11256,20 +11261,20 @@ VK_DESTROY
 					.imageSubresource  =
 					{
 						.aspectMask     = texture.m_aspectFlags,
-						.mipLevel       = toBuffer ? blit.m_srcMip : blit.m_dstMip,
+						.mipLevel       = mip,
 						.baseArrayLayer = is3D ? 0u : uint32_t(z),
 						.layerCount     = is3D ? 1u : depth,
 					},
 					.imageOffset =
 					{
-						.x = toBuffer ? blit.m_srcX : blit.m_dstX,
-						.y = toBuffer ? blit.m_srcY : blit.m_dstY,
+						.x = x,
+						.y = y,
 						.z = is3D ? z : 0,
 					},
 					.imageExtent =
 					{
-						.width  = blit.m_width,
-						.height = blit.m_height,
+						.width  = bx::min<uint32_t>(blit.m_width,  mipWidth  - x),
+						.height = bx::min<uint32_t>(blit.m_height, mipHeight - y),
 						.depth  = is3D ? depth : 1,
 					},
 				};
@@ -11397,16 +11402,26 @@ VK_DESTROY
 			const bimg::ImageBlockInfo& srcBlockInfo = bimg::getBlockInfo(bimg::TextureFormat::Enum(src.m_textureFormat) );
 			const bimg::ImageBlockInfo& dstBlockInfo = bimg::getBlockInfo(bimg::TextureFormat::Enum(dst.m_textureFormat) );
 
-			const bool stageCompressed3D = true
+			const auto isBlockRegion = [&](const bimg::ImageBlockInfo& _blockInfo, const VkOffset3D& _offset, uint32_t _mipWidth, uint32_t _mipHeight)
+			{
+				return true
+					&& (0 == copyInfo.extent.width  % _blockInfo.blockWidth  || uint32_t(_offset.x) + copyInfo.extent.width  == _mipWidth )
+					&& (0 == copyInfo.extent.height % _blockInfo.blockHeight || uint32_t(_offset.y) + copyInfo.extent.height == _mipHeight)
+					;
+			};
+
+			const bool stageCompressed = true
 				&& !resolve
 				&& !srcSingleMsaa
 				&& blit.m_src.idx != blit.m_dst.idx
 				&& bimg::isCompressed(bimg::TextureFormat::Enum(src.m_textureFormat) )
 				&& ( (isSrc3D && (0 != srcMipWidth % srcBlockInfo.blockWidth || 0 != srcMipHeight % srcBlockInfo.blockHeight) )
-				||   (isDst3D && (0 != dstMipWidth % dstBlockInfo.blockWidth || 0 != dstMipHeight % dstBlockInfo.blockHeight) ) )
+				||   (isDst3D && (0 != dstMipWidth % dstBlockInfo.blockWidth || 0 != dstMipHeight % dstBlockInfo.blockHeight) )
+				||   !isBlockRegion(srcBlockInfo, copyInfo.srcOffset, srcMipWidth, srcMipHeight)
+				||   !isBlockRegion(dstBlockInfo, copyInfo.dstOffset, dstMipWidth, dstMipHeight) )
 				;
 
-			if (stageCompressed3D)
+			if (stageCompressed)
 			{
 				const uint32_t numBlocksX = (copyInfo.extent.width  + srcBlockInfo.blockWidth  - 1) / srcBlockInfo.blockWidth;
 				const uint32_t numBlocksY = (copyInfo.extent.height + srcBlockInfo.blockHeight - 1) / srcBlockInfo.blockHeight;
@@ -11423,8 +11438,8 @@ VK_DESTROY
 					.imageOffset       = copyInfo.srcOffset,
 					.imageExtent       =
 					{
-						.width  = copyInfo.extent.width,
-						.height = copyInfo.extent.height,
+						.width  = bx::min<uint32_t>(numBlocksX * srcBlockInfo.blockWidth,  srcMipWidth  - blit.m_srcX),
+						.height = bx::min<uint32_t>(numBlocksY * srcBlockInfo.blockHeight, srcMipHeight - blit.m_srcY),
 						.depth  = isSrc3D ? depth : 1,
 					},
 				};

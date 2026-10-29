@@ -2294,6 +2294,7 @@ namespace bgfx { namespace d3d11
 		}
 
 		void blitBufferTexture(const BlitItem& _blit);
+		void blitBufferTextureLayer(const BlitItem& _blit);
 		void submitBlit(BlitState& _bs, uint16_t _view);
 
 		void submitUniformCache(UniformCacheState& _ucs, uint16_t _view);
@@ -5679,8 +5680,8 @@ namespace bgfx { namespace d3d11
 		{
 			const uint32_t blockW   = blockInfo.blockWidth;
 			const uint32_t blockH   = blockInfo.blockHeight;
-			const uint32_t alignedW = bx::max<uint32_t>(blockW, bx::alignUp(_rect.m_width,  blockW) );
-			const uint32_t alignedH = bx::max<uint32_t>(blockH, bx::alignUp(_rect.m_height, blockH) );
+			const uint32_t alignedW = bx::max<uint32_t>(blockW, bx::strideAlign(_rect.m_width,  blockW) );
+			const uint32_t alignedH = bx::max<uint32_t>(blockH, bx::strideAlign(_rect.m_height, blockH) );
 			box.right  = box.left + alignedW;
 			box.bottom = box.top  + alignedH;
 			rectPitch  = (alignedW / blockW) * blockInfo.blockSize;
@@ -6897,7 +6898,78 @@ namespace bgfx { namespace d3d11
 		}
 	}
 
+	struct UintFormat
+	{
+		DXGI_FORMAT format;
+		DXGI_FORMAT uintFormat;
+
+		static int32_t cmpFn(const void* _lhs, const void* _rhs)
+		{
+			const DXGI_FORMAT lhs = ( (const UintFormat*)(_lhs) )->format;
+			const DXGI_FORMAT rhs = ( (const UintFormat*)(_rhs) )->format;
+			return (lhs > rhs) - (lhs < rhs);
+		}
+	};
+
+	static constexpr UintFormat s_uintFormat[] =
+	{
+		{ DXGI_FORMAT_R32G32B32A32_UINT, DXGI_FORMAT_R32G32B32A32_UINT },
+		{ DXGI_FORMAT_R32G32B32A32_SINT, DXGI_FORMAT_R32G32B32A32_UINT },
+		{ DXGI_FORMAT_R16G16B16A16_UINT, DXGI_FORMAT_R16G16B16A16_UINT },
+		{ DXGI_FORMAT_R16G16B16A16_SINT, DXGI_FORMAT_R16G16B16A16_UINT },
+		{ DXGI_FORMAT_R32G32_UINT,       DXGI_FORMAT_R32G32_UINT       },
+		{ DXGI_FORMAT_R32G32_SINT,       DXGI_FORMAT_R32G32_UINT       },
+		{ DXGI_FORMAT_R10G10B10A2_UINT,  DXGI_FORMAT_R10G10B10A2_UINT  },
+		{ DXGI_FORMAT_R8G8B8A8_UINT,     DXGI_FORMAT_R8G8B8A8_UINT     },
+		{ DXGI_FORMAT_R8G8B8A8_SINT,     DXGI_FORMAT_R8G8B8A8_UINT     },
+		{ DXGI_FORMAT_R16G16_UINT,       DXGI_FORMAT_R16G16_UINT       },
+		{ DXGI_FORMAT_R16G16_SINT,       DXGI_FORMAT_R16G16_UINT       },
+		{ DXGI_FORMAT_R32_UINT,          DXGI_FORMAT_R32_UINT          },
+		{ DXGI_FORMAT_R32_SINT,          DXGI_FORMAT_R32_UINT          },
+		{ DXGI_FORMAT_R8G8_UINT,         DXGI_FORMAT_R8G8_UINT         },
+		{ DXGI_FORMAT_R8G8_SINT,         DXGI_FORMAT_R8G8_UINT         },
+		{ DXGI_FORMAT_R16_UINT,          DXGI_FORMAT_R16_UINT          },
+		{ DXGI_FORMAT_R16_SINT,          DXGI_FORMAT_R16_UINT          },
+		{ DXGI_FORMAT_R8_UINT,           DXGI_FORMAT_R8_UINT           },
+		{ DXGI_FORMAT_R8_SINT,           DXGI_FORMAT_R8_UINT           },
+	};
+	static_assert(bx::isSorted(s_uintFormat, BX_COUNTOF(s_uintFormat), [](const UintFormat& _lhs, const UintFormat& _rhs) { return _lhs.format <= _rhs.format; }) );
+
+	static DXGI_FORMAT getUintFormat(DXGI_FORMAT _format)
+	{
+		const int32_t idx = bx::binarySearch(_format, s_uintFormat, BX_COUNTOF(s_uintFormat), sizeof(UintFormat), UintFormat::cmpFn);
+
+		return 0 <= idx
+			? s_uintFormat[idx].uintFormat
+			: DXGI_FORMAT_UNKNOWN
+			;
+	}
+
 	void RendererContextD3D11::blitBufferTexture(const BlitItem& _blit)
+	{
+		const bool toBuffer = _blit.m_dst.isBuffer();
+
+		BlitItem layer = _blit;
+		layer.m_depth  = 1;
+
+		for (uint32_t ii = 0, num = bx::max<uint32_t>(1, _blit.m_depth); ii < num; ++ii)
+		{
+			blitBufferTextureLayer(layer);
+
+			if (toBuffer)
+			{
+				++layer.m_srcZ;
+				layer.m_dstOffset += _blit.m_slicePitch;
+			}
+			else
+			{
+				++layer.m_dstZ;
+				layer.m_srcOffset += _blit.m_slicePitch;
+			}
+		}
+	}
+
+	void RendererContextD3D11::blitBufferTextureLayer(const BlitItem& _blit)
 	{
 		const bool toBuffer = _blit.m_dst.isBuffer();
 
@@ -6905,16 +6977,34 @@ namespace bgfx { namespace d3d11
 		const BufferD3D11&  buffer  = getBuffer(toBuffer ? _blit.m_dst : _blit.m_src);
 
 		const bimg::TextureFormat::Enum format = bimg::TextureFormat::Enum(texture.m_textureFormat);
+		const bimg::ImageBlockInfo& blockInfo  = bimg::getBlockInfo(format);
+		const bool compressed = bimg::isCompressed(format);
 
-		if (bimg::isCompressed(format)
-		||  bimg::isDepth(format) )
+		const DXGI_FORMAT uintFormat = compressed
+			? (8 == blockInfo.blockSize ? DXGI_FORMAT_R32G32_UINT : DXGI_FORMAT_R32G32B32A32_UINT)
+			: getUintFormat(texture.getSrvFormat() )
+			;
+		const bool raw     = DXGI_FORMAT_UNKNOWN != uintFormat;
+		const bool aliased = raw && uintFormat != texture.getSrvFormat();
+
+		if (bimg::isDepth(format) )
 		{
-			BX_WARN(false, "Blit between buffer and texture is not supported for compressed or depth formats.");
+			BX_WARN(false, "Blit between buffer and texture is not supported for depth formats.");
 
 			return;
 		}
 
-		if (0 == (g_caps.formats[texture.m_textureFormat] & BGFX_CAPS_FORMAT_TEXTURE_IMAGE_WRITE) )
+		if (compressed
+		&&  8  != blockInfo.blockSize
+		&&  16 != blockInfo.blockSize)
+		{
+			BX_WARN(false, "Blit between buffer and texture is not supported for texture format %s.", bimg::getName(format) );
+
+			return;
+		}
+
+		if (!aliased
+		&&  0 == (g_caps.formats[texture.m_textureFormat] & BGFX_CAPS_FORMAT_TEXTURE_IMAGE_WRITE) )
 		{
 			BX_WARN(false, "Blit between buffer and texture is not supported for texture format %s.", bimg::getName(format) );
 
@@ -6933,9 +7023,9 @@ namespace bgfx { namespace d3d11
 			return;
 		}
 
-		const ProgramHandle prog = g_blitFallback->m_program[toBuffer
-			? BlitFallback::TextureToBuffer
-			: BlitFallback::BufferToTexture
+		const ProgramHandle prog = g_blitFallback->m_program[raw
+			? (toBuffer ? BlitFallback::TextureToBufferUint : BlitFallback::BufferToTextureUint)
+			: (toBuffer ? BlitFallback::TextureToBuffer     : BlitFallback::BufferToTexture)
 			];
 
 		if (!isValid(prog) )
@@ -6943,7 +7033,12 @@ namespace bgfx { namespace d3d11
 			return;
 		}
 
-		const uint32_t bpp    = bimg::getBitsPerPixel(format) / 8;
+		const uint32_t blockW = bx::max<uint32_t>(1, blockInfo.blockWidth);
+		const uint32_t blockH = bx::max<uint32_t>(1, blockInfo.blockHeight);
+		const uint32_t width  = (_blit.m_width  + blockW - 1) / blockW;
+		const uint32_t height = (_blit.m_height + blockH - 1) / blockH;
+
+		const uint32_t bpp    = compressed ? blockInfo.blockSize : bimg::getBitsPerPixel(format) / 8;
 		const uint32_t offset = toBuffer ? _blit.m_dstOffset : _blit.m_srcOffset;
 
 		if (0 != offset % bpp
@@ -6959,9 +7054,61 @@ namespace bgfx { namespace d3d11
 			return;
 		}
 
-		const DXGI_FORMAT dxgiFormat = texture.getSrvFormat();
-		const DXGI_FORMAT uavFormat  = texture.getUavFormat();
-		const uint32_t numElements   = (_blit.m_rowPitch * _blit.m_height) / bpp;
+		const DXGI_FORMAT dxgiFormat  = raw ? uintFormat : texture.getSrvFormat();
+		const DXGI_FORMAT uavFormat   = raw ? uintFormat : texture.getUavFormat();
+		const uint32_t numElements    = (_blit.m_rowPitch * height) / bpp;
+
+		ID3D11DeviceContext* deviceCtx = m_deviceCtx;
+
+		ID3D11Texture2D* staging = NULL;
+
+		if (aliased)
+		{
+			const D3D11_TEXTURE2D_DESC desc =
+			{
+				.Width          = width,
+				.Height         = height,
+				.MipLevels      = 1,
+				.ArraySize      = 1,
+				.Format         = uintFormat,
+				.SampleDesc     = { .Count = 1, .Quality = 0 },
+				.Usage          = D3D11_USAGE_DEFAULT,
+				.BindFlags      = D3D11_BIND_SHADER_RESOURCE|D3D11_BIND_UNORDERED_ACCESS,
+				.CPUAccessFlags = 0,
+				.MiscFlags      = 0,
+			};
+
+			DX_CHECK(m_device->CreateTexture2D(&desc, NULL, &staging) );
+
+			if (NULL == staging)
+			{
+				return;
+			}
+
+			if (toBuffer)
+			{
+				const D3D11_BOX box =
+				{
+					.left   = _blit.m_srcX,
+					.top    = _blit.m_srcY,
+					.front  = 0,
+					.right  = _blit.m_srcX + width*blockW,
+					.bottom = _blit.m_srcY + height*blockH,
+					.back   = 1,
+				};
+
+				deviceCtx->CopySubresourceRegion(
+					  staging
+					, 0
+					, 0
+					, 0
+					, 0
+					, texture.m_ptr
+					, _blit.m_srcMip + _blit.m_srcZ*texture.m_numMips
+					, &box
+					);
+			}
+		}
 
 		ID3D11ShaderResourceView*  srv = NULL;
 		ID3D11UnorderedAccessView* uav = NULL;
@@ -6971,12 +7118,12 @@ namespace bgfx { namespace d3d11
 			D3D11_SHADER_RESOURCE_VIEW_DESC srvd = {};
 			srvd.Format                         = dxgiFormat;
 			srvd.ViewDimension                  = D3D11_SRV_DIMENSION_TEXTURE2DARRAY;
-			srvd.Texture2DArray.MostDetailedMip = _blit.m_srcMip;
+			srvd.Texture2DArray.MostDetailedMip = aliased ? 0 : _blit.m_srcMip;
 			srvd.Texture2DArray.MipLevels       = 1;
-			srvd.Texture2DArray.FirstArraySlice = _blit.m_srcZ;
+			srvd.Texture2DArray.FirstArraySlice = aliased ? 0 : _blit.m_srcZ;
 			srvd.Texture2DArray.ArraySize       = 1;
 
-			DX_CHECK(m_device->CreateShaderResourceView(texture.m_ptr, &srvd, &srv) );
+			DX_CHECK(m_device->CreateShaderResourceView(aliased ? staging : texture.m_ptr, &srvd, &srv) );
 
 			D3D11_UNORDERED_ACCESS_VIEW_DESC uavd = {};
 			uavd.Format              = uavFormat;
@@ -6999,11 +7146,11 @@ namespace bgfx { namespace d3d11
 			D3D11_UNORDERED_ACCESS_VIEW_DESC uavd = {};
 			uavd.Format                         = uavFormat;
 			uavd.ViewDimension                  = D3D11_UAV_DIMENSION_TEXTURE2DARRAY;
-			uavd.Texture2DArray.MipSlice        = _blit.m_dstMip;
-			uavd.Texture2DArray.FirstArraySlice = _blit.m_dstZ;
+			uavd.Texture2DArray.MipSlice        = aliased ? 0 : _blit.m_dstMip;
+			uavd.Texture2DArray.FirstArraySlice = aliased ? 0 : _blit.m_dstZ;
 			uavd.Texture2DArray.ArraySize       = 1;
 
-			DX_CHECK(m_device->CreateUnorderedAccessView(texture.m_ptr, &uavd, &uav) );
+			DX_CHECK(m_device->CreateUnorderedAccessView(aliased ? staging : texture.m_ptr, &uavd, &uav) );
 		}
 
 		if (NULL == srv
@@ -7011,6 +7158,7 @@ namespace bgfx { namespace d3d11
 		{
 			DX_RELEASE(srv, 0);
 			DX_RELEASE(uav, 0);
+			DX_RELEASE(staging, 0);
 
 			return;
 		}
@@ -7019,17 +7167,15 @@ namespace bgfx { namespace d3d11
 
 		const float params[8] =
 		{
-			float(toBuffer ? _blit.m_srcX : _blit.m_dstX),
-			float(toBuffer ? _blit.m_srcY : _blit.m_dstY),
+			aliased ? 0.0f : float(toBuffer ? _blit.m_srcX : _blit.m_dstX),
+			aliased ? 0.0f : float(toBuffer ? _blit.m_srcY : _blit.m_dstY),
 			0.0f,
 			float(_blit.m_rowPitch / bpp),
-			float(_blit.m_width),
-			float(_blit.m_height),
+			float(width),
+			float(height),
 			1.0f,
 			0.0f,
 		};
-
-		ID3D11DeviceContext* deviceCtx = m_deviceCtx;
 
 		deviceCtx->CSSetShader(shader.m_computeShader, NULL, 0);
 		deviceCtx->CSSetShaderResources(0, 1, &srv);
@@ -7042,8 +7188,8 @@ namespace bgfx { namespace d3d11
 		}
 
 		deviceCtx->Dispatch(
-			  bx::strideAlign(_blit.m_width,  8) / 8
-			, bx::strideAlign(_blit.m_height, 8) / 8
+			  bx::strideAlign(width,  8) / 8
+			, bx::strideAlign(height, 8) / 8
 			, 1
 			);
 
@@ -7057,6 +7203,33 @@ namespace bgfx { namespace d3d11
 
 		DX_RELEASE(srv, 0);
 		DX_RELEASE(uav, 0);
+
+		if (aliased
+		&&  !toBuffer)
+		{
+			const D3D11_BOX box =
+			{
+				.left   = 0,
+				.top    = 0,
+				.front  = 0,
+				.right  = width,
+				.bottom = height,
+				.back   = 1,
+			};
+
+			deviceCtx->CopySubresourceRegion(
+				  texture.m_ptr
+				, _blit.m_dstMip + _blit.m_dstZ*texture.m_numMips
+				, _blit.m_dstX
+				, _blit.m_dstY
+				, 0
+				, staging
+				, 0
+				, &box
+				);
+		}
+
+		DX_RELEASE(staging, 0);
 	}
 
 	void RendererContextD3D11::submitBlit(BlitState& _bs, uint16_t _view)
