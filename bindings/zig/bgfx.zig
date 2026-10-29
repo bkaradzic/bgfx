@@ -2389,6 +2389,10 @@ pub const Init = extern struct {
         /// 
         /// @attention Destination texture must be created with `BGFX_TEXTURE_BLIT_DST` flag.
         /// 
+        /// @attention A depth texture, or one created with `BGFX_TEXTURE_MSAA_SAMPLE`, can only
+        ///   be blitted whole: both sides start at the origin of mips of the same size, and
+        ///   the copy covers the whole mip.
+        /// 
         /// <param name="_id">View id.</param>
         /// <param name="_dst">Destination texture region.</param>
         /// <param name="_src">Source texture region.</param>
@@ -4188,6 +4192,10 @@ extern fn bgfx_encoder_discard(self: ?*Encoder, _flags: u8) void;
 /// 
 /// @attention Destination texture must be created with `BGFX_TEXTURE_BLIT_DST` flag.
 /// 
+/// @attention A depth texture, or one created with `BGFX_TEXTURE_MSAA_SAMPLE`, can only
+///   be blitted whole: both sides start at the origin of mips of the same size, and
+///   the copy covers the whole mip.
+/// 
 /// <param name="_id">View id.</param>
 /// <param name="_dst">Destination texture region.</param>
 /// <param name="_src">Source texture region.</param>
@@ -4822,6 +4830,10 @@ extern fn bgfx_discard(_flags: u8) void;
 ///   draw commands are executed after blit and compute commands.
 /// 
 /// @attention Destination texture must be created with `BGFX_TEXTURE_BLIT_DST` flag.
+/// 
+/// @attention A depth texture, or one created with `BGFX_TEXTURE_MSAA_SAMPLE`, can only
+///   be blitted whole: both sides start at the origin of mips of the same size, and
+///   the copy covers the whole mip.
 /// 
 /// <param name="_id">View id.</param>
 /// <param name="_dst">Destination texture region.</param>

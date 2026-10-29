@@ -2465,6 +2465,10 @@ extern(C++, "bgfx") struct Encoder{
 			
 			Attention: Destination texture must be created with `BGFX_TEXTURE_BLIT_DST` flag.
 			
+			Attention: A depth texture, or one created with `BGFX_TEXTURE_MSAA_SAMPLE`, can only
+			  be blitted whole: both sides start at the origin of mips of the same size, and
+			  the copy covers the whole mip.
+			
 			Params:
 				id = View id.
 				dst = Destination texture region.
@@ -4610,6 +4614,10 @@ mixin(joinFnBinds((){
 		*   draw commands are executed after blit and compute commands.
 		* 
 		* Attention: Destination texture must be created with `BGFX_TEXTURE_BLIT_DST` flag.
+		* 
+		* Attention: A depth texture, or one created with `BGFX_TEXTURE_MSAA_SAMPLE`, can only
+		*   be blitted whole: both sides start at the origin of mips of the same size, and
+		*   the copy covers the whole mip.
 		* 
 		Params:
 			id = View id.

@@ -3718,6 +3718,10 @@ BGFX_C_API void bgfx_encoder_discard(bgfx_encoder_t* _this, uint8_t _flags);
  *
  * @attention Destination texture must be created with `BGFX_TEXTURE_BLIT_DST` flag.
  *
+ * @attention A depth texture, or one created with `BGFX_TEXTURE_MSAA_SAMPLE`, can only
+ *   be blitted whole: both sides start at the origin of mips of the same size, and
+ *   the copy covers the whole mip.
+ *
  * @param[in] _id View id.
  * @param[in] _dst Destination texture region.
  * @param[in] _src Source texture region.
@@ -4449,6 +4453,10 @@ BGFX_C_API void bgfx_discard(uint8_t _flags);
  *   draw commands are executed after blit and compute commands.
  *
  * @attention Destination texture must be created with `BGFX_TEXTURE_BLIT_DST` flag.
+ *
+ * @attention A depth texture, or one created with `BGFX_TEXTURE_MSAA_SAMPLE`, can only
+ *   be blitted whole: both sides start at the origin of mips of the same size, and
+ *   the copy covers the whole mip.
  *
  * @param[in] _id View id.
  * @param[in] _dst Destination texture region.

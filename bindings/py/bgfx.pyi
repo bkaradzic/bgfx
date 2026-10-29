@@ -3102,6 +3102,10 @@ def bgfx_encoder_discard(_this: Optional[Union[Encoder, _Pointer[Encoder], ctype
 # 
 # @attention Destination texture must be created with `BGFX_TEXTURE_BLIT_DST` flag.
 # 
+# @attention A depth texture, or one created with `BGFX_TEXTURE_MSAA_SAMPLE`, can only
+#   be blitted whole: both sides start at the origin of mips of the same size, and
+#   the copy covers the whole mip.
+# 
 def bgfx_encoder_blit(_this: Optional[Union[Encoder, _Pointer[Encoder], ctypes.Array]], _id: int, _dst: Optional[Union[TextureRegion, _Pointer[TextureRegion], ctypes.Array]], _src: Optional[Union[TextureRegion, _Pointer[TextureRegion], ctypes.Array]], /) -> None: ...
 
 # Blit buffer region between two buffers.
@@ -3468,6 +3472,10 @@ def bgfx_discard(_flags: int, /) -> None: ...
 #   draw commands are executed after blit and compute commands.
 # 
 # @attention Destination texture must be created with `BGFX_TEXTURE_BLIT_DST` flag.
+# 
+# @attention A depth texture, or one created with `BGFX_TEXTURE_MSAA_SAMPLE`, can only
+#   be blitted whole: both sides start at the origin of mips of the same size, and
+#   the copy covers the whole mip.
 # 
 def bgfx_blit(_id: int, _dst: Optional[Union[TextureRegion, _Pointer[TextureRegion], ctypes.Array]], _src: Optional[Union[TextureRegion, _Pointer[TextureRegion], ctypes.Array]], /) -> None: ...
 

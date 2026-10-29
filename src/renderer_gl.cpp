@@ -3656,16 +3656,21 @@ namespace bgfx { namespace gl
 				{
 					GL_CHECK(glBindTexture(texture.m_target, texture.m_id) );
 
+					const GLenum target = GL_TEXTURE_CUBE_MAP == texture.m_target
+						? GL_TEXTURE_CUBE_MAP_POSITIVE_X + _layer
+						: texture.m_target
+						;
+
 					if (compressed)
 					{
-						GL_CHECK(glGetCompressedTexImage(texture.m_target
+						GL_CHECK(glGetCompressedTexImage(target
 							, _mip
 							, _data
 							) );
 					}
 					else
 					{
-						GL_CHECK(glGetTexImage(texture.m_target
+						GL_CHECK(glGetTexImage(target
 							, _mip
 							, texture.m_fmt
 							, texture.m_type
@@ -8938,6 +8943,137 @@ namespace bgfx { namespace gl
 		return true;
 	}
 
+	static void compressedTexSubImage(
+		  const TextureGL& _dst
+		, uint8_t _mip
+		, uint32_t _x
+		, uint32_t _y
+		, uint32_t _z
+		, uint32_t _width
+		, uint32_t _height
+		, uint32_t _depth
+		, uint32_t _size
+		, const void* _data
+		)
+	{
+		if (GL_TEXTURE_3D             == _dst.m_target
+		||  GL_TEXTURE_2D_ARRAY       == _dst.m_target
+		||  GL_TEXTURE_CUBE_MAP_ARRAY == _dst.m_target)
+		{
+			GL_CHECK(glCompressedTexSubImage3D(_dst.m_target
+				, _mip
+				, _x
+				, _y
+				, _z
+				, _width
+				, _height
+				, _depth
+				, _dst.m_internalFmt
+				, _size
+				, _data
+				) );
+
+			return;
+		}
+
+		const uint32_t sliceSize = _size/_depth;
+
+		for (uint32_t ii = 0; ii < _depth; ++ii)
+		{
+			GL_CHECK(glCompressedTexSubImage2D(GL_TEXTURE_CUBE_MAP == _dst.m_target
+					? GL_TEXTURE_CUBE_MAP_POSITIVE_X + _z + ii
+					: _dst.m_target
+				, _mip
+				, _x
+				, _y
+				, _width
+				, _height
+				, _dst.m_internalFmt
+				, sliceSize
+				, (const uint8_t*)_data + ii*sliceSize
+				) );
+		}
+	}
+
+	static bool blitCompressedRegion(
+		  const BlitItem& _bi
+		, const TextureGL& _src
+		, const TextureGL& _dst
+		, bimg::TextureFormat::Enum _format
+		)
+	{
+		if (GL_ZERO == _dst.m_internalFmt
+		||  NULL == glGetCompressedTextureSubImage)
+		{
+			return false;
+		}
+
+		const bimg::ImageBlockInfo& info = bimg::getBlockInfo(_format);
+
+		const uint32_t blockW    = bx::max<uint32_t>(1, info.blockWidth);
+		const uint32_t blockH    = bx::max<uint32_t>(1, info.blockHeight);
+		const uint32_t blockSize = info.blockSize;
+
+		if (0 != _bi.m_srcX % blockW
+		||  0 != _bi.m_srcY % blockH
+		||  0 != _bi.m_dstX % blockW
+		||  0 != _bi.m_dstY % blockH)
+		{
+			return false;
+		}
+
+		const uint32_t srcMipW = bx::max<uint32_t>(1, _src.m_width  >> _bi.m_srcMip);
+		const uint32_t srcMipH = bx::max<uint32_t>(1, _src.m_height >> _bi.m_srcMip);
+		const uint32_t dstMipW = bx::max<uint32_t>(1, _dst.m_width  >> _bi.m_dstMip);
+		const uint32_t dstMipH = bx::max<uint32_t>(1, _dst.m_height >> _bi.m_dstMip);
+
+		const uint32_t copyW = bx::min<uint32_t>(_bi.m_width,  bx::min(srcMipW - _bi.m_srcX, dstMipW - _bi.m_dstX) );
+		const uint32_t copyH = bx::min<uint32_t>(_bi.m_height, bx::min(srcMipH - _bi.m_srcY, dstMipH - _bi.m_dstY) );
+
+		const uint32_t numBlocksX = (copyW + blockW - 1)/blockW;
+		const uint32_t numBlocksY = (copyH + blockH - 1)/blockH;
+		const uint32_t depth      = bx::max<uint32_t>(1, _bi.m_depth);
+
+		if (0 == numBlocksX
+		||  0 == numBlocksY)
+		{
+			return false;
+		}
+
+		const uint32_t size = numBlocksX*numBlocksY*blockSize*depth;
+		uint8_t* blocks = (uint8_t*)bx::alloc(g_allocator, size);
+
+		GL_CHECK(glGetCompressedTextureSubImage(_src.m_id
+			, _bi.m_srcMip
+			, _bi.m_srcX
+			, _bi.m_srcY
+			, _bi.m_srcZ
+			, bx::min<uint32_t>(numBlocksX*blockW, srcMipW - _bi.m_srcX)
+			, bx::min<uint32_t>(numBlocksY*blockH, srcMipH - _bi.m_srcY)
+			, depth
+			, size
+			, blocks
+			) );
+
+		GL_CHECK(glBindTexture(_dst.m_target, _dst.m_id) );
+		compressedTexSubImage(_dst
+			, _bi.m_dstMip
+			, _bi.m_dstX
+			, _bi.m_dstY
+			, _bi.m_dstZ
+			, bx::min<uint32_t>(numBlocksX*blockW, dstMipW - _bi.m_dstX)
+			, bx::min<uint32_t>(numBlocksY*blockH, dstMipH - _bi.m_dstY)
+			, depth
+			, size
+			, blocks
+			);
+		GL_CHECK(glBindTexture(_dst.m_target, 0) );
+
+		bx::free(g_allocator, blocks);
+
+		return true;
+	}
+
 	static void blitBuffer(GLuint _src, GLuint _dst, const BlitItem& _bi)
 	{
 		if (NULL == glCopyBufferSubData)
@@ -8975,6 +9111,48 @@ namespace bgfx { namespace gl
 		GL_CHECK(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, _src) );
 		GL_CHECK(glPixelStorei(GL_UNPACK_ALIGNMENT, 1) );
 		GL_CHECK(glBindTexture(_dst.m_target, _dst.m_id) );
+
+		const bimg::TextureFormat::Enum format = bimg::TextureFormat::Enum(_dst.m_textureFormat);
+
+		if (bimg::isCompressed(format) )
+		{
+			const bimg::ImageBlockInfo& info = bimg::getBlockInfo(format);
+
+			const uint32_t blockW = bx::max<uint32_t>(1, info.blockWidth);
+			const uint32_t blockH = bx::max<uint32_t>(1, info.blockHeight);
+			const uint32_t mipW   = bx::max<uint32_t>(1, _dst.m_width  >> _bi.m_dstMip);
+			const uint32_t mipH   = bx::max<uint32_t>(1, _dst.m_height >> _bi.m_dstMip);
+			const uint32_t width  = bx::min<uint32_t>(_bi.m_width,  mipW - _bi.m_dstX);
+			const uint32_t height = bx::min<uint32_t>(_bi.m_height, mipH - _bi.m_dstY);
+			const uint32_t numRows  = (height + blockH - 1)/blockH;
+			const uint32_t rowBytes = (width + blockW - 1)/blockW*info.blockSize;
+
+			for (uint32_t slice = 0, depth = bx::max<uint32_t>(1, _bi.m_depth); slice < depth; ++slice)
+			{
+				for (uint32_t row = 0; row < numRows; ++row)
+				{
+					const uint32_t y = _bi.m_dstY + row*blockH;
+
+					compressedTexSubImage(_dst
+						, _bi.m_dstMip
+						, _bi.m_dstX
+						, y
+						, _bi.m_dstZ + slice
+						, width
+						, bx::min<uint32_t>(blockH, mipH - y)
+						, 1
+						, rowBytes
+						, (const GLvoid*)uintptr_t(_bi.m_srcOffset + slice*_bi.m_slicePitch + row*_bi.m_rowPitch)
+						);
+				}
+			}
+
+			GL_CHECK(glBindTexture(_dst.m_target, 0) );
+			GL_CHECK(glPixelStorei(GL_UNPACK_ALIGNMENT, 4) );
+			GL_CHECK(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0) );
+
+			return;
+		}
 
 		uint32_t rowLength, imageHeight;
 		calcTextureRegionTexelPitch(
@@ -9043,6 +9221,47 @@ namespace bgfx { namespace gl
 
 		GL_CHECK(glBindBuffer(GL_PIXEL_PACK_BUFFER, _dst) );
 		GL_CHECK(glPixelStorei(GL_PACK_ALIGNMENT, 1) );
+
+		const bimg::TextureFormat::Enum format = bimg::TextureFormat::Enum(_src.m_textureFormat);
+
+		if (bimg::isCompressed(format) )
+		{
+			const bimg::ImageBlockInfo& info = bimg::getBlockInfo(format);
+
+			const uint32_t blockW = bx::max<uint32_t>(1, info.blockWidth);
+			const uint32_t blockH = bx::max<uint32_t>(1, info.blockHeight);
+			const uint32_t mipW   = bx::max<uint32_t>(1, _src.m_width  >> _bi.m_srcMip);
+			const uint32_t mipH   = bx::max<uint32_t>(1, _src.m_height >> _bi.m_srcMip);
+			const uint32_t width  = bx::min<uint32_t>(_bi.m_width,  mipW - _bi.m_srcX);
+			const uint32_t height = bx::min<uint32_t>(_bi.m_height, mipH - _bi.m_srcY);
+			const uint32_t numRows  = (height + blockH - 1)/blockH;
+			const uint32_t rowBytes = (width + blockW - 1)/blockW*info.blockSize;
+
+			for (uint32_t slice = 0, depth = bx::max<uint32_t>(1, _bi.m_depth); slice < depth; ++slice)
+			{
+				for (uint32_t row = 0; row < numRows; ++row)
+				{
+					const uint32_t y = _bi.m_srcY + row*blockH;
+
+					GL_CHECK(glGetCompressedTextureSubImage(_src.m_id
+						, _bi.m_srcMip
+						, _bi.m_srcX
+						, y
+						, _bi.m_srcZ + slice
+						, width
+						, bx::min<uint32_t>(blockH, mipH - y)
+						, 1
+						, rowBytes
+						, (GLvoid*)uintptr_t(_bi.m_dstOffset + slice*_bi.m_slicePitch + row*_bi.m_rowPitch)
+						) );
+				}
+			}
+
+			GL_CHECK(glPixelStorei(GL_PACK_ALIGNMENT, 4) );
+			GL_CHECK(glBindBuffer(GL_PIXEL_PACK_BUFFER, 0) );
+
+			return;
+		}
 
 		uint32_t rowLength, imageHeight;
 		calcTextureRegionTexelPitch(
@@ -9147,7 +9366,7 @@ namespace bgfx { namespace gl
 					||    !isCompressedRegionCopyable(bi.m_dstX, width,  dstMipWidth,  blockW)
 					||    !isCompressedRegionCopyable(bi.m_srcY, height, srcMipHeight, blockH)
 					||    !isCompressedRegionCopyable(bi.m_dstY, height, dstMipHeight, blockH) )
-					&&   blitCompressed2D(bi, src, dst, format) )
+					&&   (blitCompressedRegion(bi, src, dst, format) || blitCompressed2D(bi, src, dst, format) ) )
 					{
 						continue;
 					}

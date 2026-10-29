@@ -494,6 +494,8 @@ namespace bgfx
 #if BGFX_CONFIG_BLIT_FALLBACK
 #	include "cs_blit_texture_to_buffer.bin.h"
 #	include "cs_blit_buffer_to_texture.bin.h"
+#	include "cs_blit_texture_to_buffer_uint.bin.h"
+#	include "cs_blit_buffer_to_texture_uint.bin.h"
 #endif // BGFX_CONFIG_BLIT_FALLBACK
 
 	static const EmbeddedShader s_embeddedShaders[] =
@@ -530,6 +532,8 @@ namespace bgfx
 #if BGFX_CONFIG_BLIT_FALLBACK
 		BGFX_EMBEDDED_SHADER(cs_blit_texture_to_buffer),
 		BGFX_EMBEDDED_SHADER(cs_blit_buffer_to_texture),
+		BGFX_EMBEDDED_SHADER(cs_blit_texture_to_buffer_uint),
+		BGFX_EMBEDDED_SHADER(cs_blit_buffer_to_texture_uint),
 #endif // BGFX_CONFIG_BLIT_FALLBACK
 
 		BGFX_EMBEDDED_SHADER_END()
@@ -1098,6 +1102,8 @@ namespace bgfx
 			{
 				"cs_blit_texture_to_buffer",
 				"cs_blit_buffer_to_texture",
+				"cs_blit_texture_to_buffer_uint",
+				"cs_blit_buffer_to_texture_uint",
 			};
 
 			for (uint32_t ii = 0; ii < BX_COUNTOF(m_program); ++ii)
@@ -5421,6 +5427,11 @@ namespace bgfx
 			, dstWidth, dstHeight, dstDepth
 			);
 
+		const uint32_t srcMipWidth  = srcWidth;
+		const uint32_t srcMipHeight = srcHeight;
+		const uint32_t dstMipWidth  = dstWidth;
+		const uint32_t dstMipHeight = dstHeight;
+
 		srcWidth  = clampRegionExtent(srcWidth,  _src.x, _src.width );
 		srcHeight = clampRegionExtent(srcHeight, _src.y, _src.height);
 		srcDepth  = clampRegionExtent(srcDepth,  _src.z, _src.depth );
@@ -5431,6 +5442,32 @@ namespace bgfx
 		uint16_t width  = uint16_t(bx::min(srcWidth,  dstWidth ) );
 		uint16_t height = uint16_t(bx::min(srcHeight, dstHeight) );
 		const uint16_t depth = uint16_t(bx::min(srcDepth, dstDepth) );
+
+		if (false
+		||  src.isDepth()
+		||  dst.isDepth()
+		||  0 != ( (src.m_flags | dst.m_flags) & BGFX_TEXTURE_MSAA_SAMPLE) )
+		{
+			const bool whole = true
+				&& 0 == (_src.x | _src.y | _dst.x | _dst.y)
+				&& srcMipWidth  == dstMipWidth
+				&& srcMipHeight == dstMipHeight
+				&& width  == srcMipWidth
+				&& height == srcMipHeight
+				;
+
+			BX_ASSERT(whole
+				, "Blit of a depth or BGFX_TEXTURE_MSAA_SAMPLE texture must copy the whole mip (src %dx%d at (%d, %d), dst %dx%d at (%d, %d), size %dx%d)."
+				, srcMipWidth, srcMipHeight, _src.x, _src.y
+				, dstMipWidth, dstMipHeight, _dst.x, _dst.y
+				, width, height
+				);
+
+			if (!whole)
+			{
+				return;
+			}
+		}
 
 		alignTextureRegion(width, height, TextureFormat::Enum(src.m_format) );
 
