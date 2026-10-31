@@ -7693,6 +7693,7 @@ WGPU_IMPORT
 
 		ProgramHandle currentProgram = BGFX_INVALID_HANDLE;
 		bool hasPredefined = false;
+		ChunkedScratchBufferOffset currentSbo = { .buffer = NULL, .offsets = { 0, 0 } };
 		SortKey key;
 		uint16_t view = UINT16_MAX;
 		const View* renderView = &_render->view(0);
@@ -8133,14 +8134,13 @@ WGPU_IMPORT
 						}
 					}
 
-					ChunkedScratchBufferOffset sbo;
 					const uint32_t vsSize = program.m_vsh->m_size;
 
 					if (constantsChanged
 					||  hasPredefined)
 					{
 						viewState.setPredefined<4>(this, view, *renderView, program, _render, compute);
-						m_uniformScratchBuffer.write(sbo, m_vsScratch, vsSize);
+						m_uniformScratchBuffer.write(currentSbo, m_vsScratch, vsSize);
 					}
 
 					if (programChanged)
@@ -8153,7 +8153,7 @@ WGPU_IMPORT
 					bx::HashMurmur3 murmur;
 					murmur.begin(0x434f4d50);
 					murmur.add(renderBind.m_bind, sizeof(renderBind.m_bind) );
-					murmur.add(sbo.buffer);
+					murmur.add(currentSbo.buffer);
 					murmur.add(vsSize);
 					murmur.add(uintptr_t(bindGroupLayout) );
 					const uint32_t bindHash = murmur.end();
@@ -8161,12 +8161,12 @@ WGPU_IMPORT
 					BindGroupMap::iterator it = m_bindGroupMap.find(bindHash);
 					if (it == m_bindGroupMap.end() )
 					{
-						const BindGroup bindGroup = createBindGroup(bindGroupLayout, program, renderBind, sbo, true);
+						const BindGroup bindGroup = createBindGroup(bindGroupLayout, program, renderBind, currentSbo, true);
 						it = m_bindGroupMap.insert(stl::make_pair(bindHash, bindGroup) ).first;
 					}
 					const BindGroup* bindGroupCached = &it->second;
 
-					WGPU_CHECK(wgpuComputePassEncoderSetBindGroup(computePassEncoder, 0, bindGroupCached->bindGroup, bindGroupCached->numOffsets, sbo.offsets) );
+					WGPU_CHECK(wgpuComputePassEncoderSetBindGroup(computePassEncoder, 0, bindGroupCached->bindGroup, bindGroupCached->numOffsets, currentSbo.offsets) );
 
 					if (isValid(compute.m_indirectBuffer) )
 					{

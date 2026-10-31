@@ -8186,16 +8186,18 @@ VK_DESTROY
 					{
 						if (convert)
 						{
-							const uint32_t pitch = bx::strideAlign(bx::max<uint32_t>(mip.m_width, 4) * bpp / 8, alignment);
-							const uint32_t slice = bx::strideAlign(bx::max<uint32_t>(mip.m_height, 4) * pitch, alignment);
-							const uint32_t size  = slice * mip.m_depth;
+							const uint32_t width  = bx::max<uint32_t>(1, m_width  >> lod);
+							const uint32_t height = bx::max<uint32_t>(1, m_height >> lod);
+							const uint32_t pitch  = bx::strideAlign(width * bpp / 8, alignment);
+							const uint32_t slice  = bx::strideAlign(height * pitch, alignment);
+							const uint32_t size   = slice * mip.m_depth;
 
 							uint8_t* temp = (uint8_t*)bx::alloc(g_allocator, size);
 							imageDecodeToBgra8(
 								  temp
 								, mip.m_data
-								, mip.m_width
-								, mip.m_height
+								, width
+								, height
 								, mip.m_depth
 								, pitch
 								, slice
@@ -8203,8 +8205,8 @@ VK_DESTROY
 								);
 
 							imageInfos[kk].data     = temp;
-							imageInfos[kk].width    = mip.m_width;
-							imageInfos[kk].height   = mip.m_height;
+							imageInfos[kk].width    = width;
+							imageInfos[kk].height   = height;
 							imageInfos[kk].depth    = mip.m_depth;
 							imageInfos[kk].pitch    = pitch;
 							imageInfos[kk].slice    = slice;
@@ -11650,6 +11652,8 @@ VK_DESTROY
 		VkDescriptorSet currentDescriptorSet = VK_NULL_HANDLE;
 		uint32_t currentBindHash = 0;
 		uint32_t descriptorSetCount = 0;
+		ChunkedScratchBufferOffset currentSbo = { .buffer = VK_NULL_HANDLE, .offsets = { 0, 0 } };
+		uint32_t currentNumOffsets = 0;
 
 		struct PipelineState
 		{
@@ -12085,18 +12089,18 @@ VK_DESTROY
 
 					if (VK_NULL_HANDLE != program.m_descriptorSetLayout)
 					{
-						ChunkedScratchBufferOffset sbo;
-
 						const uint32_t vsSize = program.m_vsh->m_size;
-						uint32_t numOffsets = 0;
 
 						if (constantsChanged
 						||  hasPredefined)
 						{
+							currentSbo.buffer = VK_NULL_HANDLE;
+							currentNumOffsets = 0;
+
 							if (vsSize > 0)
 							{
-								uniformScratchBuffer.write(sbo, m_vsScratch, vsSize);
-								numOffsets = 1;
+								uniformScratchBuffer.write(currentSbo, m_vsScratch, vsSize);
+								currentNumOffsets = 1;
 							}
 						}
 
@@ -12105,7 +12109,7 @@ VK_DESTROY
 						hash.add(program.m_descriptorSetLayout);
 						hash.add(program.m_msaaMask);
 						hash.add(bindIdx);
-						hash.add(sbo.buffer);
+						hash.add(currentSbo.buffer);
 						hash.add(vsSize);
 						hash.add(0);
 
@@ -12126,7 +12130,7 @@ VK_DESTROY
 								VkDescriptorSet descriptorSet = getDescriptorSet(
 									  program
 									, renderBind
-									, sbo.buffer
+									, currentSbo.buffer
 									, _render->m_colorPalette
 								);
 
@@ -12148,8 +12152,8 @@ VK_DESTROY
 							, 0
 							, 1
 							, &currentDescriptorSet
-							, numOffsets
-							, sbo.offsets
+							, currentNumOffsets
+							, currentSbo.offsets
 							);
 					}
 
@@ -12446,19 +12450,21 @@ VK_DESTROY
 
 					if (VK_NULL_HANDLE != program.m_descriptorSetLayout)
 					{
-						ChunkedScratchBufferOffset sbo;
-
 						const uint32_t vsSize = program.m_vsh->m_size;
 						const uint32_t fsSize = NULL != program.m_fsh ? program.m_fsh->m_size : 0;
-						uint32_t numOffsets = 0;
 
-						if (true
-						&& (constantsChanged || hasPredefined)
-						&& (0 < vsSize || 0 < fsSize)
-						   )
+						if (constantsChanged
+						||  hasPredefined)
 						{
-							uniformScratchBuffer.write(sbo, m_vsScratch, vsSize, m_fsScratch, fsSize);
-							numOffsets = (0 < vsSize) + (0 < fsSize);
+							currentSbo.buffer = VK_NULL_HANDLE;
+							currentNumOffsets = 0;
+
+							if (0 < vsSize
+							||  0 < fsSize)
+							{
+								uniformScratchBuffer.write(currentSbo, m_vsScratch, vsSize, m_fsScratch, fsSize);
+								currentNumOffsets = (0 < vsSize) + (0 < fsSize);
+							}
 						}
 
 						bx::HashMurmur2A hash;
@@ -12466,7 +12472,7 @@ VK_DESTROY
 						hash.add(program.m_descriptorSetLayout);
 						hash.add(program.m_msaaMask);
 						hash.add(bindIdx);
-						hash.add(sbo.buffer);
+						hash.add(currentSbo.buffer);
 						hash.add(vsSize);
 						hash.add(fsSize);
 
@@ -12487,7 +12493,7 @@ VK_DESTROY
 								VkDescriptorSet descriptorSet = getDescriptorSet(
 									  program
 									, renderBind
-									, sbo.buffer
+									, currentSbo.buffer
 									, _render->m_colorPalette
 									);
 
@@ -12509,8 +12515,8 @@ VK_DESTROY
 							, 0
 							, 1
 							, &currentDescriptorSet
-							, numOffsets
-							, sbo.offsets
+							, currentNumOffsets
+							, currentSbo.offsets
 							);
 					}
 

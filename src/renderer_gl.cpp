@@ -1594,7 +1594,7 @@ namespace bgfx { namespace gl
 			;
 
 		GLsizei bpp  = bimg::getBitsPerPixel(bimg::TextureFormat::Enum(_format) );
-		GLsizei size = (_dim*_dim*bpp)/8;
+		GLsizei size = GLsizei(bimg::imageGetSize(NULL, _dim, _dim, 0, false, false, 1, bimg::TextureFormat::Enum(_format) ) );
 		void* data = NULL;
 
 		if (bimg::isDepth(bimg::TextureFormat::Enum(_format) ) )
@@ -1621,8 +1621,7 @@ namespace bgfx { namespace gl
 			for (uint32_t ii = 0, dim = _dim; ii < (_mipmaps ? 5u : 1u) && 0 == err; ++ii, dim >>= 1)
 			{
 				dim = bx::max(1, dim);
-				uint32_t block = bx::max(4, dim);
-				size = (block*block*bpp)/8;
+				size = GLsizei(bimg::imageGetSize(NULL, dim, dim, 0, false, false, 1, bimg::TextureFormat::Enum(_format) ) );
 				compressedTexImage(target, ii, internalFmt, dim, dim, 0, 0, size, data);
 				err |= getGlError();
 			}
@@ -1774,11 +1773,19 @@ namespace bgfx { namespace gl
 					;
 
 			case TextureFormat::ASTC4x4:
+			case TextureFormat::ASTC5x4:
 			case TextureFormat::ASTC5x5:
+			case TextureFormat::ASTC6x5:
 			case TextureFormat::ASTC6x6:
 			case TextureFormat::ASTC8x5:
 			case TextureFormat::ASTC8x6:
+			case TextureFormat::ASTC8x8:
 			case TextureFormat::ASTC10x5:
+			case TextureFormat::ASTC10x6:
+			case TextureFormat::ASTC10x8:
+			case TextureFormat::ASTC10x10:
+			case TextureFormat::ASTC12x10:
+			case TextureFormat::ASTC12x12:
 				return emscripten_webgl_enable_extension(ctx, "WEBGL_compressed_texture_astc");
 
 			default:
@@ -7008,11 +7015,11 @@ namespace bgfx { namespace gl
 								imageDecodeToRgba8(
 									  temp
 									, mip.m_data
-									, mip.m_width
-									, mip.m_height
+									, width
+									, height
 									, mip.m_depth
-									, mip.m_width*4
-									, mip.m_width*4*mip.m_height
+									, width*4
+									, width*4*height
 									, mip.m_format
 									);
 								data = temp;
