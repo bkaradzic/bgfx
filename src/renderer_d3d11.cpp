@@ -8010,6 +8010,10 @@ namespace bgfx { namespace d3d11
 						||  current.m_numMips      != bind.m_numMips
 						||  programChanged)
 						{
+							ID3D11UnorderedAccessView* const uav     = m_textureStage.m_uav[stage];
+							ID3D11ShaderResourceView*  const srv     = m_textureStage.m_srv[stage];
+							ID3D11SamplerState*        const sampler = m_textureStage.m_sampler[stage];
+
 							if (kInvalidHandle != bind.m_idx)
 							{
 								switch (bind.m_type)
@@ -8082,13 +8086,18 @@ namespace bgfx { namespace d3d11
 								m_textureStage.m_uav[stage]     = NULL;
 							}
 
-							++changes;
+							changes += false
+								|| uav     != m_textureStage.m_uav[stage]
+								|| srv     != m_textureStage.m_srv[stage]
+								|| sampler != m_textureStage.m_sampler[stage]
+								;
 						}
 
 						current = bind;
 					}
 
-					if (0 < changes)
+					if (0 < changes
+					||  resetState)
 					{
 						commitTextureStage();
 					}

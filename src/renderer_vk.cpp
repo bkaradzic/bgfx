@@ -7170,6 +7170,15 @@ VK_DESTROY
 
 		for (uint8_t stage = 0; stage < BX_COUNTOF(m_bindInfo); ++stage)
 		{
+			m_bindInfo[stage] =
+			{
+				.uniformHandle  = BGFX_INVALID_HANDLE,
+				.type           = BindType::Count,
+				.binding        = 0,
+				.samplerBinding = 0,
+				.index          = UINT32_MAX,
+			};
+
 			const ShaderVK* shader = NULL;
 			if (isValid(m_vsh->m_bindInfo[stage].uniformHandle) )
 			{
@@ -9182,6 +9191,11 @@ VK_DESTROY
 
 		errorState = ErrorState::SwapChainCreated;
 
+		if (m_needToRecreateSwapchain)
+		{
+			return VK_SUCCESS;
+		}
+
 		{
 			result = createAttachments(_commandBuffer);
 
@@ -9234,7 +9248,8 @@ VK_DESTROY
 
 	void SwapChainVK::destroy()
 	{
-		if (VK_NULL_HANDLE != m_swapChain)
+		if (VK_NULL_HANDLE != m_swapChain
+		||  VK_NULL_HANDLE != m_surface)
 		{
 			releaseFrameBuffer();
 			releaseAttachments();
@@ -9739,6 +9754,15 @@ VK_DESTROY
 		m_sci.compositeAlpha     = compositeAlpha;
 		m_sci.presentMode        = s_presentMode[presentModeIdx].mode;
 		m_sci.clipped            = VK_FALSE;
+
+		if (0 == width
+		||  0 == height)
+		{
+			BX_TRACE("Create swapchain: surface extent is %dx%d, deferred.", width, height);
+			m_sampler = s_msaa[(m_desc.flags & BGFX_SWAP_CHAIN_MSAA_MASK) >> BGFX_SWAP_CHAIN_MSAA_SHIFT];
+			m_needToRecreateSwapchain = true;
+			return VK_SUCCESS;
+		}
 
 		VkPresentModeKHR modes[2];
 		VkSwapchainPresentModesCreateInfoEXT modesInfo;
