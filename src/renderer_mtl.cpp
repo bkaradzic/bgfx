@@ -4614,11 +4614,11 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 							imageDecodeToBgra8(
 								  temp
 								, mip.m_data
-								, mip.m_width
-								, mip.m_height
+								, width
+								, height
 								, mip.m_depth
-								, mip.m_width*4
-								, mip.m_width*4*mip.m_height
+								, width*4
+								, width*4*height
 								, mip.m_format
 								);
 							data = temp;
