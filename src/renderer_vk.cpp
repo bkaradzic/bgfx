@@ -1118,6 +1118,57 @@ VK_IMPORT_DEVICE
 			;
 	}
 
+	uint8_t getRotation(VkSurfaceTransformFlagBitsKHR _transform)
+	{
+		return VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR  == _transform ? 1
+			:  VK_SURFACE_TRANSFORM_ROTATE_180_BIT_KHR == _transform ? 2
+			:  VK_SURFACE_TRANSFORM_ROTATE_270_BIT_KHR == _transform ? 3
+			:                                                          0
+			;
+	}
+
+	Rect rotateRect(const Rect& _rect, uint8_t _rotation, uint16_t _width, uint16_t _height)
+	{
+		Rect rect;
+		rect.setIntersect(_rect, Rect(0, 0, _width, _height) );
+
+		switch (_rotation)
+		{
+		case 1:  return Rect(uint16_t(_height - rect.m_y - rect.m_height), rect.m_x, rect.m_height, rect.m_width);
+		case 2:  return Rect(uint16_t(_width - rect.m_x - rect.m_width), uint16_t(_height - rect.m_y - rect.m_height), rect.m_width, rect.m_height);
+		case 3:  return Rect(rect.m_y, uint16_t(_width - rect.m_x - rect.m_width), rect.m_height, rect.m_width);
+		default: return rect;
+		}
+	}
+
+	void rotateProj(float* _proj, uint8_t _rotation)
+	{
+		const float sx = 2 == _rotation ? -1.0f : 1 == _rotation ?  1.0f : -1.0f;
+		const float sy = 2 == _rotation ? -1.0f : 1 == _rotation ? -1.0f :  1.0f;
+
+		for (uint32_t ii = 0; ii < 4; ++ii)
+		{
+			float* row = &_proj[ii*4];
+			const float xx = row[0];
+			const float yy = row[1];
+
+			row[0] = sx * (0 == (_rotation & 1) ? xx : yy);
+			row[1] = sy * (0 == (_rotation & 1) ? yy : xx);
+		}
+	}
+
+	bool isZeroArea(const FrameCache& _frameCache, const Rect& _rect, uint16_t _scissor, uint8_t _rotation, uint16_t _width, uint16_t _height)
+	{
+		if (UINT16_MAX == _scissor)
+		{
+			return false;
+		}
+
+		Rect scissorRect;
+		scissorRect.setIntersect(_rect, rotateRect(_frameCache.m_rectCache.m_cache[_scissor], _rotation, _width, _height) );
+		return scissorRect.isZeroArea();
+	}
+
 	void setImageMemoryBarrier(
 		  VkCommandBuffer _commandBuffer
 		, VkImage _image
@@ -3528,8 +3579,17 @@ VK_IMPORT_DEVICE
 			vkCmdBindPipeline(m_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pso);
 
 			ProgramVK& program = m_program[_blitter.m_program.idx];
+
+			const uint8_t rotation = frameBuffer.getRotation();
+			const bool    swapAxes = 0 != (rotation & 1);
+
 			float proj[16];
-			bx::mtxOrtho(proj, 0.0f, (float)width, (float)height, 0.0f, 0.0f, 1000.0f, 0.0f, false);
+			bx::mtxOrtho(proj, 0.0f, float(swapAxes ? height : width), float(swapAxes ? width : height), 0.0f, 0.0f, 1000.0f, 0.0f, false);
+
+			if (0 != rotation)
+			{
+				rotateProj(proj, rotation);
+			}
 
 			PredefinedUniform& predefined = m_program[_blitter.m_program.idx].m_predefined[0];
 			uint8_t flags = predefined.m_type;
@@ -3637,8 +3697,9 @@ VK_IMPORT_DEVICE
 			if (m_reset & BGFX_RESET_CAPTURE)
 			{
 				const uint8_t  bpp         = bimg::getBitsPerPixel(bimg::TextureFormat::Enum(m_backBuffer.m_swapChain.m_colorFormat) );
-				const uint32_t pitch       = m_backBuffer.m_width * bpp / 8;
-				const uint32_t captureSize = m_backBuffer.m_height * pitch;
+				const bool     swapAxes    = 0 != (m_backBuffer.getRotation() & 1);
+				const uint32_t pitch       = (swapAxes ? m_backBuffer.m_height : m_backBuffer.m_width) * bpp / 8;
+				const uint32_t captureSize = (swapAxes ? m_backBuffer.m_width  : m_backBuffer.m_height) * pitch;
 
 				if (captureSize > m_captureSize)
 				{
@@ -3747,8 +3808,9 @@ VK_IMPORT_DEVICE
 				m_backBuffer.update(m_commandBuffer, m_mainSwapChain);
 				// Update the resolution again here, as the actual width and height
 				// is now final (as it was potentially clamped by the Vulkan driver).
-				m_mainSwapChain.width = m_backBuffer.m_width;
-				m_mainSwapChain.height = m_backBuffer.m_height;
+				const bool swapAxes = 0 != (m_backBuffer.getRotation() & 1);
+				m_mainSwapChain.width  = swapAxes ? m_backBuffer.m_height : m_backBuffer.m_width;
+				m_mainSwapChain.height = swapAxes ? m_backBuffer.m_width  : m_backBuffer.m_height;
 
 				for (uint16_t ii = 0; ii < m_numWindows; ++ii)
 				{
@@ -5574,7 +5636,57 @@ VK_IMPORT_DEVICE
 				uint8_t* src;
 				VK_CHECK(vkMapMemory(m_device, _memory.mem, _memory.offset, _memory.size, 0, (void**)&src) );
 
-				_func(src, width, height, _swapChain.m_colorFormat, pitch, _userData);
+				const uint8_t rotation = _swapChain.m_rotation;
+
+				if (0 == rotation)
+				{
+					_func(src, width, height, _swapChain.m_colorFormat, pitch, _userData);
+				}
+				else
+				{
+					const uint32_t bpp       = bimg::getBitsPerPixel(bimg::TextureFormat::Enum(_swapChain.m_colorFormat) ) / 8;
+					const uint32_t dstWidth  = 0 != (rotation & 1) ? height : width;
+					const uint32_t dstHeight = 0 != (rotation & 1) ? width  : height;
+					const uint32_t dstPitch  = dstWidth * bpp;
+
+					uint8_t* dst = (uint8_t*)bx::alloc(g_allocator, dstPitch*dstHeight);
+
+					const int64_t step = 1 == rotation ? int64_t(pitch)
+						:                2 == rotation ? -int64_t(bpp)
+						:                                -int64_t(pitch)
+						;
+
+					for (uint32_t yy = 0; yy < dstHeight; ++yy)
+					{
+						const uint8_t* srcPtr = 1 == rotation ? &src[(dstHeight - 1 - yy)*bpp]
+							:                   2 == rotation ? &src[(dstHeight - 1 - yy)*pitch + (dstWidth - 1)*bpp]
+							:                                   &src[(dstWidth - 1)*pitch + yy*bpp]
+							;
+
+						uint8_t* dstRow = &dst[yy*dstPitch];
+
+						if (4 == bpp)
+						{
+							uint32_t* dstTexel = (uint32_t*)dstRow;
+
+							for (uint32_t xx = 0; xx < dstWidth; ++xx, srcPtr += step)
+							{
+								dstTexel[xx] = *(const uint32_t*)srcPtr;
+							}
+						}
+						else
+						{
+							for (uint32_t xx = 0; xx < dstWidth; ++xx, srcPtr += step)
+							{
+								bx::memCopy(&dstRow[xx*bpp], srcPtr, bpp);
+							}
+						}
+					}
+
+					_func(dst, dstWidth, dstHeight, _swapChain.m_colorFormat, dstPitch, _userData);
+
+					bx::free(g_allocator, dst);
+				}
 
 				vkUnmapMemory(m_device, _memory.mem);
 
@@ -9085,6 +9197,48 @@ VK_DESTROY
 			;
 	}
 
+	bool SwapChainVK::isRotationStale()
+	{
+		if (!BX_ENABLED(BX_PLATFORM_ANDROID) )
+		{
+			return false;
+		}
+
+		VkSurfaceCapabilitiesKHR surfaceCapabilities;
+		const VkResult result = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(s_renderVK->m_physicalDevice, m_surface, &surfaceCapabilities);
+
+		return true
+			&& VK_SUCCESS == result
+			&& getRotation(surfaceCapabilities.currentTransform) != m_rotation
+			&& isRotationSettled(m_desc)
+			;
+	}
+
+	bool SwapChainVK::isRotationSettled(const SwapChain& _desc)
+	{
+		constexpr uint8_t kMaxRotationWait = 8;
+
+		if (!BX_ENABLED(BX_PLATFORM_ANDROID)
+		||  VK_NULL_HANDLE == m_surface
+		||  kMaxRotationWait <= m_rotationWait)
+		{
+			m_rotationWait = 0;
+			return true;
+		}
+
+		VkSurfaceCapabilitiesKHR surfaceCapabilities;
+		const VkResult result = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(s_renderVK->m_physicalDevice, m_surface, &surfaceCapabilities);
+
+		const bool settled = false
+			|| VK_SUCCESS != result
+			|| (_desc.width > _desc.height) == (surfaceCapabilities.currentExtent.width > surfaceCapabilities.currentExtent.height)
+			;
+
+		m_rotationWait = settled ? 0 : m_rotationWait + 1;
+
+		return settled;
+	}
+
 	struct LowLatencyScope
 	{
 		LowLatencyScope(const SwapChainVK& _swapChain)
@@ -9287,6 +9441,15 @@ VK_DESTROY
 			|| m_desc.depth.idx != _desc.depth.idx
 			|| recreateSwapchain
 			;
+
+		if (true
+		&&  VK_NULL_HANDLE != m_swapChain
+		&& !recreateSurface
+		&& (m_desc.width != _desc.width || m_desc.height != _desc.height)
+		&& !isRotationSettled(_desc) )
+		{
+			return;
+		}
 
 		m_nwh   = _nwh;
 		m_desc  = _desc;
@@ -9646,21 +9809,43 @@ VK_DESTROY
 			: s_textureFormat[m_colorFormat].m_fmt
 			;
 
+		m_rotation = BX_ENABLED(BX_PLATFORM_ANDROID)
+			? getRotation(surfaceCapabilities.currentTransform)
+			: 0
+			;
+
+		static const VkSurfaceTransformFlagBitsKHR s_preTransform[] =
+		{
+			VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR,
+			VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR,
+			VK_SURFACE_TRANSFORM_ROTATE_180_BIT_KHR,
+			VK_SURFACE_TRANSFORM_ROTATE_270_BIT_KHR,
+		};
+
+		const VkSurfaceTransformFlagBitsKHR preTransform = BX_ENABLED(BX_PLATFORM_NX)
+			? VK_SURFACE_TRANSFORM_INHERIT_BIT_KHR
+			: s_preTransform[m_rotation]
+			;
+
+		const bool swapExtent = 0 != (m_rotation & 1);
+		const uint32_t reqWidth  = swapExtent ? m_desc.height : m_desc.width;
+		const uint32_t reqHeight = swapExtent ? m_desc.width  : m_desc.height;
+
 		const uint32_t width = bx::clamp<uint32_t>(
-			  m_desc.width
+			  reqWidth
 			, surfaceCapabilities.minImageExtent.width
 			, surfaceCapabilities.maxImageExtent.width
 			);
 		const uint32_t height = bx::clamp<uint32_t>(
-			  m_desc.height
+			  reqHeight
 			, surfaceCapabilities.minImageExtent.height
 			, surfaceCapabilities.maxImageExtent.height
 			);
-		if (width != m_desc.width || height != m_desc.height)
+		if (width != reqWidth || height != reqHeight)
 		{
 			BX_TRACE("Clamped swapchain resolution from %dx%d to %dx%d"
-					, m_desc.width
-					, m_desc.height
+					, reqWidth
+					, reqHeight
 					, width
 					, height
 					);
@@ -9736,6 +9921,7 @@ VK_DESTROY
 		m_sci.imageExtent.width  = width;
 		m_sci.imageExtent.height = height;
 		m_sci.imageUsage         = imageUsage;
+		m_sci.preTransform       = preTransform;
 		m_sci.compositeAlpha     = compositeAlpha;
 		m_sci.presentMode        = s_presentMode[presentModeIdx].mode;
 		m_sci.clipped            = VK_FALSE;
@@ -10332,7 +10518,7 @@ VK_DESTROY
 				return false;
 
 			case VK_SUBOPTIMAL_KHR:
-				m_needToRecreateSwapchain = !BX_ENABLED(BX_PLATFORM_ANDROID);
+				m_needToRecreateSwapchain = !BX_ENABLED(BX_PLATFORM_ANDROID) || isRotationStale();
 				break;
 
 			case VK_ERROR_OUT_OF_DATE_KHR:
@@ -10447,7 +10633,7 @@ VK_DESTROY
 				break;
 
 			case VK_SUBOPTIMAL_KHR:
-				m_needToRecreateSwapchain = !BX_ENABLED(BX_PLATFORM_ANDROID);
+				m_needToRecreateSwapchain = !BX_ENABLED(BX_PLATFORM_ANDROID) || isRotationStale();
 				break;
 
 			case VK_ERROR_OUT_OF_DATE_KHR:
@@ -11692,6 +11878,11 @@ VK_DESTROY
 		Rect viewScissorRect;
 		viewScissorRect.clear();
 
+		View     rotatedView;
+		uint8_t  viewRotation = 0;
+		uint16_t viewWidth    = 0;
+		uint16_t viewHeight   = 0;
+
 		bool isFrameBufferValid = false;
 
 		uint32_t statsNumPrimsSubmitted[BX_COUNTOF(s_primInfo)] = {};
@@ -11762,6 +11953,26 @@ VK_DESTROY
 				{
 					view = key.m_view;
 					renderView = &_render->view(view);
+
+					const FrameBufferVK& viewFb = getFrameBuffer(renderView->m_fbh);
+					viewRotation = viewFb.getRotation();
+
+					if (0 != viewRotation)
+					{
+						viewWidth  = uint16_t(0 != (viewRotation & 1) ? viewFb.m_height : viewFb.m_width);
+						viewHeight = uint16_t(0 != (viewRotation & 1) ? viewFb.m_width  : viewFb.m_height);
+
+						rotatedView = *renderView;
+						rotatedView.m_rect        = rotateRect(renderView->m_rect,        viewRotation, viewWidth, viewHeight);
+						rotatedView.m_clippedRect = rotateRect(renderView->m_clippedRect, viewRotation, viewWidth, viewHeight);
+						rotatedView.m_scissor     = renderView->m_scissor.isZero()
+							? renderView->m_scissor
+							: rotateRect(renderView->m_scissor, viewRotation, viewWidth, viewHeight)
+							;
+						rotateProj(rotatedView.m_proj.un.val, viewRotation);
+						renderView = &rotatedView;
+					}
+
 					viewState.setView(*renderView);
 					currentProgram = BGFX_INVALID_HANDLE;
 					hasPredefined = false;
@@ -12196,7 +12407,10 @@ VK_DESTROY
 					if (occluded
 					||  !isFrameBufferValid
 					||  0 == draw.m_streamMask
-					||  _render->m_frameCache.isZeroArea(viewScissorRect, draw.m_scissor) )
+					||  (0 == viewRotation
+						? _render->m_frameCache.isZeroArea(viewScissorRect, draw.m_scissor)
+						: isZeroArea(_render->m_frameCache, viewScissorRect, draw.m_scissor, viewRotation, viewWidth, viewHeight)
+						) )
 					{
 						continue;
 					}
@@ -12400,8 +12614,13 @@ VK_DESTROY
 						else
 						{
 							restoreScissor = true;
+							const Rect& drawScissor = _render->m_frameCache.m_rectCache.m_cache[scissor];
+
 							Rect scissorRect;
-							scissorRect.setIntersect(viewScissorRect, _render->m_frameCache.m_rectCache.m_cache[scissor]);
+							scissorRect.setIntersect(viewScissorRect, 0 != viewRotation
+								? rotateRect(drawScissor, viewRotation, viewWidth, viewHeight)
+								: drawScissor
+								);
 
 							VkRect2D rc;
 							rc.offset.x      = scissorRect.m_x;

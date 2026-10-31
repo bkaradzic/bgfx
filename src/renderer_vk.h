@@ -802,6 +802,8 @@ VK_DESTROY_FUNC(DescriptorSet);
 			, m_depthStencilFormat(VK_FORMAT_UNDEFINED)
 			, m_depthStencilAspect(0)
 			, m_backBufferColorMsaaImageView(VK_NULL_HANDLE)
+			, m_rotation(0)
+			, m_rotationWait(0)
 		{
 		}
 
@@ -832,6 +834,8 @@ VK_DESTROY_FUNC(DescriptorSet);
 		bool hasDepthStencil() const { return VK_NULL_HANDLE != m_backBufferDepthStencilImageView; }
 
 		bool isLowLatency() const;
+		bool isRotationStale();
+		bool isRotationSettled(const SwapChain& _desc);
 
 		VkQueue m_queue;
 		VkSwapchainCreateInfoKHR m_sci;
@@ -879,6 +883,8 @@ VK_DESTROY_FUNC(DescriptorSet);
 
 		bool m_supportsReadback;
 		bool m_supportsManualResolve;
+		uint8_t m_rotation;
+		uint8_t m_rotationWait;
 	};
 
 	struct FrameBufferVK
@@ -920,6 +926,11 @@ VK_DESTROY_FUNC(DescriptorSet);
 		bool isSwapChain() const
 		{
 			return NULL != m_nwh;
+		}
+
+		uint8_t getRotation() const
+		{
+			return isSwapChain() ? m_swapChain.m_rotation : 0;
 		}
 
 		TextureHandle m_texture[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
