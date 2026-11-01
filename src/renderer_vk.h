@@ -796,6 +796,7 @@ VK_DESTROY_FUNC(DescriptorSet);
 			, m_vsync(false)
 			, m_surface(VK_NULL_HANDLE)
 			, m_swapChain(VK_NULL_HANDLE)
+			, m_backBufferColorIdx(0)
 			, m_lastImageRenderedSemaphore(VK_NULL_HANDLE)
 			, m_lastImageAcquiredSemaphore(VK_NULL_HANDLE)
 			, m_needPresent(false)
@@ -895,6 +896,7 @@ VK_DESTROY_FUNC(DescriptorSet);
 			, m_numTh(0)
 			, m_nwh(NULL)
 			, m_needPresent(false)
+			, m_needResolve(false)
 			, m_framebuffer(VK_NULL_HANDLE)
 			, m_currentFramebuffer(VK_NULL_HANDLE)
 		{

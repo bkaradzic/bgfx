@@ -4421,12 +4421,16 @@ WGPU_IMPORT
 
 		bool hasStencil(TextureFormat::Enum _format)
 		{
-			return 0 < bimg::getBlockInfo(bimg::TextureFormat::Enum(_format) ).stencilBits;
+			return bimg::isDepth(bimg::TextureFormat::Enum(_format) )
+				&& 0 < bimg::getBlockInfo(bimg::TextureFormat::Enum(_format) ).stencilBits
+				;
 		}
 
 		bool hasDepth(TextureFormat::Enum _format)
 		{
-			return 0 < bimg::getBlockInfo(bimg::TextureFormat::Enum(_format) ).depthBits;
+			return bimg::isDepth(bimg::TextureFormat::Enum(_format) )
+				&& 0 < bimg::getBlockInfo(bimg::TextureFormat::Enum(_format) ).depthBits
+				;
 		}
 
 		void addAttachmentState(bx::HashMurmur3& _murmur, const FrameBufferWGPU& _fb) const

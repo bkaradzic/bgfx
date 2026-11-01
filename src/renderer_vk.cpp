@@ -10096,7 +10096,7 @@ VK_DESTROY
 				: m_backBufferColorImageView[ii]
 				;
 
-			if (NULL != m_backBufferDepthStencilImageView)
+			if (VK_NULL_HANDLE != m_backBufferDepthStencilImageView)
 			{
 				attachments[numAttachments++] = m_backBufferDepthStencilImageView;
 			}
@@ -10759,7 +10759,10 @@ VK_DESTROY
 
 		const bool acquired = m_swapChain.acquire(_commandBuffer, _block);
 		m_needPresent = m_swapChain.m_needPresent;
-		m_currentFramebuffer = m_swapChain.m_backBufferFrameBuffer[m_swapChain.m_backBufferColorIdx];
+		m_currentFramebuffer = acquired
+			? m_swapChain.m_backBufferFrameBuffer[m_swapChain.m_backBufferColorIdx]
+			: VkFramebuffer(VK_NULL_HANDLE)
+			;
 
 		return acquired;
 	}
