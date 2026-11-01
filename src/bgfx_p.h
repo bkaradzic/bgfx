@@ -113,10 +113,12 @@ namespace bgfx
 	if (!BX_IGNORE_C4127(_condition) )                                  \
 	{                                                                   \
 		BX_ERROR_SET(_err, _result, _msg);                              \
+		const bx::StringLiteral bgfxErrorMsg = _err->getMessage();      \
+		BX_UNUSED(bgfxErrorMsg);                                        \
 		BX_TRACE("%S: 0x%08x '%S' - " _format                           \
 			, &bxErrorScope.getName()                                   \
 			, _err->get().code                                          \
-			, &_err->getMessage()                                       \
+			, &bgfxErrorMsg                                             \
 			, ##__VA_ARGS__                                             \
 			);                                                          \
 		return;                                                         \

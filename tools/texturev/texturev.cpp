@@ -1477,7 +1477,8 @@ void associate()
 		}
 		else
 		{
-			bx::printf("Failed to associate MIME type image/%S (error: \"%S\")!\n", &_ext, &err.getMessage() );
+			const bx::StringLiteral msg = err.getMessage();
+			bx::printf("Failed to associate MIME type image/%S (error: \"%S\")!\n", &_ext, &msg);
 		}
 
 		bx::stringPrintf(mimeType, "image/%S;", &_ext);
@@ -1514,7 +1515,8 @@ void associate()
 	}
 	else
 	{
-		bx::printf("Failed to create texturev desktop entry (error: \"%S\")! Permissions (try sudo)?!\n", &err.getMessage() );
+		const bx::StringLiteral msg = err.getMessage();
+		bx::printf("Failed to create texturev desktop entry (error: \"%S\")! Permissions (try sudo)?!\n", &msg);
 	}
 #endif // BX_PLATFORM_WINDOWS
 }
