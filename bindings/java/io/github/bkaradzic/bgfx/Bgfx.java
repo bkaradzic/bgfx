@@ -5259,14 +5259,19 @@ public final class Bgfx {
 		public static final short Apple = (short) 0x106b;
 
 		/**
+		 * ARM adapter.
+		 */
+		public static final short Arm = (short) 0x13b5;
+
+		/**
+		 * Google adapter.
+		 */
+		public static final short Google = (short) 0x1ae0;
+
+		/**
 		 * Intel adapter.
 		 */
 		public static final short Intel = (short) 0x8086;
-
-		/**
-		 * NVIDIA adapter.
-		 */
-		public static final short Nvidia = (short) 0x10de;
 
 		/**
 		 * Microsoft adapter.
@@ -5274,9 +5279,9 @@ public final class Bgfx {
 		public static final short Microsoft = (short) 0x1414;
 
 		/**
-		 * ARM adapter.
+		 * NVIDIA adapter.
 		 */
-		public static final short Arm = (short) 0x13b5;
+		public static final short Nvidia = (short) 0x10de;
 	}
 
 	/**

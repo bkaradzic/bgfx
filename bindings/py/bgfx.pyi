@@ -1205,14 +1205,16 @@ class PciIdFlags(enum.IntFlag):
 	Amd = 0x1002
 	# Apple adapter.
 	Apple = 0x106b
-	# Intel adapter.
-	Intel = 0x8086
-	# NVIDIA adapter.
-	Nvidia = 0x10de
-	# Microsoft adapter.
-	Microsoft = 0x1414
 	# ARM adapter.
 	Arm = 0x13b5
+	# Google adapter.
+	Google = 0x1ae0
+	# Intel adapter.
+	Intel = 0x8086
+	# Microsoft adapter.
+	Microsoft = 0x1414
+	# NVIDIA adapter.
+	Nvidia = 0x10de
 
 class CubeMapFlags(enum.IntFlag):
 	# Cubemap +x.

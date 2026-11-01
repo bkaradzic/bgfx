@@ -600,10 +600,11 @@
 #define BGFX_PCI_ID_SOFTWARE_RASTERIZER           UINT16_C(0x0001) //!< Software rasterizer.
 #define BGFX_PCI_ID_AMD                           UINT16_C(0x1002) //!< AMD adapter.
 #define BGFX_PCI_ID_APPLE                         UINT16_C(0x106b) //!< Apple adapter.
-#define BGFX_PCI_ID_INTEL                         UINT16_C(0x8086) //!< Intel adapter.
-#define BGFX_PCI_ID_NVIDIA                        UINT16_C(0x10de) //!< NVIDIA adapter.
-#define BGFX_PCI_ID_MICROSOFT                     UINT16_C(0x1414) //!< Microsoft adapter.
 #define BGFX_PCI_ID_ARM                           UINT16_C(0x13b5) //!< ARM adapter.
+#define BGFX_PCI_ID_GOOGLE                        UINT16_C(0x1ae0) //!< Google adapter.
+#define BGFX_PCI_ID_INTEL                         UINT16_C(0x8086) //!< Intel adapter.
+#define BGFX_PCI_ID_MICROSOFT                     UINT16_C(0x1414) //!< Microsoft adapter.
+#define BGFX_PCI_ID_NVIDIA                        UINT16_C(0x10de) //!< NVIDIA adapter.
 
 #define BGFX_CUBE_MAP_POSITIVE_X                  UINT8_C(0x00) //!< Cubemap +x.
 #define BGFX_CUBE_MAP_NEGATIVE_X                  UINT8_C(0x01) //!< Cubemap -x.

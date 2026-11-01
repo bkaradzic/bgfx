@@ -1437,14 +1437,19 @@ public static class bgfx
 		Apple                  = 0x106b,
 	
 		/// <summary>
+		/// ARM adapter.
+		/// </summary>
+		Arm                    = 0x13b5,
+	
+		/// <summary>
+		/// Google adapter.
+		/// </summary>
+		Google                 = 0x1ae0,
+	
+		/// <summary>
 		/// Intel adapter.
 		/// </summary>
 		Intel                  = 0x8086,
-	
-		/// <summary>
-		/// NVIDIA adapter.
-		/// </summary>
-		Nvidia                 = 0x10de,
 	
 		/// <summary>
 		/// Microsoft adapter.
@@ -1452,9 +1457,9 @@ public static class bgfx
 		Microsoft              = 0x1414,
 	
 		/// <summary>
-		/// ARM adapter.
+		/// NVIDIA adapter.
 		/// </summary>
-		Arm                    = 0x13b5,
+		Nvidia                 = 0x10de,
 	}
 	
 	[AllowDuplicates]

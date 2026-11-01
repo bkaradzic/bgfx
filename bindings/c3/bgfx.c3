@@ -914,17 +914,20 @@ constdef PciIdFlags : inline ushort
 	// Apple adapter.
 	APPLE                  = 0x106b,
 
+	// ARM adapter.
+	ARM                    = 0x13b5,
+
+	// Google adapter.
+	GOOGLE                 = 0x1ae0,
+
 	// Intel adapter.
 	INTEL                  = 0x8086,
-
-	// NVIDIA adapter.
-	NVIDIA                 = 0x10de,
 
 	// Microsoft adapter.
 	MICROSOFT              = 0x1414,
 
-	// ARM adapter.
-	ARM                    = 0x13b5,
+	// NVIDIA adapter.
+	NVIDIA                 = 0x10de,
 }
 
 constdef CubeMapFlags : inline uint

@@ -670,10 +670,11 @@ enum PCIID: PCIID_{
 	softwareRasteriser  = softwareRasterizer,
 	amd                 = 0x1002, ///AMD adapter.
 	apple               = 0x106B, ///Apple adapter.
-	intel               = 0x8086, ///Intel adapter.
-	nvidia              = 0x10DE, ///NVIDIA adapter.
-	microsoft           = 0x1414, ///Microsoft adapter.
 	arm                 = 0x13B5, ///ARM adapter.
+	google              = 0x1AE0, ///Google adapter.
+	intel               = 0x8086, ///Intel adapter.
+	microsoft           = 0x1414, ///Microsoft adapter.
+	nvidia              = 0x10DE, ///NVIDIA adapter.
 }
 
 alias CubeMap_ = ubyte;
