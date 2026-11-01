@@ -501,10 +501,11 @@ flag.PciId { bits = 16, const, section = "Initialization and Shutdown" }
 	.SoftwareRasterizer  (0x0001) --- Software rasterizer.
 	.Amd                 (0x1002) --- AMD adapter.
 	.Apple               (0x106b) --- Apple adapter.
-	.Intel               (0x8086) --- Intel adapter.
-	.Nvidia              (0x10de) --- NVIDIA adapter.
-	.Microsoft           (0x1414) --- Microsoft adapter.
 	.Arm                 (0x13b5) --- ARM adapter.
+	.Google              (0x1ae0) --- Google adapter.
+	.Intel               (0x8086) --- Intel adapter.
+	.Microsoft           (0x1414) --- Microsoft adapter.
+	.Nvidia              (0x10de) --- NVIDIA adapter.
 	()
 
 flag.CubeMap { bits = 8, const }

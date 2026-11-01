@@ -882,17 +882,20 @@ pub const PciIdFlags_Amd: PciIdFlags                    = 0x1002;
 /// Apple adapter.
 pub const PciIdFlags_Apple: PciIdFlags                  = 0x106b;
 
+/// ARM adapter.
+pub const PciIdFlags_Arm: PciIdFlags                    = 0x13b5;
+
+/// Google adapter.
+pub const PciIdFlags_Google: PciIdFlags                 = 0x1ae0;
+
 /// Intel adapter.
 pub const PciIdFlags_Intel: PciIdFlags                  = 0x8086;
-
-/// NVIDIA adapter.
-pub const PciIdFlags_Nvidia: PciIdFlags                 = 0x10de;
 
 /// Microsoft adapter.
 pub const PciIdFlags_Microsoft: PciIdFlags              = 0x1414;
 
-/// ARM adapter.
-pub const PciIdFlags_Arm: PciIdFlags                    = 0x13b5;
+/// NVIDIA adapter.
+pub const PciIdFlags_Nvidia: PciIdFlags                 = 0x10de;
 
 pub const CubeMapFlags = u32;
 /// Cubemap +x.

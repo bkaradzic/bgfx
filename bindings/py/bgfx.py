@@ -646,10 +646,11 @@ class PciIdFlags(enum.IntFlag):
 	SoftwareRasterizer = 0x1
 	Amd = 0x1002
 	Apple = 0x106b
-	Intel = 0x8086
-	Nvidia = 0x10de
-	Microsoft = 0x1414
 	Arm = 0x13b5
+	Google = 0x1ae0
+	Intel = 0x8086
+	Microsoft = 0x1414
+	Nvidia = 0x10de
 
 class CubeMapFlags(enum.IntFlag):
 	PositiveX = 0x0

@@ -25,10 +25,11 @@ Initialization and Shutdown
 .. doxygendefine:: BGFX_PCI_ID_SOFTWARE_RASTERIZER
 .. doxygendefine:: BGFX_PCI_ID_AMD
 .. doxygendefine:: BGFX_PCI_ID_APPLE
-.. doxygendefine:: BGFX_PCI_ID_INTEL
-.. doxygendefine:: BGFX_PCI_ID_NVIDIA
-.. doxygendefine:: BGFX_PCI_ID_MICROSOFT
 .. doxygendefine:: BGFX_PCI_ID_ARM
+.. doxygendefine:: BGFX_PCI_ID_GOOGLE
+.. doxygendefine:: BGFX_PCI_ID_INTEL
+.. doxygendefine:: BGFX_PCI_ID_MICROSOFT
+.. doxygendefine:: BGFX_PCI_ID_NVIDIA
 
 .. doxygenstruct:: bgfx::Init
     :members:
