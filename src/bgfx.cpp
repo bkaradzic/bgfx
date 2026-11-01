@@ -108,11 +108,11 @@ namespace bgfx
 			int32_t len   = bx::snprintf(out, sizeof(temp), "%s (%d): ", _filePath, _line);
 			int32_t total = len + bx::vsnprintf(out + len, sizeof(temp)-len, _format, argListCopy);
 			va_end(argListCopy);
-			if ( (int32_t)sizeof(temp) < total)
+			if ( (int32_t)sizeof(temp) <= total)
 			{
 				out = (char*)BX_STACK_ALLOC(total+1);
 				bx::memCopy(out, temp, len);
-				bx::vsnprintf(out + len, total-len, _format, _argList);
+				bx::vsnprintf(out + len, total-len+1, _format, _argList);
 			}
 			out[total] = '\0';
 			bx::debugOutput(out);
@@ -6118,7 +6118,6 @@ namespace bgfx
 		{
 			const Attachment&   at = _attachment[ii];
 			const TextureHandle texHandle = at.handle;
-			const TextureRef&   tr = s_ctx->m_textureRef[texHandle.idx];
 
 			BGFX_ERROR_CHECK(true
 				&& isValid(texHandle)
@@ -6130,6 +6129,8 @@ namespace bgfx
 				, ii
 				, texHandle.idx
 				);
+
+			const TextureRef& tr = s_ctx->m_textureRef[texHandle.idx];
 
 			BGFX_ERROR_CHECK(true
 				&& at.mip < tr.m_numMips

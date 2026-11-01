@@ -7401,12 +7401,13 @@ namespace bgfx
 		void setNameForHandle(Handle _handle, const bx::StringView& _name)
 		{
 			char tmp[1024];
-			uint16_t len = 1+(uint16_t)bx::snprintf(tmp, BX_COUNTOF(tmp)
+			const int32_t total = bx::snprintf(tmp, BX_COUNTOF(tmp)
 				, "%sH %d: %S"
 				, _handle.getTypeName().abrvName
 				, _handle.idx
 				, &_name
 				);
+			const uint16_t len = uint16_t(bx::min<int32_t>(total, BX_COUNTOF(tmp) - 1) + 1);
 
 			CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::SetName);
 			cmdbuf.write(_handle);
