@@ -399,6 +399,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			m_apple7   = _device->supportsFamily(MTL::GPUFamilyApple7);
 			m_mac2     = _device->supportsFamily(MTL::GPUFamilyMac2);
 			m_bc       = _device->supportsBCTextureCompression();
+			m_filter32 = _device->supports32BitFloatFiltering();
 			m_packed16 = _hasPacked16Formats;
 			m_d32fs8   = _hasDepth32FloatStencil8;
 			m_rwTier   = _device->readWriteTextureSupport();
@@ -418,6 +419,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			bool multisample = false;
 			bool storage     = false;
 			bool supports3D  = false;
+			bool autoMipmap  = tfi.autoGetMipmap;
 
 			switch (_fmt)
 			{
@@ -532,6 +534,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				multisample = m_mac2 || m_apple7;
 				storage     = true;
 				supports3D  = true;
+				autoMipmap  = m_filter32;
 				break;
 
 			case TextureFormat::RGBA32F:
@@ -541,6 +544,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				multisample = m_mac2;
 				storage     = true;
 				supports3D  = true;
+				autoMipmap  = m_filter32;
 				break;
 
 			case TextureFormat::R32I:
@@ -577,6 +581,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				framebuffer = m_apple;
 				multisample = m_apple;
 				supports3D  = true;
+				autoMipmap  = m_apple;
 				break;
 
 			case TextureFormat::B5G6R5:
@@ -667,7 +672,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 					;
 			}
 
-			if (tfi.autoGetMipmap)
+			if (autoMipmap)
 			{
 				caps |= BGFX_CAPS_FORMAT_TEXTURE_MIP_AUTOGEN;
 			}
@@ -692,6 +697,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		bool m_apple7;
 		bool m_mac2;
 		bool m_bc;
+		bool m_filter32;
 		bool m_packed16;
 		bool m_d32fs8;
 		MTL::ReadWriteTextureTier m_rwTier;
