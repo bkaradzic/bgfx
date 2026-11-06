@@ -5572,6 +5572,14 @@ namespace bgfx
 			, dst.m_name
 			);
 
+		BX_ASSERT(false
+			|| 1 == src.m_numSamples
+			|| 0 == (src.m_flags & BGFX_TEXTURE_MSAA_SAMPLE)
+			, "Can't blit multisampled texture (handle %d, '%S') created with BGFX_TEXTURE_MSAA_SAMPLE flag into a buffer."
+			, _src.handle.idx
+			, &src.m_name
+			);
+
 		BX_ASSERT(_src.mip < src.m_numMips, "Invalid blit src mip (%d > %d)", _src.mip, src.m_numMips - 1);
 
 		uint32_t srcWidth, srcHeight, srcDepth;
