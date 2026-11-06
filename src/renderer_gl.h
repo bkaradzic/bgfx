@@ -1301,7 +1301,7 @@ namespace bgfx { namespace gl
 		template<typename T>
 		bool updateUniformCache(uint32_t loc, const T &value)
 		{
-			if (BX_ENABLED(BGFX_GL_CONFIG_UNIFORM_CACHE) )
+			if constexpr (BX_ENABLED(BGFX_GL_CONFIG_UNIFORM_CACHE) )
 			{
 				// Uniform state cache for various types.
 				stl::unordered_map<uint64_t, T>& uniformCacheMap = getUniformCache<T>();
@@ -1331,7 +1331,7 @@ namespace bgfx { namespace gl
 
 		void saveCurrentProgram(GLuint program)
 		{
-			if (BX_ENABLED(BGFX_GL_CONFIG_UNIFORM_CACHE) )
+			if constexpr (BX_ENABLED(BGFX_GL_CONFIG_UNIFORM_CACHE) )
 			{
 				m_currentProgram = program;
 			}

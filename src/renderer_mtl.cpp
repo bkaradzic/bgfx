@@ -1895,7 +1895,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 		{
 			BX_UNUSED(_len);
 
-			if (BX_ENABLED(BGFX_CONFIG_DEBUG_ANNOTATION) )
+			if constexpr (BX_ENABLED(BGFX_CONFIG_DEBUG_ANNOTATION) )
 			{
 				m_renderCommandEncoder->insertDebugSignpost(nsstr(_marker) );
 			}
@@ -6883,12 +6883,12 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 							MTL_RELEASE(renderPassDescriptor, 0);
 						}
-						else if (BX_ENABLED(BGFX_CONFIG_DEBUG_ANNOTATION) )
+						else if constexpr (BX_ENABLED(BGFX_CONFIG_DEBUG_ANNOTATION) )
 						{
 							rce->popDebugGroup();
 						}
 
-						if (BX_ENABLED(BGFX_CONFIG_DEBUG_ANNOTATION) )
+						if constexpr (BX_ENABLED(BGFX_CONFIG_DEBUG_ANNOTATION) )
 						{
 							rce->pushDebugGroup(nsstr(viewName) );
 						}
@@ -7629,7 +7629,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			}
 		}
 
-		if (BX_ENABLED(BGFX_CONFIG_DEBUG_ANNOTATION) )
+		if constexpr (BX_ENABLED(BGFX_CONFIG_DEBUG_ANNOTATION) )
 		{
 			if (0 < _render->m_numRenderItems)
 			{

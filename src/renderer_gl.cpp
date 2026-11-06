@@ -1250,7 +1250,7 @@ namespace bgfx { namespace gl
 
 	void lazyEnableVertexAttribArray(GLuint index)
 	{
-		if (BX_ENABLED(BX_PLATFORM_EMSCRIPTEN) )
+		if constexpr (BX_ENABLED(BX_PLATFORM_EMSCRIPTEN) )
 		{
 			if (index >= 64)
 			{
@@ -1272,7 +1272,7 @@ namespace bgfx { namespace gl
 
 	void lazyDisableVertexAttribArray(GLuint index)
 	{
-		if (BX_ENABLED(BX_PLATFORM_EMSCRIPTEN) )
+		if constexpr (BX_ENABLED(BX_PLATFORM_EMSCRIPTEN) )
 		{
 			if (index >= 64)
 			{
@@ -1294,7 +1294,7 @@ namespace bgfx { namespace gl
 
 	void applyLazyEnabledVertexAttributes()
 	{
-		if (BX_ENABLED(BX_PLATFORM_EMSCRIPTEN) )
+		if constexpr (BX_ENABLED(BX_PLATFORM_EMSCRIPTEN) )
 		{
 			while (s_vertexAttribArraysPendingDisable)
 			{
@@ -2358,7 +2358,7 @@ namespace bgfx { namespace gl
 			m_version     = getGLString(GL_VERSION);
 			m_glslVersion = getGLString(GL_SHADING_LANGUAGE_VERSION);
 
-			if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES) )
+			if constexpr (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES) )
 			{
 				const bx::StringView essl = bx::strFind(m_glslVersion, "GLSL ES ");
 
@@ -2410,7 +2410,7 @@ namespace bgfx { namespace gl
 				}
 			}
 
-			if (BX_ENABLED(BGFX_CONFIG_DEBUG) )
+			if constexpr (BX_ENABLED(BGFX_CONFIG_DEBUG) )
 			{
 #define GL_GET(_pname, _min) BX_TRACE("  " #_pname " %d (min: %d)", glGet(_pname), _min)
 				BX_TRACE("Defaults:");
@@ -2465,7 +2465,7 @@ namespace bgfx { namespace gl
 				s_extension[Extension::KHR_debug].m_initialize = false;
 			}
 
-			if (BX_ENABLED(BGFX_CONFIG_RENDERER_USE_EXTENSIONS) )
+			if constexpr (BX_ENABLED(BGFX_CONFIG_RENDERER_USE_EXTENSIONS) )
 			{
 				const char* extensions = (const char*)glGetString(GL_EXTENSIONS);
 				getGlError(); // ignore error if glGetString returns NULL.
@@ -2600,7 +2600,7 @@ namespace bgfx { namespace gl
 				s_textureFormat[TextureFormat::PTC22].m_supported |= ptc2Supported;
 				s_textureFormat[TextureFormat::PTC24].m_supported |= ptc2Supported;
 
-				if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES) )
+				if constexpr (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES) )
 				{
 					setTextureFormat(TextureFormat::R16F,    GL_R16F,    GL_RED,  0x140B /* == GL_HALF_FLOAT, but bgfx overwrites it globally with GL_HALF_FLOAT_OES */);
 					setTextureFormat(TextureFormat::RG16F,   GL_RG16F,   GL_RG,   0x140B /* == GL_HALF_FLOAT, but bgfx overwrites it globally with GL_HALF_FLOAT_OES */);
@@ -2633,7 +2633,7 @@ namespace bgfx { namespace gl
 					setTextureFormatSrgb(TextureFormat::R5G6B5, GL_ZERO,  GL_BGR);
 				}
 
-				if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL)
+				if constexpr (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL)
 				||  BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES))
 				{
 					setTextureFormat(TextureFormat::R8I,     GL_R8I,      GL_RED_INTEGER,  GL_BYTE);
@@ -2652,7 +2652,7 @@ namespace bgfx { namespace gl
 				||  s_extension[Extension::IMG_texture_format_BGRA8888  ].m_supported
 				||  s_extension[Extension::APPLE_texture_format_BGRA8888].m_supported)
 				{
-					if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) )
+					if constexpr (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) )
 					{
 						m_readPixelsFmt = GL_BGRA;
 					}
@@ -2681,7 +2681,7 @@ namespace bgfx { namespace gl
 					}
 				}
 
-				if (BX_ENABLED(BX_PLATFORM_EMSCRIPTEN) )
+				if constexpr (BX_ENABLED(BX_PLATFORM_EMSCRIPTEN) )
 				{
 					// OpenGL ES does not have reversed BGRA4 and BGR5A1 support.
 					setTextureFormat(TextureFormat::BGRA4,  GL_RGBA, GL_RGBA, GL_UNSIGNED_SHORT_4_4_4_4);
@@ -2732,7 +2732,7 @@ namespace bgfx { namespace gl
 					}
 				}
 
-				if (BX_ENABLED(0) )
+				if constexpr (BX_ENABLED(0) )
 				{
 					// Disable all compressed texture formats. For testing only.
 					for (uint32_t ii = 0; ii < TextureFormat::Unknown; ++ii)
@@ -2903,7 +2903,7 @@ namespace bgfx { namespace gl
 					: 0
 					;
 
-				if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES) )
+				if constexpr (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES) )
 				{
 					glPolygonMode = s_extension[Extension::NV_polygon_mode].m_supported
 						? glPolygonModeNV
@@ -2995,7 +2995,7 @@ namespace bgfx { namespace gl
 						);
 				}
 
-				if (!BX_ENABLED(BGFX_CONFIG_GL_NORMALIZE_NDC_CONVENTIONS) )
+				if constexpr (!BX_ENABLED(BGFX_CONFIG_GL_NORMALIZE_NDC_CONVENTIONS) )
 				{
 					g_caps.homogeneousDepth = true;
 					g_caps.originBottomLeft = true;
@@ -3070,7 +3070,7 @@ namespace bgfx { namespace gl
 
 				g_caps.supported |= m_glctx.getCaps();
 
-				if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES) )
+				if constexpr (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES) )
 				{
 					m_srgbWriteControlSupport = s_extension[Extension::EXT_sRGB_write_control].m_supported;
 
@@ -3272,12 +3272,14 @@ namespace bgfx { namespace gl
 
 		RendererType::Enum getRendererType() const override
 		{
-			if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) )
+			if constexpr (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) )
 			{
 				return RendererType::OpenGL;
 			}
-
-			return RendererType::OpenGLES;
+			else
+			{
+				return RendererType::OpenGLES;
+			}
 		}
 
 		const char* getRendererName() const override
@@ -4404,7 +4406,7 @@ namespace bgfx { namespace gl
 				GL_CHECK(glGenFramebuffers(1, &m_msaaBackBufferFbo) );
 				GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, m_msaaBackBufferFbo) );
 
-				if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES))
+				if constexpr (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES))
 				{
 					GL_CHECK(glGenTextures(BX_COUNTOF(m_msaaBackBufferTextures), m_msaaBackBufferTextures) );
 					GL_CHECK(glBindTexture(GL_TEXTURE_2D, m_msaaBackBufferTextures[0]) );
@@ -4570,7 +4572,7 @@ namespace bgfx { namespace gl
 				GL_CHECK(glDeleteFramebuffers(1, &m_msaaBackBufferFbo) );
 				m_msaaBackBufferFbo = 0;
 
-				if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES))
+				if constexpr (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES))
 				{
 					if (0 != m_msaaBackBufferTextures[0])
 					{
@@ -4613,7 +4615,7 @@ namespace bgfx { namespace gl
 					: GL_LINEAR
 					;
 
-				if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES))
+				if constexpr (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES))
 				{
 					GL_CHECK(glUseProgram(m_msaaBlitProgram) );
 					GL_CHECK(glActiveTexture(GL_TEXTURE0) );
@@ -4735,7 +4737,7 @@ namespace bgfx { namespace gl
 					GL_CHECK(glSamplerParameteri(sampler, GL_TEXTURE_MAG_FILTER, magFilter) );
 					GL_CHECK(glSamplerParameteri(sampler, GL_TEXTURE_MIN_FILTER, minFilter) );
 
-					if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) )
+					if constexpr (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) )
 					{
 						GL_CHECK(glSamplerParameterf(sampler, GL_TEXTURE_LOD_BIAS, float(BGFX_CONFIG_MIP_LOD_BIAS) ) );
 					}
@@ -7365,12 +7367,12 @@ namespace bgfx { namespace gl
 			GL_CHECK(glTexParameteri(target, GL_TEXTURE_MAG_FILTER, magFilter) );
 			GL_CHECK(glTexParameteri(target, GL_TEXTURE_MIN_FILTER, minFilter) );
 
-			if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) )
+			if constexpr (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) )
 			{
 				GL_CHECK(glTexParameterf(target, GL_TEXTURE_LOD_BIAS, float(BGFX_CONFIG_MIP_LOD_BIAS) ) );
 			}
 
-			if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL)
+			if constexpr (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL)
 			||  BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES >= 30) )
 			{
 				GL_CHECK(glTexParameterf(target, GL_TEXTURE_MIN_LOD, float(_lodMin) * 0.25f) );
@@ -7909,7 +7911,7 @@ namespace bgfx { namespace gl
 				char* temp = (char*)BX_STACK_ALLOC(tempLen);
 				bx::StaticMemoryBlockWriter writer(temp, tempLen);
 
-				if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES) )
+				if constexpr (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES) )
 				{
 					const bool cubeArray = !bx::strFind(code, "CubeArray").isEmpty();
 
@@ -8457,7 +8459,7 @@ namespace bgfx { namespace gl
 		GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, m_fbo[0]) );
 		GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0) );
 
-		if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES) )
+		if constexpr (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES) )
 		{
 			GL_CHECK(glUseProgram(s_renderGL->m_msaaBlitProgram) );
 			GL_CHECK(glActiveTexture(GL_TEXTURE0) );
@@ -8557,7 +8559,7 @@ namespace bgfx { namespace gl
 
 						GL_CHECK(glReadBuffer(GL_COLOR_ATTACHMENT0 + colorIdx) );
 
-						if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) )
+						if constexpr (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) )
 						{
 							GL_CHECK(glDrawBuffer(GL_COLOR_ATTACHMENT0 + colorIdx) );
 						}
@@ -10215,7 +10217,7 @@ namespace bgfx { namespace gl
 						viewState.m_alphaRef = ref/255.0f;
 					}
 
-					if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) )
+					if constexpr (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) )
 					{
 						if ( (BGFX_STATE_PT_POINTS|BGFX_STATE_POINT_SIZE_MASK) & changedFlags)
 						{

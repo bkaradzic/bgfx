@@ -777,9 +777,9 @@ namespace bgfx { namespace d3d11
 
 #if USE_D3D11_DYNAMIC_LIB
 	static PFN_D3D11_CREATE_DEVICE  D3D11CreateDevice;
-	static PFN_D3DPERF_SET_MARKER   D3DPERF_SetMarker;
-	static PFN_D3DPERF_BEGIN_EVENT  D3DPERF_BeginEvent;
-	static PFN_D3DPERF_END_EVENT    D3DPERF_EndEvent;
+	[[maybe_unused]] static PFN_D3DPERF_SET_MARKER   D3DPERF_SetMarker;
+	[[maybe_unused]] static PFN_D3DPERF_BEGIN_EVENT  D3DPERF_BeginEvent;
+	[[maybe_unused]] static PFN_D3DPERF_END_EVENT    D3DPERF_EndEvent;
 #endif // USE_D3D11_DYNAMIC_LIB
 
 	int  WINAPI d3d11Annotation_BeginEvent(DWORD _color, LPCWSTR _name);
@@ -958,7 +958,7 @@ namespace bgfx { namespace d3d11
 
 			m_d3d9Dll = NULL;
 
-			if (BX_ENABLED(BGFX_CONFIG_DEBUG_ANNOTATION) )
+			if constexpr (BX_ENABLED(BGFX_CONFIG_DEBUG_ANNOTATION) )
 			{
 				// D3D11_1.h has ID3DUserDefinedAnnotation
 				// https://web.archive.org/web/20190207230424/https://docs.microsoft.com/en-us/windows/desktop/api/d3d11_1/nn-d3d11_1-id3duserdefinedannotation
@@ -1258,7 +1258,7 @@ namespace bgfx { namespace d3d11
 			}
 
 #if USE_D3D11_DYNAMIC_LIB
-			if (BX_ENABLED(BGFX_CONFIG_DEBUG_ANNOTATION) )
+			if constexpr (BX_ENABLED(BGFX_CONFIG_DEBUG_ANNOTATION) )
 			{
 				HRESULT hr = m_deviceCtx->QueryInterface(IID_ID3DUserDefinedAnnotation, (void**)&m_annotation);
 
@@ -1380,7 +1380,7 @@ namespace bgfx { namespace d3d11
 
 					if (DXGI_FORMAT_UNKNOWN != fmt)
 					{
-						if (BX_ENABLED(BX_PLATFORM_LINUX || BX_PLATFORM_WINDOWS || BX_PLATFORM_WINRT) )
+						if constexpr (BX_ENABLED(BX_PLATFORM_LINUX || BX_PLATFORM_WINDOWS || BX_PLATFORM_WINRT) )
 						{
 							D3D11_FEATURE_DATA_FORMAT_SUPPORT data;
 							data.InFormat = fmt;
@@ -1557,7 +1557,7 @@ namespace bgfx { namespace d3d11
 
 					if (DXGI_FORMAT_UNKNOWN != fmtSrgb)
 					{
-						if (BX_ENABLED(BX_PLATFORM_LINUX || BX_PLATFORM_WINDOWS || BX_PLATFORM_WINRT) )
+						if constexpr (BX_ENABLED(BX_PLATFORM_LINUX || BX_PLATFORM_WINDOWS || BX_PLATFORM_WINRT) )
 						{
 							struct D3D11_FEATURE_DATA_FORMAT_SUPPORT
 							{
@@ -2247,7 +2247,7 @@ namespace bgfx { namespace d3d11
 
 		void setMarker(const char* _marker, uint16_t _len) override
 		{
-			if (BX_ENABLED(BGFX_CONFIG_DEBUG_ANNOTATION) )
+			if constexpr (BX_ENABLED(BGFX_CONFIG_DEBUG_ANNOTATION) )
 			{
 				uint32_t size = _len*sizeof(wchar_t);
 				wchar_t* name = (wchar_t*)BX_STACK_ALLOC(size+2);
@@ -3365,7 +3365,7 @@ namespace bgfx { namespace d3d11
 
 		void commitTextureStage()
 		{
-			if (BX_ENABLED(BGFX_CONFIG_DEBUG) )
+			if constexpr (BX_ENABLED(BGFX_CONFIG_DEBUG) )
 			{
 				quietValidation();
 			}
@@ -7720,7 +7720,7 @@ namespace bgfx { namespace d3d11
 						}
 					}
 
-					if (BX_ENABLED(BGFX_CONFIG_DEBUG) )
+					if constexpr (BX_ENABLED(BGFX_CONFIG_DEBUG) )
 					{
 						// Quiet validation: Resource being set to CS UnorderedAccessView slot 0 is still bound on input!
 						deviceCtx->CSSetShaderResources(0, maxComputeBindings, s_zero.m_srv);

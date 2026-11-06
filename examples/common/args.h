@@ -64,7 +64,7 @@ struct Args
 		{
 			m_type = bgfx::RendererType::Direct3D12;
 		}
-		else if (BX_ENABLED(BX_PLATFORM_OSX) )
+		else if constexpr (BX_ENABLED(BX_PLATFORM_OSX) )
 		{
 			if (cmdLine.hasArg("mtl") )
 			{
