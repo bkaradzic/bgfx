@@ -1177,6 +1177,14 @@ WL_EGL_IMPORT
 	{
 		if (m_current != _swapChain)
 		{
+			GLsync sync = NULL;
+
+			if (NULL != m_display
+			&&  NULL != glFenceSync)
+			{
+				sync = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
+			}
+
 			m_current = _swapChain;
 
 			if (NULL == _swapChain)
@@ -1189,6 +1197,12 @@ WL_EGL_IMPORT
 			else
 			{
 				_swapChain->makeCurrent();
+			}
+
+			if (NULL != sync)
+			{
+				GL_CHECK(glWaitSync(sync, 0, GL_TIMEOUT_IGNORED) );
+				GL_CHECK(glDeleteSync(sync) );
 			}
 		}
 	}
