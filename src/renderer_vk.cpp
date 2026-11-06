@@ -1696,20 +1696,22 @@ VK_IMPORT_INSTANCE
 					goto error;
 				}
 
-				VkPhysicalDevice physicalDevices[4];
+				// Systems may expose many more devices than physical GPUs (e.g. Windows' D3D emulation layers)
+				constexpr uint32_t kMaxPhysicalDevices = 16;
+				VkPhysicalDevice physicalDevices[kMaxPhysicalDevices];
 				numPhysicalDevices = bx::min<uint32_t>(numPhysicalDevices, BX_COUNTOF(physicalDevices) );
 				result = vkEnumeratePhysicalDevices(m_instance
 					, &numPhysicalDevices
 					, physicalDevices
 					);
 
-				if (VK_SUCCESS != result)
+				if (VK_SUCCESS != result && VK_INCOMPLETE != result)
 				{
 					BX_TRACE("Init error: vkEnumeratePhysicalDevices failed %d: %s.", result, getName(result) );
 					goto error;
 				}
 
-				Extension physicalDeviceExtensions[4][Extension::Count];
+				Extension physicalDeviceExtensions[kMaxPhysicalDevices][Extension::Count];
 
 				uint32_t physicalDeviceIdx         = UINT32_MAX;
 				uint32_t fallbackPhysicalDeviceIdx = UINT32_MAX;
