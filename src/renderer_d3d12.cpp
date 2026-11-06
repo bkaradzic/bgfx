@@ -6798,6 +6798,7 @@ namespace bgfx { namespace d3d12
 				bx::read(&reader, type, &err);
 
 				const uint16_t num = readUniformNum(&reader, magic, &err);
+				BX_UNUSED(num);
 
 				uint16_t regIndex = 0;
 				bx::read(&reader, regIndex, &err);

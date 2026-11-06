@@ -665,31 +665,28 @@ namespace bgfx { namespace d3d11
 
 	static BX_NO_INLINE bool getIntelExtensions(ID3D11Device* _device)
 	{
-		if (windowsVersionIs(Condition::GreaterEqual, 0x0604) )
+		uint8_t temp[28];
+
+		bx::ErrorAssert err;
+
+		bx::StaticMemoryBlockWriter writer(&temp, sizeof(temp) );
+		bx::write(&writer, "INTCEXTNCAPSFUNC", 16, &err);
+		bx::write(&writer, kIntelExtensionInterfaceVersion, &err);
+		bx::write(&writer, uint32_t(0), &err);
+		bx::write(&writer, uint32_t(0), &err);
+
+		if (SUCCEEDED(setIntelExtension(_device, temp, sizeof(temp) ) ) )
 		{
-			uint8_t temp[28];
+			bx::MemoryReader reader(&temp, sizeof(temp) );
+			bx::skip(&reader, 16);
 
-			bx::ErrorAssert err;
+			uint32_t version;
+			bx::read(&reader, version, &err);
 
-			bx::StaticMemoryBlockWriter writer(&temp, sizeof(temp) );
-			bx::write(&writer, "INTCEXTNCAPSFUNC", 16, &err);
-			bx::write(&writer, kIntelExtensionInterfaceVersion, &err);
-			bx::write(&writer, uint32_t(0), &err);
-			bx::write(&writer, uint32_t(0), &err);
+			uint32_t driverVersion;
+			bx::read(&reader, driverVersion, &err);
 
-			if (SUCCEEDED(setIntelExtension(_device, temp, sizeof(temp) ) ) )
-			{
-				bx::MemoryReader reader(&temp, sizeof(temp) );
-				bx::skip(&reader, 16);
-
-				uint32_t version;
-				bx::read(&reader, version, &err);
-
-				uint32_t driverVersion;
-				bx::read(&reader, driverVersion, &err);
-
-				return version <= driverVersion;
-			}
+			return version <= driverVersion;
 		}
 
 		return false;
@@ -4716,6 +4713,7 @@ namespace bgfx { namespace d3d11
 				bx::read(&reader, type, &err);
 
 				const uint16_t num = readUniformNum(&reader, magic, &err);
+				BX_UNUSED(num);
 
 				uint16_t regIndex = 0;
 				bx::read(&reader, regIndex, &err);
