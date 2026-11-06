@@ -5896,7 +5896,16 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 	void CommandQueueMtl::init(MTL::Device* _device, uint32_t _maxFrameLatency)
 	{
-		m_commandQueue = _device->newCommandQueue();
+		if (NULL != g_platformData.queue)
+		{
+			m_commandQueue = (MTL::CommandQueue*)g_platformData.queue;
+			m_commandQueue->retain();
+		}
+		else
+		{
+			m_commandQueue = _device->newCommandQueue();
+		}
+
 		m_maxFrameLatency = bx::min<uint32_t>(
 			  _maxFrameLatency != 0 ? _maxFrameLatency : BGFX_CONFIG_MAX_FRAME_LATENCY
 			, BGFX_CONFIG_MAX_FRAME_LATENCY
