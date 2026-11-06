@@ -3067,7 +3067,7 @@ namespace bgfx { namespace d3d12
 		{
 			BX_UNUSED(_len);
 
-			if (BX_ENABLED(BGFX_CONFIG_DEBUG_ANNOTATION) )
+			if constexpr (BX_ENABLED(BGFX_CONFIG_DEBUG_ANNOTATION) )
 			{
 				PIX3_SETMARKER(m_commandList, kColorMarker, _marker);
 			}
@@ -8502,7 +8502,7 @@ namespace bgfx { namespace d3d12
 				, rtvHandle
 				);
 
-			if (BX_ENABLED(BX_PLATFORM_XBOXONE) )
+			if constexpr (BX_ENABLED(BX_PLATFORM_XBOXONE) )
 			{
 				ID3D12Resource* resource = m_backBufferColor[ii];
 

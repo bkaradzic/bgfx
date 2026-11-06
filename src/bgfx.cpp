@@ -79,7 +79,7 @@ namespace bgfx
 
 		CallbackStub()
 		{
-			if (BX_ENABLED(BGFX_CONFIG_PROFILER) )
+			if constexpr (BX_ENABLED(BGFX_CONFIG_PROFILER) )
 			{
 				m_superluminal.load();
 			}
@@ -568,7 +568,7 @@ namespace bgfx
 
 	void dump(const VertexLayout& _layout)
 	{
-		if (BX_ENABLED(BGFX_CONFIG_DEBUG) )
+		if constexpr (BX_ENABLED(BGFX_CONFIG_DEBUG) )
 		{
 			BX_TRACE("VertexLayout %08x (%08x), stride %d"
 				, _layout.m_hash
@@ -1566,7 +1566,7 @@ namespace bgfx
 
 	void EncoderImpl::submit(ViewId _id, ProgramHandle _program, OcclusionQueryHandle _occlusionQuery, uint32_t _depth, uint8_t _flags)
 	{
-		if (BX_ENABLED(BGFX_CONFIG_DEBUG_UNIFORM) )
+		if constexpr (BX_ENABLED(BGFX_CONFIG_DEBUG_UNIFORM) )
 		{
 			m_uniformSet.clear();
 		}
@@ -1699,7 +1699,7 @@ namespace bgfx
 
 	void EncoderImpl::dispatch(ViewId _id, ProgramHandle _handle, uint32_t _numX, uint32_t _numY, uint32_t _numZ, uint8_t _flags)
 	{
-		if (BX_ENABLED(BGFX_CONFIG_DEBUG_UNIFORM) )
+		if constexpr (BX_ENABLED(BGFX_CONFIG_DEBUG_UNIFORM) )
 		{
 			m_uniformSet.clear();
 		}
@@ -1914,7 +1914,7 @@ namespace bgfx
 
 	RenderFrame::Enum renderFrame(int32_t _msecs)
 	{
-		if (BX_ENABLED(BGFX_CONFIG_MULTITHREADED) )
+		if constexpr (BX_ENABLED(BGFX_CONFIG_MULTITHREADED) )
 		{
 			if (s_renderFrameCalled)
 			{
@@ -1943,9 +1943,11 @@ namespace bgfx
 
 			return result;
 		}
-
-		BX_ASSERT(false, "This call only makes sense if used with multi-threaded renderer.");
-		return RenderFrame::NoContext;
+		else
+		{
+			BX_ASSERT(false, "This call only makes sense if used with multi-threaded renderer.");
+			return RenderFrame::NoContext;
+		}
 	}
 
 	const uint32_t g_uniformTypeSize[] =
@@ -2695,7 +2697,7 @@ namespace bgfx
 		m_submit->m_transientIb = createTransientIndexBuffer(_init.limits.maxTransientIbSize);
 		frame();
 
-		if (BX_ENABLED(BGFX_CONFIG_MULTITHREADED) )
+		if constexpr (BX_ENABLED(BGFX_CONFIG_MULTITHREADED) )
 		{
 			m_submit->m_transientVb = createTransientVertexBuffer(_init.limits.maxTransientVbSize);
 			m_submit->m_transientIb = createTransientIndexBuffer(_init.limits.maxTransientIbSize);
@@ -2732,7 +2734,7 @@ namespace bgfx
 		m_videoDecode.shutdown();
 		frame();
 
-		if (BX_ENABLED(BGFX_CONFIG_MULTITHREADED) )
+		if constexpr (BX_ENABLED(BGFX_CONFIG_MULTITHREADED) )
 		{
 			destroyTransientVertexBuffer(m_submit->m_transientVb);
 			destroyTransientIndexBuffer(m_submit->m_transientIb);
@@ -2800,7 +2802,7 @@ namespace bgfx
 		m_viewNames.destroy();
 		m_submit->destroy();
 
-		if (BX_ENABLED(BGFX_CONFIG_DEBUG) )
+		if constexpr (BX_ENABLED(BGFX_CONFIG_DEBUG) )
 		{
 #define CHECK_HANDLE_LEAK(_name, _handleAlloc)           \
 	BX_MACRO_BLOCK_BEGIN                                 \
@@ -3360,7 +3362,7 @@ namespace bgfx
 		uint32_t nextFrameNum = m_render->m_frameNum + 1;
 		m_submit->start(nextFrameNum);
 
-		if (BX_ENABLED(BGFX_CONFIG_DEBUG_TEXT) )
+		if constexpr (BX_ENABLED(BGFX_CONFIG_DEBUG_TEXT) )
 		{
 			m_submit->m_textVideoMem->resize(
 				  m_render->m_textVideoMem->m_small
@@ -3815,7 +3817,7 @@ namespace bgfx
 
 				score += RendererType::Noop != renderer ? 1 : 0;
 
-				if (BX_ENABLED(BX_PLATFORM_WINDOWS) )
+				if constexpr (BX_ENABLED(BX_PLATFORM_WINDOWS) )
 				{
 					if (windowsVersionIs(Condition::GreaterEqual, 0x0602) )
 					{
@@ -3832,7 +3834,7 @@ namespace bgfx
 						score += RendererType::Direct3D12 == renderer ? -100 : 0;
 					}
 				}
-				else if (BX_ENABLED(BX_PLATFORM_LINUX) )
+				else if constexpr (BX_ENABLED(BX_PLATFORM_LINUX) )
 				{
 					score += RendererType::Vulkan     == renderer ? 50 : 0;
 					score += RendererType::OpenGL     == renderer ? 40 : 0;
@@ -3840,16 +3842,16 @@ namespace bgfx
 					score += RendererType::Direct3D12 == renderer ? 20 : 0;
 					score += RendererType::Direct3D11 == renderer ? 10 : 0;
 				}
-				else if (BX_ENABLED(BX_PLATFORM_OSX) )
+				else if constexpr (BX_ENABLED(BX_PLATFORM_OSX) )
 				{
 					score += RendererType::Metal    == renderer ? 20 : 0;
 					score += RendererType::Vulkan   == renderer ? 10 : 0;
 				}
-				else if (BX_ENABLED(BX_PLATFORM_IOS) || BX_ENABLED(BX_PLATFORM_VISIONOS))
+				else if constexpr (BX_ENABLED(BX_PLATFORM_IOS) || BX_ENABLED(BX_PLATFORM_VISIONOS))
 				{
 					score += RendererType::Metal    == renderer ? 20 : 0;
 				}
-				else if (BX_ENABLED(0
+				else if constexpr (BX_ENABLED(0
 					 ||  BX_PLATFORM_ANDROID
 					 ||  BX_PLATFORM_EMSCRIPTEN
 					 ||  BX_PLATFORM_RPI
@@ -3857,11 +3859,11 @@ namespace bgfx
 				{
 					score += RendererType::OpenGLES == renderer ? 20 : 0;
 				}
-				else if (BX_ENABLED(BX_PLATFORM_PS4) )
+				else if constexpr (BX_ENABLED(BX_PLATFORM_PS4) )
 				{
 					score += RendererType::Gnm      == renderer ? 20 : 0;
 				}
-				else if (BX_ENABLED(0
+				else if constexpr (BX_ENABLED(0
 					 ||  BX_PLATFORM_XBOXONE
 					 ||  BX_PLATFORM_WINRT
 					 ) )
@@ -7298,7 +7300,7 @@ namespace bgfx
 	{
 		BX_ASSERT(checkView(_id), "Invalid view id: %d", _id);
 
-		if (BX_ENABLED(BGFX_CONFIG_DEBUG) )
+		if constexpr (BX_ENABLED(BGFX_CONFIG_DEBUG) )
 		{
 			const uint8_t index[] = { _0, _1, _2, _3, _4, _5, _6, _7 };
 

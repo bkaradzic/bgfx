@@ -477,7 +477,7 @@ VK_IMPORT_DEVICE
 	bool updateExtension(const char* _name, uint32_t _version, bool _instanceExt, Extension _extensions[Extension::Count])
 	{
 		bool supported = false;
-		if (BX_ENABLED(BGFX_CONFIG_RENDERER_USE_EXTENSIONS) )
+		if constexpr (BX_ENABLED(BGFX_CONFIG_RENDERER_USE_EXTENSIONS) )
 		{
 			const bx::StringView ext(_name);
 			for (uint32_t ii = 0; ii < Extension::Count; ++ii)
@@ -719,7 +719,7 @@ VK_IMPORT_DEVICE
 		BX_UNUSED(_userData, _size, _allocationType, _allocationScope);
 	}
 
-	static VkAllocationCallbacks s_allocationCb =
+	[[maybe_unused]] static VkAllocationCallbacks s_allocationCb =
 	{
 		NULL,
 		allocationFunction,
@@ -1607,7 +1607,7 @@ VK_IMPORT
 				ici.enabledExtensionCount   = numEnabledExtensions;
 				ici.ppEnabledExtensionNames = enabledExtension;
 
-				if (BX_ENABLED(BGFX_CONFIG_DEBUG) )
+				if constexpr (BX_ENABLED(BGFX_CONFIG_DEBUG) )
 				{
 					// Validation layer is calling freeFunction with pointers that are not allocated
 					// via callback mechanism. This is bug in validation layer, and work-around
@@ -2407,7 +2407,7 @@ VK_IMPORT_INSTANCE
 					enabledExtension[numEnabledExtensions++] = VK_KHR_SWAPCHAIN_EXTENSION_NAME;
 				}
 
-				if (BX_ENABLED(BX_PLATFORM_OSX) )
+				if constexpr (BX_ENABLED(BX_PLATFORM_OSX) )
 				{
 					enabledExtension[numEnabledExtensions++] = VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME;
 				}
@@ -3258,7 +3258,7 @@ VK_IMPORT_DEVICE
 
 		void setMarker(const char* _marker, uint16_t _len) override
 		{
-			if (BX_ENABLED(BGFX_CONFIG_DEBUG_ANNOTATION) )
+			if constexpr (BX_ENABLED(BGFX_CONFIG_DEBUG_ANNOTATION) )
 			{
 				BX_UNUSED(_len);
 

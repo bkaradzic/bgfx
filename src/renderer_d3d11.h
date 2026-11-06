@@ -57,7 +57,7 @@ BX_PRAGMA_DIAGNOSTIC_POP()
 
 #define BGFX_D3D11_PROFILER_BEGIN(_view, _abgr)                       \
 	BX_MACRO_BLOCK_BEGIN                                              \
-		if (BX_ENABLED(BGFX_CONFIG_DEBUG_ANNOTATION) )                \
+		if constexpr (BX_ENABLED(BGFX_CONFIG_DEBUG_ANNOTATION) )                \
 		{                                                             \
 			wchar_t viewNameW[BGFX_CONFIG_MAX_VIEW_NAME];             \
 			PIX_BEGINEVENT(_abgr, toViewNameW(viewNameW, viewName) ); \
