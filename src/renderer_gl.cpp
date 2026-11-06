@@ -9217,11 +9217,87 @@ namespace bgfx { namespace gl
 		GL_CHECK(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0) );
 	}
 
-	static void blitTextureToBuffer(GLuint _dst, const TextureGL& _src, const BlitItem& _bi)
+	static void blitTextureToBufferReadPixels(GLuint _dst, const TextureGL& _src, const BlitItem& _bi, GLenum _readPixelsFmt, GLuint _currentFbo)
+	{
+		const TextureFormat::Enum format = TextureFormat::Enum(_src.m_textureFormat);
+		const GLenum attachment = attachmentFor(format);
+		const bool   color      = GL_COLOR_ATTACHMENT0 == attachment;
+
+		if (bimg::isCompressed(bimg::TextureFormat::Enum(format) )
+		||  _src.isMsaaSurface()
+		||  (color && 0 == (g_caps.formats[format] & BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER) )
+		||  !isReadPixelsSupported(format)
+		||  (TextureFormat::BGRA8 == format && GL_BGRA != _readPixelsFmt) )
+		{
+			BX_WARN(false, "Blit texture into buffer is not supported for %s.", bimg::getName(bimg::TextureFormat::Enum(format) ) );
+
+			return;
+		}
+
+		uint32_t rowLength, imageHeight;
+		calcTextureRegionTexelPitch(
+			  rowLength
+			, imageHeight
+			, format
+			, _bi.m_rowPitch
+			, _bi.m_slicePitch
+			);
+		BX_UNUSED(imageHeight);
+
+		GLuint fbo;
+		GL_CHECK(glGenFramebuffers(1, &fbo) );
+		GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, fbo) );
+		GL_CHECK(glBindBuffer(GL_PIXEL_PACK_BUFFER, _dst) );
+		GL_CHECK(glPixelStorei(GL_PACK_ALIGNMENT, 1) );
+		GL_CHECK(glPixelStorei(GL_PACK_ROW_LENGTH, rowLength) );
+
+		for (uint32_t slice = 0, depth = bx::max<uint32_t>(1, _bi.m_depth); slice < depth; ++slice)
+		{
+			framebufferAttachSlice(attachment, _src, _bi.m_srcMip, uint16_t(_bi.m_srcZ + slice) );
+			GL_CHECK(glReadBuffer(color ? GL_COLOR_ATTACHMENT0 : GL_NONE) );
+
+			GLenum readFmt  = TextureFormat::BGRA8 == format ? _readPixelsFmt : _src.m_fmt;
+			GLenum readType = _src.m_type;
+
+			if (color)
+			{
+				GLint implFmt  = 0;
+				GLint implType = 0;
+				GL_CHECK(glGetIntegerv(GL_IMPLEMENTATION_COLOR_READ_FORMAT, &implFmt) );
+				GL_CHECK(glGetIntegerv(GL_IMPLEMENTATION_COLOR_READ_TYPE, &implType) );
+
+				if (GLenum(implFmt) == readFmt
+				&&  GLenum(implType) != readType
+				&&  isHalfFloatType(readType)
+				&&  isHalfFloatType(GLenum(implType) ) )
+				{
+					readType = GLenum(implType);
+				}
+			}
+
+			GL_CHECK(glReadPixels(
+				  _bi.m_srcX
+				, _bi.m_srcY
+				, _bi.m_width
+				, _bi.m_height
+				, readFmt
+				, readType
+				, (GLvoid*)uintptr_t(_bi.m_dstOffset + slice*_bi.m_slicePitch)
+				) );
+		}
+
+		GL_CHECK(glPixelStorei(GL_PACK_ROW_LENGTH, 0) );
+		GL_CHECK(glPixelStorei(GL_PACK_ALIGNMENT, 4) );
+		GL_CHECK(glBindBuffer(GL_PIXEL_PACK_BUFFER, 0) );
+		GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, _currentFbo) );
+		GL_CHECK(glDeleteFramebuffers(1, &fbo) );
+	}
+
+	static void blitTextureToBuffer(GLuint _dst, const TextureGL& _src, const BlitItem& _bi, GLenum _readPixelsFmt, GLuint _currentFbo)
 	{
 		if (NULL == glGetTextureSubImage)
 		{
-			BX_WARN(false, "Blit texture into buffer is not supported. glGetTextureSubImage is unavailable.");
+			blitTextureToBufferReadPixels(_dst, _src, _bi, _readPixelsFmt, _currentFbo);
 
 			return;
 		}
@@ -9318,7 +9394,7 @@ namespace bgfx { namespace gl
 
 		if (dstIsBuffer)
 		{
-			blitTextureToBuffer(getBufferId(_bi.m_dst), m_textures[_bi.m_src.idx], _bi);
+			blitTextureToBuffer(getBufferId(_bi.m_dst), m_textures[_bi.m_src.idx], _bi, m_readPixelsFmt, m_currentFbo);
 
 			return true;
 		}
@@ -9823,6 +9899,10 @@ namespace bgfx { namespace gl
 												id    = viewId;
 												level = 0;
 												layer = 0;
+											}
+											else if (1 == bind.m_numLayers)
+											{
+												layered = GL_FALSE;
 											}
 										}
 
@@ -10464,6 +10544,10 @@ namespace bgfx { namespace gl
 													id    = viewId;
 													level = 0;
 													layer = 0;
+												}
+												else if (1 == bind.m_numLayers)
+												{
+													layered = GL_FALSE;
 												}
 											}
 
