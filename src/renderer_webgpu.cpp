@@ -1020,6 +1020,7 @@ WGPU_IMPORT
 				);
 
 			const bool headless = NULL == _init.swapChain.nwh;
+			const bool externalDevice = NULL != g_platformData.context;
 
 			bool imported = true;
 
@@ -1079,13 +1080,31 @@ WGPU_IMPORT
 #endif // !BX_PLATFORM_EMSCRIPTEN
 
 			{
+				if (externalDevice)
+				{
+					m_device = (WGPUDevice)g_platformData.context;
+					wgpuDeviceAddRef(m_device);
+					errorState = ErrorState::DeviceCreated;
+
+#if !BX_PLATFORM_EMSCRIPTEN
+					m_adapter  = wgpuDeviceGetAdapter(m_device);
+					m_instance = wgpuAdapterGetInstance(m_adapter);
+#else
+					const WGPUInstanceDescriptor instanceDesc = WGPU_INSTANCE_DESCRIPTOR_INIT;
+					m_instance = wgpuCreateInstance(&instanceDesc);
+#endif // !BX_PLATFORM_EMSCRIPTEN
+
+					if (NULL == m_instance)
+					{
+						BX_TRACE("Failed to get instance of external device!");
+						goto error;
+					}
+				}
+				else
 				{
 					WGPUInstanceFeatureName requiredFeatures[] =
 					{
 						WGPUInstanceFeatureName_TimedWaitAny,
-#if !BX_PLATFORM_EMSCRIPTEN
-						WGPUInstanceFeatureName_ShaderSourceSPIRV,
-#endif // !BX_PLATFORM_EMSCRIPTEN
 					};
 
 					WGPUInstanceDescriptor instanceDesc =
@@ -1107,6 +1126,7 @@ WGPU_IMPORT
 					errorState = ErrorState::InstanceCreated;
 				}
 
+				if (!externalDevice)
 				{
 					WGPURequestAdapterOptions rao =
 					{
@@ -1178,7 +1198,15 @@ WGPU_IMPORT
 					BX_TRACE("");
 
 					WGPUSupportedFeatures supportedFeatures;
-					wgpuAdapterGetFeatures(m_adapter, &supportedFeatures);
+
+					if (externalDevice)
+					{
+						wgpuDeviceGetFeatures(m_device, &supportedFeatures);
+					}
+					else
+					{
+						wgpuAdapterGetFeatures(m_adapter, &supportedFeatures);
+					}
 
 					BX_TRACE("Supported features (%d):", supportedFeatures.featureCount);
 
@@ -1210,7 +1238,10 @@ WGPU_IMPORT
 					BX_TRACE("");
 
 					wgpuSupportedFeaturesFreeMembers(supportedFeatures);
+				}
 
+				if (!externalDevice)
+				{
 					WGPUFeatureName requiredFeatures[] =
 					{
 						ifSupported(WGPUFeatureName_TimestampQuery),
@@ -1389,7 +1420,7 @@ WGPU_IMPORT
 					WGPUStatus status;
 
 					WGPUAdapterInfo adapterInfo = WGPU_ADAPTER_INFO_INIT;
-					status = wgpuAdapterGetInfo(m_adapter, &adapterInfo);
+					status = wgpuDeviceGetAdapterInfo(m_device, &adapterInfo);
 
 					if (WGPUStatus_Success == status)
 					{
@@ -1425,7 +1456,7 @@ WGPU_IMPORT
 					BX_TRACE("");
 
 					m_limits = WGPU_LIMITS_INIT;
-					status = wgpuAdapterGetLimits(m_adapter, &m_limits);
+					status = wgpuDeviceGetLimits(m_device, &m_limits);
 
 					if (WGPUStatus_Success == status)
 					{
@@ -1542,6 +1573,7 @@ WGPU_IMPORT
 				}
 			}
 
+			g_internalData.context = m_device;
 			return true;
 
 		error:
@@ -5169,13 +5201,19 @@ WGPU_IMPORT
 				ShaderBinding& shaderBind = m_shaderBinding[stage];
 				shaderBind.clear();
 
-				if (isValid(m_vsh->m_shaderBinding[stage].uniformHandle) )
+				const bool vertex   = isValid(m_vsh->m_shaderBinding[stage].uniformHandle);
+				const bool fragment = isValid(m_fsh->m_shaderBinding[stage].uniformHandle);
+
+				if (vertex)
 				{
 					shaderBind = m_vsh->m_shaderBinding[stage];
-					shaderBind.shaderStage = WGPUShaderStage_Vertex;
+					shaderBind.shaderStage = fragment
+						? WGPUShaderStage_Vertex | WGPUShaderStage_Fragment
+						: WGPUShaderStage_Vertex
+						;
 					numBindings += getNumBindGroupEntries(shaderBind);
 				}
-				else if (NULL != m_fsh && isValid(m_fsh->m_shaderBinding[stage].uniformHandle) )
+				else if (fragment)
 				{
 					shaderBind = m_fsh->m_shaderBinding[stage];
 					shaderBind.shaderStage = WGPUShaderStage_Fragment;
@@ -5746,9 +5784,10 @@ WGPU_IMPORT
 
 		WGPUSampler sampler = s_renderWGPU->m_samplerStateCache.find(key);
 
-		const bool disableAniso = true
-			&& (BGFX_SAMPLER_MIN_POINT == (samplerFlags&BGFX_SAMPLER_MIN_POINT) )
-			&& (BGFX_SAMPLER_MAG_POINT == (samplerFlags&BGFX_SAMPLER_MAG_POINT) )
+		const bool disableAniso = false
+			|| (BGFX_SAMPLER_MIN_POINT == (samplerFlags&BGFX_SAMPLER_MIN_MASK) )
+			|| (BGFX_SAMPLER_MAG_POINT == (samplerFlags&BGFX_SAMPLER_MAG_MASK) )
+			|| (BGFX_SAMPLER_MIP_POINT == (samplerFlags&BGFX_SAMPLER_MIP_MASK) )
 			;
 
 		if (NULL == sampler)
@@ -6780,7 +6819,7 @@ WGPU_IMPORT
 			.nextInChain = NULL,
 			.label       = toWGPUStringView("TimerQuery"),
 			.type        = WGPUQueryType_Timestamp,
-			.count       = m_numQueries*2,
+			.count       = m_numQueries*2 + 1,
 		};
 
 		m_querySet = WGPU_CHECK(wgpuDeviceCreateQuerySet(device, &querySetDesc) );
@@ -6848,7 +6887,7 @@ WGPU_IMPORT
 			.nextInChain               = NULL,
 			.querySet                  = m_querySet,
 			.beginningOfPassWriteIndex = _index,
-			.endOfPassWriteIndex       = WGPU_QUERY_SET_INDEX_UNDEFINED,
+			.endOfPassWriteIndex       = m_numQueries*2,
 		};
 
 		const WGPUComputePassDescriptor computePassDesc =

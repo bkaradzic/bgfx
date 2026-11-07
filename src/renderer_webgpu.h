@@ -42,7 +42,7 @@
 		WGPU_IMPORT_FUNC(false, AdapterGetFeatures);                                \
 		WGPU_IGNORE_____(false, AdapterGetFormatCapabilities);                      \
 		WGPU_IMPORT_FUNC(false, AdapterGetInfo);                                    \
-		WGPU_IGNORE_____(false, AdapterGetInstance);                                \
+		WGPU_IMPORT_FUNC(false, AdapterGetInstance);                                \
 		WGPU_IMPORT_FUNC(false, AdapterGetLimits);                                  \
 		WGPU_IMPORT_FUNC(false, AdapterHasFeature);                                 \
 		WGPU_IMPORT_FUNC(false, AdapterRequestDevice);                              \
@@ -137,7 +137,7 @@
 		WGPU_IMPORT_FUNC(false, DeviceCreateTexture);                               \
 		WGPU_IMPORT_FUNC(false, DeviceDestroy);                                     \
 		WGPU_IGNORE_____(false, DeviceForceLoss);                                   \
-		WGPU_IGNORE_____(false, DeviceGetAdapter);                                  \
+		WGPU_IMPORT_FUNC(false, DeviceGetAdapter);                                  \
 		WGPU_IMPORT_FUNC(false, DeviceGetAdapterInfo);                              \
 		WGPU_IGNORE_____(false, DeviceGetAHardwareBufferProperties);                \
 		WGPU_IMPORT_FUNC(false, DeviceGetFeatures);                                 \
@@ -155,7 +155,7 @@
 		WGPU_IGNORE_____(false, DeviceSetLoggingCallback);                          \
 		WGPU_IGNORE_____(false, DeviceTick);                                        \
 		WGPU_IGNORE_____(false, DeviceValidateTextureDescriptor);                   \
-		WGPU_IGNORE_____(false, DeviceAddRef);                                      \
+		WGPU_IMPORT_FUNC(false, DeviceAddRef);                                      \
 		WGPU_IMPORT_FUNC(false, DeviceRelease);                                     \
 		/* */                                                                       \
 		WGPU_IGNORE_____(false, ExternalTextureDestroy);                            \
@@ -868,7 +868,7 @@ namespace wgpu {
 			uint32_t m_frameNum;
 		};
 
-		static constexpr uint32_t kMaxQueries = bx::min<uint32_t>(kMaxTimerQueries, 4096/2);
+		static constexpr uint32_t kMaxQueries = bx::min<uint32_t>(kMaxTimerQueries, (4096-1)/2);
 
 		uint64_t getBufferSize() const
 		{
