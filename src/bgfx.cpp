@@ -5206,7 +5206,6 @@ namespace bgfx
 
 	void Encoder::dispatch(ViewId _id, ProgramHandle _program, IndirectBufferHandle _indirectHandle, uint32_t _start, uint32_t _num, uint8_t _flags)
 	{
-		BGFX_CHECK_CAPS(BGFX_CAPS_DRAW_INDIRECT, "Dispatch indirect is not supported!");
 		BGFX_CHECK_CAPS(BGFX_CAPS_COMPUTE, "Compute is not supported!");
 		BGFX_CHECK_HANDLE_INVALID_OK("dispatch", s_ctx->m_programHandle, _program);
 		BGFX_CHECK_HANDLE("dispatch", s_ctx->m_vertexBufferHandle, _indirectHandle);
