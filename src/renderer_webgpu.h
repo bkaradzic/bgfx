@@ -684,6 +684,7 @@ namespace wgpu {
 			, m_viewFormat(WGPUTextureFormat_Undefined)
 			, m_formatDepthStencil(uint8_t(TextureFormat::Count) )
 			, m_readable(false)
+			, m_premultipliedAlpha(false)
 			, m_needToRecreateSwapChain(false)
 		{
 			bx::memSet(&m_descPending, 0, sizeof(m_descPending) );
@@ -715,6 +716,7 @@ namespace wgpu {
 
 		uint8_t m_formatDepthStencil;
 		bool m_readable;
+		bool m_premultipliedAlpha;
 		bool m_needToRecreateSwapChain;
 	};
 

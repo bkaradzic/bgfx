@@ -881,6 +881,7 @@ WGPU_IMPORT
 			, m_instance(NULL)
 			, m_adapter(NULL)
 			, m_device(NULL)
+			, m_backendType(WGPUBackendType_Undefined)
 			, m_maxAnisotropy(1)
 			, m_wireframe(false)
 			, m_mipGen(NULL)
@@ -1449,6 +1450,8 @@ WGPU_IMPORT
 							, s_adapterType[bx::min<uint32_t>(adapterInfo.adapterType, BX_COUNTOF(s_adapterType)-1)]
 							);
 
+						m_backendType = adapterInfo.backendType;
+
 						g_caps.vendorId = bx::narrowCast<uint16_t>(adapterInfo.vendorID);
 						g_caps.deviceId = bx::narrowCast<uint16_t>(adapterInfo.deviceID);
 					}
@@ -1516,6 +1519,7 @@ WGPU_IMPORT
 							| BGFX_CAPS_RENDERER_MULTITHREADED
 							| BGFX_CAPS_SWAP_CHAIN
 							| BGFX_CAPS_TEXTURE_CUBE_ARRAY
+							| BGFX_CAPS_TRANSPARENT_BACKBUFFER
 							| (isFeatureSupported(WGPUFeatureName_ShaderF16) ? BGFX_CAPS_SHADER_F16 : 0)
 							;
 
@@ -1556,6 +1560,11 @@ WGPU_IMPORT
 					if (!headless)
 					{
 						m_backBuffer.create(UINT16_MAX, m_mainSwapChain);
+
+						if (!m_backBuffer.m_swapChain.m_premultipliedAlpha)
+						{
+							g_caps.supported &= ~BGFX_CAPS_TRANSPARENT_BACKBUFFER;
+						}
 
 						m_windows[0] = BGFX_INVALID_HANDLE;
 						m_numWindows++;
@@ -4552,6 +4561,7 @@ WGPU_IMPORT
 
 		bx::FixedString256 m_webgpuInfo;
 		WGPULimits         m_limits;
+		WGPUBackendType    m_backendType;
 
 		uint32_t         m_maxFrameLatency;
 		CommandQueueWGPU m_cmd;
@@ -6047,6 +6057,23 @@ WGPU_IMPORT
 
 		m_readable = 0 != (surfaceCaps.usages & WGPUTextureUsage_CopySrc);
 
+		m_premultipliedAlpha = false;
+
+		const bool hwndIgnoresAlpha = false
+			|| WGPUBackendType_D3D11 == s_renderWGPU->m_backendType
+			|| WGPUBackendType_D3D12 == s_renderWGPU->m_backendType
+			;
+
+		for (uint32_t ii = 0; ii < surfaceCaps.alphaModeCount && !hwndIgnoresAlpha; ++ii)
+		{
+			m_premultipliedAlpha |= WGPUCompositeAlphaMode_Premultiplied == surfaceCaps.alphaModes[ii];
+		}
+
+		const bool transparent = true
+			&& m_premultipliedAlpha
+			&& 0 != (m_desc.flags & BGFX_SWAP_CHAIN_TRANSPARENT_BACKBUFFER)
+			;
+
 		m_viewFormat = 0 != (m_desc.flags & BGFX_SWAP_CHAIN_SRGB_BACKBUFFER)
 			? srgbFormat(format)
 			: format
@@ -6057,14 +6084,18 @@ WGPU_IMPORT
 			.nextInChain     = NULL,
 			.device          = s_renderWGPU->m_device,
 			.format          = format,
-			.usage           = WGPUTextureUsage_RenderAttachment
+			.usage           = 0
+				| WGPUTextureUsage_RenderAttachment
 				| (m_readable ? WGPUTextureUsage_CopySrc : 0)
 				,
 			.width           = m_desc.width,
 			.height          = m_desc.height,
 			.viewFormatCount = format != m_viewFormat ? 1u : 0u,
 			.viewFormats     = format != m_viewFormat ? &m_viewFormat : NULL,
-			.alphaMode       = WGPUCompositeAlphaMode_Auto,
+			.alphaMode       = transparent
+				? WGPUCompositeAlphaMode_Premultiplied
+				: WGPUCompositeAlphaMode_Auto
+				,
 			.presentMode     = WGPUPresentMode_Fifo,
 		};
 
