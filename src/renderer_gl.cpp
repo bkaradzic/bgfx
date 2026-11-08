@@ -9888,11 +9888,12 @@ namespace bgfx { namespace gl
 
 										GLuint    id      = texture.m_id;
 										GLint     level   = bind.m_firstMip;
-										GLint     layer   = bind.m_firstLayer;
+										GLint     layer   = GL_TEXTURE_3D == texture.m_target ? 0 : bind.m_firstLayer;
 										GLboolean layered = texture.isLayered() || UINT16_MAX != bind.m_numLayers ? GL_TRUE : GL_FALSE;
 
 										if (UINT16_MAX != bind.m_numLayers
-										&&  texture.isLayered() )
+										&&  texture.isLayered()
+										&&  GL_TEXTURE_3D != texture.m_target)
 										{
 											const GLuint viewId = texture.getViewId(bind.m_firstMip, 1, bind.m_firstLayer, bind.m_numLayers, NULL, true);
 
@@ -10533,11 +10534,12 @@ namespace bgfx { namespace gl
 
 											GLuint    id      = texture.m_id;
 											GLint     level   = bind.m_firstMip;
-											GLint     layer   = bind.m_firstLayer;
+											GLint     layer   = GL_TEXTURE_3D == texture.m_target ? 0 : bind.m_firstLayer;
 											GLboolean layered = texture.isLayered() || UINT16_MAX != bind.m_numLayers ? GL_TRUE : GL_FALSE;
 
 											if (UINT16_MAX != bind.m_numLayers
-											&&  texture.isLayered() )
+											&&  texture.isLayered()
+											&&  GL_TEXTURE_3D != texture.m_target)
 											{
 												const GLuint viewId = texture.getViewId(bind.m_firstMip, 1, bind.m_firstLayer, bind.m_numLayers, NULL, true);
 
