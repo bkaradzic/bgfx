@@ -1015,6 +1015,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 				| BGFX_CAPS_SHADER_F16
 				| BGFX_CAPS_SWAP_CHAIN
 				| BGFX_CAPS_TEXTURE_EXTERNAL
+				| BGFX_CAPS_TRANSPARENT_BACKBUFFER
 				| BGFX_CAPS_VERTEX_ATTRIB_UINT10
 				);
 
@@ -5159,6 +5160,8 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 	SwapChainMtl::~SwapChainMtl()
 	{
+		releaseTransparent();
+
 		MTL_RELEASE(m_metalLayer, 2);
 		MTL_RELEASE_DEFERRED(m_drawable);
 
@@ -5205,8 +5208,72 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 #endif // BX_PLATFORM_OSX
 	}
 
+#if BX_PLATFORM_OSX
+	static void setWindowTransparent(void* _nwh, bool _transparent)
+	{
+		if (NULL == _nwh
+		||  !MtlObjAccess::send<bool>(_nwh, sel_registerName("isKindOfClass:"), objc_lookUpClass("NSWindow") ) )
+		{
+			return;
+		}
+
+		if (_transparent)
+		{
+			retain( (NS::Object*)_nwh);
+		}
+
+		void (^setTransparent)(void) =
+		^{
+			Class nsColorClass = objc_lookUpClass("NSColor");
+
+			MtlObjAccess::send<void>(_nwh, sel_registerName("setOpaque:"), !_transparent);
+			MtlObjAccess::send<void>(_nwh, sel_registerName("setBackgroundColor:"), MtlObjAccess::send<void*>(
+				  nsColorClass
+				, sel_registerName(_transparent ? "clearColor" : "windowBackgroundColor")
+				) );
+
+			if (!_transparent)
+			{
+				release( (NS::Object*)_nwh);
+			}
+		};
+
+		if (MtlObjAccess::send<bool>(objc_lookUpClass("NSThread"), sel_registerName("isMainThread") ) )
+		{
+			setTransparent();
+		}
+		else
+		{
+			CFRunLoopRef mainRunLoop = CFRunLoopGetMain();
+			CFRunLoopPerformBlock(mainRunLoop, kCFRunLoopCommonModes, setTransparent);
+			CFRunLoopWakeUp(mainRunLoop);
+		}
+	}
+#endif // BX_PLATFORM_OSX
+
+	void SwapChainMtl::releaseTransparent()
+	{
+		if (!m_transparent)
+		{
+			return;
+		}
+
+		m_transparent = false;
+
+		if (NULL != m_metalLayer)
+		{
+			MtlObjAccess::send<void>(m_metalLayer, sel_registerName("setOpaque:"), true);
+		}
+
+#if BX_PLATFORM_OSX
+		setWindowTransparent(m_nwh, false);
+#endif // BX_PLATFORM_OSX
+	}
+
 	void SwapChainMtl::init(void* _nwh)
 	{
+		releaseTransparent();
+
 		{
 			MTL_RELEASE(m_metalLayer, 2);
 
@@ -5401,6 +5468,19 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 				}
 
 				m_hdr10 = hdr10;
+			}
+
+			const bool transparent = 0 != (_desc.flags & BGFX_SWAP_CHAIN_TRANSPARENT_BACKBUFFER);
+
+			MtlObjAccess::send<void>(m_metalLayer, sel_registerName("setOpaque:"), !transparent);
+
+			if (transparent != m_transparent)
+			{
+				m_transparent = transparent;
+
+#if BX_PLATFORM_OSX
+				setWindowTransparent(m_nwh, transparent);
+#endif // BX_PLATFORM_OSX
 			}
 
 			const CGSize actualSize = m_metalLayer->drawableSize();
