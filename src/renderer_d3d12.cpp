@@ -1458,7 +1458,10 @@ namespace bgfx { namespace d3d12
 					DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL
 #endif // BX_PLATFORM_LINUX || BX_PLATFORM_WINDOWS
 					;
-				m_scd.alphaMode  = DXGI_ALPHA_MODE_IGNORE;
+				m_scd.alphaMode  = (_init.swapChain.flags & BGFX_SWAP_CHAIN_TRANSPARENT_BACKBUFFER)
+					? DXGI_ALPHA_MODE_PREMULTIPLIED
+					: DXGI_ALPHA_MODE_IGNORE
+					;
 				m_scd.flags      = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
 
 				m_scd.maxFrameLatency = bx::min<uint8_t>(_init.swapChain.maxFrameLatency, BGFX_CONFIG_MAX_FRAME_LATENCY);
@@ -2203,6 +2206,9 @@ namespace bgfx { namespace d3d12
 			DX_RELEASE(m_computeRootSignature, 0);
 			DX_RELEASE(m_rootSignature, 0);
 			DX_RELEASE(mainFrameBuffer().m_msaaRt, 0);
+#if !BX_PLATFORM_LINUX
+			m_dxgi.removeSwapChain(m_scd);
+#endif // !BX_PLATFORM_LINUX
 			DX_RELEASE(mainFrameBuffer().m_swapChain, 0);
 
 			m_device->SetPrivateDataInterface(IID_ID3D12CommandQueue, NULL);
@@ -3343,6 +3349,7 @@ namespace bgfx { namespace d3d12
 					&& BX_ENABLED(BX_PLATFORM_WINDOWS || BX_PLATFORM_WINRT)
 					&& !newWindow
 					&& (m_mainSwapChain.flags&BGFX_SWAP_CHAIN_MSAA_MASK) == (_swapChain.flags&BGFX_SWAP_CHAIN_MSAA_MASK)
+					&& (m_mainSwapChain.flags&BGFX_SWAP_CHAIN_TRANSPARENT_BACKBUFFER) == (_swapChain.flags&BGFX_SWAP_CHAIN_TRANSPARENT_BACKBUFFER)
 					;
 
 				m_mainSwapChain = _swapChain;
@@ -3353,6 +3360,10 @@ namespace bgfx { namespace d3d12
 
 				m_scd.width  = _swapChain.width;
 				m_scd.height = _swapChain.height;
+				m_scd.alphaMode = (_swapChain.flags & BGFX_SWAP_CHAIN_TRANSPARENT_BACKBUFFER)
+					? DXGI_ALPHA_MODE_PREMULTIPLIED
+					: DXGI_ALPHA_MODE_IGNORE
+					;
 				m_scd.format = s_textureFormat[_swapChain.formatColor].m_fmt;
 				m_scd.hdr10  = 0 != (_swapChain.flags & BGFX_SWAP_CHAIN_HDR10);
 
@@ -3378,6 +3389,9 @@ namespace bgfx { namespace d3d12
 						updateMsaa(m_scd.format);
 						m_scd.sampleDesc = s_msaa[(m_mainSwapChain.flags&BGFX_SWAP_CHAIN_MSAA_MASK)>>BGFX_SWAP_CHAIN_MSAA_SHIFT];
 
+#if !BX_PLATFORM_LINUX
+						m_dxgi.removeSwapChain(m_scd);
+#endif // !BX_PLATFORM_LINUX
 						DX_RELEASE(mainFrameBuffer().m_swapChain, 0);
 
 						if (newWindow)
@@ -8316,6 +8330,10 @@ namespace bgfx { namespace d3d12
 		scd.ndt        = m_desc.ndt;
 		scd.sampleDesc = s_msaa[(m_desc.flags&BGFX_SWAP_CHAIN_MSAA_MASK)>>BGFX_SWAP_CHAIN_MSAA_SHIFT];
 		scd.hdr10      = 0 != (m_desc.flags & BGFX_SWAP_CHAIN_HDR10);
+		scd.alphaMode  = (m_desc.flags & BGFX_SWAP_CHAIN_TRANSPARENT_BACKBUFFER)
+			? DXGI_ALPHA_MODE_PREMULTIPLIED
+			: DXGI_ALPHA_MODE_IGNORE
+			;
 		scd.waitable   = true;
 
 		return scd;
@@ -8375,6 +8393,15 @@ namespace bgfx { namespace d3d12
 		}
 
 #if BX_PLATFORM_WINDOWS
+		if ( (m_desc.flags & BGFX_SWAP_CHAIN_TRANSPARENT_BACKBUFFER) != (_desc.flags & BGFX_SWAP_CHAIN_TRANSPARENT_BACKBUFFER) )
+		{
+			s_renderD3D12->finishAll(true);
+
+			m_needToRecreateSwapChain = false;
+			create(destroy(), _desc);
+			return;
+		}
+
 		const SwapChain prev = m_desc;
 #endif // BX_PLATFORM_WINDOWS
 
@@ -8642,6 +8669,9 @@ namespace bgfx { namespace d3d12
 		if (isSwapChain() )
 		{
 			destroySwapChainViews();
+#if !BX_PLATFORM_LINUX
+			s_renderD3D12->m_dxgi.removeSwapChain(getSwapChainDesc() );
+#endif // !BX_PLATFORM_LINUX
 		}
 
 		DX_RELEASE(m_swapChain, 0);
