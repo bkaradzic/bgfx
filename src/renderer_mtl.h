@@ -576,6 +576,7 @@ namespace bgfx { namespace mtl
 			, m_colorFormat(TextureFormat::Count)
 			, m_borrowedDepth(false)
 			, m_hdr10(false)
+			, m_transparent(false)
 		{
 		}
 
@@ -584,6 +585,8 @@ namespace bgfx { namespace mtl
 		void init(void* _nwh);
 
 		void releaseBackBuffer();
+
+		void releaseTransparent();
 
 		uint32_t resize(const SwapChain& _desc);
 
@@ -604,6 +607,7 @@ namespace bgfx { namespace mtl
 		TextureFormat::Enum m_colorFormat;
 		bool m_borrowedDepth;
 		bool m_hdr10;
+		bool m_transparent;
 	};
 
 	struct FrameBufferMtl
