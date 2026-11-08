@@ -56,6 +56,15 @@ namespace bgfx
 	};
 
 	///
+	struct DxgiComposition
+	{
+		void*     nwh;
+		IUnknown* device;
+		IUnknown* target;
+		IUnknown* visual;
+	};
+
+	///
 	struct Dxgi
 	{
 #if BX_PLATFORM_LINUX || BX_PLATFORM_WINDOWS
@@ -106,6 +115,12 @@ namespace bgfx
 		bool tearingSupported() const;
 
 		///
+		HRESULT compositionSet(void* _nwh, SwapChainI* _swapChain);
+
+		///
+		void compositionRemove(void* _nwh);
+
+		///
 		void* m_dxgiDll;
 		void* m_dxgiDebugDll;
 
@@ -115,6 +130,9 @@ namespace bgfx
 		AdapterI* m_adapter;
 		OutputI*  m_output;
 		bool m_tearingSupported;
+
+		void* m_dcompDll;
+		DxgiComposition m_composition[BGFX_CONFIG_MAX_FRAME_BUFFERS+1];
 	};
 
 } // namespace bgfx

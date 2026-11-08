@@ -2590,6 +2590,16 @@ VK_IMPORT_DEVICE
 						goto error;
 					}
 
+					{
+						VkSurfaceCapabilitiesKHR surfaceCapabilities;
+
+						if (VK_SUCCESS == vkGetPhysicalDeviceSurfaceCapabilitiesKHR(m_physicalDevice, m_backBuffer.m_swapChain.m_surface, &surfaceCapabilities)
+						&&  0 == (surfaceCapabilities.supportedCompositeAlpha & ~VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR) )
+						{
+							g_caps.supported &= ~BGFX_CAPS_TRANSPARENT_BACKBUFFER;
+						}
+					}
+
 					if (m_lowLatencySupported)
 					{
 						g_caps.supported |= BGFX_CAPS_LOW_LATENCY;
@@ -9271,7 +9281,7 @@ VK_DESTROY
 		const VkPhysicalDevice physicalDevice = s_renderVK->m_physicalDevice;
 
 		const uint64_t recreateSurfaceMask     = BGFX_SWAP_CHAIN_HIDPI;
-		const uint64_t recreateSwapchainMask   = BGFX_SWAP_CHAIN_SRGB_BACKBUFFER | BGFX_SWAP_CHAIN_HDR10;
+		const uint64_t recreateSwapchainMask   = BGFX_SWAP_CHAIN_SRGB_BACKBUFFER | BGFX_SWAP_CHAIN_HDR10 | BGFX_SWAP_CHAIN_TRANSPARENT_BACKBUFFER;
 		const uint64_t recreateAttachmentsMask = BGFX_SWAP_CHAIN_MSAA_MASK;
 
 		const bool vsync = !!(s_renderVK->m_reset & BGFX_RESET_VSYNC);

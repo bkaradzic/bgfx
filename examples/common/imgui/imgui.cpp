@@ -185,6 +185,13 @@ struct OcornutImguiContext
 			ImDrawIdx* indices = (ImDrawIdx*)tib.data;
 			bx::memCopy(indices, drawList->IdxBuffer.begin(), numIndices * sizeof(ImDrawIdx) );
 
+			constexpr uint64_t kBlendOver = BGFX_STATE_BLEND_FUNC_SEPARATE(
+				  BGFX_STATE_BLEND_SRC_ALPHA
+				, BGFX_STATE_BLEND_INV_SRC_ALPHA
+				, BGFX_STATE_BLEND_ONE
+				, BGFX_STATE_BLEND_INV_SRC_ALPHA
+				);
+
 			bgfx::Encoder* encoder = bgfx::begin();
 
 			for (const ImDrawCmd* cmd = drawList->CmdBuffer.begin(), *cmdEnd = drawList->CmdBuffer.end(); cmd != cmdEnd; ++cmd)
@@ -211,7 +218,7 @@ struct OcornutImguiContext
 						ImGui::TextureBgfx tex = bx::bitCast<ImGui::TextureBgfx>(texId);
 
 						state |= 0 != (IMGUI_FLAGS_ALPHA_BLEND & tex.flags)
-							? BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_SRC_ALPHA, BGFX_STATE_BLEND_INV_SRC_ALPHA)
+							? kBlendOver
 							: BGFX_STATE_NONE
 							;
 						th = tex.handle;
@@ -225,7 +232,7 @@ struct OcornutImguiContext
 					}
 					else
 					{
-						state |= BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_SRC_ALPHA, BGFX_STATE_BLEND_INV_SRC_ALPHA);
+						state |= kBlendOver;
 					}
 
 					// Project scissor/clipping rectangles into framebuffer space

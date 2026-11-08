@@ -10,6 +10,10 @@
 #include "dxgi.h"
 #include "renderer_d3d.h"
 
+#if BX_PLATFORM_WINDOWS
+#	include <dcomp.h>
+#endif // BX_PLATFORM_WINDOWS
+
 #if !BX_PLATFORM_WINDOWS && !BX_PLATFORM_LINUX
 #	include <inspectable.h>
 #	if BX_PLATFORM_WINRT
@@ -52,9 +56,14 @@ namespace bgfx
 	BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG("-Wunneeded-internal-declaration");
 
 #if BX_PLATFORM_WINDOWS
+	typedef HRESULT (WINAPI* PFN_DCOMPOSITION_CREATE_DEVICE2)(::IUnknown* _renderingDevice, REFIID _iid, void** _device);
+
 	static PFN_CREATE_DXGI_FACTORY  CreateDXGIFactory;
 	static PFN_GET_DEBUG_INTERFACE  DXGIGetDebugInterface;
 	static PFN_GET_DEBUG_INTERFACE1 DXGIGetDebugInterface1;
+	static PFN_DCOMPOSITION_CREATE_DEVICE2 DCompositionCreateDevice2;
+
+	static const GUID IID_IDCompositionDevice = { 0xc37ea93a, 0xe7aa, 0x450d, { 0xb1, 0x6f, 0x97, 0x46, 0xcb, 0x04, 0x07, 0xf3 } };
 #endif // BX_PLATFORM_WINDOWS
 
 	static const GUID IID_IDXGIFactory    = { 0x7b7166ec, 0x21c7, 0x44ae, { 0xb2, 0x1a, 0xc9, 0xae, 0x32, 0x1a, 0xe3, 0x69 } };
@@ -204,7 +213,9 @@ namespace bgfx
 		, m_adapter(NULL)
 		, m_output(NULL)
 		, m_tearingSupported(false)
+		, m_dcompDll(NULL)
 	{
+		bx::memSet(m_composition, 0, sizeof(m_composition) );
 	}
 
 	bool Dxgi::init(Caps& _caps)
@@ -242,6 +253,19 @@ namespace bgfx
 		}
 
 		CreateDXGIFactory = (PFN_CREATE_DXGI_FACTORY)bx::dlsym(m_dxgiDll, "CreateDXGIFactory1");
+
+		m_dcompDll = bx::dlopen("dcomp.dll");
+
+		if (NULL != m_dcompDll)
+		{
+			DCompositionCreateDevice2 = (PFN_DCOMPOSITION_CREATE_DEVICE2)bx::dlsym(m_dcompDll, "DCompositionCreateDevice2");
+
+			if (NULL == DCompositionCreateDevice2)
+			{
+				bx::dlclose(m_dcompDll);
+				m_dcompDll = NULL;
+			}
+		}
 
 		if (NULL == CreateDXGIFactory)
 		{
@@ -401,7 +425,7 @@ namespace bgfx
 				}
 
 				_caps.supported |= hdr10 ? BGFX_CAPS_HDR10 : 0;
-				_caps.supported |= BX_ENABLED(BX_PLATFORM_WINRT) ? BGFX_CAPS_TRANSPARENT_BACKBUFFER : 0;
+				_caps.supported |= BX_ENABLED(BX_PLATFORM_WINRT) || NULL != m_dcompDll ? BGFX_CAPS_TRANSPARENT_BACKBUFFER : 0;
 
 				DX_RELEASE(adapter, adapter == m_adapter ? 1 : 0);
 			}
@@ -431,6 +455,17 @@ namespace bgfx
 
 	void Dxgi::shutdown()
 	{
+		for (uint32_t ii = 0; ii < BX_COUNTOF(m_composition); ++ii)
+		{
+			if (NULL != m_composition[ii].nwh)
+			{
+				compositionRemove(m_composition[ii].nwh);
+			}
+		}
+
+		bx::dlclose(m_dcompDll);
+		m_dcompDll = NULL;
+
 		DX_RELEASE(m_output,  0);
 		DX_RELEASE(m_adapter, 0);
 		DX_RELEASE(m_factory, 0);
@@ -526,14 +561,53 @@ namespace bgfx
 			.Windowed         = _scd.windowed,
 		};
 
-		hr = m_factory->CreateSwapChainForHwnd(
-			  _device
-			, (HWND)_scd.nwh
-			, &scd
-			, &scfd
-			, NULL
-			, reinterpret_cast<IDXGISwapChain1**>(_swapChain)
-		);
+		const bool composition = true
+			&& NULL != m_dcompDll
+			&& DXGI_ALPHA_MODE_PREMULTIPLIED == _scd.alphaMode
+			&& (DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL == _scd.swapEffect || DXGI_SWAP_EFFECT_FLIP_DISCARD == _scd.swapEffect)
+			;
+
+		hr = E_FAIL;
+
+		if (composition)
+		{
+			scd.Scaling = DXGI_SCALING_STRETCH;
+
+			hr = m_factory->CreateSwapChainForComposition(
+				  _device
+				, &scd
+				, NULL
+				, reinterpret_cast<IDXGISwapChain1**>(_swapChain)
+				);
+
+			if (SUCCEEDED(hr) )
+			{
+				hr = compositionSet(_scd.nwh, *_swapChain);
+
+				if (FAILED(hr) )
+				{
+					compositionRemove(_scd.nwh);
+					DX_RELEASE_I(*_swapChain);
+				}
+			}
+
+			BX_WARN(SUCCEEDED(hr), "Transparent back buffer composition failed, hr 0x%08x, window is opaque.", hr);
+		}
+
+		if (FAILED(hr) )
+		{
+			scd.Scaling   = _scd.scaling;
+			scd.AlphaMode = DXGI_ALPHA_MODE_IGNORE;
+
+			hr = m_factory->CreateSwapChainForHwnd(
+				  _device
+				, (HWND)_scd.nwh
+				, &scd
+				, &scfd
+				, NULL
+				, reinterpret_cast<IDXGISwapChain1**>(_swapChain)
+				);
+		}
 #else
 		if (NULL == _scd.ndt)
 		{
@@ -653,9 +727,110 @@ namespace bgfx
 		IInspectable* nativeWindow = reinterpret_cast<IInspectable*>(_scd.nwh);
 		return setSwapChain(nativeWindow, NULL);
 #else
-		BX_UNUSED(_scd);
+		compositionRemove(_scd.nwh);
 		return S_OK;
 #endif // BX_PLATFORM_WINRT
+	}
+
+	HRESULT Dxgi::compositionSet(void* _nwh, SwapChainI* _swapChain)
+	{
+#if BX_PLATFORM_WINDOWS
+		DxgiComposition* comp = NULL;
+
+		for (uint32_t ii = 0; ii < BX_COUNTOF(m_composition) && NULL == comp; ++ii)
+		{
+			comp = _nwh == m_composition[ii].nwh ? &m_composition[ii] : NULL;
+		}
+
+		for (uint32_t ii = 0; ii < BX_COUNTOF(m_composition) && NULL == comp; ++ii)
+		{
+			comp = NULL == m_composition[ii].nwh ? &m_composition[ii] : NULL;
+		}
+
+		if (NULL == comp)
+		{
+			BX_TRACE("Too many composition swap chains.");
+			return E_OUTOFMEMORY;
+		}
+
+		if (NULL == comp->device)
+		{
+			IDCompositionDevice* device = NULL;
+			HRESULT hr = DCompositionCreateDevice2(NULL, IID_IDCompositionDevice, (void**)&device);
+
+			if (FAILED(hr) )
+			{
+				BX_TRACE("DCompositionCreateDevice2 failed, hr 0x%08x.", hr);
+				return hr;
+			}
+
+			IDCompositionTarget* target = NULL;
+			hr = device->CreateTargetForHwnd( (HWND)_nwh, TRUE, &target);
+
+			IDCompositionVisual* visual = NULL;
+
+			if (SUCCEEDED(hr) )
+			{
+				hr = device->CreateVisual(&visual);
+			}
+
+			if (SUCCEEDED(hr) )
+			{
+				hr = target->SetRoot(visual);
+			}
+
+			if (FAILED(hr) )
+			{
+				BX_TRACE("DirectComposition target for window failed, hr 0x%08x.", hr);
+				DX_RELEASE_I(visual);
+				DX_RELEASE_I(target);
+				DX_RELEASE_I(device);
+				return hr;
+			}
+
+			comp->nwh    = _nwh;
+			comp->device = device;
+			comp->target = target;
+			comp->visual = visual;
+		}
+
+		IDCompositionVisual* visual = reinterpret_cast<IDCompositionVisual*>(comp->visual);
+		HRESULT hr = visual->SetContent(_swapChain);
+
+		if (SUCCEEDED(hr) )
+		{
+			hr = reinterpret_cast<IDCompositionDevice*>(comp->device)->Commit();
+		}
+
+		return hr;
+#else
+		BX_UNUSED(_nwh, _swapChain);
+		return E_NOTIMPL;
+#endif // BX_PLATFORM_WINDOWS
+	}
+
+	void Dxgi::compositionRemove(void* _nwh)
+	{
+#if BX_PLATFORM_WINDOWS
+		for (uint32_t ii = 0; ii < BX_COUNTOF(m_composition); ++ii)
+		{
+			DxgiComposition& comp = m_composition[ii];
+
+			if (NULL != _nwh
+			&&  _nwh == comp.nwh)
+			{
+				reinterpret_cast<IDCompositionVisual*>(comp.visual)->SetContent(NULL);
+				reinterpret_cast<IDCompositionDevice*>(comp.device)->Commit();
+
+				DX_RELEASE_I(comp.visual);
+				DX_RELEASE_I(comp.target);
+				DX_RELEASE_I(comp.device);
+				comp.nwh = NULL;
+			}
+		}
+#else
+		BX_UNUSED(_nwh);
+#endif // BX_PLATFORM_WINDOWS
 	}
 
 	void Dxgi::updateHdr10(SwapChainI* _swapChain, const DxgiSwapChainDesc& _scd)

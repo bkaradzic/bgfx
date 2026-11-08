@@ -2613,6 +2613,7 @@ namespace bgfx { namespace d3d11
 					&& !BX_ENABLED(BX_PLATFORM_XBOXONE)
 					&& !newWindow
 					&& (m_mainSwapChain.flags&BGFX_SWAP_CHAIN_MSAA_MASK) == (_swapChain.flags&BGFX_SWAP_CHAIN_MSAA_MASK)
+					&& (m_mainSwapChain.flags&BGFX_SWAP_CHAIN_TRANSPARENT_BACKBUFFER) == (_swapChain.flags&BGFX_SWAP_CHAIN_TRANSPARENT_BACKBUFFER)
 					;
 
 				m_mainSwapChain = _swapChain;
@@ -2626,6 +2627,10 @@ namespace bgfx { namespace d3d11
 				// see comment in init() about why we don't worry about BGFX_RESET_SRGB_BACKBUFFER here
 				m_scd.format = s_textureFormat[_swapChain.formatColor].m_fmt;
 				m_scd.hdr10  = 0 != (_swapChain.flags & BGFX_SWAP_CHAIN_HDR10);
+				m_scd.alphaMode = (_swapChain.flags & BGFX_SWAP_CHAIN_TRANSPARENT_BACKBUFFER)
+					? DXGI_ALPHA_MODE_PREMULTIPLIED
+					: DXGI_ALPHA_MODE_IGNORE
+					;
 
 				preReset();
 
@@ -6077,6 +6082,15 @@ namespace bgfx { namespace d3d11
 			return;
 		}
 
+		s_renderD3D11->m_deviceCtx->OMSetRenderTargets(0, NULL, NULL);
+
+		if ( (m_desc.flags & BGFX_SWAP_CHAIN_TRANSPARENT_BACKBUFFER) != (_desc.flags & BGFX_SWAP_CHAIN_TRANSPARENT_BACKBUFFER) )
+		{
+			m_needToRecreateSwapChain = false;
+			create(destroy(), _desc);
+			return;
+		}
+
 		const SwapChain prev = m_desc;
 
 		m_desc = _desc;
@@ -6084,7 +6098,6 @@ namespace bgfx { namespace d3d11
 
 		const DxgiSwapChainDesc scd = getSwapChainDesc();
 
-		s_renderD3D11->m_deviceCtx->OMSetRenderTargets(0, NULL, NULL);
 		destroySwapChainViews();
 
 		const HRESULT hr = s_renderD3D11->m_dxgi.resizeBuffers(m_swapChain, scd);
@@ -6120,6 +6133,10 @@ namespace bgfx { namespace d3d11
 		scd.ndt        = m_desc.ndt;
 		scd.sampleDesc = s_msaa[(m_desc.flags&BGFX_SWAP_CHAIN_MSAA_MASK)>>BGFX_SWAP_CHAIN_MSAA_SHIFT];
 		scd.hdr10      = 0 != (m_desc.flags & BGFX_SWAP_CHAIN_HDR10);
+		scd.alphaMode  = (m_desc.flags & BGFX_SWAP_CHAIN_TRANSPARENT_BACKBUFFER)
+			? DXGI_ALPHA_MODE_PREMULTIPLIED
+			: DXGI_ALPHA_MODE_IGNORE
+			;
 		scd.waitable   = false
 			|| DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL == scd.swapEffect
 			|| DXGI_SWAP_EFFECT_FLIP_DISCARD    == scd.swapEffect
@@ -6249,6 +6266,7 @@ namespace bgfx { namespace d3d11
 		if (isSwapChain() )
 		{
 			destroySwapChainViews();
+			s_renderD3D11->m_dxgi.removeSwapChain(getSwapChainDesc() );
 			DX_RELEASE(m_swapChain, 0);
 		}
 		else

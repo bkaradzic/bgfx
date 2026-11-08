@@ -617,7 +617,10 @@ namespace bgfx { namespace gl
 			return 0;
 		}
 
-		return BGFX_CAPS_SWAP_CHAIN;
+		return 0
+			| BGFX_CAPS_SWAP_CHAIN
+			| (8 <= m_pfd.cAlphaBits ? BGFX_CAPS_TRANSPARENT_BACKBUFFER : 0)
+			;
 	}
 
 	SwapChainGL* GlContext::createSwapChain(void* _nwh, int32_t _width, int32_t _height)
