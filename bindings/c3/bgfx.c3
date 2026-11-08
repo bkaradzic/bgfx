@@ -386,6 +386,28 @@ constdef DebugFlags : inline uint
 	PROFILER               = 0x00000010,
 }
 
+constdef DiagnosticFlags : inline uint
+{
+	// No diagnostics.
+	NONE                   = 0x00000000,
+
+	// Report informational debug layer messages, not only warnings and errors.
+	// Requires `Init::debug`.
+	VERBOSE                = 0x00000001,
+
+	// Enable GPU-based validation (D3D12 GPU-based validation, Vulkan GPU-assisted
+	// validation). Requires `Init::debug`.
+	GPUVALIDATION          = 0x00000002,
+
+	// Enable queue synchronization validation (D3D12 synchronized command queue
+	// validation, Vulkan synchronization validation). Requires `Init::debug`.
+	SYNCVALIDATION         = 0x00000004,
+
+	// Wait for the GPU to finish each submitted command buffer before recording
+	// the next one.
+	SERIALIZE              = 0x00000008,
+}
+
 constdef BufferFlags : inline ushort
 {
 	NONE                   = 0x0000,
@@ -1922,6 +1944,9 @@ struct Init
 	// a default rendering backend will be selected appropriate to the platform.
 	// See: `bgfx::RendererType`
 	RendererType type;
+	// Select native API a layered rendering backend (WebGPU) runs on. When
+	// set to RendererType::Count implementation's default will be selected.
+	RendererType backendType;
 	// Vendor PCI ID. If set to `BGFX_PCI_ID_NONE`, discrete and integrated
 	// GPUs will be prioritised.
 	//   - `BGFX_PCI_ID_NONE` - Autoselect adapter.
@@ -1939,6 +1964,8 @@ struct Init
 	ulong capabilities;
 	// Enable device for debugging.
 	bool debug;
+	// Diagnostic flags. See: `BGFX_DIAGNOSTIC_*`.
+	uint diagnostics;
 	// Enable device for profiling.
 	bool profile;
 	// Enable fallback to next available renderer.

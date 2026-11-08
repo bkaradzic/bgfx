@@ -850,6 +850,7 @@ namespace bgfx { namespace d3d11
 			}
 
 			m_fbh = BGFX_INVALID_HANDLE;
+			m_diagnostics = _init.diagnostics;
 			bx::memSet(&m_mainSwapChain, 0, sizeof(m_mainSwapChain) );
 
 			m_ags = NULL;
@@ -4172,7 +4173,9 @@ namespace bgfx { namespace d3d11
 					continue;
 				}
 
-				if (D3D11_MESSAGE_SEVERITY_WARNING >= msg->Severity)
+				if (false
+				||  0 != (m_diagnostics & BGFX_DIAGNOSTIC_VERBOSE)
+				||  D3D11_MESSAGE_SEVERITY_WARNING >= msg->Severity)
 				{
 					BX_TRACE("D3D11 %s %s #%d: %s"
 						, s_messageSeverity[bx::min<uint32_t>(msg->Severity, BX_COUNTOF(s_messageSeverity)-1)]
@@ -4206,6 +4209,7 @@ namespace bgfx { namespace d3d11
 		ID3DUserDefinedAnnotation* m_annotation;
 		ID3D11DeviceContext1* m_deviceCtx1;
 		ID3D11InfoQueue*           m_infoQueue;
+		uint32_t                   m_diagnostics = BGFX_DIAGNOSTIC_NONE;
 
 		TimerQueryD3D11     m_gpuTimer;
 		OcclusionQueryD3D11 m_occlusionQuery;

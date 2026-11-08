@@ -1,7 +1,7 @@
 -- vim: syntax=lua
 -- bgfx interface
 
-version(167)
+version(168)
 
 typedef "bool"
 typedef "char"
@@ -220,6 +220,18 @@ flag.Debug { bits = 32, section = "Debug Flags" }
 	.Stats     --- Enable statistics display.
 	.Text      --- Enable debug text display.
 	.Profiler  --- Enable profiler. This causes per-view statistics to be collected, available through `bgfx::Stats::ViewStats`. This is unrelated to the profiler functions in `bgfx::CallbackI`.
+	()
+
+flag.Diagnostic { bits = 32, section = "Initialization and Shutdown" }
+	.None           --- No diagnostics.
+	.Verbose        --- Report informational debug layer messages, not only warnings and errors.
+	                --- Requires `Init::debug`.
+	.GpuValidation  --- Enable GPU-based validation (D3D12 GPU-based validation, Vulkan GPU-assisted
+	                --- validation). Requires `Init::debug`.
+	.SyncValidation --- Enable queue synchronization validation (D3D12 synchronized command queue
+	                --- validation, Vulkan synchronization validation). Requires `Init::debug`.
+	.Serialize      --- Wait for the GPU to finish each submitted command buffer before recording
+	                --- the next one.
 	()
 
 flag.Buffer { bits = 16, base = 8 }
@@ -1002,6 +1014,9 @@ struct.Init { ctor, section = "Initialization and Shutdown" }
 	                                   --- a default rendering backend will be selected appropriate to the platform.
 	                                   --- See: `bgfx::RendererType`
 
+	.backendType  "RendererType::Enum" --- Select native API a layered rendering backend (WebGPU) runs on. When
+	                                   --- set to RendererType::Count implementation's default will be selected.
+
 	.vendorId     "uint16_t"           --- Vendor PCI ID. If set to `BGFX_PCI_ID_NONE`, discrete and integrated
 	                                   --- GPUs will be prioritised.
 	                                   ---   - `BGFX_PCI_ID_NONE` - Autoselect adapter.
@@ -1016,6 +1031,7 @@ struct.Init { ctor, section = "Initialization and Shutdown" }
 	                                   --- matching ID.
 	.capabilities "uint64_t"           --- Capabilities initialization mask (default: UINT64_MAX).
 	.debug        "bool"               --- Enable device for debugging.
+	.diagnostics  "uint32_t"           --- Diagnostic flags. See: `BGFX_DIAGNOSTIC_*`.
 	.profile      "bool"               --- Enable device for profiling.
 	.fallback     "bool"               --- Enable fallback to next available renderer.
 	.videoDecode  "bool"               --- Enable video decoding.

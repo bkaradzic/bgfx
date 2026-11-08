@@ -786,37 +786,40 @@ namespace bgfx
 			                                ///  the cache grows on demand.
 		};
 
-		RendererType::Enum type;   //!< Select rendering backend. When set to RendererType::Count
-		                           ///  a default rendering backend will be selected appropriate to the platform.
-		                           ///  See: `bgfx::RendererType`
-		uint16_t vendorId;         //!< Vendor PCI ID. If set to `BGFX_PCI_ID_NONE`, discrete and integrated
-		                           ///  GPUs will be prioritised.
-		                           ///    - `BGFX_PCI_ID_NONE` - Autoselect adapter.
-		                           ///    - `BGFX_PCI_ID_SOFTWARE_RASTERIZER` - Software rasterizer.
-		                           ///    - `BGFX_PCI_ID_AMD` - AMD adapter.
-		                           ///    - `BGFX_PCI_ID_APPLE` - Apple adapter.
-		                           ///    - `BGFX_PCI_ID_INTEL` - Intel adapter.
-		                           ///    - `BGFX_PCI_ID_NVIDIA` - NVIDIA adapter.
-		                           ///    - `BGFX_PCI_ID_MICROSOFT` - Microsoft adapter.
-		uint16_t deviceId;         //!< Device ID. If set to 0 it will select first device, or device with
-		                           ///  matching ID.
-		uint64_t capabilities;     //!< Capabilities initialization mask (default: UINT64_MAX).
-		bool debug;                //!< Enable device for debugging.
-		bool profile;              //!< Enable device for profiling.
-		bool fallback;             //!< Enable fallback to next available renderer.
-		bool videoDecode;          //!< Enable video decoding.
-		PlatformData platformData; //!< Platform data.
-		SwapChain swapChain;       //!< Swap chain for the window bgfx creates its device on.
-		                           ///  See: `bgfx::SwapChain`.
-		uint32_t reset;            //!< Device and frame global settings. Anything that is a
-		                           ///  property of one surface belongs in `swapChain` instead.
-		                           ///  See: `BGFX_RESET_*`.
-		Limits limits;             //!< Configurable runtime limits parameters.
-		CallbackI* callback;       //!< Provide application specific callback interface.
-		                           ///  See: `bgfx::CallbackI`
-		bx::AllocatorI* allocator; //!< Custom allocator. When a custom allocator is not
-		                           ///  specified, bgfx uses the CRT allocator. Bgfx assumes
-		                           ///  custom allocator is thread safe.
+		RendererType::Enum type;        //!< Select rendering backend. When set to RendererType::Count
+		                                ///  a default rendering backend will be selected appropriate to the platform.
+		                                ///  See: `bgfx::RendererType`
+		RendererType::Enum backendType; //!< Select native API a layered rendering backend (WebGPU) runs on. When
+		                                ///  set to RendererType::Count implementation's default will be selected.
+		uint16_t vendorId;              //!< Vendor PCI ID. If set to `BGFX_PCI_ID_NONE`, discrete and integrated
+		                                ///  GPUs will be prioritised.
+		                                ///    - `BGFX_PCI_ID_NONE` - Autoselect adapter.
+		                                ///    - `BGFX_PCI_ID_SOFTWARE_RASTERIZER` - Software rasterizer.
+		                                ///    - `BGFX_PCI_ID_AMD` - AMD adapter.
+		                                ///    - `BGFX_PCI_ID_APPLE` - Apple adapter.
+		                                ///    - `BGFX_PCI_ID_INTEL` - Intel adapter.
+		                                ///    - `BGFX_PCI_ID_NVIDIA` - NVIDIA adapter.
+		                                ///    - `BGFX_PCI_ID_MICROSOFT` - Microsoft adapter.
+		uint16_t deviceId;              //!< Device ID. If set to 0 it will select first device, or device with
+		                                ///  matching ID.
+		uint64_t capabilities;          //!< Capabilities initialization mask (default: UINT64_MAX).
+		bool debug;                     //!< Enable device for debugging.
+		uint32_t diagnostics;           //!< Diagnostic flags. See: `BGFX_DIAGNOSTIC_*`.
+		bool profile;                   //!< Enable device for profiling.
+		bool fallback;                  //!< Enable fallback to next available renderer.
+		bool videoDecode;               //!< Enable video decoding.
+		PlatformData platformData;      //!< Platform data.
+		SwapChain swapChain;            //!< Swap chain for the window bgfx creates its device on.
+		                                ///  See: `bgfx::SwapChain`.
+		uint32_t reset;                 //!< Device and frame global settings. Anything that is a
+		                                ///  property of one surface belongs in `swapChain` instead.
+		                                ///  See: `BGFX_RESET_*`.
+		Limits limits;                  //!< Configurable runtime limits parameters.
+		CallbackI* callback;            //!< Provide application specific callback interface.
+		                                ///  See: `bgfx::CallbackI`
+		bx::AllocatorI* allocator;      //!< Custom allocator. When a custom allocator is not
+		                                ///  specified, bgfx uses the CRT allocator. Bgfx assumes
+		                                ///  custom allocator is thread safe.
 	};
 
 	/// Memory must be obtained by calling `bgfx::alloc`, `bgfx::copy`, or `bgfx::makeRef`.

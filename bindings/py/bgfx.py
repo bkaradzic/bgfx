@@ -543,6 +543,13 @@ class DebugFlags(enum.IntFlag):
 	Text = 0x8
 	Profiler = 0x10
 
+class DiagnosticFlags(enum.IntFlag):
+	None_ = 0x0
+	Verbose = 0x1
+	GpuValidation = 0x2
+	SyncValidation = 0x4
+	Serialize = 0x8
+
 class SwapChainMsaaFlags(enum.IntFlag):
 	X2 = 0x10
 	X4 = 0x20
@@ -927,10 +934,12 @@ InitLimits._fields_ = [
 
 Init._fields_ = [
 	("type", ctypes.c_int),
+	("backendType", ctypes.c_int),
 	("vendorId", ctypes.c_uint16),
 	("deviceId", ctypes.c_uint16),
 	("capabilities", ctypes.c_uint64),
 	("debug", ctypes.c_bool),
+	("diagnostics", ctypes.c_uint32),
 	("profile", ctypes.c_bool),
 	("fallback", ctypes.c_bool),
 	("videoDecode", ctypes.c_bool),

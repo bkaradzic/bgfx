@@ -1007,6 +1007,22 @@ class DebugFlags(enum.IntFlag):
 	# Enable profiler. This causes per-view statistics to be collected, available through `bgfx::Stats::ViewStats`. This is unrelated to the profiler functions in `bgfx::CallbackI`.
 	Profiler = 0x10
 
+class DiagnosticFlags(enum.IntFlag):
+	# No diagnostics.
+	None_ = 0x0
+	# Report informational debug layer messages, not only warnings and errors.
+	# Requires `Init::debug`.
+	Verbose = 0x1
+	# Enable GPU-based validation (D3D12 GPU-based validation, Vulkan GPU-assisted
+	# validation). Requires `Init::debug`.
+	GpuValidation = 0x2
+	# Enable queue synchronization validation (D3D12 synchronized command queue
+	# validation, Vulkan synchronization validation). Requires `Init::debug`.
+	SyncValidation = 0x4
+	# Wait for the GPU to finish each submitted command buffer before recording
+	# the next one.
+	Serialize = 0x8
+
 class SwapChainMsaaFlags(enum.IntFlag):
 	# Enable 2x MSAA.
 	X2 = 0x10
@@ -1469,6 +1485,9 @@ class Init(ctypes.Structure):
 	# a default rendering backend will be selected appropriate to the platform.
 	# See: `bgfx::RendererType`
 	type: int
+	# Select native API a layered rendering backend (WebGPU) runs on. When
+	# set to RendererType::Count implementation's default will be selected.
+	backendType: int
 	# Vendor PCI ID. If set to `BGFX_PCI_ID_NONE`, discrete and integrated
 	# GPUs will be prioritised.
 	#   - `BGFX_PCI_ID_NONE` - Autoselect adapter.
@@ -1486,6 +1505,8 @@ class Init(ctypes.Structure):
 	capabilities: int
 	# Enable device for debugging.
 	debug: bool
+	# Diagnostic flags. See: `BGFX_DIAGNOSTIC_*`.
+	diagnostics: int
 	# Enable device for profiling.
 	profile: bool
 	# Enable fallback to next available renderer.

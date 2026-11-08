@@ -540,6 +540,11 @@ namespace bgfx { namespace d3d12
 	static const GUID IID_ID3D12Debug5                            = { 0x548d6b12, 0x09fa, 0x40e0, { 0x90, 0x69, 0x5d, 0xcd, 0x58, 0x9a, 0x52, 0xc9 } };
 	static const GUID IID_ID3D12Debug6                            = { 0x82a816d6, 0x5d01, 0x4157, { 0x97, 0xd0, 0x49, 0x75, 0x46, 0x3f, 0xd1, 0xed } };
 	static const GUID IID_ID3D12DeviceRemovedExtendedDataSettings = { 0x82bc481c, 0x6b9b, 0x4030, { 0xae, 0xdb, 0x7e, 0xe3, 0xd1, 0xdf, 0x1e, 0x63 } };
+	static const GUID IID_ID3D12SDKConfiguration1                 = { 0x8aaf9303, 0xad25, 0x48b9, { 0x9a, 0x57, 0xd9, 0xc3, 0x7e, 0x00, 0x9d, 0x9f } };
+	static const GUID IID_ID3D12DeviceFactory                     = { 0x61f307d3, 0xd34e, 0x4e7c, { 0x83, 0x74, 0x3b, 0xa4, 0xde, 0x23, 0xcc, 0xcb } };
+	static const GUID CLSID_D3D12SDKConfiguration_                = { 0x7cda6aca, 0xa03e, 0x49c8, { 0x94, 0x58, 0x03, 0x34, 0xd2, 0x0e, 0x07, 0xce } };
+	static const GUID CLSID_D3D12Debug_                           = { 0xf2352aeb, 0xdd84, 0x49fe, { 0xb9, 0x7b, 0xa9, 0xdc, 0xfd, 0xcc, 0x1b, 0x4f } };
+	static const GUID CLSID_D3D12DeviceRemovedExtendedData_       = { 0x4a75bbc4, 0x9ff4, 0x4ad8, { 0x9f, 0x18, 0xab, 0xae, 0x84, 0xdc, 0x5f, 0xf2 } };
 	static const GUID IID_ID3D12DeviceRemovedExtendedData         = { 0x98931d33, 0x5ae8, 0x4791, { 0xaa, 0x3c, 0x1a, 0x73, 0xa2, 0x93, 0x4e, 0x71 } };
 	static const GUID IID_ID3D12DescriptorHeap                    = { 0x8efb471d, 0x616c, 0x4f49, { 0x90, 0xf7, 0x12, 0x7b, 0xb7, 0x63, 0xfa, 0x51 } };
 	static const GUID IID_ID3D12Device                            = { 0x189819f1, 0x1db6, 0x4b57, { 0xbe, 0x54, 0x18, 0x21, 0x33, 0x9b, 0x85, 0xf7 } };
@@ -800,6 +805,7 @@ namespace bgfx { namespace d3d12
 	static PFN_D3D12_ENABLE_EXPERIMENTAL_FEATURES D3D12EnableExperimentalFeatures;
 	static PFN_D3D12_CREATE_DEVICE                D3D12CreateDevice;
 	static PFN_D3D12_GET_DEBUG_INTERFACE          D3D12GetDebugInterface;
+	static PFN_D3D12_GET_INTERFACE                D3D12GetInterface;
 	static PFN_D3D12_SERIALIZE_ROOT_SIGNATURE     D3D12SerializeRootSignature;
 
 #	if !BX_PLATFORM_LINUX
@@ -898,6 +904,103 @@ namespace bgfx { namespace d3d12
 		{
 		}
 
+		HRESULT getDebugInterface(const GUID& _clsid, const GUID& _iid, void** _out)
+		{
+#if USE_D3D12_DYNAMIC_LIB
+			if (NULL != m_deviceFactory)
+			{
+				return m_deviceFactory->GetConfigurationInterface(_clsid, _iid, _out);
+			}
+#endif // USE_D3D12_DYNAMIC_LIB
+
+			BX_UNUSED(_clsid);
+			return D3D12GetDebugInterface(_iid, _out);
+		}
+
+#if USE_D3D12_DYNAMIC_LIB && BX_PLATFORM_WINDOWS
+		static uint32_t d3d12CoreSdkVersion(const bx::FilePath& _filePath)
+		{
+			HMODULE core = LoadLibraryExA(_filePath.getCPtr(), NULL, DONT_RESOLVE_DLL_REFERENCES);
+
+			if (NULL == core)
+			{
+				return 0;
+			}
+
+			const UINT* version = (const UINT*)GetProcAddress(core, "D3D12SDKVersion");
+			const uint32_t sdkVersion = NULL != version ? *version : 0;
+			FreeLibrary(core);
+
+			return sdkVersion;
+		}
+
+		void createAgilitySdkDeviceFactory()
+		{
+			HMODULE module = NULL;
+			char modulePath[MAX_PATH] = {};
+
+			if (!GetModuleHandleExA(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT
+				, (LPCSTR)&d3d12CoreSdkVersion
+				, &module)
+			||  0 == GetModuleFileNameA(module, modulePath, BX_COUNTOF(modulePath) ) )
+			{
+				return;
+			}
+
+			bx::FilePath sdkPath = bx::FilePath(modulePath).getPath();
+			sdkPath.join("D3D12/");
+
+			bx::FilePath corePath = sdkPath;
+			corePath.join("D3D12Core.dll");
+			const uint32_t agilityVersion = d3d12CoreSdkVersion(corePath);
+
+			char systemDir[MAX_PATH] = {};
+			GetSystemDirectoryA(systemDir, BX_COUNTOF(systemDir) );
+			corePath = systemDir;
+			corePath.join("D3D12Core.dll");
+			const uint32_t systemVersion = d3d12CoreSdkVersion(corePath);
+
+			if (agilityVersion <= systemVersion)
+			{
+				return;
+			}
+
+			ID3D12SDKConfiguration1* sdkConfig = NULL;
+			HRESULT hr = D3D12GetInterface(CLSID_D3D12SDKConfiguration_, IID_ID3D12SDKConfiguration1, (void**)&sdkConfig);
+
+			if (SUCCEEDED(hr) )
+			{
+				hr = sdkConfig->CreateDeviceFactory(agilityVersion, sdkPath.getCPtr(), IID_ID3D12DeviceFactory, (void**)&m_deviceFactory);
+				DX_RELEASE_I(sdkConfig);
+			}
+
+			if (FAILED(hr) )
+			{
+				m_deviceFactory = NULL;
+			}
+
+			BX_TRACE("D3D12 Agility SDK %u in '%s' %s (system runtime %u, 0x%08x)."
+				, agilityVersion
+				, sdkPath.getCPtr()
+				, NULL != m_deviceFactory ? "used" : "not loaded"
+				, systemVersion
+				, hr
+				);
+		}
+#endif // USE_D3D12_DYNAMIC_LIB && BX_PLATFORM_WINDOWS
+
+		HRESULT createDevice(IUnknown* _adapter, D3D_FEATURE_LEVEL _featureLevel)
+		{
+#if USE_D3D12_DYNAMIC_LIB
+			if (NULL != m_deviceFactory)
+			{
+				return m_deviceFactory->CreateDevice(_adapter, _featureLevel, IID_ID3D12Device, (void**)&m_device);
+			}
+#endif // USE_D3D12_DYNAMIC_LIB
+
+			return D3D12CreateDevice(_adapter, _featureLevel, IID_ID3D12Device, (void**)&m_device);
+		}
+
 		bool init(const Init& _init)
 		{
 			m_frameBuffers.alloc(kMainFrameBufferIdx);
@@ -948,6 +1051,7 @@ namespace bgfx { namespace d3d12
 				);
 
 			m_fbh = BGFX_INVALID_HANDLE;
+			m_diagnostics = _init.diagnostics;
 			bx::memSet(&m_mainSwapChain, 0, sizeof(m_mainSwapChain) );
 
 #if USE_D3D12_DYNAMIC_LIB
@@ -1001,6 +1105,8 @@ namespace bgfx { namespace d3d12
 			D3D12GetDebugInterface = (PFN_D3D12_GET_DEBUG_INTERFACE)bx::dlsym(m_d3d12Dll, "D3D12GetDebugInterface");
 			BX_WARN(NULL != D3D12GetDebugInterface, "Function D3D12GetDebugInterface not found.");
 
+			D3D12GetInterface = (PFN_D3D12_GET_INTERFACE)bx::dlsym(m_d3d12Dll, "D3D12GetInterface");
+
 			D3D12SerializeRootSignature = (PFN_D3D12_SERIALIZE_ROOT_SIGNATURE)bx::dlsym(m_d3d12Dll, "D3D12SerializeRootSignature");
 			BX_WARN(NULL != D3D12SerializeRootSignature, "Function D3D12SerializeRootSignature not found.");
 
@@ -1011,6 +1117,13 @@ namespace bgfx { namespace d3d12
 				BX_TRACE("Init error: Function not found.");
 				goto error;
 			}
+
+#	if BX_PLATFORM_WINDOWS
+			if (NULL != D3D12GetInterface)
+			{
+				createAgilitySdkDeviceFactory();
+			}
+#	endif // BX_PLATFORM_WINDOWS
 #endif // USE_D3D12_DYNAMIC_LIB
 
 #if !BX_PLATFORM_LINUX
@@ -1040,7 +1153,7 @@ namespace bgfx { namespace d3d12
 				||  _init.profile)
 				{
 					ID3D12Debug* debug0;
-					hr = D3D12GetDebugInterface(IID_ID3D12Debug, (void**)&debug0);
+					hr = getDebugInterface(CLSID_D3D12Debug_, IID_ID3D12Debug, (void**)&debug0);
 
 					if (SUCCEEDED(hr) )
 					{
@@ -1066,17 +1179,24 @@ namespace bgfx { namespace d3d12
 										|| NULL != m_winPixEvent
 										;
 
-									if (graphicsDebugger)
-									{
-										// RenderDoc/PIX already hook and wrap the D3D12 device. GPU-based validation conflicts
-										// with that wrapping and can intermittently deadlock CreateGraphicsPipelineState during
-										// heavy PSO creation.
-									}
-									else if (windowsVersionIs(Condition::GreaterEqual, 0x0A00, 22000) )
+									// RenderDoc/PIX already hook and wrap the D3D12 device. GPU-based validation conflicts
+									// with that wrapping and can intermittently deadlock CreateGraphicsPipelineState during
+									// heavy PSO creation.
+									const bool gpuValidation = 0 != (_init.diagnostics & BGFX_DIAGNOSTIC_GPU_VALIDATION);
+									BX_WARN(!gpuValidation || !graphicsDebugger, "GPU-based validation is disabled while a graphics debugger is attached.");
+
+									if (gpuValidation
+									&& !graphicsDebugger)
 									{
 										debug1->SetEnableGPUBasedValidation(true);
 									}
-									else
+
+									const bool syncValidation = false
+										|| 0 != (_init.diagnostics & BGFX_DIAGNOSTIC_SYNC_VALIDATION)
+										|| windowsVersionIs(Condition::GreaterEqual, 0x0A00, 22000)
+										;
+
+									if (!syncValidation)
 									{
 										debug1->SetEnableSynchronizedCommandQueueValidation(false);
 									}
@@ -1087,7 +1207,7 @@ namespace bgfx { namespace d3d12
 
 							{
 								ID3D12DeviceRemovedExtendedDataSettings* dred;
-								hr = D3D12GetDebugInterface(IID_ID3D12DeviceRemovedExtendedDataSettings, (void**)&dred);
+								hr = getDebugInterface(CLSID_D3D12DeviceRemovedExtendedData_, IID_ID3D12DeviceRemovedExtendedDataSettings, (void**)&dred);
 
 								if (SUCCEEDED(hr) )
 								{
@@ -1116,15 +1236,13 @@ namespace bgfx { namespace d3d12
 				hr = E_FAIL;
 				for (uint32_t ii = 0; ii < BX_COUNTOF(featureLevel) && FAILED(hr); ++ii)
 				{
-					hr = D3D12CreateDevice(
+					hr = createDevice(
 #if BX_PLATFORM_LINUX
 							NULL
 #else
 							m_dxgi.m_adapter
 #endif // BX_PLATFORM_LINUX
 							, featureLevel[ii]
-							, IID_ID3D12Device
-							, (void**)&m_device
 							);
 					BX_WARN(FAILED(hr), "Direct3D12 device feature level %d.%d."
 						, (featureLevel[ii] >> 12) & 0xf
@@ -1219,6 +1337,19 @@ namespace bgfx { namespace d3d12
 			}
 
 			DX_CHECK(m_device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS, &m_options, sizeof(m_options) ) );
+
+			{
+				D3D12_FEATURE_DATA_SHADER_MODEL shaderModel = { D3D_SHADER_MODEL_6_8 };
+
+				if (SUCCEEDED(m_device->CheckFeatureSupport(D3D12_FEATURE_SHADER_MODEL, &shaderModel, sizeof(shaderModel) ) ) )
+				{
+					BX_TRACE("D3D12 highest shader model %x.", shaderModel.HighestShaderModel);
+				}
+				else
+				{
+					BX_TRACE("D3D12 highest shader model below 6.8.");
+				}
+			}
 			BX_TRACE("D3D12 options:");
 			BX_TRACE("\tTiledResourcesTier %d", m_options.TiledResourcesTier);
 			BX_TRACE("\tResourceBindingTier %d", m_options.ResourceBindingTier);
@@ -2124,6 +2255,7 @@ namespace bgfx { namespace d3d12
 
 			case ErrorState::CreatedDXGIFactory:
 				DX_RELEASE(m_device,  0);
+				DX_RELEASE_I(m_deviceFactory);
 #if !BX_PLATFORM_LINUX
 				m_dxgi.shutdown();
 #endif // !BX_PLATFORM_LINUX
@@ -2215,6 +2347,7 @@ namespace bgfx { namespace d3d12
 			m_cmd.shutdown();
 
 			DX_RELEASE(m_device, 0);
+			DX_RELEASE_I(m_deviceFactory);
 
 			m_nvapi.shutdown();
 #if !BX_PLATFORM_LINUX
@@ -4710,6 +4843,12 @@ namespace bgfx { namespace d3d12
 		uint64_t kick()
 		{
 			uint64_t fence = m_cmd.kick();
+
+			if (0 != (m_diagnostics & BGFX_DIAGNOSTIC_SERIALIZE) )
+			{
+				m_cmd.finish(fence);
+			}
+
 			m_commandList = m_cmd.alloc();
 			return fence;
 		}
@@ -4756,7 +4895,9 @@ namespace bgfx { namespace d3d12
 					continue;
 				}
 
-				if (D3D12_MESSAGE_SEVERITY_WARNING >= msg->Severity)
+				if (false
+				||  0 != (m_diagnostics & BGFX_DIAGNOSTIC_VERBOSE)
+				||  D3D12_MESSAGE_SEVERITY_WARNING >= msg->Severity)
 				{
 					BX_TRACE("D3D12 %s %s #%d: %s"
 						, s_messageSeverity[bx::min<uint32_t>(msg->Severity, BX_COUNTOF(s_messageSeverity)-1)]
@@ -4787,6 +4928,7 @@ namespace bgfx { namespace d3d12
 		D3D_DRIVER_TYPE m_driverType;
 		D3D12_FEATURE_DATA_ARCHITECTURE m_architecture;
 		D3D12_FEATURE_DATA_D3D12_OPTIONS m_options;
+		uint32_t m_diagnostics = BGFX_DIAGNOSTIC_NONE;
 
 #if BX_PLATFORM_WINDOWS
 		ID3D12InfoQueue* m_infoQueue;
@@ -4797,6 +4939,7 @@ namespace bgfx { namespace d3d12
 		FrameBufferHandle m_windows[BGFX_CONFIG_MAX_FRAME_BUFFERS];
 
 		ID3D12Device*       m_device;
+		ID3D12DeviceFactory* m_deviceFactory = NULL;
 		TimerQueryD3D12     m_gpuTimer;
 		OcclusionQueryD3D12 m_occlusionQuery;
 
@@ -5194,6 +5337,7 @@ namespace bgfx { namespace d3d12
 
 		if (m_pos >= m_size)
 		{
+			BX_WARN(m_overflow, "Scratch descriptor heap overflow: %u descriptors in this frame, heap holds %u.", m_pos + 1, m_size);
 			m_overflow = true;
 			++m_pos;
 			m_high = m_pos;
@@ -8271,7 +8415,7 @@ namespace bgfx { namespace d3d12
 			commitShaderConstants(prog, gpuAddress);
 			_commandList->SetComputeRootConstantBufferView(ComputeRp::CBV, gpuAddress);
 
-			D3D12_GPU_DESCRIPTOR_HANDLE srvHandle[BGFX_MAX_COMPUTE_BINDINGS] = {};
+			D3D12_GPU_DESCRIPTOR_HANDLE srvHandle[5] = {};
 
 			for (uint32_t ii = 0; ii < 4; ++ii)
 			{
@@ -8286,11 +8430,6 @@ namespace bgfx { namespace d3d12
 			}
 
 			scratchBuffer.allocSrvArray(srvHandle[4], _texture, numSlices);
-
-			for (uint32_t ii = 5; ii < BGFX_MAX_COMPUTE_BINDINGS; ++ii)
-			{
-				scratchBuffer.allocEmpty(srvHandle[ii]);
-			}
 
 			_commandList->SetComputeRootDescriptorTable(ComputeRp::SRV, srvHandle[0]);
 			_commandList->SetComputeRootDescriptorTable(ComputeRp::UAV, srvHandle[0]);
@@ -9426,25 +9565,14 @@ namespace bgfx { namespace d3d12
 
 		m_commandList->SetPipelineState(getPipelineState(prog) );
 
-		D3D12_GPU_DESCRIPTOR_HANDLE srvHandle[BGFX_MAX_COMPUTE_BINDINGS] = {};
-		scratchBuffer.allocSrv(srvHandle[0], toBuffer ? texture.m_ptr : buffer.m_ptr, srvd);
+		D3D12_GPU_DESCRIPTOR_HANDLE srvHandle;
+		scratchBuffer.allocSrv(srvHandle, toBuffer ? texture.m_ptr : buffer.m_ptr, srvd);
 
-		for (uint32_t ii = 1; ii < BGFX_MAX_COMPUTE_BINDINGS; ++ii)
-		{
-			scratchBuffer.allocEmpty(srvHandle[ii]);
-		}
+		D3D12_GPU_DESCRIPTOR_HANDLE uavHandle;
+		scratchBuffer.allocUav(uavHandle, toBuffer ? buffer.m_ptr : texture.m_ptr, uavd);
 
-		m_commandList->SetComputeRootDescriptorTable(ComputeRp::SRV, srvHandle[0]);
-
-		D3D12_GPU_DESCRIPTOR_HANDLE uavHandle[BGFX_MAX_COMPUTE_BINDINGS] = {};
-		scratchBuffer.allocUav(uavHandle[0], toBuffer ? buffer.m_ptr : texture.m_ptr, uavd);
-
-		for (uint32_t ii = 1; ii < BGFX_MAX_COMPUTE_BINDINGS; ++ii)
-		{
-			scratchBuffer.allocEmpty(uavHandle[ii]);
-		}
-
-		m_commandList->SetComputeRootDescriptorTable(ComputeRp::UAV, uavHandle[0]);
+		m_commandList->SetComputeRootDescriptorTable(ComputeRp::SRV, srvHandle);
+		m_commandList->SetComputeRootDescriptorTable(ComputeRp::UAV, uavHandle);
 
 		const float blitRegion[8] =
 		{
@@ -10127,7 +10255,10 @@ namespace bgfx { namespace d3d12
 		D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle;
 		ScratchBufferD3D12& scratchBuffer = m_scratchBuffer[m_backBufferColorIdx];
 		m_cmd.finish(m_backBufferColorFence[m_backBufferColorIdx]);
-		scratchBuffer.reset(gpuHandle, (_render->m_numRenderItems + 1) * BGFX_CONFIG_MAX_TEXTURE_SAMPLERS);
+		scratchBuffer.reset(gpuHandle, 0
+			+ (_render->m_numRenderItems + 1) * BGFX_CONFIG_MAX_TEXTURE_SAMPLERS
+			+ _render->m_numBlitItems * 2
+			);
 
 		m_uniformScratchBuffer.begin();
 

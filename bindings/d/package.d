@@ -9,7 +9,7 @@ import bindbc.common.types: c_int64, c_uint64, va_list;
 import bindbc.bgfx.config;
 static import bgfx.impl;
 
-enum uint apiVersion = 167;
+enum uint apiVersion = 168;
 
 alias ViewID = ushort;
 
@@ -289,6 +289,31 @@ enum Debug: Debug_{
 	stats      = 0x0000_0004, ///Enable statistics display.
 	text       = 0x0000_0008, ///Enable debug text display.
 	profiler   = 0x0000_0010, ///Enable profiler. This causes per-view statistics to be collected, available through `bgfx::Stats::ViewStats`. This is unrelated to the profiler functions in `bgfx::CallbackI`.
+}
+
+alias Diagnostic_ = uint;
+enum Diagnostic: Diagnostic_{
+	none            = 0x0000_0000, ///No diagnostics.
+	/**
+	Report informational debug layer messages, not only warnings and errors.
+	Requires `Init::debug`.
+	*/
+	verbose         = 0x0000_0001,
+	/**
+	Enable GPU-based validation (D3D12 GPU-based validation, Vulkan GPU-assisted
+	validation). Requires `Init::debug`.
+	*/
+	gpuValidation   = 0x0000_0002,
+	/**
+	Enable queue synchronization validation (D3D12 synchronized command queue
+	validation, Vulkan synchronization validation). Requires `Init::debug`.
+	*/
+	syncValidation  = 0x0000_0004,
+	/**
+	Wait for the GPU to finish each submitted command buffer before recording
+	the next one.
+	*/
+	serialize       = 0x0000_0008,
 }
 
 alias Buffer_ = ushort;
@@ -1424,6 +1449,12 @@ extern(C++, "bgfx") struct Init{
 	RendererType type;
 	
 	/**
+	Select native API a layered rendering backend (WebGPU) runs on. When
+	set to RendererType::Count implementation's default will be selected.
+	*/
+	RendererType backendType;
+	
+	/**
 	Vendor PCI ID. If set to `BGFX_PCI_ID_NONE`, discrete and integrated
 	GPUs will be prioritised.
 	  - `BGFX_PCI_ID_NONE` - Autoselect adapter.
@@ -1443,6 +1474,7 @@ extern(C++, "bgfx") struct Init{
 	ushort deviceID;
 	c_uint64 capabilities; ///Capabilities initialization mask (default: UINT64_MAX).
 	bool debug_; ///Enable device for debugging.
+	uint diagnostics; ///Diagnostic flags. See: `BGFX_DIAGNOSTIC_*`.
 	bool profile; ///Enable device for profiling.
 	bool fallback; ///Enable fallback to next available renderer.
 	bool videoDecode; ///Enable video decoding.

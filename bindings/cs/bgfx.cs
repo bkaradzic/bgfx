@@ -616,6 +616,39 @@ public static partial class bgfx
 	}
 	
 	[Flags]
+	public enum DiagnosticFlags : uint
+	{
+		/// <summary>
+		/// No diagnostics.
+		/// </summary>
+		None                   = 0x00000000,
+	
+		/// <summary>
+		/// Report informational debug layer messages, not only warnings and errors.
+		/// Requires `Init::debug`.
+		/// </summary>
+		Verbose                = 0x00000001,
+	
+		/// <summary>
+		/// Enable GPU-based validation (D3D12 GPU-based validation, Vulkan GPU-assisted
+		/// validation). Requires `Init::debug`.
+		/// </summary>
+		GpuValidation          = 0x00000002,
+	
+		/// <summary>
+		/// Enable queue synchronization validation (D3D12 synchronized command queue
+		/// validation, Vulkan synchronization validation). Requires `Init::debug`.
+		/// </summary>
+		SyncValidation         = 0x00000004,
+	
+		/// <summary>
+		/// Wait for the GPU to finish each submitted command buffer before recording
+		/// the next one.
+		/// </summary>
+		Serialize              = 0x00000008,
+	}
+	
+	[Flags]
 	public enum BufferFlags : ushort
 	{
 		None                   = 0x0000,
@@ -2731,10 +2764,12 @@ public static partial class bgfx
 		}
 	
 		public RendererType type;
+		public RendererType backendType;
 		public ushort vendorId;
 		public ushort deviceId;
 		public ulong capabilities;
 		public byte debug;
+		public uint diagnostics;
 		public byte profile;
 		public byte fallback;
 		public byte videoDecode;

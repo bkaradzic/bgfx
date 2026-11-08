@@ -4609,10 +4609,12 @@ namespace bgfx
 
 	Init::Init()
 		: type(RendererType::Count)
+		, backendType(RendererType::Count)
 		, vendorId(BGFX_PCI_ID_NONE)
 		, deviceId(0)
 		, capabilities(UINT64_MAX)
 		, debug(BX_ENABLED(BGFX_CONFIG_DEBUG) )
+		, diagnostics(BGFX_DIAGNOSTIC_NONE)
 		, profile(BX_ENABLED(BGFX_CONFIG_DEBUG_ANNOTATION) )
 		, fallback(true)
 		, videoDecode(false)

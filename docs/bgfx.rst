@@ -21,6 +21,12 @@ General API for initialization, shutdown, frame management, debug, and querying 
 Initialization and Shutdown
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+.. doxygendefine:: BGFX_DIAGNOSTIC_NONE
+.. doxygendefine:: BGFX_DIAGNOSTIC_VERBOSE
+.. doxygendefine:: BGFX_DIAGNOSTIC_GPU_VALIDATION
+.. doxygendefine:: BGFX_DIAGNOSTIC_SYNC_VALIDATION
+.. doxygendefine:: BGFX_DIAGNOSTIC_SERIALIZE
+
 .. doxygendefine:: BGFX_PCI_ID_NONE
 .. doxygendefine:: BGFX_PCI_ID_SOFTWARE_RASTERIZER
 .. doxygendefine:: BGFX_PCI_ID_AMD
