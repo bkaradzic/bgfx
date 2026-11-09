@@ -892,6 +892,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			, m_renderCommandEncoder(NULL)
 			, m_computeCommandEncoder(NULL)
 			, m_renderCommandEncoderFbh(BGFX_INVALID_HANDLE)
+			, m_maxAnisotropy(1)
 		{
 			bx::memSet(&m_windows, 0xff, sizeof(m_windows) );
 		}
@@ -2104,12 +2105,15 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 		{
 			SwapChainMtl* swapChain = m_mainFrameBuffer.m_swapChain;
 
-			if (NULL != swapChain)
+			const uint32_t maxAnisotropy = !!(_reset & BGFX_RESET_MAXANISOTROPY)
+				? 16
+				: 1
+				;
+
+			if (m_maxAnisotropy != maxAnisotropy)
 			{
-				swapChain->m_maxAnisotropy = !!(_reset & BGFX_RESET_MAXANISOTROPY)
-					? 16
-					: 1
-					;
+				m_maxAnisotropy = maxAnisotropy;
+				m_samplerStateCache.invalidate();
 			}
 
 			uint32_t maskFlags = ~(0
@@ -3667,11 +3671,9 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 				desc->setLodMaxClamp(UINT8_MAX == _lodMax ? FLT_MAX : float(_lodMax) * 0.25f);
 				desc->setNormalizedCoordinates(TRUE);
 				desc->setBorderColor(borderColor);
-				desc->setMaxAnisotropy(true
-					&& NULL != m_mainFrameBuffer.m_swapChain
-					&& (0 != (_flags & (BGFX_SAMPLER_MIN_ANISOTROPIC|BGFX_SAMPLER_MAG_ANISOTROPIC) ) )
-						? m_mainFrameBuffer.m_swapChain->m_maxAnisotropy
-						: 1
+				desc->setMaxAnisotropy(0 != (_flags & (BGFX_SAMPLER_MIN_ANISOTROPIC|BGFX_SAMPLER_MAG_ANISOTROPIC) )
+					? m_maxAnisotropy
+					: 1
 					);
 
 				const uint32_t cmpFunc = (_flags&BGFX_SAMPLER_COMPARE_MASK)>>BGFX_SAMPLER_COMPARE_SHIFT;
@@ -3907,6 +3909,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 		MTL::RenderCommandEncoder*  m_renderCommandEncoder;
 		MTL::ComputeCommandEncoder* m_computeCommandEncoder;
 		FrameBufferHandle           m_renderCommandEncoderFbh;
+		uint32_t                    m_maxAnisotropy;
 		FrameBufferHandle           m_dbgTextFbh;
 	};
 
@@ -4362,8 +4365,6 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 	void TextureMtl::create(const Memory* _mem, uint64_t _flags, uint8_t _skip, uint64_t _external)
 	{
-		m_sampler = s_renderMtl->getSamplerState(uint32_t(_flags) );
-
 		bimg::ImageContainer imageContainer;
 
 		if (bimg::imageParse(imageContainer, _mem->data, _mem->size) )
@@ -4945,9 +4946,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 		{
 			s_renderMtl->m_renderCommandEncoder->setVertexTexture(ptr, _stage);
 			s_renderMtl->m_renderCommandEncoder->setVertexSamplerState(
-				  0 == (BGFX_SAMPLER_INTERNAL_DEFAULT & _flags)
-					? s_renderMtl->getSamplerState(_flags, _lodMin, _lodMax)
-					: m_sampler
+				  s_renderMtl->getSamplerState(flags, _lodMin, _lodMax)
 				, _stage
 				);
 		}
@@ -4956,9 +4955,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 		{
 			s_renderMtl->m_renderCommandEncoder->setFragmentTexture(ptr, _stage);
 			s_renderMtl->m_renderCommandEncoder->setFragmentSamplerState(
-				  0 == (BGFX_SAMPLER_INTERNAL_DEFAULT & _flags)
-					? s_renderMtl->getSamplerState(_flags, _lodMin, _lodMax)
-					: m_sampler
+				  s_renderMtl->getSamplerState(flags, _lodMin, _lodMax)
 				, _stage
 				);
 		}
@@ -5003,6 +5000,15 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 		MTL::PixelFormat format = alt
 			? m_ptrAlt->pixelFormat()
 			: ptr->pixelFormat()
+			;
+
+		const bool swizzleDepth = !_stencil
+			&& (false
+				|| MTL::PixelFormatDepth16Unorm          == format
+				|| MTL::PixelFormatDepth32Float          == format
+				|| MTL::PixelFormatDepth24Unorm_Stencil8 == format
+				|| MTL::PixelFormatDepth32Float_Stencil8 == format
+				)
 			;
 
 		if (_stencil
@@ -5073,6 +5079,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			;
 
 		if (fullRange
+		&&  !swizzleDepth
 		&&  format == ptr->pixelFormat() )
 		{
 			return ptr;
@@ -5100,12 +5107,21 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			return it->second;
 		}
 
-		MTL::Texture* view = ptr->newTextureView(
-			  format
-			, type
-			, NS::Range::Make(firstMip, numMips)
-			, NS::Range::Make(firstLayer, numLayers)
-			);
+		MTL::Texture* view = swizzleDepth
+			? ptr->newTextureView(
+				  format
+				, type
+				, NS::Range::Make(firstMip, numMips)
+				, NS::Range::Make(firstLayer, numLayers)
+				, MTL::TextureSwizzleChannels(MTL::TextureSwizzleRed, MTL::TextureSwizzleZero, MTL::TextureSwizzleZero, MTL::TextureSwizzleOne)
+				)
+			: ptr->newTextureView(
+				  format
+				, type
+				, NS::Range::Make(firstMip, numMips)
+				, NS::Range::Make(firstLayer, numLayers)
+				)
+			;
 		m_ptrViews[key] = view;
 
 		return view;
@@ -6671,6 +6687,9 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 		const uint8_t maxTextureSamplers = bx::narrowCast<uint8_t>(g_caps.limits.maxTextureSamplers);
 
 		MTL::RenderCommandEncoder* rce = NULL;
+
+		DepthControl currentDepthControl = {};
+		bool currentDepthControlValid = false;
 		PipelineStateMtl* currentPso = NULL;
 		m_lastPso = NULL;
 
@@ -7105,9 +7124,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 										, stage
 										);
 									m_computeCommandEncoder->setSamplerState(
-										0 == (BGFX_SAMPLER_INTERNAL_DEFAULT & flags)
-										? getSamplerState(flags, bind.m_lod.min, bind.m_lod.max)
-										: texture.m_sampler
+										  getSamplerState(resolvedFlags, bind.m_lod.min, bind.m_lod.max)
 										, stage
 										);
 								}
@@ -7194,6 +7211,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 							currentState.clear();
 							currentState.m_scissor = !draw.m_scissor;
 							currentBind.clear();
+							currentDepthControlValid = false;
 						}
 
 						continue;
@@ -7218,6 +7236,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 					currentState.m_stencil    = newStencil;
 
 					currentBind.clear();
+					currentDepthControlValid = false;
 
 					currentProgram = BGFX_INVALID_HANDLE;
 					setDepthStencilState(newFlags, packStencil(BGFX_STENCIL_NONE, BGFX_STENCIL_NONE) );
@@ -7274,12 +7293,25 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 						: renderView->m_depthBias
 						;
 
-					if (m_supportsDepthClipMode)
+					if (!currentDepthControlValid
+					||  currentDepthControl.m_depthClamp != depthControl.m_depthClamp)
 					{
-						rce->setDepthClipMode(depthControl.m_depthClamp ? MTL::DepthClipModeClamp : MTL::DepthClipModeClip);
+						if (m_supportsDepthClipMode)
+						{
+							rce->setDepthClipMode(depthControl.m_depthClamp ? MTL::DepthClipModeClamp : MTL::DepthClipModeClip);
+						}
 					}
 
-					rce->setDepthBias(float(depthControl.m_constant), depthControl.m_slopeScale, depthControl.m_clamp);
+					if (!currentDepthControlValid
+					||  currentDepthControl.m_constant   != depthControl.m_constant
+					||  currentDepthControl.m_slopeScale != depthControl.m_slopeScale
+					||  currentDepthControl.m_clamp      != depthControl.m_clamp)
+					{
+						rce->setDepthBias(float(depthControl.m_constant), depthControl.m_slopeScale, depthControl.m_clamp);
+					}
+
+					currentDepthControl      = depthControl;
+					currentDepthControlValid = true;
 				}
 
 				if ( (0
