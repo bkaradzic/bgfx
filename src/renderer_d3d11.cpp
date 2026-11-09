@@ -5417,8 +5417,11 @@ namespace bgfx { namespace d3d11
 					if (needResolve)
 					{
 						const uint32_t savedMipLevels = desc.MipLevels;
-						desc.MipLevels = 1;
+						const uint32_t savedMiscFlags = desc.MiscFlags;
+						desc.MipLevels  = 1;
+						desc.MiscFlags &= ~D3D11_RESOURCE_MISC_TEXTURECUBE;
 						DX_CHECK(s_renderD3D11->m_device->CreateTexture2D(&desc, NULL, &m_rt2d) );
+						desc.MiscFlags  = savedMiscFlags;
 
 						const bool autoGenMips = 0 != (desc.MiscFlags & D3D11_RESOURCE_MISC_GENERATE_MIPS);
 						if (!depth)
@@ -6510,7 +6513,11 @@ namespace bgfx { namespace d3d11
 								desc.Texture2DArray.MipSlice        = at.mip;
 							}
 
-							DX_CHECK(s_renderD3D11->m_device->CreateRenderTargetView(texture.m_ptr, &desc, &m_rtv[m_num]) );
+							DX_CHECK(s_renderD3D11->m_device->CreateRenderTargetView(
+								  NULL == texture.m_rt ? texture.m_ptr : texture.m_rt
+								, &desc
+								, &m_rtv[m_num]
+								) );
 							break;
 
 						case TextureD3D11::Texture3D:

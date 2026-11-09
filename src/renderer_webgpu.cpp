@@ -3368,6 +3368,7 @@ WGPU_IMPORT
 			{
 				m_maxAnisotropy = maxAnisotropy;
 				m_samplerStateCache.invalidate();
+				invalidateBindGroupCache();
 			}
 
 			if (!m_backBuffer.isSwapChain() )

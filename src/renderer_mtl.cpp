@@ -4542,10 +4542,13 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 			if (sampleCount > 1)
 			{
-				desc->setTextureType(ti.numLayers > 1
+				const uint32_t numSides = ti.numLayers * (imageContainer.m_cubeMap ? 6 : 1);
+
+				desc->setTextureType(numSides > 1
 					? MTL::TextureType2DMultisampleArray
 					: MTL::TextureType2DMultisample
 					);
+				desc->setArrayLength(numSides);
 				desc->setSampleCount(sampleCount);
 				desc->setMipmapLevelCount(1);
 
