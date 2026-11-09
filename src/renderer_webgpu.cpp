@@ -103,6 +103,23 @@ namespace bgfx { namespace wgpu
 	};
 	static_assert(AttribType::Count == BX_COUNTOF(s_attribType) );
 
+	static const WGPUBackendType s_wgpuBackendType[] =
+	{
+		WGPUBackendType_Null,      // Noop
+		WGPUBackendType_Undefined, // Agc
+		WGPUBackendType_D3D11,     // Direct3D11
+		WGPUBackendType_D3D12,     // Direct3D12
+		WGPUBackendType_Undefined, // Gnm
+		WGPUBackendType_Metal,     // Metal
+		WGPUBackendType_Undefined, // Nvn
+		WGPUBackendType_OpenGLES,  // OpenGLES
+		WGPUBackendType_OpenGL,    // OpenGL
+		WGPUBackendType_Vulkan,    // Vulkan
+		WGPUBackendType_Undefined, // WebGPU
+		WGPUBackendType_Undefined, // Count
+	};
+	static_assert(RendererType::Count+1 == BX_COUNTOF(s_wgpuBackendType) );
+
 	static const WGPUCullMode s_cullMode[] =
 	{
 		WGPUCullMode_None,
@@ -934,6 +951,7 @@ WGPU_IMPORT
 			, m_device(NULL)
 			, m_backendType(WGPUBackendType_Undefined)
 			, m_callbackMode(WGPUCallbackMode_AllowProcessEvents)
+			, m_diagnostics(BGFX_DIAGNOSTIC_NONE)
 			, m_maxAnisotropy(1)
 			, m_wireframe(false)
 			, m_mipGen(NULL)
@@ -1060,6 +1078,7 @@ WGPU_IMPORT
 			ErrorState::Enum errorState = ErrorState::Default;
 
 //			m_fbh = BGFX_INVALID_HANDLE;
+			m_diagnostics = _init.diagnostics;
 			bx::memSet(&m_mainSwapChain, 0, sizeof(m_mainSwapChain) );
 
 			if (_init.debug
@@ -1188,7 +1207,7 @@ WGPU_IMPORT
 						.featureLevel         = WGPUFeatureLevel_Undefined,
 						.powerPreference      = WGPUPowerPreference_HighPerformance,
 						.forceFallbackAdapter = false,
-						.backendType          = WGPUBackendType_Undefined,
+						.backendType          = s_wgpuBackendType[_init.backendType],
 						.compatibleSurface    = NULL,
 					};
 
@@ -4617,6 +4636,7 @@ WGPU_IMPORT
 		WGPULimits         m_limits;
 		WGPUBackendType    m_backendType;
 		WGPUCallbackMode   m_callbackMode;
+		uint32_t           m_diagnostics;
 
 		uint32_t         m_maxFrameLatency;
 		CommandQueueWGPU m_cmd;
@@ -6835,6 +6855,11 @@ WGPU_IMPORT
 	#if !BX_PLATFORM_EMSCRIPTEN
 		WGPU_CHECK(wgpuInstanceProcessEvents(s_renderWGPU->m_instance) );
 	#endif // !BX_PLATFORM_EMSCRIPTEN
+
+		if (0 != (s_renderWGPU->m_diagnostics & BGFX_DIAGNOSTIC_SERIALIZE) )
+		{
+			wait();
+		}
 
 		m_commandEncoder = WGPU_CHECK(wgpuDeviceCreateCommandEncoder(s_renderWGPU->m_device, NULL) );
 	}

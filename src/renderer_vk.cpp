@@ -392,6 +392,7 @@ VK_IMPORT_DEVICE
 			EXT_surface_maintenance1,
 			EXT_swapchain_colorspace,
 			EXT_swapchain_maintenance1,
+			EXT_validation_features,
 			KHR_16bit_storage,
 			KHR_draw_indirect_count,
 			KHR_fragment_shading_rate,
@@ -445,6 +446,7 @@ VK_IMPORT_DEVICE
 		{ "VK_EXT_surface_maintenance1",            1, false, false, true,                                                          Layer::Count },
 		{ "VK_EXT_swapchain_colorspace",            1, false, false, true,                                                          Layer::Count },
 		{ "VK_EXT_swapchain_maintenance1",          1, false, false, true,                                                          Layer::Count },
+		{ "VK_EXT_validation_features",             1, false, false, false,                                                         Layer::VK_LAYER_KHRONOS_validation },
 		{ "VK_KHR_16bit_storage",                   1, false, false, true,                                                          Layer::Count },
 		{ "VK_KHR_draw_indirect_count",             1, false, false, true,                                                          Layer::Count },
 		{ "VK_KHR_fragment_shading_rate",           1, false, false, true,                                                          Layer::Count },
@@ -1411,6 +1413,7 @@ VK_IMPORT_DEVICE
 			bool shaderOutputLayer       = false;
 
 			m_fbh = BGFX_INVALID_HANDLE;
+			m_diagnostics = _init.diagnostics;
 			m_readOnlyDepthLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 			bx::memSet(&m_mainSwapChain, 0, sizeof(m_mainSwapChain) );
 
@@ -1480,6 +1483,10 @@ VK_IMPORT
 				s_layer[Layer::VK_LAYER_KHRONOS_validation        ].m_instance.m_initialize = _init.debug;
 
 				s_extension[Extension::EXT_debug_report].m_initialize = _init.debug;
+				s_extension[Extension::EXT_validation_features].m_initialize = true
+					&& _init.debug
+					&& 0 != (_init.diagnostics & (BGFX_DIAGNOSTIC_GPU_VALIDATION | BGFX_DIAGNOSTIC_SYNC_VALIDATION) )
+					;
 
 				s_extension[Extension::EXT_conservative_rasterization ].m_initialize = !!(_init.capabilities & BGFX_CAPS_CONSERVATIVE_RASTER  );
 				s_extension[Extension::EXT_shader_viewport_index_layer].m_initialize = !!(_init.capabilities & BGFX_CAPS_VIEWPORT_LAYER_ARRAY );
@@ -1607,6 +1614,45 @@ VK_IMPORT
 				ici.enabledExtensionCount   = numEnabledExtensions;
 				ici.ppEnabledExtensionNames = enabledExtension;
 
+				VkValidationFeatureEnableEXT validationFeatureEnable[2];
+				uint32_t numValidationFeatureEnable = 0;
+
+				if (0 != (_init.diagnostics & BGFX_DIAGNOSTIC_GPU_VALIDATION) )
+				{
+					validationFeatureEnable[numValidationFeatureEnable++] = VK_VALIDATION_FEATURE_ENABLE_GPU_ASSISTED_EXT;
+				}
+
+				if (0 != (_init.diagnostics & BGFX_DIAGNOSTIC_SYNC_VALIDATION) )
+				{
+					validationFeatureEnable[numValidationFeatureEnable++] = VK_VALIDATION_FEATURE_ENABLE_SYNCHRONIZATION_VALIDATION_EXT;
+				}
+
+				const VkValidationFeaturesEXT validationFeatures =
+				{
+					.sType                          = VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT,
+					.pNext                          = NULL,
+					.enabledValidationFeatureCount  = numValidationFeatureEnable,
+					.pEnabledValidationFeatures     = validationFeatureEnable,
+					.disabledValidationFeatureCount = 0,
+					.pDisabledValidationFeatures    = NULL,
+				};
+
+				const bool validationFeaturesEnabled = true
+					&& s_extension[Extension::EXT_validation_features].m_supported
+					&& s_extension[Extension::EXT_validation_features].m_initialize
+					&& s_layer[Layer::VK_LAYER_KHRONOS_validation].m_instance.m_supported
+					&& s_layer[Layer::VK_LAYER_KHRONOS_validation].m_instance.m_initialize
+					;
+
+				BX_WARN(!s_extension[Extension::EXT_validation_features].m_initialize || validationFeaturesEnabled
+					, "VK_EXT_validation_features is not available, GPU-assisted and synchronization validation are disabled."
+					);
+
+				if (validationFeaturesEnabled)
+				{
+					ici.pNext = &validationFeatures;
+				}
+
 				if constexpr (BX_ENABLED(BGFX_CONFIG_DEBUG) )
 				{
 					// Validation layer is calling freeFunction with pointers that are not allocated
@@ -1672,6 +1718,9 @@ VK_IMPORT_INSTANCE
 				drcb.flags       = 0
 					| VK_DEBUG_REPORT_ERROR_BIT_EXT
 					| VK_DEBUG_REPORT_WARNING_BIT_EXT
+					| (0 != (m_diagnostics & BGFX_DIAGNOSTIC_VERBOSE) ? VK_DEBUG_REPORT_INFORMATION_BIT_EXT         : 0)
+					| (0 != (m_diagnostics & BGFX_DIAGNOSTIC_VERBOSE) ? VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT : 0)
+					| (0 != (m_diagnostics & BGFX_DIAGNOSTIC_VERBOSE) ? VK_DEBUG_REPORT_DEBUG_BIT_EXT               : 0)
 					;
 				result = vkCreateDebugReportCallbackEXT(m_instance
 					, &drcb
@@ -6026,6 +6075,7 @@ VK_IMPORT_DEVICE
 
 		VkAllocationCallbacks*   m_allocatorCb;
 		VkDebugReportCallbackEXT m_debugReportCallback;
+		uint32_t         m_diagnostics = BGFX_DIAGNOSTIC_NONE;
 		VkInstance       m_instance;
 		VkPhysicalDevice m_physicalDevice;
 		uint32_t         m_instanceApiVersion;
@@ -11042,7 +11092,9 @@ VK_DESTROY
 				}
 			}
 
-			if (_wait)
+			if (false
+			||  _wait
+			||  0 != (s_renderVK->m_diagnostics & BGFX_DIAGNOSTIC_SERIALIZE) )
 			{
 				BGFX_PROFILER_SCOPE("vkWaitForFences", kColorWait);
 

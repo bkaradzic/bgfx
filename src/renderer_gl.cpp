@@ -1213,9 +1213,11 @@ namespace bgfx { namespace gl
 		return "<unknown>";
 	}
 
-	void GL_APIENTRY debugProcCb(GLenum _source, GLenum _type, GLuint _id, GLenum _severity, GLsizei /*_length*/, const GLchar* _message, const void* /*_userParam*/)
+	void GL_APIENTRY debugProcCb(GLenum _source, GLenum _type, GLuint _id, GLenum _severity, GLsizei /*_length*/, const GLchar* _message, const void* _userParam)
 	{
-		if (GL_DEBUG_SEVERITY_NOTIFICATION != _severity)
+		if (false
+		||  NULL != _userParam
+		||  GL_DEBUG_SEVERITY_NOTIFICATION != _severity)
 		{
 			BX_TRACE("src %s, type %s, id %d, severity %s, '%s'"
 					, toString(_source)
@@ -3145,7 +3147,9 @@ namespace bgfx { namespace gl
 					&&  NULL != glDebugMessageCallback
 					&&  NULL != glGetDebugMessageLog)
 					{
-						GL_CHECK(glDebugMessageCallback(debugProcCb, NULL) );
+						const bool verbose = 0 != (_init.diagnostics & BGFX_DIAGNOSTIC_VERBOSE);
+
+						GL_CHECK(glDebugMessageCallback(debugProcCb, verbose ? this : NULL) );
 						GL_CHECK(glDebugMessageControl(GL_DONT_CARE
 							, GL_DONT_CARE
 							, GL_DEBUG_SEVERITY_MEDIUM
@@ -3153,6 +3157,12 @@ namespace bgfx { namespace gl
 							, NULL
 							, GL_TRUE
 							) );
+
+						if (verbose)
+						{
+							GL_CHECK(glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DEBUG_SEVERITY_LOW,          0, NULL, GL_TRUE) );
+							GL_CHECK(glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DEBUG_SEVERITY_NOTIFICATION, 0, NULL, GL_TRUE) );
+						}
 					}
 				}
 				else

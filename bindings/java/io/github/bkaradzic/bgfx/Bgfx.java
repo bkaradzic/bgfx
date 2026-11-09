@@ -4190,6 +4190,43 @@ public final class Bgfx {
 	}
 
 	/**
+	 * Constants for Diagnostic flags.
+	 */
+	@NullMarked
+	public static final class DiagnosticFlags {
+		private DiagnosticFlags() {
+		}
+		/**
+		 * No diagnostics.
+		 */
+		public static final int None = 0x00000000;
+
+		/**
+		 * Report informational debug layer messages, not only warnings and errors.
+		 * Requires {@code Init.debug}.
+		 */
+		public static final int Verbose = 0x00000001;
+
+		/**
+		 * Enable GPU-based validation (D3D12 GPU-based validation, Vulkan GPU-assisted
+		 * validation). Requires {@code Init.debug}.
+		 */
+		public static final int GpuValidation = 0x00000002;
+
+		/**
+		 * Enable queue synchronization validation (D3D12 synchronized command queue
+		 * validation, Vulkan synchronization validation). Requires {@code Init.debug}.
+		 */
+		public static final int SyncValidation = 0x00000004;
+
+		/**
+		 * Wait for the GPU to finish each submitted command buffer before recording
+		 * the next one.
+		 */
+		public static final int Serialize = 0x00000008;
+	}
+
+	/**
 	 * Constants for Buffer flags.
 	 */
 	@NullMarked
@@ -8184,10 +8221,12 @@ public final class Bgfx {
 		 */
 		public static final StructLayout LAYOUT = cStruct("bgfx_init_t",
 			ValueLayout.JAVA_INT.withName("type"),
+			ValueLayout.JAVA_INT.withName("backendType"),
 			ValueLayout.JAVA_SHORT.withName("vendorId"),
 			ValueLayout.JAVA_SHORT.withName("deviceId"),
 			ValueLayout.JAVA_LONG.withName("capabilities"),
 			ValueLayout.JAVA_BOOLEAN.withName("debug"),
+			ValueLayout.JAVA_INT.withName("diagnostics"),
 			ValueLayout.JAVA_BOOLEAN.withName("profile"),
 			ValueLayout.JAVA_BOOLEAN.withName("fallback"),
 			ValueLayout.JAVA_BOOLEAN.withName("videoDecode"),
@@ -8199,6 +8238,8 @@ public final class Bgfx {
 			ValueLayout.ADDRESS.withName("allocator"));
 		private static final VarHandle VH_TYPE = LAYOUT.varHandle(
 			MemoryLayout.PathElement.groupElement("type"));
+		private static final VarHandle VH_BACKENDTYPE = LAYOUT.varHandle(
+			MemoryLayout.PathElement.groupElement("backendType"));
 		private static final VarHandle VH_VENDORID = LAYOUT.varHandle(
 			MemoryLayout.PathElement.groupElement("vendorId"));
 		private static final VarHandle VH_DEVICEID = LAYOUT.varHandle(
@@ -8207,6 +8248,8 @@ public final class Bgfx {
 			MemoryLayout.PathElement.groupElement("capabilities"));
 		private static final VarHandle VH_DEBUG = LAYOUT.varHandle(
 			MemoryLayout.PathElement.groupElement("debug"));
+		private static final VarHandle VH_DIAGNOSTICS = LAYOUT.varHandle(
+			MemoryLayout.PathElement.groupElement("diagnostics"));
 		private static final VarHandle VH_PROFILE = LAYOUT.varHandle(
 			MemoryLayout.PathElement.groupElement("profile"));
 		private static final VarHandle VH_FALLBACK = LAYOUT.varHandle(
@@ -8257,6 +8300,24 @@ public final class Bgfx {
 		 */
 		public Init type(RendererType value) {
 			VH_TYPE.set(segment(), 0L, value.ordinal());
+			return this;
+		}
+
+		/**
+		 * Select native API a layered rendering backend (WebGPU) runs on. When
+		 * set to RendererType.COUNT implementation's default will be selected.
+		 * @return the field value
+		 */
+		public RendererType backendType() {
+			return RendererType.fromValue((int) VH_BACKENDTYPE.get(segment(), 0L));
+		}
+
+		/**
+		 * Sets the native {@code backendType} field and returns {@code this}.
+		 * @param value the new field value
+		 */
+		public Init backendType(RendererType value) {
+			VH_BACKENDTYPE.set(segment(), 0L, value.ordinal());
 			return this;
 		}
 
@@ -8350,6 +8411,23 @@ public final class Bgfx {
 		 */
 		public Init debug(boolean value) {
 			VH_DEBUG.set(segment(), 0L, value);
+			return this;
+		}
+
+		/**
+		 * Diagnostic flags. See: {@code BGFX_DIAGNOSTIC_*}.
+		 * @return the field value
+		 */
+		public @Unsigned int diagnostics() {
+			return (@Unsigned int) VH_DIAGNOSTICS.get(segment(), 0L);
+		}
+
+		/**
+		 * Sets the native {@code diagnostics} field and returns {@code this}.
+		 * @param value the new field value
+		 */
+		public Init diagnostics(@Unsigned int value) {
+			VH_DIAGNOSTICS.set(segment(), 0L, value);
 			return this;
 		}
 

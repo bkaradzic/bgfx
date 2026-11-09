@@ -909,6 +909,12 @@ typedef struct bgfx_init_s
     bgfx_renderer_type_t type;
     
     /**
+     * Select native API a layered rendering backend (WebGPU) runs on. When
+     * set to RendererType::Count implementation's default will be selected.
+     */
+    bgfx_renderer_type_t backendType;
+    
+    /**
      * Vendor PCI ID. If set to `BGFX_PCI_ID_NONE`, discrete and integrated
      * GPUs will be prioritised.
      *   - `BGFX_PCI_ID_NONE` - Autoselect adapter.
@@ -928,6 +934,7 @@ typedef struct bgfx_init_s
     uint16_t             deviceId;
     uint64_t             capabilities;       /** Capabilities initialization mask (default: UINT64_MAX). */
     bool                 debug;              /** Enable device for debugging.             */
+    uint32_t             diagnostics;        /** Diagnostic flags. See: `BGFX_DIAGNOSTIC_*`. */
     bool                 profile;            /** Enable device for profiling.             */
     bool                 fallback;           /** Enable fallback to next available renderer. */
     bool                 videoDecode;        /** Enable video decoding.                   */

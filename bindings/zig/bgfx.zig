@@ -377,6 +377,26 @@ pub const DebugFlags_Text: DebugFlags                   = 0x00000008;
 /// Enable profiler. This causes per-view statistics to be collected, available through `bgfx::Stats::ViewStats`. This is unrelated to the profiler functions in `bgfx::CallbackI`.
 pub const DebugFlags_Profiler: DebugFlags               = 0x00000010;
 
+pub const DiagnosticFlags = u32;
+/// No diagnostics.
+pub const DiagnosticFlags_None: DiagnosticFlags                   = 0x00000000;
+
+/// Report informational debug layer messages, not only warnings and errors.
+/// Requires `Init::debug`.
+pub const DiagnosticFlags_Verbose: DiagnosticFlags                = 0x00000001;
+
+/// Enable GPU-based validation (D3D12 GPU-based validation, Vulkan GPU-assisted
+/// validation). Requires `Init::debug`.
+pub const DiagnosticFlags_GpuValidation: DiagnosticFlags          = 0x00000002;
+
+/// Enable queue synchronization validation (D3D12 synchronized command queue
+/// validation, Vulkan synchronization validation). Requires `Init::debug`.
+pub const DiagnosticFlags_SyncValidation: DiagnosticFlags         = 0x00000004;
+
+/// Wait for the GPU to finish each submitted command buffer before recording
+/// the next one.
+pub const DiagnosticFlags_Serialize: DiagnosticFlags              = 0x00000008;
+
 pub const BufferFlags = u16;
 pub const BufferFlags_None: BufferFlags                   = 0x0000;
 
@@ -1713,10 +1733,12 @@ pub const Init = extern struct {
     };
 
         type: RendererType,
+        backendType: RendererType,
         vendorId: u16,
         deviceId: u16,
         capabilities: u64,
         debug: bool,
+        diagnostics: u32,
         profile: bool,
         fallback: bool,
         videoDecode: bool,

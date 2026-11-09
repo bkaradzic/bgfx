@@ -15,7 +15,7 @@
 #ifndef BGFX_DEFINES_H_HEADER_GUARD
 #define BGFX_DEFINES_H_HEADER_GUARD
 
-#define BGFX_API_VERSION UINT32_C(167)
+#define BGFX_API_VERSION UINT32_C(168)
 
 /**
  * Color RGB/alpha/depth write. When it's not specified write will be disabled.
@@ -272,6 +272,24 @@
 #define BGFX_DEBUG_STATS                          UINT32_C(0x00000004) //!< Enable statistics display.
 #define BGFX_DEBUG_TEXT                           UINT32_C(0x00000008) //!< Enable debug text display.
 #define BGFX_DEBUG_PROFILER                       UINT32_C(0x00000010) //!< Enable profiler. This causes per-view statistics to be collected, available through `bgfx::Stats::ViewStats`. This is unrelated to the profiler functions in `bgfx::CallbackI`.
+
+#define BGFX_DIAGNOSTIC_NONE                      UINT32_C(0x00000000) //!< No diagnostics.
+
+/// Report informational debug layer messages, not only warnings and errors.
+/// Requires `Init::debug`.
+#define BGFX_DIAGNOSTIC_VERBOSE                   UINT32_C(0x00000001)
+
+/// Enable GPU-based validation (D3D12 GPU-based validation, Vulkan GPU-assisted
+/// validation). Requires `Init::debug`.
+#define BGFX_DIAGNOSTIC_GPU_VALIDATION            UINT32_C(0x00000002)
+
+/// Enable queue synchronization validation (D3D12 synchronized command queue
+/// validation, Vulkan synchronization validation). Requires `Init::debug`.
+#define BGFX_DIAGNOSTIC_SYNC_VALIDATION           UINT32_C(0x00000004)
+
+/// Wait for the GPU to finish each submitted command buffer before recording
+/// the next one.
+#define BGFX_DIAGNOSTIC_SERIALIZE                 UINT32_C(0x00000008)
 
 #define BGFX_BUFFER_NONE                          UINT16_C(0x0000)
 #define BGFX_BUFFER_COMPUTE_READ                  UINT16_C(0x0100) //!< Buffer will be read by shader.

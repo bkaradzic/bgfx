@@ -551,12 +551,24 @@ namespace shaderc
 			bx::StringView acceptQuoted(char _quote)
 			{
 				const bx::StringView cursor = m_scanner.getCursor();
+				bx::StringView spliced;
+				bx::StringView piece = cursor;
 
 				m_scanner.accept(_quote);
 
 				while (!m_scanner.isDone()
 				&&     m_scanner.peek('\n').isEmpty() )
 				{
+					const bx::StringView before = m_scanner.getCursor();
+
+					if (skipLineContinuation() )
+					{
+						const bx::StringView parts[] = { spliced, bx::StringView(piece.getPtr(), before.getPtr() ) };
+						spliced = m_arena.concat(parts, BX_COUNTOF(parts) );
+						piece   = m_scanner.getCursor();
+						continue;
+					}
+
 					if (!m_scanner.accept('\\').isEmpty() )
 					{
 						m_scanner.accept();
@@ -571,7 +583,13 @@ namespace shaderc
 					m_scanner.accept();
 				}
 
-				return m_scanner.between(cursor);
+				if (spliced.isEmpty() )
+				{
+					return m_scanner.between(cursor);
+				}
+
+				const bx::StringView parts[] = { spliced, m_scanner.between(piece) };
+				return m_arena.concat(parts, BX_COUNTOF(parts) );
 			}
 
 			bx::StringView acceptPunct()
