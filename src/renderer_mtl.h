@@ -118,7 +118,15 @@ namespace bgfx { namespace mtl
 	{
 		NS::Error*  error  = NULL;
 		NS::String* source = NS::String::string(_source, NS::ASCIIStringEncoding);
-		MTL::Library*  lib = _device->newLibrary(source, (MTL::CompileOptions*)NULL, &error);
+		MTL::CompileOptions* options = MTL::CompileOptions::alloc()->init();
+
+		if (__builtin_available(macOS 11.0, iOS 14.0, tvOS 14.0, macCatalyst 14.0, *) )
+		{
+			options->setPreserveInvariance(true);
+		}
+
+		MTL::Library*  lib = _device->newLibrary(source, options, &error);
+		options->release();
 
 		BX_WARN(NULL == error
 			, "Shader compilation failed: %s"
@@ -492,7 +500,6 @@ namespace bgfx { namespace mtl
 			, m_ptrAlt(NULL)
 			, m_ptrMsaaAlt(NULL)
 			, m_ptrMsaaStencil(NULL)
-			, m_sampler(NULL)
 			, m_videoDecoder(NULL)
 			, m_flags(0)
 			, m_width(0)
@@ -548,7 +555,6 @@ namespace bgfx { namespace mtl
 		MTL::Texture* m_ptrMsaaAlt;
 		MTL::Texture* m_ptrMsaaStencil;
 		stl::unordered_map<uint64_t, MTL::Texture*> m_ptrViews;
-		MTL::SamplerState* m_sampler;
 		VideoDecoderMtl*   m_videoDecoder;
 		uint64_t m_flags;
 		uint32_t m_width;
@@ -572,7 +578,6 @@ namespace bgfx { namespace mtl
 			, m_backBufferColorMsaa()
 			, m_backBufferDepth()
 			, m_backBufferStencil()
-			, m_maxAnisotropy(0)
 			, m_colorFormat(TextureFormat::Count)
 			, m_borrowedDepth(false)
 			, m_hdr10(false)
@@ -602,7 +607,6 @@ namespace bgfx { namespace mtl
 		MTL::Texture* m_backBufferDepth;
 		MTL::Texture* m_backBufferStencil;
 
-		uint32_t m_maxAnisotropy;
 		void* m_nwh;
 		TextureFormat::Enum m_colorFormat;
 		bool m_borrowedDepth;
