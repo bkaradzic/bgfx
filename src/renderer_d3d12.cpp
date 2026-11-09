@@ -4491,6 +4491,7 @@ namespace bgfx { namespace d3d12
 			bx::HashMurmur3 murmur;
 			murmur.begin();
 			murmur.add(_flags, _num * sizeof(uint32_t) );
+			murmur.add(m_maxAnisotropy);
 
 			if (NULL != _lod)
 			{
