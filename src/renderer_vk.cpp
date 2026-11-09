@@ -8627,12 +8627,14 @@ VK_DESTROY
 		const VkImageLayout oldLayout = m_currentImageLayout;
 		const VkImageLayout oldSingleMsaaLayout = m_currentSingleMsaaImageLayout;
 
-		const uint32_t numLayers = false
+		const bool isCube = false
 			|| m_type == VK_IMAGE_VIEW_TYPE_CUBE
 			|| m_type == VK_IMAGE_VIEW_TYPE_CUBE_ARRAY
-			? m_numSides
-			: _numLayers
 			;
+
+		// Cube textures resolve and generate mips for all sides, starting at the first one.
+		const uint32_t layer     = isCube ? 0          : _layer;
+		const uint32_t numLayers = isCube ? m_numSides : _numLayers;
 
 		if (needResolve)
 		{
@@ -8640,11 +8642,11 @@ VK_DESTROY
 
 			if (0 != (m_aspectFlags & VK_IMAGE_ASPECT_DEPTH_BIT) )
 			{
-				s_renderVK->resolveDepth(_commandBuffer, *this, _layer, numLayers, _mip);
+				s_renderVK->resolveDepth(_commandBuffer, *this, layer, numLayers, _mip);
 			}
 			else if (resolveFormat != m_format)
 			{
-				resolveRenderPass(_commandBuffer, resolveFormat, _layer, numLayers, _mip);
+				resolveRenderPass(_commandBuffer, resolveFormat, layer, numLayers, _mip);
 				setState(_commandBuffer, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, true);
 			}
 			else
@@ -8658,7 +8660,7 @@ VK_DESTROY
 					{
 						.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT,
 						.mipLevel       = _mip,
-						.baseArrayLayer = _layer,
+						.baseArrayLayer = layer,
 						.layerCount     = numLayers,
 					},
 					.srcOffset = { .x = 0, .y = 0, .z = 0 },
@@ -8666,7 +8668,7 @@ VK_DESTROY
 					{
 						.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT,
 						.mipLevel       = _mip,
-						.baseArrayLayer = _layer,
+						.baseArrayLayer = layer,
 						.layerCount     = numLayers,
 					},
 					.dstOffset = { .x = 0, .y = 0, .z = 0 },
@@ -8705,11 +8707,11 @@ VK_DESTROY
 				VkImageBlit blit;
 				blit.srcOffsets[0] = { 0, 0, 0 };
 				blit.srcSubresource.aspectMask     = m_aspectFlags;
-				blit.srcSubresource.baseArrayLayer = _layer;
+				blit.srcSubresource.baseArrayLayer = layer;
 				blit.srcSubresource.layerCount     = numLayers;
 				blit.dstOffsets[0] = { 0, 0, 0 };
 				blit.dstSubresource.aspectMask     = m_aspectFlags;
-				blit.dstSubresource.baseArrayLayer = _layer;
+				blit.dstSubresource.baseArrayLayer = layer;
 				blit.dstSubresource.layerCount     = numLayers;
 
 				for (uint32_t i = _mip + 1; i < m_numMips; i++)
@@ -8733,7 +8735,7 @@ VK_DESTROY
 						, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL
 						, blit.srcSubresource.mipLevel
 						, 1
-						, _layer
+						, layer
 						, numLayers
 						);
 
@@ -8757,7 +8759,7 @@ VK_DESTROY
 					, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
 					, _mip
 					, m_numMips - _mip - 1
-					, _layer
+					, layer
 					, numLayers
 					);
 			}
@@ -8782,13 +8784,13 @@ VK_DESTROY
 			blit.srcOffsets[1] = { mipWidth, mipHeight, 1 };
 			blit.srcSubresource.aspectMask     = m_aspectFlags;
 			blit.srcSubresource.mipLevel       = 0;
-			blit.srcSubresource.baseArrayLayer = _layer;
+			blit.srcSubresource.baseArrayLayer = layer;
 			blit.srcSubresource.layerCount     = numLayers;
 			blit.dstOffsets[0] = { 0, 0, 0 };
 			blit.dstOffsets[1] = { mipWidth, mipHeight, 1 };
 			blit.dstSubresource.aspectMask     = m_aspectFlags;
 			blit.dstSubresource.mipLevel       = 0;
-			blit.dstSubresource.baseArrayLayer = _layer;
+			blit.dstSubresource.baseArrayLayer = layer;
 			blit.dstSubresource.layerCount     = numLayers;
 
 			for (uint32_t i = _mip + 1; i < m_numMips; i++)
@@ -8812,7 +8814,7 @@ VK_DESTROY
 					, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL
 					, blit.srcSubresource.mipLevel
 					, 1
-					, _layer
+					, layer
 					, numLayers
 					);
 
@@ -8836,7 +8838,7 @@ VK_DESTROY
 				, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
 				, _mip
 				, m_numMips - _mip - 1
-				, _layer
+				, layer
 				, numLayers
 				);
 		}
