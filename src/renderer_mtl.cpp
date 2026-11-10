@@ -4642,8 +4642,8 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 						if (compressed && !convert)
 						{
-							if (format >= 160 /*PVRTC_RGB_2BPP*/
-							&&  format <= 167 /*PVRTC_RGBA_4BPP_sRGB*/)
+							if (format >= MTL::PixelFormatPVRTC_RGB_2BPP
+							&&  format <= MTL::PixelFormatPVRTC_RGBA_4BPP_sRGB)
 							{
 								bytesPerRow   = 0;
 								bytesPerImage = 0;
@@ -4761,8 +4761,8 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 		uint32_t rectpitch  = _rect.m_width*bpp/8;
 		if (bimg::isCompressed(bimg::TextureFormat::Enum(m_textureFormat) ) )
 		{
-			if (m_ptr->pixelFormat() >= 160 /*PVRTC_RGB_2BPP*/
-			&&  m_ptr->pixelFormat() <= 167 /*PVRTC_RGBA_4BPP_sRGB*/)
+			if (m_ptr->pixelFormat() >= MTL::PixelFormatPVRTC_RGB_2BPP
+			&&  m_ptr->pixelFormat() <= MTL::PixelFormatPVRTC_RGBA_4BPP_sRGB)
 			{
 				rectpitch   = 0;
 			}
