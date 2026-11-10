@@ -2181,6 +2181,11 @@ VK_IMPORT_INSTANCE
 					&& lineRasterizationFeatures.smoothLines
 					;
 
+				m_bresenhamLineSupport = true
+					&& s_extension[Extension::EXT_line_rasterization].m_supported
+					&& lineRasterizationFeatures.bresenhamLines
+					;
+
 				m_borderColorSupport = true
 					&& s_extension[Extension::EXT_custom_border_color].m_supported
 					&& customBorderColorFeatures.customBorderColors
@@ -4117,8 +4122,23 @@ VK_IMPORT_DEVICE
 		{
 			_desc.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_LINE_STATE_CREATE_INFO_EXT;
 			_desc.pNext = NULL;
+
+			const uint64_t pt = _state & BGFX_STATE_PT_MASK;
+
+			const bool bresenham = true
+				&& m_bresenhamLineSupport
+				&& 0 == (_state & (BGFX_STATE_MSAA | BGFX_STATE_BLEND_ALPHA_TO_COVERAGE) )
+				&& (false
+					|| m_wireframe
+					|| BGFX_STATE_PT_LINES     == pt
+					|| BGFX_STATE_PT_LINESTRIP == pt
+					)
+				;
+
 			_desc.lineRasterizationMode = (_state & BGFX_STATE_LINEAA)
 				? VK_LINE_RASTERIZATION_MODE_RECTANGULAR_SMOOTH_EXT
+				: bresenham
+				? VK_LINE_RASTERIZATION_MODE_BRESENHAM_EXT
 				: VK_LINE_RASTERIZATION_MODE_DEFAULT_EXT
 				;
 			_desc.stippledLineEnable = VK_FALSE;
@@ -5109,7 +5129,8 @@ VK_IMPORT_DEVICE
 			}
 
 			VkPipelineRasterizationLineStateCreateInfoEXT lineRasterizationState;
-			if (m_lineAASupport)
+			if (m_lineAASupport
+			||  m_bresenhamLineSupport)
 			{
 				nextRasterizationState->pNext = (VkBaseInStructure*)&lineRasterizationState;
 				nextRasterizationState = (VkBaseInStructure*)&lineRasterizationState;
@@ -6086,6 +6107,7 @@ VK_IMPORT_DEVICE
 		VkPhysicalDeviceFeatures          m_deviceFeatures;
 
 		bool m_lineAASupport;
+		bool m_bresenhamLineSupport = false;
 		bool m_borderColorSupport;
 		bool m_timerQuerySupport;
 		bool m_swapchainMaintenance1Supported = false;
