@@ -6,16 +6,16 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Tools &mdash; bgfx 1.146.9292 documentation</title>
+  <title>Tools &mdash; bgfx 1.168.9622 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
-      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
 
   
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="_static/documentation_options.js?v=6b816648"></script>
-      <script src="_static/doctools.js?v=9bcbadda"></script>
-      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="_static/documentation_options.js?v=9080174b"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -464,65 +464,53 @@ The semantic must be <code class="docutils literal notranslate"><span class="pre
 <dd><p>Include path. (for multiple paths use -i multiple times)</p>
 </dd>
 <dt><kbd><span class="option">-o <var>&lt;file path&gt;</var></span></kbd></dt>
-<dd><p>Output’s file path.</p>
-</dd>
-<dt><kbd><span class="option">--bin2c <var>&lt;array name&gt;</var></span></kbd></dt>
-<dd><p>Generate C header file. If array name is not specified base file name will be used as name.</p>
-</dd>
+<dd><p>Output’s file path.
+–stdout                   Output to console.
+–bin2c [array name]       Generate C header file. If array name is not specified base file name</p>
+<blockquote>
+<div><p>will be used as name.</p>
+</div></blockquote>
+<dl class="option-list">
 <dt><kbd><span class="option">--depends</span></kbd></dt>
 <dd><p>Generate makefile style depends file.</p>
 </dd>
 <dt><kbd><span class="option">--platform <var>&lt;platform&gt;</var></span></kbd></dt>
-<dd><p>Target platform.</p>
+<dd><p>Target platform.
+android
+asm.js
+ios
+linux
+orbis
+osx
+windows</p>
+</dd>
+</dl>
 </dd>
 <dt><kbd><span class="option">-p</span>, <span class="option">--profile <var>&lt;profile&gt;</var></span></kbd></dt>
-<dd><p>Shader model.
-Defaults to GLSL.</p>
-</dd>
-<dt><kbd><span class="option">--preprocess</span></kbd></dt>
-<dd><p>Only pre-process.</p>
-</dd>
-<dt><kbd><span class="option">--define <var>&lt;defines&gt;</var></span></kbd></dt>
-<dd><p>Add defines to preprocessor. (semicolon separated)</p>
-</dd>
-<dt><kbd><span class="option">--raw</span></kbd></dt>
-<dd><p>Do not process shader. No preprocessor, and no glsl-optimizer. (GLSL only)</p>
-</dd>
-<dt><kbd><span class="option">--type <var>&lt;type&gt;</var></span></kbd></dt>
-<dd><p>Shader type.
-Can be ‘vertex’, ‘fragment, or ‘compute’.</p>
-</dd>
-<dt><kbd><span class="option">--varyingdef <var>&lt;file path&gt;</var></span></kbd></dt>
-<dd><p>A varying.def.sc’s file path.</p>
-</dd>
-<dt><kbd><span class="option">--verbose</span></kbd></dt>
-<dd><p>Be verbose.</p>
-</dd>
-</dl>
-</div></blockquote>
-<p>(Vulkan, DirectX and Metal):</p>
-<blockquote>
-<div><dl class="option-list">
-<dt><kbd><span class="option">--debug</span></kbd></dt>
-<dd><p>Debug information.</p>
-</dd>
-</dl>
-</div></blockquote>
-<p>(DirectX only):</p>
-<blockquote>
-<div><dl class="option-list">
-<dt><kbd><span class="option">--disasm</span></kbd></dt>
-<dd><p>Disassemble a compiled shader.</p>
+<dd><p>Shader model. Defaults to GLSL. See shader profiles below.
+–preprocess               Only pre-process.
+–keepcomments             Do not discard comments.
+–define &lt;defines&gt;         Add defines to preprocessor. (Semicolon-separated)
+–raw                      Do not process shader. No preprocessor. (GLSL only)
+–type &lt;type&gt;              Shader type. Can be ‘vertex’, ‘fragment, or ‘compute’.
+–varyingdef &lt;file path&gt;   varying.def.sc’s file path.
+–verbose                  Be verbose.
+–debug                    Debug information. (Vulkan, DirectX and Metal only)
+–disasm                   Disassemble compiled shader. (DirectX only)</p>
 </dd>
 <dt><kbd><span class="option">-O <var>&lt;level&gt;</var></span></kbd></dt>
-<dd><p>Set optimization level.
-Can be 0–3.</p>
-</dd>
-<dt><kbd><span class="option">--Werror</span></kbd></dt>
-<dd><p>Treat warnings as errors.</p>
+<dd><p>Set optimization level. Can be 0 to 3. (DirectX only)
+–Werror                   Treat warnings as errors. (DirectX only)
+–avoid-flow-control       Avoid flow control instructions. (DirectX only)
+–no-preshader             Do not generate preshader. (DirectX only)
+–partial-precision        Use partial precision. (DirectX only)
+–prefer-flow-control      Prefer flow control instructions. (DirectX only)
+–backwards-compatibility  Enable backwards compatibility. (DirectX only)
+–keep-intermediate        Keep intermediate compilation results. (DirectX only)</p>
 </dd>
 </dl>
 </div></blockquote>
+<p>Shader profiles are listed by <code class="docutils literal notranslate"><span class="pre">shaderc</span> <span class="pre">--help</span></code>.</p>
 </section>
 <section id="building-shaders">
 <h3>Building shaders<a class="headerlink" href="#building-shaders" title="Link to this heading"></a></h3>
@@ -536,6 +524,7 @@ D3D shaders can be only compiled on Windows.</p>
 <p>Convert PNG, TGA, DDS, KTX, and PVR textures into bgfx-supported texture formats.</p>
 <p>Usage:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">texturec</span> <span class="o">-</span><span class="n">f</span> <span class="o">&lt;</span><span class="ow">in</span><span class="o">&gt;</span> <span class="o">-</span><span class="n">o</span> <span class="o">&lt;</span><span class="n">out</span><span class="o">&gt;</span> <span class="p">[</span><span class="o">-</span><span class="n">t</span> <span class="o">&lt;</span><span class="n">texture</span> <span class="nb">format</span><span class="o">&gt;</span><span class="p">]</span>
+<span class="n">texturec</span> <span class="o">&lt;</span><span class="ow">in</span><span class="o">&gt;</span> <span class="o">&lt;</span><span class="n">out</span><span class="o">&gt;</span> <span class="p">[</span><span class="o">-</span><span class="n">t</span> <span class="o">&lt;</span><span class="n">texture</span> <span class="nb">format</span><span class="o">&gt;</span><span class="p">]</span>
 </pre></div>
 </div>
 <p>Supported file formats:</p>
@@ -548,37 +537,53 @@ D3D shaders can be only compiled on Windows.</p>
 </tr>
 </thead>
 <tbody>
-<tr class="row-even"><td><p>.bmp</p></td>
+<tr class="row-even"><td><p>.avif</p></td>
+<td><p>(input)</p></td>
+<td><p>AV1 Image File Format.</p></td>
+</tr>
+<tr class="row-odd"><td><p>.bmp</p></td>
 <td><p>(input)</p></td>
 <td><p>Windows Bitmap.</p></td>
 </tr>
-<tr class="row-odd"><td><p>.dds</p></td>
+<tr class="row-even"><td><p>.dds</p></td>
 <td><p>(input, output)</p></td>
 <td><p>Direct Draw Surface.</p></td>
 </tr>
-<tr class="row-even"><td><p>.exr</p></td>
+<tr class="row-odd"><td><p>.exr</p></td>
 <td><p>(input, output)</p></td>
 <td><p>OpenEXR.</p></td>
 </tr>
-<tr class="row-odd"><td><p>.gif</p></td>
+<tr class="row-even"><td><p>.gif</p></td>
 <td><p>(input)</p></td>
 <td><p>Graphics Interchange Format.</p></td>
-</tr>
-<tr class="row-even"><td><p>.jpg</p></td>
-<td><p>(input)</p></td>
-<td><p>JPEG Interchange Format.</p></td>
 </tr>
 <tr class="row-odd"><td><p>.hdr</p></td>
 <td><p>(input, output)</p></td>
 <td><p>Radiance RGBE.</p></td>
 </tr>
-<tr class="row-even"><td><p>.ktx</p></td>
+<tr class="row-even"><td><p>.jpg</p></td>
+<td><p>(input)</p></td>
+<td><p>JPEG Interchange Format.</p></td>
+</tr>
+<tr class="row-odd"><td><p>.ktx</p></td>
 <td><p>(input, output)</p></td>
 <td><p>Khronos Texture.</p></td>
 </tr>
-<tr class="row-odd"><td><p>.png</p></td>
+<tr class="row-even"><td><p>.ktx2</p></td>
+<td><p>(input, output)</p></td>
+<td><p>Khronos Texture 2.</p></td>
+</tr>
+<tr class="row-odd"><td><p>.pgm</p></td>
+<td><p>(input)</p></td>
+<td><p>Portable Gray Map.</p></td>
+</tr>
+<tr class="row-even"><td><p>.png</p></td>
 <td><p>(input, output)</p></td>
 <td><p>Portable Network Graphics.</p></td>
+</tr>
+<tr class="row-odd"><td><p>.ppm</p></td>
+<td><p>(input)</p></td>
+<td><p>Portable Pixel Map.</p></td>
 </tr>
 <tr class="row-even"><td><p>.psd</p></td>
 <td><p>(input)</p></td>
@@ -592,9 +597,15 @@ D3D shaders can be only compiled on Windows.</p>
 <td><p>(input)</p></td>
 <td><p>Truevision TGA.</p></td>
 </tr>
+<tr class="row-odd"><td><p>.webp</p></td>
+<td><p>(input)</p></td>
+<td><p>WebP.</p></td>
+</tr>
 </tbody>
 </table>
 </div></blockquote>
+<p>Which formats can be read depends on the image parsers compiled into <code class="docutils literal notranslate"><span class="pre">bimg</span></code>.
+<code class="docutils literal notranslate"><span class="pre">texturec</span> <span class="pre">--help</span></code> lists the ones this build actually supports.</p>
 <p>Options:</p>
 <dl>
 <dt>Options:</dt><dd><dl class="option-list">
@@ -605,7 +616,9 @@ D3D shaders can be only compiled on Windows.</p>
 <dd><p>Version information only.</p>
 </dd>
 <dt><kbd><span class="option">-f <var>&lt;file path&gt;</var></span></kbd></dt>
-<dd><p>Input file path.</p>
+<dd><p>Input file path.
+Input and output may also be passed positionally, without
+-f/-o.</p>
 </dd>
 <dt><kbd><span class="option">-o <var>&lt;file path&gt;</var></span></kbd></dt>
 <dd><p>Output file path.</p>
@@ -621,35 +634,25 @@ D3D shaders can be only compiled on Windows.</p>
 –mipskip &lt;N&gt;        Skip &lt;N&gt; number of mips.</p>
 </dd>
 <dt><kbd><span class="option">-n</span>, <span class="option">--normalmap</span></kbd></dt>
-<dd><p>Input texture is normal map. (Implies –linear)</p>
+<dd><p>Input texture is normal map. (Implies –linear)
+–equirect           Input texture is equirectangular projection of cubemap.
+–strip              Input texture is horizontal or vertical strip of cubemap.
+–sdf                Compute SDF texture.
+–ref &lt;alpha&gt;        Alpha reference value.
+–iqa                Image Quality Assessment
+–pma                Premultiply alpha into RGB channel.
+–linear             Input and output texture is linear color space (gamma</p>
+<blockquote>
+<div><p>correction won’t be applied).</p>
+</div></blockquote>
 <dl class="option-list">
-<dt><kbd><span class="option">--equirect</span></kbd></dt>
-<dd><p>Input texture is equirectangular projection of cubemap.</p>
-</dd>
-<dt><kbd><span class="option">--strip</span></kbd></dt>
-<dd><p>Input texture is horizontal or vertical strip of cubemap.</p>
-</dd>
-<dt><kbd><span class="option">--sdf</span></kbd></dt>
-<dd><p>Compute SDF texture.</p>
-</dd>
-<dt><kbd><span class="option">--ref <var>&lt;alpha&gt;</var></span></kbd></dt>
-<dd><p>Alpha reference value.</p>
-</dd>
-<dt><kbd><span class="option">--iqa</span></kbd></dt>
-<dd><p>Image Quality Assessment</p>
-</dd>
-<dt><kbd><span class="option">--pma</span></kbd></dt>
-<dd><p>Premultiply alpha into RGB channel.</p>
-</dd>
-<dt><kbd><span class="option">--linear</span></kbd></dt>
-<dd><p>Input and output texture is linear color space (gamma correction won’t be applied).</p>
-</dd>
 <dt><kbd><span class="option">--max <var>&lt;max size&gt;</var></span></kbd></dt>
 <dd><p>Maximum width/height (image will be scaled down and
 aspect ratio will be preserved)</p>
 </dd>
 <dt><kbd><span class="option">--radiance <var>&lt;model&gt;</var></span></kbd></dt>
-<dd><p>Radiance cubemap filter. (Lighting model: Phong, PhongBrdf, Blinn, BlinnBrdf, GGX)</p>
+<dd><p>Radiance cubemap filter. (Lighting model: Phong, PhongBrdf,
+Blinn, BlinnBrdf, GGX)</p>
 </dd>
 <dt><kbd><span class="option">--as <var>&lt;extension&gt;</var></span></kbd></dt>
 <dd><p>Save as.</p>
@@ -658,7 +661,8 @@ aspect ratio will be preserved)</p>
 <dd><p>List all supported formats.</p>
 </dd>
 <dt><kbd><span class="option">--validate</span></kbd></dt>
-<dd><p><strong>DEBUG</strong> Validate that output image produced matches after loading.</p>
+<dd><p><em>DEBUG</em> Validate that output image produced matches after
+loading.</p>
 </dd>
 </dl>
 </dd>

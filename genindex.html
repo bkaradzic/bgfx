@@ -5,16 +5,16 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Index &mdash; bgfx 1.146.9292 documentation</title>
+  <title>Index &mdash; bgfx 1.168.9622 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
-      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
 
   
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="_static/documentation_options.js?v=6b816648"></script>
-      <script src="_static/doctools.js?v=9bcbadda"></script>
-      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="_static/documentation_options.js?v=9080174b"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="#" />
     <link rel="search" title="Search" href="search.html" /> 
@@ -107,6 +107,8 @@
 </li>
       <li><a href="bgfx.html#_CPPv4N4bgfx10Attachment6accessE">bgfx::Attachment::access (C++ member)</a>
 </li>
+      <li><a href="bgfx.html#_CPPv4N4bgfx10Attachment5flagsE">bgfx::Attachment::flags (C++ member)</a>
+</li>
       <li><a href="bgfx.html#_CPPv4N4bgfx10Attachment6handleE">bgfx::Attachment::handle (C++ member)</a>
 </li>
       <li><a href="bgfx.html#_CPPv4N4bgfx10Attachment4initE13TextureHandleN6Access4EnumE8uint16_t8uint16_t8uint16_t7uint8_t">bgfx::Attachment::init (C++ function)</a>
@@ -116,8 +118,6 @@
       <li><a href="bgfx.html#_CPPv4N4bgfx10Attachment3mipE">bgfx::Attachment::mip (C++ member)</a>
 </li>
       <li><a href="bgfx.html#_CPPv4N4bgfx10Attachment9numLayersE">bgfx::Attachment::numLayers (C++ member)</a>
-</li>
-      <li><a href="bgfx.html#_CPPv4N4bgfx10Attachment7resolveE">bgfx::Attachment::resolve (C++ member)</a>
 </li>
       <li><a href="bgfx.html#_CPPv4N4bgfx6AttribE">bgfx::Attrib (C++ struct)</a>
 </li>
@@ -147,6 +147,18 @@
 </li>
       <li><a href="bgfx.html#_CPPv4N4bgfx6Attrib4Enum9TexCoord1E">bgfx::Attrib::Enum::TexCoord1 (C++ enumerator)</a>
 </li>
+      <li><a href="bgfx.html#_CPPv4N4bgfx6Attrib4Enum10TexCoord10E">bgfx::Attrib::Enum::TexCoord10 (C++ enumerator)</a>
+</li>
+      <li><a href="bgfx.html#_CPPv4N4bgfx6Attrib4Enum10TexCoord11E">bgfx::Attrib::Enum::TexCoord11 (C++ enumerator)</a>
+</li>
+      <li><a href="bgfx.html#_CPPv4N4bgfx6Attrib4Enum10TexCoord12E">bgfx::Attrib::Enum::TexCoord12 (C++ enumerator)</a>
+</li>
+      <li><a href="bgfx.html#_CPPv4N4bgfx6Attrib4Enum10TexCoord13E">bgfx::Attrib::Enum::TexCoord13 (C++ enumerator)</a>
+</li>
+      <li><a href="bgfx.html#_CPPv4N4bgfx6Attrib4Enum10TexCoord14E">bgfx::Attrib::Enum::TexCoord14 (C++ enumerator)</a>
+</li>
+      <li><a href="bgfx.html#_CPPv4N4bgfx6Attrib4Enum10TexCoord15E">bgfx::Attrib::Enum::TexCoord15 (C++ enumerator)</a>
+</li>
       <li><a href="bgfx.html#_CPPv4N4bgfx6Attrib4Enum9TexCoord2E">bgfx::Attrib::Enum::TexCoord2 (C++ enumerator)</a>
 </li>
       <li><a href="bgfx.html#_CPPv4N4bgfx6Attrib4Enum9TexCoord3E">bgfx::Attrib::Enum::TexCoord3 (C++ enumerator)</a>
@@ -158,6 +170,10 @@
       <li><a href="bgfx.html#_CPPv4N4bgfx6Attrib4Enum9TexCoord6E">bgfx::Attrib::Enum::TexCoord6 (C++ enumerator)</a>
 </li>
       <li><a href="bgfx.html#_CPPv4N4bgfx6Attrib4Enum9TexCoord7E">bgfx::Attrib::Enum::TexCoord7 (C++ enumerator)</a>
+</li>
+      <li><a href="bgfx.html#_CPPv4N4bgfx6Attrib4Enum9TexCoord8E">bgfx::Attrib::Enum::TexCoord8 (C++ enumerator)</a>
+</li>
+      <li><a href="bgfx.html#_CPPv4N4bgfx6Attrib4Enum9TexCoord9E">bgfx::Attrib::Enum::TexCoord9 (C++ enumerator)</a>
 </li>
       <li><a href="bgfx.html#_CPPv4N4bgfx6Attrib4Enum6WeightE">bgfx::Attrib::Enum::Weight (C++ enumerator)</a>
 </li>
@@ -173,25 +189,45 @@
 </li>
       <li><a href="bgfx.html#_CPPv4N4bgfx10AttribType4Enum5Int16E">bgfx::AttribType::Enum::Int16 (C++ enumerator)</a>
 </li>
+      <li><a href="bgfx.html#_CPPv4N4bgfx10AttribType4Enum5Int32E">bgfx::AttribType::Enum::Int32 (C++ enumerator)</a>
+</li>
       <li><a href="bgfx.html#_CPPv4N4bgfx10AttribType4Enum4Int8E">bgfx::AttribType::Enum::Int8 (C++ enumerator)</a>
 </li>
       <li><a href="bgfx.html#_CPPv4N4bgfx10AttribType4Enum6Uint10E">bgfx::AttribType::Enum::Uint10 (C++ enumerator)</a>
 </li>
       <li><a href="bgfx.html#_CPPv4N4bgfx10AttribType4Enum6Uint16E">bgfx::AttribType::Enum::Uint16 (C++ enumerator)</a>
 </li>
+      <li><a href="bgfx.html#_CPPv4N4bgfx10AttribType4Enum6Uint32E">bgfx::AttribType::Enum::Uint32 (C++ enumerator)</a>
+</li>
       <li><a href="bgfx.html#_CPPv4N4bgfx10AttribType4Enum5Uint8E">bgfx::AttribType::Enum::Uint8 (C++ enumerator)</a>
 </li>
       <li><a href="bgfx.html#_CPPv4N4bgfx5beginEb">bgfx::begin (C++ function)</a>
 </li>
-      <li><a href="bgfx.html#_CPPv4N4bgfx4blitE6ViewId13TextureHandle7uint8_t8uint16_t8uint16_t8uint16_t13TextureHandle7uint8_t8uint16_t8uint16_t8uint16_t8uint16_t8uint16_t8uint16_t">bgfx::blit (C++ function)</a>, <a href="bgfx.html#_CPPv4N4bgfx4blitE6ViewId13TextureHandle8uint16_t8uint16_t13TextureHandle8uint16_t8uint16_t8uint16_t8uint16_t">[1]</a>
+      <li><a href="bgfx.html#_CPPv4N4bgfx4blitE6ViewIdRK12BufferRegionRK12BufferRegion">bgfx::blit (C++ function)</a>, <a href="bgfx.html#_CPPv4N4bgfx4blitE6ViewIdRK12BufferRegionRK13TextureRegion">[1]</a>, <a href="bgfx.html#_CPPv4N4bgfx4blitE6ViewIdRK13TextureRegionRK12BufferRegion">[2]</a>, <a href="bgfx.html#_CPPv4N4bgfx4blitE6ViewIdRK13TextureRegionRK13TextureRegion">[3]</a>
+</li>
+      <li><a href="bgfx.html#_CPPv4N4bgfx12BufferRegionE">bgfx::BufferRegion (C++ struct)</a>
+</li>
+      <li><a href="bgfx.html#_CPPv4N4bgfx12BufferRegion6handleE">bgfx::BufferRegion::handle (C++ member)</a>
+</li>
+      <li><a href="bgfx.html#_CPPv4N4bgfx12BufferRegion4initE12BufferHandle8uint32_t8uint32_t">bgfx::BufferRegion::init (C++ function)</a>, <a href="bgfx.html#_CPPv4N4bgfx12BufferRegion4initERK13TextureRegion">[1]</a>
+</li>
+      <li><a href="bgfx.html#_CPPv4N4bgfx12BufferRegion6offsetE">bgfx::BufferRegion::offset (C++ member)</a>
+</li>
+      <li><a href="bgfx.html#_CPPv4N4bgfx12BufferRegion8rowPitchE">bgfx::BufferRegion::rowPitch (C++ member)</a>
+</li>
+      <li><a href="bgfx.html#_CPPv4N4bgfx12BufferRegion4sizeE">bgfx::BufferRegion::size (C++ member)</a>
+</li>
+      <li><a href="bgfx.html#_CPPv4N4bgfx12BufferRegion10slicePitchE">bgfx::BufferRegion::slicePitch (C++ member)</a>
 </li>
       <li><a href="bgfx.html#_CPPv4N4bgfx15calcTextureSizeER11TextureInfo8uint16_t8uint16_t8uint16_tbb8uint16_tN13TextureFormat4EnumE">bgfx::calcTextureSize (C++ function)</a>
+</li>
+      <li><a href="bgfx.html#_CPPv4N4bgfx5clearE13TextureHandle7uint8_t7uint8_t8uint16_t8uint16_t">bgfx::clear (C++ function)</a>
 </li>
       <li><a href="bgfx.html#_CPPv4N4bgfx24createDynamicIndexBufferE8uint32_t8uint16_t">bgfx::createDynamicIndexBuffer (C++ function)</a>, <a href="bgfx.html#_CPPv4N4bgfx24createDynamicIndexBufferEPK6Memory8uint16_t">[1]</a>
 </li>
       <li><a href="bgfx.html#_CPPv4N4bgfx25createDynamicVertexBufferE8uint32_tRK12VertexLayout8uint16_t">bgfx::createDynamicVertexBuffer (C++ function)</a>, <a href="bgfx.html#_CPPv4N4bgfx25createDynamicVertexBufferEPK6MemoryRK12VertexLayout8uint16_t">[1]</a>
 </li>
-      <li><a href="bgfx.html#_CPPv4N4bgfx17createFrameBufferE7uint8_tPK10Attachmentb">bgfx::createFrameBuffer (C++ function)</a>, <a href="bgfx.html#_CPPv4N4bgfx17createFrameBufferE7uint8_tPK13TextureHandleb">[1]</a>, <a href="bgfx.html#_CPPv4N4bgfx17createFrameBufferE8uint16_t8uint16_tN13TextureFormat4EnumE8uint64_t">[2]</a>, <a href="bgfx.html#_CPPv4N4bgfx17createFrameBufferEN15BackbufferRatio4EnumEN13TextureFormat4EnumE8uint64_t">[3]</a>, <a href="bgfx.html#_CPPv4N4bgfx17createFrameBufferEPv8uint16_t8uint16_tN13TextureFormat4EnumEN13TextureFormat4EnumE">[4]</a>
+      <li><a href="bgfx.html#_CPPv4N4bgfx17createFrameBufferE7uint8_tPK10Attachmentb">bgfx::createFrameBuffer (C++ function)</a>, <a href="bgfx.html#_CPPv4N4bgfx17createFrameBufferE7uint8_tPK13TextureHandleb">[1]</a>, <a href="bgfx.html#_CPPv4N4bgfx17createFrameBufferE8uint16_t8uint16_tN13TextureFormat4EnumE8uint64_t">[2]</a>, <a href="bgfx.html#_CPPv4N4bgfx17createFrameBufferEN15BackbufferRatio4EnumEN13TextureFormat4EnumE8uint64_t">[3]</a>, <a href="bgfx.html#_CPPv4N4bgfx17createFrameBufferERK9SwapChain">[4]</a>
 </li>
       <li><a href="bgfx.html#_CPPv4N4bgfx17createIndexBufferEPK6Memory8uint16_t">bgfx::createIndexBuffer (C++ function)</a>
 </li>
@@ -235,17 +271,19 @@
 </li>
       <li><a href="bgfx.html#_CPPv4N4bgfx7Encoder14allocTransformEP9Transform8uint16_t">bgfx::Encoder::allocTransform (C++ function)</a>
 </li>
-      <li><a href="bgfx.html#_CPPv4N4bgfx7Encoder4blitE6ViewId13TextureHandle7uint8_t8uint16_t8uint16_t8uint16_t13TextureHandle7uint8_t8uint16_t8uint16_t8uint16_t8uint16_t8uint16_t8uint16_t">bgfx::Encoder::blit (C++ function)</a>, <a href="bgfx.html#_CPPv4N4bgfx7Encoder4blitE6ViewId13TextureHandle8uint16_t8uint16_t13TextureHandle8uint16_t8uint16_t8uint16_t8uint16_t">[1]</a>
+      <li><a href="bgfx.html#_CPPv4N4bgfx7Encoder4blitE6ViewIdRK12BufferRegionRK12BufferRegion">bgfx::Encoder::blit (C++ function)</a>, <a href="bgfx.html#_CPPv4N4bgfx7Encoder4blitE6ViewIdRK12BufferRegionRK13TextureRegion">[1]</a>, <a href="bgfx.html#_CPPv4N4bgfx7Encoder4blitE6ViewIdRK13TextureRegionRK12BufferRegion">[2]</a>, <a href="bgfx.html#_CPPv4N4bgfx7Encoder4blitE6ViewIdRK13TextureRegionRK13TextureRegion">[3]</a>
 </li>
       <li><a href="bgfx.html#_CPPv4N4bgfx7Encoder7discardE7uint8_t">bgfx::Encoder::discard (C++ function)</a>
 </li>
       <li><a href="bgfx.html#_CPPv4N4bgfx7Encoder8dispatchE6ViewId13ProgramHandle20IndirectBufferHandle8uint32_t8uint32_t7uint8_t">bgfx::Encoder::dispatch (C++ function)</a>, <a href="bgfx.html#_CPPv4N4bgfx7Encoder8dispatchE6ViewId13ProgramHandle8uint32_t8uint32_t8uint32_t7uint8_t">[1]</a>
 </li>
-      <li><a href="bgfx.html#_CPPv4N4bgfx7Encoder9setBufferE7uint8_t17IndexBufferHandleN6Access4EnumE">bgfx::Encoder::setBuffer (C++ function)</a>, <a href="bgfx.html#_CPPv4N4bgfx7Encoder9setBufferE7uint8_t18VertexBufferHandleN6Access4EnumE">[1]</a>, <a href="bgfx.html#_CPPv4N4bgfx7Encoder9setBufferE7uint8_t20IndirectBufferHandleN6Access4EnumE">[2]</a>, <a href="bgfx.html#_CPPv4N4bgfx7Encoder9setBufferE7uint8_t24DynamicIndexBufferHandleN6Access4EnumE">[3]</a>, <a href="bgfx.html#_CPPv4N4bgfx7Encoder9setBufferE7uint8_t25DynamicVertexBufferHandleN6Access4EnumE">[4]</a>
+      <li><a href="bgfx.html#_CPPv4N4bgfx7Encoder9setBufferE7uint8_t17IndexBufferHandleN6Access4EnumE8uint32_t8uint32_t">bgfx::Encoder::setBuffer (C++ function)</a>, <a href="bgfx.html#_CPPv4N4bgfx7Encoder9setBufferE7uint8_t18VertexBufferHandleN6Access4EnumE8uint32_t8uint32_t">[1]</a>, <a href="bgfx.html#_CPPv4N4bgfx7Encoder9setBufferE7uint8_t20IndirectBufferHandleN6Access4EnumE">[2]</a>, <a href="bgfx.html#_CPPv4N4bgfx7Encoder9setBufferE7uint8_t24DynamicIndexBufferHandleN6Access4EnumE8uint32_t8uint32_t">[3]</a>, <a href="bgfx.html#_CPPv4N4bgfx7Encoder9setBufferE7uint8_t25DynamicVertexBufferHandleN6Access4EnumE8uint32_t8uint32_t">[4]</a>
 </li>
       <li><a href="bgfx.html#_CPPv4N4bgfx7Encoder12setConditionE20OcclusionQueryHandleb">bgfx::Encoder::setCondition (C++ function)</a>
 </li>
-      <li><a href="bgfx.html#_CPPv4N4bgfx7Encoder8setImageE7uint8_t13TextureHandle7uint8_tN6Access4EnumEN13TextureFormat4EnumE">bgfx::Encoder::setImage (C++ function)</a>
+      <li><a href="bgfx.html#_CPPv4N4bgfx7Encoder15setDepthControlE7int32_tffb">bgfx::Encoder::setDepthControl (C++ function)</a>, <a href="bgfx.html#_CPPv4N4bgfx7Encoder15setDepthControlE8uint16_t">[1]</a>
+</li>
+      <li><a href="bgfx.html#_CPPv4N4bgfx7Encoder8setImageE7uint8_t13TextureHandle7uint8_tN6Access4EnumEN13TextureFormat4EnumE">bgfx::Encoder::setImage (C++ function)</a>, <a href="bgfx.html#_CPPv4N4bgfx7Encoder8setImageE7uint8_t13TextureHandle8uint16_t8uint16_t7uint8_tN6Access4EnumEN13TextureFormat4EnumE">[1]</a>
 </li>
       <li><a href="bgfx.html#_CPPv4N4bgfx7Encoder14setIndexBufferE17IndexBufferHandle">bgfx::Encoder::setIndexBuffer (C++ function)</a>, <a href="bgfx.html#_CPPv4N4bgfx7Encoder14setIndexBufferE17IndexBufferHandle8uint32_t8uint32_t">[1]</a>, <a href="bgfx.html#_CPPv4N4bgfx7Encoder14setIndexBufferE24DynamicIndexBufferHandle">[2]</a>, <a href="bgfx.html#_CPPv4N4bgfx7Encoder14setIndexBufferE24DynamicIndexBufferHandle8uint32_t8uint32_t">[3]</a>, <a href="bgfx.html#_CPPv4N4bgfx7Encoder14setIndexBufferEPK20TransientIndexBuffer">[4]</a>, <a href="bgfx.html#_CPPv4N4bgfx7Encoder14setIndexBufferEPK20TransientIndexBuffer8uint32_t8uint32_t">[5]</a>
 </li>
@@ -255,17 +293,21 @@
 </li>
       <li><a href="bgfx.html#_CPPv4N4bgfx7Encoder9setMarkerEPKc7int32_t">bgfx::Encoder::setMarker (C++ function)</a>
 </li>
+      <li><a href="bgfx.html#_CPPv4N4bgfx7Encoder13setSampleMaskE8uint32_t">bgfx::Encoder::setSampleMask (C++ function)</a>
+</li>
       <li><a href="bgfx.html#_CPPv4N4bgfx7Encoder10setScissorE8uint16_t">bgfx::Encoder::setScissor (C++ function)</a>, <a href="bgfx.html#_CPPv4N4bgfx7Encoder10setScissorE8uint16_t8uint16_t8uint16_t8uint16_t">[1]</a>
 </li>
       <li><a href="bgfx.html#_CPPv4N4bgfx7Encoder8setStateE8uint64_t8uint32_t">bgfx::Encoder::setState (C++ function)</a>
 </li>
       <li><a href="bgfx.html#_CPPv4N4bgfx7Encoder10setStencilE8uint32_t8uint32_t">bgfx::Encoder::setStencil (C++ function)</a>
 </li>
-      <li><a href="bgfx.html#_CPPv4N4bgfx7Encoder10setTextureE7uint8_t13UniformHandle13TextureHandle8uint16_t8uint16_t7uint8_t7uint8_t8uint32_t">bgfx::Encoder::setTexture (C++ function)</a>, <a href="bgfx.html#_CPPv4N4bgfx7Encoder10setTextureE7uint8_t13UniformHandle13TextureHandle8uint32_t">[1]</a>
+      <li><a href="bgfx.html#_CPPv4N4bgfx7Encoder10setTextureE7uint8_t13UniformHandle13TextureHandle8uint16_t8uint16_t7uint8_t7uint8_t8uint32_t7uint8_t7uint8_t">bgfx::Encoder::setTexture (C++ function)</a>, <a href="bgfx.html#_CPPv4N4bgfx7Encoder10setTextureE7uint8_t13UniformHandle13TextureHandle8uint32_t">[1]</a>
 </li>
       <li><a href="bgfx.html#_CPPv4N4bgfx7Encoder12setTransformE8uint32_t8uint16_t">bgfx::Encoder::setTransform (C++ function)</a>, <a href="bgfx.html#_CPPv4N4bgfx7Encoder12setTransformEPKv8uint16_t">[1]</a>
 </li>
       <li><a href="bgfx.html#_CPPv4N4bgfx7Encoder10setUniformE13UniformHandlePKv8uint16_t">bgfx::Encoder::setUniform (C++ function)</a>
+</li>
+      <li><a href="bgfx.html#_CPPv4N4bgfx7Encoder13setUniformRefE13UniformHandlePKv8uint16_t">bgfx::Encoder::setUniformRef (C++ function)</a>
 </li>
       <li><a href="bgfx.html#_CPPv4N4bgfx7Encoder15setVertexBufferE7uint8_t18VertexBufferHandle">bgfx::Encoder::setVertexBuffer (C++ function)</a>, <a href="bgfx.html#_CPPv4N4bgfx7Encoder15setVertexBufferE7uint8_t18VertexBufferHandle8uint32_t8uint32_t18VertexLayoutHandle">[1]</a>, <a href="bgfx.html#_CPPv4N4bgfx7Encoder15setVertexBufferE7uint8_t25DynamicVertexBufferHandle">[2]</a>, <a href="bgfx.html#_CPPv4N4bgfx7Encoder15setVertexBufferE7uint8_t25DynamicVertexBufferHandle8uint32_t8uint32_t18VertexLayoutHandle">[3]</a>, <a href="bgfx.html#_CPPv4N4bgfx7Encoder15setVertexBufferE7uint8_tPK21TransientVertexBuffer">[4]</a>, <a href="bgfx.html#_CPPv4N4bgfx7Encoder15setVertexBufferE7uint8_tPK21TransientVertexBuffer8uint32_t8uint32_t18VertexLayoutHandle">[5]</a>
 </li>
@@ -315,6 +357,8 @@
 </li>
       <li><a href="bgfx.html#_CPPv4N4bgfx4Init9allocatorE">bgfx::Init::allocator (C++ member)</a>
 </li>
+      <li><a href="bgfx.html#_CPPv4N4bgfx4Init11backendTypeE">bgfx::Init::backendType (C++ member)</a>
+</li>
       <li><a href="bgfx.html#_CPPv4N4bgfx4Init8callbackE">bgfx::Init::callback (C++ member)</a>
 </li>
       <li><a href="bgfx.html#_CPPv4N4bgfx4Init12capabilitiesE">bgfx::Init::capabilities (C++ member)</a>
@@ -322,6 +366,8 @@
       <li><a href="bgfx.html#_CPPv4N4bgfx4Init5debugE">bgfx::Init::debug (C++ member)</a>
 </li>
       <li><a href="bgfx.html#_CPPv4N4bgfx4Init8deviceIdE">bgfx::Init::deviceId (C++ member)</a>
+</li>
+      <li><a href="bgfx.html#_CPPv4N4bgfx4Init11diagnosticsE">bgfx::Init::diagnostics (C++ member)</a>
 </li>
       <li><a href="bgfx.html#_CPPv4N4bgfx4Init8fallbackE">bgfx::Init::fallback (C++ member)</a>
 </li>
@@ -339,11 +385,21 @@
 </li>
       <li><a href="bgfx.html#_CPPv4N4bgfx4Init6Limits20minUniformBufferSizeE">bgfx::Init::Limits::minUniformBufferSize (C++ member)</a>
 </li>
+      <li><a href="bgfx.html#_CPPv4N4bgfx4Init6Limits19minUniformCacheSizeE">bgfx::Init::Limits::minUniformCacheSize (C++ member)</a>
+</li>
+      <li><a href="bgfx.html#_CPPv4N4bgfx4Init6Limits8minViewsE">bgfx::Init::Limits::minViews (C++ member)</a>
+</li>
+      <li><a href="bgfx.html#_CPPv4N4bgfx4Init6Limits21numDrawCallPeakFramesE">bgfx::Init::Limits::numDrawCallPeakFrames (C++ member)</a>
+</li>
+      <li><a href="bgfx.html#_CPPv4N4bgfx4Init6Limits12numDrawCallsE">bgfx::Init::Limits::numDrawCalls (C++ member)</a>
+</li>
       <li><a href="bgfx.html#_CPPv4N4bgfx4Init12platformDataE">bgfx::Init::platformData (C++ member)</a>
 </li>
       <li><a href="bgfx.html#_CPPv4N4bgfx4Init7profileE">bgfx::Init::profile (C++ member)</a>
 </li>
-      <li><a href="bgfx.html#_CPPv4N4bgfx4Init10resolutionE">bgfx::Init::resolution (C++ member)</a>
+      <li><a href="bgfx.html#_CPPv4N4bgfx4Init5resetE">bgfx::Init::reset (C++ member)</a>
+</li>
+      <li><a href="bgfx.html#_CPPv4N4bgfx4Init9swapChainE">bgfx::Init::swapChain (C++ member)</a>
 </li>
       <li><a href="bgfx.html#_CPPv4N4bgfx4Init4typeE">bgfx::Init::type (C++ member)</a>
 </li>
@@ -389,25 +445,15 @@
 </li>
       <li><a href="bgfx.html#_CPPv4N4bgfx20OcclusionQueryResult4Enum7VisibleE">bgfx::OcclusionQueryResult::Enum::Visible (C++ enumerator)</a>
 </li>
-      <li><a href="bgfx.html#_CPPv4N4bgfx16overrideInternalE13TextureHandle8uint16_t8uint16_t7uint8_tN13TextureFormat4EnumE8uint64_t">bgfx::overrideInternal (C++ function)</a>, <a href="bgfx.html#_CPPv4N4bgfx16overrideInternalE13TextureHandle9uintptr_t8uint16_t">[1]</a>
-</li>
       <li><a href="bgfx.html#_CPPv4N4bgfx12PlatformDataE">bgfx::PlatformData (C++ struct)</a>
 </li>
-      <li><a href="bgfx.html#_CPPv4N4bgfx12PlatformData10backBufferE">bgfx::PlatformData::backBuffer (C++ member)</a>
-</li>
-      <li><a href="bgfx.html#_CPPv4N4bgfx12PlatformData12backBufferDSE">bgfx::PlatformData::backBufferDS (C++ member)</a>
-</li>
       <li><a href="bgfx.html#_CPPv4N4bgfx12PlatformData7contextE">bgfx::PlatformData::context (C++ member)</a>
-</li>
-      <li><a href="bgfx.html#_CPPv4N4bgfx12PlatformData3ndtE">bgfx::PlatformData::ndt (C++ member)</a>
-</li>
-      <li><a href="bgfx.html#_CPPv4N4bgfx12PlatformData3nwhE">bgfx::PlatformData::nwh (C++ member)</a>
 </li>
       <li><a href="bgfx.html#_CPPv4N4bgfx12PlatformData5queueE">bgfx::PlatformData::queue (C++ member)</a>
 </li>
       <li><a href="bgfx.html#_CPPv4N4bgfx12PlatformData4typeE">bgfx::PlatformData::type (C++ member)</a>
 </li>
-      <li><a href="bgfx.html#_CPPv4N4bgfx11readTextureE13TextureHandlePv8uint16_t7uint8_t">bgfx::readTexture (C++ function)</a>
+      <li><a href="bgfx.html#_CPPv4N4bgfx4readERK12BufferRegionPv">bgfx::read (C++ function)</a>, <a href="bgfx.html#_CPPv4N4bgfx4readERK13TextureRegionPv">[1]</a>
 </li>
       <li><a href="bgfx.html#_CPPv4N4bgfx12RendererTypeE">bgfx::RendererType (C++ struct)</a>
 </li>
@@ -443,37 +489,21 @@
 </li>
       <li><a href="bgfx.html#_CPPv4N4bgfx17requestScreenShotE17FrameBufferHandlePKc">bgfx::requestScreenShot (C++ function)</a>
 </li>
-      <li><a href="bgfx.html#_CPPv4N4bgfx5resetE8uint32_t8uint32_t8uint32_tN13TextureFormat4EnumE">bgfx::reset (C++ function)</a>
+      <li><a href="bgfx.html#_CPPv4N4bgfx5resetE8uint32_tPK9SwapChain">bgfx::reset (C++ function)</a>
 </li>
       <li><a href="bgfx.html#_CPPv4N4bgfx9resetViewE6ViewId">bgfx::resetView (C++ function)</a>
 </li>
-      <li><a href="bgfx.html#_CPPv4N4bgfx10ResolutionE">bgfx::Resolution (C++ struct)</a>
-</li>
-      <li><a href="bgfx.html#_CPPv4N4bgfx10Resolution14debugTextScaleE">bgfx::Resolution::debugTextScale (C++ member)</a>
-</li>
-      <li><a href="bgfx.html#_CPPv4N4bgfx10Resolution11formatColorE">bgfx::Resolution::formatColor (C++ member)</a>
-</li>
-      <li><a href="bgfx.html#_CPPv4N4bgfx10Resolution18formatDepthStencilE">bgfx::Resolution::formatDepthStencil (C++ member)</a>
-</li>
-      <li><a href="bgfx.html#_CPPv4N4bgfx10Resolution6heightE">bgfx::Resolution::height (C++ member)</a>
-</li>
-      <li><a href="bgfx.html#_CPPv4N4bgfx10Resolution15maxFrameLatencyE">bgfx::Resolution::maxFrameLatency (C++ member)</a>
-</li>
-      <li><a href="bgfx.html#_CPPv4N4bgfx10Resolution14numBackBuffersE">bgfx::Resolution::numBackBuffers (C++ member)</a>
-</li>
-      <li><a href="bgfx.html#_CPPv4N4bgfx10Resolution5resetE">bgfx::Resolution::reset (C++ member)</a>
-</li>
-      <li><a href="bgfx.html#_CPPv4N4bgfx10Resolution5widthE">bgfx::Resolution::width (C++ member)</a>
-</li>
-      <li><a href="bgfx.html#_CPPv4N4bgfx9setBufferE7uint8_t17IndexBufferHandleN6Access4EnumE">bgfx::setBuffer (C++ function)</a>, <a href="bgfx.html#_CPPv4N4bgfx9setBufferE7uint8_t18VertexBufferHandleN6Access4EnumE">[1]</a>, <a href="bgfx.html#_CPPv4N4bgfx9setBufferE7uint8_t20IndirectBufferHandleN6Access4EnumE">[2]</a>, <a href="bgfx.html#_CPPv4N4bgfx9setBufferE7uint8_t24DynamicIndexBufferHandleN6Access4EnumE">[3]</a>, <a href="bgfx.html#_CPPv4N4bgfx9setBufferE7uint8_t25DynamicVertexBufferHandleN6Access4EnumE">[4]</a>
+      <li><a href="bgfx.html#_CPPv4N4bgfx9setBufferE7uint8_t17IndexBufferHandleN6Access4EnumE8uint32_t8uint32_t">bgfx::setBuffer (C++ function)</a>, <a href="bgfx.html#_CPPv4N4bgfx9setBufferE7uint8_t18VertexBufferHandleN6Access4EnumE8uint32_t8uint32_t">[1]</a>, <a href="bgfx.html#_CPPv4N4bgfx9setBufferE7uint8_t20IndirectBufferHandleN6Access4EnumE">[2]</a>, <a href="bgfx.html#_CPPv4N4bgfx9setBufferE7uint8_t24DynamicIndexBufferHandleN6Access4EnumE8uint32_t8uint32_t">[3]</a>, <a href="bgfx.html#_CPPv4N4bgfx9setBufferE7uint8_t25DynamicVertexBufferHandleN6Access4EnumE8uint32_t8uint32_t">[4]</a>
 </li>
       <li><a href="bgfx.html#_CPPv4N4bgfx12setConditionE20OcclusionQueryHandleb">bgfx::setCondition (C++ function)</a>
 </li>
-      <li><a href="bgfx.html#_CPPv4N4bgfx8setDebugE8uint32_t">bgfx::setDebug (C++ function)</a>
+      <li><a href="bgfx.html#_CPPv4N4bgfx8setDebugE8uint32_t17FrameBufferHandle7uint8_t">bgfx::setDebug (C++ function)</a>
+</li>
+      <li><a href="bgfx.html#_CPPv4N4bgfx15setDepthControlE7int32_tffb">bgfx::setDepthControl (C++ function)</a>, <a href="bgfx.html#_CPPv4N4bgfx15setDepthControlE8uint16_t">[1]</a>
 </li>
       <li><a href="bgfx.html#_CPPv4N4bgfx15setFrameUniformE13UniformHandlePKv8uint16_t">bgfx::setFrameUniform (C++ function)</a>
 </li>
-      <li><a href="bgfx.html#_CPPv4N4bgfx8setImageE7uint8_t13TextureHandle7uint8_tN6Access4EnumEN13TextureFormat4EnumE">bgfx::setImage (C++ function)</a>
+      <li><a href="bgfx.html#_CPPv4N4bgfx8setImageE7uint8_t13TextureHandle7uint8_tN6Access4EnumEN13TextureFormat4EnumE">bgfx::setImage (C++ function)</a>, <a href="bgfx.html#_CPPv4N4bgfx8setImageE7uint8_t13TextureHandle8uint16_t8uint16_t7uint8_tN6Access4EnumEN13TextureFormat4EnumE">[1]</a>
 </li>
       <li><a href="bgfx.html#_CPPv4N4bgfx14setIndexBufferE17IndexBufferHandle">bgfx::setIndexBuffer (C++ function)</a>, <a href="bgfx.html#_CPPv4N4bgfx14setIndexBufferE17IndexBufferHandle8uint32_t8uint32_t">[1]</a>, <a href="bgfx.html#_CPPv4N4bgfx14setIndexBufferE24DynamicIndexBufferHandle">[2]</a>, <a href="bgfx.html#_CPPv4N4bgfx14setIndexBufferE24DynamicIndexBufferHandle8uint32_t8uint32_t">[3]</a>, <a href="bgfx.html#_CPPv4N4bgfx14setIndexBufferEPK20TransientIndexBuffer">[4]</a>, <a href="bgfx.html#_CPPv4N4bgfx14setIndexBufferEPK20TransientIndexBuffer8uint32_t8uint32_t">[5]</a>
 </li>
@@ -487,7 +517,7 @@
 </li>
       <li><a href="bgfx.html#_CPPv4N4bgfx15setPaletteColorE7uint8_t8uint32_t">bgfx::setPaletteColor (C++ function)</a>, <a href="bgfx.html#_CPPv4N4bgfx15setPaletteColorE7uint8_tAL4E_Kf">[1]</a>, <a href="bgfx.html#_CPPv4N4bgfx15setPaletteColorE7uint8_tffff">[2]</a>
 </li>
-      <li><a href="bgfx.html#_CPPv4N4bgfx15setPlatformDataERK12PlatformData">bgfx::setPlatformData (C++ function)</a>
+      <li><a href="bgfx.html#_CPPv4N4bgfx13setSampleMaskE8uint32_t">bgfx::setSampleMask (C++ function)</a>
 </li>
       <li><a href="bgfx.html#_CPPv4N4bgfx10setScissorE8uint16_t">bgfx::setScissor (C++ function)</a>, <a href="bgfx.html#_CPPv4N4bgfx10setScissorE8uint16_t8uint16_t8uint16_t8uint16_t">[1]</a>
 </li>
@@ -495,17 +525,21 @@
 </li>
       <li><a href="bgfx.html#_CPPv4N4bgfx10setStencilE8uint32_t8uint32_t">bgfx::setStencil (C++ function)</a>
 </li>
-      <li><a href="bgfx.html#_CPPv4N4bgfx10setTextureE7uint8_t13UniformHandle13TextureHandle8uint16_t8uint16_t7uint8_t7uint8_t8uint32_t">bgfx::setTexture (C++ function)</a>, <a href="bgfx.html#_CPPv4N4bgfx10setTextureE7uint8_t13UniformHandle13TextureHandle8uint32_t">[1]</a>
+      <li><a href="bgfx.html#_CPPv4N4bgfx10setTextureE7uint8_t13UniformHandle13TextureHandle8uint16_t8uint16_t7uint8_t7uint8_t8uint32_t7uint8_t7uint8_t">bgfx::setTexture (C++ function)</a>, <a href="bgfx.html#_CPPv4N4bgfx10setTextureE7uint8_t13UniformHandle13TextureHandle8uint32_t">[1]</a>
 </li>
       <li><a href="bgfx.html#_CPPv4N4bgfx12setTransformE8uint32_t8uint16_t">bgfx::setTransform (C++ function)</a>, <a href="bgfx.html#_CPPv4N4bgfx12setTransformEPKv8uint16_t">[1]</a>
 </li>
       <li><a href="bgfx.html#_CPPv4N4bgfx10setUniformE13UniformHandlePKv8uint16_t">bgfx::setUniform (C++ function)</a>
+</li>
+      <li><a href="bgfx.html#_CPPv4N4bgfx13setUniformRefE13UniformHandlePKv8uint16_t">bgfx::setUniformRef (C++ function)</a>
 </li>
       <li><a href="bgfx.html#_CPPv4N4bgfx15setVertexBufferE7uint8_t18VertexBufferHandle8uint32_t8uint32_t18VertexLayoutHandle">bgfx::setVertexBuffer (C++ function)</a>, <a href="bgfx.html#_CPPv4N4bgfx15setVertexBufferE7uint8_t25DynamicVertexBufferHandle8uint32_t8uint32_t18VertexLayoutHandle">[1]</a>, <a href="bgfx.html#_CPPv4N4bgfx15setVertexBufferE7uint8_tPK21TransientVertexBuffer8uint32_t8uint32_t18VertexLayoutHandle">[2]</a>
 </li>
       <li><a href="bgfx.html#_CPPv4N4bgfx14setVertexCountE8uint32_t">bgfx::setVertexCount (C++ function)</a>
 </li>
       <li><a href="bgfx.html#_CPPv4N4bgfx12setViewClearE6ViewId8uint16_t8uint32_tf7uint8_t">bgfx::setViewClear (C++ function)</a>, <a href="bgfx.html#_CPPv4N4bgfx12setViewClearE6ViewId8uint16_tf7uint8_t7uint8_t7uint8_t7uint8_t7uint8_t7uint8_t7uint8_t7uint8_t7uint8_t">[1]</a>
+</li>
+      <li><a href="bgfx.html#_CPPv4N4bgfx16setViewDepthBiasE6ViewId7int32_tff">bgfx::setViewDepthBias (C++ function)</a>
 </li>
       <li><a href="bgfx.html#_CPPv4N4bgfx18setViewFrameBufferE6ViewId17FrameBufferHandle">bgfx::setViewFrameBuffer (C++ function)</a>
 </li>
@@ -515,7 +549,9 @@
 </li>
       <li><a href="bgfx.html#_CPPv4N4bgfx12setViewOrderE6ViewId8uint16_tPK6ViewId">bgfx::setViewOrder (C++ function)</a>
 </li>
-      <li><a href="bgfx.html#_CPPv4N4bgfx11setViewRectE6ViewId8uint16_t8uint16_t8uint16_t8uint16_t">bgfx::setViewRect (C++ function)</a>, <a href="bgfx.html#_CPPv4N4bgfx11setViewRectE6ViewId8uint16_t8uint16_tN15BackbufferRatio4EnumE">[1]</a>
+      <li><a href="bgfx.html#_CPPv4N4bgfx11setViewRectE6ViewId7int16_t7int16_t8uint16_t8uint16_tff">bgfx::setViewRect (C++ function)</a>, <a href="bgfx.html#_CPPv4N4bgfx11setViewRectE6ViewId7int16_t7int16_tN15BackbufferRatio4EnumE">[1]</a>
+</li>
+      <li><a href="bgfx.html#_CPPv4N4bgfx17setViewSampleMaskE6ViewId8uint32_t">bgfx::setViewSampleMask (C++ function)</a>
 </li>
       <li><a href="bgfx.html#_CPPv4N4bgfx14setViewScissorE6ViewId8uint16_t8uint16_t8uint16_t8uint16_t">bgfx::setViewScissor (C++ function)</a>
 </li>
@@ -573,13 +609,31 @@
 </li>
       <li><a href="bgfx.html#_CPPv4N4bgfx5Stats6heightE">bgfx::Stats::height (C++ member)</a>
 </li>
+      <li><a href="bgfx.html#_CPPv4N4bgfx5Stats10latencyGpuE">bgfx::Stats::latencyGpu (C++ member)</a>
+</li>
+      <li><a href="bgfx.html#_CPPv4N4bgfx5Stats14latencyPresentE">bgfx::Stats::latencyPresent (C++ member)</a>
+</li>
+      <li><a href="bgfx.html#_CPPv4N4bgfx5Stats12latencyQueueE">bgfx::Stats::latencyQueue (C++ member)</a>
+</li>
+      <li><a href="bgfx.html#_CPPv4N4bgfx5Stats19latencyRenderSubmitE">bgfx::Stats::latencyRenderSubmit (C++ member)</a>
+</li>
+      <li><a href="bgfx.html#_CPPv4N4bgfx5Stats17latencySimulationE">bgfx::Stats::latencySimulation (C++ member)</a>
+</li>
+      <li><a href="bgfx.html#_CPPv4N4bgfx5Stats12latencySleepE">bgfx::Stats::latencySleep (C++ member)</a>
+</li>
+      <li><a href="bgfx.html#_CPPv4N4bgfx5Stats12latencyTotalE">bgfx::Stats::latencyTotal (C++ member)</a>
+</li>
       <li><a href="bgfx.html#_CPPv4N4bgfx5Stats13maxGpuLatencyE">bgfx::Stats::maxGpuLatency (C++ member)</a>
 </li>
       <li><a href="bgfx.html#_CPPv4N4bgfx5Stats7numBlitE">bgfx::Stats::numBlit (C++ member)</a>
 </li>
+      <li><a href="bgfx.html#_CPPv4N4bgfx5Stats13numBlitRepackE">bgfx::Stats::numBlitRepack (C++ member)</a>
+</li>
       <li><a href="bgfx.html#_CPPv4N4bgfx5Stats10numComputeE">bgfx::Stats::numCompute (C++ member)</a>
 </li>
       <li><a href="bgfx.html#_CPPv4N4bgfx5Stats7numDrawE">bgfx::Stats::numDraw (C++ member)</a>
+</li>
+      <li><a href="bgfx.html#_CPPv4N4bgfx5Stats16numDrawCallsPeakE">bgfx::Stats::numDrawCallsPeak (C++ member)</a>
 </li>
       <li><a href="bgfx.html#_CPPv4N4bgfx5Stats22numDynamicIndexBuffersE">bgfx::Stats::numDynamicIndexBuffers (C++ member)</a>
 </li>
@@ -631,6 +685,28 @@
 </li>
       <li><a href="bgfx.html#_CPPv4N4bgfx6submitE6ViewId13ProgramHandle20IndirectBufferHandle8uint32_t17IndexBufferHandle8uint32_t8uint32_t8uint32_t7uint8_t">bgfx::submit (C++ function)</a>, <a href="bgfx.html#_CPPv4N4bgfx6submitE6ViewId13ProgramHandle20IndirectBufferHandle8uint32_t8uint32_t8uint32_t7uint8_t">[1]</a>, <a href="bgfx.html#_CPPv4N4bgfx6submitE6ViewId13ProgramHandle20OcclusionQueryHandle8uint32_t7uint8_t">[2]</a>, <a href="bgfx.html#_CPPv4N4bgfx6submitE6ViewId13ProgramHandle8uint32_t7uint8_t">[3]</a>
 </li>
+      <li><a href="bgfx.html#_CPPv4N4bgfx9SwapChainE">bgfx::SwapChain (C++ struct)</a>
+</li>
+      <li><a href="bgfx.html#_CPPv4N4bgfx9SwapChain5depthE">bgfx::SwapChain::depth (C++ member)</a>
+</li>
+      <li><a href="bgfx.html#_CPPv4N4bgfx9SwapChain5flagsE">bgfx::SwapChain::flags (C++ member)</a>
+</li>
+      <li><a href="bgfx.html#_CPPv4N4bgfx9SwapChain11formatColorE">bgfx::SwapChain::formatColor (C++ member)</a>
+</li>
+      <li><a href="bgfx.html#_CPPv4N4bgfx9SwapChain18formatDepthStencilE">bgfx::SwapChain::formatDepthStencil (C++ member)</a>
+</li>
+      <li><a href="bgfx.html#_CPPv4N4bgfx9SwapChain6heightE">bgfx::SwapChain::height (C++ member)</a>
+</li>
+      <li><a href="bgfx.html#_CPPv4N4bgfx9SwapChain15maxFrameLatencyE">bgfx::SwapChain::maxFrameLatency (C++ member)</a>
+</li>
+      <li><a href="bgfx.html#_CPPv4N4bgfx9SwapChain3ndtE">bgfx::SwapChain::ndt (C++ member)</a>
+</li>
+      <li><a href="bgfx.html#_CPPv4N4bgfx9SwapChain14numBackBuffersE">bgfx::SwapChain::numBackBuffers (C++ member)</a>
+</li>
+      <li><a href="bgfx.html#_CPPv4N4bgfx9SwapChain3nwhE">bgfx::SwapChain::nwh (C++ member)</a>
+</li>
+      <li><a href="bgfx.html#_CPPv4N4bgfx9SwapChain5widthE">bgfx::SwapChain::width (C++ member)</a>
+</li>
       <li><a href="bgfx.html#_CPPv4N4bgfx13TextureFormatE">bgfx::TextureFormat (C++ struct)</a>
 </li>
       <li><a href="bgfx.html#_CPPv4N4bgfx13TextureFormat4EnumE">bgfx::TextureFormat::Enum (C++ enum)</a>
@@ -681,10 +757,18 @@
 </li>
       <li><a href="bgfx.html#_CPPv4N4bgfx13TextureFormat4Enum3BC4E">bgfx::TextureFormat::Enum::BC4 (C++ enumerator)</a>
 </li>
+      <li><a href="bgfx.html#_CPPv4N4bgfx13TextureFormat4Enum4BC4SE">bgfx::TextureFormat::Enum::BC4S (C++ enumerator)</a>
+</li>
       <li><a href="bgfx.html#_CPPv4N4bgfx13TextureFormat4Enum3BC5E">bgfx::TextureFormat::Enum::BC5 (C++ enumerator)</a>
+</li>
+      <li><a href="bgfx.html#_CPPv4N4bgfx13TextureFormat4Enum4BC5SE">bgfx::TextureFormat::Enum::BC5S (C++ enumerator)</a>
 </li>
       <li><a href="bgfx.html#_CPPv4N4bgfx13TextureFormat4Enum4BC6HE">bgfx::TextureFormat::Enum::BC6H (C++ enumerator)</a>
 </li>
+      <li><a href="bgfx.html#_CPPv4N4bgfx13TextureFormat4Enum5BC6HUE">bgfx::TextureFormat::Enum::BC6HU (C++ enumerator)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="bgfx.html#_CPPv4N4bgfx13TextureFormat4Enum3BC7E">bgfx::TextureFormat::Enum::BC7 (C++ enumerator)</a>
 </li>
       <li><a href="bgfx.html#_CPPv4N4bgfx13TextureFormat4Enum6BGR5A1E">bgfx::TextureFormat::Enum::BGR5A1 (C++ enumerator)</a>
@@ -711,8 +795,8 @@
 </li>
       <li><a href="bgfx.html#_CPPv4N4bgfx13TextureFormat4Enum4D32FE">bgfx::TextureFormat::Enum::D32F (C++ enumerator)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="bgfx.html#_CPPv4N4bgfx13TextureFormat4Enum6D32FS8E">bgfx::TextureFormat::Enum::D32FS8 (C++ enumerator)</a>
+</li>
       <li><a href="bgfx.html#_CPPv4N4bgfx13TextureFormat4Enum6EACR11E">bgfx::TextureFormat::Enum::EACR11 (C++ enumerator)</a>
 </li>
       <li><a href="bgfx.html#_CPPv4N4bgfx13TextureFormat4Enum7EACR11SE">bgfx::TextureFormat::Enum::EACR11S (C++ enumerator)</a>
@@ -797,6 +881,8 @@
 </li>
       <li><a href="bgfx.html#_CPPv4N4bgfx13TextureFormat4Enum7RGB10A2E">bgfx::TextureFormat::Enum::RGB10A2 (C++ enumerator)</a>
 </li>
+      <li><a href="bgfx.html#_CPPv4N4bgfx13TextureFormat4Enum8RGB10A2UE">bgfx::TextureFormat::Enum::RGB10A2U (C++ enumerator)</a>
+</li>
       <li><a href="bgfx.html#_CPPv4N4bgfx13TextureFormat4Enum6RGB5A1E">bgfx::TextureFormat::Enum::RGB5A1 (C++ enumerator)</a>
 </li>
       <li><a href="bgfx.html#_CPPv4N4bgfx13TextureFormat4Enum4RGB8E">bgfx::TextureFormat::Enum::RGB8 (C++ enumerator)</a>
@@ -858,6 +944,26 @@
       <li><a href="bgfx.html#_CPPv4N4bgfx11TextureInfo11storageSizeE">bgfx::TextureInfo::storageSize (C++ member)</a>
 </li>
       <li><a href="bgfx.html#_CPPv4N4bgfx11TextureInfo5widthE">bgfx::TextureInfo::width (C++ member)</a>
+</li>
+      <li><a href="bgfx.html#_CPPv4N4bgfx13TextureRegionE">bgfx::TextureRegion (C++ struct)</a>
+</li>
+      <li><a href="bgfx.html#_CPPv4N4bgfx13TextureRegion5depthE">bgfx::TextureRegion::depth (C++ member)</a>
+</li>
+      <li><a href="bgfx.html#_CPPv4N4bgfx13TextureRegion6handleE">bgfx::TextureRegion::handle (C++ member)</a>
+</li>
+      <li><a href="bgfx.html#_CPPv4N4bgfx13TextureRegion6heightE">bgfx::TextureRegion::height (C++ member)</a>
+</li>
+      <li><a href="bgfx.html#_CPPv4N4bgfx13TextureRegion4initE13TextureHandle8uint16_t8uint16_t8uint16_t8uint16_t">bgfx::TextureRegion::init (C++ function)</a>
+</li>
+      <li><a href="bgfx.html#_CPPv4N4bgfx13TextureRegion3mipE">bgfx::TextureRegion::mip (C++ member)</a>
+</li>
+      <li><a href="bgfx.html#_CPPv4N4bgfx13TextureRegion5widthE">bgfx::TextureRegion::width (C++ member)</a>
+</li>
+      <li><a href="bgfx.html#_CPPv4N4bgfx13TextureRegion1xE">bgfx::TextureRegion::x (C++ member)</a>
+</li>
+      <li><a href="bgfx.html#_CPPv4N4bgfx13TextureRegion1yE">bgfx::TextureRegion::y (C++ member)</a>
+</li>
+      <li><a href="bgfx.html#_CPPv4N4bgfx13TextureRegion1zE">bgfx::TextureRegion::z (C++ member)</a>
 </li>
       <li><a href="bgfx.html#_CPPv4N4bgfx15topologyConvertEN15TopologyConvert4EnumEPv8uint32_tPKv8uint32_tb">bgfx::topologyConvert (C++ function)</a>
 </li>
@@ -975,6 +1081,8 @@
 </li>
       <li><a href="bgfx.html#_CPPv4N4bgfx6updateE24DynamicIndexBufferHandle8uint32_tPK6Memory">bgfx::update (C++ function)</a>, <a href="bgfx.html#_CPPv4N4bgfx6updateE25DynamicVertexBufferHandle8uint32_tPK6Memory">[1]</a>
 </li>
+      <li><a href="bgfx.html#_CPPv4N4bgfx15updateSwapChainE17FrameBufferHandleRK9SwapChain">bgfx::updateSwapChain (C++ function)</a>
+</li>
       <li><a href="bgfx.html#_CPPv4N4bgfx15updateTexture2DE13TextureHandle8uint16_t7uint8_t8uint16_t8uint16_t8uint16_t8uint16_tPK6Memory8uint16_t">bgfx::updateTexture2D (C++ function)</a>
 </li>
       <li><a href="bgfx.html#_CPPv4N4bgfx15updateTexture3DE13TextureHandle7uint8_t8uint16_t8uint16_t8uint16_t8uint16_t8uint16_t8uint16_tPK6Memory">bgfx::updateTexture3D (C++ function)</a>
@@ -1079,8 +1187,6 @@
 </li>
       <li><a href="bgfx.html#_CPPv4N4bgfx9ViewStats4viewE">bgfx::ViewStats::view (C++ member)</a>
 </li>
-      <li><a href="bgfx.html#c.BGFX_CAPS_ALPHA_TO_COVERAGE">BGFX_CAPS_ALPHA_TO_COVERAGE (C macro)</a>
-</li>
       <li><a href="bgfx.html#c.BGFX_CAPS_BLEND_INDEPENDENT">BGFX_CAPS_BLEND_INDEPENDENT (C macro)</a>
 </li>
       <li><a href="bgfx.html#c.BGFX_CAPS_COMPUTE">BGFX_CAPS_COMPUTE (C macro)</a>
@@ -1091,41 +1197,25 @@
 </li>
       <li><a href="bgfx.html#c.BGFX_CAPS_DRAW_INDIRECT_COUNT">BGFX_CAPS_DRAW_INDIRECT_COUNT (C macro)</a>
 </li>
-      <li><a href="bgfx.html#c.BGFX_CAPS_FRAGMENT_DEPTH">BGFX_CAPS_FRAGMENT_DEPTH (C macro)</a>
-</li>
       <li><a href="bgfx.html#c.BGFX_CAPS_FRAGMENT_ORDERING">BGFX_CAPS_FRAGMENT_ORDERING (C macro)</a>
 </li>
       <li><a href="bgfx.html#c.BGFX_CAPS_GRAPHICS_DEBUGGER">BGFX_CAPS_GRAPHICS_DEBUGGER (C macro)</a>
 </li>
       <li><a href="bgfx.html#c.BGFX_CAPS_HDR10">BGFX_CAPS_HDR10 (C macro)</a>
 </li>
-      <li><a href="bgfx.html#c.BGFX_CAPS_HIDPI">BGFX_CAPS_HIDPI (C macro)</a>
-</li>
       <li><a href="bgfx.html#c.BGFX_CAPS_IMAGE_RW">BGFX_CAPS_IMAGE_RW (C macro)</a>
 </li>
       <li><a href="bgfx.html#c.BGFX_CAPS_INDEX32">BGFX_CAPS_INDEX32 (C macro)</a>
 </li>
-      <li><a href="bgfx.html#c.BGFX_CAPS_INSTANCING">BGFX_CAPS_INSTANCING (C macro)</a>
-</li>
-      <li><a href="bgfx.html#c.BGFX_CAPS_OCCLUSION_QUERY">BGFX_CAPS_OCCLUSION_QUERY (C macro)</a>
+      <li><a href="bgfx.html#c.BGFX_CAPS_LOW_LATENCY">BGFX_CAPS_LOW_LATENCY (C macro)</a>
 </li>
       <li><a href="bgfx.html#c.BGFX_CAPS_PRIMITIVE_ID">BGFX_CAPS_PRIMITIVE_ID (C macro)</a>
 </li>
       <li><a href="bgfx.html#c.BGFX_CAPS_RENDERER_MULTITHREADED">BGFX_CAPS_RENDERER_MULTITHREADED (C macro)</a>
 </li>
+      <li><a href="bgfx.html#c.BGFX_CAPS_SHADER_F16">BGFX_CAPS_SHADER_F16 (C macro)</a>
+</li>
       <li><a href="bgfx.html#c.BGFX_CAPS_SWAP_CHAIN">BGFX_CAPS_SWAP_CHAIN (C macro)</a>
-</li>
-      <li><a href="bgfx.html#c.BGFX_CAPS_TEXTURE_2D_ARRAY">BGFX_CAPS_TEXTURE_2D_ARRAY (C macro)</a>
-</li>
-      <li><a href="bgfx.html#c.BGFX_CAPS_TEXTURE_3D">BGFX_CAPS_TEXTURE_3D (C macro)</a>
-</li>
-      <li><a href="bgfx.html#c.BGFX_CAPS_TEXTURE_BLIT">BGFX_CAPS_TEXTURE_BLIT (C macro)</a>
-</li>
-      <li><a href="bgfx.html#c.BGFX_CAPS_TEXTURE_COMPARE_ALL">BGFX_CAPS_TEXTURE_COMPARE_ALL (C macro)</a>
-</li>
-      <li><a href="bgfx.html#c.BGFX_CAPS_TEXTURE_COMPARE_LEQUAL">BGFX_CAPS_TEXTURE_COMPARE_LEQUAL (C macro)</a>
-</li>
-      <li><a href="bgfx.html#c.BGFX_CAPS_TEXTURE_COMPARE_RESERVED">BGFX_CAPS_TEXTURE_COMPARE_RESERVED (C macro)</a>
 </li>
       <li><a href="bgfx.html#c.BGFX_CAPS_TEXTURE_CUBE_ARRAY">BGFX_CAPS_TEXTURE_CUBE_ARRAY (C macro)</a>
 </li>
@@ -1135,17 +1225,11 @@
 </li>
       <li><a href="bgfx.html#c.BGFX_CAPS_TEXTURE_EXTERNAL_SHARED">BGFX_CAPS_TEXTURE_EXTERNAL_SHARED (C macro)</a>
 </li>
-      <li><a href="bgfx.html#c.BGFX_CAPS_TEXTURE_READ_BACK">BGFX_CAPS_TEXTURE_READ_BACK (C macro)</a>
-</li>
       <li><a href="bgfx.html#c.BGFX_CAPS_TRANSPARENT_BACKBUFFER">BGFX_CAPS_TRANSPARENT_BACKBUFFER (C macro)</a>
 </li>
       <li><a href="bgfx.html#c.BGFX_CAPS_VARIABLE_RATE_SHADING">BGFX_CAPS_VARIABLE_RATE_SHADING (C macro)</a>
 </li>
-      <li><a href="bgfx.html#c.BGFX_CAPS_VERTEX_ATTRIB_HALF">BGFX_CAPS_VERTEX_ATTRIB_HALF (C macro)</a>
-</li>
       <li><a href="bgfx.html#c.BGFX_CAPS_VERTEX_ATTRIB_UINT10">BGFX_CAPS_VERTEX_ATTRIB_UINT10 (C macro)</a>
-</li>
-      <li><a href="bgfx.html#c.BGFX_CAPS_VERTEX_ID">BGFX_CAPS_VERTEX_ID (C macro)</a>
 </li>
       <li><a href="bgfx.html#c.BGFX_CAPS_VIDEO_DECODE">BGFX_CAPS_VIDEO_DECODE (C macro)</a>
 </li>
@@ -1163,6 +1247,16 @@
 </li>
       <li><a href="bgfx.html#c.BGFX_DEBUG_WIREFRAME">BGFX_DEBUG_WIREFRAME (C macro)</a>
 </li>
+      <li><a href="bgfx.html#c.BGFX_DIAGNOSTIC_GPU_VALIDATION">BGFX_DIAGNOSTIC_GPU_VALIDATION (C macro)</a>
+</li>
+      <li><a href="bgfx.html#c.BGFX_DIAGNOSTIC_NONE">BGFX_DIAGNOSTIC_NONE (C macro)</a>
+</li>
+      <li><a href="bgfx.html#c.BGFX_DIAGNOSTIC_SERIALIZE">BGFX_DIAGNOSTIC_SERIALIZE (C macro)</a>
+</li>
+      <li><a href="bgfx.html#c.BGFX_DIAGNOSTIC_SYNC_VALIDATION">BGFX_DIAGNOSTIC_SYNC_VALIDATION (C macro)</a>
+</li>
+      <li><a href="bgfx.html#c.BGFX_DIAGNOSTIC_VERBOSE">BGFX_DIAGNOSTIC_VERBOSE (C macro)</a>
+</li>
       <li><a href="bgfx.html#c.BGFX_FRAME_DEBUG_CAPTURE">BGFX_FRAME_DEBUG_CAPTURE (C macro)</a>
 </li>
       <li><a href="bgfx.html#c.BGFX_FRAME_DISCARD">BGFX_FRAME_DISCARD (C macro)</a>
@@ -1177,6 +1271,8 @@
 </li>
       <li><a href="bgfx.html#c.BGFX_PCI_ID_ARM">BGFX_PCI_ID_ARM (C macro)</a>
 </li>
+      <li><a href="bgfx.html#c.BGFX_PCI_ID_GOOGLE">BGFX_PCI_ID_GOOGLE (C macro)</a>
+</li>
       <li><a href="bgfx.html#c.BGFX_PCI_ID_INTEL">BGFX_PCI_ID_INTEL (C macro)</a>
 </li>
       <li><a href="bgfx.html#c.BGFX_PCI_ID_MICROSOFT">BGFX_PCI_ID_MICROSOFT (C macro)</a>
@@ -1189,8 +1285,6 @@
 </li>
       <li><a href="bgfx.html#c.BGFX_RESET_CAPTURE">BGFX_RESET_CAPTURE (C macro)</a>
 </li>
-      <li><a href="bgfx.html#c.BGFX_RESET_DEPTH_CLAMP">BGFX_RESET_DEPTH_CLAMP (C macro)</a>
-</li>
       <li><a href="bgfx.html#c.BGFX_RESET_FLIP_AFTER_RENDER">BGFX_RESET_FLIP_AFTER_RENDER (C macro)</a>
 </li>
       <li><a href="bgfx.html#c.BGFX_RESET_FLUSH_AFTER_RENDER">BGFX_RESET_FLUSH_AFTER_RENDER (C macro)</a>
@@ -1200,6 +1294,10 @@
       <li><a href="bgfx.html#c.BGFX_RESET_HDR10">BGFX_RESET_HDR10 (C macro)</a>
 </li>
       <li><a href="bgfx.html#c.BGFX_RESET_HIDPI">BGFX_RESET_HIDPI (C macro)</a>
+</li>
+      <li><a href="bgfx.html#c.BGFX_RESET_LOW_LATENCY_BOOST">BGFX_RESET_LOW_LATENCY_BOOST (C macro)</a>
+</li>
+      <li><a href="bgfx.html#c.BGFX_RESET_LOW_LATENCY_ON">BGFX_RESET_LOW_LATENCY_ON (C macro)</a>
 </li>
       <li><a href="bgfx.html#c.BGFX_RESET_MAXANISOTROPY">BGFX_RESET_MAXANISOTROPY (C macro)</a>
 </li>
@@ -1323,6 +1421,18 @@
 </li>
       <li><a href="bgfx.html#c.BGFX_STENCIL_TEST_NOTEQUAL">BGFX_STENCIL_TEST_NOTEQUAL (C macro)</a>
 </li>
+      <li><a href="bgfx.html#c.BGFX_SWAP_CHAIN_FULLSCREEN">BGFX_SWAP_CHAIN_FULLSCREEN (C macro)</a>
+</li>
+      <li><a href="bgfx.html#c.BGFX_SWAP_CHAIN_HDR10">BGFX_SWAP_CHAIN_HDR10 (C macro)</a>
+</li>
+      <li><a href="bgfx.html#c.BGFX_SWAP_CHAIN_HIDPI">BGFX_SWAP_CHAIN_HIDPI (C macro)</a>
+</li>
+      <li><a href="bgfx.html#c.BGFX_SWAP_CHAIN_NONE">BGFX_SWAP_CHAIN_NONE (C macro)</a>
+</li>
+      <li><a href="bgfx.html#c.BGFX_SWAP_CHAIN_SRGB_BACKBUFFER">BGFX_SWAP_CHAIN_SRGB_BACKBUFFER (C macro)</a>
+</li>
+      <li><a href="bgfx.html#c.BGFX_SWAP_CHAIN_TRANSPARENT_BACKBUFFER">BGFX_SWAP_CHAIN_TRANSPARENT_BACKBUFFER (C macro)</a>
+</li>
       <li><a href="bgfx.html#c.BGFX_TEXTURE_BLIT_DST">BGFX_TEXTURE_BLIT_DST (C macro)</a>
 </li>
       <li><a href="bgfx.html#c.BGFX_TEXTURE_COMPUTE_WRITE">BGFX_TEXTURE_COMPUTE_WRITE (C macro)</a>
@@ -1340,6 +1450,8 @@
       <li><a href="bgfx.html#c.BGFX_TEXTURE_RT_WRITE_ONLY">BGFX_TEXTURE_RT_WRITE_ONLY (C macro)</a>
 </li>
       <li><a href="bgfx.html#c.BGFX_TEXTURE_SRGB">BGFX_TEXTURE_SRGB (C macro)</a>
+</li>
+      <li><a href="bgfx.html#c.BGFX_TEXTURE_SRGB_MUTABLE">BGFX_TEXTURE_SRGB_MUTABLE (C macro)</a>
 </li>
   </ul></td>
 </tr></table>

@@ -6,16 +6,16 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Examples &mdash; bgfx 1.146.9292 documentation</title>
+  <title>Examples &mdash; bgfx 1.168.9622 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
-      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
 
   
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="_static/documentation_options.js?v=6b816648"></script>
-      <script src="_static/doctools.js?v=9bcbadda"></script>
-      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="_static/documentation_options.js?v=9080174b"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -102,6 +102,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#hextile">49-hextile</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#headless">50-headless</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#gpufont">51-gpufont</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#hdr10">55-hdr10</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="bgfx.html">API Reference</a></li>
@@ -1229,6 +1230,19 @@ and output result into an image.</p>
 <figure class="align-default">
 <img alt="example-51-gpufont" src="https://github.com/bkaradzic/bgfx/raw/master/examples/51-gpufont/screenshot.png" />
 </figure>
+</section>
+<section id="hdr10">
+<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/55-hdr10">55-hdr10</a><a class="headerlink" href="#hdr10" title="Link to this heading"></a></h2>
+<p>HDR10 test pattern. Gray steps at 0 to 10000 nits and BT.2020 color bars at 203 nits, PQ encoded into
+an RGB10A2 back buffer, or as multiples of SDR white in an RGBA16F extended linear back buffer. HDR10
+can be toggled to compare HDR output against SDR on an HDR capable display.</p>
+<dl class="simple">
+<dt>Reference(s):</dt><dd><ul class="simple">
+<li><p><a class="reference external" href="https://www.itu.int/rec/R-REC-BT.2100">ITU-R BT.2100</a>.</p></li>
+<li><p><a class="reference external" href="https://www.itu.int/pub/R-REP-BT.2408">ITU-R BT.2408</a>.</p></li>
+</ul>
+</dd>
+</dl>
 </section>
 </section>
 

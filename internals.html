@@ -6,16 +6,16 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Internals &mdash; bgfx 1.146.9292 documentation</title>
+  <title>Internals &mdash; bgfx 1.168.9622 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
-      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
 
   
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="_static/documentation_options.js?v=6b816648"></script>
-      <script src="_static/doctools.js?v=9bcbadda"></script>
-      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="_static/documentation_options.js?v=9080174b"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -183,7 +183,7 @@
 <h2>View API<a class="headerlink" href="#view-api" title="Link to this heading"></a></h2>
 <p>Any API call starting with <code class="docutils literal notranslate"><span class="pre">bgfx::setView*</span></code> is considered part of the View API. The View API is <strong>not</strong> internally thread safe - but it doesn’t need to be, because views are independent from each other. Calling any view API for different views from different threads is safe. What is <strong>not</strong> safe is updating the same view from multiple threads simultaneously; doing so leads to undefined behaviour.</p>
 <p>One important constraint: <code class="docutils literal notranslate"><span class="pre">bgfx::setViewMode</span></code> must be set <strong>before</strong> any draw calls are submitted to that view within a frame. The internal encoder reads the view mode at submit time to select the sort key encoding. Changing the view mode after draw calls have already been submitted to that view will cause incorrect sort behaviour.</p>
-<p>The maximum number of views is configured by <code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_MAX_VIEWS</span></code> (default: 256, must be a power of 2). Views are referenced by <code class="docutils literal notranslate"><span class="pre">ViewId</span></code> (a 16-bit integer).</p>
+<p>Views are referenced by <code class="docutils literal notranslate"><span class="pre">ViewId</span></code> (a 16-bit integer) in the range <code class="docutils literal notranslate"><span class="pre">0</span></code> to <code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_MAX_VIEWS-1</span></code> (4096 ids, fixed). View state is kept for <code class="docutils literal notranslate"><span class="pre">Init::Limits::minViews</span></code> views (<code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_MIN_VIEWS</span></code>, default 256) and allocated in blocks of 64 as views past that are set; a block whose views are all reset is released again once <code class="docutils literal notranslate"><span class="pre">Init::Limits::numDrawCallPeakFrames</span></code> frames have gone by. The per-frame copies hold only the views used in that frame and grow and shrink with that count.</p>
 </section>
 <section id="encoder-api">
 <h2>Encoder API<a class="headerlink" href="#encoder-api" title="Link to this heading"></a></h2>
@@ -200,10 +200,10 @@
 </section>
 <section id="customization">
 <h2>Customization<a class="headerlink" href="#customization" title="Link to this heading"></a></h2>
-<p>By default each platform has sane default values. For example on Windows the default renderer is Direct3D 12, on Linux it is Vulkan, and on macOS it’s Metal. On Windows, almost all rendering backends are available. For OpenGL ES on desktop you can find more information at: <a class="reference external" href="http://www.g-truc.net/post-0457.html">OpenGL ES 2.0 and EGL on desktop</a></p>
+<p>By default each platform has sane default values. For example on Windows the default renderer is Direct3D 12, on Linux it is Vulkan, and on macOS it’s Metal. On Windows, almost all rendering backends are available. For OpenGL ES on desktop you can find more information at: <a class="reference external" href="http://www.g-truc.net/post-0457.html">OpenGL ES and EGL on desktop</a></p>
 <p>If you’re targeting specific mobile hardware, you can find GLES support in their official SDKs: <a class="reference external" href="http://developer.qualcomm.com/mobile-development/mobile-technologies/gaming-graphics-optimization-adreno/tools-and-resources">Adreno SDK</a>, <a class="reference external" href="http://www.malideveloper.com/">Mali SDK</a>, <a class="reference external" href="http://www.imgtec.com/powervr/insider/sdkdownloads/">PowerVR SDK</a>.</p>
 <p>All configuration settings are located inside <a class="reference external" href="https://github.com/bkaradzic/bgfx/blob/master/src/config.h">src/config.h</a>.</p>
-<p>Every <code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_*</span></code> setting can be changed by passing defines through compiler switches. For example setting preprocessor define <code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_RENDERER_OPENGL=1</span></code> will change the backend renderer to OpenGL 2.1 on Windows. Since rendering APIs are platform specific, this obviously won’t work nor make sense in all cases.</p>
+<p>Every <code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_*</span></code> setting can be changed by passing defines through compiler switches. For example setting preprocessor define <code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_RENDERER_OPENGL=1</span></code> will change the backend renderer to OpenGL 4.3 on Windows. Since rendering APIs are platform specific, this obviously won’t work nor make sense in all cases.</p>
 <section id="options">
 <h3>Options<a class="headerlink" href="#options" title="Link to this heading"></a></h3>
 <section id="threading-and-synchronisation">
@@ -221,19 +221,23 @@
 <p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_RENDERER_GNM</span></code> - Enable GNM renderer backend (PS4). Default is auto-detected per platform.</p>
 <p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_RENDERER_METAL</span></code> - Enable Metal renderer backend. Default is 1 on iOS/macOS/visionOS.</p>
 <p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_RENDERER_NVN</span></code> - Enable NVN renderer backend (Nintendo Switch). Default is auto-detected per platform.</p>
-<p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_RENDERER_OPENGL</span></code> - Enable OpenGL renderer backend. Set to the minimum GL version (e.g. 21 for OpenGL 2.1, 33 for 3.3, 44 for 4.4). Default is auto-detected per platform; minimum is 21 if enabled.</p>
-<p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_RENDERER_OPENGLES</span></code> - Enable OpenGL ES renderer backend. Set to the minimum GLES version (e.g. 20 for ES 2.0, 30 for ES 3.0). Default is auto-detected per platform; minimum is 20 if enabled. Cannot be combined with <code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_RENDERER_OPENGL</span></code>.</p>
+<p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_RENDERER_OPENGL</span></code> - Enable OpenGL renderer backend. Set to the minimum GL version (e.g. 43 for OpenGL 4.3, 45 for 4.5, 46 for 4.6). Default is auto-detected per platform; minimum is 43 if enabled.</p>
+<p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_RENDERER_OPENGLES</span></code> - Enable OpenGL ES renderer backend. Set to the minimum GLES version (e.g. 30 for ES 3.0, 31 for ES 3.1). Default is auto-detected per platform; minimum is 30 if enabled. Cannot be combined with <code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_RENDERER_OPENGL</span></code>.</p>
 <p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_RENDERER_VULKAN</span></code> - Enable Vulkan renderer backend. Default is 1 on Android/Linux/Windows/macOS/NX.</p>
 <p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_RENDERER_WEBGPU</span></code> - Enable WebGPU renderer backend. Default is 1 on Linux/macOS/Windows.</p>
 <p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_RENDERER_USE_EXTENSIONS</span></code> - Enable use of renderer-specific API extensions (e.g. OpenGL extensions, Vulkan extensions). Default is 1.</p>
 <p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_RENDERER_DIRECT3D11_USE_STAGING_BUFFER</span></code> - Enable use of staging buffers in the Direct3D 11 renderer for texture and buffer updates. Default is 0.</p>
-<p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_RENDERER_VULKAN_MAX_DESCRIPTOR_SETS_PER_FRAME</span></code> - Maximum number of Vulkan descriptor sets allocated per frame. Default is 1024. Each draw/compute call may consume one descriptor set.</p>
+<p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_RENDERER_VULKAN_DESCRIPTOR_SETS_PER_POOL</span></code> - Number of Vulkan descriptor sets per descriptor-pool chunk. The per-frame descriptor pool is a chain of chunks of this size, grown on demand and reset/reused each frame; this is the allocation granularity and initial per-frame footprint, not a hard cap. Each unique draw/compute bind consumes one descriptor set. Default is 1024.</p>
 </section>
 <section id="resource-limits">
 <h4>Resource limits<a class="headerlink" href="#resource-limits" title="Link to this heading"></a></h4>
 <p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_MAX_DRAW_CALLS</span></code> - Maximum number of draw/compute calls per frame. Default is 65535 (64K - 1).</p>
+<p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_DYNAMIC_FRAME_STORAGE</span></code> - Enable dynamic per frame storage. When enabled, storage for render items, binds, blit items and scissor rectangles is allocated in blocks, on first touch, and grows during the frame instead of dropping submissions; <code class="docutils literal notranslate"><span class="pre">Init::Limits::numDrawCalls</span></code> is then what is reserved up front rather than a hard limit, and <code class="docutils literal notranslate"><span class="pre">Caps::Limits::maxDrawCalls</span></code> always reports <code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_MAX_DRAW_CALLS</span></code>. When disabled, all of it is allocated once, up front, at exactly the requested size, indexing has no indirection, and <code class="docutils literal notranslate"><span class="pre">Init::Limits::numDrawCalls</span></code> is a hard limit that submissions are dropped past. Default is 1. Disabling trades memory for a small amount of submission throughput; see <code class="docutils literal notranslate"><span class="pre">Stats::numDrawCallsPeak</span></code> to size <code class="docutils literal notranslate"><span class="pre">numDrawCalls</span></code>.</p>
+<p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_DRAW_CALL_BLOCK</span></code> - Granularity dynamic per frame storage grows by, in items, and the multiple <code class="docutils literal notranslate"><span class="pre">Init::Limits::numDrawCalls</span></code> is rounded up to. Must be a power of two, at least 64. Default is 1024.</p>
+<p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_BLIT_BLOCK</span></code>, <code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_DEPTH_CONTROL_BLOCK</span></code>, <code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_MATRIX_BLOCK</span></code>, <code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_RECT_BLOCK</span></code>, <code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_VIEW_BLOCK</span></code> - Granularity the per frame blit item, depth control, matrix and scissor rect caches and the view storage grow by. Must be a power of two, at least 64. Default is 64.</p>
 <p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_MAX_BLIT_ITEMS</span></code> - Maximum number of blit items per frame. Default is 1024.</p>
-<p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_MAX_VIEWS</span></code> - Maximum number of views. Default is 256. Must be a power of 2.</p>
+<p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_MAX_VIEWS</span></code> - Number of view ids. Fixed at 4096; view storage is allocated as views are used, so this is only the id range.</p>
+<p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_MIN_VIEWS</span></code> - Minimum number of views storage is kept for. Default is 256. Must be at least <code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_VIEW_BLOCK</span></code>.</p>
 <p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_MAX_VIEW_NAME</span></code> - Maximum length of a view name string. Default is 256.</p>
 <p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_MAX_VERTEX_LAYOUTS</span></code> - Maximum number of vertex layout declarations. Default is 64.</p>
 <p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_MAX_INDEX_BUFFERS</span></code> - Maximum number of static index buffer handles. Default is 4096.</p>
@@ -259,10 +263,10 @@
 <p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_DYNAMIC_VERTEX_BUFFER_SIZE</span></code> - Initial size in bytes of the dynamic vertex buffer backing store. Default is 3 MB. The backing store grows as needed via sub-allocation.</p>
 <p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_MAX_TRANSIENT_VERTEX_BUFFER_SIZE</span></code> - Maximum transient vertex buffer size. There is no growth; all transient vertices must fit into this buffer. Default is 6 MB.</p>
 <p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_MAX_TRANSIENT_INDEX_BUFFER_SIZE</span></code> - Maximum transient index buffer size. There is no growth; all transient indices must fit into this buffer. Default is 2 MB.</p>
-<p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_MIN_RESOURCE_COMMAND_BUFFER_SIZE</span></code> - Minimum initial size of the resource command buffer (pre/post render commands for resource creation and updates). Default is 64 KB. The buffer grows as needed.</p>
-<p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_MIN_UNIFORM_BUFFER_SIZE</span></code> - Minimum initial size in bytes of the per-encoder uniform buffer. Default is 1 MB. This buffer will resize on demand.</p>
-<p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_UNIFORM_BUFFER_RESIZE_THRESHOLD_SIZE</span></code> - Maximum amount of unused uniform buffer space (in bytes) before the buffer is shrunk. Default is 64 KB.</p>
-<p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_UNIFORM_BUFFER_RESIZE_INCREMENT_SIZE</span></code> - Increment size for uniform buffer resize. Default is 1 MB.</p>
+<p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_MIN_RESOURCE_COMMAND_BUFFER_SIZE</span></code> - Minimum initial size of the resource command buffer (pre/post render commands for resource creation and updates). Default is 64 KB. The buffer grows as needed. After <code class="docutils literal notranslate"><span class="pre">Init::Limits::numDrawCallPeakFrames</span></code> (default 60) of observing the high-water mark it shrinks toward that peak, but not below this minimum. Set <code class="docutils literal notranslate"><span class="pre">numDrawCallPeakFrames</span></code> to 0 to keep the largest size for the lifetime of the context.</p>
+<p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_MIN_UNIFORM_BUFFER_SIZE</span></code> - Minimum initial size in bytes of the per-encoder uniform buffer. Default is 128 KB. This buffer will resize on demand. Must be larger than <code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_UNIFORM_BUFFER_RESIZE_THRESHOLD_SIZE</span></code>, otherwise the buffer resizes on first use.</p>
+<p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_UNIFORM_BUFFER_RESIZE_THRESHOLD_SIZE</span></code> - Head room in bytes kept in the uniform buffer; it grows once less than this is left, and shrinking keeps this much above the peak. Must be at least as large as the largest single uniform record (4 + 1023*sizeof(Mat4) = 65476 bytes). Default is 64 KB.</p>
+<p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_UNIFORM_BUFFER_RESIZE_INCREMENT_SIZE</span></code> - Increment size for uniform buffer resize. Default is 64 KB.</p>
 <p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_CACHED_DEVICE_MEMORY_ALLOCATIONS_SIZE</span></code> - Amount of allowed memory allocations left on device to use for recycling during later allocations. This can be beneficial in case the driver is slow allocating memory on the device. Default is 128 MB. Currently only used by the Vulkan backend.</p>
 <p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_MAX_STAGING_SCRATCH_BUFFER_SIZE</span></code> - Threshold of data size above which the staging scratch buffer will not be used; instead a separate device memory allocation will take place to stage the data. Default is 16 MB.</p>
 <p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_MAX_SCRATCH_STAGING_BUFFER_PER_FRAME_SIZE</span></code> - Amount of scratch buffer size (per in-flight frame) reserved for staging data for copying to the device (vertex buffers, textures, etc.). Default is 32 MB. Currently only used by the Vulkan backend.</p>
@@ -277,13 +281,13 @@
 </section>
 <section id="swap-chain">
 <h4>Swap chain<a class="headerlink" href="#swap-chain" title="Link to this heading"></a></h4>
-<p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_MAX_BACK_BUFFERS</span></code> - Maximum number of back buffers for the swap chain. Default is 4. The actual number used is specified via <code class="docutils literal notranslate"><span class="pre">bgfx::Resolution::numBackBuffers</span></code>.</p>
-<p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_MAX_FRAME_LATENCY</span></code> - Maximum frame latency (number of frames that can be queued ahead). Default is 3. The actual value is specified via <code class="docutils literal notranslate"><span class="pre">bgfx::Resolution::maxFrameLatency</span></code>.</p>
+<p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_MAX_BACK_BUFFERS</span></code> - Maximum number of back buffers for the swap chain. Default is 4. The actual number used is specified via <code class="docutils literal notranslate"><span class="pre">bgfx::SwapChain::numBackBuffers</span></code>.</p>
+<p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_MAX_FRAME_LATENCY</span></code> - Maximum frame latency (number of frames that can be queued ahead). Default is 3. The actual value is specified via <code class="docutils literal notranslate"><span class="pre">bgfx::SwapChain::maxFrameLatency</span></code>.</p>
 </section>
 <section id="debugging-and-profiling">
 <h4>Debugging and profiling<a class="headerlink" href="#debugging-and-profiling" title="Link to this heading"></a></h4>
 <p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_DEBUG_TEXT_MAX_SCALE</span></code> - Debug text maximum scale factor for <code class="docutils literal notranslate"><span class="pre">bgfx::dbgTextPrintf</span></code>. Default is 4.</p>
-<p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_DEBUG_PERFHUD</span></code> - Enable nVidia PerfHUD integration. Default is 0.</p>
+<p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_DEBUG_PERFHUD</span></code> - Enable NVIDIA PerfHUD integration. Default is 0.</p>
 <p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_DEBUG_ANNOTATION</span></code> - Enable annotation for graphics debuggers (e.g. RenderDoc, PIX). Default matches <code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_DEBUG</span></code>.</p>
 <p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_DEBUG_OBJECT_NAME</span></code> - Enable debug names on graphics API objects (Direct3D 11/12, Vulkan, etc.). Default matches <code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_DEBUG_ANNOTATION</span></code>.</p>
 <p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_DEBUG_UNIFORM</span></code> - Enable runtime validation that uniforms are set before each draw call. Default matches <code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_DEBUG</span></code>.</p>
@@ -294,10 +298,9 @@
 </section>
 <section id="miscellaneous">
 <h4>Miscellaneous<a class="headerlink" href="#miscellaneous" title="Link to this heading"></a></h4>
-<p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_USE_TINYSTL</span></code> - Enable use of tinystl instead of std containers for internal data structures. Default is 1. Reduces binary size and avoids std library dependency.</p>
 <p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_MIP_LOD_BIAS</span></code> - Global MIP level-of-detail bias applied to all texture sampling. Default is 0. Positive values select coarser MIP levels, negative values select finer MIP levels.</p>
 <p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_DRAW_INDIRECT_STRIDE</span></code> - Stride in bytes of each draw indirect command. Fixed at 32 bytes. Not configurable.</p>
-<p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_PREFER_DISCRETE_GPU</span></code> - On laptops with integrated and discrete GPU, prefer selection of the discrete GPU (nVidia and AMD). Default is 1 on Windows, 0 elsewhere.</p>
+<p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_PREFER_DISCRETE_GPU</span></code> - On laptops with integrated and discrete GPU, prefer selection of the discrete GPU (NVIDIA and AMD). Default is 1 on Windows, 0 elsewhere.</p>
 </section>
 </section>
 </section>

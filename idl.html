@@ -6,16 +6,16 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>IDL — Interface Definition Language &mdash; bgfx 1.146.9292 documentation</title>
+  <title>IDL — Interface Definition Language &mdash; bgfx 1.168.9622 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
-      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
 
   
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="_static/documentation_options.js?v=6b816648"></script>
-      <script src="_static/doctools.js?v=9bcbadda"></script>
-      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="_static/documentation_options.js?v=9080174b"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -166,9 +166,9 @@ Comments prefixed with <code class="docutils literal notranslate"><span class="p
 <section id="typedef">
 <h3>typedef<a class="headerlink" href="#typedef" title="Link to this heading"></a></h3>
 <p>Declares a type alias. These map IDL type names to their C/C++ equivalents:</p>
-<div class="highlight-lua notranslate"><div class="highlight"><pre><span></span><span class="nv">typedef</span><span class="w"> </span><span class="s2">&quot;uint32_t&quot;</span>
-<span class="nv">typedef</span><span class="w"> </span><span class="s2">&quot;ViewId&quot;</span>
-<span class="nv">typedef</span><span class="w"> </span><span class="s2">&quot;CallbackI&quot;</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nv">cname</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;callback_interface&quot;</span><span class="w"> </span><span class="p">}</span>
+<div class="highlight-lua notranslate"><div class="highlight"><pre><span></span><span class="nv">typedef</span><span class="w"> </span><span class="s2">"uint32_t"</span>
+<span class="nv">typedef</span><span class="w"> </span><span class="s2">"ViewId"</span>
+<span class="nv">typedef</span><span class="w"> </span><span class="s2">"CallbackI"</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nv">cname</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"callback_interface"</span><span class="w"> </span><span class="p">}</span>
 </pre></div>
 </div>
 <p>The optional table provides attributes. <code class="docutils literal notranslate"><span class="pre">cname</span></code> overrides the C binding name.</p>
@@ -177,18 +177,18 @@ Comments prefixed with <code class="docutils literal notranslate"><span class="p
 <h3>handle<a class="headerlink" href="#handle" title="Link to this heading"></a></h3>
 <p>Declares an opaque handle type. Handles are type-safe 16-bit integers used to reference GPU
 resources:</p>
-<div class="highlight-lua notranslate"><div class="highlight"><pre><span></span><span class="nv">handle</span><span class="w"> </span><span class="s2">&quot;TextureHandle&quot;</span>
-<span class="nv">handle</span><span class="w"> </span><span class="s2">&quot;VertexBufferHandle&quot;</span>
+<div class="highlight-lua notranslate"><div class="highlight"><pre><span></span><span class="nv">handle</span><span class="w"> </span><span class="s2">"TextureHandle"</span>
+<span class="nv">handle</span><span class="w"> </span><span class="s2">"VertexBufferHandle"</span>
 </pre></div>
 </div>
 </section>
 <section id="enum">
 <h3>enum<a class="headerlink" href="#enum" title="Link to this heading"></a></h3>
 <p>Declares an enumeration. Each member can have a <code class="docutils literal notranslate"><span class="pre">---</span></code> documentation comment:</p>
-<div class="highlight-lua notranslate"><div class="highlight"><pre><span></span><span class="nv">enum</span><span class="p">.</span><span class="py">TextureFormat</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nv">comment</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;Texture formats:&quot;</span><span class="p">,</span><span class="w"> </span><span class="nv">section</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;Textures&quot;</span><span class="w"> </span><span class="p">}</span>
+<div class="highlight-lua notranslate"><div class="highlight"><pre><span></span><span class="nv">enum</span><span class="p">.</span><span class="py">TextureFormat</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nv">comment</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"Texture formats:"</span><span class="p">,</span><span class="w"> </span><span class="nv">section</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"Textures"</span><span class="w"> </span><span class="p">}</span>
 <span class="w">    </span><span class="p">.</span><span class="nv">BC1</span><span class="w">       </span><span class="c1">--- DXT1 R5G6B5A1.</span>
-<span class="w">    </span><span class="p">.</span><span class="py">BC2</span><span class="w">       </span><span class="c1">--- DXT3 R5G6B5A4.</span>
-<span class="w">    </span><span class="p">.</span><span class="nf">Unknown</span><span class="w">   </span><span class="c1">--- Compressed formats above.</span>
+<span class="w">    </span><span class="p">.</span><span class="nv">BC2</span><span class="w">       </span><span class="c1">--- DXT3 R5G6B5A4.</span>
+<span class="w">    </span><span class="p">.</span><span class="nv">Unknown</span><span class="w">   </span><span class="c1">--- Compressed formats above.</span>
 <span class="w">    </span><span class="p">()</span>
 </pre></div>
 </div>
@@ -198,14 +198,14 @@ attribute controls where this type appears in the generated documentation hierar
 <section id="flag">
 <h3>flag<a class="headerlink" href="#flag" title="Link to this heading"></a></h3>
 <p>Declares a bitfield flag type. Similar to <code class="docutils literal notranslate"><span class="pre">enum</span></code>, but members represent individual bits:</p>
-<div class="highlight-lua notranslate"><div class="highlight"><pre><span></span><span class="nv">flag</span><span class="p">.</span><span class="py">StateWrite</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nv">bits</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">64</span><span class="p">,</span><span class="w"> </span><span class="nv">base</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="nv">section</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;State Flags&quot;</span><span class="p">,</span><span class="w"> </span><span class="nv">label</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;Write&quot;</span><span class="w"> </span><span class="p">}</span>
+<div class="highlight-lua notranslate"><div class="highlight"><pre><span></span><span class="nv">flag</span><span class="p">.</span><span class="py">StateWrite</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nv">bits</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">64</span><span class="p">,</span><span class="w"> </span><span class="nv">base</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="nv">section</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"State Flags"</span><span class="p">,</span><span class="w"> </span><span class="nv">label</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"Write"</span><span class="w"> </span><span class="p">}</span>
 <span class="w">    </span><span class="p">.</span><span class="nv">R</span><span class="w">     </span><span class="c1">--- Enable R write.</span>
-<span class="w">    </span><span class="p">.</span><span class="py">G</span><span class="w">     </span><span class="c1">--- Enable G write.</span>
-<span class="w">    </span><span class="p">.</span><span class="py">B</span><span class="w">     </span><span class="c1">--- Enable B write.</span>
-<span class="w">    </span><span class="p">.</span><span class="py">A</span><span class="w">     </span><span class="c1">--- Enable alpha write.</span>
+<span class="w">    </span><span class="p">.</span><span class="nv">G</span><span class="w">     </span><span class="c1">--- Enable G write.</span>
+<span class="w">    </span><span class="p">.</span><span class="nv">B</span><span class="w">     </span><span class="c1">--- Enable B write.</span>
+<span class="w">    </span><span class="p">.</span><span class="nv">A</span><span class="w">     </span><span class="c1">--- Enable alpha write.</span>
 <span class="w">    </span><span class="p">.</span><span class="nf">Z</span><span class="w"> </span><span class="p">(</span><span class="mi">39</span><span class="p">)</span><span class="w"> </span><span class="c1">--- Enable depth write.</span>
-<span class="w">    </span><span class="p">.</span><span class="nv">Rgb</span><span class="w">  </span><span class="p">{</span><span class="w"> </span><span class="s2">&quot;R&quot;</span><span class="p">,</span><span class="w">   </span><span class="s2">&quot;G&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;B&quot;</span><span class="w"> </span><span class="p">}</span><span class="w">  </span><span class="c1">--- Enable RGB write.</span>
-<span class="w">    </span><span class="p">.</span><span class="nv">Mask</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="s2">&quot;Rgb&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;A&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;Z&quot;</span><span class="w"> </span><span class="p">}</span><span class="w">  </span><span class="c1">--- Write all channels mask.</span>
+<span class="w">    </span><span class="p">.</span><span class="nv">Rgb</span><span class="w">  </span><span class="p">{</span><span class="w"> </span><span class="s2">"R"</span><span class="p">,</span><span class="w">   </span><span class="s2">"G"</span><span class="p">,</span><span class="w"> </span><span class="s2">"B"</span><span class="w"> </span><span class="p">}</span><span class="w">  </span><span class="c1">--- Enable RGB write.</span>
+<span class="w">    </span><span class="p">.</span><span class="nv">Mask</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="s2">"Rgb"</span><span class="p">,</span><span class="w"> </span><span class="s2">"A"</span><span class="p">,</span><span class="w"> </span><span class="s2">"Z"</span><span class="w"> </span><span class="p">}</span><span class="w">  </span><span class="c1">--- Write all channels mask.</span>
 </pre></div>
 </div>
 <p>Attributes:</p>
@@ -223,13 +223,13 @@ with a table of names (e.g. <code class="docutils literal notranslate"><span cla
 <section id="struct">
 <h3>struct<a class="headerlink" href="#struct" title="Link to this heading"></a></h3>
 <p>Declares a data structure with typed fields:</p>
-<div class="highlight-lua notranslate"><div class="highlight"><pre><span></span><span class="nv">struct</span><span class="p">.</span><span class="py">Init</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nv">ctor</span><span class="p">,</span><span class="w"> </span><span class="nv">section</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;Initialization and Shutdown&quot;</span><span class="w"> </span><span class="p">}</span>
-<span class="w">    </span><span class="p">.</span><span class="nb">type</span><span class="w">             </span><span class="s2">&quot;RendererType::Enum&quot;</span><span class="w"> </span><span class="c1">--- Select rendering backend.</span>
-<span class="w">    </span><span class="p">.</span><span class="nv">vendorId</span><span class="w">         </span><span class="s2">&quot;uint16_t&quot;</span><span class="w">           </span><span class="c1">--- Vendor PCI ID. See: `BGFX_PCI_ID_*`.</span>
-<span class="w">    </span><span class="p">.</span><span class="nv">deviceId</span><span class="w">         </span><span class="s2">&quot;uint16_t&quot;</span><span class="w">           </span><span class="c1">--- Device ID.</span>
-<span class="w">    </span><span class="p">.</span><span class="nv">capabilities</span><span class="w">     </span><span class="s2">&quot;uint64_t&quot;</span><span class="w">           </span><span class="c1">--- Capabilities initialization mask.</span>
-<span class="w">    </span><span class="p">.</span><span class="nv">debug</span><span class="w">            </span><span class="s2">&quot;bool&quot;</span><span class="w">               </span><span class="c1">--- Enable device for debugging.</span>
-<span class="w">    </span><span class="p">.</span><span class="nv">profile</span><span class="w">          </span><span class="s2">&quot;bool&quot;</span><span class="w">               </span><span class="c1">--- Enable device for profiling.</span>
+<div class="highlight-lua notranslate"><div class="highlight"><pre><span></span><span class="nv">struct</span><span class="p">.</span><span class="py">Init</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nv">ctor</span><span class="p">,</span><span class="w"> </span><span class="nv">section</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"Initialization and Shutdown"</span><span class="w"> </span><span class="p">}</span>
+<span class="w">    </span><span class="p">.</span><span class="nb">type</span><span class="w">             </span><span class="s2">"RendererType::Enum"</span><span class="w"> </span><span class="c1">--- Select rendering backend.</span>
+<span class="w">    </span><span class="p">.</span><span class="nv">vendorId</span><span class="w">         </span><span class="s2">"uint16_t"</span><span class="w">           </span><span class="c1">--- Vendor PCI ID. See: `BGFX_PCI_ID_*`.</span>
+<span class="w">    </span><span class="p">.</span><span class="nv">deviceId</span><span class="w">         </span><span class="s2">"uint16_t"</span><span class="w">           </span><span class="c1">--- Device ID.</span>
+<span class="w">    </span><span class="p">.</span><span class="nv">capabilities</span><span class="w">     </span><span class="s2">"uint64_t"</span><span class="w">           </span><span class="c1">--- Capabilities initialization mask.</span>
+<span class="w">    </span><span class="p">.</span><span class="nv">debug</span><span class="w">            </span><span class="s2">"bool"</span><span class="w">               </span><span class="c1">--- Enable device for debugging.</span>
+<span class="w">    </span><span class="p">.</span><span class="nv">profile</span><span class="w">          </span><span class="s2">"bool"</span><span class="w">               </span><span class="c1">--- Enable device for profiling.</span>
 </pre></div>
 </div>
 <p>Attributes:</p>
@@ -244,10 +244,10 @@ with a table of names (e.g. <code class="docutils literal notranslate"><span cla
 <h3>func<a class="headerlink" href="#func" title="Link to this heading"></a></h3>
 <p>Declares a function. The first string is the return type, followed by named parameters:</p>
 <div class="highlight-lua notranslate"><div class="highlight"><pre><span></span><span class="c1">--- Advance to next frame.</span>
-<span class="nv">func</span><span class="p">.</span><span class="py">frame</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nv">section</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;Frame&quot;</span><span class="w"> </span><span class="p">}</span>
-<span class="w">    </span><span class="s2">&quot;uint32_t&quot;</span><span class="w">                      </span><span class="c1">--- Current frame number.</span>
-<span class="w">    </span><span class="p">.</span><span class="nv">flags</span><span class="w"> </span><span class="s2">&quot;uint8_t&quot;</span><span class="w">                </span><span class="c1">--- Frame flags.</span>
-<span class="w">     </span><span class="p">{</span><span class="w"> </span><span class="nv">default</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;BGFX_FRAME_NONE&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="nv">func</span><span class="p">.</span><span class="py">frame</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nv">section</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"Frame"</span><span class="w"> </span><span class="p">}</span>
+<span class="w">    </span><span class="s2">"uint32_t"</span><span class="w">                      </span><span class="c1">--- Current frame number.</span>
+<span class="w">    </span><span class="p">.</span><span class="nv">flags</span><span class="w"> </span><span class="s2">"uint8_t"</span><span class="w">                </span><span class="c1">--- Frame flags.</span>
+<span class="w">     </span><span class="p">{</span><span class="w"> </span><span class="nv">default</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"BGFX_FRAME_NONE"</span><span class="w"> </span><span class="p">}</span>
 </pre></div>
 </div>
 <p>Attributes:</p>
@@ -269,9 +269,9 @@ with a table of names (e.g. <code class="docutils literal notranslate"><span cla
 <h3>funcptr<a class="headerlink" href="#funcptr" title="Link to this heading"></a></h3>
 <p>Declares a function pointer type:</p>
 <div class="highlight-lua notranslate"><div class="highlight"><pre><span></span><span class="nv">funcptr</span><span class="p">.</span><span class="py">ReleaseFn</span>
-<span class="w">    </span><span class="s2">&quot;void&quot;</span>
-<span class="w">    </span><span class="p">.</span><span class="nv">ptr</span><span class="w">      </span><span class="s2">&quot;void*&quot;</span><span class="w"> </span><span class="c1">--- Pointer to allocated data.</span>
-<span class="w">    </span><span class="p">.</span><span class="nv">userData</span><span class="w"> </span><span class="s2">&quot;void*&quot;</span><span class="w"> </span><span class="c1">--- User defined data if needed.</span>
+<span class="w">    </span><span class="s2">"void"</span>
+<span class="w">    </span><span class="p">.</span><span class="nv">ptr</span><span class="w">      </span><span class="s2">"void*"</span><span class="w"> </span><span class="c1">--- Pointer to allocated data.</span>
+<span class="w">    </span><span class="p">.</span><span class="nv">userData</span><span class="w"> </span><span class="s2">"void*"</span><span class="w"> </span><span class="c1">--- User defined data if needed.</span>
 </pre></div>
 </div>
 </section>
@@ -279,9 +279,9 @@ with a table of names (e.g. <code class="docutils literal notranslate"><span cla
 <h3>section<a class="headerlink" href="#section" title="Link to this heading"></a></h3>
 <p>Declares a documentation section for organizing the generated API reference. Sections form a
 hierarchy based on their level (0 = top-level heading, 1 = chapter, 2+ = subsections):</p>
-<div class="highlight-lua notranslate"><div class="highlight"><pre><span></span><span class="nf">section</span><span class="p">(</span><span class="s2">&quot;API Reference&quot;</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span>
-<span class="nf">section</span><span class="p">(</span><span class="s2">&quot;General&quot;</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">)</span>
-<span class="nf">section</span><span class="p">(</span><span class="s2">&quot;Initialization and Shutdown&quot;</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">)</span>
+<div class="highlight-lua notranslate"><div class="highlight"><pre><span></span><span class="nf">section</span><span class="p">(</span><span class="s2">"API Reference"</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span>
+<span class="nf">section</span><span class="p">(</span><span class="s2">"General"</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">)</span>
+<span class="nf">section</span><span class="p">(</span><span class="s2">"Initialization and Shutdown"</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>Types and functions reference their section via the <code class="docutils literal notranslate"><span class="pre">section</span></code> attribute. The documentation
@@ -295,12 +295,12 @@ as Doxygen-style comments in the C/C++ headers and as descriptions in the genera
 <span class="c1">---</span>
 <span class="c1">--- @attention `bgfx::renderFrame` is a blocking call.</span>
 <span class="c1">---</span>
-<span class="c1">--- @warning This call should only be used on platforms that don&#39;t</span>
+<span class="c1">--- @warning This call should only be used on platforms that don't</span>
 <span class="c1">---   allow creating a separate rendering thread.</span>
 <span class="c1">---</span>
-<span class="nv">func</span><span class="p">.</span><span class="py">renderFrame</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nv">section</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;Platform specific&quot;</span><span class="w"> </span><span class="p">}</span>
-<span class="w">    </span><span class="s2">&quot;RenderFrame::Enum&quot;</span>
-<span class="w">    </span><span class="p">.</span><span class="nv">msecs</span><span class="w"> </span><span class="s2">&quot;int32_t&quot;</span>
+<span class="nv">func</span><span class="p">.</span><span class="py">renderFrame</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nv">section</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"Platform specific"</span><span class="w"> </span><span class="p">}</span>
+<span class="w">    </span><span class="s2">"RenderFrame::Enum"</span>
+<span class="w">    </span><span class="p">.</span><span class="nv">msecs</span><span class="w"> </span><span class="s2">"int32_t"</span>
 <span class="w">    </span><span class="p">{</span><span class="w"> </span><span class="nv">default</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">-</span><span class="mi">1</span><span class="w"> </span><span class="p">}</span>
 </pre></div>
 </div>

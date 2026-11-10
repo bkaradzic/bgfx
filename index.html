@@ -6,16 +6,16 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Documentation &mdash; bgfx 1.146.9292 documentation</title>
+  <title>Documentation &mdash; bgfx 1.168.9622 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
-      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
 
   
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="_static/documentation_options.js?v=6b816648"></script>
-      <script src="_static/doctools.js?v=9bcbadda"></script>
-      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="_static/documentation_options.js?v=9080174b"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -126,10 +126,12 @@ licensed under permissive BSD-2 clause open source license.</p>
 <li class="toctree-l3"><a class="reference internal" href="build.html#id1">Windows</a></li>
 <li class="toctree-l3"><a class="reference internal" href="build.html#macos">macOS</a></li>
 <li class="toctree-l3"><a class="reference internal" href="build.html#id2">Linux</a></li>
+<li class="toctree-l3"><a class="reference internal" href="build.html#id3">Android</a></li>
+<li class="toctree-l3"><a class="reference internal" href="build.html#ios">iOS</a></li>
 <li class="toctree-l3"><a class="reference internal" href="build.html#winrt-uwp">WinRT / UWP</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="build.html#amalgamated-build">Amalgamated Build</a></li>
+<li class="toctree-l2"><a class="reference internal" href="build.html#id7">Amalgamated Build</a></li>
 <li class="toctree-l2"><a class="reference internal" href="build.html#tools">Tools</a></li>
 <li class="toctree-l2"><a class="reference internal" href="build.html#alternative-build-systems">Alternative build systems</a></li>
 <li class="toctree-l2"><a class="reference internal" href="build.html#minimal-example-without-bgfx-s-example-harness">Minimal example without bgfx’s example harness</a></li>
@@ -192,6 +194,7 @@ licensed under permissive BSD-2 clause open source license.</p>
 <li class="toctree-l2"><a class="reference internal" href="examples.html#hextile">49-hextile</a></li>
 <li class="toctree-l2"><a class="reference internal" href="examples.html#headless">50-headless</a></li>
 <li class="toctree-l2"><a class="reference internal" href="examples.html#gpufont">51-gpufont</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#hdr10">55-hdr10</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="bgfx.html">API Reference</a><ul>
@@ -208,9 +211,11 @@ licensed under permissive BSD-2 clause open source license.</p>
 <li class="toctree-l3"><a class="reference internal" href="bgfx.html#_CPPv4N4bgfx8ViewModeE"><code class="docutils literal notranslate"><span class="pre">bgfx::ViewMode</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="bgfx.html#_CPPv4N4bgfx11ShadingRateE"><code class="docutils literal notranslate"><span class="pre">bgfx::ShadingRate</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="bgfx.html#_CPPv4N4bgfx11setViewNameE6ViewIdPKc7int32_t"><code class="docutils literal notranslate"><span class="pre">setViewName()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="bgfx.html#_CPPv4N4bgfx11setViewRectE6ViewId8uint16_t8uint16_t8uint16_t8uint16_t"><code class="docutils literal notranslate"><span class="pre">setViewRect()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="bgfx.html#_CPPv4N4bgfx11setViewRectE6ViewId8uint16_t8uint16_tN15BackbufferRatio4EnumE"><code class="docutils literal notranslate"><span class="pre">setViewRect()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#_CPPv4N4bgfx11setViewRectE6ViewId7int16_t7int16_t8uint16_t8uint16_tff"><code class="docutils literal notranslate"><span class="pre">setViewRect()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#_CPPv4N4bgfx11setViewRectE6ViewId7int16_t7int16_tN15BackbufferRatio4EnumE"><code class="docutils literal notranslate"><span class="pre">setViewRect()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="bgfx.html#_CPPv4N4bgfx14setViewScissorE6ViewId8uint16_t8uint16_t8uint16_t8uint16_t"><code class="docutils literal notranslate"><span class="pre">setViewScissor()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#_CPPv4N4bgfx16setViewDepthBiasE6ViewId7int32_tff"><code class="docutils literal notranslate"><span class="pre">setViewDepthBias()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="bgfx.html#_CPPv4N4bgfx17setViewSampleMaskE6ViewId8uint32_t"><code class="docutils literal notranslate"><span class="pre">setViewSampleMask()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="bgfx.html#_CPPv4N4bgfx12setViewClearE6ViewId8uint16_t8uint32_tf7uint8_t"><code class="docutils literal notranslate"><span class="pre">setViewClear()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="bgfx.html#_CPPv4N4bgfx12setViewClearE6ViewId8uint16_tf7uint8_t7uint8_t7uint8_t7uint8_t7uint8_t7uint8_t7uint8_t7uint8_t7uint8_t"><code class="docutils literal notranslate"><span class="pre">setViewClear()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="bgfx.html#_CPPv4N4bgfx11setViewModeE6ViewIdN8ViewMode4EnumE"><code class="docutils literal notranslate"><span class="pre">setViewMode()</span></code></a></li>
