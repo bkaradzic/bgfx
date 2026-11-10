@@ -3264,6 +3264,7 @@ namespace bgfx { namespace d3d12
 			const uint32_t width  = frameBuffer.m_width;
 			const uint32_t height = frameBuffer.m_height;
 
+			m_wireframe = false;
 			setFrameBuffer(_handle, false);
 
 			D3D12_VIEWPORT vp;
@@ -4290,6 +4291,7 @@ namespace bgfx { namespace d3d12
 			murmur.add(_depthBias);
 			murmur.add(_slopeScale);
 			murmur.add(_biasClamp);
+			murmur.add(m_wireframe);
 			const uint32_t hash = murmur.end();
 
 			ID3D12PipelineState* pso = m_pipelineStateCache.find(hash);
@@ -4338,7 +4340,7 @@ namespace bgfx { namespace d3d12
 
 			setBlendState(desc.BlendState, _state, _rgba);
 			desc.SampleMask = _sampleMask;
-			setRasterizerState(desc.RasterizerState, _state, false, _depthClamp, _depthBias, _slopeScale, _biasClamp);
+			setRasterizerState(desc.RasterizerState, _state, m_wireframe, _depthClamp, _depthBias, _slopeScale, _biasClamp);
 			setDepthStencilState(desc.DepthStencilState, _state, _stencil);
 
 			D3D12_INPUT_ELEMENT_DESC vertexElements[Attrib::Count + 1 + BGFX_CONFIG_MAX_INSTANCE_DATA_COUNT];
@@ -10196,6 +10198,7 @@ namespace bgfx { namespace d3d12
 		uint32_t viewsSinceKick         = 0;
 		ID3D12PipelineState* currentPso = NULL;
 		psoMruReset();
+		m_wireframe = !!(_render->m_debug&BGFX_DEBUG_WIREFRAME);
 		SortKey key;
 		uint16_t view = UINT16_MAX;
 		const View* renderView = &_render->view(0);
