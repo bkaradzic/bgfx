@@ -248,6 +248,11 @@ namespace entry
 				case APP_CMD_WINDOW_RESIZED:
 					// Command from main thread: the current ANativeWindow has been resized.
 					// Please redraw with its new size.
+					if (NULL != m_window)
+					{
+						WindowHandle defaultWindow = { 0 };
+						m_eventQueue.postSizeEvent(defaultWindow, ANativeWindow_getWidth(m_window), ANativeWindow_getHeight(m_window) );
+					}
 					break;
 
 				case APP_CMD_WINDOW_REDRAW_NEEDED:
