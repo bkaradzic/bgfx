@@ -107,6 +107,8 @@
 			VK_IMPORT_INSTANCE_FUNC(true,  vkGetPhysicalDeviceSurfacePresentModesKHR); \
 			VK_IMPORT_INSTANCE_FUNC(true,  vkGetPhysicalDeviceSurfaceSupportKHR);      \
 			VK_IMPORT_INSTANCE_FUNC(true,  vkDestroySurfaceKHR);                       \
+			/* VK_KHR_get_surface_capabilities2 */                                     \
+			VK_IMPORT_INSTANCE_FUNC(true,  vkGetPhysicalDeviceSurfaceCapabilities2KHR); \
 			/* VK_KHR_get_physical_device_properties2 */                               \
 			VK_IMPORT_INSTANCE_FUNC(true,  vkGetPhysicalDeviceProperties2KHR);         \
 			VK_IMPORT_INSTANCE_FUNC(true,  vkGetPhysicalDeviceFeatures2KHR);           \
@@ -826,6 +828,7 @@ VK_DESTROY_FUNC(DescriptorSet);
 		void releaseFrameBuffer();
 
 		uint32_t findPresentMode(bool _vsync);
+		bool getPresentScaling(const VkSurfaceCapabilitiesKHR& _surfaceCapabilities, VkExtent2D& _extent, VkSwapchainPresentScalingCreateInfoEXT* _scalingInfo);
 		TextureFormat::Enum findSurfaceFormat(TextureFormat::Enum _format, VkColorSpaceKHR _colorSpace, bool _srgb);
 
 		bool acquire(VkCommandBuffer _commandBuffer, bool _block = true);

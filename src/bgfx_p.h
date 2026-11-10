@@ -1036,6 +1036,14 @@ namespace bgfx
 					|| TextureFormat::RGBA16  == _format
 					|| TextureFormat::RGBA16F == _format
 					|| TextureFormat::RGBA32F == _format
+					|| TextureFormat::R8      == _format
+					|| TextureFormat::RG8     == _format
+					|| TextureFormat::R16     == _format
+					|| TextureFormat::RG16    == _format
+					|| TextureFormat::R16F    == _format
+					|| TextureFormat::RG16F   == _format
+					|| TextureFormat::R32F    == _format
+					|| TextureFormat::RG32F   == _format
 				);
 		}
 

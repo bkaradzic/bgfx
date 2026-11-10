@@ -6688,17 +6688,21 @@ WGPU_IMPORT
 				const Attachment& at = m_attachment[ii];
 				const TextureWGPU& texture = s_renderWGPU->m_textures[at.handle.idx];
 				const WGPUTextureFormat viewFormat = texture.getViewFormat(at.flags, BGFX_ATTACHMENT_SRGB);
+				const bool is3D = TextureWGPU::Texture3D == texture.m_type;
 
 				WGPUTextureViewDescriptor textureViewDesc =
 				{
 					.nextInChain     = NULL,
 					.label           = WGPU_STRING_VIEW_INIT,
 					.format          = viewFormat,
-					.dimension       = at.numLayers > 1 ? WGPUTextureViewDimension_2DArray : WGPUTextureViewDimension_2D,
+					.dimension       = is3D
+						? WGPUTextureViewDimension_3D
+						: at.numLayers > 1 ? WGPUTextureViewDimension_2DArray : WGPUTextureViewDimension_2D
+						,
 					.baseMipLevel    = at.mip,
 					.mipLevelCount   = 1,
-					.baseArrayLayer  = at.layer,
-					.arrayLayerCount = at.numLayers,
+					.baseArrayLayer  = is3D ? 0u : uint32_t(at.layer),
+					.arrayLayerCount = is3D ? 1u : uint32_t(at.numLayers),
 					.aspect          = WGPUTextureAspect_All,
 					.usage           = WGPUTextureUsage_RenderAttachment,
 				};
@@ -6733,6 +6737,7 @@ WGPU_IMPORT
 
 					m_textureView[m_numColorAttachments] = attachmentView;
 					m_resolveView[m_numColorAttachments] = resolveView;
+					m_depthSlice[m_numColorAttachments]  = is3D ? at.layer : WGPU_DEPTH_SLICE_UNDEFINED;
 					m_colorFormat[m_numColorAttachments] = viewFormat;
 					m_texture[m_numColorAttachments] = at.handle;
 					m_numColorAttachments++;
@@ -7448,6 +7453,81 @@ WGPU_IMPORT
 			const TextureWGPU& src = m_textures[blit.m_src.idx];
 			const TextureWGPU& dst = m_textures[blit.m_dst.idx];
 
+			const bool     is3D  = TextureWGPU::Texture3D == src.m_type;
+			const uint32_t depth = bx::max<uint32_t>(1, blit.m_depth);
+
+			if (blit.m_src.idx == blit.m_dst.idx
+			&&  blit.m_srcMip  == blit.m_dstMip
+			&&  (is3D || (blit.m_srcZ < blit.m_dstZ + depth && blit.m_dstZ < blit.m_srcZ + depth) )
+			&&  NULL == src.m_textureMsaa
+			&&  !bimg::isDepth(bimg::TextureFormat::Enum(src.m_textureFormat) ) )
+			{
+				const bimg::ImageBlockInfo& blockInfo = bimg::getBlockInfo(bimg::TextureFormat::Enum(src.m_textureFormat) );
+
+				const WGPUTextureDescriptor tempDesc =
+				{
+					.nextInChain     = NULL,
+					.label           = toWGPUStringView("blit temp"),
+					.usage           = WGPUTextureUsage_CopySrc | WGPUTextureUsage_CopyDst,
+					.dimension       = is3D ? WGPUTextureDimension_3D : WGPUTextureDimension_2D,
+					.size            =
+					{
+						.width              = bx::alignUp(uint32_t(blit.m_width),  uint32_t(blockInfo.blockWidth) ),
+						.height             = bx::alignUp(uint32_t(blit.m_height), uint32_t(blockInfo.blockHeight) ),
+						.depthOrArrayLayers = depth,
+					},
+					.format          = src.m_fmt,
+					.mipLevelCount   = 1,
+					.sampleCount     = 1,
+					.viewFormatCount = 0,
+					.viewFormats     = NULL,
+				};
+
+				WGPUTexture temp = WGPU_CHECK(wgpuDeviceCreateTexture(m_device, &tempDesc) );
+
+				const WGPUExtent3D copySize =
+				{
+					.width              = blit.m_width,
+					.height             = blit.m_height,
+					.depthOrArrayLayers = depth,
+				};
+
+				m_cmd.copyTextureToTexture(
+					{
+						.texture  = src.m_texture,
+						.mipLevel = blit.m_srcMip,
+						.origin   = { .x = blit.m_srcX, .y = blit.m_srcY, .z = blit.m_srcZ },
+						.aspect   = WGPUTextureAspect_All,
+					},
+					{
+						.texture  = temp,
+						.mipLevel = 0,
+						.origin   = { .x = 0, .y = 0, .z = 0 },
+						.aspect   = WGPUTextureAspect_All,
+					},
+					copySize
+					);
+
+				m_cmd.copyTextureToTexture(
+					{
+						.texture  = temp,
+						.mipLevel = 0,
+						.origin   = { .x = 0, .y = 0, .z = 0 },
+						.aspect   = WGPUTextureAspect_All,
+					},
+					{
+						.texture  = dst.m_texture,
+						.mipLevel = blit.m_dstMip,
+						.origin   = { .x = blit.m_dstX, .y = blit.m_dstY, .z = blit.m_dstZ },
+						.aspect   = WGPUTextureAspect_All,
+					},
+					copySize
+					);
+
+				wgpuRelease(temp);
+				continue;
+			}
+
 			s_renderWGPU->m_cmd.copyTextureToTexture(
 				{
 					.texture  = src.m_texture,
@@ -7579,18 +7659,10 @@ WGPU_IMPORT
 
 			const uint32_t nonPowerOfTwo = (srcWidth & 1) | ( (srcHeight & 1) << 1);
 
-			uint8_t additionalMips = 0;
-			{
-				const uint32_t v = 0
-					| (dstWidth  == 1 ? dstHeight : dstWidth)
-					| (dstHeight == 1 ? dstWidth : dstHeight)
-					;
-
-				if (0 != v)
-				{
-					additionalMips = bx::countTrailingZeros(v);
-				}
-			}
+			const uint8_t additionalMips = 0 != dstWidth && 0 != dstHeight
+				? uint8_t(bx::countTrailingZeros(dstWidth | dstHeight) )
+				: 0
+				;
 
 			uint8_t numMips = 1 + bx::min<uint8_t>(additionalMips, 3);
 
@@ -8119,7 +8191,7 @@ WGPU_IMPORT
 						{
 							.nextInChain   = NULL,
 							.view          = colorTextureView,
-							.depthSlice    = WGPU_DEPTH_SLICE_UNDEFINED,
+							.depthSlice    = isSwapChain ? WGPU_DEPTH_SLICE_UNDEFINED : fb.m_depthSlice[ii],
 							.resolveTarget = resolveTextureView,
 							.loadOp        = true
 								&& clearWhole

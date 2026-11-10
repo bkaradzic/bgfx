@@ -400,6 +400,8 @@ VK_IMPORT_DEVICE
 			KHR_get_surface_capabilities2,
 			KHR_present_id,
 			KHR_shader_float16_int8,
+			KHR_surface_maintenance1,
+			KHR_swapchain_maintenance1,
 			KHR_video_queue,
 			KHR_video_decode_queue,
 			KHR_video_decode_h264,
@@ -454,6 +456,8 @@ VK_IMPORT_DEVICE
 		{ "VK_KHR_get_surface_capabilities2",       1, false, false, true,                                                          Layer::Count },
 		{ "VK_KHR_present_id",                      1, false, false, false,                                                         Layer::Count },
 		{ "VK_KHR_shader_float16_int8",             1, false, false, true,                                                          Layer::Count },
+		{ "VK_KHR_surface_maintenance1",            1, false, false, true,                                                          Layer::Count },
+		{ "VK_KHR_swapchain_maintenance1",          1, false, false, true,                                                          Layer::Count },
 		{ "VK_KHR_video_queue",                     1, false, false, true,                                                          Layer::Count },
 		{ "VK_KHR_video_decode_queue",              1, false, false, true,                                                          Layer::Count },
 		{ "VK_KHR_video_decode_h264",               1, false, false, true,                                                          Layer::Count },
@@ -1900,11 +1904,21 @@ VK_IMPORT_INSTANCE
 
 				bx::memCopy(&s_extension[0], &physicalDeviceExtensions[physicalDeviceIdx][0], sizeof(s_extension) );
 
-				if ( s_extension[Extension::EXT_swapchain_maintenance1].m_supported
-				&& (!s_extension[Extension::EXT_surface_maintenance1  ].m_supported || !s_extension[Extension::KHR_get_surface_capabilities2].m_supported)
-				   )
+				if (s_extension[Extension::KHR_surface_maintenance1].m_supported)
+				{
+					s_extension[Extension::EXT_surface_maintenance1].m_supported = false;
+				}
+
+				if (s_extension[Extension::KHR_swapchain_maintenance1].m_supported)
 				{
 					s_extension[Extension::EXT_swapchain_maintenance1].m_supported = false;
+				}
+
+				if (!s_extension[Extension::KHR_get_surface_capabilities2].m_supported
+				|| (!s_extension[Extension::EXT_surface_maintenance1].m_supported && !s_extension[Extension::KHR_surface_maintenance1].m_supported) )
+				{
+					s_extension[Extension::EXT_swapchain_maintenance1].m_supported = false;
+					s_extension[Extension::KHR_swapchain_maintenance1].m_supported = false;
 				}
 
 				m_deviceShadingRateImageProperties = {};
@@ -1953,7 +1967,8 @@ VK_IMPORT_INSTANCE
 						customBorderColorFeatures.pNext = NULL;
 					}
 
-					if (s_extension[Extension::EXT_swapchain_maintenance1].m_supported)
+					if (s_extension[Extension::EXT_swapchain_maintenance1].m_supported
+					||  s_extension[Extension::KHR_swapchain_maintenance1].m_supported)
 					{
 						next->pNext = (VkBaseOutStructure*)&swapchainMaintenance1Features;
 						next = (VkBaseOutStructure*)&swapchainMaintenance1Features;
@@ -2194,7 +2209,10 @@ VK_IMPORT_INSTANCE
 				m_timerQuerySupport = m_deviceProperties.limits.timestampComputeAndGraphics;
 
 				m_swapchainMaintenance1Supported = true
-					&& s_extension[Extension::EXT_swapchain_maintenance1].m_supported
+					&& (false
+						|| s_extension[Extension::EXT_swapchain_maintenance1].m_supported
+						|| s_extension[Extension::KHR_swapchain_maintenance1].m_supported
+						)
 					&& swapchainMaintenance1Features.swapchainMaintenance1
 					;
 
@@ -8660,8 +8678,10 @@ VK_DESTROY
 			|| m_type == VK_IMAGE_VIEW_TYPE_CUBE_ARRAY
 			;
 
-		const uint32_t layer     = isCube ? 0          : _layer;
-		const uint32_t numLayers = isCube ? m_numSides : _numLayers;
+		const bool is3D = VK_IMAGE_VIEW_TYPE_3D == m_type;
+
+		const uint32_t layer     = isCube ? 0          : is3D ? 0 : _layer;
+		const uint32_t numLayers = isCube ? m_numSides : is3D ? 1 : _numLayers;
 
 		if (needResolve)
 		{
@@ -8800,37 +8820,53 @@ VK_DESTROY
 
 			int32_t mipWidth  = bx::max<int32_t>(int32_t(m_width)  >> _mip, 1);
 			int32_t mipHeight = bx::max<int32_t>(int32_t(m_height) >> _mip, 1);
+			int32_t mipDepth  = is3D ? bx::max<int32_t>(int32_t(m_depth) >> _mip, 1) : 1;
 
 			const VkFilter filter = bimg::isDepth(bimg::TextureFormat::Enum(m_textureFormat) )
 				? VK_FILTER_NEAREST
 				: VK_FILTER_LINEAR
 				;
 
-			VkImageBlit blit;
-			blit.srcOffsets[0] = { 0, 0, 0 };
-			blit.srcOffsets[1] = { mipWidth, mipHeight, 1 };
-			blit.srcSubresource.aspectMask     = m_aspectFlags;
-			blit.srcSubresource.mipLevel       = 0;
-			blit.srcSubresource.baseArrayLayer = layer;
-			blit.srcSubresource.layerCount     = numLayers;
-			blit.dstOffsets[0] = { 0, 0, 0 };
-			blit.dstOffsets[1] = { mipWidth, mipHeight, 1 };
-			blit.dstSubresource.aspectMask     = m_aspectFlags;
-			blit.dstSubresource.mipLevel       = 0;
-			blit.dstSubresource.baseArrayLayer = layer;
-			blit.dstSubresource.layerCount     = numLayers;
+			VkImageBlit blit =
+			{
+				.srcSubresource =
+				{
+					.aspectMask     = m_aspectFlags,
+					.mipLevel       = 0,
+					.baseArrayLayer = layer,
+					.layerCount     = numLayers,
+				},
+				.srcOffsets =
+				{
+					{ .x = 0,        .y = 0,         .z = 0        },
+					{ .x = mipWidth, .y = mipHeight, .z = mipDepth },
+				},
+				.dstSubresource =
+				{
+					.aspectMask     = m_aspectFlags,
+					.mipLevel       = 0,
+					.baseArrayLayer = layer,
+					.layerCount     = numLayers,
+				},
+				.dstOffsets =
+				{
+					{ .x = 0,        .y = 0,         .z = 0        },
+					{ .x = mipWidth, .y = mipHeight, .z = mipDepth },
+				},
+			};
 
 			for (uint32_t i = _mip + 1; i < m_numMips; i++)
 			{
 				BGFX_PROFILER_SCOPE("Mipmap", kColorResource);
 
-				blit.srcOffsets[1] = { mipWidth, mipHeight, 1 };
+				blit.srcOffsets[1] = { .x = mipWidth, .y = mipHeight, .z = mipDepth };
 				blit.srcSubresource.mipLevel = i - 1;
 
 				mipWidth  = bx::max(mipWidth  >> 1, 1);
 				mipHeight = bx::max(mipHeight >> 1, 1);
+				mipDepth  = bx::max(mipDepth  >> 1, 1);
 
-				blit.dstOffsets[1] = { mipWidth, mipHeight, 1 };
+				blit.dstOffsets[1] = { .x = mipWidth, .y = mipHeight, .z = mipDepth };
 				blit.dstSubresource.mipLevel = i;
 
 				setImageMemoryBarrier(
@@ -9433,19 +9469,30 @@ VK_DESTROY
 					&& surfaceCapabilities.maxImageExtent.height <= surfaceExtentSanityMax
 					;
 
-				const uint32_t width = bx::clamp<uint32_t>(
-					  m_desc.width
-					, surfaceCapabilities.minImageExtent.width
-					, surfaceCapabilities.maxImageExtent.width
-					);
-				const uint32_t height = bx::clamp<uint32_t>(
-					  m_desc.height
-					, surfaceCapabilities.minImageExtent.height
-					, surfaceCapabilities.maxImageExtent.height
-					);
+				VkExtent2D extent =
+				{
+					.width  = m_desc.width,
+					.height = m_desc.height,
+				};
+				if (!getPresentScaling(surfaceCapabilities, extent, NULL) )
+				{
+					extent =
+					{
+						.width  = bx::clamp<uint32_t>(
+							  m_desc.width
+							, surfaceCapabilities.minImageExtent.width
+							, surfaceCapabilities.maxImageExtent.width
+							),
+						.height = bx::clamp<uint32_t>(
+							  m_desc.height
+							, surfaceCapabilities.minImageExtent.height
+							, surfaceCapabilities.maxImageExtent.height
+							),
+					};
+				}
 
-				if (0 == width
-				||  0 == height
+				if (0 == extent.width
+				||  0 == extent.height
 				||  VK_SUCCESS != result
 				||  !surfaceCapsSane)
 				{
@@ -9750,16 +9797,34 @@ VK_DESTROY
 			: s_textureFormat[m_colorFormat].m_fmt
 			;
 
-		const uint32_t width = bx::clamp<uint32_t>(
-			  m_desc.width
-			, surfaceCapabilities.minImageExtent.width
-			, surfaceCapabilities.maxImageExtent.width
-			);
-		const uint32_t height = bx::clamp<uint32_t>(
-			  m_desc.height
-			, surfaceCapabilities.minImageExtent.height
-			, surfaceCapabilities.maxImageExtent.height
-			);
+		VkSwapchainPresentScalingCreateInfoEXT scalingInfo;
+		VkExtent2D extent =
+		{
+			.width  = m_desc.width,
+			.height = m_desc.height,
+		};
+		const bool presentScaling = getPresentScaling(surfaceCapabilities, extent, &scalingInfo);
+
+		if (!presentScaling)
+		{
+			extent =
+			{
+				.width  = bx::clamp<uint32_t>(
+					  m_desc.width
+					, surfaceCapabilities.minImageExtent.width
+					, surfaceCapabilities.maxImageExtent.width
+					),
+				.height = bx::clamp<uint32_t>(
+					  m_desc.height
+					, surfaceCapabilities.minImageExtent.height
+					, surfaceCapabilities.maxImageExtent.height
+					),
+			};
+		}
+
+		const uint32_t width  = extent.width;
+		const uint32_t height = extent.height;
+
 		if (width != m_desc.width || height != m_desc.height)
 		{
 			BX_TRACE("Clamped swapchain resolution from %dx%d to %dx%d"
@@ -9871,6 +9936,12 @@ VK_DESTROY
 			modesInfo.pNext = m_sci.pNext;
 
 			m_sci.pNext = &modesInfo;
+		}
+
+		if (presentScaling)
+		{
+			scalingInfo.pNext = m_sci.pNext;
+			m_sci.pNext = &scalingInfo;
 		}
 
 		const bool lowLatency = isLowLatency();
@@ -10038,7 +10109,7 @@ VK_DESTROY
 		VkResult result = VK_SUCCESS;
 
 		const uint32_t samplerIndex = (m_desc.flags & BGFX_SWAP_CHAIN_MSAA_MASK) >> BGFX_SWAP_CHAIN_MSAA_SHIFT;
-		const uint64_t textureFlags = (uint64_t(samplerIndex + 1) << BGFX_TEXTURE_RT_MSAA_SHIFT) | BGFX_TEXTURE_RT | BGFX_TEXTURE_RT_WRITE_ONLY;
+		const uint64_t textureFlags = (uint64_t(samplerIndex + 1) << BGFX_TEXTURE_RT_MSAA_SHIFT) | BGFX_TEXTURE_RT_WRITE_ONLY;
 		m_sampler = s_msaa[samplerIndex];
 
 		const uint32_t requiredCaps = m_sampler.Count > 1
@@ -10286,6 +10357,121 @@ VK_DESTROY
 		}
 
 		return idx;
+	}
+
+	bool SwapChainVK::getPresentScaling(const VkSurfaceCapabilitiesKHR& _surfaceCapabilities, VkExtent2D& _extent, VkSwapchainPresentScalingCreateInfoEXT* _scalingInfo)
+	{
+		BGFX_PROFILER_SCOPE("SwapChainVK::getPresentScaling", kColorFrame);
+
+		const bool fits = true
+			&& _extent.width  >= _surfaceCapabilities.minImageExtent.width
+			&& _extent.width  <= _surfaceCapabilities.maxImageExtent.width
+			&& _extent.height >= _surfaceCapabilities.minImageExtent.height
+			&& _extent.height <= _surfaceCapabilities.maxImageExtent.height
+			;
+
+		if (fits
+		||  0 == _surfaceCapabilities.maxImageExtent.width
+		||  0 == _surfaceCapabilities.maxImageExtent.height
+		||  0 == _extent.width
+		||  0 == _extent.height
+		||  !s_renderVK->m_swapchainMaintenance1Supported
+		||  NULL == vkGetPhysicalDeviceSurfaceCapabilities2KHR)
+		{
+			return false;
+		}
+
+		const uint32_t presentModeIdx[] =
+		{
+			findPresentMode(true),
+			findPresentMode(false),
+		};
+
+		VkExtent2D minExtent = { .width = 0,          .height = 0          };
+		VkExtent2D maxExtent = { .width = UINT32_MAX, .height = UINT32_MAX };
+		VkPresentGravityFlagsEXT gravityX = VK_PRESENT_GRAVITY_MIN_BIT_EXT;
+		VkPresentGravityFlagsEXT gravityY = VK_PRESENT_GRAVITY_MIN_BIT_EXT;
+
+		for (uint32_t ii = 0; ii < BX_COUNTOF(presentModeIdx); ++ii)
+		{
+			if (UINT32_MAX == presentModeIdx[ii])
+			{
+				return false;
+			}
+
+			const VkSurfacePresentModeEXT surfacePresentMode =
+			{
+				.sType       = VK_STRUCTURE_TYPE_SURFACE_PRESENT_MODE_EXT,
+				.pNext       = NULL,
+				.presentMode = s_presentMode[presentModeIdx[ii] ].mode,
+			};
+
+			const VkPhysicalDeviceSurfaceInfo2KHR surfaceInfo =
+			{
+				.sType   = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SURFACE_INFO_2_KHR,
+				.pNext   = &surfacePresentMode,
+				.surface = m_surface,
+			};
+
+			VkSurfacePresentScalingCapabilitiesEXT scalingCapabilities =
+			{
+				.sType                    = VK_STRUCTURE_TYPE_SURFACE_PRESENT_SCALING_CAPABILITIES_EXT,
+				.pNext                    = NULL,
+				.supportedPresentScaling  = 0,
+				.supportedPresentGravityX = 0,
+				.supportedPresentGravityY = 0,
+				.minScaledImageExtent     = {},
+				.maxScaledImageExtent     = {},
+			};
+
+			VkSurfaceCapabilities2KHR surfaceCapabilities2 =
+			{
+				.sType               = VK_STRUCTURE_TYPE_SURFACE_CAPABILITIES_2_KHR,
+				.pNext               = &scalingCapabilities,
+				.surfaceCapabilities = {},
+			};
+
+			const VkResult result = vkGetPhysicalDeviceSurfaceCapabilities2KHR(s_renderVK->m_physicalDevice, &surfaceInfo, &surfaceCapabilities2);
+
+			if (VK_SUCCESS != result
+			||  0 == (scalingCapabilities.supportedPresentScaling & VK_PRESENT_SCALING_STRETCH_BIT_EXT) )
+			{
+				return false;
+			}
+
+			minExtent.width  = bx::max(minExtent.width,  scalingCapabilities.minScaledImageExtent.width);
+			minExtent.height = bx::max(minExtent.height, scalingCapabilities.minScaledImageExtent.height);
+			maxExtent.width  = bx::min(maxExtent.width,  scalingCapabilities.maxScaledImageExtent.width);
+			maxExtent.height = bx::min(maxExtent.height, scalingCapabilities.maxScaledImageExtent.height);
+
+			gravityX &= scalingCapabilities.supportedPresentGravityX;
+			gravityY &= scalingCapabilities.supportedPresentGravityY;
+		}
+
+		if (minExtent.width  > maxExtent.width
+		||  minExtent.height > maxExtent.height)
+		{
+			return false;
+		}
+
+		_extent.width  = bx::clamp(_extent.width,  minExtent.width,  maxExtent.width);
+		_extent.height = bx::clamp(_extent.height, minExtent.height, maxExtent.height);
+
+		if (NULL != _scalingInfo)
+		{
+			const bool gravity = 0 != gravityX && 0 != gravityY;
+
+			*_scalingInfo =
+			{
+				.sType           = VK_STRUCTURE_TYPE_SWAPCHAIN_PRESENT_SCALING_CREATE_INFO_EXT,
+				.pNext           = NULL,
+				.scalingBehavior = VK_PRESENT_SCALING_STRETCH_BIT_EXT,
+				.presentGravityX = gravity ? gravityX : 0,
+				.presentGravityY = gravity ? gravityY : 0,
+			};
+		}
+
+		return true;
 	}
 
 	TextureFormat::Enum SwapChainVK::findSurfaceFormat(TextureFormat::Enum _format, VkColorSpaceKHR _colorSpace, bool _srgb)

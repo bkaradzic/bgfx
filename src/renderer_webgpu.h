@@ -762,6 +762,7 @@ namespace wgpu {
 		Attachment      m_attachment[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
 		WGPUTextureView m_textureView[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
 		WGPUTextureView m_resolveView[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
+		uint32_t        m_depthSlice[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
 		WGPUTextureFormat m_colorFormat[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
 		WGPUTextureView m_depthStencilView;
 		uint8_t m_formatDepthStencil;
