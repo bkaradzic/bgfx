@@ -190,12 +190,12 @@ void showExampleDialog(entry::AppI* _app, const char* _errorText)
 		  ImVec2(10.0f, 50.0f)
 		, ImGuiCond_FirstUseEver
 		);
-	ImGui::SetNextWindowSize(
+	ImGui::SetNextWindowSizeConstraints(
 		  ImVec2(300.0f, 0.0f)
-		, ImGuiCond_Always
+		, ImVec2(300.0f, FLT_MAX)
 		);
 
-	ImGui::Begin(temp);
+	ImGui::Begin(temp, NULL, ImGuiWindowFlags_AlwaysAutoResize);
 
 	ImGui::TextWrapped("%s", _app->getDescription() );
 

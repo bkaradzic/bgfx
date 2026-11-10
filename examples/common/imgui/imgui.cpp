@@ -161,7 +161,7 @@ struct OcornutImguiContext
 		const ImVec2 clipScale = _drawData->FramebufferScale; // (1,1) unless using retina display which are often (2,2)
 
 		// Render command lists
-		for (int32_t ii = 0, num = _drawData->CmdListsCount; ii < num; ++ii)
+		for (int32_t ii = 0, num = _drawData->CmdLists.Size; ii < num; ++ii)
 		{
 			bgfx::TransientVertexBuffer tvb;
 			bgfx::TransientIndexBuffer tib;
@@ -396,6 +396,7 @@ struct OcornutImguiContext
 		m_keyMap[entry::Key::KeyZ]         = ImGuiKey_Z;
 
 		io.ConfigFlags |= 0
+			| ImGuiConfigFlags_DockingEnable
 			| ImGuiConfigFlags_NavEnableGamepad
 			| ImGuiConfigFlags_NavEnableKeyboard
 			;
