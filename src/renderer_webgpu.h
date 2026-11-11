@@ -524,6 +524,7 @@ namespace wgpu {
 			, m_hash(0)
 			, m_numUniforms(0)
 			, m_numPredefined(0)
+			, m_outputMask(UINT8_MAX)
 		{
 		}
 
@@ -548,6 +549,7 @@ namespace wgpu {
 		uint8_t  m_numPredefined;
 		uint8_t  m_numAttrs;
 		uint8_t  m_numInstanceData;
+		uint8_t  m_outputMask;
 
 		ShaderBinding m_shaderBinding[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS];
 

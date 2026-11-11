@@ -2403,6 +2403,27 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			}
 		}
 
+		bool hasIntegerColorAttachment(FrameBufferHandle _fbh) const
+		{
+			if (!isValid(_fbh)
+			||  NULL != m_frameBuffers[_fbh.idx].m_swapChain)
+			{
+				return false;
+			}
+
+			const FrameBufferMtl& fb = m_frameBuffers[_fbh.idx];
+
+			for (uint32_t ii = 0; ii < fb.m_num; ++ii)
+			{
+				if (isIntegerFormat(TextureFormat::Enum(m_textures[fb.m_colorHandle[ii].idx].m_textureFormat) ) )
+				{
+					return true;
+				}
+			}
+
+			return false;
+		}
+
 		bool clearIntegerColor(FrameBufferHandle _fbh, const Rect& _rect, const Clear& _clear, const float _palette[][4])
 		{
 			if (!isValid(_fbh)
@@ -3217,6 +3238,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 				pd->setAlphaToCoverageEnabled(!!(BGFX_STATE_BLEND_ALPHA_TO_COVERAGE & _state) );
 
 				uint32_t frameBufferAttachment = 1;
+				uint8_t integerAttachmentMask = 0;
 
 				if (!isValid(_fbh)
 				||  s_renderMtl->m_frameBuffers[_fbh.idx].m_swapChain)
@@ -3256,6 +3278,11 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 							: 1
 							);
 						pd->colorAttachments()->object(ii)->setPixelFormat(texture.getAttachmentPixelFormat(frameBuffer.m_colorAttachment[ii].flags) );
+
+						if (isIntegerFormat(TextureFormat::Enum(texture.m_textureFormat) ) )
+						{
+							integerAttachmentMask |= uint8_t(1<<ii);
+						}
 					}
 
 					if (isValid(frameBuffer.m_depthHandle) )
@@ -3342,6 +3369,14 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 						drt->setAlphaBlendOperation(        (MTL::BlendOperation)s_blendEquation[equationIndex]);
 
 						drt->setWriteMask(writeMask);
+					}
+				}
+
+				for (uint32_t ii = 0; ii < frameBufferAttachment; ++ii)
+				{
+					if (0 != (integerAttachmentMask & (1<<ii) ) )
+					{
+						pd->colorAttachments()->object(ii)->setBlendingEnabled(false);
 					}
 				}
 
@@ -6810,7 +6845,8 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 						if (NULL == m_renderCommandEncoder
 						||  fbh.idx != renderView->m_fbh.idx
-						||  profileViews)
+						||  profileViews
+						||  (BGFX_CLEAR_NONE != (clr.m_flags & BGFX_CLEAR_MASK) && hasIntegerColorAttachment(renderView->m_fbh) ) )
 						{
 							endEncoding();
 
