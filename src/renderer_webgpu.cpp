@@ -4173,7 +4173,7 @@ WGPU_IMPORT
 			const bool hasFragmentShader = NULL != program.m_fsh;
 			const bool bgra8Storage = hasBgra8Storage(entries, entryCount);
 
-			const uint32_t targetCount = hasFragmentShader ? setColorTargetState(blendState, colorTragetState, fb, _state, _rgba, _mrtMask) : 0;
+			const uint32_t targetCount = hasFragmentShader ? setColorTargetState(blendState, colorTragetState, fb, _state, _rgba, _mrtMask & program.m_fsh->m_outputMask) : 0;
 
 			if (NULL != depthStencilTextureView)
 			{
@@ -4514,7 +4514,14 @@ WGPU_IMPORT
 					: _fb.m_colorFormat[ii]
 					;
 
-				const WGPUBlendState* blend = independentBlendEnable && 0 != ii
+				const bool integer = true
+					&& !isSwapChain
+					&& isIntegerFormat(TextureFormat::Enum(m_textures[_fb.m_texture[ii].idx].m_textureFormat) )
+					;
+
+				const WGPUBlendState* blend = integer
+					? NULL
+					: independentBlendEnable && 0 != ii
 					? (WGPUBlendFactor_Undefined != _outBlendState[ii].color.srcFactor ? &_outBlendState[ii] : NULL)
 					: blendState
 					;
@@ -4850,6 +4857,77 @@ WGPU_IMPORT
 		m_layoutHandle = _layoutHandle;
 	}
 
+	static uint8_t getLocationMask(const bx::StringView& _str)
+	{
+		uint8_t mask = 0;
+
+		for (bx::StringView location = bx::strFind(_str, "@location(")
+			; !location.isEmpty()
+			; location = bx::strFind(bx::StringView(location.getTerm(), _str.getTerm() ), "@location(")
+			)
+		{
+			const bx::StringView index = bx::strLTrimSpace(bx::StringView(location.getTerm(), _str.getTerm() ) );
+
+			uint32_t idx = 0;
+
+			for (const char* ptr = index.getPtr(); ptr != index.getTerm() && bx::isNumeric(*ptr); ++ptr)
+			{
+				idx = idx*10 + uint32_t(*ptr - '0');
+			}
+
+			mask |= idx < 8 ? uint8_t(1<<idx) : 0;
+		}
+
+		return mask;
+	}
+
+	static uint8_t getFragmentOutputMask(const bx::StringView& _code)
+	{
+		const bx::StringView fragment = bx::strFind(_code, "@fragment");
+
+		if (fragment.isEmpty() )
+		{
+			return UINT8_MAX;
+		}
+
+		const bx::StringView params = bx::strFindBlock(bx::StringView(fragment.getTerm(), _code.getTerm() ), '(', ')');
+
+		if (params.isEmpty() )
+		{
+			return UINT8_MAX;
+		}
+
+		const bx::StringView ret    = bx::strLTrimSpace(bx::StringView(params.getTerm(), _code.getTerm() ) );
+		const bx::StringView output = bx::strLTrimSpace(bx::strTrimPrefix(ret, "->") );
+
+		if (output.getPtr() == ret.getPtr() )
+		{
+			return 0;
+		}
+
+		if (0 == bx::strCmp(output, "@", 1) )
+		{
+			return getLocationMask(bx::StringView(output.getPtr(), bx::strFind(output, '{').getPtr() ) );
+		}
+
+		const bx::StringView type = bx::strIdentifier(output);
+
+		for (bx::StringView decl = bx::strFind(_code, "struct ")
+			; !decl.isEmpty()
+			; decl = bx::strFind(bx::StringView(decl.getTerm(), _code.getTerm() ), "struct ")
+			)
+		{
+			const bx::StringView name = bx::strIdentifier(bx::strLTrimSpace(bx::StringView(decl.getTerm(), _code.getTerm() ) ) );
+
+			if (0 == bx::strCmp(name, type) )
+			{
+				return getLocationMask(bx::strFindBlock(bx::StringView(name.getTerm(), _code.getTerm() ), '{', '}') );
+			}
+		}
+
+		return UINT8_MAX;
+	}
+
 	void ShaderWGPU::create(const Memory* _mem)
 	{
 		bx::MemoryReader reader(_mem->data, _mem->size);
@@ -5147,6 +5225,8 @@ WGPU_IMPORT
 
 		bx::read(&reader, m_size, &err);
 		bx::read(&reader, m_blockSize, &err);
+
+		m_outputMask = getFragmentOutputMask(bx::StringView( (const char*)m_code->data, m_code->size) );
 
 		if (bx::strFind(bx::StringView( (const char*)m_code->data, m_code->size), "rgba8unorm").isEmpty() )
 		{

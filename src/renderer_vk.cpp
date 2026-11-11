@@ -4088,6 +4088,19 @@ VK_IMPORT_DEVICE
 				}
 			}
 
+			if (!frameBuffer.isSwapChain() )
+			{
+				VkPipelineColorBlendAttachmentState* attachments = const_cast<VkPipelineColorBlendAttachmentState*>(_desc.pAttachments);
+
+				for (uint32_t ii = 0; ii < numAttachments; ++ii)
+				{
+					if (isIntegerFormat(TextureFormat::Enum(m_textures[frameBuffer.m_texture[ii].idx].m_textureFormat) ) )
+					{
+						attachments[ii].blendEnable = VK_FALSE;
+					}
+				}
+			}
+
 			_desc.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
 			_desc.pNext = NULL;
 			_desc.flags = 0;
