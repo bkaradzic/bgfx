@@ -34,6 +34,10 @@ void imguiDestroy();
 void imguiBeginFrame(int32_t _mx, int32_t _my, uint8_t _button, int32_t _scroll, uint16_t _width, uint16_t _height, int _inputChar = -1, bgfx::ViewId _view = UINT16_MAX);
 void imguiEndFrame();
 
+void imguiSetSwapChainFlags(uint32_t _flags);
+
+bgfx::FrameBufferHandle imguiGetFrameBuffer(const ImGuiViewport* _viewport);
+
 struct ImguiOutput
 {
 	enum Enum
