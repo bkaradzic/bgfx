@@ -242,33 +242,89 @@ namespace shaderc
 			Block*          m_head;
 		};
 
-		static const bx::StringLiteral s_puncts[] =
+		static constexpr bx::StringLiteral s_puncts[] =
 		{
-			"<<=",
-			">>=",
-			"...",
-			"##",
-			"<<",
-			">>",
-			"<=",
-			">=",
-			"==",
 			"!=",
-			"&&",
-			"||",
-			"->",
-			"++",
-			"--",
-			"+=",
-			"-=",
-			"*=",
-			"/=",
+			"##",
 			"%=",
+			"&&",
 			"&=",
-			"|=",
-			"^=",
+			"*=",
+			"++",
+			"+=",
+			"--",
+			"-=",
+			"->",
+			"...",
+			"/=",
 			"::",
+			"<<",
+			"<<=",
+			"<=",
+			"==",
+			">=",
+			">>",
+			">>=",
+			"^=",
+			"|=",
+			"||",
 		};
+
+		static constexpr uint32_t kMaxPunctLength = 3;
+
+		constexpr bool punctLessFn(const bx::StringLiteral& _lhs, const bx::StringLiteral& _rhs)
+		{
+			return 0 > bx::strCmp(_lhs, _rhs);
+		}
+		static_assert(bx::isSorted(s_puncts, BX_COUNTOF(s_puncts), punctLessFn), "s_puncts must be sorted!");
+
+		int32_t punctCmpFn(const void* _lhs, const void* _rhs)
+		{
+			return bx::strCmp(*(const bx::StringView*)_lhs, *(const bx::StringLiteral*)_rhs);
+		}
+
+		bool isPunct(const bx::StringView& _lexeme)
+		{
+			return 0 <= bx::binarySearch( (const void*)&_lexeme, s_puncts, BX_COUNTOF(s_puncts), sizeof(bx::StringLiteral), punctCmpFn);
+		}
+
+		constexpr bool isPunctTail(char _ch)
+		{
+			return false
+				|| '-' == _ch
+				|| '=' == _ch
+				|| '.' == _ch
+				|| '&' == _ch
+				|| '+' == _ch
+				|| '|' == _ch
+				|| '<' == _ch
+				|| '>' == _ch
+				|| ':' == _ch
+				|| '#' == _ch
+				;
+		}
+
+		constexpr bool isPunctTailOfAll(const bx::StringLiteral* _puncts, uint32_t _num)
+		{
+			for (uint32_t ii = 0; ii < _num; ++ii)
+			{
+				if (!isPunctTail(_puncts[ii].getCPtr()[1])
+				||  kMaxPunctLength < uint32_t(_puncts[ii].getLength() ) )
+				{
+					return false;
+				}
+			}
+
+			return true;
+		}
+		static_assert(isPunctTailOfAll(s_puncts, BX_COUNTOF(s_puncts) ), "isPunctTail and kMaxPunctLength must match s_puncts!");
+
+		bool isCommentText(char _ch)
+		{
+			return '/' != _ch
+				&& '*' != _ch
+				;
+		}
 
 		bool isNumberPart(char _ch)
 		{
@@ -314,15 +370,13 @@ namespace shaderc
 
 					const uint32_t line = m_scanner.getLine();
 
-					const bx::StringView newLine = m_scanner.accept('\n');
+					const char ch = peek();
 
-					if (!newLine.isEmpty() )
+					if ('\n' == ch)
 					{
-						emit(Kind::Newline, newLine, spaceBefore, line);
+						emit(Kind::Newline, m_scanner.accept('\n'), spaceBefore, line);
 						continue;
 					}
-
-					const char ch = peek();
 
 					if (bx::isIdentStart(ch) )
 					{
@@ -370,7 +424,7 @@ namespace shaderc
 		private:
 			char peek(int32_t _offset = 0) const
 			{
-				const char* ptr = m_scanner.getCursor().getPtr() + _offset;
+				const char* ptr = m_scanner.getTail().getPtr() + _offset;
 
 				return ptr < m_input.getTerm() ? *ptr : '\0';
 			}
@@ -381,14 +435,17 @@ namespace shaderc
 
 				for (;;)
 				{
-					if (!m_scanner.acceptWhile(bx::isSpaceHoriz).isEmpty() )
+					const char ch = peek();
+
+					if (bx::isSpaceHoriz(ch)
+					&&  !m_scanner.acceptWhile(bx::isSpaceHoriz).isEmpty() )
 					{
 						space = true;
 						continue;
 					}
 
-					if (skipLineContinuation()
-					||  skipComment() )
+					if ( ('\\' == ch && skipLineContinuation() )
+					||   ('/'  == ch && skipComment() ) )
 					{
 						space = true;
 						continue;
@@ -455,6 +512,7 @@ namespace shaderc
 					}
 
 					m_scanner.accept();
+					m_scanner.acceptWhile(isCommentText);
 				}
 
 				m_unterminatedComment = m_unterminatedComment || 0 != depth;
@@ -464,6 +522,11 @@ namespace shaderc
 
 			bool spliceJoins(bool (*_isPart)(char) )
 			{
+				if ('\\' != peek() )
+				{
+					return false;
+				}
+
 				const bx::StringView cursor = m_scanner.getCursor();
 
 				if (!skipLineContinuation() )
@@ -594,13 +657,18 @@ namespace shaderc
 
 			bx::StringView acceptPunct()
 			{
-				for (uint32_t ii = 0; ii < BX_COUNTOF(s_puncts); ++ii)
+				if (isPunctTail(peek(1) ) )
 				{
-					const bx::StringView punct = m_scanner.accept(s_puncts[ii]);
+					const bx::StringView tail = m_scanner.getTail();
 
-					if (!punct.isEmpty() )
+					for (uint32_t len = bx::min(kMaxPunctLength, uint32_t(tail.getLength() ) ); 1 < len; --len)
 					{
-						return punct;
+						const bx::StringView punct(tail.getPtr(), int32_t(len) );
+
+						if (isPunct(punct) )
+						{
+							return m_scanner.accept(punct);
+						}
 					}
 				}
 
