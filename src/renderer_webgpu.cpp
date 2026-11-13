@@ -3111,25 +3111,25 @@ WGPU_IMPORT
 			wgpuRelease(depthView);
 		}
 
-		bool clearIntegerColor(WGPUCommandEncoder _commandEncoder, const FrameBufferWGPU& _fb, const Rect& _rect, const Clear& _clear, const float _palette[][4])
+		uint8_t clearIntegerColor(WGPUCommandEncoder _commandEncoder, const FrameBufferWGPU& _fb, const Rect& _rect, const Clear& _clear, const float _palette[][4])
 		{
 			if (0 == (_clear.m_flags & BGFX_CLEAR_COLOR)
 			||  1 <  _fb.m_msaaCount)
 			{
-				return false;
+				return 0;
 			}
 
-			bool integer = false;
+			uint8_t integerMask = 0;
 
 			for (uint32_t ii = 0; ii < _fb.m_numColorAttachments; ++ii)
 			{
 				const TextureWGPU& texture = m_textures[_fb.m_texture[ii].idx];
-				integer |= isIntegerFormat(TextureFormat::Enum(texture.m_textureFormat) );
+				integerMask |= isIntegerFormat(TextureFormat::Enum(texture.m_textureFormat) ) ? uint8_t(1<<ii) : 0;
 			}
 
-			if (!integer)
+			if (0 == integerMask)
 			{
-				return false;
+				return 0;
 			}
 
 			const uint8_t skipMask = _clear.getColorSkipMask(_fb.m_numColorAttachments);
@@ -3207,10 +3207,10 @@ WGPU_IMPORT
 				wgpuBufferRelease(buffer);
 			}
 
-			return true;
+			return integerMask;
 		}
 
-		void clearQuad(WGPURenderPassEncoder _renderPassEncoder, FrameBufferHandle _fbh, uint32_t _msaaCount, const ClearQuad& _clearQuad, const Rect& _rect, const Clear& _clear, const float _palette[][4])
+		void clearQuad(WGPURenderPassEncoder _renderPassEncoder, FrameBufferHandle _fbh, uint32_t _msaaCount, const ClearQuad& _clearQuad, const Rect& _rect, const Clear& _clear, const float _palette[][4], uint8_t _mrtFormatMask = UINT8_MAX)
 		{
 			BX_UNUSED(_clearQuad, _rect, _clear, _palette);
 
@@ -3269,6 +3269,7 @@ WGPU_IMPORT
 				, 0.0f
 				, UINT32_MAX
 				, uint8_t(~_clear.getColorSkipMask(numMrt) )
+				, _mrtFormatMask
 				);
 
 			const ProgramWGPU& program = m_program[_clearQuad.m_program[numMrt-1].idx];
@@ -3905,6 +3906,7 @@ WGPU_IMPORT
 			, float _biasClamp = 0.0f
 			, uint32_t _sampleMask = UINT32_MAX
 			, uint8_t _mrtMask = UINT8_MAX
+			, uint8_t _mrtFormatMask = UINT8_MAX
 			)
 		{
 			const ProgramWGPU& program = m_program[_program.idx];
@@ -4010,6 +4012,7 @@ WGPU_IMPORT
 			murmur.add(_biasClamp);
 			murmur.add(_sampleMask);
 			murmur.add(_mrtMask);
+			murmur.add(_mrtFormatMask);
 			const uint32_t hash = murmur.end();
 
 			RenderPipeline* renderPipeline = m_renderPipelineCache.find(hash);
@@ -4173,7 +4176,7 @@ WGPU_IMPORT
 			const bool hasFragmentShader = NULL != program.m_fsh;
 			const bool bgra8Storage = hasBgra8Storage(entries, entryCount);
 
-			const uint32_t targetCount = hasFragmentShader ? setColorTargetState(blendState, colorTragetState, fb, _state, _rgba, _mrtMask & program.m_fsh->m_outputMask) : 0;
+			const uint32_t targetCount = hasFragmentShader ? setColorTargetState(blendState, colorTragetState, fb, _state, _rgba, _mrtMask & program.m_fsh->m_outputMask, _mrtFormatMask) : 0;
 
 			if (NULL != depthStencilTextureView)
 			{
@@ -4424,7 +4427,7 @@ WGPU_IMPORT
 			}
 		}
 
-		uint32_t setColorTargetState(WGPUBlendState* _outBlendState, WGPUColorTargetState* _outColorTargetState, const FrameBufferWGPU& _fb, uint64_t _state, uint32_t _rgba = 0, uint8_t _mrtMask = UINT8_MAX)
+		uint32_t setColorTargetState(WGPUBlendState* _outBlendState, WGPUColorTargetState* _outColorTargetState, const FrameBufferWGPU& _fb, uint64_t _state, uint32_t _rgba = 0, uint8_t _mrtMask = UINT8_MAX, uint8_t _mrtFormatMask = UINT8_MAX)
 		{
 			if (0 == _fb.m_numColorAttachments
 			&&  !_fb.isSwapChain() )
@@ -4513,6 +4516,19 @@ WGPU_IMPORT
 					? _fb.m_swapChain.m_viewFormat
 					: _fb.m_colorFormat[ii]
 					;
+
+				if (0 == (_mrtFormatMask & (1<<ii) ) )
+				{
+					_outColorTargetState[ii] =
+					{
+						.nextInChain = NULL,
+						.format      = WGPUTextureFormat_Undefined,
+						.blend       = NULL,
+						.writeMask   = WGPUColorWriteMask_None,
+					};
+
+					continue;
+				}
 
 				const bool integer = true
 					&& !isSwapChain
@@ -8349,12 +8365,71 @@ WGPU_IMPORT
 					{
 						WGPUCommandEncoder cmdEncoder = m_cmd.alloc();
 
-						const bool integerCleared = true
+						const uint8_t integerMask = true
 							&& !clearWhole
 							&&  needClear
 							&& !isSwapChain
-							&&  clearIntegerColor(cmdEncoder, fb, clippedRect, clr, _render->m_colorPalette)
+							? clearIntegerColor(cmdEncoder, fb, clippedRect, clr, _render->m_colorPalette)
+							: 0
 							;
+						const bool integerCleared = 0 != integerMask;
+
+						const uint8_t colorMask = uint8_t( (1<<numColorAttachments)-1);
+						const bool clearRest = true
+							&& integerCleared
+							&& (false
+								|| (0 != (BGFX_CLEAR_COLOR & clr.m_flags) && 0 != (colorMask & ~integerMask & ~colorSkipMask) )
+								|| (depthRw   && 0 != (BGFX_CLEAR_DEPTH   & clr.m_flags) )
+								|| (stencilRw && 0 != (BGFX_CLEAR_STENCIL & clr.m_flags) )
+								)
+							;
+
+						if (clearRest)
+						{
+							WGPURenderPassColorAttachment clearColorAttachment[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
+
+							for (uint32_t ii = 0; ii < numColorAttachments; ++ii)
+							{
+								clearColorAttachment[ii] = colorAttachment[ii];
+
+								if (0 != (integerMask & (1<<ii) ) )
+								{
+									clearColorAttachment[ii].view          = NULL;
+									clearColorAttachment[ii].depthSlice    = WGPU_DEPTH_SLICE_UNDEFINED;
+									clearColorAttachment[ii].resolveTarget = NULL;
+									clearColorAttachment[ii].loadOp        = WGPULoadOp_Undefined;
+									clearColorAttachment[ii].storeOp       = WGPUStoreOp_Undefined;
+								}
+							}
+
+							const WGPURenderPassDescriptor clearRenderPassDesc =
+							{
+								.nextInChain            = NULL,
+								.label                  = toWGPUStringView(viewName),
+								.colorAttachmentCount   = numColorAttachments,
+								.colorAttachments       = clearColorAttachment,
+								.depthStencilAttachment = renderPassDesc.depthStencilAttachment,
+								.occlusionQuerySet      = NULL,
+								.timestampWrites        = NULL,
+							};
+
+							WGPURenderPassEncoder clearPassEncoder = WGPU_CHECK(wgpuCommandEncoderBeginRenderPass(cmdEncoder, &clearRenderPassDesc) );
+
+							wgpuRenderPassEncoderSetViewport(
+								  clearPassEncoder
+								, float(viewRect.m_x)
+								, float(viewRect.m_y)
+								, float(viewRect.m_width)
+								, float(viewRect.m_height)
+								, 0.0f
+								, 1.0f
+								);
+
+							clearQuad(clearPassEncoder, fbh, msaaCount, _clearQuad, clippedRect, clr, _render->m_colorPalette, uint8_t(~integerMask) );
+
+							WGPU_CHECK(wgpuRenderPassEncoderEnd(clearPassEncoder) );
+							wgpuRelease(clearPassEncoder);
+						}
 
 						renderPassEncoder = WGPU_CHECK(wgpuCommandEncoderBeginRenderPass(cmdEncoder, &renderPassDesc) );
 						currentPipeline   = NULL;
