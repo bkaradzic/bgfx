@@ -2403,25 +2403,31 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			}
 		}
 
-		bool hasIntegerColorAttachment(FrameBufferHandle _fbh) const
+		uint8_t getIntegerColorAttachmentMask(FrameBufferHandle _fbh) const
 		{
 			if (!isValid(_fbh)
 			||  NULL != m_frameBuffers[_fbh.idx].m_swapChain)
 			{
-				return false;
+				return 0;
 			}
 
 			const FrameBufferMtl& fb = m_frameBuffers[_fbh.idx];
+			uint8_t mask = 0;
 
 			for (uint32_t ii = 0; ii < fb.m_num; ++ii)
 			{
 				if (isIntegerFormat(TextureFormat::Enum(m_textures[fb.m_colorHandle[ii].idx].m_textureFormat) ) )
 				{
-					return true;
+					mask |= uint8_t(1<<ii);
 				}
 			}
 
-			return false;
+			return mask;
+		}
+
+		bool hasIntegerColorAttachment(FrameBufferHandle _fbh) const
+		{
+			return 0 != getIntegerColorAttachmentMask(_fbh);
 		}
 
 		bool clearIntegerColor(FrameBufferHandle _fbh, const Rect& _rect, const Clear& _clear, const float _palette[][4])
@@ -2509,7 +2515,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			return true;
 		}
 
-		void clearQuad(const ClearQuad& _clearQuad, const Rect& /*_rect*/, const Clear& _clear, const float _palette[][4])
+		void clearQuad(const ClearQuad& _clearQuad, const Rect& /*_rect*/, const Clear& _clear, const float _palette[][4], uint8_t _mrtFormatMask = UINT8_MAX)
 		{
 			const uint64_t state = 0
 				| (_clear.m_flags & BGFX_CLEAR_COLOR ? BGFX_STATE_WRITE_RGB|BGFX_STATE_WRITE_A         : 0)
@@ -2550,6 +2556,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 				, 0
 				, UINT32_MAX
 				, uint8_t(~_clear.getColorSkipMask(numMrt) )
+				, _mrtFormatMask
 				);
 			setRenderPipelineState(pso->m_rps);
 
@@ -3141,6 +3148,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			, uint8_t _numInstanceData
 			, uint32_t _sampleMask = UINT32_MAX
 			, uint8_t _mrtMask = UINT8_MAX
+			, uint8_t _mrtFormatMask = UINT8_MAX
 			)
 		{
 			_state &= (0
@@ -3165,7 +3173,8 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			&&  m_lastPsoState.m_numStreams      == _numStreams
 			&&  m_lastPsoState.m_numInstanceData == _numInstanceData
 			&&  m_lastPsoState.m_sampleMask      == _sampleMask
-			&&  m_lastPsoState.m_mrtMask         == _mrtMask)
+			&&  m_lastPsoState.m_mrtMask         == _mrtMask
+			&&  m_lastPsoState.m_mrtFormatMask   == _mrtFormatMask)
 			{
 				bool match = true;
 				for (uint8_t ii = 0; ii < _numStreams && match; ++ii)
@@ -3187,6 +3196,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			m_lastPsoState.m_numInstanceData = _numInstanceData;
 			m_lastPsoState.m_sampleMask      = _sampleMask;
 			m_lastPsoState.m_mrtMask         = _mrtMask;
+			m_lastPsoState.m_mrtFormatMask   = _mrtFormatMask;
 			for (uint8_t ii = 0; ii < _numStreams; ++ii)
 			{
 				m_lastPsoState.m_layouts[ii] = _layouts[ii];
@@ -3201,6 +3211,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			murmur.add(_numInstanceData);
 			murmur.add(_sampleMask);
 			murmur.add(_mrtMask);
+			murmur.add(_mrtFormatMask);
 
 			if (!isValid(_fbh) )
 			{
@@ -3277,7 +3288,10 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 							? texture.m_ptrMsaa->sampleCount()
 							: 1
 							);
-						pd->colorAttachments()->object(ii)->setPixelFormat(texture.getAttachmentPixelFormat(frameBuffer.m_colorAttachment[ii].flags) );
+						pd->colorAttachments()->object(ii)->setPixelFormat(0 != (_mrtFormatMask & (1<<ii) )
+							? texture.getAttachmentPixelFormat(frameBuffer.m_colorAttachment[ii].flags)
+							: MTL::PixelFormatInvalid
+							);
 
 						if (isIntegerFormat(TextureFormat::Enum(texture.m_textureFormat) ) )
 						{
@@ -3901,6 +3915,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			uint8_t             m_numStreams;
 			uint8_t             m_numInstanceData;
 			uint8_t             m_mrtMask;
+			uint8_t             m_mrtFormatMask;
 		};
 
 		PipelineState m_lastPsoState;
@@ -6879,9 +6894,98 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 								&& height == viewRect.m_height
 								;
 
+							const uint8_t integerAttachmentMask = getIntegerColorAttachmentMask(fbh);
 							integerCleared = !clearWithRenderPass
-								&& clearIntegerColor(fbh, clippedRect, clr, _render->m_colorPalette)
+								&& 0 != integerAttachmentMask
 								;
+							if (integerCleared)
+							{
+								clearIntegerColor(fbh, clippedRect, clr, _render->m_colorPalette);
+							}
+
+							const uint8_t colorClearMask = uint8_t(~clr.getColorSkipMask(g_caps.limits.maxFBAttachments) );
+							const uint8_t colorAttachmentMask = isValid(fbh)
+								? uint8_t( (1<<m_frameBuffers[fbh.idx].m_num)-1)
+								: 0
+								;
+							const bool clearNonInteger = 0 != (clr.m_flags & BGFX_CLEAR_COLOR)
+								&& 0 != (colorClearMask & colorAttachmentMask & ~integerAttachmentMask)
+								;
+							const bool clearDepthStencil = hasDepthAttachment
+								&& 0 != (clr.m_flags & (BGFX_CLEAR_DEPTH|BGFX_CLEAR_STENCIL) )
+								;
+
+							if (integerCleared
+							&&  (clearNonInteger || clearDepthStencil) )
+							{
+								MTL::RenderPassDescriptor* clearRenderPassDescriptor = newRenderPassDescriptor();
+								setFrameBuffer(clearRenderPassDescriptor, fbh);
+
+								for (uint32_t ii = 0; ii < g_caps.limits.maxFBAttachments; ++ii)
+								{
+									MTL::RenderPassColorAttachmentDescriptor* desc = clearRenderPassDescriptor->colorAttachments()->object(ii);
+
+									if (0 != (integerAttachmentMask & (1<<ii) ) )
+									{
+										desc->setTexture(NULL);
+										desc->setResolveTexture(NULL);
+									}
+									else if (NULL != desc->texture() )
+									{
+										desc->setLoadAction(MTL::LoadActionLoad);
+										desc->setStoreAction(NULL != desc->resolveTexture()
+											? (m_hasStoreActionStoreAndMultisampleResolve ? MTL::StoreActionStoreAndMultisampleResolve : MTL::StoreActionMultisampleResolve)
+											: MTL::StoreActionStore
+											);
+									}
+								}
+
+								MTL::RenderPassDepthAttachmentDescriptor* depthAttachment = clearRenderPassDescriptor->depthAttachment();
+								if (NULL != depthAttachment->texture() )
+								{
+									depthAttachment->setLoadAction(MTL::LoadActionLoad);
+									depthAttachment->setStoreAction(NULL != depthAttachment->resolveTexture()
+										? (m_hasStoreActionStoreAndMultisampleResolve ? MTL::StoreActionStoreAndMultisampleResolve : MTL::StoreActionMultisampleResolve)
+										: MTL::StoreActionStore
+										);
+								}
+
+								MTL::RenderPassStencilAttachmentDescriptor* stencilAttachment = clearRenderPassDescriptor->stencilAttachment();
+								if (NULL != stencilAttachment->texture() )
+								{
+									stencilAttachment->setLoadAction(MTL::LoadActionLoad);
+									stencilAttachment->setStoreAction(MTL::StoreActionStore);
+								}
+
+								rce = m_commandBuffer->renderCommandEncoder(clearRenderPassDescriptor);
+								setRenderCommandEncoder(rce);
+								m_renderCommandEncoderFbh = fbh;
+								MTL_RELEASE(clearRenderPassDescriptor, 0);
+
+								const MTL::Viewport clearViewport =
+								{
+									.originX = double(viewState.m_rect.m_x),
+									.originY = double(viewState.m_rect.m_y),
+									.width   = double(viewState.m_rect.m_width),
+									.height  = double(viewState.m_rect.m_height),
+									.znear   = 0.0,
+									.zfar    = 1.0,
+								};
+								rce->setViewport(clearViewport);
+
+								const MTL::ScissorRect clearScissorRect =
+								{
+									.x      = NS::UInteger(clippedRect.m_x),
+									.y      = NS::UInteger(clippedRect.m_y),
+									.width  = NS::UInteger(clippedRect.m_width),
+									.height = NS::UInteger(clippedRect.m_height),
+								};
+								rce->setScissorRect(clearScissorRect);
+
+								clearQuad(_clearQuad, clippedRect, clr, _render->m_colorPalette, uint8_t(~integerAttachmentMask) );
+								endEncoding();
+								rce = NULL;
+							}
 
 							setFrameBuffer(renderPassDescriptor, fbh);
 
