@@ -2284,7 +2284,18 @@ VK_IMPORT_INSTANCE
 						}
 						else
 						{
-							s_msaa[ii] = s_msaa[last];
+							uint16_t nearest = last;
+
+							for (uint16_t jj = ii + 1; 0 == last && jj < BX_COUNTOF(s_msaa); ++jj)
+							{
+								if (s_msaa[jj].Sample & sampleMask)
+								{
+									nearest = jj;
+									break;
+								}
+							}
+
+							s_msaa[ii] = s_msaa[nearest];
 						}
 					}
 				}

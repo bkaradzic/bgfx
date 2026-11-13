@@ -2249,10 +2249,12 @@ namespace bgfx { namespace gl
 	{
 		void reset()
 		{
-			m_detachShader = true;
+			m_detachShader    = true;
+			m_copyImageViaFbo = false;
 		}
 
 		bool m_detachShader;
+		bool m_copyImageViaFbo;
 	};
 
 	static void glBindStorageBuffer(uint32_t _index, GLuint _id, uint32_t _bufferSize, uint32_t _offset, uint32_t _size)
@@ -2310,6 +2312,7 @@ namespace bgfx { namespace gl
 			, m_msaaBlitProgram(0)
 			, m_clearQuadColor(BGFX_INVALID_HANDLE)
 			, m_clearQuadDepth(BGFX_INVALID_HANDLE)
+			, m_currentFbo(0)
 		{
 			bx::memSet(m_msaaBackBufferRbos, 0, sizeof(m_msaaBackBufferRbos) );
 		}
@@ -2942,6 +2945,12 @@ namespace bgfx { namespace gl
 				{
 					m_blitSupported = NULL != glCopyImageSubData;
 				}
+
+				m_workaround.m_copyImageViaFbo = true
+					&& m_blitSupported
+					&& BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES)
+					&& BGFX_PCI_ID_ARM == g_caps.vendorId
+					;
 
 				if (s_extension[Extension::ARB_texture_view].m_supported
 				||  s_extension[Extension::EXT_texture_view].m_supported
@@ -3927,6 +3936,14 @@ namespace bgfx { namespace gl
 				m_fbh = BGFX_INVALID_HANDLE;
 			}
 
+			const FrameBufferGL& frameBuffer = m_frameBuffers[_handle.idx];
+
+			if (0 != m_currentFbo
+			&& (m_currentFbo == frameBuffer.m_fbo[0] || m_currentFbo == frameBuffer.m_fbo[1]) )
+			{
+				m_currentFbo = m_msaaBackBufferFbo;
+			}
+
 			uint16_t denseIdx = m_frameBuffers[_handle.idx].destroy();
 			m_frameBuffers.release(_handle.idx);
 			if (UINT16_MAX != denseIdx)
@@ -4078,6 +4095,7 @@ namespace bgfx { namespace gl
 		}
 
 		void submitBlit(BlitState& _bs, uint16_t _view);
+		void blitCopyTexSubImage(const BlitItem& _bi, const TextureGL& _src, const TextureGL& _dst);
 
 		bool submitBlitBufferItem(const BlitItem& _bi);
 
@@ -7127,6 +7145,16 @@ namespace bgfx { namespace gl
 				s_textureFormat[m_textureFormat].m_mapping[2],
 				s_textureFormat[m_textureFormat].m_mapping[3],
 			};
+
+			if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL)
+			&&  bimg::isDepth(bimg::TextureFormat::Enum(m_textureFormat) ) )
+			{
+				mapping[0] = GL_RED;
+				mapping[1] = GL_ZERO;
+				mapping[2] = GL_ZERO;
+				mapping[3] = GL_ONE;
+			}
+
 			if (s_renderGL->m_textureSwizzleSupport
 			&& (-1 != mapping[0] || -1 != mapping[1] || -1 != mapping[2] || -1 != mapping[3]) )
 			{
@@ -7618,9 +7646,14 @@ namespace bgfx { namespace gl
 			}
 		}
 
+		const uint32_t filterFlags = isIntegerFormat(TextureFormat::Enum(m_textureFormat) )
+			? (flags & ~(BGFX_SAMPLER_MIN_MASK|BGFX_SAMPLER_MAG_MASK|BGFX_SAMPLER_MIP_MASK) ) | BGFX_SAMPLER_POINT
+			: flags
+			;
+
 		const uint32_t samplerFlags = 0 != (m_flags & BGFX_TEXTURE_SRGB_MUTABLE)
-			? flags
-			: flags | BGFX_SAMPLER_SRGB
+			? filterFlags
+			: filterFlags | BGFX_SAMPLER_SRGB
 			;
 
 		if (s_renderGL->m_samplerObjectSupport)
@@ -9421,6 +9454,68 @@ namespace bgfx { namespace gl
 		return false;
 	}
 
+	void RendererContextGL::blitCopyTexSubImage(const BlitItem& _bi, const TextureGL& _src, const TextureGL& _dst)
+	{
+		GLuint fbo;
+		GL_CHECK(glGenFramebuffers(1, &fbo) );
+
+		GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, fbo) );
+
+		const uint32_t numSlices = bx::max<uint32_t>(_bi.m_depth, 1);
+
+		GL_CHECK(glActiveTexture(GL_TEXTURE0) );
+		GL_CHECK(glBindTexture(_dst.m_target, _dst.m_id) );
+
+		const bool dstLayered = false
+			|| GL_TEXTURE_3D             == _dst.m_target
+			|| GL_TEXTURE_2D_ARRAY       == _dst.m_target
+			|| GL_TEXTURE_CUBE_MAP_ARRAY == _dst.m_target
+			;
+
+		for (uint32_t ii = 0; ii < numSlices; ++ii)
+		{
+			framebufferAttachSlice(GL_COLOR_ATTACHMENT0, _src, _bi.m_srcMip, uint16_t(_bi.m_srcZ + ii) );
+
+			GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+			BX_ASSERT(GL_FRAMEBUFFER_COMPLETE == status, "glCheckFramebufferStatus failed 0x%08x", status);
+			BX_UNUSED(status);
+
+			if (dstLayered)
+			{
+				GL_CHECK(glCopyTexSubImage3D(_dst.m_target
+					, _bi.m_dstMip
+					, _bi.m_dstX
+					, _bi.m_dstY
+					, _bi.m_dstZ + ii
+					, _bi.m_srcX
+					, _bi.m_srcY
+					, _bi.m_width
+					, _bi.m_height
+					) );
+			}
+			else
+			{
+				const GLenum target = GL_TEXTURE_CUBE_MAP == _dst.m_target
+					? GL_TEXTURE_CUBE_MAP_POSITIVE_X + _bi.m_dstZ + ii
+					: _dst.m_target
+					;
+
+				GL_CHECK(glCopyTexSubImage2D(target
+					, _bi.m_dstMip
+					, _bi.m_dstX
+					, _bi.m_dstY
+					, _bi.m_srcX
+					, _bi.m_srcY
+					, _bi.m_width
+					, _bi.m_height
+					) );
+			}
+		}
+
+		GL_CHECK(glDeleteFramebuffers(1, &fbo) );
+		GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, m_currentFbo) );
+	}
+
 	void RendererContextGL::submitBlit(BlitState& _bs, uint16_t _view)
 	{
 		if (m_blitSupported)
@@ -9481,6 +9576,19 @@ namespace bgfx { namespace gl
 					resolveMsaaRbo(src, m_currentFbo);
 				}
 
+				if (m_workaround.m_copyImageViaFbo
+				&&  !srcReadsMsaaRbo
+				&&  !bimg::isCompressed(format)
+				&&  !bimg::isDepth(format)
+				&&  0 != (g_caps.formats[format] & BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER)
+				&&  0 == ( (src.m_flags ^ dst.m_flags) & BGFX_TEXTURE_SRGB)
+				&& (bi.m_src.idx != bi.m_dst.idx || bi.m_srcMip != bi.m_dstMip)
+				&&  !dst.isMsaaSurface() )
+				{
+					blitCopyTexSubImage(bi, src, dst);
+					continue;
+				}
+
 				GL_CHECK(glCopyImageSubData(
 					  srcReadsMsaaRbo ? src.m_rbo       : src.m_id
 					, srcReadsMsaaRbo ? GL_RENDERBUFFER : src.m_target
@@ -9520,64 +9628,7 @@ namespace bgfx { namespace gl
 					resolveMsaaRbo(src, m_currentFbo);
 				}
 
-				GLuint fbo;
-				GL_CHECK(glGenFramebuffers(1, &fbo) );
-
-				GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, fbo) );
-
-				const uint32_t numSlices = bx::max<uint32_t>(bi.m_depth, 1);
-
-				GL_CHECK(glActiveTexture(GL_TEXTURE0) );
-				GL_CHECK(glBindTexture(dst.m_target, dst.m_id) );
-
-				const bool dstLayered = false
-					|| GL_TEXTURE_3D             == dst.m_target
-					|| GL_TEXTURE_2D_ARRAY       == dst.m_target
-					|| GL_TEXTURE_CUBE_MAP_ARRAY == dst.m_target
-					;
-
-				for (uint32_t ii = 0; ii < numSlices; ++ii)
-				{
-					framebufferAttachSlice(GL_COLOR_ATTACHMENT0, src, bi.m_srcMip, uint16_t(bi.m_srcZ + ii) );
-
-					GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-					BX_ASSERT(GL_FRAMEBUFFER_COMPLETE == status, "glCheckFramebufferStatus failed 0x%08x", status);
-					BX_UNUSED(status);
-
-					if (dstLayered)
-					{
-						GL_CHECK(glCopyTexSubImage3D(dst.m_target
-							, bi.m_dstMip
-							, bi.m_dstX
-							, bi.m_dstY
-							, bi.m_dstZ + ii
-							, bi.m_srcX
-							, bi.m_srcY
-							, bi.m_width
-							, bi.m_height
-							) );
-					}
-					else
-					{
-						const GLenum target = GL_TEXTURE_CUBE_MAP == dst.m_target
-							? GL_TEXTURE_CUBE_MAP_POSITIVE_X + bi.m_dstZ + ii
-							: dst.m_target
-							;
-
-						GL_CHECK(glCopyTexSubImage2D(target
-							, bi.m_dstMip
-							, bi.m_dstX
-							, bi.m_dstY
-							, bi.m_srcX
-							, bi.m_srcY
-							, bi.m_width
-							, bi.m_height
-							) );
-					}
-				}
-
-				GL_CHECK(glDeleteFramebuffers(1, &fbo) );
-				GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, m_currentFbo) );
+				blitCopyTexSubImage(bi, src, dst);
 			}
 		}
 		else
