@@ -38,7 +38,7 @@ namespace bgfx { namespace wgpu
 	static const uint32_t s_msaa[] =
 	{
 		1,
-		1, // 2 is not supported.
+		4,
 		4,
 		4,
 		4,
@@ -1321,7 +1321,7 @@ WGPU_IMPORT
 
 						ifSupported(WGPUFeatureName_DepthClipControl),
 
-						WGPUFeatureName_IndirectFirstInstance,
+						ifSupported(WGPUFeatureName_IndirectFirstInstance),
 
 						ifSupported(WGPUFeatureName_Unorm16TextureFormats),
 						ifSupported(WGPUFeatureName_BGRA8UnormStorage),
