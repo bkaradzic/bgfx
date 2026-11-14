@@ -36,6 +36,8 @@
 #include "robotomono_regular.ttf.h"
 #include "icons_kenney.ttf.h"
 #include "icons_font_awesome.ttf.h"
+#include "icons_font_awesome_7_brands.ttf.h"
+#include "icons_codicons.ttf.h"
 
 static const bgfx::EmbeddedShader s_embeddedShaders[] =
 {
@@ -56,8 +58,10 @@ struct FontRangeMerge
 
 static FontRangeMerge s_fontRangeMerge[] =
 {
-	{ s_iconsKenneyTtf,      sizeof(s_iconsKenneyTtf),      { ICON_MIN_KI, ICON_MAX_KI, 0 } },
-	{ s_iconsFontAwesomeTtf, sizeof(s_iconsFontAwesomeTtf), { ICON_MIN_FA, ICON_MAX_FA, 0 } },
+	{ s_iconsKenneyTtf,             sizeof(s_iconsKenneyTtf),             { ICON_MIN_KI,  ICON_MAX_KI,  0 } },
+	{ s_iconsFontAwesomeTtf,        sizeof(s_iconsFontAwesomeTtf),        { ICON_MIN_FA,  ICON_MAX_FA,  0 } },
+	{ s_iconsFontAwesome7BrandsTtf, sizeof(s_iconsFontAwesome7BrandsTtf), { ICON_MIN_FAB, ICON_MAX_FAB, 0 } },
+	{ s_iconsCodiconsTtf,           sizeof(s_iconsCodiconsTtf),           { ICON_MIN_CI,  ICON_MAX_CI,  0 } },
 };
 
 static void* memAlloc(size_t _size, void* _userData);
