@@ -450,6 +450,8 @@ GL_IMPORT______(false, PFNGLUSEPROGRAMPROC,                        glUseProgram)
 GL_IMPORT______(true,  PFNGLVERTEXATTRIBDIVISORPROC,               glVertexAttribDivisor);
 GL_IMPORT______(false, PFNGLVERTEXATTRIBPOINTERPROC,               glVertexAttribPointer);
 GL_IMPORT______(true,  PFNGLVERTEXATTRIBIPOINTERPROC,              glVertexAttribIPointer);
+GL_IMPORT______(true,  PFNGLVERTEXATTRIBI4IPROC,                   glVertexAttribI4i);
+GL_IMPORT______(true,  PFNGLVERTEXATTRIBI4UIPROC,                  glVertexAttribI4ui);
 GL_IMPORT______(false, PFNGLVERTEXATTRIB1FPROC,                    glVertexAttrib1f);
 GL_IMPORT______(false, PFNGLVERTEXATTRIB2FPROC,                    glVertexAttrib2f);
 GL_IMPORT______(false, PFNGLVERTEXATTRIB3FPROC,                    glVertexAttrib3f);
@@ -531,6 +533,8 @@ GL_IMPORT______(true,  PFNGLCLEARBUFFERIVPROC,                     glClearBuffer
 GL_IMPORT______(true,  PFNGLCLEARBUFFERUIVPROC,                    glClearBufferuiv);
 GL_IMPORT______(true,  PFNGLCOPYTEXSUBIMAGE3DPROC,                 glCopyTexSubImage3D);
 GL_IMPORT______(true,  PFNGLVERTEXATTRIBIPOINTERPROC,              glVertexAttribIPointer);
+GL_IMPORT______(true,  PFNGLVERTEXATTRIBI4IPROC,                   glVertexAttribI4i);
+GL_IMPORT______(true,  PFNGLVERTEXATTRIBI4UIPROC,                  glVertexAttribI4ui);
 GL_IMPORT______(true,  PFNGLGETINTERNALFORMATIVPROC,               glGetInternalformativ);
 GL_IMPORT______(true,  PFNGLGETINTERNALFORMATI64VPROC,             glGetInternalformati64v);
 GL_IMPORT______(true,  PFNGLPOLYGONOFFSETCLAMPPROC,                glPolygonOffsetClamp);

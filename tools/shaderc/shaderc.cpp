@@ -2339,8 +2339,12 @@ namespace bgfx
 								&& !bx::findIdentifierMatch(preprocessedInput, s_bitsToEncoders).isEmpty()
 								;
 
-							if (!bx::strFind(preprocessedInput, "layout(std430").isEmpty()
-							||  !bx::strFind(preprocessedInput, "image2D").isEmpty()
+							const bool usesImagesOrStorageBuffers = false
+								|| !bx::strFind(preprocessedInput, "layout(std430").isEmpty()
+								|| !bx::strFind(preprocessedInput, "image2D").isEmpty()
+								;
+
+							if (usesImagesOrStorageBuffers
 							||  usesBitsToEncoders)
 							{
 								if (glsl_profile < 430)
@@ -2349,7 +2353,8 @@ namespace bgfx
 								}
 
 								// Images, and storage buffers, require ESSL 3.10.
-								if (0 != esslVersion)
+								if (0 != esslVersion
+								&&  usesImagesOrStorageBuffers)
 								{
 									esslVersion = bx::max<uint32_t>(esslVersion, 310);
 								}

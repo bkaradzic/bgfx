@@ -13,6 +13,10 @@
 #	include <bx/pixelformat.h>
 #	include "renderer_webgpu.h"
 
+#	if BX_PLATFORM_EMSCRIPTEN
+#		include <emscripten/emscripten.h>
+#	endif // BX_PLATFORM_EMSCRIPTEN
+
 namespace bgfx { namespace wgpu
 {
 	struct PrimInfo
@@ -704,8 +708,8 @@ namespace bgfx { namespace wgpu
 			case TextureFormat::R32U:      framebuffer = true;          multisample = true;          storage = true;           supported = true; break;
 			case TextureFormat::R32F:      framebuffer = true;          multisample = m_core;        storage = true;           supported = true; break;
 			case TextureFormat::RG32I:
-			case TextureFormat::RG32U:     framebuffer = true;          multisample = m_core;        storage = false;          supported = true; break;
-			case TextureFormat::RG32F:     framebuffer = true;          multisample = m_core;        storage = false;          supported = true; break;
+			case TextureFormat::RG32U:     framebuffer = true;          multisample = m_core;        storage = m_core;         supported = true; break;
+			case TextureFormat::RG32F:     framebuffer = true;          multisample = m_core;        storage = m_core;         supported = true; break;
 			case TextureFormat::RGBA32I:
 			case TextureFormat::RGBA32U:   framebuffer = true;          multisample = m_core;        storage = true;           supported = true; break;
 			case TextureFormat::RGBA32F:   framebuffer = true;          multisample = m_core;        storage = true;           supported = true; break;
@@ -951,6 +955,7 @@ WGPU_IMPORT
 			, m_device(NULL)
 			, m_backendType(WGPUBackendType_Undefined)
 			, m_callbackMode(WGPUCallbackMode_AllowProcessEvents)
+			, m_timedWaitAny(true)
 			, m_diagnostics(BGFX_DIAGNOSTIC_NONE)
 			, m_maxAnisotropy(1)
 			, m_wireframe(false)
@@ -1162,7 +1167,21 @@ WGPU_IMPORT
 					m_adapter  = wgpuDeviceGetAdapter(m_device);
 					m_instance = wgpuAdapterGetInstance(m_adapter);
 #else
-					const WGPUInstanceDescriptor instanceDesc = WGPU_INSTANCE_DESCRIPTOR_INIT;
+					m_timedWaitAny = 0 != emscripten_has_asyncify();
+
+					const WGPUInstanceFeatureName requiredFeatures[] =
+					{
+						WGPUInstanceFeatureName_TimedWaitAny,
+					};
+
+					const WGPUInstanceDescriptor instanceDesc =
+					{
+						.nextInChain          = NULL,
+						.requiredFeatureCount = m_timedWaitAny ? uint32_t(BX_COUNTOF(requiredFeatures) ) : 0,
+						.requiredFeatures     = requiredFeatures,
+						.requiredLimits       = NULL,
+					};
+
 					m_instance     = wgpuCreateInstance(&instanceDesc);
 					m_callbackMode = WGPUCallbackMode_AllowSpontaneous;
 #endif // !BX_PLATFORM_EMSCRIPTEN
@@ -1902,6 +1921,8 @@ WGPU_IMPORT
 			uint32_t stencilOffset;
 			uint32_t stencilPitch;
 			uint32_t texelSize;
+			char* filePath;
+			TextureFormat::Enum format;
 		};
 
 		static void interleaveDepthStencil(const ReadTexture& _readTexture, const void* _src)
@@ -1977,45 +1998,103 @@ WGPU_IMPORT
 				}
 
 				WGPU_CHECK(wgpuBufferUnmap(readTexture.buffer) );
+
+				if (NULL != readTexture.filePath)
+				{
+					g_callback->screenShot(
+						  readTexture.filePath
+						, readTexture.width
+						, readTexture.height
+						, readTexture.dataPitch
+						, readTexture.format
+						, readTexture.data
+						, readTexture.dataPitch*readTexture.height
+						, false
+						);
+				}
 			}
 
 			wgpuRelease(readTexture.buffer);
 
-			*(bool*)(_userdata2) = true;
-		}
-
-		struct ReadBuffer
-		{
-			WGPUBuffer buffer;
-			uint32_t size;
-			void* data;
-		};
-
-		static void readBufferCb(WGPUMapAsyncStatus _status, WGPUStringView _message, void* _userdata1, void* _userdata2)
-		{
-			ReadBuffer& readBuffer = *(ReadBuffer*)_userdata1;
-
-			if (WGPUMapAsyncStatus_Success != _status)
+			if (NULL != readTexture.filePath)
 			{
-				BX_TRACE("readBuffer: map failed %d.", _status);
-				trace(_message);
+				bx::free(g_allocator, readTexture.data);
+				bx::free(g_allocator, readTexture.filePath);
+			}
+
+			if (NULL == _userdata2)
+			{
+				bx::deleteObject(g_allocator, &readTexture);
 			}
 			else
 			{
-				const void* result = (const void*)WGPU_CHECK(wgpuBufferGetConstMappedRange(
-					  readBuffer.buffer
-					, 0
-					, readBuffer.size
-					) );
-
-				bx::memCopy(readBuffer.data, result, readBuffer.size);
-
-				WGPU_CHECK(wgpuBufferUnmap(readBuffer.buffer) );
+				*(bool*)(_userdata2) = true;
 			}
+		}
 
-			wgpuRelease(readBuffer.buffer);
+		void mapRead(const ReadTexture& _readTexture)
+		{
+			if constexpr (!BX_ENABLED(BX_PLATFORM_EMSCRIPTEN) )
+			{
+				ReadTexture readTexture = _readTexture;
+				s_done = false;
 
-			*(bool*)(_userdata2) = true;
+				WGPU_CHECK(wgpuBufferMapAsync(
+					  readTexture.buffer
+					, WGPUMapMode_Read
+					, 0
+					, readTexture.size
+					, {
+						.nextInChain = NULL,
+						.mode        = WGPUCallbackMode_AllowProcessEvents,
+						.callback    = readTextureCb,
+						.userdata1   = &readTexture,
+						.userdata2   = &s_done,
+					}) );
+
+				while (!s_done)
+				{
+					wgpuInstanceProcessEvents(m_instance);
+				}
+			}
+			else if (m_timedWaitAny)
+			{
+				ReadTexture readTexture = _readTexture;
+
+				WGPUFutureWaitInfo fwi =
+				{
+					.future = wgpuBufferMapAsync(
+						  readTexture.buffer
+						, WGPUMapMode_Read
+						, 0
+						, readTexture.size
+						, {
+							.nextInChain = NULL,
+							.mode        = WGPUCallbackMode_WaitAnyOnly,
+							.callback    = readTextureCb,
+							.userdata1   = &readTexture,
+							.userdata2   = &s_done,
+						}),
+					.completed = false,
+				};
+
+				waitForFuture(fwi);
+			}
+			else
+			{
+				WGPU_CHECK(wgpuBufferMapAsync(
+					  _readTexture.buffer
+					, WGPUMapMode_Read
+					, 0
+					, _readTexture.size
+					, {
+						.nextInChain = NULL,
+						.mode        = WGPUCallbackMode_AllowSpontaneous,
+						.callback    = readTextureCb,
+						.userdata1   = BX_NEW(g_allocator, ReadTexture)(_readTexture),
+						.userdata2   = NULL,
+					}) );
+			}
 		}
 
 		void readTexture(TextureHandle _handle, void* _data, uint16_t _layer, uint8_t _mip) override
@@ -2063,8 +2142,6 @@ WGPU_IMPORT
 			};
 
 			WGPUBuffer readTextureBuffer = WGPU_CHECK(wgpuDeviceCreateBuffer(m_device, &readTextureBufferDesc) );
-
-			s_done = false;
 
 			m_cmd.copyTextureToBuffer(
 				{
@@ -2131,8 +2208,7 @@ WGPU_IMPORT
 			m_cmd.kick();
 			m_cmd.wait();
 
-			ReadTexture readTexture =
-			{
+			mapRead({
 				.buffer        = readTextureBuffer,
 				.size          = copySize,
 				.data          = _data,
@@ -2143,25 +2219,9 @@ WGPU_IMPORT
 				.stencilOffset = stencilOffset,
 				.stencilPitch  = stencilPitch,
 				.texelSize     = blockInfo.blockSize,
-			};
-
-			WGPU_CHECK(wgpuBufferMapAsync(
-				  readTextureBuffer
-				, WGPUMapMode_Read
-				, 0
-				, copySize
-				, {
-					.nextInChain = NULL,
-					.mode        = WGPUCallbackMode_AllowProcessEvents,
-					.callback    = readTextureCb,
-					.userdata1   = &readTexture,
-					.userdata2   = &s_done,
-				}) );
-
-			while (!s_done)
-			{
-				wgpuInstanceProcessEvents(m_instance);
-			}
+				.filePath      = NULL,
+				.format        = TextureFormat::Count,
+			});
 		}
 
 		BufferWGPU& getBuffer(Handle _handle)
@@ -2192,36 +2252,24 @@ WGPU_IMPORT
 
 			WGPUBuffer readBufferDst = WGPU_CHECK(wgpuDeviceCreateBuffer(m_device, &readBufferDesc) );
 
-			s_done = false;
-
 			m_cmd.copyBufferToBuffer(buffer.m_buffer, _offset, readBufferDst, 0, _size);
 
 			m_cmd.kick();
 
-			ReadBuffer readBuffer =
-			{
-				.buffer = readBufferDst,
-				.size   = _size,
-				.data   = _data,
-			};
-
-			WGPU_CHECK(wgpuBufferMapAsync(
-				  readBufferDst
-				, WGPUMapMode_Read
-				, 0
-				, _size
-				, {
-					.nextInChain = NULL,
-					.mode        = WGPUCallbackMode_AllowProcessEvents,
-					.callback    = readBufferCb,
-					.userdata1   = &readBuffer,
-					.userdata2   = &s_done,
-				}) );
-
-			while (!s_done)
-			{
-				wgpuInstanceProcessEvents(m_instance);
-			}
+			mapRead({
+				.buffer        = readBufferDst,
+				.size          = _size,
+				.data          = _data,
+				.dataPitch     = _size,
+				.pitch         = _size,
+				.height        = 1,
+				.width         = _size,
+				.stencilOffset = 0,
+				.stencilPitch  = 0,
+				.texelSize     = 1,
+				.filePath      = NULL,
+				.format        = TextureFormat::Count,
+			});
 		}
 
 		void resizeTexture(TextureHandle _handle, uint16_t _width, uint16_t _height, uint8_t _numMips, uint16_t _numLayers) override
@@ -2365,9 +2413,9 @@ WGPU_IMPORT
 
 			WGPUBuffer readTextureBuffer = WGPU_CHECK(wgpuDeviceCreateBuffer(m_device, &readTextureBufferDesc) );
 
-			void* data = bx::alloc(g_allocator, dstPitch*height);
-
-			s_done = false;
+			const uint32_t filePathLen = bx::strLen(_filePath) + 1;
+			char* filePath = (char*)bx::alloc(g_allocator, filePathLen);
+			bx::strCopy(filePath, filePathLen, _filePath);
 
 			m_cmd.copyTextureToBuffer(
 				{
@@ -2400,11 +2448,10 @@ WGPU_IMPORT
 			m_cmd.kick();
 			m_cmd.wait();
 
-			ReadTexture readTexture =
-			{
+			mapRead({
 				.buffer        = readTextureBuffer,
 				.size          = copySize,
-				.data          = data,
+				.data          = bx::alloc(g_allocator, dstPitch*height),
 				.dataPitch     = dstPitch,
 				.pitch         = srcPitch,
 				.height        = height,
@@ -2412,38 +2459,9 @@ WGPU_IMPORT
 				.stencilOffset = 0,
 				.stencilPitch  = 0,
 				.texelSize     = uint32_t(bpp/8),
-			};
-
-			WGPU_CHECK(wgpuBufferMapAsync(
-				  readTextureBuffer
-				, WGPUMapMode_Read
-				, 0
-				, copySize
-				, {
-					.nextInChain = NULL,
-					.mode        = WGPUCallbackMode_AllowProcessEvents,
-					.callback    = readTextureCb,
-					.userdata1   = &readTexture,
-					.userdata2   = &s_done,
-				}) );
-
-			while (!s_done)
-			{
-				wgpuInstanceProcessEvents(m_instance);
-			}
-
-			g_callback->screenShot(
-				  _filePath
-				, width
-				, height
-				, dstPitch
-				, format
-				, data
-				, dstPitch*height
-				, false
-				);
-
-			bx::free(g_allocator, data);
+				.filePath      = filePath,
+				.format        = format,
+			});
 		}
 
 		void invalidateOcclusionQuery(OcclusionQueryHandle _handle) override
@@ -4441,7 +4459,7 @@ WGPU_IMPORT
 
 			if (blendEnabled)
 			{
-//				constexpr uint32_t kBlendOne = (BGFX_STATE_BLEND_ONE & BGFX_STATE_BLEND_MASK) >> BGFX_STATE_BLEND_SHIFT;
+				constexpr uint32_t kBlendOne = (BGFX_STATE_BLEND_ONE & BGFX_STATE_BLEND_MASK) >> BGFX_STATE_BLEND_SHIFT;
 
 				const uint32_t blend    = uint32_t( (_state & BGFX_STATE_BLEND_MASK         ) >> BGFX_STATE_BLEND_SHIFT);
 				const uint32_t equation = uint32_t( (_state & BGFX_STATE_BLEND_EQUATION_MASK) >> BGFX_STATE_BLEND_EQUATION_SHIFT);
@@ -4452,10 +4470,10 @@ WGPU_IMPORT
 				const bool equRGBIsMinOrMax = 3 <= equRGB;
 				const bool equAIsMinOrMax   = 3 <= equA;
 
-				const uint32_t srcRGB = equRGBIsMinOrMax ? 0 : (blend      ) & 0xf;
-				const uint32_t dstRGB = equRGBIsMinOrMax ? 0 : (blend >>  4) & 0xf;
-				const uint32_t srcA   = equAIsMinOrMax   ? 0 : (blend >>  8) & 0xf;
-				const uint32_t dstA   = equAIsMinOrMax   ? 0 : (blend >> 12) & 0xf;
+				const uint32_t srcRGB = equRGBIsMinOrMax ? kBlendOne : (blend      ) & 0xf;
+				const uint32_t dstRGB = equRGBIsMinOrMax ? kBlendOne : (blend >>  4) & 0xf;
+				const uint32_t srcA   = equAIsMinOrMax   ? kBlendOne : (blend >>  8) & 0xf;
+				const uint32_t dstA   = equAIsMinOrMax   ? kBlendOne : (blend >> 12) & 0xf;
 
 				_outBlendState[0] =
 				{
@@ -4478,9 +4496,12 @@ WGPU_IMPORT
 			{
 				for (uint32_t ii = 1, rgba = _rgba; ii < BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS; ++ii, rgba >>= 11)
 				{
-					const uint32_t src      = (rgba     ) & 0xf;
-					const uint32_t dst      = (rgba >> 4) & 0xf;
+					constexpr uint32_t kBlendOne = (BGFX_STATE_BLEND_ONE & BGFX_STATE_BLEND_MASK) >> BGFX_STATE_BLEND_SHIFT;
+
 					const uint32_t equation = (rgba >> 8) & 0x7;
+					const bool     minOrMax = 3 <= equation;
+					const uint32_t src      = minOrMax ? kBlendOne : (rgba     ) & 0xf;
+					const uint32_t dst      = minOrMax ? kBlendOne : (rgba >> 4) & 0xf;
 
 					_outBlendState[ii] =
 					{
@@ -4660,6 +4681,7 @@ WGPU_IMPORT
 		WGPULimits         m_limits;
 		WGPUBackendType    m_backendType;
 		WGPUCallbackMode   m_callbackMode;
+		bool               m_timedWaitAny;
 		uint32_t           m_diagnostics;
 
 		uint32_t         m_maxFrameLatency;
@@ -7339,7 +7361,8 @@ WGPU_IMPORT
 
 	void OcclusionQueryWGPU::resolve()
 	{
-		if (0 < m_control.getNumUsed() )
+		if (!m_mapPending
+		&&  0 < m_control.getNumUsed() )
 		{
 			WGPUCommandEncoder commandEncoder = s_renderWGPU->m_cmd.m_commandEncoder;
 
@@ -7362,6 +7385,9 @@ WGPU_IMPORT
 				, 0
 				, kOcclusionQueryBufferSize
 				) );
+
+			m_numResolved = m_control.getNumUsed();
+			m_resolved    = true;
 		}
 	}
 
@@ -7374,9 +7400,13 @@ WGPU_IMPORT
 
 	void OcclusionQueryWGPU::readResultsAsync(Frame* _frame)
 	{
-		if (0 < m_control.getNumUsed() )
+		if (m_resolved
+		&&  !m_mapPending)
 		{
 			constexpr uint64_t kOcclusionQueryBufferSize = BGFX_CONFIG_MAX_OCCLUSION_QUERIES * sizeof(uint64_t);
+
+			m_resolved   = false;
+			m_mapPending = true;
 
 			WGPU_CHECK(wgpuBufferMapAsync(
 				  m_readback
@@ -7397,25 +7427,30 @@ WGPU_IMPORT
 	{
 		constexpr uint64_t kOcclusionQueryBufferSize = BGFX_CONFIG_MAX_OCCLUSION_QUERIES * sizeof(uint64_t);
 
-		const uint64_t* result = (const uint64_t*)WGPU_CHECK(wgpuBufferGetConstMappedRange(
+		const uint64_t* result = (const uint64_t*)wgpuBufferGetConstMappedRange(
 			  m_readback
 			, 0
 			, kOcclusionQueryBufferSize
-			) );
+			);
 
-		while (NULL != result
-		&&     0 < m_control.getNumUsed() )
+		if (NULL != result)
 		{
-			OcclusionQueryHandle handle = m_handle[m_control.m_read];
-			if (isValid(handle) )
+			for (; 0 < m_numResolved && 0 < m_control.getNumUsed(); --m_numResolved)
 			{
-				_frame->m_occlusion[handle.idx] = int32_t(result[handle.idx]);
+				OcclusionQueryHandle handle = m_handle[m_control.m_read];
+				if (isValid(handle) )
+				{
+					_frame->m_occlusion[handle.idx] = int32_t(result[handle.idx]);
+				}
+
+				m_control.consume(1);
 			}
 
-			m_control.consume(1);
+			WGPU_CHECK(wgpuBufferUnmap(m_readback) );
 		}
 
-		WGPU_CHECK(wgpuBufferUnmap(m_readback) );
+		m_numResolved = 0;
+		m_mapPending  = false;
 	}
 
 	void OcclusionQueryWGPU::invalidate(OcclusionQueryHandle _handle)
