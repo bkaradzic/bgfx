@@ -397,6 +397,14 @@ typedef double GLdouble;
 #	define GL_COMPRESSED_RG_RGTC2 0x8DBD
 #endif // GL_COMPRESSED_RG_RGTC2
 
+#ifndef GL_COMPRESSED_SIGNED_RED_RGTC1
+#	define GL_COMPRESSED_SIGNED_RED_RGTC1 0x8DBC
+#endif // GL_COMPRESSED_SIGNED_RED_RGTC1
+
+#ifndef GL_COMPRESSED_SIGNED_RG_RGTC2
+#	define GL_COMPRESSED_SIGNED_RG_RGTC2 0x8DBE
+#endif // GL_COMPRESSED_SIGNED_RG_RGTC2
+
 #ifndef GL_ETC1_RGB8_OES
 #	define GL_ETC1_RGB8_OES 0x8D64
 #endif // GL_ETC1_RGB8_OES
@@ -1567,6 +1575,7 @@ namespace bgfx { namespace gl
 			: m_id(0)
 			, m_type(0)
 			, m_hash(0)
+			, m_numFragOutputs(UINT8_MAX)
 		{
 		}
 
@@ -1576,6 +1585,7 @@ namespace bgfx { namespace gl
 		GLuint m_id;
 		GLenum m_type;
 		uint32_t m_hash;
+		uint8_t m_numFragOutputs;
 	};
 
 	struct FrameBufferGL
@@ -1588,6 +1598,7 @@ namespace bgfx { namespace gl
 			, m_swapChainMsaa(1)
 			, m_denseIdx(UINT16_MAX)
 			, m_num(0)
+			, m_numDrawBuffers(0)
 			, m_needPresent(false)
 		{
 			bx::memSet(m_fbo, 0, sizeof(m_fbo) );
@@ -1624,6 +1635,7 @@ namespace bgfx { namespace gl
 		uint16_t m_denseIdx;
 		uint8_t  m_num;
 		uint8_t  m_numTh;
+		uint8_t  m_numDrawBuffers;
 		bool     m_needPresent;
 		Attachment m_attachment[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
 	};
@@ -1635,6 +1647,9 @@ namespace bgfx { namespace gl
 			, m_numSamplerTargets(0)
 			, m_constantBuffer(NULL)
 			, m_numPredefined(0)
+			, m_numFragOutputs(UINT8_MAX)
+			, m_intAttribMask(0)
+			, m_uintAttribMask(0)
 		{
 			m_instanceData[0] = -1;
 		}
@@ -1675,6 +1690,9 @@ namespace bgfx { namespace gl
 		UniformBuffer* m_constantBuffer;
 		PredefinedUniform m_predefined[PredefinedUniform::Count];
 		uint8_t m_numPredefined;
+		uint8_t m_numFragOutputs;
+		uint32_t m_intAttribMask;
+		uint32_t m_uintAttribMask;
 	};
 
 	struct TimerQueryGL

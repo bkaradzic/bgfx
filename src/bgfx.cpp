@@ -6370,6 +6370,17 @@ namespace bgfx
 			, g_caps.limits.maxTextureLayers
 			);
 
+		BGFX_ERROR_CHECK(false
+			|| !_cubeMap
+			|| 1 >= _numLayers
+			|| 0 != (g_caps.supported & BGFX_CAPS_TEXTURE_CUBE_ARRAY)
+			, _err
+			, BGFX_ERROR_TEXTURE_VALIDATION
+			, "Cube map array textures are not supported! "
+			  "Use bgfx::getCaps to check `BGFX_CAPS_TEXTURE_CUBE_ARRAY` backend renderer capabilities."
+			, ""
+			);
+
 		bool formatSupported;
 		if (0 != (_flags & (BGFX_TEXTURE_RT | BGFX_TEXTURE_RT_WRITE_ONLY)) )
 		{

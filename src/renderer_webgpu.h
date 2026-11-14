@@ -906,6 +906,9 @@ namespace wgpu {
 			, m_resolve(NULL)
 			, m_readback(NULL)
 			, m_control(BX_COUNTOF(m_handle) )
+			, m_numResolved(0)
+			, m_resolved(false)
+			, m_mapPending(false)
 		{
 		}
 
@@ -924,6 +927,9 @@ namespace wgpu {
 
 		OcclusionQueryHandle m_handle[BGFX_CONFIG_MAX_OCCLUSION_QUERIES];
 		bx::RingBufferControl m_control;
+		uint32_t m_numResolved;
+		bool m_resolved;
+		bool m_mapPending;
 	};
 
 } /* namespace bgfx */ } // namespace wgpu

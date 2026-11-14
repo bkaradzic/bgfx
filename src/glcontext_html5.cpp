@@ -102,6 +102,12 @@ namespace bgfx { namespace gl
 		}
 		else
 		{
+			if (NULL == canvas)
+			{
+				BX_TRACE("Init error: WebGL needs a canvas, swap chain native window handle is NULL.");
+				return false;
+			}
+
 			m_primary = createSwapChain( (void*)canvas, _swapChain.width, _swapChain.height);
 
 			if (NULL == m_primary)
@@ -110,6 +116,8 @@ namespace bgfx { namespace gl
 				return false;
 			}
 		}
+
+		BX_WARN(0 == (_swapChain.flags & BGFX_SWAP_CHAIN_SRGB_BACKBUFFER), "WebGL canvas has no sRGB back buffer.");
 
 		if (0 != _swapChain.width
 		&&  0 != _swapChain.height)
@@ -146,6 +154,8 @@ namespace bgfx { namespace gl
 		{
 			return;
 		}
+
+		BX_WARN(0 == (_swapChain.flags & BGFX_SWAP_CHAIN_SRGB_BACKBUFFER), "WebGL canvas has no sRGB back buffer.");
 
 		EMSCRIPTEN_CHECK(emscripten_set_canvas_element_size(
 			  m_primary->m_canvas
