@@ -739,7 +739,6 @@ https://proje.ca - Projeca is a massively multiplayer anarchy blockgame.
 
 <img width="3024" height="1898" alt="Projeca" src="https://github.com/user-attachments/assets/9c775be6-e91d-4ca4-b066-3069adb9ca54" />
 
-
 [License (BSD 2-clause)](https://bkaradzic.github.io/bgfx/license.html)
 -----------------------------------------------------------------------
 
