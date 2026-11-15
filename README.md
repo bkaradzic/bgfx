@@ -733,6 +733,12 @@ and Metal on iOS and macOS.
 
 <img width="1920" height="960" alt="mytin2-cross-platform-" src="https://github.com/user-attachments/assets/56468125-f220-40a2-9655-357447b4b264" />
 
+## Projeca
+
+https://proje.ca - Projeca is a massively multiplayer anarchy blockgame.
+
+<img width="3024" height="1898" alt="Projeca" src="https://github.com/user-attachments/assets/9c775be6-e91d-4ca4-b066-3069adb9ca54" />
+
 [License (BSD 2-clause)](https://bkaradzic.github.io/bgfx/license.html)
 -----------------------------------------------------------------------
 
