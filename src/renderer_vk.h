@@ -796,6 +796,7 @@ VK_DESTROY_FUNC(DescriptorSet);
 		SwapChainVK()
 			: m_nwh(NULL)
 			, m_vsync(false)
+			, m_presentModeSwitch(false)
 			, m_surface(VK_NULL_HANDLE)
 			, m_swapChain(VK_NULL_HANDLE)
 			, m_backBufferColorIdx(0)
@@ -828,6 +829,7 @@ VK_DESTROY_FUNC(DescriptorSet);
 		void releaseFrameBuffer();
 
 		uint32_t findPresentMode(bool _vsync);
+		bool isPresentModeCompatible(VkPresentModeKHR _presentMode, VkPresentModeKHR _with);
 		bool getPresentScaling(const VkSurfaceCapabilitiesKHR& _surfaceCapabilities, VkExtent2D& _extent, VkSwapchainPresentScalingCreateInfoEXT* _scalingInfo);
 		TextureFormat::Enum findSurfaceFormat(TextureFormat::Enum _format, VkColorSpaceKHR _colorSpace, bool _srgb);
 
@@ -847,6 +849,7 @@ VK_DESTROY_FUNC(DescriptorSet);
 		SwapChain m_desc;
 
 		bool m_vsync;
+		bool m_presentModeSwitch;
 
 		TextureFormat::Enum m_colorFormat;
 		TextureFormat::Enum m_depthFormat;

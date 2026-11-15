@@ -143,8 +143,8 @@ namespace bgfx { namespace vk
 	{
 		{ VK_PRESENT_MODE_FIFO_KHR,         true,  "VK_PRESENT_MODE_FIFO_KHR"         },
 		{ VK_PRESENT_MODE_FIFO_RELAXED_KHR, true,  "VK_PRESENT_MODE_FIFO_RELAXED_KHR" },
-		{ VK_PRESENT_MODE_MAILBOX_KHR,      true,  "VK_PRESENT_MODE_MAILBOX_KHR"      },
 		{ VK_PRESENT_MODE_IMMEDIATE_KHR,    false, "VK_PRESENT_MODE_IMMEDIATE_KHR"    },
+		{ VK_PRESENT_MODE_MAILBOX_KHR,      false, "VK_PRESENT_MODE_MAILBOX_KHR"      },
 	};
 
 	static const VkLatencyMarkerNV s_latencyMarker[] =
@@ -3794,8 +3794,14 @@ VK_IMPORT_DEVICE
 				setLowLatencyMode(lowLatencyMode);
 			}
 
-			if (m_swapchainMaintenance1Supported
-			&& !!((_reset ^ m_reset) & BGFX_RESET_VSYNC) )
+			bool presentModeSwitch = !!( (_reset ^ m_reset) & BGFX_RESET_VSYNC);
+
+			for (uint16_t ii = 0; ii < m_numWindows && presentModeSwitch; ++ii)
+			{
+				presentModeSwitch = getFrameBuffer(m_windows[ii]).m_swapChain.m_presentModeSwitch;
+			}
+
+			if (presentModeSwitch)
 			{
 				m_reset = 0
 					| (m_reset & ~BGFX_RESET_VSYNC)
@@ -9425,7 +9431,7 @@ VK_DESTROY
 
 		const bool vsync = !!(s_renderVK->m_reset & BGFX_RESET_VSYNC);
 		const bool vsyncChanged = false
-			|| (m_vsync != vsync && !s_renderVK->m_swapchainMaintenance1Supported)
+			|| (m_vsync != vsync && !m_presentModeSwitch)
 			;
 
 		const bool recreateSurface = false
@@ -9921,9 +9927,25 @@ VK_DESTROY
 			return VK_ERROR_INITIALIZATION_FAILED;
 		}
 
+		m_presentModeSwitch = true
+			&& s_renderVK->m_swapchainMaintenance1Supported
+			&& UINT32_MAX != m_presentModeWithVSyncIdx
+			&& UINT32_MAX != m_presentModeWithoutVSyncIdx
+			&& isPresentModeCompatible(s_presentMode[m_presentModeWithVSyncIdx].mode, s_presentMode[m_presentModeWithoutVSyncIdx].mode)
+			;
+
+		const bool mailbox = true
+			&& UINT32_MAX != m_presentModeWithoutVSyncIdx
+			&& VK_PRESENT_MODE_MAILBOX_KHR == s_presentMode[m_presentModeWithoutVSyncIdx].mode
+			&& (!vsync || m_presentModeSwitch)
+			;
+
 		m_sci.pNext              = NULL;
 		m_sci.surface            = m_surface;
-		m_sci.minImageCount      = swapBufferCount;
+		m_sci.minImageCount      = mailbox
+			? bx::min<uint32_t>(bx::max<uint32_t>(swapBufferCount, 3), maxSwapBufferCount)
+			: swapBufferCount
+			;
 		m_sci.imageFormat        = surfaceFormat;
 		m_sci.imageColorSpace    = surfaceColorSpace;
 		m_sci.imageExtent.width  = width;
@@ -9945,12 +9967,7 @@ VK_DESTROY
 		VkPresentModeKHR modes[2];
 		VkSwapchainPresentModesCreateInfoEXT modesInfo;
 
-		if (UINT32_MAX == m_presentModeWithVSyncIdx
-		||  UINT32_MAX == m_presentModeWithoutVSyncIdx)
-		{
-			s_renderVK->m_swapchainMaintenance1Supported = false;
-		}
-		else if (s_renderVK->m_swapchainMaintenance1Supported)
+		if (m_presentModeSwitch)
 		{
 			modes[0] = s_presentMode[m_presentModeWithVSyncIdx].mode;
 			modes[1] = s_presentMode[m_presentModeWithoutVSyncIdx].mode;
@@ -10383,6 +10400,70 @@ VK_DESTROY
 		return idx;
 	}
 
+	bool SwapChainVK::isPresentModeCompatible(VkPresentModeKHR _presentMode, VkPresentModeKHR _with)
+	{
+		if (_presentMode == _with)
+		{
+			return true;
+		}
+
+		if (NULL == vkGetPhysicalDeviceSurfaceCapabilities2KHR)
+		{
+			return false;
+		}
+
+		VkPresentModeKHR presentModes[16];
+
+		VkSurfacePresentModeCompatibilityEXT compatibility =
+		{
+			.sType            = VK_STRUCTURE_TYPE_SURFACE_PRESENT_MODE_COMPATIBILITY_EXT,
+			.pNext            = NULL,
+			.presentModeCount = BX_COUNTOF(presentModes),
+			.pPresentModes    = presentModes,
+		};
+
+		const VkSurfacePresentModeEXT surfacePresentMode =
+		{
+			.sType       = VK_STRUCTURE_TYPE_SURFACE_PRESENT_MODE_EXT,
+			.pNext       = NULL,
+			.presentMode = _presentMode,
+		};
+
+		const VkPhysicalDeviceSurfaceInfo2KHR surfaceInfo =
+		{
+			.sType   = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SURFACE_INFO_2_KHR,
+			.pNext   = &surfacePresentMode,
+			.surface = m_surface,
+		};
+
+		VkSurfaceCapabilities2KHR surfaceCapabilities2 =
+		{
+			.sType               = VK_STRUCTURE_TYPE_SURFACE_CAPABILITIES_2_KHR,
+			.pNext               = &compatibility,
+			.surfaceCapabilities = {},
+		};
+
+		const VkResult result = vkGetPhysicalDeviceSurfaceCapabilities2KHR(s_renderVK->m_physicalDevice, &surfaceInfo, &surfaceCapabilities2);
+
+		if (VK_SUCCESS != result
+		&&  VK_INCOMPLETE != result)
+		{
+			return false;
+		}
+
+		for (uint32_t ii = 0, num = bx::min<uint32_t>(compatibility.presentModeCount, BX_COUNTOF(presentModes) ); ii < num; ++ii)
+		{
+			if (_with == presentModes[ii])
+			{
+				return true;
+			}
+		}
+
+		BX_TRACE("Present mode %d can't be switched to %d without recreating the swap chain.", _presentMode, _with);
+
+		return false;
+	}
+
 	bool SwapChainVK::getPresentScaling(const VkSurfaceCapabilitiesKHR& _surfaceCapabilities, VkExtent2D& _extent, VkSwapchainPresentScalingCreateInfoEXT* _scalingInfo)
 	{
 		BGFX_PROFILER_SCOPE("SwapChainVK::getPresentScaling", kColorFrame);
@@ -10719,7 +10800,7 @@ VK_DESTROY
 			pi.pResults           = NULL;
 
 			VkSwapchainPresentModeInfoEXT presentModeInfo;
-			if (s_renderVK->m_swapchainMaintenance1Supported)
+			if (m_presentModeSwitch)
 			{
 				const uint32_t presentModeIdx = m_vsync
 					? m_presentModeWithVSyncIdx
