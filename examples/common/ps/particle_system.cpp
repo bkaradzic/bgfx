@@ -156,7 +156,15 @@ namespace ps
 				if (m_ra.find(_width, _height, pack) )
 				{
 					handle.idx = m_handleAlloc.alloc();
-					m_pack[handle.idx] = pack;
+
+					if (bx::kInvalidHandle != handle.idx)
+					{
+						m_pack[handle.idx] = pack;
+					}
+					else
+					{
+						m_ra.clear(pack);
+					}
 				}
 			}
 
