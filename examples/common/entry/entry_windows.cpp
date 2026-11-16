@@ -1062,7 +1062,7 @@ namespace entry
 		WCHAR m_surrogate;
 		bx::Mutex m_lock;
 
-		bx::HandleAlloc2T<ENTRY_CONFIG_MAX_WINDOWS> m_windowAlloc;
+		bx::HandleAllocT<ENTRY_CONFIG_MAX_WINDOWS> m_windowAlloc;
 
 		HWND m_hwnd[ENTRY_CONFIG_MAX_WINDOWS];
 		uint32_t m_flags[ENTRY_CONFIG_MAX_WINDOWS];

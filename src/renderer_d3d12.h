@@ -304,7 +304,7 @@ namespace bgfx { namespace d3d12
 		Allocator* m_allocator[MemoryKindD3D12::Count];
 		uint8_t m_numSlabs[MemoryKindD3D12::Count];
 		Slab m_slab[kMaxSlabs];
-		bx::HandleAlloc2T<kMaxSlabs> m_slabHandle;
+		bx::HandleAllocT<kMaxSlabs> m_slabHandle;
 	};
 
 	struct BufferD3D12

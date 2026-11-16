@@ -451,7 +451,7 @@ VK_DESTROY_FUNC(DescriptorSet);
 		uint8_t m_numSlabs[VK_MAX_MEMORY_TYPES][MemoryKindVK::Count];
 		bool m_persistentMap;
 		Slab m_slab[kMaxSlabs];
-		bx::HandleAlloc2T<kMaxSlabs> m_slabHandle;
+		bx::HandleAllocT<kMaxSlabs> m_slabHandle;
 	};
 
 	struct MemoryLruVK
