@@ -3,10 +3,6 @@
  * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
-#include <string>
-#include <vector>
-#include <algorithm>
-
 #include "common.h"
 
 #include <bgfx/bgfx.h>

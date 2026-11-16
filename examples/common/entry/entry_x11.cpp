@@ -19,8 +19,7 @@
 #include <bx/os.h>
 #include <bx/handlealloc.h>
 #include <bx/mutex.h>
-
-#include <string>
+#include <bx/stringpool.h>
 
 #include <fcntl.h>
 
@@ -228,7 +227,7 @@ namespace entry
 		uint32_t m_width;
 		uint32_t m_height;
 		uint32_t m_flags;
-		std::string m_title;
+		bx::String m_title;
 	};
 
 	struct Context
@@ -647,10 +646,10 @@ namespace entry
 			XSetWMProtocols(m_display, window, &wmDeleteWindow, 1);
 
 			XMapWindow(m_display, window);
-			XStoreName(m_display, window, msg->m_title.c_str() );
+			XStoreName(m_display, window, msg->m_title.getCPtr() );
 
 			XClassHint* hint = XAllocClassHint();
-			hint->res_name  = (char*)msg->m_title.c_str();
+			hint->res_name  = (char*)msg->m_title.getCPtr();
 			hint->res_class = (char*)s_applicationClass;
 			XSetClassHint(m_display, window, hint);
 			XFree(hint);
@@ -673,9 +672,8 @@ namespace entry
 		WindowHandle findHandle(Window _window)
 		{
 			bx::MutexScope scope(m_lock);
-			for (uint32_t ii = 0, num = m_windowAlloc.getNumHandles(); ii < num; ++ii)
+			for (uint16_t idx = m_windowAlloc.findFirst(); bx::kInvalidHandle != idx; idx = m_windowAlloc.findNext(idx) )
 			{
-				uint16_t idx = m_windowAlloc.getHandleAt(ii);
 				if (_window == m_window[idx])
 				{
 					WindowHandle handle = { idx };
@@ -696,7 +694,7 @@ namespace entry
 
 		EventQueue m_eventQueue;
 		bx::Mutex m_lock;
-		bx::HandleAllocT<ENTRY_CONFIG_MAX_WINDOWS> m_windowAlloc;
+		bx::HandleAlloc2T<ENTRY_CONFIG_MAX_WINDOWS> m_windowAlloc;
 
 		int32_t m_depth;
 		Visual* m_visual;
@@ -751,7 +749,7 @@ namespace entry
 			msg->m_y      = _y;
 			msg->m_width  = _width;
 			msg->m_height = _height;
-			msg->m_title  = _title;
+			msg->m_title  = bx::String(bx::StringView(_title) );
 			msg->m_flags  = _flags;
 			s_ctx.createWindow(handle, msg);
 		}

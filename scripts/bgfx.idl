@@ -1,7 +1,7 @@
 -- vim: syntax=lua
 -- bgfx interface
 
-version(168)
+version(169)
 
 typedef "bool"
 typedef "char"
@@ -877,8 +877,8 @@ struct.Limits  { namespace = "Caps" }
 	.maxOcclusionQueries     "uint32_t" --- Maximum number of occlusion query handles.
 	.maxEncoders             "uint32_t" --- Maximum number of encoder threads.
 	.minResourceCbSize       "uint32_t" --- Minimum resource command buffer size.
-	.maxTransientVbSize      "uint32_t" --- Maximum transient vertex buffer size.
-	.maxTransientIbSize      "uint32_t" --- Maximum transient index buffer size.
+	.minTransientVbSize      "uint32_t" --- Minimum transient vertex buffer size, it grows on demand.
+	.minTransientIbSize      "uint32_t" --- Minimum transient index buffer size, it grows on demand.
 	.minUniformBufferSize    "uint32_t" --- Mimimum uniform buffer size.
 	.minUniformCacheSize     "uint32_t" --- Minimum view and frame uniform cache size.
 	.blitRowPitchAlign       "uint32_t" --- Row pitch alignment, in bytes, that buffer to texture blit copies
@@ -1002,8 +1002,8 @@ struct.Limits { ctor, namespace = "Init" }
 	                                  --- `BGFX_CONFIG_DYNAMIC_FRAME_STORAGE` disabled storage for all views
 	                                  --- is allocated up front.
 	.minResourceCbSize    "uint32_t"  --- Minimum resource command buffer size.
-	.maxTransientVbSize   "uint32_t"  --- Maximum transient vertex buffer size.
-	.maxTransientIbSize   "uint32_t"  --- Maximum transient index buffer size.
+	.minTransientVbSize   "uint32_t"  --- Minimum transient vertex buffer size, it grows on demand.
+	.minTransientIbSize   "uint32_t"  --- Minimum transient index buffer size, it grows on demand.
 	.minUniformBufferSize "uint32_t"  --- Mimimum uniform buffer size.
 	.minUniformCacheSize  "uint32_t"  --- Minimum view and frame uniform cache size. This is a reservation,
 	                                  --- the cache grows on demand.

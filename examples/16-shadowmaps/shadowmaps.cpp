@@ -3,10 +3,6 @@
  * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
-#include <string>
-#include <vector>
-#include <algorithm>
-
 #include "common.h"
 #include "bgfx_utils.h"
 
@@ -767,7 +763,7 @@ struct Mesh : public ::Mesh
 		mem = bgfx::makeRef(_indices, size);
 		group.m_ibh = bgfx::createIndexBuffer(mem);
 
-		m_groups.push_back(group);
+		m_groups.add(group);
 	}
 
 	void submit(uint8_t _viewId, float* _mtx, bgfx::ProgramHandle _program, const RenderState& _renderState, bool _submitShadowMaps = false)
@@ -778,10 +774,8 @@ struct Mesh : public ::Mesh
 
 	void submit(uint8_t _viewId, float* _mtx, bgfx::ProgramHandle _program, const RenderState& _renderState, bgfx::TextureHandle _texture, bool _submitShadowMaps = false)
 	{
-		for (GroupArray::const_iterator it = m_groups.begin(), itEnd = m_groups.end(); it != itEnd; ++it)
+		for (const Group& group : m_groups)
 		{
-			const Group& group = *it;
-
 			// Set uniforms.
 			s_uniforms.submitPerDrawUniforms();
 
@@ -862,7 +856,7 @@ void screenSpaceQuad(bool _originBottomLeft = true, float _width = 1.0f, float _
 
 		if (_originBottomLeft)
 		{
-			std::swap(minv, maxv);
+			bx::swap(minv, maxv);
 			minv -= 1.0f;
 			maxv -= 1.0f;
 		}

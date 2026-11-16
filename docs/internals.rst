@@ -110,7 +110,7 @@ Transient vertex and index buffers are per-frame temporary allocations intended 
 
 Each of the two ``Frame`` objects owns its own transient vertex buffer and transient index buffer. When the frame buffers are swapped, the new submit buffer gets a fresh transient allocation. This means that pointers obtained from ``bgfx::allocTransientVertexBuffer`` / ``bgfx::allocTransientIndexBuffer`` are only valid until the next call to ``bgfx::frame``.
 
-The maximum size of transient buffers can be configured via ``Limits.maxTransientVbSize`` and ``Limits.maxTransientIbSize`` in ``bgfx::Init``.
+The minimum size of transient buffers can be configured via ``Limits.minTransientVbSize`` and ``Limits.minTransientIbSize`` in ``bgfx::Init``. Buffers start at this size, grow on demand, and shrink back when they aren't used.
 
 Customization
 -------------
@@ -226,9 +226,9 @@ Buffer sizes
 
 ``BGFX_CONFIG_DYNAMIC_VERTEX_BUFFER_SIZE`` - Initial size in bytes of the dynamic vertex buffer backing store. Default is 3 MB. The backing store grows as needed via sub-allocation.
 
-``BGFX_CONFIG_MAX_TRANSIENT_VERTEX_BUFFER_SIZE`` - Maximum transient vertex buffer size. There is no growth; all transient vertices must fit into this buffer. Default is 6 MB.
+``BGFX_CONFIG_MIN_TRANSIENT_VERTEX_BUFFER_SIZE`` - Minimum transient vertex buffer size. Buffer starts at this size, grows on demand, and shrinks back when it isn't used. Default is 6 MB.
 
-``BGFX_CONFIG_MAX_TRANSIENT_INDEX_BUFFER_SIZE`` - Maximum transient index buffer size. There is no growth; all transient indices must fit into this buffer. Default is 2 MB.
+``BGFX_CONFIG_MIN_TRANSIENT_INDEX_BUFFER_SIZE`` - Minimum transient index buffer size. Buffer starts at this size, grows on demand, and shrinks back when it isn't used. Default is 2 MB.
 
 ``BGFX_CONFIG_MIN_RESOURCE_COMMAND_BUFFER_SIZE`` - Minimum initial size of the resource command buffer (pre/post render commands for resource creation and updates). Default is 64 KB. The buffer grows as needed. After ``Init::Limits::numDrawCallPeakFrames`` (default 60) of observing the high-water mark it shrinks toward that peak, but not below this minimum. Set ``numDrawCallPeakFrames`` to 0 to keep the largest size for the lifetime of the context.
 

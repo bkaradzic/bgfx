@@ -1139,12 +1139,12 @@ WL_EGL_IMPORT
 
 	SwapChainGL* GlContext::createSwapChain(void* _nwh, int32_t _width, int32_t _height)
 	{
-		return BX_NEW(g_allocator, SwapChainGL)(m_display, m_config, m_context, (EGLNativeWindowType)_nwh, _width, _height);
+		return BX_NEW_PTR(g_allocatorBlk, SwapChainGL)(m_display, m_config, m_context, (EGLNativeWindowType)_nwh, _width, _height);
 	}
 
 	void GlContext::destroySwapChain(SwapChainGL* _swapChain)
 	{
-		bx::deleteObject(g_allocator, _swapChain);
+		bx::deletePtr(_swapChain);
 	}
 
 	void GlContext::swap(SwapChainGL* _swapChain, bool _vsync)

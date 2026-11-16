@@ -856,7 +856,7 @@ VK_IMPORT_DEVICE
 			if (VK_SUCCESS == result
 			&&  0 < numExtensionProperties)
 			{
-				VkExtensionProperties* extensionProperties = (VkExtensionProperties*)bx::alloc(g_allocator, numExtensionProperties * sizeof(VkExtensionProperties) );
+				VkExtensionProperties* extensionProperties = (VkExtensionProperties*)bx::allocPtr(g_allocatorBlk, numExtensionProperties * sizeof(VkExtensionProperties) );
 				result = enumerateExtensionProperties(_physicalDevice
 					, NULL
 					, &numExtensionProperties
@@ -885,7 +885,7 @@ VK_IMPORT_DEVICE
 					BX_UNUSED(supported);
 				}
 
-				bx::free(g_allocator, extensionProperties);
+				bx::freePtr(extensionProperties);
 			}
 		}
 
@@ -896,7 +896,7 @@ VK_IMPORT_DEVICE
 		if (VK_SUCCESS == result
 		&&  0 < numLayerProperties)
 		{
-			VkLayerProperties* layerProperties = (VkLayerProperties*)bx::alloc(g_allocator, numLayerProperties * sizeof(VkLayerProperties) );
+			VkLayerProperties* layerProperties = (VkLayerProperties*)bx::allocPtr(g_allocatorBlk, numLayerProperties * sizeof(VkLayerProperties) );
 			result = enumerateLayerProperties(_physicalDevice, &numLayerProperties, layerProperties);
 
 			char indent = VK_NULL_HANDLE == _physicalDevice ? '\0' : '\t';
@@ -932,7 +932,7 @@ VK_IMPORT_DEVICE
 				if (VK_SUCCESS == result
 				&&  0 < numExtensionProperties)
 				{
-					VkExtensionProperties* extensionProperties = (VkExtensionProperties*)bx::alloc(g_allocator, numExtensionProperties * sizeof(VkExtensionProperties) );
+					VkExtensionProperties* extensionProperties = (VkExtensionProperties*)bx::allocPtr(g_allocatorBlk, numExtensionProperties * sizeof(VkExtensionProperties) );
 					result = enumerateExtensionProperties(_physicalDevice
 						, layerProperties[layer].layerName
 						, &numExtensionProperties
@@ -958,11 +958,11 @@ VK_IMPORT_DEVICE
 						BX_UNUSED(supported);
 					}
 
-					bx::free(g_allocator, extensionProperties);
+					bx::freePtr(extensionProperties);
 				}
 			}
 
-			bx::free(g_allocator, layerProperties);
+			bx::freePtr(layerProperties);
 		}
 	}
 
@@ -2421,7 +2421,7 @@ VK_IMPORT_INSTANCE
 					, NULL
 					);
 
-				VkQueueFamilyProperties* queueFamilyPropertices = (VkQueueFamilyProperties*)bx::alloc(g_allocator, queueFamilyPropertyCount * sizeof(VkQueueFamilyProperties) );
+				VkQueueFamilyProperties* queueFamilyPropertices = (VkQueueFamilyProperties*)bx::allocPtr(g_allocatorBlk, queueFamilyPropertyCount * sizeof(VkQueueFamilyProperties) );
 				vkGetPhysicalDeviceQueueFamilyProperties(
 					  m_physicalDevice
 					, &queueFamilyPropertyCount
@@ -2457,7 +2457,7 @@ VK_IMPORT_INSTANCE
 					}
 				}
 
-				bx::free(g_allocator, queueFamilyPropertices);
+				bx::freePtr(queueFamilyPropertices);
 
 				if (UINT32_MAX == m_globalQueueFamily)
 				{
@@ -2920,6 +2920,14 @@ VK_IMPORT_DEVICE
 
 			m_uniformScratchBuffer.destroy();
 
+			for (uint16_t ii = 0; ii < kMaxTransientStaging; ++ii)
+			{
+				if (NULL != m_transientStaging[ii].m_staging)
+				{
+					destroyTransientStaging(ii, m_transientStaging[ii].m_staging);
+				}
+			}
+
 			for (uint32_t ii = 0; ii < m_maxFrameLatency; ++ii)
 			{
 				m_scratchStagingBuffer[ii].destroy();
@@ -2940,6 +2948,7 @@ VK_IMPORT_DEVICE
 			m_cmd.shutdown();
 
 			m_memoryLru.evictAll();
+			m_memoryAllocator.shutdown();
 
 			vkDestroy(m_pipelineCache);
 			vkDestroy(m_lowLatencySemaphore);
@@ -3095,6 +3104,76 @@ VK_IMPORT_DEVICE
 			m_vertexBuffers.release(_handle.idx);
 		}
 
+		void createTransientStaging(uint16_t _idx, TransientStaging* _staging) override
+		{
+			TransientStagingVK& ts = m_transientStaging[_idx];
+
+			void* data = NULL;
+
+			const bool created = true
+				&& m_memoryAllocator.m_persistentMap
+				&& VK_SUCCESS == createReadbackBuffer(_staging->m_size, &ts.m_buffer, &ts.m_deviceMem)
+				;
+
+			const bool cached = true
+				&& created
+				&& 0 != (m_memoryProperties.memoryTypes[ts.m_deviceMem.memoryTypeIndex].propertyFlags & VK_MEMORY_PROPERTY_HOST_CACHED_BIT)
+				&& VK_SUCCESS == mapMemory(ts.m_deviceMem, _staging->m_size, &data)
+				;
+
+			if (!cached)
+			{
+				if (created)
+				{
+					release(ts.m_buffer);
+					recycleMemory(ts.m_deviceMem);
+				}
+
+				bx::atomicStore<int32_t>(&_staging->m_state, TransientStaging::Unsupported);
+				return;
+			}
+
+			ts.m_staging = _staging;
+
+			_staging->m_data = (uint8_t*)data;
+			bx::atomicStore<int32_t>(&_staging->m_state, TransientStaging::Ready);
+		}
+
+		void destroyTransientStaging(uint16_t _idx, TransientStaging* _staging) override
+		{
+			TransientStagingVK& ts = m_transientStaging[_idx];
+
+			unmapMemory(ts.m_deviceMem);
+			release(ts.m_buffer);
+			recycleMemory(ts.m_deviceMem);
+
+			ts.m_staging = NULL;
+
+			bx::atomicStore<int32_t>(&_staging->m_state, TransientStaging::None);
+		}
+
+		void updateTransient(BufferVK& _buffer, const TransientBufferChunk& _chunk)
+		{
+			if (kInvalidHandle == _chunk.m_staging)
+			{
+				if (0 < _chunk.m_offset)
+				{
+					_buffer.update(m_commandBuffer, 0, _chunk.m_offset, _chunk.m_data);
+				}
+
+				return;
+			}
+
+			TransientStagingVK& ts = m_transientStaging[_chunk.m_staging];
+
+			if (0 < _chunk.m_offset)
+			{
+				_buffer.copy(m_commandBuffer, ts.m_buffer, 0, 0, _chunk.m_offset);
+			}
+
+			m_cmd.releaseTransientStaging(ts.m_staging);
+		}
+
 		void createShader(ShaderHandle _handle, const Memory* _mem) override
 		{
 			m_shaders.alloc(_handle.idx).create(_mem);
@@ -3153,7 +3232,7 @@ VK_IMPORT_DEVICE
 
 			kick(true);
 
-			texture.m_readback.readback(stagingMemory.mem, stagingMemory.offset, _data, texture.m_aspectFlags, _mip);
+			texture.m_readback.readback(stagingMemory, _data, texture.m_aspectFlags, _mip);
 
 			vkDestroy(stagingBuffer);
 			recycleMemory(stagingMemory);
@@ -3192,9 +3271,9 @@ VK_IMPORT_DEVICE
 			kick(true);
 
 			void* dst = NULL;
-			VK_CHECK(vkMapMemory(m_device, stagingMemory.mem, stagingMemory.offset, _size, 0, &dst) );
+			VK_CHECK(mapMemory(stagingMemory, _size, &dst) );
 			bx::memCopy(_data, dst, _size);
-			vkUnmapMemory(m_device, stagingMemory.mem);
+			unmapMemory(stagingMemory);
 
 			vkDestroy(stagingBuffer);
 			recycleMemory(stagingMemory);
@@ -5292,7 +5371,7 @@ VK_IMPORT_DEVICE
 
 			if (cached)
 			{
-				cachedData = bx::alloc(g_allocator, length);
+				cachedData = bx::allocPtr(g_allocatorBlk, length);
 				if (g_callback->cacheRead(hash, cachedData, length) )
 				{
 					BX_TRACE("Loading cached pipeline state (size %d).", length);
@@ -5332,7 +5411,7 @@ VK_IMPORT_DEVICE
 			{
 				if (length < dataSize)
 				{
-					cachedData = bx::realloc(g_allocator, cachedData, dataSize);
+					cachedData = bx::reallocPtr(g_allocatorBlk, cachedData, dataSize);
 				}
 
 				VK_CHECK(vkGetPipelineCacheData(m_device, cache, &dataSize, cachedData) );
@@ -5344,7 +5423,7 @@ VK_IMPORT_DEVICE
 
 			if (NULL != cachedData)
 			{
-				bx::free(g_allocator, cachedData);
+				bx::freePtr(cachedData);
 			}
 
 			return pipeline;
@@ -5359,6 +5438,16 @@ VK_IMPORT_DEVICE
 
 			m_descriptorPoolIdx = 0;
 			m_descriptorSetMap.clear();
+		}
+
+		BX_NO_INLINE const VkDescriptorSet* findDescriptorSet(uint32_t _bindHash)
+		{
+			return m_descriptorSetMap.find(_bindHash);
+		}
+
+		BX_NO_INLINE void addDescriptorSet(uint32_t _bindHash, VkDescriptorSet _descriptorSet)
+		{
+			m_descriptorSetMap.add(_bindHash, _descriptorSet);
 		}
 
 		VkDescriptorPool createDescriptorPool()
@@ -5700,11 +5789,11 @@ VK_IMPORT_DEVICE
 				kick(true);
 
 				uint8_t* src;
-				VK_CHECK(vkMapMemory(m_device, _memory.mem, _memory.offset, _memory.size, 0, (void**)&src) );
+				VK_CHECK(mapMemory(_memory, _memory.size, (void**)&src) );
 
 				_func(src, width, height, _swapChain.m_colorFormat, pitch, _userData);
 
-				vkUnmapMemory(m_device, _memory.mem);
+				unmapMemory(_memory);
 
 				readback.destroy();
 
@@ -6000,6 +6089,8 @@ VK_IMPORT_DEVICE
 					memory->memoryTypeIndex = searchIndex;
 					memory->size = bx::narrowCast<uint32_t>(ma.allocationSize);
 					memory->offset = 0;
+					memory->blockIdx = DeviceMemoryAllocationVK::kDedicated;
+					memory->data = NULL;
 					result = vkAllocateMemory(m_device, &ma, m_allocatorCb, &memory->mem);
 				}
 			}
@@ -6012,6 +6103,60 @@ VK_IMPORT_DEVICE
 			}
 
 			return result;
+		}
+
+		VkResult mapMemory(const DeviceMemoryAllocationVK& _memory, VkDeviceSize _size, void** _data)
+		{
+			if (NULL != _memory.data)
+			{
+				*_data = _memory.data;
+				return VK_SUCCESS;
+			}
+
+			return vkMapMemory(m_device, _memory.mem, _memory.offset, _size, 0, _data);
+		}
+
+		void unmapMemory(const DeviceMemoryAllocationVK& _memory)
+		{
+			if (NULL == _memory.data)
+			{
+				vkUnmapMemory(m_device, _memory.mem);
+			}
+		}
+
+		VkResult allocateHostMemory(const VkMemoryRequirements* _requirements, VkMemoryPropertyFlags _flags, DeviceMemoryAllocationVK* _memory, bool _forcePrivateDeviceAllocation)
+		{
+			if (m_memoryAllocator.m_persistentMap
+			&&  _requirements->size <= MemoryAllocatorVK::kMaxBlockSize)
+			{
+				const int32_t memoryType = selectMemoryType(_requirements->memoryTypeBits, _flags, 0);
+
+				if (0 <= memoryType
+				&&  VK_SUCCESS == m_memoryAllocator.alloc(*_requirements, memoryType, MemoryKindVK::Host, _memory) )
+				{
+					return VK_SUCCESS;
+				}
+			}
+
+			return allocateMemory(_requirements, _flags, _memory, _forcePrivateDeviceAllocation);
+		}
+
+		VkResult allocateDeviceLocalMemory(const VkMemoryRequirements* _requirements, MemoryKindVK::Enum _kind, DeviceMemoryAllocationVK* _memory)
+		{
+			BGFX_PROFILER_SCOPE("RendererContextVK::allocateDeviceLocalMemory", kColorResource);
+
+			if (_requirements->size <= MemoryAllocatorVK::kMaxBlockSize)
+			{
+				const int32_t memoryType = selectMemoryType(_requirements->memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 0);
+
+				if (0 <= memoryType
+				&&  VK_SUCCESS == m_memoryAllocator.alloc(*_requirements, memoryType, _kind, _memory) )
+				{
+					return VK_SUCCESS;
+				}
+			}
+
+			return allocateMemory(_requirements, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, _memory, false);
 		}
 
 		VkResult createHostBuffer(uint32_t _size, VkMemoryPropertyFlags _flags, ::VkBuffer* _buffer, DeviceMemoryAllocationVK* _memory, bool _forcePrivateDeviceAllocation, const void* _data = NULL)
@@ -6040,12 +6185,12 @@ VK_IMPORT_DEVICE
 			VkMemoryRequirements mr;
 			vkGetBufferMemoryRequirements(m_device, *_buffer, &mr);
 
-			result = allocateMemory(&mr, _flags, _memory, _forcePrivateDeviceAllocation);
+			result = allocateHostMemory(&mr, _flags, _memory, _forcePrivateDeviceAllocation);
 
 			if (VK_SUCCESS != result
 			&&  (_flags & VK_MEMORY_PROPERTY_HOST_CACHED_BIT) )
 			{
-				result = allocateMemory(&mr, _flags & ~VK_MEMORY_PROPERTY_HOST_CACHED_BIT, _memory, _forcePrivateDeviceAllocation);
+				result = allocateHostMemory(&mr, _flags & ~VK_MEMORY_PROPERTY_HOST_CACHED_BIT, _memory, _forcePrivateDeviceAllocation);
 			}
 
 			if (VK_SUCCESS != result)
@@ -6066,7 +6211,7 @@ VK_IMPORT_DEVICE
 				BGFX_PROFILER_SCOPE("map and copy data", kColorResource);
 
 				void* dst;
-				result = vkMapMemory(m_device, _memory->mem, _memory->offset, _size, 0, &dst);
+				result = mapMemory(*_memory, _size, &dst);
 				if (VK_SUCCESS != result)
 				{
 					BX_TRACE("Create host buffer error: vkMapMemory failed %d: %s.", result, getName(result) );
@@ -6074,7 +6219,7 @@ VK_IMPORT_DEVICE
 				}
 
 				bx::memCopy(dst, _data, _size);
-				vkUnmapMemory(m_device, _memory->mem);
+				unmapMemory(*_memory);
 			}
 
 			return result;
@@ -6170,6 +6315,8 @@ VK_IMPORT_DEVICE
 		int64_t m_presentElapsed;
 
 		MemoryLruVK m_memoryLru;
+		MemoryAllocatorVK m_memoryAllocator;
+		TransientStagingVK m_transientStaging[kMaxTransientStaging];
 		int64_t m_heapAllocated[VK_MAX_MEMORY_HEAPS] = {};
 
 		ChunkedScratchBufferVK m_uniformScratchBuffer;
@@ -6192,8 +6339,8 @@ VK_IMPORT_DEVICE
 		uint16_t m_numDescriptorPools[BGFX_CONFIG_MAX_FRAME_LATENCY];
 		uint16_t m_descriptorPoolIdx;
 
-		typedef stl::unordered_map<uint32_t, VkDescriptorSet> DescriptorSetMap;
-		DescriptorSetMap m_descriptorSetMap;
+		using DescriptorSetMap = bx::HashMapT<uint32_t, VkDescriptorSet>;
+		DescriptorSetMap m_descriptorSetMap{g_allocatorHandle};
 
 		VkPipelineCache  m_pipelineCache;
 
@@ -6373,10 +6520,10 @@ VK_IMPORT_DEVICE
 
 	RendererContextI* rendererCreate(const Init& _init)
 	{
-		s_renderVK = BX_NEW(g_allocator, RendererContextVK);
+		s_renderVK = BX_NEW_PTR(g_allocatorBlk, RendererContextVK);
 		if (!s_renderVK->init(_init) )
 		{
-			bx::deleteObject(g_allocator, s_renderVK);
+			bx::deletePtr(s_renderVK);
 			s_renderVK = NULL;
 		}
 		return s_renderVK;
@@ -6385,7 +6532,7 @@ VK_IMPORT_DEVICE
 	void rendererDestroy()
 	{
 		s_renderVK->shutdown();
-		bx::deleteObject(g_allocator, s_renderVK);
+		bx::deletePtr(s_renderVK);
 		s_renderVK = NULL;
 	}
 
@@ -6558,6 +6705,178 @@ VK_DESTROY
 
 		lru.reset();
 		totalSizeCached = 0;
+	}
+
+	MemoryAllocatorVK::MemoryAllocatorVK()
+	{
+		bx::memSet(m_allocator, 0, sizeof(m_allocator) );
+		bx::memSet(m_numSlabs, 0, sizeof(m_numSlabs) );
+		m_persistentMap = true;
+	}
+
+	void MemoryAllocatorVK::shutdown()
+	{
+		for (uint32_t ii = 0; ii < VK_MAX_MEMORY_TYPES; ++ii)
+		{
+			for (uint32_t jj = 0; jj < MemoryKindVK::Count; ++jj)
+			{
+				bx::deletePtr(m_allocator[ii][jj]);
+				m_allocator[ii][jj] = NULL;
+			}
+		}
+
+		while (0 < m_slabHandle.getNumHandles() )
+		{
+			removeSlab(m_slabHandle.findFirst() );
+		}
+	}
+
+	VkResult MemoryAllocatorVK::addSlab(Allocator& _allocator, uint32_t _size, int32_t _memoryTypeIndex, MemoryKindVK::Enum _kind)
+	{
+		const uint16_t slabIdx = m_slabHandle.alloc();
+
+		if (bx::kInvalidHandle == slabIdx)
+		{
+			return VK_ERROR_OUT_OF_DEVICE_MEMORY;
+		}
+
+		VkMemoryAllocateInfo ma;
+		ma.sType           = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+		ma.pNext           = NULL;
+		ma.allocationSize  = _size;
+		ma.memoryTypeIndex = _memoryTypeIndex;
+
+		Slab& slab = m_slab[slabIdx];
+
+		const VkResult result = vkAllocateMemory(s_renderVK->m_device, &ma, s_renderVK->m_allocatorCb, &slab.mem);
+
+		if (VK_SUCCESS != result)
+		{
+			m_slabHandle.free(slabIdx);
+			return result;
+		}
+
+		slab.data = NULL;
+
+		if (MemoryKindVK::Host == _kind
+		&&  VK_SUCCESS != vkMapMemory(s_renderVK->m_device, slab.mem, 0, _size, 0, (void**)&slab.data) )
+		{
+			BX_TRACE("Persistently mapped memory is disabled, vkMapMemory of %d bytes failed.", _size);
+			m_persistentMap = false;
+
+			vkDestroy(slab.mem);
+			m_slabHandle.free(slabIdx);
+
+			return VK_ERROR_MEMORY_MAP_FAILED;
+		}
+
+		slab.size            = _size;
+		slab.memoryTypeIndex = _memoryTypeIndex;
+		slab.kind            = _kind;
+
+		++m_numSlabs[_memoryTypeIndex][_kind];
+
+		s_renderVK->m_heapAllocated[s_renderVK->m_memoryProperties.memoryTypes[_memoryTypeIndex].heapIndex] += _size;
+
+		_allocator.addSlab(bx::Blk(uint64_t(slabIdx + 1) << kSlabShift, _size, 0, false, bx::AllocatorOp::Allocate) );
+
+		return VK_SUCCESS;
+	}
+
+	void MemoryAllocatorVK::removeSlab(uint16_t _slabIdx)
+	{
+		Slab& slab = m_slab[_slabIdx];
+
+		--m_numSlabs[slab.memoryTypeIndex][slab.kind];
+
+		if (NULL != slab.data)
+		{
+			vkUnmapMemory(s_renderVK->m_device, slab.mem);
+			slab.data = NULL;
+		}
+
+		s_renderVK->m_heapAllocated[s_renderVK->m_memoryProperties.memoryTypes[slab.memoryTypeIndex].heapIndex] -= slab.size;
+
+		vkDestroy(slab.mem);
+		m_slabHandle.free(_slabIdx);
+	}
+
+	VkResult MemoryAllocatorVK::alloc(const VkMemoryRequirements& _requirements, int32_t _memoryTypeIndex, MemoryKindVK::Enum _kind, DeviceMemoryAllocationVK* _alloc)
+	{
+		Allocator*& allocator = m_allocator[_memoryTypeIndex][_kind];
+
+		if (NULL == allocator)
+		{
+			allocator = BX_NEW_PTR(g_allocatorBlk, Allocator)(g_allocatorBlk);
+		}
+
+		bx::Blk blk = allocator->alloc(size_t(_requirements.size), size_t(_requirements.alignment) );
+
+		if (!bx::isValid(blk) )
+		{
+			const uint32_t numSlabs = m_numSlabs[_memoryTypeIndex][_kind];
+			const uint32_t slabSize = bx::max(
+				  bx::min(kMaxSlabSize, kMinSlabSize << bx::min<uint32_t>(numSlabs, bx::countTrailingZeros(kMaxSlabSize/kMinSlabSize) ) )
+				, bx::alignUp(uint32_t(_requirements.size + _requirements.alignment), kMinSlabSize)
+				);
+
+			const VkResult result = addSlab(*allocator, slabSize, _memoryTypeIndex, _kind);
+
+			if (VK_SUCCESS != result)
+			{
+				return result;
+			}
+
+			blk = allocator->alloc(size_t(_requirements.size), size_t(_requirements.alignment) );
+
+			if (!bx::isValid(blk) )
+			{
+				return VK_ERROR_OUT_OF_DEVICE_MEMORY;
+			}
+		}
+
+		const uint16_t slabIdx = uint16_t( (blk.ptr >> kSlabShift) - 1);
+
+		_alloc->mem             = m_slab[slabIdx].mem;
+		_alloc->offset          = uint32_t(blk.ptr);
+		_alloc->size            = uint32_t(blk.size);
+		_alloc->memoryTypeIndex = _memoryTypeIndex;
+		_alloc->blockIdx        = blk.bookKeeping;
+		_alloc->slabIdx         = slabIdx;
+		_alloc->data            = NULL != m_slab[slabIdx].data
+			? m_slab[slabIdx].data + _alloc->offset
+			: NULL
+			;
+
+		blk.invalidate();
+
+		return VK_SUCCESS;
+	}
+
+	void MemoryAllocatorVK::free(const DeviceMemoryAllocationVK& _alloc)
+	{
+		const Slab& slab = m_slab[_alloc.slabIdx];
+		Allocator& allocator = *m_allocator[slab.memoryTypeIndex][slab.kind];
+
+		bx::Blk blk( (uint64_t(_alloc.slabIdx + 1) << kSlabShift) | _alloc.offset, _alloc.size, 0, false, bx::AllocatorOp::Allocate);
+		blk.bookKeeping = _alloc.blockIdx;
+
+		(void)allocator.free(bx::move(blk) );
+
+		const size_t total = allocator.getTotal();
+
+		if (total - allocator.getUsed() <= bx::max<size_t>(total/2, kMinFreeSize) )
+		{
+			return;
+		}
+
+		bx::Blk unused = allocator.removeUnusedSlab();
+
+		if (bx::isValid(unused) )
+		{
+			removeSlab(uint16_t( (unused.ptr >> kSlabShift) - 1) );
+			unused.invalidate();
+		}
 	}
 
 	void StagingScratchBufferVK::create(uint32_t _size, uint32_t _count, VkBufferUsageFlags usage, uint32_t _align)
@@ -6801,7 +7120,7 @@ VK_DESTROY
 		VkMemoryRequirements mr;
 		vkGetBufferMemoryRequirements(device, m_buffer, &mr);
 
-		VK_CHECK(s_renderVK->allocateMemory(&mr, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &m_deviceMem, false) );
+		VK_CHECK(s_renderVK->allocateDeviceLocalMemory(&mr, MemoryKindVK::Buffer, &m_deviceMem) );
 
 		VK_CHECK(vkBindBufferMemory(device, m_buffer, m_deviceMem.mem, m_deviceMem.offset) );
 
@@ -6818,6 +7137,17 @@ VK_DESTROY
 
 		StagingBufferVK stagingBuffer = s_renderVK->allocFromScratchStagingBuffer(_size, 16, _data);
 
+		copy(_commandBuffer, stagingBuffer.m_buffer, stagingBuffer.m_offset, _offset, _size);
+
+		if (!stagingBuffer.m_isFromScratch)
+		{
+			s_renderVK->release(stagingBuffer.m_buffer);
+			s_renderVK->recycleMemory(stagingBuffer.m_deviceMem);
+		}
+	}
+
+	void BufferVK::copy(VkCommandBuffer _commandBuffer, VkBuffer _src, uint32_t _srcOffset, uint32_t _offset, uint32_t _size)
+	{
 		uint32_t& epoch = s_renderVK->m_copyEpoch;
 
 		if (m_copyEpoch == epoch
@@ -6846,16 +7176,10 @@ VK_DESTROY
 		}
 
 		VkBufferCopy region;
-		region.srcOffset = stagingBuffer.m_offset;
+		region.srcOffset = _srcOffset;
 		region.dstOffset = _offset;
 		region.size      = _size;
-		vkCmdCopyBuffer(_commandBuffer, stagingBuffer.m_buffer, m_buffer, 1, &region);
-
-		if (!stagingBuffer.m_isFromScratch)
-		{
-			s_renderVK->release(stagingBuffer.m_buffer);
-			s_renderVK->recycleMemory(stagingBuffer.m_deviceMem);
-		}
+		vkCmdCopyBuffer(_commandBuffer, _src, m_buffer, 1, &region);
 	}
 
 	void BufferVK::destroy()
@@ -7496,7 +7820,7 @@ VK_DESTROY
 			return result;
 		}
 
-		result = vkMapMemory(device, m_readbackMemory.mem, m_readbackMemory.offset, VK_WHOLE_SIZE, 0, (void**)&m_queryResult);
+		result = s_renderVK->mapMemory(m_readbackMemory, VK_WHOLE_SIZE, (void**)&m_queryResult);
 
 		if (VK_SUCCESS != result)
 		{
@@ -7515,7 +7839,7 @@ VK_DESTROY
 	{
 		vkDestroy(m_queryPool);
 		vkDestroy(m_readback);
-		vkUnmapMemory(s_renderVK->m_device, m_readbackMemory.mem);
+		s_renderVK->unmapMemory(m_readbackMemory);
 		s_renderVK->recycleMemory(m_readbackMemory);
 	}
 
@@ -7528,7 +7852,7 @@ VK_DESTROY
 
 		s_renderVK->release(m_queryPool);
 		s_renderVK->release(m_readback);
-		vkUnmapMemory(s_renderVK->m_device, m_readbackMemory.mem);
+		s_renderVK->unmapMemory(m_readbackMemory);
 		s_renderVK->recycleMemory(m_readbackMemory);
 
 		bgfx::resize(m_control, _size);
@@ -7903,7 +8227,7 @@ VK_DESTROY
 			);
 	}
 
-	void ReadbackVK::readback(VkDeviceMemory _memory, VkDeviceSize _offset, void* _data, VkImageAspectFlags _aspect, uint8_t _mip) const
+	void ReadbackVK::readback(const DeviceMemoryAllocationVK& _memory, void* _data, VkImageAspectFlags _aspect, uint8_t _mip) const
 	{
 		BGFX_PROFILER_SCOPE("ReadbackVK::readback", kColorResource);
 
@@ -7919,8 +8243,7 @@ VK_DESTROY
 		const uint32_t numRows = (mipHeight + blockInfo.blockHeight - 1) / blockInfo.blockHeight;
 
 		const uint8_t* src;
-		VK_CHECK(vkMapMemory(s_renderVK->m_device, _memory, 0, VK_WHOLE_SIZE, 0, (void**)&src) );
-		src += _offset;
+		VK_CHECK(s_renderVK->mapMemory(_memory, VK_WHOLE_SIZE, (void**)&src) );
 
 		if (isDepthStencilAspect(_aspect, m_format) )
 		{
@@ -7966,7 +8289,7 @@ VK_DESTROY
 			bx::gather(_data, src, rowPitch, rowPitch, numRows);
 		}
 
-		vkUnmapMemory(s_renderVK->m_device, _memory);
+		s_renderVK->unmapMemory(_memory);
 	}
 
 	VkResult TextureVK::create(VkCommandBuffer _commandBuffer, uint32_t _width, uint32_t _height, uint64_t _flags, VkFormat _format)
@@ -8112,7 +8435,7 @@ VK_DESTROY
 			VkMemoryRequirements imageMemReq;
 			vkGetImageMemoryRequirements(device, m_textureImage, &imageMemReq);
 
-			result = s_renderVK->allocateMemory(&imageMemReq, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &m_textureDeviceMem, false);
+			result = s_renderVK->allocateDeviceLocalMemory(&imageMemReq, MemoryKindVK::Image, &m_textureDeviceMem);
 			if (VK_SUCCESS != result)
 			{
 				BX_TRACE("Create texture image error: allocateMemory failed %d: %s.", result, getName(result) );
@@ -8154,7 +8477,7 @@ VK_DESTROY
 			VkMemoryRequirements imageMemReq_resolve;
 			vkGetImageMemoryRequirements(device, m_singleMsaaImage, &imageMemReq_resolve);
 
-			result = s_renderVK->allocateMemory(&imageMemReq_resolve, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &m_singleMsaaDeviceMem, false);
+			result = s_renderVK->allocateDeviceLocalMemory(&imageMemReq_resolve, MemoryKindVK::Image, &m_singleMsaaDeviceMem);
 			if (VK_SUCCESS != result)
 			{
 				BX_TRACE("Create texture image error: allocateMemory failed %d: %s.", result, getName(result) );
@@ -8317,7 +8640,7 @@ VK_DESTROY
 				uint32_t layer;
 			};
 
-			ImageInfo* imageInfos = (ImageInfo*)bx::alloc(g_allocator, sizeof(ImageInfo) * numSrd);
+			ImageInfo* imageInfos = (ImageInfo*)bx::allocPtr(g_allocatorBlk, sizeof(ImageInfo) * numSrd);
 			bx::memSet(imageInfos, 0, sizeof(ImageInfo) * numSrd);
 			uint32_t alignment = 1; // tightly aligned buffer
 
@@ -8337,7 +8660,7 @@ VK_DESTROY
 							const uint32_t slice  = bx::strideAlign(height * pitch, alignment);
 							const uint32_t size   = slice * mip.m_depth;
 
-							uint8_t* temp = (uint8_t*)bx::alloc(g_allocator, size);
+							uint8_t* temp = (uint8_t*)bx::allocPtr(g_allocatorBlk, size);
 							imageDecodeToBgra8(
 								  temp
 								, mip.m_data
@@ -8367,7 +8690,7 @@ VK_DESTROY
 							const uint32_t slice = bx::strideAlign(numBlocksY * pitch, alignment);
 							const uint32_t size  = slice * mip.m_depth;
 
-							uint8_t* temp = (uint8_t*)bx::alloc(g_allocator, size);
+							uint8_t* temp = (uint8_t*)bx::allocPtr(g_allocatorBlk, size);
 							bimg::imageCopy(
 								  temp
 								, numBlocksY
@@ -8393,7 +8716,7 @@ VK_DESTROY
 							const uint32_t slice = bx::strideAlign(mip.m_height * pitch, alignment);
 							const uint32_t size  = slice * mip.m_depth;
 
-							uint8_t* temp = (uint8_t*)bx::alloc(g_allocator, size);
+							uint8_t* temp = (uint8_t*)bx::allocPtr(g_allocatorBlk, size);
 							bimg::imageCopy(
 								  temp
 								, mip.m_height
@@ -8419,7 +8742,7 @@ VK_DESTROY
 			}
 
 			uint32_t totalMemSize = 0;
-			VkBufferImageCopy* bufferCopyInfo = (VkBufferImageCopy*)bx::alloc(g_allocator, sizeof(VkBufferImageCopy) * numSrd);
+			VkBufferImageCopy* bufferCopyInfo = (VkBufferImageCopy*)bx::allocPtr(g_allocatorBlk, sizeof(VkBufferImageCopy) * numSrd);
 
 			for (uint32_t ii = 0; ii < numSrd; ++ii)
 			{
@@ -8439,7 +8762,6 @@ VK_DESTROY
 
 			if (totalMemSize > 0)
 			{
-				const VkDevice device = s_renderVK->m_device;
 				const bimg::ImageBlockInfo &dstBlockInfo = bimg::getBlockInfo(bimg::TextureFormat::Enum(m_textureFormat) );
 
 				StagingBufferVK stagingBuffer = s_renderVK->allocFromScratchStagingBuffer(totalMemSize, dstBlockInfo.blockSize);
@@ -8448,14 +8770,7 @@ VK_DESTROY
 
 				if (!stagingBuffer.m_isFromScratch)
 				{
-					VK_CHECK(vkMapMemory(
-						  device
-						, stagingBuffer.m_deviceMem.mem
-						, stagingBuffer.m_deviceMem.offset
-						, totalMemSize
-						, 0
-						, (void**)&mappedMemory
-						) );
+					VK_CHECK(s_renderVK->mapMemory(stagingBuffer.m_deviceMem, totalMemSize, (void**)&mappedMemory) );
 				}
 				else
 				{
@@ -8477,7 +8792,7 @@ VK_DESTROY
 
 				if (!stagingBuffer.m_isFromScratch)
 				{
-					vkUnmapMemory(device, stagingBuffer.m_deviceMem.mem);
+					s_renderVK->unmapMemory(stagingBuffer.m_deviceMem);
 				}
 
 				copyBufferToTexture(_commandBuffer, stagingBuffer.m_buffer, numSrd, bufferCopyInfo);
@@ -8493,14 +8808,14 @@ VK_DESTROY
 				setState(_commandBuffer, m_sampledLayout);
 			}
 
-			bx::free(g_allocator, bufferCopyInfo);
+			bx::freePtr(bufferCopyInfo);
 
 			for (uint32_t ii = 0; ii < numSrd; ++ii)
 			{
-				bx::free(g_allocator, imageInfos[ii].data);
+				bx::freePtr(imageInfos[ii].data);
 			}
 
-			bx::free(g_allocator, imageInfos);
+			bx::freePtr(imageInfos);
 
 			m_readback.create(m_textureImage, m_width, m_height, TextureFormat::Enum(m_textureFormat) );
 		}
@@ -8641,13 +8956,13 @@ VK_DESTROY
 
 		if (convert)
 		{
-			temp = (uint8_t*)bx::alloc(g_allocator, slicePitch * _depth);
+			temp = (uint8_t*)bx::allocPtr(g_allocatorBlk, slicePitch * _depth);
 			imageDecodeToBgra8(temp, data, _rect.m_width, _rect.m_height, _depth, rectPitch, slicePitch, bimg::TextureFormat::Enum(m_requestedFormat) );
 			data = temp;
 		}
 		else if (repackPitch)
 		{
-			temp = (uint8_t*)bx::alloc(g_allocator, slicePitch * _depth);
+			temp = (uint8_t*)bx::allocPtr(g_allocatorBlk, slicePitch * _depth);
 			bimg::imageCopy(temp, numRows, _pitch, _depth, data, rectPitch);
 			data = temp;
 		}
@@ -8682,7 +8997,7 @@ VK_DESTROY
 
 		if (NULL != temp)
 		{
-			bx::free(g_allocator, temp);
+			bx::freePtr(temp);
 		}
 	}
 
@@ -11457,12 +11772,17 @@ VK_DESTROY
 		Resource resource;
 		resource.m_type = _type;
 		resource.m_handle = _handle;
-		m_release[m_currentFrameInFlight].push_back(resource);
+		m_release[m_currentFrameInFlight].add(resource);
 	}
 
 	void CommandQueueVK::recycleMemory(DeviceMemoryAllocationVK _mem)
 	{
-		m_recycleAllocs[m_currentFrameInFlight].push_back(_mem);
+		m_recycleAllocs[m_currentFrameInFlight].add(_mem);
+	}
+
+	void CommandQueueVK::releaseTransientStaging(TransientStaging* _staging)
+	{
+		m_transientStaging[m_currentFrameInFlight].add(_staging);
 	}
 
 	void CommandQueueVK::consume()
@@ -11473,10 +11793,24 @@ VK_DESTROY
 
 		for (DeviceMemoryAllocationVK& alloc : m_recycleAllocs[m_consumeIndex])
 		{
-			s_renderVK->m_memoryLru.recycle(alloc);
+			if (DeviceMemoryAllocationVK::kDedicated != alloc.blockIdx)
+			{
+				s_renderVK->m_memoryAllocator.free(alloc);
+			}
+			else
+			{
+				s_renderVK->m_memoryLru.recycle(alloc);
+			}
 		}
 
 		m_recycleAllocs[m_consumeIndex].clear();
+
+		for (TransientStaging* staging : m_transientStaging[m_consumeIndex])
+		{
+			bx::atomicStore<int32_t>(&staging->m_state, TransientStaging::Ready);
+		}
+
+		m_transientStaging[m_consumeIndex].clear();
 
 		for (const Resource& resource : m_release[m_consumeIndex])
 		{
@@ -11508,16 +11842,16 @@ VK_DESTROY
 
 	void CommandQueueVK::addExternal(TextureHandle _handle)
 	{
-		m_external.push_back(_handle);
+		m_external.add(_handle);
 	}
 
 	void CommandQueueVK::removeExternal(TextureHandle _handle)
 	{
-		for (ExternalTextureArray::iterator it = m_external.begin(), itEnd = m_external.end(); it != itEnd; ++it)
+		for (uint32_t ii = 0, num = m_external.getCount(); ii < num; ++ii)
 		{
-			if (it->idx == _handle.idx)
+			if (m_external[ii].idx == _handle.idx)
 			{
-				m_external.erase(it);
+				m_external.remove(ii, bx::kOrdered);
 				return;
 			}
 		}
@@ -12024,20 +12358,22 @@ VK_DESTROY
 			frameQueryIdx = m_gpuTimer.begin(BGFX_CONFIG_MAX_VIEWS, _render->m_frameNum);
 		}
 
-		if (0 < _render->m_iboffset)
 		{
 			BGFX_PROFILER_SCOPE("bgfx/Update transient index buffer", kColorResource);
 
-			TransientIndexBuffer* ib = _render->m_transientIb;
-			m_indexBuffers[ib->handle.idx].update(m_commandBuffer, 0, _render->m_iboffset, ib->data);
+			for (const TransientBufferChunk& chunk : _render->m_transientIb.m_chunks)
+			{
+				updateTransient(m_indexBuffers[chunk.m_handle], chunk);
+			}
 		}
 
-		if (0 < _render->m_vboffset)
 		{
 			BGFX_PROFILER_SCOPE("bgfx/Update transient vertex buffer", kColorResource);
 
-			TransientVertexBuffer* vb = _render->m_transientVb;
-			m_vertexBuffers[vb->handle.idx].update(m_commandBuffer, 0, _render->m_vboffset, vb->data);
+			for (const TransientBufferChunk& chunk : _render->m_transientVb.m_chunks)
+			{
+				updateTransient(m_vertexBuffers[chunk.m_handle], chunk);
+			}
 		}
 
 		_render->sort();
@@ -12533,8 +12869,8 @@ VK_DESTROY
 						{
 							currentBindHash = bindHash;
 
-							DescriptorSetMap::const_iterator it = m_descriptorSetMap.find(bindHash);
-							if (it == m_descriptorSetMap.end() )
+							const VkDescriptorSet* found = findDescriptorSet(bindHash);
+							if (NULL == found)
 							{
 								VkDescriptorSet descriptorSet = getDescriptorSet(
 									  program
@@ -12543,14 +12879,14 @@ VK_DESTROY
 									, _render->m_colorPalette
 								);
 
-								m_descriptorSetMap.insert(stl::make_pair(bindHash, descriptorSet) );
+								addDescriptorSet(bindHash, descriptorSet);
 								currentDescriptorSet = descriptorSet;
 
 								descriptorSetCount++;
 							}
 							else
 							{
-								currentDescriptorSet = it->second;
+								currentDescriptorSet = *found;
 							}
 						}
 
@@ -12896,8 +13232,8 @@ VK_DESTROY
 						{
 							currentBindHash = bindHash;
 
-							DescriptorSetMap::const_iterator it = m_descriptorSetMap.find(bindHash);
-							if (it == m_descriptorSetMap.end() )
+							const VkDescriptorSet* found = findDescriptorSet(bindHash);
+							if (NULL == found)
 							{
 								VkDescriptorSet descriptorSet = getDescriptorSet(
 									  program
@@ -12906,14 +13242,14 @@ VK_DESTROY
 									, _render->m_colorPalette
 									);
 
-								m_descriptorSetMap.insert(stl::make_pair(bindHash, descriptorSet) );
+								addDescriptorSet(bindHash, descriptorSet);
 								currentDescriptorSet = descriptorSet;
 
 								descriptorSetCount++;
 							}
 							else
 							{
-								currentDescriptorSet = it->second;
+								currentDescriptorSet = *found;
 							}
 						}
 

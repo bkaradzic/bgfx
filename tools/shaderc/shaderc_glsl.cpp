@@ -101,7 +101,7 @@ namespace bgfx { namespace glsl
 		return false;
 	}
 
-	static bool compileSpirvCross(const Options& _options, uint32_t _version, const std::string& _code, bx::WriterI* _shaderWriter, bx::WriterI* _messageWriter)
+	static bool compileSpirvCross(const Options& _options, uint32_t _version, const bx::StringView& _code, bx::WriterI* _shaderWriter, bx::WriterI* _messageWriter)
 	{
 		bx::ErrorAssert messageErr;
 
@@ -133,9 +133,11 @@ namespace bgfx { namespace glsl
 		shader->setEnvClient(glslang::EShClientOpenGL, glslang::EShTargetOpenGL_450);
 		shader->setEnvTarget(glslang::EShTargetSpv, glslang::EShTargetSpv_1_0);
 
-		const char* shaderStrings[] = { _code.c_str() };
-		shader->setStrings(
+		const char* shaderStrings[] = { _code.getPtr() };
+		const int   shaderLengths[] = { _code.getLength() };
+		shader->setStringsWithLengths(
 			  shaderStrings
+			, shaderLengths
 			, BX_COUNTOF(shaderStrings)
 			);
 
@@ -167,7 +169,7 @@ namespace bgfx { namespace glsl
 					end   = start + 20;
 				}
 
-				printCode(_code.c_str(), line, start, end, -1);
+				printCode(_code, line, start, end, -1);
 
 				bx::write(_messageWriter, &messageErr, "%s\n", log);
 			}
@@ -194,12 +196,16 @@ namespace bgfx { namespace glsl
 
 		if (linked)
 		{
-			std::vector<uint32_t> spirv;
+			bx::ArrayT<uint32_t> spirv;
 
 			glslang::SpvOptions spvOptions;
 			spvOptions.disableOptimizer = true;
 
-			glslang::GlslangToSpv(*program->getIntermediate(stage), spirv, &spvOptions);
+			{
+				std::vector<uint32_t> generated;
+				glslang::GlslangToSpv(*program->getIntermediate(stage), generated, &spvOptions);
+				spirv.set(bx::ArrayViewT<uint32_t>(generated.data(), uint32_t(generated.size() ) ) );
+			}
 
 			spvtools::Optimizer opt(SPV_ENV_OPENGL_4_5);
 
@@ -211,14 +217,16 @@ namespace bgfx { namespace glsl
 
 			opt.RegisterPerformancePasses();
 
-			std::vector<uint32_t> optimized;
-
-			if (opt.Run(spirv.data(), spirv.size(), &optimized) )
 			{
-				spirv = std::move(optimized);
+				std::vector<uint32_t> optimized;
+
+				if (opt.Run(spirv.getPtr(), spirv.getCount(), &optimized) )
+				{
+					spirv.set(bx::ArrayViewT<uint32_t>(optimized.data(), uint32_t(optimized.size() ) ) );
+				}
 			}
 
-			spirv_cross::CompilerGLSL compiler(std::move(spirv) );
+			spirv_cross::CompilerGLSL compiler(spirv.getPtr(), spirv.getCount() );
 
 			spirv_cross::CompilerGLSL::Options compilerOptions = compiler.get_common_options();
 			compilerOptions.version                            = version;
@@ -283,12 +291,15 @@ namespace bgfx { namespace glsl
 				}
 			}
 
-			std::string source = compiler.compile();
+			bx::StringBuilder compiledSource;
+			compiledSource.set(toStringView(compiler.compile() ) );
 
-			if (0 == source.compare(0, 8, "#version") )
+			bx::StringView source = compiledSource.getView();
+
+			if (bx::hasPrefix(source, "#version") )
 			{
-				const size_t eol = source.find('\n');
-				source.erase(0, std::string::npos == eol ? source.size() : eol+1);
+				const bx::StringView eol = bx::strFind(source, '\n');
+				source.set(eol.isEmpty() ? source.getTerm() : eol.getPtr()+1, source.getTerm() );
 			}
 
 			UniformArray uniforms;
@@ -299,10 +310,10 @@ namespace bgfx { namespace glsl
 				const spirv_cross::SPIRType& type = compiler.get_type(resource.type_id);
 
 				Uniform un;
-				un.name = compiler.get_name(resource.id);
+				un.name = bx::String(toStringView(compiler.get_name(resource.id) ) );
 				un.type = getUniformType(type);
 
-				if (0 == bx::strCmp(un.name.c_str(), "bgfx_ndc") )
+				if (0 == bx::strCmp(un.name.getCPtr(), "bgfx_ndc") )
 				{
 					continue;
 				}
@@ -314,7 +325,7 @@ namespace bgfx { namespace glsl
 
 				const uint32_t num = type.array.empty() ? 1 : type.array[0];
 
-				if (!isUniformNumValid(un.name.c_str(), num, _messageWriter) )
+				if (!isUniformNumValid(un.name.getCPtr(), num, _messageWriter) )
 				{
 					validUniforms = false;
 					continue;
@@ -338,9 +349,9 @@ namespace bgfx { namespace glsl
 					break;
 				}
 
-				BX_TRACE("name: %s (type %d, num %d)", un.name.c_str(), un.type, un.num);
+				BX_TRACE("name: %s (type %d, num %d)", un.name.getCPtr(), un.type, un.num);
 
-				uniforms.push_back(un);
+				uniforms.add(un);
 			}
 
 			for (const spirv_cross::Resource& resource : resources.sampled_images)
@@ -348,29 +359,28 @@ namespace bgfx { namespace glsl
 				const spirv_cross::SPIRType& type = compiler.get_type(resource.type_id);
 
 				Uniform un;
-				un.name         = compiler.get_name(resource.id);
+				un.name         = bx::String(toStringView(compiler.get_name(resource.id) ) );
 				un.type         = UniformType::Enum(kUniformSamplerBit | UniformType::Sampler);
 				un.num          = 1;
 				un.regIndex     = 0;
 				un.regCount     = 1;
 				un.texDimension = spirvDimToTextureDimensionId(uint32_t(type.image.dim), type.image.arrayed, type.image.ms);
 
-				uniforms.push_back(un);
+				uniforms.add(un);
 			}
 
 			bx::ErrorAssert err;
 
 			RawBindings().write(_shaderWriter, &err);
 
-			uint16_t count = uint16_t(uniforms.size() );
+			uint16_t count = uint16_t(uniforms.getCount() );
 			bx::write(_shaderWriter, count, &err);
 
-			for (UniformArray::const_iterator it = uniforms.begin(); it != uniforms.end(); ++it)
+			for (const Uniform& un : uniforms)
 			{
-				const Uniform& un = *it;
-				uint8_t nameSize = (uint8_t)un.name.size();
+				uint8_t nameSize = (uint8_t)un.name.getLength();
 				bx::write(_shaderWriter, nameSize, &err);
-				bx::write(_shaderWriter, un.name.c_str(), nameSize, &err);
+				bx::write(_shaderWriter, un.name.getCPtr(), nameSize, &err);
 				uint8_t uniformType = uint8_t(un.type);
 				bx::write(_shaderWriter, uniformType, &err);
 				bx::write(_shaderWriter, un.num, &err);
@@ -381,16 +391,18 @@ namespace bgfx { namespace glsl
 				bx::write(_shaderWriter, un.texFormat, &err);
 			}
 
-			uint32_t shaderSize = uint32_t(source.size() );
+			uint32_t shaderSize = uint32_t(source.getLength() );
 			bx::write(_shaderWriter, shaderSize, &err);
-			bx::write(_shaderWriter, source.c_str(), shaderSize, &err);
+			bx::write(_shaderWriter, source.getPtr(), shaderSize, &err);
 			uint8_t nul = 0;
 			bx::write(_shaderWriter, nul, &err);
 
 			if (_options.disasm)
 			{
-				std::string disasmfp = _options.outputFilePath + ".disasm";
-				writeFile(disasmfp.c_str(), source.c_str(), shaderSize);
+				bx::StringBuilder disasmfp;
+				disasmfp.add(_options.outputFilePath);
+				disasmfp.add(".disasm");
+				writeFile(disasmfp.getView().getPtr(), source.getPtr(), shaderSize);
 			}
 
 			result = validUniforms;
@@ -411,7 +423,7 @@ namespace bgfx { namespace glsl
 
 namespace bgfx
 {
-	bool compileGLSLShader(const Options& _options, uint32_t _version, const std::string& _code, bx::WriterI* _shaderWriter, bx::WriterI* _messageWriter)
+	bool compileGLSLShader(const Options& _options, uint32_t _version, const bx::StringView& _code, bx::WriterI* _shaderWriter, bx::WriterI* _messageWriter)
 	{
 #if SHADERC_CONFIG_HAS_GLSLANG
 		return glsl::compileSpirvCross(_options, _version, _code, _shaderWriter, _messageWriter);

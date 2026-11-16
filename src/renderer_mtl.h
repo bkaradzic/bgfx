@@ -307,7 +307,7 @@ namespace bgfx { namespace mtl
 
 			if (NULL != m_dynamic)
 			{
-				bx::deleteObject(g_allocator, m_dynamic);
+				bx::deletePtr(m_dynamic);
 				m_dynamic = NULL;
 			}
 		}
@@ -350,9 +350,9 @@ namespace bgfx { namespace mtl
 
 		void destroy()
 		{
-			for (FunctionMap::iterator it = m_functions.begin(), itEnd = m_functions.end(); it != itEnd; ++it)
+			for (FunctionMap::Iterator it = m_functions.begin(), itEnd = m_functions.end(); it != itEnd; ++it)
 			{
-				MTL_RELEASE_DEFERRED(it->second);
+				MTL_RELEASE_DEFERRED(it.getValue() );
 			}
 
 			m_functions.clear();
@@ -362,13 +362,13 @@ namespace bgfx { namespace mtl
 			MTL_RELEASE_DEFERRED(m_lib);
 		}
 
-		typedef stl::unordered_map<uint32_t, MTL::Function*> FunctionMap;
-		typedef stl::unordered_map<uint32_t, UniformHandle> UniformMap;
+		using FunctionMap = bx::HashMapT<uint32_t, MTL::Function*>;
+		using UniformMap  = bx::HashMapT<uint32_t, UniformHandle>;
 
 		MTL::Library*  m_lib;
 		MTL::Function* m_function;
-		mutable FunctionMap m_functions;
-		UniformMap m_uniforms;
+		mutable FunctionMap m_functions{g_allocatorHandle};
+		UniformMap m_uniforms{g_allocatorHandle};
 		uint32_t m_hash;
 		uint16_t m_numThreads[3];
 	};
@@ -468,7 +468,7 @@ namespace bgfx { namespace mtl
 
 	inline void release(PipelineStateMtl* _ptr)
 	{
-		bx::deleteObject(g_allocator, _ptr);
+		bx::deletePtr(_ptr);
 	}
 
 	template<typename T>
@@ -554,7 +554,7 @@ namespace bgfx { namespace mtl
 		MTL::Texture* m_ptrAlt;
 		MTL::Texture* m_ptrMsaaAlt;
 		MTL::Texture* m_ptrMsaaStencil;
-		stl::unordered_map<uint64_t, MTL::Texture*> m_ptrViews;
+		bx::HashMapT<uint64_t, MTL::Texture*> m_ptrViews{g_allocatorHandle};
 		VideoDecoderMtl*   m_videoDecoder;
 		uint64_t m_flags;
 		uint32_t m_width;
@@ -685,8 +685,8 @@ namespace bgfx { namespace mtl
 			uint32_t    frame;
 		};
 
-		typedef stl::vector<Release> ReleaseArray;
-		ReleaseArray m_release;
+		using ReleaseArray = bx::ArrayT<Release>;
+		ReleaseArray m_release{g_allocatorHandle};
 	};
 
 	struct TimerQueryMtl

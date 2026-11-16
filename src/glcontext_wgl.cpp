@@ -626,7 +626,7 @@ namespace bgfx { namespace gl
 	SwapChainGL* GlContext::createSwapChain(void* _nwh, int32_t _width, int32_t _height)
 	{
 		BX_UNUSED(_width, _height);
-		SwapChainGL* swapChain = BX_NEW(g_allocator, SwapChainGL)(_nwh);
+		SwapChainGL* swapChain = BX_NEW_PTR(g_allocatorBlk, SwapChainGL)(_nwh);
 
 		int result = SetPixelFormat(swapChain->m_hdc, m_pixelFormat, &m_pfd);
 		BX_WARN(result, "SetPixelFormat failed (last err: 0x%08x)!", GetLastError() ); BX_UNUSED(result);
@@ -644,7 +644,7 @@ namespace bgfx { namespace gl
 
 	void GlContext::destroySwapChain(SwapChainGL*  _swapChain)
 	{
-		bx::deleteObject(g_allocator, _swapChain);
+		bx::deletePtr(_swapChain);
 		--m_numSwapChains;
 
 		wglMakeCurrent(m_hdc, m_context);

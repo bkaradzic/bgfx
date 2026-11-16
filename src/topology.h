@@ -33,7 +33,7 @@ namespace bgfx
 		, const void* _indices
 		, uint32_t _numIndices
 		, bool _index32
-		, bx::AllocatorI* _allocator
+		, bx::AllocatorBlkI* _allocator
 		);
 
 	///
@@ -48,7 +48,7 @@ namespace bgfx
 		, const void* _indices
 		, uint32_t _numIndices
 		, bool _index32
-		, bx::AllocatorI* _allocator
+		, bx::AllocatorBlkI* _allocator
 		);
 
 } // namespace bgfx

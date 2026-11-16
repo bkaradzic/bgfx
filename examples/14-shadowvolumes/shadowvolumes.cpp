@@ -3,21 +3,17 @@
  * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
-#include <string>
-#include <vector>
-#include <map>
-#include <tinystl/allocator.h>
-#include <tinystl/unordered_map.h>
-namespace stl = tinystl;
-
 #include "common.h"
 #include "bgfx_utils.h"
 
 #include <bgfx/bgfx.h>
 #include <bx/timer.h>
 #include <bx/allocator.h>
+#include <bx/array.h>
 #include <bx/hash.h>
+#include <bx/hashmap.h>
 #include <bx/simd_t.h>
+#include <bx/sort.h>
 #include <bx/math.h>
 #include <bx/file.h>
 #include "entry/entry.h"
@@ -560,7 +556,7 @@ struct Face
 	uint16_t m_i[3];
 	float m_plane[4];
 };
-typedef std::vector<Face> FaceArray;
+using FaceArray = bx::ArrayT<Face>;
 
 struct Edge
 {
@@ -594,19 +590,19 @@ struct HalfEdges
 	{
 		m_data = (HalfEdge*)malloc(2 * _numIndices * sizeof(HalfEdge) );
 
-		stl::unordered_map<uint16_t, std::vector<uint16_t> > edges;
+		bx::HashMapT<uint16_t, bx::ArrayT<uint16_t> > edges;
 		for (uint32_t ii = 0; ii < _numIndices; ii+=3)
 		{
 			uint16_t idx0 = _indices[ii];
 			uint16_t idx1 = _indices[ii+1];
 			uint16_t idx2 = _indices[ii+2];
 
-			edges[idx0].push_back(idx1);
-			edges[idx1].push_back(idx2);
-			edges[idx2].push_back(idx0);
+			edges.getOrAdd(idx0).add(idx1);
+			edges.getOrAdd(idx1).add(idx2);
+			edges.getOrAdd(idx2).add(idx0);
 		}
 
-		uint32_t numRows = (uint32_t)edges.size();
+		uint32_t numRows = edges.getCount();
 		m_offsets = (uint32_t*)malloc(numRows * sizeof(uint32_t) );
 
 		HalfEdge* he = m_data;
@@ -614,8 +610,8 @@ struct HalfEdges
 		{
 			m_offsets[ii] = uint32_t(he - m_data);
 
-			std::vector<uint16_t>& row = edges[ii];
-			for (uint32_t jj = 0, size = (uint32_t)row.size(); jj < size; ++jj)
+			bx::ArrayT<uint16_t>& row = edges.getOrAdd(ii);
+			for (uint32_t jj = 0, size = row.getCount(); jj < size; ++jj)
 			{
 				he->m_secondIndex = row[jj];
 				he->m_marked = false;
@@ -734,13 +730,15 @@ struct Group
 		m_halfEdges.init(m_indices, m_numIndices);
 
 		//Init faces and edges.
-		m_faces.reserve(m_numIndices/3); //1 face = 3 indices
+		m_faces.setCapacity(m_numIndices/3); //1 face = 3 indices
 		m_edges = (Edge*)malloc(m_numIndices * sizeof(Edge) ); //1 triangle = 3 indices = 3 edges.
 		m_edgePlanesUnalignedPtr = (Plane*)malloc(m_numIndices * sizeof(Plane) + 15);
 		m_edgePlanes = (Plane*)bx::alignPtr(m_edgePlanesUnalignedPtr, 0, 16);
 
-		typedef std::map<std::pair<uint16_t, uint16_t>, EdgeAndPlane> EdgeMap;
+		using EdgeMap = bx::HashMapT<uint32_t, EdgeAndPlane>;
 		EdgeMap edgeMap;
+		bx::ArrayT<uint32_t> edgeKeys;
+		constexpr uint32_t kEdgeKeyShift = 16;
 
 		//Get unique indices.
 		uint16_t* uniqueVertices = (uint16_t*)malloc(m_numVertices * sizeof(uint16_t) );
@@ -770,7 +768,7 @@ struct Group
 			face.m_i[1] = i1;
 			face.m_i[2] = i2;
 			bx::memCopy(face.m_plane, plane, 4*sizeof(float) );
-			m_faces.push_back(face);
+			m_faces.add(face);
 
 			//Use unique indices for EdgeMap.
 			const uint16_t* uindices = &uniqueIndices[ii*3];
@@ -790,20 +788,24 @@ struct Group
 				const uint16_t ui0 = triangleEdge[jj][0];
 				const uint16_t ui1 = triangleEdge[jj][1];
 
-				std::pair<uint16_t, uint16_t> key    = std::make_pair(ui0, ui1);
-				std::pair<uint16_t, uint16_t> keyInv = std::make_pair(ui1, ui0);
+				const uint32_t key    = uint32_t(ui0)<<kEdgeKeyShift | ui1;
+				const uint32_t keyInv = uint32_t(ui1)<<kEdgeKeyShift | ui0;
 
-				EdgeMap::iterator iter = edgeMap.find(keyInv);
-				if (iter != edgeMap.end() )
+				EdgeAndPlane* found = edgeMap.find(keyInv);
+				if (NULL != found)
 				{
-					EdgeAndPlane& ep = iter->second;
+					EdgeAndPlane& ep = *found;
 					bx::memCopy(ep.m_plane[ep.m_faceIndex].m_plane, plane, 4*sizeof(float) );
 					ep.m_faceReverseOrder[ep.m_faceIndex] = true;
 				}
 				else
 				{
-					std::pair<EdgeMap::iterator, bool> result = edgeMap.insert(std::make_pair(key, EdgeAndPlane(ui0, ui1) ) );
-					EdgeAndPlane& ep = result.first->second;
+					if (edgeMap.tryAdd(key, bx::Emplace, ui0, ui1) )
+					{
+						edgeKeys.add(key);
+					}
+
+					EdgeAndPlane& ep = *edgeMap.find(key);
 					bx::memCopy(ep.m_plane[ep.m_faceIndex].m_plane, plane, 4*sizeof(float) );
 					ep.m_faceReverseOrder[ep.m_faceIndex] = false;
 					ep.m_faceIndex++;
@@ -813,14 +815,18 @@ struct Group
 
 		free(uniqueIndices);
 
+		bx::quickSort(edgeKeys.getPtr(), edgeKeys.getCount() );
+
 		uint32_t index = 0;
-		for (EdgeMap::const_iterator iter = edgeMap.begin(), end = edgeMap.end(); iter != end; ++iter)
+		for (uint32_t edgeKey : edgeKeys)
 		{
+			const EdgeAndPlane& ep = *edgeMap.find(edgeKey);
+
 			Edge* edge = &m_edges[m_numEdges];
 			Plane* plane = &m_edgePlanes[index];
 
-			bx::memCopy(edge, iter->second.m_faceReverseOrder, sizeof(Edge) );
-			bx::memCopy(plane, iter->second.m_plane, 2 * sizeof(Plane) );
+			bx::memCopy(edge, ep.m_faceReverseOrder, sizeof(Edge) );
+			bx::memCopy(plane, ep.m_plane, 2 * sizeof(Plane) );
 
 			m_numEdges++;
 			index += 2;
@@ -863,7 +869,7 @@ struct Group
 	HalfEdges m_halfEdges;
 };
 
-typedef std::vector<Group> GroupArray;
+using GroupArray = bx::ArrayT<Group>;
 
 struct Mesh
 {
@@ -893,7 +899,7 @@ struct Mesh
 		mem = bgfx::makeRef(group.m_indices, size);
 		group.m_ibh = bgfx::createIndexBuffer(mem);
 
-		m_groups.push_back(group);
+		m_groups.add(group);
 	}
 
 	void load(const char* _filePath)
@@ -902,45 +908,45 @@ struct Mesh
 		m_layout = mesh->m_layout;
 		uint16_t stride = m_layout.getStride();
 
-		for (::GroupArray::iterator it = mesh->m_groups.begin(), itEnd = mesh->m_groups.end(); it != itEnd; ++it)
+		for (const ::Group& srcGroup : mesh->m_groups)
 		{
 			Group group;
-			group.m_numVertices = it->m_numVertices;
+			group.m_numVertices = srcGroup.m_numVertices;
 			const uint32_t vertexSize = group.m_numVertices*stride;
 			group.m_vertices = (uint8_t*)malloc(vertexSize);
-			bx::memCopy(group.m_vertices, it->m_vertices, vertexSize);
+			bx::memCopy(group.m_vertices, srcGroup.m_vertices, vertexSize);
 
 			const bgfx::Memory* mem = bgfx::makeRef(group.m_vertices, vertexSize);
 			group.m_vbh = bgfx::createVertexBuffer(mem, m_layout);
 
-			group.m_numIndices = it->m_numIndices;
+			group.m_numIndices = srcGroup.m_numIndices;
 			const uint32_t indexSize = 2 * group.m_numIndices;
 			group.m_indices = (uint16_t*)malloc(indexSize);
-			bx::memCopy(group.m_indices, it->m_indices, indexSize);
+			bx::memCopy(group.m_indices, srcGroup.m_indices, indexSize);
 
 			mem = bgfx::makeRef(group.m_indices, indexSize);
 			group.m_ibh = bgfx::createIndexBuffer(mem);
 
-			group.m_sphere = it->m_sphere;
-			group.m_aabb   = it->m_aabb;
-			group.m_obb    = it->m_obb;
-			group.m_prims  = it->m_prims;
+			group.m_sphere = srcGroup.m_sphere;
+			group.m_aabb   = srcGroup.m_aabb;
+			group.m_obb    = srcGroup.m_obb;
+			group.m_prims  = srcGroup.m_prims;
 
-			m_groups.push_back(group);
+			m_groups.add(group);
 		}
 		::meshUnload(mesh);
 
-		for (GroupArray::iterator it = m_groups.begin(), itEnd = m_groups.end(); it != itEnd; ++it)
+		for (Group& group : m_groups)
 		{
-			it->fillStructures(m_layout);
+			group.fillStructures(m_layout);
 		}
 	}
 
 	void unload()
 	{
-		for (GroupArray::iterator it = m_groups.begin(), itEnd = m_groups.end(); it != itEnd; ++it)
+		for (Group& group : m_groups)
 		{
-			it->unload();
+			group.unload();
 		}
 		m_groups.clear();
 	}
@@ -979,10 +985,8 @@ struct Model
 
 	void submit(uint8_t _viewId, float* _mtx, const RenderState& _renderState)
 	{
-		for (GroupArray::const_iterator it = m_mesh.m_groups.begin(), itEnd = m_mesh.m_groups.end(); it != itEnd; ++it)
+		for (const Group& group : m_mesh.m_groups)
 		{
-			const Group& group = *it;
-
 			// Set uniforms
 			s_uniforms.submitPerDrawUniforms();
 
@@ -1111,10 +1115,10 @@ struct ShadowVolumeAlgorithm
 
 struct ShadowVolume
 {
-	bgfx::TransientVertexBuffer m_vbSides;
-	bgfx::TransientIndexBuffer m_ibSides;
-	bgfx::TransientIndexBuffer m_ibFrontCap;
-	bgfx::TransientIndexBuffer m_ibBackCap;
+	bgfx::VertexBufferHandle m_vbSides;
+	bgfx::IndexBufferHandle m_ibSides;
+	bgfx::IndexBufferHandle m_ibFrontCap;
+	bgfx::IndexBufferHandle m_ibBackCap;
 
 	uint32_t m_numVertices;
 	uint32_t m_numIndices;
@@ -1123,7 +1127,6 @@ struct ShadowVolume
 	const float* m_lightPos;
 
 	bool m_cap;
-	bool m_valid;
 };
 
 void shadowVolumeLightTransform(
@@ -1229,10 +1232,8 @@ void shadowVolumeCreate(
 
 	if (ShadowVolumeAlgorithm::FaceBased == _algo)
 	{
-		for (FaceArray::const_iterator iter = faces.begin(), end = faces.end(); iter != end; ++iter)
+		for (const Face& face : faces)
 		{
-			const Face& face = *iter;
-
 			bool frontFacing = false;
 			const float f = bx::dot(bx::load<bx::Vec3>(face.m_plane), bx::load<bx::Vec3>(_light) ) + face.m_plane[3];
 			if (f > 0.0f)
@@ -1456,10 +1457,8 @@ void shadowVolumeCreate(
 		if (cap)
 		{
 			// This could/should be done on GPU!
-			for (FaceArray::const_iterator iter = faces.begin(), end = faces.end(); iter != end; ++iter)
+			for (const Face& face : faces)
 			{
-				const Face& face = *iter;
-
 				const float f = bx::dot(bx::load<bx::Vec3>(face.m_plane), bx::load<bx::Vec3>(_light) ) + face.m_plane[3];
 				bool frontFacing = (f > 0.0f);
 
@@ -1495,38 +1494,40 @@ void shadowVolumeCreate(
 	_outShadowVolume.m_lightPos    = _light;
 	_outShadowVolume.m_cap         = cap;
 
+	const bgfx::Memory* mem;
+
 	//sides
 	uint32_t vsize = vsideI * 5*sizeof(float);
 	uint32_t isize = sideI * sizeof(uint16_t);
 
-	const uint32_t numIndices = sideI + (cap ? frontCapI + backCapI : 0);
-	_outShadowVolume.m_valid = true
-		&& vsideI     == bgfx::getAvailTransientVertexBuffer(vsideI, layout)
-		&& numIndices == bgfx::getAvailTransientIndexBuffer(numIndices)
-		;
+	mem = bgfx::makeRef(verticesSide, vsize);
+	_outShadowVolume.m_vbSides = bgfx::createVertexBuffer(mem, layout);
 
-	if (!_outShadowVolume.m_valid)
-	{
-		return;
-	}
+	mem = bgfx::makeRef(indicesSide, isize);
+	_outShadowVolume.m_ibSides = bgfx::createIndexBuffer(mem);
 
-	bgfx::allocTransientVertexBuffer(&_outShadowVolume.m_vbSides, vsideI, layout);
-	bx::memCopy(_outShadowVolume.m_vbSides.data, verticesSide, vsize);
-
-	bgfx::allocTransientIndexBuffer(&_outShadowVolume.m_ibSides, sideI);
-	bx::memCopy(_outShadowVolume.m_ibSides.data, indicesSide, isize);
+	// bgfx::destroy*Buffer doesn't actually destroy buffers now.
+	// Instead, these bgfx::destroy*Buffer commands get queued to be executed after the end of the next frame.
+	bgfx::destroy(_outShadowVolume.m_vbSides);
+	bgfx::destroy(_outShadowVolume.m_ibSides);
 
 	if (cap)
 	{
 		//front cap
 		isize = frontCapI * sizeof(uint16_t);
-		bgfx::allocTransientIndexBuffer(&_outShadowVolume.m_ibFrontCap, frontCapI);
-		bx::memCopy(_outShadowVolume.m_ibFrontCap.data, indicesFrontCap, isize);
+		mem = bgfx::makeRef(indicesFrontCap, isize);
+		_outShadowVolume.m_ibFrontCap = bgfx::createIndexBuffer(mem);
+
+		//gets destroyed after the end of the next frame
+		bgfx::destroy(_outShadowVolume.m_ibFrontCap);
 
 		//back cap
 		isize = backCapI * sizeof(uint16_t);
-		bgfx::allocTransientIndexBuffer(&_outShadowVolume.m_ibBackCap, backCapI);
-		bx::memCopy(_outShadowVolume.m_ibBackCap.data, indicesBackCap, isize);
+		mem = bgfx::makeRef(indicesBackCap, isize);
+		_outShadowVolume.m_ibBackCap = bgfx::createIndexBuffer(mem);
+
+		//gets destroyed after the end of the next frame
+		bgfx::destroy(_outShadowVolume.m_ibBackCap);
 	}
 }
 
@@ -1617,10 +1618,8 @@ bool clipTest(const float* _planes, uint8_t _planeNum, const Mesh& _mesh, const 
 	float scale = bx::max(_scale[0], _scale[1], _scale[2]);
 
 	const GroupArray& groups = _mesh.m_groups;
-	for (GroupArray::const_iterator it = groups.begin(), itEnd = groups.end(); it != itEnd; ++it)
+	for (const Group& group : groups)
 	{
-		const Group& group = *it;
-
 		bx::Sphere sphere = group.m_sphere;
 		sphere.center.x = sphere.center.x * scale + _translate[0];
 		sphere.center.y = sphere.center.y * scale + _translate[1];
@@ -2532,10 +2531,8 @@ public:
 
 					GroupArray& groups = model->m_mesh.m_groups;
 					const uint16_t stride = model->m_mesh.m_layout.getStride();
-					for (GroupArray::iterator it = groups.begin(), itEnd = groups.end(); it != itEnd; ++it)
+					for (Group& group : groups)
 					{
-						Group& group = *it;
-
 						// Create shadow volume.
 						ShadowVolume shadowVolume;
 						shadowVolumeCreate(
@@ -2552,12 +2549,6 @@ public:
 
 						m_numShadowVolumeVertices += shadowVolume.m_numVertices;
 						m_numShadowVolumeIndices += shadowVolume.m_numIndices;
-
-						if (!shadowVolume.m_valid)
-						{
-							// Geometry didn't fit the per-frame transient budget; skip it.
-							continue;
-						}
 
 						ShadowVolumeProgramType::Enum programIndex = ShadowVolumeProgramType::Blank;
 						RenderState::Enum renderStateIndex;
@@ -2584,8 +2575,8 @@ public:
 
 						s_uniforms.submitPerDrawUniforms();
 						bgfx::setTransform(shadowVolumeMtx);
-						bgfx::setVertexBuffer(0, &shadowVolume.m_vbSides);
-						bgfx::setIndexBuffer(&shadowVolume.m_ibSides);
+						bgfx::setVertexBuffer(0, shadowVolume.m_vbSides);
+						bgfx::setIndexBuffer(shadowVolume.m_ibSides);
 						setRenderState(renderStateCraftStencil);
 						::submit(viewId, m_svProgs[programIndex][ShadowVolumePart::Side]);
 
@@ -2594,14 +2585,14 @@ public:
 							s_uniforms.submitPerDrawUniforms();
 							bgfx::setTransform(shadowVolumeMtx);
 							bgfx::setVertexBuffer(0, group.m_vbh);
-							bgfx::setIndexBuffer(&shadowVolume.m_ibFrontCap);
+							bgfx::setIndexBuffer(shadowVolume.m_ibFrontCap);
 							setRenderState(renderStateCraftStencil);
 							::submit(viewId, m_svProgs[programIndex][ShadowVolumePart::Front]);
 
 							s_uniforms.submitPerDrawUniforms();
 							bgfx::setTransform(shadowVolumeMtx);
 							bgfx::setVertexBuffer(0, group.m_vbh);
-							bgfx::setIndexBuffer(&shadowVolume.m_ibBackCap);
+							bgfx::setIndexBuffer(shadowVolume.m_ibBackCap);
 							::setRenderState(renderStateCraftStencil);
 							::submit(viewId, m_svProgs[programIndex][ShadowVolumePart::Back]);
 						}
@@ -2612,8 +2603,8 @@ public:
 
 							s_uniforms.submitPerDrawUniforms();
 							bgfx::setTransform(shadowVolumeMtx);
-							bgfx::setVertexBuffer(0, &shadowVolume.m_vbSides);
-							bgfx::setIndexBuffer(&shadowVolume.m_ibSides);
+							bgfx::setVertexBuffer(0, shadowVolume.m_vbSides);
+							bgfx::setIndexBuffer(shadowVolume.m_ibSides);
 							::setRenderState(renderState);
 							::submit(kRange1Pass3, m_svProgs[ShadowVolumeProgramType::Color][ShadowVolumePart::Side]);
 
@@ -2622,14 +2613,14 @@ public:
 								s_uniforms.submitPerDrawUniforms();
 								bgfx::setTransform(shadowVolumeMtx);
 								bgfx::setVertexBuffer(0, group.m_vbh);
-								bgfx::setIndexBuffer(&shadowVolume.m_ibFrontCap);
+								bgfx::setIndexBuffer(shadowVolume.m_ibFrontCap);
 								::setRenderState(renderState);
 								::submit(kRange1Pass3, m_svProgs[ShadowVolumeProgramType::Color][ShadowVolumePart::Front]);
 
 								s_uniforms.submitPerDrawUniforms();
 								bgfx::setTransform(shadowVolumeMtx);
 								bgfx::setVertexBuffer(0, group.m_vbh);
-								bgfx::setIndexBuffer(&shadowVolume.m_ibBackCap);
+								bgfx::setIndexBuffer(shadowVolume.m_ibBackCap);
 								::setRenderState(renderState);
 								::submit(kRange1Pass3, m_svProgs[ShadowVolumeProgramType::Color][ShadowVolumePart::Back]);
 							}

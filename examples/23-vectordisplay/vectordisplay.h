@@ -8,9 +8,7 @@
 
 #include <bgfx/bgfx.h>
 
-#include <tinystl/allocator.h>
-#include <tinystl/vector.h>
-namespace stl = tinystl;
+#include <bx/array.h>
 
 struct PosColorUvVertex
 {
@@ -168,19 +166,19 @@ protected:
 	uint16_t m_screenWidth, m_screenHeight;
 	uint16_t m_glowWidth, m_glowHeight;
 
-	int m_numberDecaySteps;
+	int32_t m_numberDecaySteps;
 	float m_decayValue;
 	uint8_t m_drawColorR;
 	uint8_t m_drawColorG;
 	uint8_t m_drawColorB;
 	uint8_t m_drawColorA;
 
-	stl::vector<PosColorUvVertex> m_points;
-	stl::vector<PendingPoint> m_pendingPoints;
+	bx::ArrayT<PosColorUvVertex> m_points;
+	bx::ArrayT<PendingPoint> m_pendingPoints;
 
-	int m_currentDrawStep;
-	stl::vector<bgfx::DynamicVertexBufferHandle> m_vertexBuffers;
-	stl::vector<int> m_vertexBuffersSize;
+	int32_t m_currentDrawStep;
+	bx::ArrayT<bgfx::DynamicVertexBufferHandle> m_vertexBuffers;
+	bx::ArrayT<int32_t> m_vertexBuffersSize;
 
 	bgfx::TextureHandle m_lineTexId;
 

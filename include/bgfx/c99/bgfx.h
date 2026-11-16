@@ -681,8 +681,8 @@ typedef struct bgfx_caps_limits_s
     uint32_t             maxOcclusionQueries; /** Maximum number of occlusion query handles. */
     uint32_t             maxEncoders;        /** Maximum number of encoder threads.       */
     uint32_t             minResourceCbSize;  /** Minimum resource command buffer size.    */
-    uint32_t             maxTransientVbSize; /** Maximum transient vertex buffer size.    */
-    uint32_t             maxTransientIbSize; /** Maximum transient index buffer size.     */
+    uint32_t             minTransientVbSize; /** Minimum transient vertex buffer size, it grows on demand. */
+    uint32_t             minTransientIbSize; /** Minimum transient index buffer size, it grows on demand. */
     uint32_t             minUniformBufferSize; /** Mimimum uniform buffer size.             */
     uint32_t             minUniformCacheSize; /** Minimum view and frame uniform cache size. */
     
@@ -882,8 +882,8 @@ typedef struct bgfx_init_limits_s
      */
     uint32_t             minViews;
     uint32_t             minResourceCbSize;  /** Minimum resource command buffer size.    */
-    uint32_t             maxTransientVbSize; /** Maximum transient vertex buffer size.    */
-    uint32_t             maxTransientIbSize; /** Maximum transient index buffer size.     */
+    uint32_t             minTransientVbSize; /** Minimum transient vertex buffer size, it grows on demand. */
+    uint32_t             minTransientIbSize; /** Minimum transient index buffer size, it grows on demand. */
     uint32_t             minUniformBufferSize; /** Mimimum uniform buffer size.             */
     
     /**

@@ -7214,8 +7214,8 @@ public final class Bgfx {
 				ValueLayout.JAVA_INT.withName("maxOcclusionQueries"),
 				ValueLayout.JAVA_INT.withName("maxEncoders"),
 				ValueLayout.JAVA_INT.withName("minResourceCbSize"),
-				ValueLayout.JAVA_INT.withName("maxTransientVbSize"),
-				ValueLayout.JAVA_INT.withName("maxTransientIbSize"),
+				ValueLayout.JAVA_INT.withName("minTransientVbSize"),
+				ValueLayout.JAVA_INT.withName("minTransientIbSize"),
 				ValueLayout.JAVA_INT.withName("minUniformBufferSize"),
 				ValueLayout.JAVA_INT.withName("minUniformCacheSize"),
 				ValueLayout.JAVA_INT.withName("blitRowPitchAlign"),
@@ -7268,10 +7268,10 @@ public final class Bgfx {
 				MemoryLayout.PathElement.groupElement("maxEncoders"));
 			private static final VarHandle VH_MINRESOURCECBSIZE = LAYOUT.varHandle(
 				MemoryLayout.PathElement.groupElement("minResourceCbSize"));
-			private static final VarHandle VH_MAXTRANSIENTVBSIZE = LAYOUT.varHandle(
-				MemoryLayout.PathElement.groupElement("maxTransientVbSize"));
-			private static final VarHandle VH_MAXTRANSIENTIBSIZE = LAYOUT.varHandle(
-				MemoryLayout.PathElement.groupElement("maxTransientIbSize"));
+			private static final VarHandle VH_MINTRANSIENTVBSIZE = LAYOUT.varHandle(
+				MemoryLayout.PathElement.groupElement("minTransientVbSize"));
+			private static final VarHandle VH_MINTRANSIENTIBSIZE = LAYOUT.varHandle(
+				MemoryLayout.PathElement.groupElement("minTransientIbSize"));
 			private static final VarHandle VH_MINUNIFORMBUFFERSIZE = LAYOUT.varHandle(
 				MemoryLayout.PathElement.groupElement("minUniformBufferSize"));
 			private static final VarHandle VH_MINUNIFORMCACHESIZE = LAYOUT.varHandle(
@@ -7705,36 +7705,36 @@ public final class Bgfx {
 			}
 
 			/**
-			 * Maximum transient vertex buffer size.
+			 * Minimum transient vertex buffer size, it grows on demand.
 			 * @return the field value
 			 */
-			public @Unsigned int maxTransientVbSize() {
-				return (@Unsigned int) VH_MAXTRANSIENTVBSIZE.get(segment(), 0L);
+			public @Unsigned int minTransientVbSize() {
+				return (@Unsigned int) VH_MINTRANSIENTVBSIZE.get(segment(), 0L);
 			}
 
 			/**
-			 * Sets the native {@code maxTransientVbSize} field and returns {@code this}.
+			 * Sets the native {@code minTransientVbSize} field and returns {@code this}.
 			 * @param value the new field value
 			 */
-			public Limits maxTransientVbSize(@Unsigned int value) {
-				VH_MAXTRANSIENTVBSIZE.set(segment(), 0L, value);
+			public Limits minTransientVbSize(@Unsigned int value) {
+				VH_MINTRANSIENTVBSIZE.set(segment(), 0L, value);
 				return this;
 			}
 
 			/**
-			 * Maximum transient index buffer size.
+			 * Minimum transient index buffer size, it grows on demand.
 			 * @return the field value
 			 */
-			public @Unsigned int maxTransientIbSize() {
-				return (@Unsigned int) VH_MAXTRANSIENTIBSIZE.get(segment(), 0L);
+			public @Unsigned int minTransientIbSize() {
+				return (@Unsigned int) VH_MINTRANSIENTIBSIZE.get(segment(), 0L);
 			}
 
 			/**
-			 * Sets the native {@code maxTransientIbSize} field and returns {@code this}.
+			 * Sets the native {@code minTransientIbSize} field and returns {@code this}.
 			 * @param value the new field value
 			 */
-			public Limits maxTransientIbSize(@Unsigned int value) {
-				VH_MAXTRANSIENTIBSIZE.set(segment(), 0L, value);
+			public Limits minTransientIbSize(@Unsigned int value) {
+				VH_MINTRANSIENTIBSIZE.set(segment(), 0L, value);
 				return this;
 			}
 
@@ -8605,8 +8605,8 @@ public final class Bgfx {
 				ValueLayout.JAVA_INT.withName("numDrawCallPeakFrames"),
 				ValueLayout.JAVA_INT.withName("minViews"),
 				ValueLayout.JAVA_INT.withName("minResourceCbSize"),
-				ValueLayout.JAVA_INT.withName("maxTransientVbSize"),
-				ValueLayout.JAVA_INT.withName("maxTransientIbSize"),
+				ValueLayout.JAVA_INT.withName("minTransientVbSize"),
+				ValueLayout.JAVA_INT.withName("minTransientIbSize"),
 				ValueLayout.JAVA_INT.withName("minUniformBufferSize"),
 				ValueLayout.JAVA_INT.withName("minUniformCacheSize"));
 			private static final VarHandle VH_MAXENCODERS = LAYOUT.varHandle(
@@ -8619,10 +8619,10 @@ public final class Bgfx {
 				MemoryLayout.PathElement.groupElement("minViews"));
 			private static final VarHandle VH_MINRESOURCECBSIZE = LAYOUT.varHandle(
 				MemoryLayout.PathElement.groupElement("minResourceCbSize"));
-			private static final VarHandle VH_MAXTRANSIENTVBSIZE = LAYOUT.varHandle(
-				MemoryLayout.PathElement.groupElement("maxTransientVbSize"));
-			private static final VarHandle VH_MAXTRANSIENTIBSIZE = LAYOUT.varHandle(
-				MemoryLayout.PathElement.groupElement("maxTransientIbSize"));
+			private static final VarHandle VH_MINTRANSIENTVBSIZE = LAYOUT.varHandle(
+				MemoryLayout.PathElement.groupElement("minTransientVbSize"));
+			private static final VarHandle VH_MINTRANSIENTIBSIZE = LAYOUT.varHandle(
+				MemoryLayout.PathElement.groupElement("minTransientIbSize"));
 			private static final VarHandle VH_MINUNIFORMBUFFERSIZE = LAYOUT.varHandle(
 				MemoryLayout.PathElement.groupElement("minUniformBufferSize"));
 			private static final VarHandle VH_MINUNIFORMCACHESIZE = LAYOUT.varHandle(
@@ -8758,36 +8758,36 @@ public final class Bgfx {
 			}
 
 			/**
-			 * Maximum transient vertex buffer size.
+			 * Minimum transient vertex buffer size, it grows on demand.
 			 * @return the field value
 			 */
-			public @Unsigned int maxTransientVbSize() {
-				return (@Unsigned int) VH_MAXTRANSIENTVBSIZE.get(segment(), 0L);
+			public @Unsigned int minTransientVbSize() {
+				return (@Unsigned int) VH_MINTRANSIENTVBSIZE.get(segment(), 0L);
 			}
 
 			/**
-			 * Sets the native {@code maxTransientVbSize} field and returns {@code this}.
+			 * Sets the native {@code minTransientVbSize} field and returns {@code this}.
 			 * @param value the new field value
 			 */
-			public Limits maxTransientVbSize(@Unsigned int value) {
-				VH_MAXTRANSIENTVBSIZE.set(segment(), 0L, value);
+			public Limits minTransientVbSize(@Unsigned int value) {
+				VH_MINTRANSIENTVBSIZE.set(segment(), 0L, value);
 				return this;
 			}
 
 			/**
-			 * Maximum transient index buffer size.
+			 * Minimum transient index buffer size, it grows on demand.
 			 * @return the field value
 			 */
-			public @Unsigned int maxTransientIbSize() {
-				return (@Unsigned int) VH_MAXTRANSIENTIBSIZE.get(segment(), 0L);
+			public @Unsigned int minTransientIbSize() {
+				return (@Unsigned int) VH_MINTRANSIENTIBSIZE.get(segment(), 0L);
 			}
 
 			/**
-			 * Sets the native {@code maxTransientIbSize} field and returns {@code this}.
+			 * Sets the native {@code minTransientIbSize} field and returns {@code this}.
 			 * @param value the new field value
 			 */
-			public Limits maxTransientIbSize(@Unsigned int value) {
-				VH_MAXTRANSIENTIBSIZE.set(segment(), 0L, value);
+			public Limits minTransientIbSize(@Unsigned int value) {
+				VH_MINTRANSIENTIBSIZE.set(segment(), 0L, value);
 				return this;
 			}
 

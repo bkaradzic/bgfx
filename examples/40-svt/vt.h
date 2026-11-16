@@ -16,10 +16,8 @@
 #pragma once
 
 #include <bimg/decode.h>
-#include <tinystl/allocator.h>
-#include <tinystl/unordered_set.h>
-#include <tinystl/vector.h>
-#include <functional>
+#include <bx/array.h>
+#include <bx/hashmap.h>
 
 #include "common.h"
 #include "bgfx_utils.h"
@@ -33,6 +31,21 @@ namespace vt
 class PageCache;
 class TextureAtlas;
 class TileDataFile;
+
+// Callback
+template<typename... ArgsT>
+struct CallbackT
+{
+	using Fn = void (*)(void* _userData, ArgsT... _args);
+
+	void operator()(ArgsT... _args) const
+	{
+		m_fn(m_userData, _args...);
+	}
+
+	Fn    m_fn       = NULL;
+	void* m_userData = NULL;
+};
 
 // Point
 struct Point
@@ -123,7 +136,7 @@ public:
 	void				next();
 
 private:
-	tinystl::vector<bgfx::TextureHandle>  m_stagingTextures;
+	bx::ArrayT<bgfx::TextureHandle>  m_stagingTextures;
 
 	int			m_stagingTextureIndex;
 	int			m_width;
@@ -149,16 +162,16 @@ private:
 	int                 m_mipcount;
 	int					m_count;
 
-	tinystl::vector<int>    m_offsets; // This stores the offsets to the first page of the start of a mipmap level
-	tinystl::vector<int>    m_sizes; // This stores the sizes of various mip levels
-	tinystl::vector<Page>   m_reverse;
+	bx::ArrayT<int>    m_offsets; // This stores the offsets to the first page of the start of a mipmap level
+	bx::ArrayT<int>    m_sizes; // This stores the sizes of various mip levels
+	bx::ArrayT<Page>   m_reverse;
 };
 
 // SimpleImage
 struct SimpleImage
 {
 	SimpleImage(int _width, int _height, int _channelCount, uint8_t _clearValue = 0);
-	SimpleImage(int _width, int _height, int _channelCount, tinystl::vector<uint8_t>& _data);
+	SimpleImage(int _width, int _height, int _channelCount, bx::ArrayT<uint8_t>& _data);
 
 	void copy(Point dest_offset, SimpleImage& src, Rect src_rect);
 	void clear(uint8_t clearValue = 0);
@@ -170,7 +183,7 @@ struct SimpleImage
 	int	m_height = 0;
 	int	m_channelCount = 0;
 
-	tinystl::vector<uint8_t> m_data;
+	bx::ArrayT<uint8_t> m_data;
 };
 
 // Quadtree
@@ -210,8 +223,8 @@ private:
 	Quadtree*			m_quadtree;
 	bool				m_quadtreeDirty;
 
-	tinystl::vector<SimpleImage*>			m_images;
-	tinystl::vector<bgfx::TextureHandle>	m_stagingTextures;
+	bx::ArrayT<SimpleImage*>			m_images;
+	bx::ArrayT<bgfx::TextureHandle>	m_stagingTextures;
 };
 
 // PageLoader
@@ -221,7 +234,7 @@ public:
 	struct ReadState
 	{
 		Page						m_page;
-		tinystl::vector<uint8_t>	m_data;
+		bx::ArrayT<uint8_t>	m_data;
 	};
 
 	PageLoader(TileDataFile* _tileDataFile, PageIndexer* _indexer, VirtualTextureInfo* _info);
@@ -231,7 +244,7 @@ public:
 	void copyBorder(uint8_t* image);
 	void copyColor(uint8_t* image, Page request);
 
-	std::function<void(Page, uint8_t*)> loadComplete;
+	CallbackT<Page, uint8_t*> loadComplete;
 
 	bool m_colorMipLevels;
 	bool m_showBorders;
@@ -253,8 +266,8 @@ public:
 	void loadComplete(Page page, uint8_t* data);
 
 	// These callbacks are used to notify the other systems
-	std::function<void(Page, Point)> removed;
-	std::function<void(Page, Point)> added;
+	CallbackT<Page, Point> removed;
+	CallbackT<Page, Point> added;
 
 private:
 	TextureAtlas*		m_atlas;
@@ -275,9 +288,9 @@ private:
 
 	int m_current; // This is used for generating the texture atlas indices before the lru is full
 
-	tinystl::unordered_set<Page>    m_lru_used;
-	tinystl::vector<LruPage>		m_lru;
-	tinystl::unordered_set<Page>	m_loading;
+	bx::HashSetT<size_t>            m_lru_used;
+	bx::ArrayT<LruPage>		m_lru;
+	bx::HashSetT<size_t>			m_loading;
 
 	bgfx::ViewId m_blitViewId;
 };
@@ -316,7 +329,7 @@ public:
 	// We do this so that we can fall back to them if we run out of memory
 	void addRequestAndParents(Page request);
 
-	const tinystl::vector<int>& getRequests() const;
+	const bx::ArrayT<int>& getRequests() const;
 	bgfx::FrameBufferHandle getFrameBuffer();
 
 	int getWidth() const;
@@ -334,8 +347,8 @@ private:
 	bgfx::FrameBufferHandle m_feedbackFrameBuffer;
 
 	// This stores the pages by index.  The int value is number of requests.
-	tinystl::vector<int>		m_requests;
-	tinystl::vector<uint8_t>	m_downloadBuffer;
+	bx::ArrayT<int>		m_requests;
+	bx::ArrayT<uint8_t>	m_downloadBuffer;
 };
 
 // VirtualTexture
@@ -361,7 +374,7 @@ public:
 	bgfx::TextureHandle getPageTableTexture();
 
 	void clear();
-	void update(const tinystl::vector<int>& requests, bgfx::ViewId blitViewId);
+	void update(const bx::ArrayT<int>& requests, bgfx::ViewId blitViewId);
 
 	void setUniforms();
 
@@ -380,7 +393,7 @@ private:
 	int m_atlasCount;
 	int m_uploadsPerFrame;
 
-	tinystl::vector<PageCount> m_pagesToLoad;
+	bx::ArrayT<PageCount> m_pagesToLoad;
 
 	int m_mipBias;
 

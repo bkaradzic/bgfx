@@ -17,13 +17,11 @@
 #include "font/utf8.h"
 
 #include <bx/math.h>
+#include <bx/array.h>
 #include <bx/easing.h>
+#include <bx/hashmap.h>
 #include <bx/sort.h>
 #include <bx/string.h>
-
-#include <tinystl/unordered_map.h>
-#include <tinystl/vector.h>
-namespace stl = tinystl;
 
 #include <stb/stb_truetype.h>
 
@@ -195,7 +193,7 @@ public:
 				continue;
 			}
 
-			if (m_glyphs.find(codePoint) != m_glyphs.end() )
+			if (NULL != m_glyphs.find(codePoint) )
 			{
 				continue;
 			}
@@ -222,8 +220,8 @@ public:
 
 		float originalX = _x;
 
-		stl::vector<FontVertex> vertices;
-		stl::vector<uint32_t>   indices;
+		bx::ArrayT<FontVertex> vertices;
+		bx::ArrayT<uint32_t>   indices;
 
 		uint32_t state = 0;
 
@@ -251,8 +249,8 @@ public:
 				continue;
 			}
 
-			auto glyphIt = m_glyphs.find(codePoint);
-			SlugGlyph& glyph = (glyphIt == m_glyphs.end() ) ? m_glyphs[0] : glyphIt->second;
+			SlugGlyph* found = m_glyphs.find(codePoint);
+			SlugGlyph& glyph = (NULL == found) ? m_glyphs.getOrAdd(0) : *found;
 
 			if (previous != 0 && glyph.glyphIndex != 0)
 			{
@@ -274,7 +272,7 @@ public:
 
 				static constexpr float kN = 1.0f;
 
-				uint32_t base = (uint32_t)vertices.size();
+				uint32_t base = vertices.getCount();
 
 				FontVertex vert;
 				vert.m_bandScaleX  = glyph.bandScaleX;
@@ -294,7 +292,7 @@ public:
 				vert.m_v  =  v0;
 				vert.m_nx = -kN;
 				vert.m_ny = -kN;
-				vertices.push_back(vert);
+				vertices.add(vert);
 
 				vert.m_x  =  x1;
 				vert.m_y  =  y0;
@@ -302,7 +300,7 @@ public:
 				vert.m_v  =  v0;
 				vert.m_nx = +kN;
 				vert.m_ny = -kN;
-				vertices.push_back(vert);
+				vertices.add(vert);
 
 				vert.m_x  =  x1;
 				vert.m_y  =  y1;
@@ -310,7 +308,7 @@ public:
 				vert.m_v  =  v1;
 				vert.m_nx = +kN;
 				vert.m_ny = +kN;
-				vertices.push_back(vert);
+				vertices.add(vert);
 
 				vert.m_x  =  x0;
 				vert.m_y  =  y1;
@@ -318,14 +316,14 @@ public:
 				vert.m_v  =  v1;
 				vert.m_nx = -kN;
 				vert.m_ny = +kN;
-				vertices.push_back(vert);
+				vertices.add(vert);
 
-				indices.push_back(base + 0);
-				indices.push_back(base + 1);
-				indices.push_back(base + 2);
-				indices.push_back(base + 2);
-				indices.push_back(base + 3);
-				indices.push_back(base + 0);
+				indices.add(base + 0);
+				indices.add(base + 1);
+				indices.add(base + 2);
+				indices.add(base + 2);
+				indices.add(base + 3);
+				indices.add(base + 0);
 			}
 
 			_x += float(glyph.advance) / m_emSize * worldSize;
@@ -334,13 +332,13 @@ public:
 
 		BX_ASSERT(state == UTF8_ACCEPT, "The string is not well-formed");
 
-		if (!indices.empty() )
+		if (!indices.isEmpty() )
 		{
-			const bgfx::Memory* vmem = bgfx::alloc( (uint32_t)(vertices.size() * sizeof(FontVertex)) );
-			bx::memCopy(vmem->data, vertices.data(), vmem->size);
+			const bgfx::Memory* vmem = bgfx::alloc( (uint32_t)(vertices.getCount() * sizeof(FontVertex)) );
+			bx::memCopy(vmem->data, vertices.getPtr(), vmem->size);
 
-			const bgfx::Memory* imem = bgfx::alloc( (uint32_t)(indices.size() * sizeof(uint32_t)) );
-			bx::memCopy(imem->data, indices.data(), imem->size);
+			const bgfx::Memory* imem = bgfx::alloc( (uint32_t)(indices.getCount() * sizeof(uint32_t)) );
+			bx::memCopy(imem->data, indices.getPtr(), imem->size);
 
 			m_vbh = bgfx::createVertexBuffer(vmem, FontVertex::ms_layout);
 			m_ibh = bgfx::createIndexBuffer(imem, BGFX_BUFFER_INDEX32);
@@ -416,8 +414,8 @@ public:
 				continue;
 			}
 
-			auto glyphIt = m_glyphs.find(codePoint);
-			SlugGlyph& glyph = (glyphIt == m_glyphs.end() ) ? m_glyphs[0] : glyphIt->second;
+			SlugGlyph* found = m_glyphs.find(codePoint);
+			SlugGlyph& glyph = (NULL == found) ? m_glyphs.getOrAdd(0) : *found;
 
 			if (0 != previous
 			&&  0 != glyph.glyphIndex)
@@ -448,7 +446,7 @@ private:
 	{
 		SlugGlyph glyph;
 		glyph.glyphIndex = _glyphIndex;
-		glyph.curveStart = (int32_t)m_curves.size();
+		glyph.curveStart = (int32_t)m_curves.getCount();
 
 		stbtt_vertex* stbVerts = NULL;
 		int32_t numVerts = stbtt_GetGlyphShape(&m_fontInfo, _glyphIndex, &stbVerts);
@@ -459,7 +457,7 @@ private:
 			stbtt_FreeShape(&m_fontInfo, stbVerts);
 		}
 
-		glyph.curveCount = int32_t(m_curves.size() ) - glyph.curveStart;
+		glyph.curveCount = int32_t(m_curves.getCount() ) - glyph.curveStart;
 
 		int32_t advanceWidth, leftSideBearing;
 		stbtt_GetGlyphHMetrics(&m_fontInfo, _glyphIndex, &advanceWidth, &leftSideBearing);
@@ -490,7 +488,7 @@ private:
 		glyph.bandOffsetX = 0.0f;
 		glyph.bandOffsetY = 0.0f;
 
-		m_glyphs[_charcode] = glyph;
+		m_glyphs.add(_charcode, glyph, true);
 	}
 
 	void convertOutline(const stbtt_vertex* _vertices, int32_t _numVertices)
@@ -519,7 +517,7 @@ private:
 					c.p3y = float(v.y)/emSize;
 					c.p2x = 0.5f * (c.p1x + c.p3x);
 					c.p2y = 0.5f * (c.p1y + c.p3y);
-					m_curves.push_back(c);
+					m_curves.add(c);
 
 					cx = c.p3x;
 					cy = c.p3y;
@@ -535,7 +533,7 @@ private:
 					c.p2y = float(v.cy)/emSize;
 					c.p3x = float(v.x )/emSize;
 					c.p3y = float(v.y )/emSize;
-					m_curves.push_back(c);
+					m_curves.add(c);
 
 					cx = c.p3x;
 					cy = c.p3y;
@@ -562,13 +560,13 @@ private:
 					q1.p1x = cx;  q1.p1y = cy;
 					q1.p2x = c0x; q1.p2y = c0y;
 					q1.p3x = dx;  q1.p3y = dy;
-					m_curves.push_back(q1);
+					m_curves.add(q1);
 
 					Curve q2;
 					q2.p1x = dx;  q2.p1y = dy;
 					q2.p2x = c1x; q2.p2y = c1y;
 					q2.p3x = b3x; q2.p3y = b3y;
-					m_curves.push_back(q2);
+					m_curves.add(q2);
 
 					cx = b3x;
 					cy = b3y;
@@ -592,15 +590,15 @@ private:
 	}
 
 	static void collectHBand(
-		  const stl::vector<Curve>& _curves
+		  const bx::ArrayT<Curve>& _curves
 		, int32_t _start
 		, int32_t _count
 		, float _bandMinY
 		, float _bandMaxY
-		, stl::vector<int32_t>& _outResult
+		, bx::ArrayT<int32_t>& _outResult
 		)
 	{
-		stl::vector<CurveRef> refs;
+		bx::ArrayT<CurveRef> refs;
 
 		for (int32_t ii = 0; ii < _count; ++ii)
 		{
@@ -612,31 +610,31 @@ private:
 			&&  cMinY <= _bandMaxY)
 			{
 				CurveRef ref = { _start + ii, bx::max(curve.p1x, curve.p2x, curve.p3x) };
-				refs.push_back(ref);
+				refs.add(ref);
 			}
 		}
 
-		if (!refs.empty() )
+		if (!refs.isEmpty() )
 		{
-			bx::quickSort(refs.data(), (uint32_t)refs.size(), compareCurveRefDescending);
+			bx::quickSort(refs.getPtr(), refs.getCount(), compareCurveRefDescending);
 		}
 
 		for (const CurveRef& ref : refs)
 		{
-			_outResult.push_back(ref.index);
+			_outResult.add(ref.index);
 		}
 	}
 
 	static void collectVBand(
-		  const stl::vector<Curve>& _curves
+		  const bx::ArrayT<Curve>& _curves
 		, int32_t _start
 		, int32_t _count
 		, float _bandMinX
 		, float _bandMaxX
-		, stl::vector<int32_t>& _outResult
+		, bx::ArrayT<int32_t>& _outResult
 		)
 	{
-		stl::vector<CurveRef> refs;
+		bx::ArrayT<CurveRef> refs;
 
 		for (int32_t ii = 0; ii < _count; ++ii)
 		{
@@ -648,26 +646,27 @@ private:
 			&&  cMinX <= _bandMaxX)
 			{
 				CurveRef ref = { _start + ii, bx::max(curve.p1y, curve.p2y, curve.p3y) };
-				refs.push_back(ref);
+				refs.add(ref);
 			}
 		}
 
-		if (!refs.empty() )
+		if (!refs.isEmpty() )
 		{
-			bx::quickSort(refs.data(), (uint32_t)refs.size(), compareCurveRefDescending);
+			bx::quickSort(refs.getPtr(), refs.getCount(), compareCurveRefDescending);
 		}
 
 		for (const CurveRef& ref : refs)
 		{
-			_outResult.push_back(ref.index);
+			_outResult.add(ref.index);
 		}
 	}
 
 	void uploadTextures()
 	{
-		uint32_t numCurves = (uint32_t)m_curves.size();
+		uint32_t numCurves = m_curves.getCount();
 
-		stl::vector<uint32_t> curveTexelIndex(numCurves);
+		bx::ArrayT<uint32_t> curveTexelIndex;
+		curveTexelIndex.setCount(numCurves);
 		uint32_t curveTexels = 0;
 
 		for (uint32_t ii = 0; ii < numCurves; ++ii)
@@ -699,17 +698,17 @@ private:
 			BandEntry vbands[kMaxBands];
 			uint8_t   numHBands;
 			uint8_t   numVBands;
-			stl::vector<uint32_t>  curveLocList;
+			bx::ArrayT<uint32_t>  curveLocList;
 		};
 
-		stl::vector<GlyphBandData> allGlyphBands;
-		allGlyphBands.reserve(m_glyphs.size() );
+		bx::ArrayT<GlyphBandData> allGlyphBands;
+		allGlyphBands.setCapacity(m_glyphs.getCount() );
 
 		uint32_t bandTexRow = 0;
 
-		for (auto& kv : m_glyphs)
+		for (GlyphMap::Iterator it = m_glyphs.begin(), itEnd = m_glyphs.end(); it != itEnd; ++it)
 		{
-			SlugGlyph& glyph = kv.second;
+			SlugGlyph& glyph = it.getValue();
 
 			GlyphBandData gbd;
 
@@ -728,7 +727,7 @@ private:
 				gbd.vbands[0] = {0, 0};
 				gbd.numHBands = 1;
 				gbd.numVBands = 1;
-				allGlyphBands.push_back(gbd);
+				allGlyphBands.add(gbd);
 
 				bandTexRow++;
 				continue;
@@ -777,17 +776,17 @@ private:
 				const float bMinY = glyph.rect.minY + float(bb    ) * bandH;
 				const float bMaxY = glyph.rect.minY + float(bb + 1) * bandH;
 
-				stl::vector<int32_t> curvesInBand;
+				bx::ArrayT<int32_t> curvesInBand;
 				collectHBand(m_curves, glyph.curveStart, glyph.curveCount, bMinY, bMaxY, curvesInBand);
 
-				gbd.hbands[bb].count  = (uint32_t)curvesInBand.size();
-				gbd.hbands[bb].offset = (uint32_t)gbd.curveLocList.size();
+				gbd.hbands[bb].count  = curvesInBand.getCount();
+				gbd.hbands[bb].offset = gbd.curveLocList.getCount();
 
 				for (int32_t ci : curvesInBand)
 				{
 					uint32_t texIdx = curveTexelIndex[ci];
-					gbd.curveLocList.push_back(texIdx % kTexWidth);
-					gbd.curveLocList.push_back(texIdx / kTexWidth);
+					gbd.curveLocList.add(texIdx % kTexWidth);
+					gbd.curveLocList.add(texIdx / kTexWidth);
 				}
 			}
 
@@ -800,29 +799,28 @@ private:
 				const float bMinX = glyph.rect.minX + float(bb    ) * bandW;
 				const float bMaxX = glyph.rect.minX + float(bb + 1) * bandW;
 
-				stl::vector<int32_t> curvesInBand;
+				bx::ArrayT<int32_t> curvesInBand;
 				collectVBand(m_curves, glyph.curveStart, glyph.curveCount, bMinX, bMaxX, curvesInBand);
 
-				gbd.vbands[bb].count  = (uint32_t)curvesInBand.size();
-				gbd.vbands[bb].offset = (uint32_t)gbd.curveLocList.size();
+				gbd.vbands[bb].count  = curvesInBand.getCount();
+				gbd.vbands[bb].offset = gbd.curveLocList.getCount();
 
 				for (int32_t ci : curvesInBand)
 				{
 					uint32_t texIdx = curveTexelIndex[ci];
-					gbd.curveLocList.push_back(texIdx % kTexWidth);
-					gbd.curveLocList.push_back(texIdx / kTexWidth);
+					gbd.curveLocList.add(texIdx % kTexWidth);
+					gbd.curveLocList.add(texIdx / kTexWidth);
 				}
 			}
 
-			allGlyphBands.push_back(gbd);
+			allGlyphBands.add(gbd);
 			bandTexRow++;
 		}
 
 		{
 			uint32_t glyphIdx = 0;
-			for (auto& kv : m_glyphs)
+			for (GlyphMap::Iterator it = m_glyphs.begin(), itEnd = m_glyphs.end(); it != itEnd; ++it)
 			{
-				BX_UNUSED(kv);
 				GlyphBandData& gbd = allGlyphBands[glyphIdx];
 
 				const int32_t  numHBands  = gbd.numHBands;
@@ -895,9 +893,9 @@ private:
 			float* dst = (float*)mem->data;
 
 			uint32_t glyphIdx = 0;
-			for (auto& kv : m_glyphs)
+			for (GlyphMap::Iterator it = m_glyphs.begin(), itEnd = m_glyphs.end(); it != itEnd; ++it)
 			{
-				SlugGlyph&   glyph = kv.second;
+				SlugGlyph&   glyph = it.getValue();
 				GlyphBandData& gbd = allGlyphBands[glyphIdx];
 
 				uint32_t rowBase = (uint32_t)glyph.glyphLocY * kTexWidth;
@@ -926,7 +924,7 @@ private:
 				}
 
 				const uint32_t headerSize = (uint32_t)(numHBands + numVBands);
-				const uint32_t numLocPairs = (uint32_t)(gbd.curveLocList.size() / 2);
+				const uint32_t numLocPairs = (uint32_t)(gbd.curveLocList.getCount() / 2);
 
 				for (uint32_t ll = 0; ll < numLocPairs; ++ll)
 				{
@@ -956,8 +954,9 @@ private:
 	stbtt_fontinfo m_fontInfo;
 	float m_emSize;
 
-	stl::vector<Curve> m_curves;
-	stl::unordered_map<uint32_t, SlugGlyph> m_glyphs;
+	bx::ArrayT<Curve> m_curves;
+	using GlyphMap = bx::HashMapT<uint32_t, SlugGlyph>;
+	GlyphMap m_glyphs;
 
 	bgfx::TextureHandle m_curveTex;
 	bgfx::TextureHandle m_bandTex;

@@ -60,20 +60,20 @@ namespace bgfx
 #	endif
 #endif
 
+#include <bx/array.h>
 #include <bx/debug.h>
 #include <bx/commandline.h>
 #include <bx/endian.h>
+#include <bx/hashmap.h>
 #include <bx/string.h>
+#include <bx/stringpool.h>
 #include <bx/scanner.h>
 #include <bx/hash.h>
 #include <bx/file.h>
 #include "../../src/vertexlayout.h"
 
+#include <stdio.h>
 #include <string.h>
-#include <algorithm>
-#include <string>
-#include <vector>
-#include <unordered_map>
 
 namespace bgfx
 {
@@ -120,7 +120,7 @@ namespace bgfx
 		{
 		}
 
-		std::string name;
+		bx::String name;
 		UniformType::Enum type;
 		uint16_t num;
 		uint16_t regIndex;
@@ -155,15 +155,15 @@ namespace bgfx
 		void dump();
 
 		char shaderType;
-		std::string platform;
-		std::string profile;
+		bx::String platform;
+		bx::String profile;
 
-		std::string	inputFilePath;
-		std::string	outputFilePath;
+		bx::String	inputFilePath;
+		bx::String	outputFilePath;
 
-		std::vector<std::string> includeDirs;
-		std::vector<std::string> defines;
-		std::vector<std::string> dependencies;
+		bx::ArrayT<bx::String> includeDirs;
+		bx::ArrayT<bx::String> defines;
+		bx::ArrayT<bx::String> dependencies;
 
 		bool disasm;
 		bool raw;
@@ -185,20 +185,26 @@ namespace bgfx
 		uint32_t optimizationLevel;
 	};
 
-	typedef std::vector<Uniform> UniformArray;
+	using UniformArray = bx::ArrayT<Uniform>;
 
-	void printCode(const char* _code, int32_t _line = 0, int32_t _start = 0, int32_t _end = INT32_MAX, int32_t _column = -1);
+	template<typename StringT>
+	inline bx::StringView toStringView(const StringT& _str)
+	{
+		return bx::StringView(_str.data(), int32_t(_str.size() ) );
+	}
+
+	void printCode(const bx::StringView& _code, int32_t _line = 0, int32_t _start = 0, int32_t _end = INT32_MAX, int32_t _column = -1);
 	void strReplace(char* _str, const char* _find, const char* _replace);
 	int32_t writef(bx::WriterI* _writer, const char* _format, ...);
 	void writeFile(const char* _filePath, const void* _data, int32_t _size);
 
-	bool compileGLSLShader(const Options& _options, uint32_t _version, const std::string& _code, bx::WriterI* _writer, bx::WriterI* _messages);
-	bool compileHLSLShader(const Options& _options, uint32_t _version, const std::string& _code, bx::WriterI* _writer, bx::WriterI* _messages);
-	bool compileDxilShader(const Options& _options, uint32_t _version, const std::string& _code, bx::WriterI* _writer, bx::WriterI* _messages);
-	bool compileMetalShader(const Options& _options, uint32_t _version, const std::string& _code, bx::WriterI* _writer, bx::WriterI* _messages);
-	bool compilePSSLShader(const Options& _options, uint32_t _version, const std::string& _code, bx::WriterI* _writer, bx::WriterI* _messages);
-	bool compileSPIRVShader(const Options& _options, uint32_t _version, const std::string& _code, bx::WriterI* _writer, bx::WriterI* _messages);
-	bool compileWgslShader(const Options& _options, uint32_t _version, const std::string& _code, bx::WriterI* _writer, bx::WriterI* _messages);
+	bool compileGLSLShader(const Options& _options, uint32_t _version, const bx::StringView& _code, bx::WriterI* _writer, bx::WriterI* _messages);
+	bool compileHLSLShader(const Options& _options, uint32_t _version, const bx::StringView& _code, bx::WriterI* _writer, bx::WriterI* _messages);
+	bool compileDxilShader(const Options& _options, uint32_t _version, const bx::StringView& _code, bx::WriterI* _writer, bx::WriterI* _messages);
+	bool compileMetalShader(const Options& _options, uint32_t _version, const bx::StringView& _code, bx::WriterI* _writer, bx::WriterI* _messages);
+	bool compilePSSLShader(const Options& _options, uint32_t _version, const bx::StringView& _code, bx::WriterI* _writer, bx::WriterI* _messages);
+	bool compileSPIRVShader(const Options& _options, uint32_t _version, const bx::StringView& _code, bx::WriterI* _writer, bx::WriterI* _messages);
+	bool compileWgslShader(const Options& _options, uint32_t _version, const bx::StringView& _code, bx::WriterI* _writer, bx::WriterI* _messages);
 
 	const char* getPsslPreamble();
 

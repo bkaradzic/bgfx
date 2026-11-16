@@ -82,7 +82,7 @@ StagingPool::StagingPool(int _width, int _height, int _count, bool _readBack)
 
 StagingPool::~StagingPool()
 {
-	for (int i = 0; i < (int)m_stagingTextures.size(); ++i)
+	for (uint32_t i = 0, num = m_stagingTextures.getCount(); i < num; ++i)
 	{
 		bgfx::destroy(m_stagingTextures[i]);
 	}
@@ -90,10 +90,10 @@ StagingPool::~StagingPool()
 
 void StagingPool::grow(int count)
 {
-	while ((int)m_stagingTextures.size() < count)
+	while ((int)m_stagingTextures.getCount() < count)
 	{
 		auto stagingTexture = bgfx::createTexture2D((uint16_t)m_width, (uint16_t)m_height, false, 1, bgfx::TextureFormat::BGRA8, m_flags);
-		m_stagingTextures.push_back(stagingTexture);
+		m_stagingTextures.add(stagingTexture);
 	}
 }
 
@@ -104,7 +104,7 @@ bgfx::TextureHandle StagingPool::getTexture()
 
 void StagingPool::next()
 {
-	m_stagingTextureIndex = (m_stagingTextureIndex + 1) % (int)m_stagingTextures.size();
+	m_stagingTextureIndex = (m_stagingTextureIndex + 1) % (int)m_stagingTextures.getCount();
 }
 
 PageIndexer::PageIndexer(VirtualTextureInfo* _info)
@@ -112,13 +112,13 @@ PageIndexer::PageIndexer(VirtualTextureInfo* _info)
 {
 	m_mipcount = int(bx::log2((float)m_info->GetPageTableSize()) + 1);
 
-	m_sizes.resize(m_mipcount);
+	m_sizes.setCount(m_mipcount);
 	for (int i = 0; i < m_mipcount; ++i)
 	{
 		m_sizes[i] = (m_info->m_virtualTextureSize / m_info->m_tileSize) >> i;
 	}
 
-	m_offsets.resize(m_mipcount);
+	m_offsets.setCount(m_mipcount);
 	m_count = 0;
 
 	for (int i = 0; i < m_mipcount; ++i)
@@ -128,7 +128,7 @@ PageIndexer::PageIndexer(VirtualTextureInfo* _info)
 	}
 
 	// Calculate reverse mapping
-	m_reverse.resize(m_count);
+	m_reverse.setCount(m_count);
 
 	for (int i = 0; i < m_mipcount; ++i)
 	{
@@ -207,11 +207,11 @@ SimpleImage::SimpleImage(int _width, int _height, int _channelCount, uint8_t _cl
 	, m_height(_height)
 	, m_channelCount(_channelCount)
 {
-	m_data.resize(m_width * m_height * m_channelCount);
+	m_data.setCount(m_width * m_height * m_channelCount);
 	clear(_clearValue);
 }
 
-SimpleImage::SimpleImage(int _width, int _height, int _channelCount, tinystl::vector<uint8_t>& _data)
+SimpleImage::SimpleImage(int _width, int _height, int _channelCount, bx::ArrayT<uint8_t>& _data)
 	: m_width(_width)
 	, m_height(_height)
 	, m_channelCount(_channelCount)
@@ -442,8 +442,8 @@ PageTable::PageTable(PageCache* _cache, VirtualTextureInfo* _info, PageIndexer* 
 	m_quadtree = BX_NEW(VirtualTexture::getAllocator(), Quadtree)({ 0, 0, size, size }, (int)bx::log2((float)size));
 	m_texture = bgfx::createTexture2D((uint16_t)size, (uint16_t)size, true, 1, bgfx::TextureFormat::BGRA8, BGFX_SAMPLER_UVW_CLAMP | BGFX_SAMPLER_POINT | BGFX_TEXTURE_BLIT_DST);
 
-	_cache->added = [this](Page page, Point pt) { m_quadtreeDirty = true; m_quadtree->add(page, pt); };
-	_cache->removed = [this](Page page, Point pt) { m_quadtreeDirty = true; m_quadtree->remove(page); BX_UNUSED(pt); };
+	_cache->added = { [](void* _userData, Page page, Point pt) { PageTable* self = (PageTable*)_userData; self->m_quadtreeDirty = true; self->m_quadtree->add(page, pt); }, this };
+	_cache->removed = { [](void* _userData, Page page, Point pt) { PageTable* self = (PageTable*)_userData; self->m_quadtreeDirty = true; self->m_quadtree->remove(page); BX_UNUSED(pt); }, this };
 
 	auto PageTableSizeLog2 = m_indexer->getMipCount();
 
@@ -452,8 +452,8 @@ PageTable::PageTable(PageCache* _cache, VirtualTextureInfo* _info, PageIndexer* 
 		int  mipSize = m_info->GetPageTableSize() >> i;
 		auto simpleImage = BX_NEW(VirtualTexture::getAllocator(), SimpleImage)(mipSize, mipSize, s_channelCount);
 		auto stagingTexture = bgfx::createTexture2D((uint16_t)mipSize, (uint16_t)mipSize, false, 1, bgfx::TextureFormat::BGRA8, BGFX_SAMPLER_UVW_CLAMP | BGFX_SAMPLER_POINT);
-		m_images.push_back(simpleImage);
-		m_stagingTextures.push_back(stagingTexture);
+		m_images.add(simpleImage);
+		m_stagingTextures.add(stagingTexture);
 	}
 }
 
@@ -462,12 +462,12 @@ PageTable::~PageTable()
 	bx::deleteObject(VirtualTexture::getAllocator(), m_quadtree);
 	bgfx::destroy(m_texture);
 
-	for (int i = 0; i < (int)m_images.size(); ++i)
+	for (uint32_t i = 0, num = m_images.getCount(); i < num; ++i)
 	{
 		bx::deleteObject(VirtualTexture::getAllocator(), m_images[i]);
 	}
 
-	for (int i = 0; i < (int)m_stagingTextures.size(); ++i)
+	for (uint32_t i = 0, num = m_stagingTextures.getCount(); i < num; ++i)
 	{
 		bgfx::destroy(m_stagingTextures[i]);
 	}
@@ -523,7 +523,7 @@ void PageLoader::submit(Page request)
 void PageLoader::loadPage(ReadState& state)
 {
 	int size = m_info->GetPageSize() * m_info->GetPageSize() * s_channelCount;
-	state.m_data.resize(size);
+	state.m_data.setCount(size);
 
 	if (m_colorMipLevels)
 	{
@@ -604,24 +604,24 @@ PageCache::PageCache(TextureAtlas* _atlas, PageLoader* _loader, int _count)
 	, m_count(_count)
 {
 	clear();
-	m_loader->loadComplete = [&](Page page, uint8_t* data) { loadComplete(page, data); };
+	m_loader->loadComplete = { [](void* _userData, Page page, uint8_t* data) { ( (PageCache*)_userData)->loadComplete(page, data); }, this };
 }
 
 // Update the pages's position in the lru
 bool PageCache::touch(Page page)
 {
-	if (m_loading.find(page) == m_loading.end())
+	if (!m_loading.contains(page))
 	{
-		if (m_lru_used.find(page) != m_lru_used.end())
+		if (m_lru_used.contains(page))
 		{
 			// Find the page (slow!!) and add it to the back of the list
-			for (auto it = m_lru.begin(); it != m_lru.end(); ++it)
+			for (uint32_t i = 0, num = m_lru.getCount(); i < num; ++i)
 			{
-				if (it->m_page == page)
+				if (m_lru[i].m_page == page)
 				{
-					auto lruPage = *it;
-					m_lru.erase(it);
-					m_lru.push_back(lruPage);
+					auto lruPage = m_lru[i];
+					m_lru.remove(i, bx::kOrdered);
+					m_lru.add(lruPage);
 					return true;
 				}
 			}
@@ -636,11 +636,11 @@ bool PageCache::touch(Page page)
 bool PageCache::request(Page request, bgfx::ViewId blitViewId)
 {
 	m_blitViewId = blitViewId;
-	if (m_loading.find(request) == m_loading.end())
+	if (!m_loading.contains(request))
 	{
-		if (m_lru_used.find(request) == m_lru_used.end())
+		if (!m_lru_used.contains(request))
 		{
-			m_loading.insert(request);
+			m_loading.tryAdd(request);
 			m_loader->submit(request);
 			return true;
 		}
@@ -653,20 +653,20 @@ void PageCache::clear()
 {
 	for (auto& lru_page : m_lru)
 	{
-		if (m_lru_used.find(lru_page.m_page) != m_lru_used.end())
+		if (m_lru_used.contains(lru_page.m_page))
 		{
 			removed(lru_page.m_page, lru_page.m_point);
 		}
 	}
 	m_lru_used.clear();
 	m_lru.clear();
-	m_lru.reserve(m_count * m_count);
+	m_lru.setCapacity(m_count * m_count);
 	m_current = 0;
 }
 
 void PageCache::loadComplete(Page page, uint8_t* data)
 {
-	m_loading.erase(page);
+	m_loading.tryRemove(page);
 
 	// Find a place in the atlas for the data
 	Point pt;
@@ -675,8 +675,8 @@ void PageCache::loadComplete(Page page, uint8_t* data)
 	{
 		// Remove the oldest lru page and remember it's location so we can use it
 		auto lru_page = m_lru[0];
-		m_lru.erase(m_lru.begin());
-		m_lru_used.erase(lru_page.m_page);
+		m_lru.remove(bx::kFirst);
+		m_lru_used.tryRemove(lru_page.m_page);
 		pt = lru_page.m_point;
 		// Notify that we removed a page
 		removed(lru_page.m_page, lru_page.m_point);
@@ -694,8 +694,8 @@ void PageCache::loadComplete(Page page, uint8_t* data)
 
 	// Notify atlas that he can upload the page and add the page to lru
 	m_atlas->uploadPage(pt, data, m_blitViewId);
-	m_lru.push_back({ page, pt });
-	m_lru_used.insert(page);
+	m_lru.add(LruPage{ page, pt });
+	m_lru_used.tryAdd(page);
 
 	// Signal that we added a page
 	added(page, pt);
@@ -773,10 +773,10 @@ FeedbackBuffer::FeedbackBuffer(VirtualTextureInfo* _info, int _width, int _heigh
 {
 	// Setup classes
 	m_indexer = BX_NEW(VirtualTexture::getAllocator(), PageIndexer)(m_info);
-	m_requests.resize(m_indexer->getCount());
+	m_requests.setCount(m_indexer->getCount());
 
 	// Initialize and clear buffers
-	m_downloadBuffer.resize(m_width * m_height * s_channelCount);
+	m_downloadBuffer.setCount(m_width * m_height * s_channelCount);
 	bx::memSet(&m_downloadBuffer[0], 0, m_width * m_height * s_channelCount);
 	clear();
 
@@ -864,7 +864,7 @@ void FeedbackBuffer::addRequestAndParents(Page request)
 	}
 }
 
-const tinystl::vector<int>& FeedbackBuffer::getRequests() const
+const bx::ArrayT<int>& FeedbackBuffer::getRequests() const
 {
 	return m_requests;
 }
@@ -896,7 +896,7 @@ VirtualTexture::VirtualTexture(TileDataFile* _tileDataFile, VirtualTextureInfo* 
 
 	// Setup indexer
 	m_indexer = BX_NEW(VirtualTexture::getAllocator(), PageIndexer)(m_info);
-	m_pagesToLoad.reserve(m_indexer->getCount());
+	m_pagesToLoad.setCapacity(m_indexer->getCount());
 
 	// Setup classes
 	m_atlas = BX_NEW(VirtualTexture::getAllocator(), TextureAtlas)(m_info, m_atlasCount, m_uploadsPerFrame);
@@ -1033,7 +1033,7 @@ void VirtualTexture::clear()
 	m_cache->clear();
 }
 
-void VirtualTexture::update(const tinystl::vector<int>& requests, bgfx::ViewId blitViewId)
+void VirtualTexture::update(const bx::ArrayT<int>& requests, bgfx::ViewId blitViewId)
 {
 	m_pagesToLoad.clear();
 
@@ -1041,14 +1041,14 @@ void VirtualTexture::update(const tinystl::vector<int>& requests, bgfx::ViewId b
 	// If it is, update it's position in the LRU collection
 	// Otherwise add it to the list of pages to load
 	int touched = 0;
-	for (int i = 0; i < (int)requests.size(); ++i)
+	for (uint32_t i = 0, num = requests.getCount(); i < num; ++i)
 	{
 		if (requests[i] > 0)
 		{
 			PageCount pc(m_indexer->getPageFromIndex(i), requests[i]);
 			if (!m_cache->touch(pc.m_page))
 			{
-				m_pagesToLoad.push_back(pc);
+				m_pagesToLoad.add(pc);
 			}
 			else
 			{
@@ -1062,8 +1062,8 @@ void VirtualTexture::update(const tinystl::vector<int>& requests, bgfx::ViewId b
 	{
 		// sort by low res to high res and number of requests
 		bx::quickSort(
-			m_pagesToLoad.begin()
-			, uint32_t(m_pagesToLoad.size())
+			m_pagesToLoad.getPtr()
+			, m_pagesToLoad.getCount()
 			, sizeof(vt::PageCount)
 			, [](const void* _a, const void* _b) -> int32_t {
 			const vt::PageCount& lhs = *(const vt::PageCount*)(_a);
@@ -1072,7 +1072,7 @@ void VirtualTexture::update(const tinystl::vector<int>& requests, bgfx::ViewId b
 		});
 
 		// if more pages than will fit in memory or more than update per frame drop high res pages with lowest use count
-		int loadcount = bx::min(bx::min((int)m_pagesToLoad.size(), m_uploadsPerFrame), m_atlasCount * m_atlasCount);
+		int loadcount = bx::min(bx::min((int)m_pagesToLoad.getCount(), m_uploadsPerFrame), m_atlasCount * m_atlasCount);
 		for (int i = 0; i < loadcount; ++i)
 			m_cache->request(m_pagesToLoad[i].m_page, blitViewId);
 	}

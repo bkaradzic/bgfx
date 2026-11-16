@@ -866,14 +866,18 @@ namespace bgfx
 
 	struct PendingAU
 	{
-		stl::vector<uint8_t> data;
-		int64_t              ptsUs;
-		int32_t              gopId;
-		bool                 isIdr;
+		BX_CLASS(PendingAU, TRIVIALLY_RELOCATABLE);
+
+		bx::ArrayT<uint8_t> data{g_allocatorHandle};
+		int64_t             ptsUs;
+		int32_t             gopId;
+		bool                isIdr;
 
 		void swap(PendingAU& _other)
 		{
-			data.swap(_other.data);
+			bx::ArrayT<uint8_t> tmp(bx::move(data) );
+			data = bx::move(_other.data);
+			_other.data = bx::move(tmp);
 			int64_t tmpPts = ptsUs; ptsUs = _other.ptsUs; _other.ptsUs = tmpPts;
 			int32_t tmpGop = gopId; gopId = _other.gopId; _other.gopId = tmpGop;
 			bool    tmpIdr = isIdr; isIdr = _other.isIdr; _other.isIdr = tmpIdr;
@@ -909,12 +913,12 @@ namespace bgfx
 				m_seenAnyIdr = true;
 			}
 
-			m_items.emplace_back();
+			m_items.add(bx::Emplace);
 
-			PendingAU& au = m_items.back();
-			au.data.resize(_size);
+			PendingAU& au = m_items[m_items.getCount()-1];
+			au.data.setCount(_size, bx::InitNone);
 
-			bx::memCopy(au.data.data(), _bitstream, _size);
+			bx::memCopy(au.data.getPtr(), _bitstream, _size);
 
 			au.ptsUs = _ptsUs;
 			au.gopId = m_currentGopId;
@@ -928,7 +932,7 @@ namespace bgfx
 
 		bool empty() const
 		{
-			return m_head >= m_items.size();
+			return m_head >= m_items.getCount();
 		}
 
 		const PendingAU& front() const
@@ -950,7 +954,7 @@ namespace bgfx
 
 			dropOverSoftCap();
 
-			if (m_head == m_items.size() && m_head > 0)
+			if (m_head == m_items.getCount() && m_head > 0)
 			{
 				m_items.clear();
 				m_head        = 0;
@@ -962,23 +966,14 @@ namespace bgfx
 
 			if (m_head > 64)
 			{
-				const size_t remaining = m_items.size() - m_head;
 				size_t freedBytes = 0;
 
-				for (size_t ii = 0; ii < m_head; ++ii)
+				for (uint32_t ii = 0; ii < m_head; ++ii)
 				{
-					freedBytes += m_items[ii].data.size();
+					freedBytes += m_items[ii].data.getCount();
 				}
 
-				for (size_t ii = 0; ii < remaining; ++ii)
-				{
-					m_items[ii].data.swap(m_items[m_head + ii].data);
-					m_items[ii].ptsUs = m_items[m_head + ii].ptsUs;
-					m_items[ii].gopId = m_items[m_head + ii].gopId;
-					m_items[ii].isIdr = m_items[m_head + ii].isIdr;
-				}
-
-				m_items.resize(remaining);
+				m_items.remove(0, bx::kOrdered, m_head);
 				m_head = 0;
 				m_totalBytes -= uint32_t(freedBytes);
 			}
@@ -993,29 +988,29 @@ namespace bgfx
 
 			size_t pendingBytes = 0;
 
-			for (size_t ii = m_head; ii < m_items.size(); ++ii)
+			for (uint32_t ii = m_head, num = m_items.getCount(); ii < num; ++ii)
 			{
-				pendingBytes += m_items[ii].data.size();
+				pendingBytes += m_items[ii].data.getCount();
 			}
 
 			while (pendingBytes > m_softCapBytes)
 			{
-				size_t nextIdr = m_head + 1;
+				uint32_t nextIdr = m_head + 1;
 
-				while (nextIdr < m_items.size()
+				while (nextIdr < m_items.getCount()
 				&&     !m_items[nextIdr].isIdr)
 				{
 					++nextIdr;
 				}
 
-				if (nextIdr >= m_items.size() )
+				if (nextIdr >= m_items.getCount() )
 				{
 					break;
 				}
 
-				for (size_t ii = m_head; ii < nextIdr; ++ii)
+				for (uint32_t ii = m_head; ii < nextIdr; ++ii)
 				{
-					pendingBytes -= m_items[ii].data.size();
+					pendingBytes -= m_items[ii].data.getCount();
 				}
 
 				m_head = nextIdr;
@@ -1035,7 +1030,7 @@ namespace bgfx
 
 		uint32_t size() const
 		{
-			return uint32_t(m_items.size() );
+			return m_items.getCount();
 		}
 
 		const PendingAU& at(uint32_t _idx) const
@@ -1046,7 +1041,7 @@ namespace bgfx
 		int32_t findRunHeadForPts(int64_t _ptsUs) const
 		{
 			int32_t best = -1;
-			for (uint32_t ii = 0; ii < uint32_t(m_items.size() ); ++ii)
+			for (uint32_t ii = 0, num = m_items.getCount(); ii < num; ++ii)
 			{
 				if (m_items[ii].isIdr
 				&&  m_items[ii].ptsUs <= _ptsUs)
@@ -1065,7 +1060,7 @@ namespace bgfx
 
 		uint32_t readCursor() const
 		{
-			return uint32_t(m_head);
+			return m_head;
 		}
 
 		bool isRetaining() const { return m_retain; }
@@ -1074,8 +1069,8 @@ namespace bgfx
 		int64_t maxPts() const   { return m_maxPts; }
 
 	private:
-		stl::vector<PendingAU> m_items;
-		size_t                 m_head;
+		bx::ArrayT<PendingAU>  m_items{g_allocatorHandle};
+		uint32_t               m_head;
 		uint32_t               m_softCapBytes;
 		uint32_t               m_totalBytes;
 		int32_t                m_currentGopId;
@@ -1201,7 +1196,7 @@ namespace bgfx
 			const PendingAU& au = _cache.front();
 			const int64_t    pts = au.ptsUs;
 
-			_decodeOne(au.data.data(), uint32_t(au.data.size() ), pts);
+			_decodeOne(au.data.getPtr(), au.data.getCount(), pts);
 			_cache.pop();
 
 			if (pts <= _ptsUs

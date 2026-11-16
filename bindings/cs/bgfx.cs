@@ -2700,8 +2700,8 @@ public static partial class bgfx
 			public uint maxOcclusionQueries;
 			public uint maxEncoders;
 			public uint minResourceCbSize;
-			public uint maxTransientVbSize;
-			public uint maxTransientIbSize;
+			public uint minTransientVbSize;
+			public uint minTransientIbSize;
 			public uint minUniformBufferSize;
 			public uint minUniformCacheSize;
 			public uint blitRowPitchAlign;
@@ -2757,8 +2757,8 @@ public static partial class bgfx
 			public uint numDrawCallPeakFrames;
 			public uint minViews;
 			public uint minResourceCbSize;
-			public uint maxTransientVbSize;
-			public uint maxTransientIbSize;
+			public uint minTransientVbSize;
+			public uint minTransientIbSize;
 			public uint minUniformBufferSize;
 			public uint minUniformCacheSize;
 		}

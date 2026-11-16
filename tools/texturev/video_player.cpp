@@ -7,6 +7,7 @@
 
 #include <bx/allocator.h>
 #include <bx/bx.h>
+#include <bx/array.h>
 #include <bx/debug.h>
 #include <bx/endian.h>
 #include <bx/file.h>
@@ -16,9 +17,6 @@
 #include <bx/timer.h>
 
 #include <entry/entry.h>
-
-#include <tinystl/vector.h>
-namespace stl = tinystl;
 
 BX_PRAGMA_DIAGNOSTIC_PUSH();
 BX_PRAGMA_DIAGNOSTIC_IGNORED_MSVC(4127) // warning C4127: conditional expression is constant
@@ -49,7 +47,7 @@ struct VideoPlayer::Impl
 	uint16_t height   = 0;
 	uint8_t  maxDpbSlots         = 16;
 	uint8_t  maxActiveReferences = 4;
-	stl::vector<uint8_t> parameterSets;
+	bx::ArrayT<uint8_t> parameterSets;
 
 	lsmash_root_t*           root       = NULL;
 	lsmash_file_parameters_t fp         = {};
@@ -61,7 +59,7 @@ struct VideoPlayer::Impl
 	bool           readerOpened = false;
 	uint64_t       fileSize     = 0;
 
-	stl::vector<uint8_t> scratch;
+	bx::ArrayT<uint8_t> scratch;
 
 	struct Frame
 	{
@@ -71,7 +69,7 @@ struct VideoPlayer::Impl
 		bool     isKeyframe;
 	};
 
-	stl::vector<Frame> frames;
+	bx::ArrayT<Frame> frames;
 	uint64_t           totalBytes = 0;
 
 	~Impl()
@@ -229,7 +227,7 @@ namespace
 		return 0 == bx::memCmp(_data, _fourcc, 4);
 	}
 
-	void avccToAnnexB(stl::vector<uint8_t>& _out, const uint8_t* _in, uint32_t _size, uint32_t _lengthSize)
+	void avccToAnnexB(bx::ArrayT<uint8_t>& _out, const uint8_t* _in, uint32_t _size, uint32_t _lengthSize)
 	{
 		uint32_t pos = 0;
 
@@ -249,10 +247,10 @@ namespace
 				break;
 			}
 
-			_out.push_back(0);
-			_out.push_back(0);
-			_out.push_back(1);
-			_out.insert(_out.end(), _in + pos, _in + pos + naluLen);
+			_out.add(0);
+			_out.add(0);
+			_out.add(1);
+			_out.add(bx::ArrayViewT<uint8_t>(_in + pos, _in + pos + naluLen) );
 
 			pos += naluLen;
 		}
@@ -284,7 +282,7 @@ namespace
 		}
 	}
 
-	uint32_t appendNalAsAnnexB(stl::vector<uint8_t>& _out, const uint8_t* _nal, uint32_t _nalLen)
+	uint32_t appendNalAsAnnexB(bx::ArrayT<uint8_t>& _out, const uint8_t* _nal, uint32_t _nalLen)
 	{
 		if (NULL == _nal
 		||  0 == _nalLen)
@@ -292,10 +290,10 @@ namespace
 			return 0;
 		}
 
-		_out.push_back(0);
-		_out.push_back(0);
-		_out.push_back(1);
-		_out.insert(_out.end(), _nal, _nal + _nalLen);
+		_out.add(0);
+		_out.add(0);
+		_out.add(1);
+		_out.add(bx::ArrayViewT<uint8_t>(_nal, _nal + _nalLen) );
 
 		return 1;
 	}
@@ -321,10 +319,10 @@ namespace
 		return dstIdx;
 	}
 
-	void stripEmulationPrevention(stl::vector<uint8_t>& _dst, const uint8_t* _src, uint32_t _size)
+	void stripEmulationPrevention(bx::ArrayT<uint8_t>& _dst, const uint8_t* _src, uint32_t _size)
 	{
-		_dst.resize(_size);
-		_dst.resize(stripEmulationPrevention(_dst.data(), _src, _size) );
+		_dst.setCount(_size);
+		_dst.setCount(stripEmulationPrevention(_dst.getPtr(), _src, _size) );
 	}
 
 	uint8_t chromaFromFormatIdc(uint32_t _chromaFormatIdc)
@@ -418,14 +416,14 @@ namespace
 			: prevPocMsb(0)
 			, prevPocLsb(0)
 		{
-			sps.resize(h264::MAX_SPS_ID + 1);
-			pps.resize(h264::MAX_PPS_ID + 1);
+			sps.setCount(h264::MAX_SPS_ID + 1);
+			pps.setCount(h264::MAX_PPS_ID + 1);
 			bx::memSet(spsValid, 0, sizeof(spsValid) );
 			bx::memSet(ppsValid, 0, sizeof(ppsValid) );
 		}
 
-		stl::vector<h264::SPS> sps;
-		stl::vector<h264::PPS> pps;
+		bx::ArrayT<h264::SPS> sps;
+		bx::ArrayT<h264::PPS> pps;
 		bool    spsValid[h264::MAX_SPS_ID + 1];
 		bool    ppsValid[h264::MAX_PPS_ID + 1];
 		int32_t prevPocMsb;
@@ -557,7 +555,7 @@ namespace
 		}
 
 		h264::SliceHeader sh = {};
-		h264::read_slice_header(&sh, &nal, _tables.pps.data(), _tables.sps.data(), &bs);
+		h264::read_slice_header(&sh, &nal, _tables.pps.getPtr(), _tables.sps.getPtr(), &bs);
 
 		const bool isIdr = h264::NAL_UNIT_TYPE_CODED_SLICE_IDR == nal.type;
 		_poc = computePoc(_tables.prevPocMsb, _tables.prevPocLsb, _tables.sps[spsId], sh, nal, isIdr);
@@ -1391,7 +1389,7 @@ namespace
 			{
 				found = true;
 				_video.parameterSets.clear();
-				_video.parameterSets.insert(_video.parameterSets.end(), _obu, _obu + _obuSize);
+				_video.parameterSets.add(bx::ArrayViewT<uint8_t>(_obu, _obu + _obuSize) );
 			}
 		});
 
@@ -1564,7 +1562,7 @@ namespace
 			, m_bufferPos(0)
 			, m_bufferLen(0)
 		{
-			m_buffer.resize(kScanBufferSize);
+			m_buffer.setCount(kScanBufferSize);
 		}
 
 		const uint8_t* window(uint64_t _pos, uint32_t _minLen, uint32_t& _len)
@@ -1585,7 +1583,7 @@ namespace
 
 			_len = uint32_t(bx::min<uint64_t>(m_bufferPos + m_bufferLen - _pos, UINT32_MAX) );
 
-			return &m_buffer[size_t(_pos - m_bufferPos)];
+			return &m_buffer[uint32_t(_pos - m_bufferPos)];
 		}
 
 		uint64_t size() const
@@ -1598,7 +1596,7 @@ namespace
 		{
 			bx::Error err;
 			bx::seek(m_reader, int64_t(_pos), bx::Whence::Begin);
-			const int32_t len = bx::read(m_reader, m_buffer.data(), int32_t(m_buffer.size() ), &err);
+			const int32_t len = bx::read(m_reader, m_buffer.getPtr(), int32_t(m_buffer.getCount() ), &err);
 
 			m_bufferPos = _pos;
 			m_bufferLen = 0 < len ? uint32_t(len) : 0;
@@ -1608,7 +1606,7 @@ namespace
 		uint64_t             m_size;
 		uint64_t             m_bufferPos;
 		uint32_t             m_bufferLen;
-		stl::vector<uint8_t> m_buffer;
+		bx::ArrayT<uint8_t> m_buffer;
 	};
 
 	uint64_t findStartCode(FileScanner& _scanner, uint64_t _pos)
@@ -1677,29 +1675,29 @@ namespace
 		return lhs.frame < rhs.frame ? -1 : lhs.frame > rhs.frame ? 1 : 0;
 	}
 
-	void finalizeGop(Impl& _video, stl::vector<GopPicture>& _gop, uint64_t& _displayBase, int64_t _frameUs)
+	void finalizeGop(Impl& _video, bx::ArrayT<GopPicture>& _gop, uint64_t& _displayBase, int64_t _frameUs)
 	{
-		if (_gop.empty() )
+		if (_gop.isEmpty() )
 		{
 			return;
 		}
 
-		bx::quickSort(_gop.data(), uint32_t(_gop.size() ), sizeof(GopPicture), compareGopPicture);
+		bx::quickSort(_gop.getPtr(), _gop.getCount(), sizeof(GopPicture), compareGopPicture);
 
-		for (uint32_t ii = 0; ii < uint32_t(_gop.size() ); ++ii)
+		for (uint32_t ii = 0, num = _gop.getCount(); ii < num; ++ii)
 		{
 			_video.frames[_gop[ii].frame].ptsUs = (_displayBase + ii) * uint64_t(_frameUs);
 		}
 
-		_displayBase += _gop.size();
+		_displayBase += _gop.getCount();
 		_gop.clear();
 	}
 
 	void closeFrame(Impl& _video, uint64_t _end)
 	{
-		if (!_video.frames.empty() )
+		if (!_video.frames.isEmpty() )
 		{
-			Impl::Frame& last = _video.frames.back();
+			Impl::Frame& last = _video.frames[_video.frames.getCount()-1];
 			last.size = uint32_t(_end - last.offset);
 			_video.totalBytes += last.size;
 		}
@@ -1719,9 +1717,9 @@ namespace
 		uint64_t unitBegin   = UINT64_MAX;
 		uint64_t pos         = findStartCode(scanner, 0);
 
-		stl::vector<GopPicture> gop;
-		stl::vector<uint8_t>    rbsp;
-		rbsp.resize(kNalPeekSize);
+		bx::ArrayT<GopPicture> gop;
+		bx::ArrayT<uint8_t>    rbsp;
+		rbsp.setCount(kNalPeekSize);
 
 		while (pos < scanner.size() )
 		{
@@ -1747,7 +1745,7 @@ namespace
 			const uint32_t peek     = uint32_t(bx::min<uint64_t>(next - header, kNalPeekSize) );
 			const uint8_t* nal      = scanner.window(header, peek, len);
 			const uint32_t nalLen   = bx::min(peek, len);
-			const uint32_t rbspSize = stripEmulationPrevention(rbsp.data(), nal, nalLen);
+			const uint32_t rbspSize = stripEmulationPrevention(rbsp.getPtr(), nal, nalLen);
 			const uint32_t minSize  = isHevc ? hevc::kNalHeaderSize + 1 : 2;
 
 			if (rbspSize < minSize)
@@ -1763,7 +1761,7 @@ namespace
 
 			if (isHevc)
 			{
-				const uint8_t type = hevc::getNalUnitType(rbsp.data() );
+				const uint8_t type = hevc::getNalUnitType(rbsp.getPtr() );
 				parameterSet = hevc::isParameterSet(type);
 				slice        = hevc::isVcl(type);
 				firstSlice   = 0 != (rbsp[hevc::kNalHeaderSize] & 0x80);
@@ -1782,14 +1780,14 @@ namespace
 			{
 				if (isHevc)
 				{
-					parseHevcParameterSet(hevcTables, rbsp.data(), rbspSize);
+					parseHevcParameterSet(hevcTables, rbsp.getPtr(), rbspSize);
 				}
 				else
 				{
-					parseH264ParameterSet(h264Tables, _video, frameUs, rbsp.data(), rbspSize);
+					parseH264ParameterSet(h264Tables, _video, frameUs, rbsp.getPtr(), rbspSize);
 				}
 
-				if (_video.frames.empty()
+				if (_video.frames.isEmpty()
 				&&  UINT64_MAX == unitBegin)
 				{
 					appendNalAsAnnexB(_video.parameterSets, nal, nalLen);
@@ -1807,12 +1805,12 @@ namespace
 				int32_t poc = 0;
 
 				const bool haveOrder = isHevc
-					? hevcSlicePoc(hevcTables, rbsp.data(), rbspSize, poc)
-					: h264SlicePoc(h264Tables, rbsp.data(), rbspSize, poc)
+					? hevcSlicePoc(hevcTables, rbsp.getPtr(), rbspSize, poc)
+					: h264SlicePoc(h264Tables, rbsp.getPtr(), rbspSize, poc)
 					;
 
 				const bool gopStart = isHevc
-					? hevc::isIdrOrBla(hevc::getNalUnitType(rbsp.data() ) )
+					? hevc::isIdrOrBla(hevc::getNalUnitType(rbsp.getPtr() ) )
 					: keyframe
 					;
 
@@ -1821,9 +1819,9 @@ namespace
 					finalizeGop(_video, gop, displayBase, 0 != frameUs ? frameUs : kDefaultFrameUs);
 				}
 
-				const uint32_t frameIdx = uint32_t(_video.frames.size() );
+				const uint32_t frameIdx = _video.frames.getCount();
 
-				_video.frames.push_back(
+				_video.frames.add(
 					{
 						.ptsUs      = 0,
 						.offset     = start,
@@ -1831,11 +1829,11 @@ namespace
 						.isKeyframe = keyframe,
 					});
 
-				gop.push_back({ haveOrder ? poc : int32_t(frameIdx), frameIdx });
+				gop.add({ haveOrder ? poc : int32_t(frameIdx), frameIdx });
 				unitBegin = UINT64_MAX;
 			}
 			else if (!slice
-			     &&  !_video.frames.empty() )
+			     &&  !_video.frames.isEmpty() )
 			{
 				unitBegin = bx::min(unitBegin, pos);
 			}
@@ -1867,8 +1865,8 @@ namespace
 
 		finalizeGop(_video, gop, displayBase, 0 != frameUs ? frameUs : kDefaultFrameUs);
 
-		return !_video.frames.empty()
-			&& !_video.parameterSets.empty()
+		return !_video.frames.isEmpty()
+			&& !_video.parameterSets.isEmpty()
 			&& 0 != _video.width
 			&& 0 != _video.height
 			;
@@ -1902,11 +1900,11 @@ namespace
 				;
 
 			if (av1::OBU_TEMPORAL_DELIMITER == obu.type
-			||  _video.frames.empty() )
+			||  _video.frames.isEmpty() )
 			{
 				closeFrame(_video, pos);
 
-				_video.frames.push_back(
+				_video.frames.add(
 					{
 						.ptsUs      = 0,
 						.offset     = pos,
@@ -1928,7 +1926,7 @@ namespace
 				&&  parseAv1SequenceHeader(whole + obu.headerSize, obu.payloadSize, seq) )
 				{
 					haveSeq = true;
-					_video.parameterSets.insert(_video.parameterSets.end(), whole, whole + obuSize);
+					_video.parameterSets.add(bx::ArrayViewT<uint8_t>(whole, whole + obuSize) );
 				}
 			}
 			else if (!keySeen
@@ -1936,7 +1934,7 @@ namespace
 			{
 				const uint8_t* head = scanner.window(payload, 1, len);
 				keySeen = true;
-				_video.frames.back().isKeyframe = NULL != head && av1FrameIsKey(head, 1, 0 != seq.reducedStillPictureHeader);
+				_video.frames[_video.frames.getCount()-1].isKeyframe = NULL != head && av1FrameIsKey(head, 1, 0 != seq.reducedStillPictureHeader);
 			}
 
 			pos = next;
@@ -1953,12 +1951,12 @@ namespace
 
 		const int64_t frameUs = 0 != seq.frameUs ? seq.frameUs : kDefaultFrameUs;
 
-		for (uint32_t ii = 0; ii < uint32_t(_video.frames.size() ); ++ii)
+		for (uint32_t ii = 0, num = _video.frames.getCount(); ii < num; ++ii)
 		{
 			_video.frames[ii].ptsUs = uint64_t(ii) * uint64_t(frameUs);
 		}
 
-		return !_video.frames.empty();
+		return !_video.frames.isEmpty();
 	}
 
 	bool indexIvf(Impl& _video)
@@ -2019,10 +2017,10 @@ namespace
 
 			const uint64_t ptsUs = 0 != timebaseDen
 				? pts * uint64_t(timebaseNum) * 1000000ull / uint64_t(timebaseDen)
-				: uint64_t(_video.frames.size() ) * uint64_t(kDefaultFrameUs)
+				: uint64_t(_video.frames.getCount() ) * uint64_t(kDefaultFrameUs)
 				;
 
-			_video.frames.push_back(
+			_video.frames.add(
 				{
 					.ptsUs      = ptsUs,
 					.offset     = offset,
@@ -2041,7 +2039,7 @@ namespace
 
 		noteAv1SequenceHeader(_video, seq);
 
-		return !_video.frames.empty();
+		return !_video.frames.isEmpty();
 	}
 
 	bool parseAvcC(Impl& _video, const uint8_t* _data, uint32_t _size, uint32_t& _lengthSize)
@@ -2069,7 +2067,7 @@ namespace
 
 		H264Tables tables;
 		int64_t    frameUs = 0;
-		stl::vector<uint8_t> rbsp;
+		bx::ArrayT<uint8_t> rbsp;
 
 		for (uint32_t ii = 0; ii < numSps; ++ii)
 		{
@@ -2088,7 +2086,7 @@ namespace
 
 			appendNalAsAnnexB(_video.parameterSets, _data + pos, nalLen);
 			stripEmulationPrevention(rbsp, _data + pos, nalLen);
-			parseH264ParameterSet(tables, _video, frameUs, rbsp.data(), uint32_t(rbsp.size() ) );
+			parseH264ParameterSet(tables, _video, frameUs, rbsp.getPtr(), rbsp.getCount() );
 
 			pos += nalLen;
 		}
@@ -2157,9 +2155,9 @@ namespace
 		_video.chroma   = chromaFromFormatIdc(chromaFormat);
 		_video.bitDepth = bitDepthLuma;
 
-		stl::vector<uint8_t> vps;
-		stl::vector<uint8_t> sps;
-		stl::vector<uint8_t> pps;
+		bx::ArrayT<uint8_t> vps;
+		bx::ArrayT<uint8_t> sps;
+		bx::ArrayT<uint8_t> pps;
 
 		for (uint32_t aa = 0; aa < numArrays; ++aa)
 		{
@@ -2172,7 +2170,7 @@ namespace
 			const uint32_t numNalus    = readBe<uint16_t>(_data + pos);
 			pos += 2;
 
-			stl::vector<uint8_t>* dst = NULL;
+			bx::ArrayT<uint8_t>* dst = NULL;
 
 			switch (nalUnitType)
 			{
@@ -2206,9 +2204,9 @@ namespace
 			}
 		}
 
-		_video.parameterSets.insert(_video.parameterSets.end(), vps.begin(), vps.end() );
-		_video.parameterSets.insert(_video.parameterSets.end(), sps.begin(), sps.end() );
-		_video.parameterSets.insert(_video.parameterSets.end(), pps.begin(), pps.end() );
+		_video.parameterSets.add(vps);
+		_video.parameterSets.add(sps);
+		_video.parameterSets.add(pps);
 
 		return true;
 	}
@@ -2327,7 +2325,7 @@ namespace
 			const bool isHevc = bgfx::VideoCodec::H265 == _video.codec;
 			H264Tables tables;
 			int64_t    frameUs = 0;
-			stl::vector<uint8_t> rbsp;
+			bx::ArrayT<uint8_t> rbsp;
 
 			visitLengthPrefixedNals(s->data, s->length, _video.lengthSize, [&](const uint8_t* _nal, uint32_t _nalLen)
 			{
@@ -2350,7 +2348,7 @@ namespace
 					if (keep)
 					{
 						stripEmulationPrevention(rbsp, _nal, _nalLen);
-						parseH264ParameterSet(tables, _video, frameUs, rbsp.data(), uint32_t(rbsp.size() ) );
+						parseH264ParameterSet(tables, _video, frameUs, rbsp.getPtr(), rbsp.getCount() );
 					}
 				}
 
@@ -2478,7 +2476,7 @@ namespace
 			return false;
 		}
 
-		if (_video.parameterSets.empty() )
+		if (_video.parameterSets.isEmpty() )
 		{
 			takeInBandParameterSets(_video);
 		}
@@ -2486,7 +2484,7 @@ namespace
 		const uint32_t timescale  = bx::max<uint32_t>(md.timescale, 1);
 		const uint32_t numSamples = lsmash_get_sample_count_in_media_timeline(root, trackId);
 
-		_video.frames.reserve(numSamples);
+		_video.frames.setCapacity(numSamples);
 
 		for (uint32_t ii = 0; ii < numSamples; ++ii)
 		{
@@ -2497,7 +2495,7 @@ namespace
 				break;
 			}
 
-			_video.frames.push_back(
+			_video.frames.add(
 				{
 					.ptsUs      = s.cts * 1000000ull / timescale,
 					.offset     = 0,
@@ -2508,8 +2506,8 @@ namespace
 			_video.totalBytes += s.length;
 		}
 
-		return !_video.frames.empty()
-			&& !_video.parameterSets.empty()
+		return !_video.frames.isEmpty()
+			&& !_video.parameterSets.isEmpty()
 			;
 	}
 
@@ -2640,10 +2638,10 @@ bool VideoPlayer::open(const char* _filePath)
 		return false;
 	}
 
-	const uint32_t psSize    = uint32_t(m_impl->parameterSets.size() );
+	const uint32_t psSize    = m_impl->parameterSets.getCount();
 	const uint32_t totalSize = uint32_t(sizeof(bgfx::VideoDecoderInit) ) + psSize;
 
-	const uint64_t durationUs    = bx::max<uint64_t>(m_impl->frames.back().ptsUs, 1);
+	const uint64_t durationUs    = bx::max<uint64_t>(m_impl->frames[m_impl->frames.getCount()-1].ptsUs, 1);
 	const uint64_t bytesPerSec   = m_impl->totalBytes * 1000000ull / durationUs;
 	const uint32_t cachedAuBytes = uint32_t(bx::clamp<uint64_t>(bytesPerSec * kCacheWindowUs / 1000000ull, kMinCachedAuBytes, UINT32_MAX) );
 
@@ -2662,7 +2660,7 @@ bool VideoPlayer::open(const char* _filePath)
 
 	bx::memCopy(
 		  mem->data + sizeof(bgfx::VideoDecoderInit)
-		, m_impl->parameterSets.data()
+		, m_impl->parameterSets.getPtr()
 		, psSize
 		);
 
@@ -2686,7 +2684,7 @@ bool VideoPlayer::open(const char* _filePath)
 		return false;
 	}
 
-	m_durationUs     = m_impl->frames.back().ptsUs;
+	m_durationUs     = m_impl->frames[m_impl->frames.getCount()-1].ptsUs;
 	m_playbackTimeUs = 0;
 	m_lastTickHpc    = bx::getHPCounter();
 	m_nextAuToSubmit = 0;
@@ -2741,14 +2739,14 @@ bgfx::VideoCodec::Enum VideoPlayer::codec() const
 uint32_t VideoPlayer::findIdrAtOrBefore(uint64_t _ptsUs) const
 {
 	if (NULL == m_impl
-	||  m_impl->frames.empty() )
+	||  m_impl->frames.isEmpty() )
 	{
 		return 0;
 	}
 
 	uint32_t lastIdr = 0;
 
-	for (uint32_t ii = 0; ii < uint32_t(m_impl->frames.size() ); ++ii)
+	for (uint32_t ii = 0, num = m_impl->frames.getCount(); ii < num; ++ii)
 	{
 		if (m_impl->frames[ii].ptsUs > _ptsUs)
 		{
@@ -2767,12 +2765,12 @@ uint32_t VideoPlayer::findIdrAtOrBefore(uint64_t _ptsUs) const
 uint32_t VideoPlayer::findIdrAtOrAfter(uint64_t _ptsUs) const
 {
 	if (NULL == m_impl
-	||  m_impl->frames.empty() )
+	||  m_impl->frames.isEmpty() )
 	{
 		return 0;
 	}
 
-	const uint32_t numFrames = uint32_t(m_impl->frames.size() );
+	const uint32_t numFrames = m_impl->frames.getCount();
 
 	for (uint32_t ii = 0; ii < numFrames; ++ii)
 	{
@@ -2789,12 +2787,12 @@ uint32_t VideoPlayer::findIdrAtOrAfter(uint64_t _ptsUs) const
 uint32_t VideoPlayer::findFrameAtOrBefore(uint64_t _ptsUs) const
 {
 	if (NULL == m_impl
-	||  m_impl->frames.empty() )
+	||  m_impl->frames.isEmpty() )
 	{
 		return 0;
 	}
 
-	const uint32_t numFrames = uint32_t(m_impl->frames.size() );
+	const uint32_t numFrames = m_impl->frames.getCount();
 	uint32_t       result    = 0;
 
 	for (uint32_t ii = 0; ii < numFrames; ++ii)
@@ -2814,7 +2812,7 @@ void VideoPlayer::submitDecodeFrame(uint32_t _index, bool _setPosition)
 {
 	const Impl::Frame& f = m_impl->frames[_index];
 
-	stl::vector<uint8_t>& scratch = m_impl->scratch;
+	bx::ArrayT<uint8_t>& scratch = m_impl->scratch;
 	scratch.clear();
 
 	if (Impl::Mp4 == m_impl->container)
@@ -2832,7 +2830,7 @@ void VideoPlayer::submitDecodeFrame(uint32_t _index, bool _setPosition)
 
 		if (bgfx::VideoCodec::AV1 == m_impl->codec)
 		{
-			scratch.insert(scratch.end(), s->data, s->data + s->length);
+			scratch.add(bx::ArrayViewT<uint8_t>(s->data, s->data + s->length) );
 		}
 		else
 		{
@@ -2843,11 +2841,11 @@ void VideoPlayer::submitDecodeFrame(uint32_t _index, bool _setPosition)
 	}
 	else
 	{
-		scratch.resize(f.size);
+		scratch.setCount(f.size);
 
 		bx::Error err;
 		bx::seek(&m_impl->reader, int64_t(f.offset), bx::Whence::Begin);
-		const int32_t read = bx::read(&m_impl->reader, scratch.data(), int32_t(f.size), &err);
+		const int32_t read = bx::read(&m_impl->reader, scratch.getPtr(), int32_t(f.size), &err);
 
 		if (!err.isOk()
 		||  uint32_t(read) != f.size)
@@ -2862,14 +2860,14 @@ void VideoPlayer::submitDecodeFrame(uint32_t _index, bool _setPosition)
 		bgfx::VideoDecoderAu    au;
 	};
 
-	const uint32_t bitstreamSize = uint32_t(scratch.size() );
+	const uint32_t bitstreamSize = scratch.getCount();
 	const uint32_t totalSize     = uint32_t(sizeof(Payload) ) + bitstreamSize;
 
 	const bgfx::Memory* mem = bgfx::alloc(totalSize);
 	Payload* dstPayload     = (Payload*)mem->data;
 	uint8_t* dstBitstream   = (uint8_t*)(dstPayload + 1);
 
-	bx::memCopy(dstBitstream, scratch.data(), bitstreamSize);
+	bx::memCopy(dstBitstream, scratch.getPtr(), bitstreamSize);
 
 	dstPayload->au =
 	{
@@ -2910,7 +2908,7 @@ void VideoPlayer::submitAccessUnitsUpTo(int64_t _untilPtsUs)
 
 	uint32_t submitted = 0;
 
-	while (m_nextAuToSubmit < uint32_t(m_impl->frames.size() )
+	while (m_nextAuToSubmit < m_impl->frames.getCount()
 		&& int64_t(m_impl->frames[m_nextAuToSubmit].ptsUs) <= _untilPtsUs
 		&& submitted < kMaxSubmitPerCall)
 	{
@@ -3048,7 +3046,7 @@ void VideoPlayer::seekRelative(int64_t _deltaUs)
 
 		if (idrBeforePts <= m_playbackTimeUs)
 		{
-			const uint32_t numFrames = uint32_t(m_impl->frames.size() );
+			const uint32_t numFrames = m_impl->frames.getCount();
 			const uint32_t idrAfter  = findIdrAtOrAfter(m_playbackTimeUs + 1);
 
 			if (idrAfter < numFrames)

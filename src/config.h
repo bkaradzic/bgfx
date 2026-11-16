@@ -530,17 +530,17 @@ static_assert(BGFX_CONFIG_MAX_VERTEX_STREAMS < 32, "Must be less than 32!");
 #	define BGFX_CONFIG_MIN_RESOURCE_COMMAND_BUFFER_SIZE (64<<10)
 #endif // BGFX_CONFIG_MIN_RESOURCE_COMMAND_BUFFER_SIZE
 
-#ifndef BGFX_CONFIG_MAX_TRANSIENT_VERTEX_BUFFER_SIZE
-/// Maximum transient vertex buffer size. There is no growth, and all transient
-/// vertices must fit into this buffer.
-#	define BGFX_CONFIG_MAX_TRANSIENT_VERTEX_BUFFER_SIZE (6<<20)
-#endif // BGFX_CONFIG_MAX_TRANSIENT_VERTEX_BUFFER_SIZE
+#ifndef BGFX_CONFIG_MIN_TRANSIENT_VERTEX_BUFFER_SIZE
+/// Minimum transient vertex buffer size. Buffer starts at this size, grows on
+/// demand, and shrinks back when it isn't used.
+#	define BGFX_CONFIG_MIN_TRANSIENT_VERTEX_BUFFER_SIZE (6<<20)
+#endif // BGFX_CONFIG_MIN_TRANSIENT_VERTEX_BUFFER_SIZE
 
-#ifndef BGFX_CONFIG_MAX_TRANSIENT_INDEX_BUFFER_SIZE
-/// Maximum transient index buffer size. There is no growth, and all transient
-/// indices must fit into this buffer.
-#	define BGFX_CONFIG_MAX_TRANSIENT_INDEX_BUFFER_SIZE (2<<20)
-#endif // BGFX_CONFIG_MAX_TRANSIENT_INDEX_BUFFER_SIZE
+#ifndef BGFX_CONFIG_MIN_TRANSIENT_INDEX_BUFFER_SIZE
+/// Minimum transient index buffer size. Buffer starts at this size, grows on
+/// demand, and shrinks back when it isn't used.
+#	define BGFX_CONFIG_MIN_TRANSIENT_INDEX_BUFFER_SIZE (2<<20)
+#endif // BGFX_CONFIG_MIN_TRANSIENT_INDEX_BUFFER_SIZE
 
 #ifndef BGFX_CONFIG_MIN_UNIFORM_BUFFER_SIZE
 /// Mimumum uniform buffer size. This buffer will resize on demand. It's

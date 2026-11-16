@@ -9,7 +9,7 @@ import bindbc.common.types: c_int64, c_uint64, va_list;
 import bindbc.bgfx.config;
 static import bgfx.impl;
 
-enum uint apiVersion = 168;
+enum uint apiVersion = 169;
 
 alias ViewID = ushort;
 
@@ -1244,8 +1244,8 @@ extern(C++, "bgfx") struct Caps{
 		uint maxOcclusionQueries; ///Maximum number of occlusion query handles.
 		uint maxEncoders; ///Maximum number of encoder threads.
 		uint minResourceCBSize; ///Minimum resource command buffer size.
-		uint maxTransientVBSize; ///Maximum transient vertex buffer size.
-		uint maxTransientIBSize; ///Maximum transient index buffer size.
+		uint minTransientVBSize; ///Minimum transient vertex buffer size, it grows on demand.
+		uint minTransientIBSize; ///Minimum transient index buffer size, it grows on demand.
 		uint minUniformBufferSize; ///Mimimum uniform buffer size.
 		uint minUniformCacheSize; ///Minimum view and frame uniform cache size.
 		
@@ -1424,8 +1424,8 @@ extern(C++, "bgfx") struct Init{
 		*/
 		uint minViews;
 		uint minResourceCBSize; ///Minimum resource command buffer size.
-		uint maxTransientVBSize; ///Maximum transient vertex buffer size.
-		uint maxTransientIBSize; ///Maximum transient index buffer size.
+		uint minTransientVBSize; ///Minimum transient vertex buffer size, it grows on demand.
+		uint minTransientIBSize; ///Minimum transient index buffer size, it grows on demand.
 		uint minUniformBufferSize; ///Mimimum uniform buffer size.
 		
 		/**

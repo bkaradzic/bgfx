@@ -10,11 +10,10 @@
 #include "cmd.h"
 
 #include <bx/allocator.h>
+#include <bx/hash.h>
+#include <bx/hashmap.h>
 #include <bx/ringbuffer.h>
-#include <tinystl/string.h>
-#include <tinystl/allocator.h>
-#include <tinystl/unordered_map.h>
-namespace stl = tinystl;
+#include <bx/string.h>
 
 struct InputMouse
 {
@@ -198,16 +197,12 @@ struct Input
 
 	void addBindings(const char* _name, const InputBinding* _bindings)
 	{
-		m_inputBindingsMap.insert(stl::make_pair(stl::string(_name), _bindings) );
+		m_inputBindingsMap.tryAdd(bx::hash<bx::HashMurmur2A>(bx::StringView(_name) ), _bindings);
 	}
 
 	void removeBindings(const char* _name)
 	{
-		InputBindingMap::iterator it = m_inputBindingsMap.find(stl::string(_name));
-		if (it != m_inputBindingsMap.end() )
-		{
-			m_inputBindingsMap.erase(it);
-		}
+		m_inputBindingsMap.tryRemove(bx::hash<bx::HashMurmur2A>(bx::StringView(_name) ) );
 	}
 
 	void process(const InputBinding* _bindings)
@@ -260,9 +255,9 @@ struct Input
 
 	void process()
 	{
-		for (InputBindingMap::const_iterator it = m_inputBindingsMap.begin(); it != m_inputBindingsMap.end(); ++it)
+		for (InputBindingMap::Iterator it = m_inputBindingsMap.begin(), itEnd = m_inputBindingsMap.end(); it != itEnd; ++it)
 		{
-			process(it->second);
+			process(it.getValue() );
 		}
 	}
 
@@ -276,7 +271,7 @@ struct Input
 		}
 	}
 
-	typedef stl::unordered_map<stl::string, const InputBinding*> InputBindingMap;
+	using InputBindingMap = bx::HashMapT<uint32_t, const InputBinding*>;
 	InputBindingMap m_inputBindingsMap;
 	InputKeyboard m_keyboard;
 	InputMouse m_mouse;

@@ -32,7 +32,7 @@
 #include <bx/handlealloc.h>
 #include <bx/thread.h>
 #include <bx/mutex.h>
-#include <tinystl/string.h>
+#include <bx/stringpool.h>
 
 #include "dbg.h"
 
@@ -253,7 +253,7 @@ namespace entry
 		uint32_t m_height;
 		uint32_t m_flags;
 		bool	 m_value;
-		tinystl::string m_title;
+		bx::String m_title;
 		WindowHandle m_handle;
 	};
 
@@ -471,7 +471,7 @@ namespace entry
 						{
 							GLFWwindow* window = glfwCreateWindow(msg->m_width
 								, msg->m_height
-								, msg->m_title.c_str()
+								, msg->m_title.getCPtr()
 								, NULL
 								, NULL);
 							if (!window)
@@ -514,7 +514,7 @@ namespace entry
 					case GLFW_WINDOW_SET_TITLE:
 						{
 							GLFWwindow* window = m_window[msg->m_handle.idx];
-							glfwSetWindowTitle(window, msg->m_title.c_str());
+							glfwSetWindowTitle(window, msg->m_title.getCPtr());
 						}
 						break;
 
@@ -606,9 +606,8 @@ namespace entry
 		WindowHandle findHandle(GLFWwindow* _window)
 		{
 			bx::MutexScope scope(m_lock);
-			for (uint32_t ii = 0, num = m_windowAlloc.getNumHandles(); ii < num; ++ii)
+			for (uint16_t idx = m_windowAlloc.findFirst(); bx::kInvalidHandle != idx; idx = m_windowAlloc.findNext(idx) )
 			{
-				uint16_t idx = m_windowAlloc.getHandleAt(ii);
 				if (_window == m_window[idx])
 				{
 					WindowHandle handle = { idx };
@@ -635,7 +634,7 @@ namespace entry
 		bx::Mutex m_lock;
 
 		GLFWwindow* m_window[ENTRY_CONFIG_MAX_WINDOWS];
-		bx::HandleAllocT<ENTRY_CONFIG_MAX_WINDOWS> m_windowAlloc;
+		bx::HandleAlloc2T<ENTRY_CONFIG_MAX_WINDOWS> m_windowAlloc;
 
 		GamepadGLFW m_gamepad[ENTRY_CONFIG_MAX_GAMEPADS];
 
@@ -778,7 +777,7 @@ namespace entry
 		msg->m_width = _width;
 		msg->m_height = _height;
 		msg->m_flags = _flags;
-		msg->m_title = _title;
+		msg->m_title = bx::String(bx::StringView(_title) );
 		msg->m_handle.idx = s_ctx.m_windowAlloc.alloc();
 		s_ctx.m_msgs.push(msg);
 		return msg->m_handle;
@@ -812,7 +811,7 @@ namespace entry
 	void setWindowTitle(WindowHandle _handle, const char* _title)
 	{
 		Msg* msg = new Msg(GLFW_WINDOW_SET_TITLE);
-		msg->m_title = _title;
+		msg->m_title = bx::String(bx::StringView(_title) );
 		msg->m_handle = _handle;
 		s_ctx.m_msgs.push(msg);
 	}

@@ -7,7 +7,7 @@
 
 namespace bgfx
 {
-	bool compilePSSLShader(const Options& _options, uint32_t _version, const std::string& _code, bx::WriterI* _shaderWriter, bx::WriterI* _messageWriter)
+	bool compilePSSLShader(const Options& _options, uint32_t _version, const bx::StringView& _code, bx::WriterI* _shaderWriter, bx::WriterI* _messageWriter)
 	{
 		BX_UNUSED(_options, _version, _code, _shaderWriter);
 		bx::ErrorAssert messageErr;
