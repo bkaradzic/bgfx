@@ -1760,10 +1760,10 @@ struct CapsLimits
 	uint maxEncoders;
 	// Minimum resource command buffer size.
 	uint minResourceCbSize;
-	// Maximum transient vertex buffer size.
-	uint maxTransientVbSize;
-	// Maximum transient index buffer size.
-	uint maxTransientIbSize;
+	// Minimum transient vertex buffer size, it grows on demand.
+	uint minTransientVbSize;
+	// Minimum transient index buffer size, it grows on demand.
+	uint minTransientIbSize;
 	// Mimimum uniform buffer size.
 	uint minUniformBufferSize;
 	// Minimum view and frame uniform cache size.
@@ -1926,10 +1926,10 @@ struct InitLimits
 	uint minViews;
 	// Minimum resource command buffer size.
 	uint minResourceCbSize;
-	// Maximum transient vertex buffer size.
-	uint maxTransientVbSize;
-	// Maximum transient index buffer size.
-	uint maxTransientIbSize;
+	// Minimum transient vertex buffer size, it grows on demand.
+	uint minTransientVbSize;
+	// Minimum transient index buffer size, it grows on demand.
+	uint minTransientIbSize;
 	// Mimimum uniform buffer size.
 	uint minUniformBufferSize;
 	// Minimum view and frame uniform cache size. This is a reservation,

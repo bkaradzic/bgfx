@@ -10,16 +10,14 @@
 #include <bgfx/bgfx.h>
 
 #include <bx/allocator.h>
+#include <bx/array.h>
 #include <bx/commandline.h>
 #include <bx/mutex.h>
 #include <bx/handlealloc.h>
 #include <bx/os.h>
+#include <bx/stringpool.h>
 #include <bx/thread.h>
 #include <bx/timer.h>
-
-#include <tinystl/allocator.h>
-#include <tinystl/string.h>
-#include <tinystl/vector.h>
 
 #include <windows.h>
 #include <windowsx.h>
@@ -36,21 +34,20 @@
 
 namespace entry
 {
-	typedef tinystl::vector<WCHAR> WSTRING;
+	using WSTRING = bx::ArrayT<WCHAR>;
 
 	inline WSTRING UTF8ToUTF16(const char *utf8_str)
 	{
 		int len = MultiByteToWideChar(CP_UTF8, 0, utf8_str, -1, NULL, 0);
-		WSTRING utf16(len);
-		MultiByteToWideChar(CP_UTF8, 0, utf8_str, -1, utf16.data(), len);
+		WSTRING utf16;
+		utf16.setCount(len);
+		MultiByteToWideChar(CP_UTF8, 0, utf8_str, -1, utf16.getPtr(), len);
 		return utf16;
 	}
 
 	typedef DWORD (WINAPI* PFN_XINPUT_GET_STATE)(DWORD dwUserIndex, XINPUT_STATE* pState);
-	typedef void  (WINAPI* PFN_XINPUT_ENABLE)(BOOL enable); // 1.4+
 
 	PFN_XINPUT_GET_STATE XInputGetState;
-	PFN_XINPUT_ENABLE    XInputEnable;
 
 	struct XInputRemap
 	{
@@ -104,7 +101,6 @@ namespace entry
 			if (NULL != m_xinputdll)
 			{
 				XInputGetState = (PFN_XINPUT_GET_STATE)bx::dlsym(m_xinputdll, "XInputGetState");
-//				XInputEnable   = (PFN_XINPUT_ENABLE   )bx::dlsym(m_xinputdll, "XInputEnable"  );
 
 				if (NULL == XInputGetState)
 				{
@@ -338,7 +334,7 @@ namespace entry
 		uint32_t m_width;
 		uint32_t m_height;
 		uint32_t m_flags;
-		tinystl::string m_title;
+		bx::String m_title;
 		bool m_flagsEnabled;
 	};
 
@@ -555,7 +551,7 @@ namespace entry
 					{
 						Msg* msg = (Msg*)_lparam;
 						HWND hwnd = CreateWindowW(L"bgfx"
-							, UTF8ToUTF16(msg->m_title.c_str()).data()
+							, UTF8ToUTF16(msg->m_title.getCPtr() ).getPtr()
 							, WS_OVERLAPPEDWINDOW|WS_VISIBLE
 							, msg->m_x
 							, msg->m_y
@@ -598,7 +594,7 @@ namespace entry
 				case WM_USER_WINDOW_SET_TITLE:
 					{
 						Msg* msg = (Msg*)_lparam;
-						SetWindowTextW(m_hwnd[_wparam], UTF8ToUTF16(msg->m_title.c_str()).data() );
+						SetWindowTextW(m_hwnd[_wparam], UTF8ToUTF16(msg->m_title.getCPtr() ).getPtr() );
 						delete msg;
 					}
 					break;
@@ -928,9 +924,8 @@ namespace entry
 		WindowHandle findHandle(HWND _hwnd)
 		{
 			bx::MutexScope scope(m_lock);
-			for (uint16_t ii = 0, num = m_windowAlloc.getNumHandles(); ii < num; ++ii)
+			for (uint16_t idx = m_windowAlloc.findFirst(); bx::kInvalidHandle != idx; idx = m_windowAlloc.findNext(idx) )
 			{
-				uint16_t idx = m_windowAlloc.getHandleAt(ii);
 				if (_hwnd == m_hwnd[idx])
 				{
 					WindowHandle handle = { idx };
@@ -1067,7 +1062,7 @@ namespace entry
 		WCHAR m_surrogate;
 		bx::Mutex m_lock;
 
-		bx::HandleAllocT<ENTRY_CONFIG_MAX_WINDOWS> m_windowAlloc;
+		bx::HandleAlloc2T<ENTRY_CONFIG_MAX_WINDOWS> m_windowAlloc;
 
 		HWND m_hwnd[ENTRY_CONFIG_MAX_WINDOWS];
 		uint32_t m_flags[ENTRY_CONFIG_MAX_WINDOWS];
@@ -1126,7 +1121,7 @@ namespace entry
 			msg->m_y      = _y;
 			msg->m_width  = _width;
 			msg->m_height = _height;
-			msg->m_title  = _title;
+			msg->m_title  = bx::String(bx::StringView(_title) );
 			msg->m_flags  = _flags;
 			PostMessage(s_ctx.m_hwnd[0], WM_USER_WINDOW_CREATE, handle.idx, (LPARAM)msg);
 		}
@@ -1161,7 +1156,7 @@ namespace entry
 	void setWindowTitle(WindowHandle _handle, const char* _title)
 	{
 		Msg* msg = new Msg;
-		msg->m_title = _title;
+		msg->m_title = bx::String(bx::StringView(_title) );
 		PostMessage(s_ctx.m_hwnd[0], WM_USER_WINDOW_SET_TITLE, _handle.idx, (LPARAM)msg);
 	}
 

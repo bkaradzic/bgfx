@@ -159,7 +159,7 @@ namespace bgfx { namespace dxil
 		DXC_ARG_OPTIMIZATION_LEVEL3,
 	};
 
-	typedef std::vector<std::string> UniformNameList;
+	using UniformNameList = bx::ArrayT<bx::String>;
 
 	static TextureDimension::Enum d3dSrvDimensionToTextureDimension(D3D_SRV_DIMENSION _dimension)
 	{
@@ -364,12 +364,12 @@ namespace bgfx { namespace dxil
 								}
 
 								Uniform un;
-								un.name = varDesc.Name;
+								un.name = bx::String(bx::StringView(varDesc.Name) );
 								un.type = uniformType;
 								un.num = uint16_t(constDesc.Elements);
 								un.regIndex = uint16_t(varDesc.StartOffset);
 								un.regCount = uint16_t(bx::alignUp(varDesc.Size, 16) / 16);
-								_uniforms.push_back(un);
+								_uniforms.add(un);
 
 								BX_TRACE("\t%s, %d, size %d, flags 0x%08x, %d (used)"
 									, varDesc.Name
@@ -383,7 +383,7 @@ namespace bgfx { namespace dxil
 							{
 								if (0 == (varDesc.uFlags & D3D_SVF_USED) )
 								{
-									unusedUniforms.push_back(varDesc.Name);
+									unusedUniforms.add(bx::String(bx::StringView(varDesc.Name) ) );
 								}
 
 								BX_TRACE("\t%s, unknown type", varDesc.Name);
@@ -398,12 +398,13 @@ namespace bgfx { namespace dxil
 
 		struct TextureBinding
 		{
+			bx::String name;
 			uint8_t  dimension;
 			uint16_t regIndex;
 			uint16_t regCount;
 		};
 
-		std::unordered_map<std::string, TextureBinding> textureBinding;
+		bx::HashMapT<uint32_t, TextureBinding> textureBinding;
 
 		for (uint32_t ii = 0; ii < desc.BoundResources; ++ii)
 		{
@@ -418,12 +419,15 @@ namespace bgfx { namespace dxil
 				if (!end.isEmpty()
 				&&  TextureDimension::Count != dimension)
 				{
-					textureBinding[std::string(bindDesc.Name, end.getPtr() - bindDesc.Name)] =
+					const bx::String name(bx::StringView(bindDesc.Name, end.getPtr() ) );
+					const TextureBinding binding =
 					{
+						.name      = name,
 						.dimension = textureDimensionToId(dimension),
 						.regIndex  = uint16_t(bindDesc.BindPoint),
 						.regCount  = uint16_t(bindDesc.BindCount),
 					};
+					textureBinding.add(name.getHandle(), binding, true);
 				}
 			}
 		}
@@ -457,21 +461,21 @@ namespace bgfx { namespace dxil
 					if (!end.isEmpty() )
 					{
 						Uniform un;
-						un.name.assign(bindDesc.Name, (end.getPtr() - bindDesc.Name) );
+						un.name = bx::String(bx::StringView(bindDesc.Name, end.getPtr() ) );
 						un.type = UniformType::Enum(kUniformSamplerBit | UniformType::Sampler);
 						un.num = 1;
 						un.regIndex = uint16_t(bindDesc.BindPoint);
 						un.regCount = uint16_t(bindDesc.BindCount);
 
-						const auto it = textureBinding.find(un.name);
+						const TextureBinding* binding = textureBinding.find(un.name.getHandle() );
 
-						if (it != textureBinding.end() )
+						if (NULL != binding)
 						{
-							un.texDimension = it->second.dimension;
-							textureBinding.erase(it);
+							un.texDimension = binding->dimension;
+							textureBinding.remove(un.name.getHandle() );
 						}
 
-						_uniforms.push_back(un);
+						_uniforms.add(un);
 					}
 				}
 			}
@@ -491,21 +495,21 @@ namespace bgfx { namespace dxil
 					continue;
 				}
 
-				const std::string name(bindDesc.Name, end.getPtr() - bindDesc.Name);
-				const auto it = textureBinding.find(name);
+				const bx::String name(bx::StringView(bindDesc.Name, end.getPtr() ) );
+				const TextureBinding* binding = textureBinding.find(name.getHandle() );
 
-				if (it != textureBinding.end() )
+				if (NULL != binding)
 				{
 					Uniform un;
 					un.name = name;
 					un.type = UniformType::Enum(kUniformSamplerBit | UniformType::Sampler);
 					un.num  = 1;
-					un.regIndex     = it->second.regIndex;
-					un.regCount     = it->second.regCount;
-					un.texDimension = it->second.dimension;
+					un.regIndex     = binding->regIndex;
+					un.regCount     = binding->regCount;
+					un.texDimension = binding->dimension;
 
-					_uniforms.push_back(un);
-					textureBinding.erase(it);
+					_uniforms.add(un);
+					textureBinding.remove(name.getHandle() );
 				}
 			}
 		}
@@ -513,7 +517,7 @@ namespace bgfx { namespace dxil
 		return true;
 	}
 
-	static bool compile(Dxc& _dxc, const Options& _options, uint32_t _version, const std::string& _code, bx::WriterI* _shaderWriter, bx::WriterI* _messageWriter, bool _firstPass)
+	static bool compile(Dxc& _dxc, const Options& _options, uint32_t _version, const bx::StringView& _code, bx::WriterI* _shaderWriter, bx::WriterI* _messageWriter, bool _firstPass)
 	{
 		bx::Error messageErr;
 		bx::ErrorAssert err;
@@ -523,8 +527,8 @@ namespace bgfx { namespace dxil
 		{
 			const DxcBuffer source =
 			{
-				.Ptr      = _code.c_str(),
-				.Size     = _code.size(),
+				.Ptr      = _code.getPtr(),
+				.Size     = size_t(_code.getLength() ),
 				.Encoding = DXC_CP_UTF8,
 			};
 
@@ -607,7 +611,7 @@ namespace bgfx { namespace dxil
 			{
 				bx::write(_messageWriter, &messageErr, "Status: %x\n", hr);
 
-				BX_TRACE("%s\n", _code.c_str() );
+				BX_TRACE("%S\n", &_code);
 
 				IDxcBlobUtf8* dxcErrors = NULL;
 				dxcResult->GetOutput(DXC_OUT_ERRORS, IID_IDxcBlobUtf8, (void**)&dxcErrors, NULL);
@@ -662,17 +666,17 @@ namespace bgfx { namespace dxil
 			dxcRelease(dxcReflectionBlob);
 
 			if (_firstPass
-			&&  unusedUniforms.size() > 0)
+			&&  unusedUniforms.getCount() > 0)
 			{
 				// first time through, we just find unused uniforms and get rid of them
-				std::string output;
-				bx::LineReader reader(_code.c_str() );
+				bx::StringBuilder output;
+				bx::LineReader reader(_code);
 				while (!reader.isDone() )
 				{
 					bx::StringView strLine = reader.next();
 					bool found = false;
 
-					for (UniformNameList::iterator it = unusedUniforms.begin(), itEnd = unusedUniforms.end(); it != itEnd; ++it)
+					for (uint32_t ii = 0, num = unusedUniforms.getCount(); ii < num; ++ii)
 					{
 						bx::StringView str = strFind(strLine, "uniform ");
 						if (str.isEmpty() )
@@ -685,28 +689,28 @@ namespace bgfx { namespace dxil
 						// included in the uniform blob that the application must upload
 						// we can't just remove them, because unused functions might still reference
 						// them and cause a compile error when they're gone
-						if (!bx::findIdentifierMatch(strLine, it->c_str() ).isEmpty() )
+						if (!bx::findIdentifierMatch(strLine, unusedUniforms[ii].getCPtr() ).isEmpty() )
 						{
-							output.append(strLine.getPtr(), str.getPtr() );
-							output += "static ";
-							output.append(str.getTerm(), strLine.getTerm() );
-							output += "\n";
+							output.add(bx::StringView(strLine.getPtr(), str.getPtr() ) );
+							output.add("static ");
+							output.add(bx::StringView(str.getTerm(), strLine.getTerm() ) );
+							output.add("\n");
 							found = true;
 
-							unusedUniforms.erase(it);
+							unusedUniforms.remove(ii, bx::kOrdered);
 							break;
 						}
 					}
 
 					if (!found)
 					{
-						output.append(strLine.getPtr(), strLine.getTerm() );
-						output += "\n";
+						output.add(strLine);
+						output.add("\n");
 					}
 				}
 
 				// recompile with the unused uniforms converted to statics
-				return compile(_dxc, _options, _version, output.c_str(), _shaderWriter, _messageWriter, false);
+				return compile(_dxc, _options, _version, output.getView(), _shaderWriter, _messageWriter, false);
 			}
 
 			IDxcBlob* dxcShaderBlob = NULL;
@@ -720,17 +724,16 @@ namespace bgfx { namespace dxil
 			{
 				rawBindings.write(_shaderWriter, &err);
 
-				uint16_t count = (uint16_t)uniforms.size();
+				uint16_t count = (uint16_t)uniforms.getCount();
 				bx::write(_shaderWriter, count, &err);
 
 				uint32_t fragmentBit = _options.shaderType == 'f' ? kUniformFragmentBit : 0;
-				for (UniformArray::const_iterator it = uniforms.begin(); it != uniforms.end(); ++it)
+				for (const Uniform& un : uniforms)
 				{
-					const Uniform& un = *it;
 
-					const uint8_t nameSize = (uint8_t)un.name.size();
+					const uint8_t nameSize = (uint8_t)un.name.getLength();
 					bx::write(_shaderWriter, nameSize, &err);
-					bx::write(_shaderWriter, un.name.c_str(), nameSize, &err);
+					bx::write(_shaderWriter, un.name.getCPtr(), nameSize, &err);
 
 					const uint8_t type = uint8_t(un.type | fragmentBit);
 					bx::write(_shaderWriter, type, &err);
@@ -742,7 +745,7 @@ namespace bgfx { namespace dxil
 					bx::write(_shaderWriter, un.texFormat, &err);
 
 					BX_TRACE("%s, %s, %d, %d, %d"
-						, un.name.c_str()
+						, un.name.getCPtr()
 						, getUniformTypeName(UniformType::Enum(un.type & ~kUniformMask))
 						, un.num
 						, un.regIndex
@@ -786,9 +789,11 @@ namespace bgfx { namespace dxil
 					return false;
 				}
 
-				std::string disasmfp = _options.outputFilePath + ".disasm";
+				bx::StringBuilder disasmfp;
+				disasmfp.add(_options.outputFilePath);
+				disasmfp.add(".disasm");
 
-				writeFile(disasmfp.c_str(), dxcShaderDisassembleBlob->GetBufferPointer(), (uint32_t)dxcShaderDisassembleBlob->GetBufferSize() );
+				writeFile(disasmfp.getView().getPtr(), dxcShaderDisassembleBlob->GetBufferPointer(), (uint32_t)dxcShaderDisassembleBlob->GetBufferSize() );
 
 				dxcRelease(dxcShaderDisassembleBlob);
 				dxcRelease(dxcDisassembleResult);
@@ -803,7 +808,7 @@ namespace bgfx { namespace dxil
 
 } // namespace hlsl
 
-	bool compileDxilShader(const Options& _options, uint32_t _version, const std::string& _code, bx::WriterI* _shaderWriter, bx::WriterI* _messageWriter)
+	bool compileDxilShader(const Options& _options, uint32_t _version, const bx::StringView& _code, bx::WriterI* _shaderWriter, bx::WriterI* _messageWriter)
 	{
 		using namespace dxil;
 
@@ -828,7 +833,7 @@ namespace bgfx { namespace dxil
 
 namespace bgfx
 {
-	bool compileDxilShader(const Options& _options, uint32_t _version, const std::string& _code, bx::WriterI* _shaderWriter, bx::WriterI* _messageWriter)
+	bool compileDxilShader(const Options& _options, uint32_t _version, const bx::StringView& _code, bx::WriterI* _shaderWriter, bx::WriterI* _messageWriter)
 	{
 		BX_UNUSED(_options, _version, _code, _shaderWriter);
 		bx::Error messageErr;

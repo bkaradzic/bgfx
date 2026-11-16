@@ -18,6 +18,7 @@
 #include <bx/process.h>
 #include <bx/settings.h>
 #include <bx/sort.h>
+#include <bx/stringpool.h>
 
 #include <entry/entry.h>
 #include <entry/input.h>
@@ -26,11 +27,6 @@
 #include <imgui/imgui.h>
 #include <bgfx_utils.h>
 
-#include <tinystl/allocator.h>
-#include <tinystl/vector.h>
-namespace stl = tinystl;
-#include <string>
-#include <algorithm>
 
 #include <bimg/decode.h>
 
@@ -711,7 +707,7 @@ struct View
 			}
 			else if (0 == bx::strCmp(_argv[1], "file-down") )
 			{
-				uint32_t numFiles = bx::satSub<uint32_t>(uint32_t(m_fileList.size()), 1u);
+				uint32_t numFiles = bx::satSub<uint32_t>(m_fileList.getCount(), 1u);
 				++m_fileIndex;
 				m_fileIndex  = bx::min(m_fileIndex, numFiles);
 				m_fileScroll = 1;
@@ -723,7 +719,7 @@ struct View
 			}
 			else if (0 == bx::strCmp(_argv[1], "file-pgdown") )
 			{
-				uint32_t numFiles = bx::satSub<uint32_t>(uint32_t(m_fileList.size()), 1u);
+				uint32_t numFiles = bx::satSub<uint32_t>(m_fileList.getCount(), 1u);
 				m_fileIndex += m_fileRows;
 				m_fileIndex  = bx::min(m_fileIndex, numFiles);
 				m_fileScroll = 1;
@@ -852,7 +848,7 @@ struct View
 				}
 				else if (!m_delete)
 				{
-					m_delete = !m_fileList.empty();
+					m_delete = !m_fileList.isEmpty();
 				}
 				else
 				{
@@ -877,9 +873,11 @@ struct View
 		return 0;
 	}
 
-	static bool sortNameAscending(const std::string& _lhs, const std::string& _rhs)
+	static int32_t sortNameAscending(const void* _lhs, const void* _rhs)
 	{
-		return 0 > bx::strCmpV(_lhs.c_str(), _rhs.c_str() );
+		const bx::String& lhs = *(const bx::String*)_lhs;
+		const bx::String& rhs = *(const bx::String*)_rhs;
+		return bx::strCmpV(lhs.getCPtr(), rhs.getCPtr() );
 	}
 
 	void updateFileList(const bx::FilePath& _filePath)
@@ -930,7 +928,7 @@ struct View
 				if (supported)
 				{
 					const bx::StringView fileName = fi.filePath.getFileName();
-					m_fileList.push_back(std::string(fileName.getPtr(), fileName.getTerm() ) );
+					m_fileList.add(bx::String(fileName) );
 				}
 			}
 		}
@@ -943,9 +941,9 @@ struct View
 			bx::FileInfo fi;
 			bool listed = false;
 
-			for (FileList::const_iterator it = m_fileList.begin(); it != m_fileList.end(); ++it)
+			for (const bx::String& file : m_fileList)
 			{
-				listed |= 0 == bx::strCmp(it->c_str(), fileName);
+				listed |= 0 == bx::strCmp(file.getCPtr(), fileName);
 			}
 
 			if (!listed
@@ -953,24 +951,26 @@ struct View
 			&&  bx::stat(fi, _filePath)
 			&&  bx::FileType::File == fi.type)
 			{
-				m_fileList.push_back(std::string(fileName.getPtr(), fileName.getTerm() ) );
+				m_fileList.add(bx::String(fileName) );
 			}
 		}
 
-		std::sort(m_fileList.begin(), m_fileList.end(), sortNameAscending);
+		bx::quickSort(m_fileList.getPtr(), m_fileList.getCount(), sizeof(bx::String), sortNameAscending);
 
 		m_fileIndex = 0;
 		uint32_t idx = 0;
 
-		for (FileList::const_iterator it = m_fileList.begin(); it != m_fileList.end(); ++it, ++idx)
+		for (uint32_t num = m_fileList.getCount(); idx < num; ++idx)
 		{
-			if (0 == bx::strCmpI(it->c_str(), fileName) )
+			const bx::String& file = m_fileList[idx];
+
+			if (0 == bx::strCmpI(file.getCPtr(), fileName) )
 			{
 				// If it is case-insensitive match then might be correct one, but keep
 				// searching.
 				m_fileIndex = idx;
 
-				if (0 == bx::strCmp(it->c_str(), fileName) )
+				if (0 == bx::strCmp(file.getCPtr(), fileName) )
 				{
 					// If it is exact match we're done.
 					break;
@@ -1046,7 +1046,7 @@ struct View
 
 	bx::FilePath m_path;
 
-	typedef stl::vector<std::string> FileList;
+	using FileList = bx::ArrayT<bx::String>;
 	FileList m_fileList;
 
 	bgfx::RendererType::Enum m_rendererType;
@@ -1391,51 +1391,50 @@ void keyBindingHelp(const char* _bindings, const char* _description)
 	ImGui::Text("%s", _description);
 }
 
-inline std::string replaceAll(const char* _str, const char* _from, const char* _to)
+inline void replaceAll(bx::StringBuilder& _out, const bx::StringView& _str, const bx::StringView& _from, const bx::StringView& _to)
 {
-	std::string str = _str;
-	size_t startPos = 0;
-	const size_t fromLen = bx::strLen(_from);
-	const size_t toLen   = bx::strLen(_to);
-	while ( (startPos = str.find(_from, startPos) ) != std::string::npos)
+	bx::StringView str = _str;
+	for (bx::StringView found = bx::strFind(str, _from); !found.isEmpty(); found = bx::strFind(str, _from) )
 	{
-		str.replace(startPos, fromLen, _to);
-		startPos += toLen;
+		_out.add(bx::StringView(str.getPtr(), found.getPtr() ) );
+		_out.add(_to);
+		str.set(found.getTerm(), str.getTerm() );
 	}
 
-	return str;
+	_out.add(str);
 }
 
 void associate()
 {
 #if BX_PLATFORM_WINDOWS
-	std::string str;
+	bx::StringBuilder str;
 
 	char exec[bx::kMaxFilePath];
 	GetModuleFileNameA(GetModuleHandleA(NULL), exec, sizeof(exec) );
 
-	std::string strExec = replaceAll(exec, "\\", "\\\\");
+	bx::StringBuilder strExec;
+	replaceAll(strExec, exec, "\\", "\\\\");
 
-	std::string value;
-	bx::stringPrintf(value, "@=\"\\\"%s\\\" \\\"%%1\\\"\"\r\n\r\n", strExec.c_str() );
+	bx::StringBuilder value;
+	value.addPrintf("@=\"\\\"%s\\\" \\\"%%1\\\"\"\r\n\r\n", strExec.getView().getPtr() );
 
-	str += "Windows Registry Editor Version 5.00\r\n\r\n";
+	str.add("Windows Registry Editor Version 5.00\r\n\r\n");
 
-	str += "[HKEY_CLASSES_ROOT\\texturev\\shell\\open\\command]\r\n";
-	str += value;
+	str.add("[HKEY_CLASSES_ROOT\\texturev\\shell\\open\\command]\r\n");
+	str.add(value.getView() );
 
-	str += "[HKEY_CLASSES_ROOT\\Applications\\texturev.exe\\shell\\open\\command]\r\n";
-	str += value;
+	str.add("[HKEY_CLASSES_ROOT\\Applications\\texturev.exe\\shell\\open\\command]\r\n");
+	str.add(value.getView() );
 
 	for (uint32_t ii = 0; ii < s_numSupportedExt; ++ii)
 	{
 		const bx::StringView& ext = s_supportedExt[ii];
 
-		bx::stringPrintf(str, "[-HKEY_CLASSES_ROOT\\.%S]\r\n\r\n", &ext);
-		bx::stringPrintf(str, "[-HKEY_CURRENT_USER\\Software\\Classes\\.%S]\r\n\r\n", &ext);
+		str.addPrintf("[-HKEY_CLASSES_ROOT\\.%S]\r\n\r\n", &ext);
+		str.addPrintf("[-HKEY_CURRENT_USER\\Software\\Classes\\.%S]\r\n\r\n", &ext);
 
-		bx::stringPrintf(str, "[HKEY_CLASSES_ROOT\\.%S]\r\n@=\"texturev\"\r\n\r\n", &ext);
-		bx::stringPrintf(str, "[HKEY_CURRENT_USER\\Software\\Classes\\.%S]\r\n@=\"texturev\"\r\n\r\n", &ext);
+		str.addPrintf("[HKEY_CLASSES_ROOT\\.%S]\r\n@=\"texturev\"\r\n\r\n", &ext);
+		str.addPrintf("[HKEY_CURRENT_USER\\Software\\Classes\\.%S]\r\n@=\"texturev\"\r\n\r\n", &ext);
 	}
 
 	bx::FilePath filePath(bx::Dir::Temp);
@@ -1445,16 +1444,17 @@ void associate()
 	bx::Error err;
 	if (bx::open(&writer, filePath, false, &err) )
 	{
-		bx::write(&writer, str.c_str(), uint32_t(str.length()), &err);
+		const bx::StringView strView = str.getView();
+		bx::write(&writer, strView.getPtr(), strView.getLength(), &err);
 		bx::close(&writer);
 
 		if (err.isOk() )
 		{
-			std::string cmd;
-			bx::stringPrintf(cmd, "/s %s", filePath.getCPtr() );
+			bx::StringBuilder cmd;
+			cmd.addPrintf("/s %s", filePath.getCPtr() );
 
 			bx::ProcessReader reader;
-			if (bx::open(&reader, "regedit.exe", cmd.c_str(), &err) )
+			if (bx::open(&reader, "regedit.exe", cmd.getView().getPtr(), &err) )
 			{
 				bx::close(&reader);
 			}
@@ -1462,16 +1462,16 @@ void associate()
 	}
 #elif BX_PLATFORM_LINUX
 
-	std::string mimeType;
+	bx::StringBuilder mimeType;
 
 	auto associate = [&mimeType](const bx::StringView _ext)
 	{
-		std::string tmp;
-		bx::stringPrintf(tmp, "default texturev.desktop image/%S", &_ext);
+		bx::StringBuilder tmp;
+		tmp.addPrintf("default texturev.desktop image/%S", &_ext);
 
 		bx::ProcessReader reader;
 		bx::Error err;
-		if (bx::open(&reader, "xdg-mime", tmp.c_str(), &err) )
+		if (bx::open(&reader, "xdg-mime", tmp.getView().getPtr(), &err) )
 		{
 			bx::close(&reader);
 		}
@@ -1481,7 +1481,7 @@ void associate()
 			bx::printf("Failed to associate MIME type image/%S (error: \"%S\")!\n", &_ext, &msg);
 		}
 
-		bx::stringPrintf(mimeType, "image/%S;", &_ext);
+		mimeType.addPrintf("image/%S;", &_ext);
 	};
 
 	for (uint32_t ii = 0; ii < s_numSupportedExt; ++ii)
@@ -1509,7 +1509,7 @@ void associate()
 			, BGFX_TEXTUREV_VERSION_MAJOR
 			, BGFX_TEXTUREV_VERSION_MINOR
 			, BGFX_API_VERSION
-			, mimeType.c_str()
+			, mimeType.getView().getPtr()
 			);
 		bx::close(&writer);
 	}
@@ -2019,13 +2019,13 @@ int _main_(int _argc, char** _argv)
 					ImGui::EndMenu();
 				}
 
-				if (0 != view.m_fileList.size() )
+				if (0 != view.m_fileList.getCount() )
 				{
 					ImGui::Separator();
 					ImGui::TextColored(
 						  ImVec4(0.0f, 1.0f, 1.0f, 1.0f)
 						, "%s"
-						, view.m_fileList[view.m_fileIndex].c_str()
+						, view.m_fileList[view.m_fileIndex].getCPtr()
 						);
 
 					ImGui::Separator();
@@ -2247,7 +2247,7 @@ int _main_(int _argc, char** _argv)
 						}
 						else
 						{
-							ImGui::Text("Name: %s", view.m_fileList[view.m_fileIndex].c_str() );
+							ImGui::Text("Name: %s", view.m_fileList[view.m_fileIndex].getCPtr() );
 
 							ImGui::Text("Dimensions: %d x %d"
 								, view.m_textureInfo.width
@@ -2314,7 +2314,7 @@ int _main_(int _argc, char** _argv)
 						ImGui::PushItemWidth(-1);
 						if (ImGui::BeginListBox("##empty", ImVec2(0.0f, listHeight) ) )
 						{
-							const int32_t itemCount = int32_t(view.m_fileList.size() );
+							const int32_t itemCount = int32_t(view.m_fileList.getCount() );
 							const int32_t index     = int32_t(view.m_fileIndex);
 							const int32_t scroll    = view.m_fileScroll;
 
@@ -2340,7 +2340,7 @@ int _main_(int _argc, char** _argv)
 
 									const bool isSelected = pos == index;
 
-									if (ImGui::Selectable(view.m_fileList[pos].c_str(), isSelected) )
+									if (ImGui::Selectable(view.m_fileList[pos].getCPtr(), isSelected) )
 									{
 										view.m_fileIndex = pos;
 									}
@@ -2462,7 +2462,7 @@ int _main_(int _argc, char** _argv)
 				ImGui::Text("Delete file:\n\n");
 
 				ImGui::PushFont(ImGui::Font::Mono);
-				ImGui::Text("%s", view.m_fileList.empty() ? "" : view.m_fileList[view.m_fileIndex].c_str() );
+				ImGui::Text("%s", view.m_fileList.isEmpty() ? "" : view.m_fileList[view.m_fileIndex].getCPtr() );
 				ImGui::NextLine();
 
 				keyBindingHelp("d",     "Delete file.");
@@ -2508,7 +2508,7 @@ int _main_(int _argc, char** _argv)
 
 				if (cancel
 				||  View::Action::None != view.m_action
-				||  view.m_fileList.empty()
+				||  view.m_fileList.isEmpty()
 				||  !view.m_delete)
 				{
 					view.m_delete = false;
@@ -2525,10 +2525,10 @@ int _main_(int _argc, char** _argv)
 				const View::Action::Enum action = view.m_action;
 				view.m_action = View::Action::None;
 
-				if (!view.m_fileList.empty() )
+				if (!view.m_fileList.isEmpty() )
 				{
 					bx::FilePath fp = view.m_path;
-					fp.join(view.m_fileList[view.m_fileIndex].c_str() );
+					fp.join(view.m_fileList[view.m_fileIndex].getCPtr() );
 
 					if (videoOwnsTexture)
 					{
@@ -2550,11 +2550,11 @@ int _main_(int _argc, char** _argv)
 
 					if (result)
 					{
-						view.m_fileList.erase(view.m_fileList.begin() + view.m_fileIndex);
+						view.m_fileList.remove(view.m_fileIndex, bx::kOrdered);
 
-						if (view.m_fileIndex >= view.m_fileList.size() )
+						if (view.m_fileIndex >= view.m_fileList.getCount() )
 						{
-							view.m_fileIndex = bx::satSub<uint32_t>(uint32_t(view.m_fileList.size() ), 1u);
+							view.m_fileIndex = bx::satSub<uint32_t>(view.m_fileList.getCount(), 1u);
 						}
 					}
 					else
@@ -2565,7 +2565,7 @@ int _main_(int _argc, char** _argv)
 
 					fileIndex = UINT32_MAX;
 
-					if (view.m_fileList.empty() )
+					if (view.m_fileList.isEmpty() )
 					{
 						entry::setWindowTitle(entry::kDefaultWindowHandle, "texturev");
 					}
@@ -2573,12 +2573,12 @@ int _main_(int _argc, char** _argv)
 			}
 
 			if (view.m_fileIndex != fileIndex
-			&&  0 != view.m_fileList.size() )
+			&&  0 != view.m_fileList.getCount() )
 			{
 				fileIndex = view.m_fileIndex;
 
 				bx::FilePath fp = view.m_path;
-				fp.join(view.m_fileList[view.m_fileIndex].c_str() );
+				fp.join(view.m_fileList[view.m_fileIndex].getCPtr() );
 
 				const bool nextIsVideo = VideoPlayer::isVideoFile(fp);
 
@@ -2603,7 +2603,7 @@ int _main_(int _argc, char** _argv)
 				}
 				playbackBinding = desiredBinding;
 
-				std::string title;
+				bx::StringBuilder title;
 
 				if (nextIsVideo)
 				{
@@ -2628,7 +2628,7 @@ int _main_(int _argc, char** _argv)
 
 						cmdExec("view orientation\nview orientation z 0");
 
-						bx::stringPrintf(title, "%s (%d x %d, video, %5.2fs)"
+						title.addPrintf("%s (%d x %d, video, %5.2fs)"
 							, fp.getCPtr()
 							, view.m_textureInfo.width
 							, view.m_textureInfo.height
@@ -2637,7 +2637,7 @@ int _main_(int _argc, char** _argv)
 					}
 					else
 					{
-						bx::stringPrintf(title, "Failed to load %s!", filePath);
+						title.addPrintf("Failed to load %s!", filePath);
 					}
 				}
 				else
@@ -2678,7 +2678,7 @@ int _main_(int _argc, char** _argv)
 					if (!loadErr.isOk() )
 					{
 						const bx::StringView& msg = loadErr.getMessage();
-						bx::stringPrintf(title, "Failed to load %s: %S", filePath, &msg);
+						title.addPrintf("Failed to load %s: %S", filePath, &msg);
 						bx::printf("Failed to load %s: %S\n", filePath, &msg);
 					}
 					else
@@ -2698,7 +2698,7 @@ int _main_(int _argc, char** _argv)
 							name = " 2D Array";
 						}
 
-						bx::stringPrintf(title, "%s (%d x %d%s, mips: %d, layers %d, %s)"
+						title.addPrintf("%s (%d x %d%s, mips: %d, layers %d, %s)"
 							, fp.getCPtr()
 							, view.m_textureInfo.width
 							, view.m_textureInfo.height
@@ -2710,7 +2710,7 @@ int _main_(int _argc, char** _argv)
 					}
 				}
 
-				entry::setWindowTitle(entry::kDefaultWindowHandle, title.c_str() );
+				entry::setWindowTitle(entry::kDefaultWindowHandle, title.getView().getPtr() );
 			}
 
 			const int64_t now = bx::getHPCounter();

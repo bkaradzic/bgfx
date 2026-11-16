@@ -5,11 +5,6 @@
 
 #include "common.h"
 
-#include <tinystl/allocator.h>
-#include <tinystl/vector.h>
-#include <tinystl/string.h>
-namespace stl = tinystl;
-
 #include <bgfx/bgfx.h>
 #include <bx/commandline.h>
 #include <bx/endian.h>
@@ -562,9 +557,9 @@ void Mesh::load(bx::ReaderSeekerI* _reader, bool _ramcopy)
 				uint16_t len;
 				read(_reader, len, &err);
 
-				stl::string material;
-				material.resize(len);
-				read(_reader, const_cast<char*>(material.c_str() ), len, &err);
+				bx::ArrayT<char> material;
+				material.setCount(len, bx::InitNone);
+				read(_reader, material.getPtr(), len, &err);
 
 				uint16_t num;
 				read(_reader, num, &err);
@@ -573,9 +568,9 @@ void Mesh::load(bx::ReaderSeekerI* _reader, bool _ramcopy)
 				{
 					read(_reader, len, &err);
 
-					stl::string name;
-					name.resize(len);
-					read(_reader, const_cast<char*>(name.c_str() ), len, &err);
+					bx::ArrayT<char> name;
+					name.setCount(len, bx::InitNone);
+					read(_reader, name.getPtr(), len, &err);
 
 					Primitive prim;
 					read(_reader, prim.m_startIndex, &err);
@@ -586,10 +581,10 @@ void Mesh::load(bx::ReaderSeekerI* _reader, bool _ramcopy)
 					read(_reader, prim.m_aabb, &err);
 					read(_reader, prim.m_obb, &err);
 
-					group.m_prims.push_back(prim);
+					group.m_prims.add(prim);
 				}
 
-				m_groups.push_back(group);
+				m_groups.add(group);
 				group.reset();
 			}
 				break;
@@ -605,9 +600,8 @@ void Mesh::unload()
 {
 	bx::AllocatorI* allocator = entry::getAllocator();
 
-	for (GroupArray::const_iterator it = m_groups.begin(), itEnd = m_groups.end(); it != itEnd; ++it)
+	for (const Group& group : m_groups)
 	{
-		const Group& group = *it;
 		bgfx::destroy(group.m_vbh);
 
 		if (bgfx::isValid(group.m_ibh) )
@@ -645,10 +639,8 @@ void Mesh::submit(bgfx::ViewId _id, bgfx::ProgramHandle _program, const float* _
 	bgfx::setTransform(_mtx);
 	bgfx::setState(_state);
 
-	for (GroupArray::const_iterator it = m_groups.begin(), itEnd = m_groups.end(); it != itEnd; ++it)
+	for (const Group& group : m_groups)
 	{
-		const Group& group = *it;
-
 		bgfx::setIndexBuffer(group.m_ibh);
 		bgfx::setVertexBuffer(0, group.m_vbh);
 		bgfx::submit(
@@ -685,10 +677,8 @@ void Mesh::submit(const MeshState*const* _state, uint8_t _numPasses, const float
 				);
 		}
 
-		for (GroupArray::const_iterator it = m_groups.begin(), itEnd = m_groups.end(); it != itEnd; ++it)
+		for (const Group& group : m_groups)
 		{
-			const Group& group = *it;
-
 			bgfx::setIndexBuffer(group.m_ibh);
 			bgfx::setVertexBuffer(0, group.m_vbh);
 			bgfx::submit(

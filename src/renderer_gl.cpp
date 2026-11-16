@@ -3627,7 +3627,7 @@ namespace bgfx { namespace gl
 					else
 					{
 						const uint32_t numTexels = blocksW*blocksH;
-						uint32_t* temp = (uint32_t*)bx::alloc(g_allocator, numTexels*16);
+						uint32_t* temp = (uint32_t*)bx::allocPtr(g_allocatorBlk, numTexels*16);
 
 						GL_CHECK(glReadPixels(0, 0, blocksW, blocksH, GL_RGBA_INTEGER, GL_UNSIGNED_INT, temp) );
 
@@ -3643,7 +3643,7 @@ namespace bgfx { namespace gl
 							}
 						}
 
-						bx::free(g_allocator, temp);
+						bx::freePtr(temp);
 					}
 
 					result = true;
@@ -3680,10 +3680,10 @@ namespace bgfx { namespace gl
 			const uint32_t mipWidth  = bx::max<uint32_t>(1, texture.m_width  >> _mip);
 			const uint32_t mipHeight = bx::max<uint32_t>(1, texture.m_height >> _mip);
 
-			void* temp = bx::alloc(g_allocator, mipWidth*mipHeight*bimg::getBitsPerPixel(storageFormat)/8);
+			void* temp = bx::allocPtr(g_allocatorBlk, mipWidth*mipHeight*bimg::getBitsPerPixel(storageFormat)/8);
 			readTextureStorage(_handle, temp, _layer, _mip);
 			bimg::imageConvert(g_allocator, _data, requestedFormat, temp, storageFormat, mipWidth, mipHeight, 1);
-			bx::free(g_allocator, temp);
+			bx::freePtr(temp);
 		}
 
 		void readTextureStorage(TextureHandle _handle, void* _data, uint16_t _layer, uint8_t _mip)
@@ -3875,7 +3875,7 @@ namespace bgfx { namespace gl
 
 						if (bimg::TextureFormat::Count != readFormat)
 						{
-							void* temp = bx::alloc(g_allocator, mipWidth*mipHeight*bimg::getBitsPerPixel(readFormat)/8);
+							void* temp = bx::allocPtr(g_allocatorBlk, mipWidth*mipHeight*bimg::getBitsPerPixel(readFormat)/8);
 
 							GL_CHECK(glReadPixels(
 								  0
@@ -3898,7 +3898,7 @@ namespace bgfx { namespace gl
 								, 1
 								);
 
-							bx::free(g_allocator, temp);
+							bx::freePtr(temp);
 						}
 						else
 						{
@@ -4110,7 +4110,7 @@ namespace bgfx { namespace gl
 			}
 
 			uint32_t length = width*height*4;
-			uint8_t* data = (uint8_t*)bx::alloc(g_allocator, length);
+			uint8_t* data = (uint8_t*)bx::allocPtr(g_allocatorBlk, length);
 
 			GL_CHECK(glReadPixels(0
 				, 0
@@ -4147,7 +4147,7 @@ namespace bgfx { namespace gl
 				, length
 				, true
 				);
-			bx::free(g_allocator, data);
+			bx::freePtr(data);
 
 			m_glctx.makeCurrent(NULL);
 			GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, m_backBufferFbo) );
@@ -4954,7 +4954,7 @@ namespace bgfx { namespace gl
 			if (m_reset&BGFX_RESET_CAPTURE)
 			{
 				m_captureSize = m_mainSwapChain.width*m_mainSwapChain.height*4;
-				m_capture = bx::realloc(g_allocator, m_capture, m_captureSize);
+				m_capture = bx::reallocPtr(g_allocatorBlk, m_capture, m_captureSize);
 				g_callback->captureBegin(m_mainSwapChain.width, m_mainSwapChain.height, m_mainSwapChain.width*4, TextureFormat::BGRA8, true);
 			}
 			else
@@ -4997,7 +4997,7 @@ namespace bgfx { namespace gl
 			if (NULL != m_capture)
 			{
 				g_callback->captureEnd();
-				bx::free(g_allocator, m_capture);
+				bx::freePtr(m_capture);
 				m_capture = NULL;
 				m_captureSize = 0;
 			}
@@ -5016,7 +5016,7 @@ namespace bgfx { namespace gl
 
 				if (cached)
 				{
-					void* data = bx::alloc(g_allocator, length);
+					void* data = bx::allocPtr(g_allocatorBlk, length);
 					if (g_callback->cacheRead(_id, data, length) )
 					{
 						bx::Error err;
@@ -5028,7 +5028,7 @@ namespace bgfx { namespace gl
 						GL_CHECK(glProgramBinary(programId, format, reader.getDataPtr(), (GLsizei)reader.remaining() ) );
 					}
 
-					bx::free(g_allocator, data);
+					bx::freePtr(data);
 				}
 
 #if BGFX_CONFIG_RENDERER_OPENGL
@@ -5052,13 +5052,13 @@ namespace bgfx { namespace gl
 				if (0 < programLength)
 				{
 					uint32_t length = programLength + 4;
-					uint8_t* data = (uint8_t*)bx::alloc(g_allocator, length);
+					uint8_t* data = (uint8_t*)bx::allocPtr(g_allocatorBlk, length);
 					GL_CHECK(glGetProgramBinary(programId, programLength, NULL, &format, &data[4]) );
 					*(uint32_t*)data = format;
 
 					g_callback->cacheWrite(_id, data, length);
 
-					bx::free(g_allocator, data);
+					bx::freePtr(data);
 				}
 			}
 		}
@@ -5769,10 +5769,10 @@ namespace bgfx { namespace gl
 
 	RendererContextI* rendererCreate(const Init& _init)
 	{
-		s_renderGL = BX_NEW(g_allocator, RendererContextGL);
+		s_renderGL = BX_NEW_PTR(g_allocatorBlk, RendererContextGL);
 		if (!s_renderGL->init(_init) )
 		{
-			bx::deleteObject(g_allocator, s_renderGL);
+			bx::deletePtr(s_renderGL);
 			s_renderGL = NULL;
 		}
 		return s_renderGL;
@@ -5781,7 +5781,7 @@ namespace bgfx { namespace gl
 	void rendererDestroy()
 	{
 		s_renderGL->shutdown();
-		bx::deleteObject(g_allocator, s_renderGL);
+		bx::deletePtr(s_renderGL);
 		s_renderGL = NULL;
 	}
 
@@ -6901,7 +6901,7 @@ namespace bgfx { namespace gl
 			: _texture.m_target
 			;
 
-		void* zero = bx::alloc(g_allocator, size);
+		void* zero = bx::allocPtr(g_allocatorBlk, size);
 		bx::memSet(zero, 0, size);
 
 		GL_CHECK(glBindTexture(_texture.m_target, _texture.m_id) );
@@ -6910,7 +6910,7 @@ namespace bgfx { namespace gl
 		GL_CHECK(glPixelStorei(GL_UNPACK_ALIGNMENT, 4) );
 		GL_CHECK(glBindTexture(_texture.m_target, 0) );
 
-		bx::free(g_allocator, zero);
+		bx::freePtr(zero);
 	}
 
 	void TextureGL::clearAttached(uint8_t _mipBeg, uint8_t _mipEnd, uint16_t _layer, uint16_t _numLayers)
@@ -7157,7 +7157,7 @@ namespace bgfx { namespace gl
 			uint8_t* temp = NULL;
 			if (convert)
 			{
-				temp = (uint8_t*)bx::alloc(g_allocator, ti.width*ti.height*ti.depth*4);
+				temp = (uint8_t*)bx::allocPtr(g_allocatorBlk, ti.width*ti.height*ti.depth*4);
 			}
 
 			const uint16_t numSides = ti.numLayers * (imageContainer.m_cubeMap ? 6 : 1);
@@ -7349,7 +7349,7 @@ namespace bgfx { namespace gl
 
 			if (NULL != temp)
 			{
-				bx::free(g_allocator, temp);
+				bx::freePtr(temp);
 			}
 		}
 
@@ -7440,7 +7440,7 @@ namespace bgfx { namespace gl
 		||  !unpackRowLength
 		||  (compressed && UINT16_MAX != _pitch && srcPitch != rectPitch) )
 		{
-			temp = (uint8_t*)bx::alloc(g_allocator, rectPitch*height*_depth);
+			temp = (uint8_t*)bx::allocPtr(g_allocatorBlk, rectPitch*height*_depth);
 		}
 		else if (unpackRowLength
 		     &&  !compressed)
@@ -7491,7 +7491,7 @@ namespace bgfx { namespace gl
 				&&  UINT16_MAX != _pitch
 				&&  packedPitch != _pitch)
 				{
-					packed = (uint8_t*)bx::alloc(g_allocator, packedPitch*height*_depth);
+					packed = (uint8_t*)bx::allocPtr(g_allocatorBlk, packedPitch*height*_depth);
 					bimg::imageCopy(packed, height, _pitch, _depth, data, packedPitch);
 					data = packed;
 				}
@@ -7502,7 +7502,7 @@ namespace bgfx { namespace gl
 
 				if (NULL != packed)
 				{
-					bx::free(g_allocator, packed);
+					bx::freePtr(packed);
 				}
 			}
 
@@ -7536,7 +7536,7 @@ namespace bgfx { namespace gl
 
 		if (NULL != temp)
 		{
-			bx::free(g_allocator, temp);
+			bx::freePtr(temp);
 		}
 	}
 
@@ -9186,7 +9186,7 @@ namespace bgfx { namespace gl
 		const uint32_t srcMipBytes = srcBlocksX*srcBlocksY*blockSize;
 		const uint32_t numBytes   = numBlocksX*numBlocksY*blockSize;
 
-		uint8_t* mip    = (uint8_t*)bx::alloc(g_allocator, srcMipBytes + numBytes);
+		uint8_t* mip    = (uint8_t*)bx::allocPtr(g_allocatorBlk, srcMipBytes + numBytes);
 		uint8_t* blocks = mip + srcMipBytes;
 
 		GL_CHECK(glBindTexture(_src.m_target, _src.m_id) );
@@ -9219,7 +9219,7 @@ namespace bgfx { namespace gl
 			) );
 		GL_CHECK(glBindTexture(_dst.m_target, 0) );
 
-		bx::free(g_allocator, mip);
+		bx::freePtr(mip);
 
 		return true;
 	}
@@ -9322,7 +9322,7 @@ namespace bgfx { namespace gl
 		}
 
 		const uint32_t size = numBlocksX*numBlocksY*blockSize*depth;
-		uint8_t* blocks = (uint8_t*)bx::alloc(g_allocator, size);
+		uint8_t* blocks = (uint8_t*)bx::allocPtr(g_allocatorBlk, size);
 
 		GL_CHECK(glGetCompressedTextureSubImage(_src.m_id
 			, _bi.m_srcMip
@@ -9350,7 +9350,7 @@ namespace bgfx { namespace gl
 			);
 		GL_CHECK(glBindTexture(_dst.m_target, 0) );
 
-		bx::free(g_allocator, blocks);
+		bx::freePtr(blocks);
 
 		return true;
 	}
@@ -9971,15 +9971,27 @@ namespace bgfx { namespace gl
 		if (0 < _render->m_iboffset)
 		{
 			BGFX_PROFILER_SCOPE("bgfx/Update transient index buffer", kColorResource);
-			TransientIndexBuffer* ib = _render->m_transientIb;
-			m_indexBuffers[ib->handle.idx].update(0, _render->m_iboffset, ib->data, true);
+
+			for (const TransientBufferChunk& chunk : _render->m_transientIb.m_chunks)
+			{
+				if (0 < chunk.m_offset)
+				{
+					m_indexBuffers[chunk.m_handle].update(0, chunk.m_offset, chunk.m_data, true);
+				}
+			}
 		}
 
 		if (0 < _render->m_vboffset)
 		{
 			BGFX_PROFILER_SCOPE("bgfx/Update transient vertex buffer", kColorResource);
-			TransientVertexBuffer* vb = _render->m_transientVb;
-			m_vertexBuffers[vb->handle.idx].update(0, _render->m_vboffset, vb->data, true);
+
+			for (const TransientBufferChunk& chunk : _render->m_transientVb.m_chunks)
+			{
+				if (0 < chunk.m_offset)
+				{
+					m_vertexBuffers[chunk.m_handle].update(0, chunk.m_offset, chunk.m_data, true);
+				}
+			}
 		}
 
 		_render->sort();

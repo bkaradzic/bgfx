@@ -6,8 +6,8 @@
 #include "common.h"
 #include "bgfx_utils.h"
 #include "imgui/imgui.h"
+#include <bx/hashmap.h>
 #include <bx/rng.h>
-#include <map>
 
 namespace
 {
@@ -323,7 +323,7 @@ public:
 				if (m_reading == m_currFrame)
 				{
 					m_reading = 0;
-					std::map<uint32_t, uint32_t> ids;  // This contains all the IDs found in the buffer
+					bx::HashMapT<uint32_t, uint32_t> ids;  // This contains all the IDs found in the buffer
 					uint32_t maxAmount = 0;
 					for (uint8_t *x = m_blitData; x < m_blitData + ID_DIM * ID_DIM * 4;)
 					{
@@ -338,14 +338,14 @@ public:
 						}
 
 						uint32_t hashKey = rr + (gg << 8) + (bb << 16) + (aa << 24);
-						std::map<uint32_t, uint32_t>::iterator mapIter = ids.find(hashKey);
+						const uint32_t* found = ids.find(hashKey);
 						uint32_t amount = 1;
-						if (mapIter != ids.end() )
+						if (NULL != found)
 						{
-							amount = mapIter->second + 1;
+							amount = *found + 1;
 						}
 
-						ids[hashKey] = amount; // Amount of times this ID (color) has been clicked on in buffer
+						ids.add(hashKey, amount, true); // Amount of times this ID (color) has been clicked on in buffer
 						maxAmount = maxAmount > amount
 							? maxAmount
 							: amount
@@ -356,12 +356,12 @@ public:
 					m_highlighted = UINT32_MAX;
 					if (maxAmount)
 					{
-						for (std::map<uint32_t, uint32_t>::iterator mapIter = ids.begin(); mapIter != ids.end(); mapIter++)
+						idKey = UINT32_MAX;
+						for (bx::HashMapT<uint32_t, uint32_t>::Iterator mapIter = ids.begin(), mapEnd = ids.end(); mapIter != mapEnd; ++mapIter)
 						{
-							if (mapIter->second == maxAmount)
+							if (mapIter.getValue() == maxAmount)
 							{
-								idKey = mapIter->first;
-								break;
+								idKey = bx::min(idKey, mapIter.getKey() );
 							}
 						}
 

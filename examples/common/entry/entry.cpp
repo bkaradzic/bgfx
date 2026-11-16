@@ -1173,19 +1173,6 @@ restart:
 		return g_allocator;
 	}
 
-	void* TinyStlAllocator::static_allocate(size_t _bytes)
-	{
-		return bx::alloc(getAllocator(), _bytes);
-	}
-
-	void TinyStlAllocator::static_deallocate(void* _ptr, size_t /*_bytes*/)
-	{
-		if (NULL != _ptr)
-		{
-			bx::free(getAllocator(), _ptr);
-		}
-	}
-
 } // namespace entry
 
 extern "C" bool entry_process_events(uint32_t* _width, uint32_t* _height, uint32_t* _debug, uint32_t* _reset)

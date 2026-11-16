@@ -1313,10 +1313,10 @@ class CapsLimits(ctypes.Structure):
 	maxEncoders: int
 	# Minimum resource command buffer size.
 	minResourceCbSize: int
-	# Maximum transient vertex buffer size.
-	maxTransientVbSize: int
-	# Maximum transient index buffer size.
-	maxTransientIbSize: int
+	# Minimum transient vertex buffer size, it grows on demand.
+	minTransientVbSize: int
+	# Minimum transient index buffer size, it grows on demand.
+	minTransientIbSize: int
 	# Mimimum uniform buffer size.
 	minUniformBufferSize: int
 	# Minimum view and frame uniform cache size.
@@ -1469,10 +1469,10 @@ class InitLimits(ctypes.Structure):
 	minViews: int
 	# Minimum resource command buffer size.
 	minResourceCbSize: int
-	# Maximum transient vertex buffer size.
-	maxTransientVbSize: int
-	# Maximum transient index buffer size.
-	maxTransientIbSize: int
+	# Minimum transient vertex buffer size, it grows on demand.
+	minTransientVbSize: int
+	# Minimum transient index buffer size, it grows on demand.
+	minTransientIbSize: int
 	# Mimimum uniform buffer size.
 	minUniformBufferSize: int
 	# Minimum view and frame uniform cache size. This is a reservation,

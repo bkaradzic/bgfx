@@ -1122,7 +1122,7 @@ namespace bgfx { namespace vk
 			&&     bgfx::hasReorderSpace(m_reorderPool, kVideoMaxReorderInFlight) )
 			{
 				const bgfx::PendingAU& au = m_auQueue.front();
-				decodeOneAU(au.data.data(), uint32_t(au.data.size() ), au.ptsUs);
+				decodeOneAU(au.data.getPtr(), au.data.getCount(), au.ptsUs);
 				m_auQueue.pop();
 			}
 
@@ -2713,11 +2713,11 @@ namespace bgfx { namespace vk
 
 	VideoDecoderVK* videoDecoderCreate(const VideoDecoderInit& _init, RendererContextVK* _renderer, uint16_t _width, uint16_t _height)
 	{
-		VideoDecoderVK* decoder = BX_NEW(g_allocator, VideoDecoderVK);
+		VideoDecoderVK* decoder = BX_NEW_PTR(g_allocatorBlk, VideoDecoderVK);
 		if (!decoder->create(_init, _renderer, _width, _height) )
 		{
 			decoder->destroy();
-			bx::deleteObject(g_allocator, decoder);
+			bx::deletePtr(decoder);
 			return NULL;
 		}
 		return decoder;
@@ -2728,7 +2728,7 @@ namespace bgfx { namespace vk
 		if (NULL != _decoder)
 		{
 			_decoder->destroy();
-			bx::deleteObject(g_allocator, _decoder);
+			bx::deletePtr(_decoder);
 		}
 	}
 

@@ -8,13 +8,11 @@
 #include "imgui/imgui.h"
 
 #include <bx/allocator.h>
+#include <bx/array.h>
 #include <bx/math.h>
+#include <bx/stringpool.h>
 
 #include <bimg/decode.h>
-
-#include <tinystl/string.h>
-#include <tinystl/vector.h>
-namespace stl = tinystl;
 
 namespace
 {
@@ -101,7 +99,7 @@ struct Texture
 
 struct TextureSet
 {
-	stl::string m_name;
+	bx::String m_name;
 	uint16_t m_maxWidth  = 0;
 	uint16_t m_maxHeight = 0;
 	bool m_hasCompressedTextures = false;
@@ -333,7 +331,7 @@ static void textureSetPopulateUncompressedFormats(TextureSet& textureSet, bimg::
 static TextureSet makeEmptyTextureSet(const char* name)
 {
 	TextureSet textureSet;
-	textureSet.m_name = name;
+	textureSet.m_name = bx::String(bx::StringView(name) );
 
 	for (int32_t ii = 0; ii < kNumFormats; ++ii)
 	{
@@ -476,9 +474,9 @@ public:
 			, checkerboardImageMemory
 			);
 
-		m_textureSets.push_back(generateTextureSetFromImage("Hue Wheel", generateHueWheelImage() ) );
-		m_textureSets.push_back(generateTextureSetFromFile("textures/pf_alpha_test.dds") );
-		m_textureSets.push_back(generateTextureSetFromFile("textures/pf_uv_filtering_test.dds") );
+		m_textureSets.add(generateTextureSetFromImage("Hue Wheel", generateHueWheelImage() ) );
+		m_textureSets.add(generateTextureSetFromFile("textures/pf_alpha_test.dds") );
+		m_textureSets.add(generateTextureSetFromFile("textures/pf_uv_filtering_test.dds") );
 
 		const char* textureCompressionSetFiles[] =
 		{
@@ -513,7 +511,7 @@ public:
 			NULL
 		};
 
-		m_textureSets.push_back(generateTextureSetFromFileSet("texture_compression_* set", textureCompressionSetFiles) );
+		m_textureSets.add(generateTextureSetFromFileSet("texture_compression_* set", textureCompressionSetFiles) );
 
 		m_currentTextureSet = &m_textureSets[0];
 
@@ -670,12 +668,12 @@ public:
 
 			ImDrawList* drawList = ImGui::GetWindowDrawList();
 
-			if (ImGui::BeginCombo("Sample", m_currentTextureSet ? m_currentTextureSet->m_name.c_str() : NULL) )
+			if (ImGui::BeginCombo("Sample", m_currentTextureSet ? m_currentTextureSet->m_name.getCPtr() : NULL) )
 			{
 				for (auto& textureSet : m_textureSets)
 				{
 					bool isSelected = (&textureSet == m_currentTextureSet);
-					if (ImGui::Selectable(textureSet.m_name.c_str(), &isSelected) )
+					if (ImGui::Selectable(textureSet.m_name.getCPtr(), &isSelected) )
 					{
 						m_currentTextureSet = &textureSet;
 						if (!m_currentTextureSet->m_hasCompressedTextures && formatToIndex(m_selectedFormat) < kNumCompressedFormats)
@@ -850,7 +848,7 @@ public:
 	bimg::TextureFormat::Enum m_selectedFormat = bimg::TextureFormat::RGBA8;
 
 	bgfx::TextureHandle m_checkerboard = BGFX_INVALID_HANDLE;
-	stl::vector<TextureSet> m_textureSets;
+	bx::ArrayT<TextureSet> m_textureSets;
 	TextureSet* m_currentTextureSet = NULL;
 };
 

@@ -3,9 +3,6 @@
  * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
-#include <vector>
-#include <string>
-
 #include "common.h"
 #include "bgfx_utils.h"
 #include "imgui/imgui.h"
@@ -115,7 +112,7 @@ void screenSpaceQuad(float _textureWidth, float _textureHeight, bool _originBott
 
 		if (_originBottomLeft)
 		{
-			std::swap(minv, maxv);
+			bx::swap(minv, maxv);
 			minv -= 1.0f;
 			maxv -= 1.0f;
 		}

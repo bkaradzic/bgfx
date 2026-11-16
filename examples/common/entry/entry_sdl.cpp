@@ -30,8 +30,7 @@ BX_PRAGMA_DIAGNOSTIC_POP()
 #include <bx/thread.h>
 #include <bx/handlealloc.h>
 #include <bx/readerwriter.h>
-#include <tinystl/allocator.h>
-#include <tinystl/string.h>
+#include <bx/stringpool.h>
 
 namespace entry
 {
@@ -235,7 +234,7 @@ namespace entry
 		uint32_t m_width;
 		uint32_t m_height;
 		uint32_t m_flags;
-		tinystl::string m_title;
+		bx::String m_title;
 		bool m_flagsEnabled;
 	};
 
@@ -747,7 +746,7 @@ namespace entry
 									WindowHandle handle = getWindowHandle(uev);
 									Msg* msg = (Msg*)uev.data2;
 
-									m_window[handle.idx] = SDL_CreateWindow(msg->m_title.c_str()
+									m_window[handle.idx] = SDL_CreateWindow(msg->m_title.getCPtr()
 										, msg->m_x
 										, msg->m_y
 										, msg->m_width
@@ -787,7 +786,7 @@ namespace entry
 									Msg* msg = (Msg*)uev.data2;
 									if (isValid(handle) )
 									{
-										SDL_SetWindowTitle(m_window[handle.idx], msg->m_title.c_str() );
+										SDL_SetWindowTitle(m_window[handle.idx], msg->m_title.getCPtr() );
 									}
 									delete msg;
 								}
@@ -884,9 +883,8 @@ namespace entry
 		WindowHandle findHandle(SDL_Window* _window)
 		{
 			bx::MutexScope scope(m_lock);
-			for (uint32_t ii = 0, num = m_windowAlloc.getNumHandles(); ii < num; ++ii)
+			for (uint16_t idx = m_windowAlloc.findFirst(); bx::kInvalidHandle != idx; idx = m_windowAlloc.findNext(idx) )
 			{
-				uint16_t idx = m_windowAlloc.getHandleAt(ii);
 				if (_window == m_window[idx])
 				{
 					WindowHandle handle = { idx };
@@ -900,9 +898,8 @@ namespace entry
 
 		GamepadHandle findGamepad(SDL_JoystickID _jid)
 		{
-			for (uint32_t ii = 0, num = m_gamepadAlloc.getNumHandles(); ii < num; ++ii)
+			for (uint16_t idx = m_gamepadAlloc.findFirst(); bx::kInvalidHandle != idx; idx = m_gamepadAlloc.findNext(idx) )
 			{
-				uint16_t idx = m_gamepadAlloc.getHandleAt(ii);
 				if (_jid == m_gamepad[idx].m_jid)
 				{
 					GamepadHandle handle = { idx };
@@ -920,11 +917,11 @@ namespace entry
 		EventQueue m_eventQueue;
 		bx::Mutex m_lock;
 
-		bx::HandleAllocT<ENTRY_CONFIG_MAX_WINDOWS> m_windowAlloc;
+		bx::HandleAlloc2T<ENTRY_CONFIG_MAX_WINDOWS> m_windowAlloc;
 		SDL_Window* m_window[ENTRY_CONFIG_MAX_WINDOWS];
 		uint32_t m_flags[ENTRY_CONFIG_MAX_WINDOWS];
 
-		bx::HandleAllocT<ENTRY_CONFIG_MAX_GAMEPADS> m_gamepadAlloc;
+		bx::HandleAlloc2T<ENTRY_CONFIG_MAX_GAMEPADS> m_gamepadAlloc;
 		GamepadSDL m_gamepad[ENTRY_CONFIG_MAX_GAMEPADS];
 
 		uint32_t m_width;
@@ -967,7 +964,7 @@ namespace entry
 			msg->m_y      = _y;
 			msg->m_width  = _width;
 			msg->m_height = _height;
-			msg->m_title  = _title;
+			msg->m_title  = bx::String(bx::StringView(_title) );
 			msg->m_flags  = _flags;
 
 			sdlPostEvent(SDL_USER_WINDOW_CREATE, handle, msg);
@@ -1009,7 +1006,7 @@ namespace entry
 	void setWindowTitle(WindowHandle _handle, const char* _title)
 	{
 		Msg* msg = new Msg;
-		msg->m_title = _title;
+		msg->m_title = bx::String(bx::StringView(_title) );
 
 		sdlPostEvent(SDL_USER_WINDOW_SET_TITLE, _handle, msg);
 	}

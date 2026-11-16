@@ -6,16 +6,12 @@
 #include <bx/allocator.h>
 #include <bx/commandline.h>
 #include <bx/hash.h>
+#include <bx/hashmap.h>
 #include <bx/string.h>
 
 #include "dbg.h"
 #include "cmd.h"
 #include "entry_p.h"
-
-#include <tinystl/allocator.h>
-#include <tinystl/string.h>
-#include <tinystl/unordered_map.h>
-namespace stl = tinystl;
 
 struct CmdContext
 {
@@ -30,21 +26,17 @@ struct CmdContext
 	void add(const char* _name, ConsoleFn _fn, void* _userData)
 	{
 		const uint32_t cmd = bx::hash<bx::HashMurmur2A>(_name, (uint32_t)bx::strLen(_name) );
-		BX_ASSERT(m_lookup.end() == m_lookup.find(cmd), "Command \"%s\" already exist.", _name);
+		BX_ASSERT(NULL == m_lookup.find(cmd), "Command \"%s\" already exist.", _name);
 
 		Func fn = { _fn, _userData };
-		m_lookup.insert(stl::make_pair(cmd, fn) );
+		m_lookup.tryAdd(cmd, fn);
 	}
 
 	void remove(const char* _name)
 	{
 		const uint32_t cmd = bx::hash<bx::HashMurmur2A>(_name, (uint32_t)bx::strLen(_name) );
 
-		CmdLookup::iterator it = m_lookup.find(cmd);
-		if (it != m_lookup.end() )
-		{
-			m_lookup.erase(it);
-		}
+		m_lookup.tryRemove(cmd);
 	}
 
 	void exec(const char* _cmd)
@@ -60,10 +52,10 @@ struct CmdContext
 			{
 				int err = -1;
 				uint32_t cmd = bx::hash<bx::HashMurmur2A>(argv[0], (uint32_t)bx::strLen(argv[0]) );
-				CmdLookup::iterator it = m_lookup.find(cmd);
-				if (it != m_lookup.end() )
+				Func* found = m_lookup.find(cmd);
+				if (NULL != found)
 				{
-					Func& fn = it->second;
+					Func fn = *found;
 					err = fn.m_fn(this, fn.m_userData, argc, argv);
 				}
 
@@ -74,15 +66,15 @@ struct CmdContext
 
 				case -1:
 					{
-						stl::string tmp(_cmd, next.getPtr()-_cmd - (next.isEmpty() ? 0 : 1) );
-						DBG("Command '%s' doesn't exist.", tmp.c_str() );
+						const bx::StringView tmp(_cmd, int32_t(next.getPtr()-_cmd - (next.isEmpty() ? 0 : 1) ) );
+						DBG("Command '%S' doesn't exist.", &tmp);
 					}
 					break;
 
 				default:
 					{
-						stl::string tmp(_cmd, next.getPtr()-_cmd - (next.isEmpty() ? 0 : 1) );
-						DBG("Failed '%s' err: %d.", tmp.c_str(), err);
+						const bx::StringView tmp(_cmd, int32_t(next.getPtr()-_cmd - (next.isEmpty() ? 0 : 1) ) );
+						DBG("Failed '%S' err: %d.", &tmp, err);
 					}
 					break;
 				}
@@ -96,7 +88,7 @@ struct CmdContext
 		void* m_userData;
 	};
 
-	typedef stl::unordered_map<uint32_t, Func> CmdLookup;
+	using CmdLookup = bx::HashMapT<uint32_t, Func>;
 	CmdLookup m_lookup;
 };
 

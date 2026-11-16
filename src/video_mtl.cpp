@@ -129,7 +129,7 @@ namespace bgfx { namespace mtl
 
 		if (NULL != _memoryBlock)
 		{
-			bx::free(g_allocator, _memoryBlock);
+			bx::freePtr(_memoryBlock);
 		}
 	}
 
@@ -864,13 +864,13 @@ namespace bgfx { namespace mtl
 				0,
 			};
 
-			uint8_t* seqObu = (uint8_t*)bx::alloc(g_allocator, seqPayloadSize + av1::kObuHeaderMaxSize);
+			uint8_t* seqObu = (uint8_t*)bx::allocPtr(g_allocatorBlk, seqPayloadSize + av1::kObuHeaderMaxSize);
 			const uint32_t seqObuSize = writeObuWithSize(seqObu, av1::OBU_SEQUENCE_HEADER, seqExtension, seqHasExtension, seqPayload, seqPayloadSize);
 
 			CFMutableDataRef av1cData = CFDataCreateMutable(kCFAllocatorDefault, 0);
 			CFDataAppendBytes(av1cData, av1c, sizeof(av1c) );
 			CFDataAppendBytes(av1cData, seqObu, seqObuSize);
-			bx::free(g_allocator, seqObu);
+			bx::freePtr(seqObu);
 
 			const void* atomKeys[]   = { CFSTR("av1C") };
 			const void* atomValues[] = { av1cData };
@@ -1117,7 +1117,7 @@ namespace bgfx { namespace mtl
 			&&     hasReorderSpace(m_reorderPool, kVideoMaxReorderInFlight) )
 			{
 				const PendingAU& au = m_auQueue.front();
-				decodeOneAU(au.data.data(), uint32_t(au.data.size() ), au.ptsUs);
+				decodeOneAU(au.data.getPtr(), au.data.getCount(), au.ptsUs);
 				m_auQueue.pop();
 			}
 
@@ -1192,19 +1192,19 @@ namespace bgfx { namespace mtl
 			if (VideoCodec::AV1 == m_codec)
 			{
 				const uint32_t numObus = visitObus(_bitstream, _bitstreamSize, [](uint8_t, uint8_t, bool, const uint8_t*, uint32_t) {});
-				sampleBytes = (uint8_t*)bx::alloc(g_allocator, _bitstreamSize + av1::kObuHeaderMaxSize*numObus);
+				sampleBytes = (uint8_t*)bx::allocPtr(g_allocatorBlk, _bitstreamSize + av1::kObuHeaderMaxSize*numObus);
 				sampleSize  = av1TemporalUnitToSample(sampleBytes, _bitstream, _bitstreamSize);
 			}
 			else
 			{
 				const uint32_t numNals = visitAnnexBNalUnits(_bitstream, _bitstreamSize, [](const uint8_t*, uint32_t) {});
-				sampleBytes = (uint8_t*)bx::alloc(g_allocator, _bitstreamSize + kNalLengthSize*numNals);
+				sampleBytes = (uint8_t*)bx::allocPtr(g_allocatorBlk, _bitstreamSize + kNalLengthSize*numNals);
 				sampleSize  = annexBToLengthPrefixed(sampleBytes, _bitstream, _bitstreamSize);
 			}
 
 			if (0 == sampleSize)
 			{
-				bx::free(g_allocator, sampleBytes);
+				bx::freePtr(sampleBytes);
 				return false;
 			}
 
@@ -1227,7 +1227,7 @@ namespace bgfx { namespace mtl
 
 			if (noErr != status)
 			{
-				bx::free(g_allocator, sampleBytes);
+				bx::freePtr(sampleBytes);
 				return false;
 			}
 
@@ -1489,12 +1489,12 @@ namespace bgfx { namespace mtl
 
 	VideoDecoderMtl* videoDecoderCreate(const VideoDecoderInit& _init, RendererContextMtl* _renderer, MTL::Device* _device, uint16_t _width, uint16_t _height)
 	{
-		VideoDecoderMtl* decoder = BX_NEW(g_allocator, VideoDecoderMtl);
+		VideoDecoderMtl* decoder = BX_NEW_PTR(g_allocatorBlk, VideoDecoderMtl);
 
 		if (!decoder->create(_init, _renderer, _device, _width, _height) )
 		{
 			decoder->destroy();
-			bx::deleteObject(g_allocator, decoder);
+			bx::deletePtr(decoder);
 
 			return NULL;
 		}
@@ -1507,7 +1507,7 @@ namespace bgfx { namespace mtl
 		if (NULL != _decoder)
 		{
 			_decoder->destroy();
-			bx::deleteObject(g_allocator, _decoder);
+			bx::deletePtr(_decoder);
 		}
 	}
 

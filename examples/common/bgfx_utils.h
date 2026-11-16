@@ -12,9 +12,7 @@
 #include <bgfx/bgfx.h>
 #include <bimg/bimg.h>
 
-#include <tinystl/allocator.h>
-#include <tinystl/vector.h>
-namespace stl = tinystl;
+#include <bx/array.h>
 
 #include "args.h"
 
@@ -162,7 +160,7 @@ struct Primitive
 	bx::Obb    m_obb;
 };
 
-typedef stl::vector<Primitive> PrimitiveArray;
+using PrimitiveArray = bx::ArrayT<Primitive>;
 
 struct Group
 {
@@ -180,7 +178,7 @@ struct Group
 	bx::Obb    m_obb;
 	PrimitiveArray m_prims;
 };
-typedef stl::vector<Group> GroupArray;
+using GroupArray = bx::ArrayT<Group>;
 
 struct Mesh
 {

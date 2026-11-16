@@ -667,7 +667,7 @@ namespace bgfx { namespace d3d12
 			&&     bgfx::hasReorderSpace(m_reorderPool, kVideoMaxReorderInFlight) )
 			{
 				const bgfx::PendingAU& au = m_auQueue.front();
-				decodeOneAU(au.data.data(), uint32_t(au.data.size() ), au.ptsUs);
+				decodeOneAU(au.data.getPtr(), au.data.getCount(), au.ptsUs);
 				m_auQueue.pop();
 			}
 
@@ -1721,11 +1721,11 @@ namespace bgfx { namespace d3d12
 
 	VideoDecoderD3D12* videoDecoderCreate(const VideoDecoderInit& _init, RendererContextD3D12* _renderer, uint16_t _width, uint16_t _height)
 	{
-		VideoDecoderD3D12* decoder = BX_NEW(g_allocator, VideoDecoderD3D12);
+		VideoDecoderD3D12* decoder = BX_NEW_PTR(g_allocatorBlk, VideoDecoderD3D12);
 		if (!decoder->create(_init, _renderer, _width, _height) )
 		{
 			decoder->destroy();
-			bx::deleteObject(g_allocator, decoder);
+			bx::deletePtr(decoder);
 			return NULL;
 		}
 		return decoder;
@@ -1736,7 +1736,7 @@ namespace bgfx { namespace d3d12
 		if (NULL != _decoder)
 		{
 			_decoder->destroy();
-			bx::deleteObject(g_allocator, _decoder);
+			bx::deletePtr(_decoder);
 		}
 	}
 

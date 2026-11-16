@@ -2018,13 +2018,13 @@ WGPU_IMPORT
 
 			if (NULL != readTexture.filePath)
 			{
-				bx::free(g_allocator, readTexture.data);
-				bx::free(g_allocator, readTexture.filePath);
+				bx::freePtr(readTexture.data);
+				bx::freePtr(readTexture.filePath);
 			}
 
 			if (NULL == _userdata2)
 			{
-				bx::deleteObject(g_allocator, &readTexture);
+				bx::deletePtr(&readTexture);
 			}
 			else
 			{
@@ -2091,7 +2091,7 @@ WGPU_IMPORT
 						.nextInChain = NULL,
 						.mode        = WGPUCallbackMode_AllowSpontaneous,
 						.callback    = readTextureCb,
-						.userdata1   = BX_NEW(g_allocator, ReadTexture)(_readTexture),
+						.userdata1   = BX_NEW_PTR(g_allocatorBlk, ReadTexture)(_readTexture),
 						.userdata2   = NULL,
 					}) );
 			}
@@ -2414,7 +2414,7 @@ WGPU_IMPORT
 			WGPUBuffer readTextureBuffer = WGPU_CHECK(wgpuDeviceCreateBuffer(m_device, &readTextureBufferDesc) );
 
 			const uint32_t filePathLen = bx::strLen(_filePath) + 1;
-			char* filePath = (char*)bx::alloc(g_allocator, filePathLen);
+			char* filePath = (char*)bx::allocPtr(g_allocatorBlk, filePathLen);
 			bx::strCopy(filePath, filePathLen, _filePath);
 
 			m_cmd.copyTextureToBuffer(
@@ -2451,7 +2451,7 @@ WGPU_IMPORT
 			mapRead({
 				.buffer        = readTextureBuffer,
 				.size          = copySize,
-				.data          = bx::alloc(g_allocator, dstPitch*height),
+				.data          = bx::allocPtr(g_allocatorBlk, dstPitch*height),
 				.dataPitch     = dstPitch,
 				.pitch         = srcPitch,
 				.height        = height,
@@ -3175,7 +3175,7 @@ WGPU_IMPORT
 				const uint32_t pitch     = bx::alignUp(_rect.m_width*texelSize, 256);
 				const uint32_t size      = bx::alignUp(pitch*(_rect.m_height-1) + _rect.m_width*texelSize, 4);
 
-				uint8_t* data = (uint8_t*)bx::alloc(g_allocator, size);
+				uint8_t* data = (uint8_t*)bx::allocPtr(g_allocatorBlk, size);
 
 				for (uint32_t yy = 0; yy < _rect.m_height; ++yy)
 				{
@@ -3198,7 +3198,7 @@ WGPU_IMPORT
 
 				WGPUBuffer buffer = WGPU_CHECK(wgpuDeviceCreateBuffer(m_device, &bufferDesc) );
 				m_cmd.writeBuffer(buffer, 0, data, size);
-				bx::free(g_allocator, data);
+				bx::freePtr(data);
 
 				const WGPUTexelCopyBufferInfo source =
 				{
@@ -3365,9 +3365,9 @@ WGPU_IMPORT
 
 		void invalidateBindGroupCache()
 		{
-			for (BindGroupMap::iterator it = m_bindGroupMap.begin(), end = m_bindGroupMap.end(); it != end; ++it)
+			for (BindGroupMap::Iterator it = m_bindGroupMap.begin(), end = m_bindGroupMap.end(); it != end; ++it)
 			{
-				release(it->second);
+				release(it.getValue() );
 			}
 
 			m_bindGroupMap.clear();
@@ -3805,7 +3805,7 @@ WGPU_IMPORT
 
 			ComputePipeline* computePipeline = m_computePipelineCache.find(hash);
 
-			if (BX_LIKELY(NULL != computePipeline) )
+			if (NULL != computePipeline) [[likely]]
 			{
 				return computePipeline;
 			}
@@ -4035,7 +4035,7 @@ WGPU_IMPORT
 
 			RenderPipeline* renderPipeline = m_renderPipelineCache.find(hash);
 
-			if (BX_LIKELY(NULL != renderPipeline) )
+			if (NULL != renderPipeline) [[likely]]
 			{
 				return renderPipeline;
 			}
@@ -4709,8 +4709,10 @@ WGPU_IMPORT
 		StateCacheT<WGPUTextureView>         m_textureViewStateCache;
 		StateCacheT<WGPUSampler>             m_samplerStateCache;
 
-		typedef stl::unordered_map<uint32_t, BindGroup> BindGroupMap;
-		BindGroupMap m_bindGroupMap;
+		static constexpr uint32_t kBindGroupBlockCapacity = 256;
+
+		using BindGroupMap = bx::BlockHashMapT<uint32_t, BindGroup, kBindGroupBlockCapacity>;
+		BindGroupMap m_bindGroupMap{g_allocatorHandle};
 
 		Matrix4 m_predefinedUniforms[PredefinedUniform::Count];
 
@@ -4733,10 +4735,10 @@ WGPU_IMPORT
 	RendererContextI* rendererCreate(const Init& _init)
 	{
 		BX_UNUSED(_init);
-		s_renderWGPU = BX_NEW(g_allocator, RendererContextWGPU);
+		s_renderWGPU = BX_NEW_PTR(g_allocatorBlk, RendererContextWGPU);
 		if (!s_renderWGPU->init(_init) )
 		{
-			bx::deleteObject(g_allocator, s_renderWGPU);
+			bx::deletePtr(s_renderWGPU);
 			s_renderWGPU = NULL;
 		}
 		return s_renderWGPU;
@@ -4745,7 +4747,7 @@ WGPU_IMPORT
 	void rendererDestroy()
 	{
 		s_renderWGPU->shutdown();
-		bx::deleteObject(g_allocator, s_renderWGPU);
+		bx::deletePtr(s_renderWGPU);
 		s_renderWGPU = NULL;
 	}
 
@@ -4807,13 +4809,13 @@ WGPU_IMPORT
 		};
 
 		_chunk.buffer = WGPU_CHECK(wgpuDeviceCreateBuffer(s_renderWGPU->m_device, &bufferDesc) );
-		_chunk.data   = (uint8_t*)bx::alloc(g_allocator, m_chunkSize);
+		_chunk.data   = (uint8_t*)bx::allocPtr(g_allocatorBlk, m_chunkSize);
 	}
 
 	void ChunkedScratchBufferWGPU::destroyChunk(ChunkWGPU& _chunk)
 	{
 		wgpuRelease(_chunk.buffer);
-		bx::free(g_allocator, _chunk.data);
+		bx::freePtr(_chunk.data);
 	}
 
 	void ChunkedScratchBufferWGPU::flushChunk(ChunkWGPU& _chunk, uint32_t _size)
@@ -4836,11 +4838,11 @@ WGPU_IMPORT
 			return;
 		}
 
-		uint8_t* temp = (uint8_t*)bx::alloc(g_allocator, alignedSize);
+		uint8_t* temp = (uint8_t*)bx::allocPtr(g_allocatorBlk, alignedSize);
 		bx::memCopy(temp, _data, _size);
 		bx::memSet(&temp[_size], 0, alignedSize - _size);
 		s_renderWGPU->m_cmd.writeBuffer(_buffer, _offset, temp, alignedSize);
-		bx::free(g_allocator, temp);
+		bx::freePtr(temp);
 	}
 
 	void BufferWGPU::create(uint32_t _size, void* _data, uint16_t _flags, bool _vertex, uint32_t _stride)
@@ -5306,7 +5308,7 @@ WGPU_IMPORT
 		{
 			const bx::StringView code( (const char*)m_code->data, m_code->size);
 
-			bx::MemoryBlock mb(g_allocator);
+			bx::MemoryBlock mb(g_allocatorHandle);
 			bx::MemoryWriter writer(&mb);
 			bx::Error err;
 
@@ -5452,7 +5454,7 @@ WGPU_IMPORT
 
 	static float* depthToFloat(const uint8_t* _src, uint32_t _width, uint32_t _height, uint32_t _srcPitch, TextureFormat::Enum _format)
 	{
-		float* dst = (float*)bx::alloc(g_allocator, _width*_height*sizeof(float) );
+		float* dst = (float*)bx::allocPtr(g_allocatorBlk, _width*_height*sizeof(float) );
 
 		for (uint32_t yy = 0; yy < _height; ++yy)
 		{
@@ -5700,7 +5702,7 @@ WGPU_IMPORT
 						{
 							float* depth = depthToFloat(mip.m_data, mip.m_width, mip.m_height, mip.m_width*mip.m_bpp/8, TextureFormat::Enum(m_requestedFormat) );
 							s_renderWGPU->writeDepth(*this, lod, side, 0, 0, mip.m_width, mip.m_height, depth);
-							bx::free(g_allocator, depth);
+							bx::freePtr(depth);
 						}
 						else if (convert)
 						{
@@ -5709,7 +5711,7 @@ WGPU_IMPORT
 							const uint32_t height      = bx::max<uint32_t>(m_height >> lod, 1);
 							const uint32_t size        = bytesPerRow*mip.m_height*mip.m_depth;
 
-							uint8_t* temp = (uint8_t*)bx::alloc(g_allocator, size);
+							uint8_t* temp = (uint8_t*)bx::allocPtr(g_allocatorBlk, size);
 
 							imageDecodeToBgra8(
 								  temp
@@ -5737,7 +5739,7 @@ WGPU_IMPORT
 									.depthOrArrayLayers = mip.m_depth,
 								});
 
-							bx::free(g_allocator, temp);
+							bx::freePtr(temp);
 						}
 						else if (compressed)
 						{
@@ -5900,7 +5902,7 @@ WGPU_IMPORT
 		if (convert)
 		{
 			bytesPerRow = rectPitch;
-			temp = (uint8_t*)bx::alloc(g_allocator, slicePitch*bx::max<uint32_t>(1, _depth) );
+			temp = (uint8_t*)bx::allocPtr(g_allocatorBlk, slicePitch*bx::max<uint32_t>(1, _depth) );
 			imageDecodeToBgra8(temp, srcData, _rect.m_width, _rect.m_height, bx::max<uint32_t>(1, _depth), rectPitch, slicePitch, bimg::TextureFormat::Enum(m_requestedFormat) );
 			srcData = temp;
 		}
@@ -5922,11 +5924,11 @@ WGPU_IMPORT
 		{
 			float* depthData = depthToFloat(srcData, width, height, bytesPerRow, TextureFormat::Enum(m_requestedFormat) );
 			s_renderWGPU->writeDepth(*this, _mip, originZ, _rect.m_x, _rect.m_y, width, height, depthData);
-			bx::free(g_allocator, depthData);
+			bx::freePtr(depthData);
 
 			if (NULL != temp)
 			{
-				bx::free(g_allocator, temp);
+				bx::freePtr(temp);
 			}
 
 			return;
@@ -5959,7 +5961,7 @@ WGPU_IMPORT
 
 		if (NULL != temp)
 		{
-			bx::free(g_allocator, temp);
+			bx::freePtr(temp);
 		}
 	}
 
@@ -7059,7 +7061,7 @@ WGPU_IMPORT
 	void TimerQueryWGPU::create(uint32_t _num)
 	{
 		m_numQueries = bx::min(_num, kMaxQueries);
-		m_query      = (Query*)bx::alloc(g_allocator, sizeof(Query)*m_numQueries);
+		m_query      = (Query*)bx::allocPtr(g_allocatorBlk, sizeof(Query)*m_numQueries);
 		bgfx::resize(m_control, m_numQueries);
 
 		WGPUDevice device = s_renderWGPU->m_device;
@@ -7109,7 +7111,7 @@ WGPU_IMPORT
 		wgpuDestroy(m_resolve);
 		wgpuDestroy(m_readback);
 
-		bx::free(g_allocator, m_query);
+		bx::freePtr(m_query);
 		m_query      = NULL;
 		m_numQueries = 0;
 	}
@@ -8037,16 +8039,26 @@ WGPU_IMPORT
 		{
 			BGFX_PROFILER_SCOPE("bgfx/Update transient index buffer", kColorResource);
 
-			TransientIndexBuffer* ib = _render->m_transientIb;
-			m_indexBuffers[ib->handle.idx].update(0, _render->m_iboffset, ib->data);
+			for (const TransientBufferChunk& chunk : _render->m_transientIb.m_chunks)
+			{
+				if (0 < chunk.m_offset)
+				{
+					m_indexBuffers[chunk.m_handle].update(0, chunk.m_offset, chunk.m_data);
+				}
+			}
 		}
 
 		if (0 < _render->m_vboffset)
 		{
 			BGFX_PROFILER_SCOPE("bgfx/Update transient vertex buffer", kColorResource);
 
-			TransientVertexBuffer* vb = _render->m_transientVb;
-			m_vertexBuffers[vb->handle.idx].update(0, _render->m_vboffset, vb->data);
+			for (const TransientBufferChunk& chunk : _render->m_transientVb.m_chunks)
+			{
+				if (0 < chunk.m_offset)
+				{
+					m_vertexBuffers[chunk.m_handle].update(0, chunk.m_offset, chunk.m_data);
+				}
+			}
 		}
 
 		_render->sort();
@@ -8591,13 +8603,13 @@ WGPU_IMPORT
 					murmur.add(uintptr_t(bindGroupLayout) );
 					const uint32_t bindHash = murmur.end();
 
-					BindGroupMap::iterator it = m_bindGroupMap.find(bindHash);
-					if (it == m_bindGroupMap.end() )
+					const BindGroup* bindGroupCached = m_bindGroupMap.find(bindHash);
+					if (NULL == bindGroupCached)
 					{
 						const BindGroup bindGroup = createBindGroup(bindGroupLayout, program, renderBind, currentSbo, true);
-						it = m_bindGroupMap.insert(stl::make_pair(bindHash, bindGroup) ).first;
+						m_bindGroupMap.add(bindHash, bindGroup);
+						bindGroupCached = m_bindGroupMap.find(bindHash);
 					}
-					const BindGroup* bindGroupCached = &it->second;
 
 					WGPU_CHECK(wgpuComputePassEncoderSetBindGroup(computePassEncoder, 0, bindGroupCached->bindGroup, bindGroupCached->numOffsets, currentSbo.offsets) );
 
@@ -8810,14 +8822,13 @@ WGPU_IMPORT
 					murmur.add(uintptr_t(bindGroupLayout) );
 					const uint32_t bindHash = murmur.end();
 
-					BindGroupMap::iterator bindIt = m_bindGroupMap.find(bindHash);
-					if (bindIt == m_bindGroupMap.end() )
+					bindGroupCached = m_bindGroupMap.find(bindHash);
+					if (NULL == bindGroupCached)
 					{
 						const BindGroup bind = createBindGroup(bindGroupLayout, program, renderBind, sbo, false);
-						bindIt = m_bindGroupMap.insert(stl::make_pair(bindHash, bind) ).first;
+						m_bindGroupMap.add(bindHash, bind);
+						bindGroupCached = m_bindGroupMap.find(bindHash);
 					}
-
-					bindGroupCached = &bindIt->second;
 
 					bindState.valid     = true;
 					bindState.program   = key.m_program.idx;

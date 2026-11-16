@@ -294,7 +294,7 @@ namespace bgfx
 
 		if (NULL != m_latencyResult)
 		{
-			bx::deleteObject(g_allocator, m_latencyResult);
+			bx::deletePtr(m_latencyResult);
 			m_latencyResult = NULL;
 		}
 
@@ -520,7 +520,7 @@ namespace bgfx
 		if (NULL == m_latencyResult)
 		{
 			// Latency result holds 64 frame reports, it's too big for the stack.
-			m_latencyResult = BX_NEW(g_allocator, NvLatencyResultParamsV1);
+			m_latencyResult = BX_NEW_PTR(g_allocatorBlk, NvLatencyResultParamsV1);
 		}
 
 		return true;
@@ -536,7 +536,7 @@ namespace bgfx
 
 		if (NULL != m_latencyResult)
 		{
-			bx::deleteObject(g_allocator, m_latencyResult);
+			bx::deletePtr(m_latencyResult);
 			m_latencyResult = NULL;
 		}
 	}

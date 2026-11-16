@@ -112,7 +112,7 @@ void VectorDisplay::resize(uint16_t _width, uint16_t _height)
 
 void VectorDisplay::teardown()
 {
-	for (size_t i = 0; i < m_vertexBuffers.size(); ++i)
+	for (uint32_t i = 0, num = m_vertexBuffers.getCount(); i < num; ++i)
 	{
 		bgfx::destroy(m_vertexBuffers[i]);
 	}
@@ -158,14 +158,14 @@ void VectorDisplay::endFrame()
 	// advance step
 	m_currentDrawStep = (m_currentDrawStep + 1) % m_numberDecaySteps;
 
-	BX_ASSERT(m_points.size() < MAX_NUMBER_VERTICES, "");
+	BX_ASSERT(m_points.getCount() < MAX_NUMBER_VERTICES, "");
 
 	bgfx::update(
 		  m_vertexBuffers[m_currentDrawStep]
 		, 0
-		, bgfx::copy(m_points.data(), (uint32_t)m_points.size() * sizeof(PosColorUvVertex) )
+		, bgfx::copy(m_points.getPtr(), m_points.getCount() * sizeof(PosColorUvVertex) )
 		);
-	m_vertexBuffersSize[m_currentDrawStep] = (uint32_t)m_points.size();
+	m_vertexBuffersSize[m_currentDrawStep] = m_points.getCount();
 
 	for (int loopvar = 0; loopvar < m_numberDecaySteps; loopvar++)
 	{
@@ -312,12 +312,12 @@ void VectorDisplay::endFrame()
 
 void VectorDisplay::beginDraw(float _x, float _y)
 {
-	BX_ASSERT(0 == m_pendingPoints.size(), "Begin draw on already filled buffer!");
+	BX_ASSERT(0 == m_pendingPoints.getCount(), "Begin draw on already filled buffer!");
 
 	PendingPoint point;
 	point.x = _x * m_drawScale + m_drawOffsetX;
 	point.y = _y * m_drawScale + m_drawOffsetY;
-	m_pendingPoints.push_back(point);
+	m_pendingPoints.add(point);
 }
 
 void VectorDisplay::drawTo(float _x, float _y)
@@ -325,29 +325,29 @@ void VectorDisplay::drawTo(float _x, float _y)
 	PendingPoint point;
 	point.x = _x * m_drawScale + m_drawOffsetX;
 	point.y = _y * m_drawScale + m_drawOffsetY;
-	m_pendingPoints.push_back(point);
+	m_pendingPoints.add(point);
 }
 
 void VectorDisplay::endDraw()
 {
-	if (m_pendingPoints.size() < 2)
+	if (m_pendingPoints.getCount() < 2)
 	{
 		m_pendingPoints.clear();
 		return;
 	}
 
 	// from the list of points, build a list of lines
-	uint32_t nlines = (uint32_t)m_pendingPoints.size() - 1;
+	uint32_t nlines = m_pendingPoints.getCount() - 1;
 	Line* lines = (Line*)BX_STACK_ALLOC(nlines * sizeof(Line) );
 
 	float t = effectiveThickness();
 	int first_last_same = true
-		&& bx::abs(m_pendingPoints[0].x - m_pendingPoints[m_pendingPoints.size() - 1].x) < 0.1
-		&& bx::abs(m_pendingPoints[0].y - m_pendingPoints[m_pendingPoints.size() - 1].y) < 0.1
+		&& bx::abs(m_pendingPoints[0].x - m_pendingPoints[m_pendingPoints.getCount() - 1].x) < 0.1
+		&& bx::abs(m_pendingPoints[0].y - m_pendingPoints[m_pendingPoints.getCount() - 1].y) < 0.1
 		;
 
 	// compute basics
-	for (size_t i = 1; i < m_pendingPoints.size(); i++)
+	for (uint32_t i = 1, num = m_pendingPoints.getCount(); i < num; i++)
 	{
 		Line* line = &lines[i - 1];
 		line->is_first = i == 1;
@@ -614,7 +614,7 @@ void VectorDisplay::appendTexpoint(float _x, float _y, float _u, float _v)
 	point.m_abgr = (m_drawColorA << 24) | (m_drawColorB << 16) | (m_drawColorG << 8) | m_drawColorR;
 	point.m_u = _u / TEXTURE_SIZE;
 	point.m_v = 1.0f - _v / TEXTURE_SIZE;
-	m_points.push_back(point);
+	m_points.add(point);
 }
 
 void VectorDisplay::drawFan(float _cx, float _cy, float _pa, float _a, float _t, float _s, float _e)
@@ -721,9 +721,9 @@ bool VectorDisplay::setDecaySteps(int _steps)
 
 	m_numberDecaySteps = _steps;
 
-	if (m_vertexBuffers.size() != 0)
+	if (m_vertexBuffers.getCount() != 0)
 	{
-		for (size_t i = 0; i < m_vertexBuffers.size(); ++i)
+		for (uint32_t i = 0, num = m_vertexBuffers.getCount(); i < num; ++i)
 		{
 			bgfx::destroy(m_vertexBuffers[i]);
 		}
@@ -734,8 +734,8 @@ bool VectorDisplay::setDecaySteps(int _steps)
 
 	for (int i = 0; i < m_numberDecaySteps; ++i)
 	{
-		m_vertexBuffers.push_back(bgfx::createDynamicVertexBuffer(MAX_NUMBER_VERTICES, PosColorUvVertex::ms_layout) );
-		m_vertexBuffersSize.push_back(0);
+		m_vertexBuffers.add(bgfx::createDynamicVertexBuffer(MAX_NUMBER_VERTICES, PosColorUvVertex::ms_layout) );
+		m_vertexBuffersSize.add(0);
 	}
 
 	return true;

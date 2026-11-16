@@ -53,7 +53,8 @@
 #include "imgui/imgui.h"
 #include "camera.h"
 
-#include <map>
+#include <bx/array.h>
+#include <bx/sort.h>
 
 namespace
 {
@@ -79,10 +80,16 @@ Color xyzToRgb(const Color& xyz)
 	return rgb;
 };
 
+struct ColorKey
+{
+	float time;
+	Color value;
+};
+
 // Precomputed luminance of sunlight in XYZ colorspace.
 // Computed using code from Game Engine Gems, Volume One, chapter 15. Implementation based on Dr. Richard Bird model.
 // This table is used for piecewise linear interpolation. Transitions from and to 0.0 at sunset and sunrise are highly inaccurate
-static std::map<float, Color> sunLuminanceXYZTable =
+static const ColorKey sunLuminanceXYZTable[] =
 {
 	{  5.0f, {  0.000000f,  0.000000f,  0.000000f } },
 	{  7.0f, { 12.703322f, 12.989393f,  9.100411f } },
@@ -106,7 +113,7 @@ static std::map<float, Color> sunLuminanceXYZTable =
 // This table is used for piecewise linear interpolation. Day/night transitions are highly inaccurate.
 // The scale of luminance change in Day/night transitions is not preserved.
 // Luminance at night was increased to eliminate need the of HDR render.
-static std::map<float, Color> skyLuminanceXYZTable =
+static const ColorKey skyLuminanceXYZTable[] =
 {
 	{  0.0f, { 0.308f,    0.308f,    0.411f    } },
 	{  1.0f, { 0.308f,    0.308f,    0.410f    } },
@@ -159,7 +166,7 @@ static constexpr Color ABCDE_t[] =
 class DynamicValueController
 {
 	typedef Color ValueType;
-	typedef std::map<float, ValueType> KeyMap;
+	using KeyMap = bx::ArrayT<ColorKey>;
 
 public:
 	DynamicValueController()
@@ -170,31 +177,31 @@ public:
 	{
 	}
 
-	void SetMap(const KeyMap& keymap)
+	void SetMap(const bx::ArrayViewT<ColorKey>& keymap)
 	{
-		m_keyMap = keymap;
+		m_keyMap.set(keymap);
 	}
 
 	ValueType GetValue(float time) const
 	{
-		typename KeyMap::const_iterator itUpper = m_keyMap.upper_bound(time + 1e-6f);
-		typename KeyMap::const_iterator itLower = itUpper;
-		--itLower;
+		const uint32_t upper = bx::upperBound(time + 1e-6f, m_keyMap.getPtr(), m_keyMap.getCount(), sizeof(ColorKey) );
 
-		if (itLower == m_keyMap.end())
+		if (0 == upper)
 		{
-			return itUpper->second;
+			return m_keyMap[upper].value;
 		}
 
-		if (itUpper == m_keyMap.end())
+		const uint32_t lower = upper - 1;
+
+		if (m_keyMap.getCount() == upper)
 		{
-			return itLower->second;
+			return m_keyMap[lower].value;
 		}
 
-		float lowerTime = itLower->first;
-		const ValueType& lowerVal = itLower->second;
-		float upperTime = itUpper->first;
-		const ValueType& upperVal = itUpper->second;
+		float lowerTime = m_keyMap[lower].time;
+		const ValueType& lowerVal = m_keyMap[lower].value;
+		float upperTime = m_keyMap[upper].time;
+		const ValueType& upperVal = m_keyMap[upper].value;
 
 		if (lowerTime == upperTime)
 		{
@@ -437,8 +444,8 @@ public:
 			, 0
 			);
 
-		m_sunLuminanceXYZ.SetMap(sunLuminanceXYZTable);
-		m_skyLuminanceXYZ.SetMap(skyLuminanceXYZTable);
+		m_sunLuminanceXYZ.SetMap(bx::ArrayViewT<ColorKey>(sunLuminanceXYZTable) );
+		m_skyLuminanceXYZ.SetMap(bx::ArrayViewT<ColorKey>(skyLuminanceXYZTable) );
 
 		m_mesh = meshLoad("meshes/test_scene.bin");
 

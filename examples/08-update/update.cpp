@@ -10,9 +10,8 @@
 #include "entry/entry.h"
 #include <bimg/decode.h>
 
+#include <bx/array.h>
 #include <bx/rng.h>
-
-#include <list>
 
 namespace
 {
@@ -647,7 +646,7 @@ public:
 
 				if (m_cube.find(bw, bh, face) )
 				{
-					m_quads.push_back(face);
+					m_quads.add(face);
 
 					++m_hit;
 					const Pack2D& rect = face.m_rect;
@@ -670,9 +669,9 @@ public:
 				{
 					++m_miss;
 
-					for (uint32_t ii = 0, num = bx::min(10, (uint32_t)m_quads.size() ); ii < num; ++ii)
+					for (uint32_t ii = 0, num = bx::min(10, m_quads.getCount() ); ii < num; ++ii)
 					{
-						face = m_quads.front();
+						face = m_quads[0];
 						const Pack2D& rect = face.m_rect;
 
 						updateTextureCubeRectBgra8(m_textureCube[0], face.m_side, rect.m_x, rect.m_y, rect.m_width, rect.m_height, 0, 0, 0);
@@ -686,7 +685,7 @@ public:
 						}
 
 						m_cube.clear(face);
-						m_quads.pop_front();
+						m_quads.remove(bx::kFirst);
 					}
 				}
 
@@ -1069,7 +1068,7 @@ public:
 	bool m_computeSupported;
 	bool m_showDescriptions;
 
-	std::list<PackCube> m_quads;
+	bx::ArrayT<PackCube> m_quads;
 	RectPackCubeT<256> m_cube;
 	bx::Ticks m_updateTime = bx::InitZero;
 

@@ -3,7 +3,7 @@
  * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
-#include <bx/allocator.h>
+#include <bx/blk.h>
 #include <bx/debug.h>
 #include <bx/math.h>
 #include <bx/sort.h>
@@ -141,12 +141,12 @@ namespace bgfx
 	}
 
 	template<typename IndexT, typename SortT>
-	static uint32_t topologyConvertTriListToLineList(void* _dst, uint32_t _dstSize, const IndexT* _indices, uint32_t _numIndices, bx::AllocatorI* _allocator)
+	static uint32_t topologyConvertTriListToLineList(void* _dst, uint32_t _dstSize, const IndexT* _indices, uint32_t _numIndices, bx::AllocatorBlkI* _allocator)
 	{
-		IndexT* temp     = (IndexT*)bx::alloc(_allocator, _numIndices*2*sizeof(IndexT)*2);
+		IndexT* temp     = (IndexT*)bx::allocPtr(_allocator, _numIndices*2*sizeof(IndexT)*2);
 		SortT*  tempSort = (SortT*)&temp[_numIndices*2];
 		uint32_t num = topologyConvertTriListToLineList(_dst, _dstSize, _indices, _numIndices, temp, tempSort);
-		bx::free(_allocator, temp);
+		bx::freePtr(temp);
 		return num;
 	}
 
@@ -205,7 +205,7 @@ namespace bgfx
 		, const void* _indices
 		, uint32_t _numIndices
 		, bool _index32
-		, bx::AllocatorI* _allocator
+		, bx::AllocatorBlkI* _allocator
 		)
 	{
 		switch (_conversion)
@@ -389,7 +389,7 @@ namespace bgfx
 		, const void* _indices
 		, uint32_t    _numIndices
 		, bool        _index32
-		, bx::AllocatorI* _allocator
+		, bx::AllocatorBlkI* _allocator
 		)
 	{
 		uint32_t indexSize = _index32
@@ -397,7 +397,7 @@ namespace bgfx
 			: sizeof(uint16_t)
 			;
 		uint32_t  num  = bx::min(_numIndices*indexSize, _dstSize)/(indexSize*3);
-		uint32_t* temp = (uint32_t*)bx::alloc(_allocator, sizeof(uint32_t)*num*4);
+		uint32_t* temp = (uint32_t*)bx::allocPtr(_allocator, sizeof(uint32_t)*num*4);
 
 		uint32_t* keys       = &temp[num*0];
 		uint32_t* values     = &temp[num*1];
@@ -439,7 +439,7 @@ namespace bgfx
 					);
 		}
 
-		bx::free(_allocator, temp);
+		bx::freePtr(temp);
 	}
 
 } //namespace bgfx

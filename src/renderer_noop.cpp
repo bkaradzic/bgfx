@@ -253,13 +253,13 @@ namespace bgfx { namespace noop
 	RendererContextI* rendererCreate(const Init& _init)
 	{
 		BX_UNUSED(_init);
-		s_renderNOOP = BX_NEW(g_allocator, RendererContextNOOP);
+		s_renderNOOP = BX_NEW_PTR(g_allocatorBlk, RendererContextNOOP);
 		return s_renderNOOP;
 	}
 
 	void rendererDestroy()
 	{
-		bx::deleteObject(g_allocator, s_renderNOOP);
+		bx::deletePtr(s_renderNOOP);
 		s_renderNOOP = NULL;
 	}
 } /* namespace noop */ } // namespace bgfx

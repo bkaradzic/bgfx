@@ -13,6 +13,7 @@
 #include <bx/math.h>
 #include <bx/os.h>
 #include <bx/settings.h>
+#include <bx/stringpool.h>
 
 #include <entry/entry.h>
 #include <entry/input.h>
@@ -21,12 +22,6 @@
 #include <imgui/imgui.h>
 #include <debugdraw/debugdraw.h>
 #include <bgfx_utils.h>
-
-#include <tinystl/allocator.h>
-#include <tinystl/vector.h>
-namespace stl = tinystl;
-#include <string>
-#include <algorithm>
 
 #include <bgfx/embedded_shader.h>
 
@@ -351,7 +346,7 @@ struct View
 			}
 			else if (0 == bx::strCmp(_argv[1], "file-down") )
 			{
-				uint32_t numFiles = bx::satSub<uint32_t>(uint32_t(m_fileList.size()), 1u);
+				uint32_t numFiles = bx::satSub<uint32_t>(m_fileList.getCount(), 1u);
 				++m_fileIndex;
 				m_fileIndex = bx::min(m_fileIndex, numFiles);
 			}
@@ -425,9 +420,11 @@ struct View
 		return 0;
 	}
 
-	static bool sortNameAscending(const std::string& _lhs, const std::string& _rhs)
+	static int32_t sortNameAscending(const void* _lhs, const void* _rhs)
 	{
-		return 0 > bx::strCmpV(_lhs.c_str(), _rhs.c_str() );
+		const bx::String& lhs = *(const bx::String*)_lhs;
+		const bx::String& rhs = *(const bx::String*)_rhs;
+		return bx::strCmpV(lhs.getCPtr(), rhs.getCPtr() );
 	}
 
 	void updateFileList(const bx::FilePath& _filePath)
@@ -481,7 +478,7 @@ struct View
 					if (supported)
 					{
 						const bx::StringView fileName = fi.filePath.getFileName();
-						m_fileList.push_back(std::string(fileName.getPtr(), fileName.getTerm() ) );
+						m_fileList.add(bx::String(fileName) );
 					}
 				}
 			}
@@ -489,22 +486,24 @@ struct View
 
 		bx::close(&dr);
 
-		std::sort(m_fileList.begin(), m_fileList.end(), sortNameAscending);
+		bx::quickSort(m_fileList.getPtr(), m_fileList.getCount(), sizeof(bx::String), sortNameAscending);
 
 		m_fileIndex = 0;
 		uint32_t idx = 0;
 
 		const bx::StringView fileName = _filePath.getFileName();
 
-		for (FileList::const_iterator it = m_fileList.begin(); it != m_fileList.end(); ++it, ++idx)
+		for (uint32_t num = m_fileList.getCount(); idx < num; ++idx)
 		{
-			if (0 == bx::strCmpI(it->c_str(), fileName) )
+			const bx::String& file = m_fileList[idx];
+
+			if (0 == bx::strCmpI(file.getCPtr(), fileName) )
 			{
 				// If it is case-insensitive match then might be correct one, but keep
 				// searching.
 				m_fileIndex = idx;
 
-				if (0 == bx::strCmp(it->c_str(), fileName) )
+				if (0 == bx::strCmp(file.getCPtr(), fileName) )
 				{
 					// If it is exact match we're done.
 					break;
@@ -566,7 +565,7 @@ struct View
 
 	bx::FilePath m_path;
 
-	typedef stl::vector<std::string> FileList;
+	using FileList = bx::ArrayT<bx::String>;
 	FileList m_fileList;
 
 	uint32_t m_fileIndex;
@@ -788,7 +787,6 @@ int _main_(int _argc, char** _argv)
 	const char* filePath = cmdLine.getPositional(1);
 	filePath = NULL == filePath ? "" : filePath;
 
-	std::string path = filePath;
 	{
 		bx::FilePath fp(filePath);
 		view.updateFileList(fp);
@@ -924,13 +922,13 @@ int _main_(int _argc, char** _argv)
 					ImGui::EndMenu();
 				}
 
-				if (0 != view.m_fileList.size() )
+				if (0 != view.m_fileList.getCount() )
 				{
 					ImGui::Separator();
 					ImGui::TextColored(
 						  ImVec4(0.0f, 1.0f, 1.0f, 1.0f)
 						, "%s"
-						, view.m_fileList[view.m_fileIndex].c_str()
+						, view.m_fileList[view.m_fileIndex].getCPtr()
 						);
 				}
 
@@ -1020,37 +1018,31 @@ int _main_(int _argc, char** _argv)
 									bx::strCat(layout, sizeof(layout), s_attribShortNames[attrib]);
 							}
 
-							ImGui::Text("Name: %s %s", view.m_fileList[view.m_fileIndex].c_str(), layout);
+							ImGui::Text("Name: %s %s", view.m_fileList[view.m_fileIndex].getCPtr(), layout);
 
 							ImGui::Indent();
-							for (GroupArray::const_iterator itGroup = mesh->m_groups.begin(), itGroupEnd = mesh->m_groups.end()
-								; itGroup != itGroupEnd
-								; ++itGroup
-								)
+							for (const Group& group : mesh->m_groups)
 							{
 								ImGui::Text("Group v %d i %d c %.2f %.2f %.2f r %.2f"
-									, itGroup->m_numVertices
-									, itGroup->m_numIndices
-									, itGroup->m_sphere.center.x
-									, itGroup->m_sphere.center.y
-									, itGroup->m_sphere.center.z
-									, itGroup->m_sphere.radius
+									, group.m_numVertices
+									, group.m_numIndices
+									, group.m_sphere.center.x
+									, group.m_sphere.center.y
+									, group.m_sphere.center.z
+									, group.m_sphere.radius
 									);
 
 								ImGui::Indent();
 
-								for (PrimitiveArray::const_iterator itPrim = itGroup->m_prims.begin(), itPrimEnd = itGroup->m_prims.end()
-									; itPrim != itPrimEnd
-									; ++itPrim
-									)
+								for (const Primitive& prim : group.m_prims)
 								{
 									ImGui::Text("Primitive v %d i %d c %.2f %.2f %.2f r %.2f"
-										, itPrim->m_numVertices
-										, itPrim->m_numIndices
-										, itPrim->m_sphere.center.x
-										, itPrim->m_sphere.center.y
-										, itPrim->m_sphere.center.z
-										, itPrim->m_sphere.radius
+										, prim.m_numVertices
+										, prim.m_numIndices
+										, prim.m_sphere.center.x
+										, prim.m_sphere.center.y
+										, prim.m_sphere.center.z
+										, prim.m_sphere.radius
 										);
 								}
 
@@ -1094,7 +1086,7 @@ int _main_(int _argc, char** _argv)
 						ImGui::PushItemWidth(-1);
 						if (ImGui::BeginListBox("##empty", ImVec2(0.0f, listHeight) ) )
 						{
-							const int32_t itemCount = int32_t(view.m_fileList.size() );
+							const int32_t itemCount = int32_t(view.m_fileList.getCount() );
 
 							ImGuiListClipper clipper;
 							clipper.Begin(itemCount, itemHeight);
@@ -1119,7 +1111,7 @@ int _main_(int _argc, char** _argv)
 									ImGui::PushID(pos);
 
 									bool isSelected = uint32_t(pos) == view.m_fileIndex;
-									if (ImGui::Selectable(view.m_fileList[pos].c_str(), &isSelected) )
+									if (ImGui::Selectable(view.m_fileList[pos].getCPtr(), &isSelected) )
 									{
 										view.m_fileIndex = pos;
 									}
@@ -1206,7 +1198,7 @@ int _main_(int _argc, char** _argv)
 			imguiEndFrame();
 
 			if ( (NULL == mesh || view.m_fileIndex != fileIndex)
-			&&  0 != view.m_fileList.size() )
+			&&  0 != view.m_fileList.getCount() )
 			{
 				if (NULL != mesh )
 				{
@@ -1216,11 +1208,11 @@ int _main_(int _argc, char** _argv)
 				fileIndex = view.m_fileIndex;
 
 				bx::FilePath fp = view.m_path;
-				fp.join(view.m_fileList[view.m_fileIndex].c_str() );
+				fp.join(view.m_fileList[view.m_fileIndex].getCPtr() );
 
 				mesh = meshLoad(fp.getCPtr());
 
-				std::string title;
+				bx::StringBuilder title;
 				if (NULL != mesh )
 				{
 					uint32_t numPrimitives = 0;
@@ -1228,28 +1220,29 @@ int _main_(int _argc, char** _argv)
 					uint32_t numIndices = 0;
 					bx::Aabb boundingBox = {};
 
-					for (GroupArray::const_iterator it = mesh->m_groups.begin(), itEnd = mesh->m_groups.end(); it != itEnd; ++it)
+					for (uint32_t ii = 0, num = mesh->m_groups.getCount(); ii < num; ++ii)
 					{
-						if ( it == mesh->m_groups.begin())
+						const Group& group = mesh->m_groups[ii];
+
+						if (0 == ii)
 						{
-							boundingBox = it->m_aabb;
+							boundingBox = group.m_aabb;
 						}
 						else
 						{
-							aabbExpand(boundingBox, it->m_aabb.min);
-							aabbExpand(boundingBox, it->m_aabb.max);
+							aabbExpand(boundingBox, group.m_aabb.min);
+							aabbExpand(boundingBox, group.m_aabb.max);
 						}
 
-						numPrimitives += (uint32_t)it->m_prims.size();
-						numVertices += (uint32_t)it->m_numVertices;
-						numIndices += (uint32_t)it->m_numIndices;
+						numPrimitives += group.m_prims.getCount();
+						numVertices += (uint32_t)group.m_numVertices;
+						numIndices += (uint32_t)group.m_numIndices;
 					}
 
-					bx::stringPrintf(
-						  title
-						, "%s (g %d, p %d, v %d, i %d)"
+					title.addPrintf(
+						  "%s (g %d, p %d, v %d, i %d)"
 						, fp.getCPtr()
-						, mesh->m_groups.size()
+						, mesh->m_groups.getCount()
 						, numPrimitives
 						, numVertices
 						, numIndices
@@ -1262,10 +1255,10 @@ int _main_(int _argc, char** _argv)
 				}
 				else
 				{
-					bx::stringPrintf(title, "Failed to load %s!", filePath);
+					title.addPrintf("Failed to load %s!", filePath);
 				}
 
-				entry::setWindowTitle(entry::kDefaultWindowHandle, title.c_str() );
+				entry::setWindowTitle(entry::kDefaultWindowHandle, title.getView().getPtr() );
 			}
 
 			const int64_t now = bx::getHPCounter();

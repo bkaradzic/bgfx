@@ -97,14 +97,14 @@ namespace bgfx
 
 		~TimerQueryArrayT()
 		{
-			bx::free(g_allocator, m_query);
+			bx::freePtr(m_query);
 		}
 
 		void resize(uint32_t _num)
 		{
 			if (_num != m_num)
 			{
-				m_query = (QueryT*)bx::realloc(g_allocator, m_query, sizeof(QueryT)*_num);
+				m_query = (QueryT*)bx::reallocPtr(g_allocatorBlk, m_query, sizeof(QueryT)*_num);
 				m_num   = _num;
 			}
 		}
@@ -151,7 +151,7 @@ namespace bgfx
 
 		~TimerResultT()
 		{
-			bx::free(g_allocator, m_result);
+			bx::freePtr(m_result);
 		}
 
 		void reset()
@@ -194,7 +194,7 @@ namespace bgfx
 		{
 			const uint32_t num = bx::alignUp(_num, kTimerQueryBlock);
 
-			ResultT* result = (ResultT*)bx::alloc(g_allocator, sizeof(ResultT)*num);
+			ResultT* result = (ResultT*)bx::allocPtr(g_allocatorBlk, sizeof(ResultT)*num);
 			bx::memCopy(result, m_result, sizeof(ResultT)*m_num);
 
 			for (uint32_t ii = m_num; ii < num; ++ii)
@@ -202,7 +202,7 @@ namespace bgfx
 				result[ii].reset();
 			}
 
-			bx::free(g_allocator, m_result);
+			bx::freePtr(m_result);
 			m_result = result;
 			m_num    = num;
 		}
@@ -594,17 +594,17 @@ namespace bgfx
 			data.m_hash   = _key;
 			data.m_value  = _value;
 			data.m_parent = _parent;
-			m_hashMap.insert(stl::make_pair(_key, handle) );
+			m_hashMap.tryAdd(_key, handle);
 
 			return bx::addressOf(m_data[handle].m_value);
 		}
 
 		Ty* find(uint64_t _key)
 		{
-			HashMap::iterator it = m_hashMap.find(_key);
-			if (it != m_hashMap.end() )
+			const uint16_t* found = m_hashMap.find(_key);
+			if (NULL != found)
 			{
-				uint16_t handle = it->second;
+				uint16_t handle = *found;
 				m_alloc.touch(handle);
 				return bx::addressOf(m_data[handle].m_value);
 			}
@@ -614,12 +614,12 @@ namespace bgfx
 
 		void invalidate(uint64_t _key)
 		{
-			HashMap::iterator it = m_hashMap.find(_key);
-			if (it != m_hashMap.end() )
+			const uint16_t* found = m_hashMap.find(_key);
+			if (NULL != found)
 			{
-				uint16_t handle = it->second;
+				uint16_t handle = *found;
 				m_alloc.free(handle);
-				m_hashMap.erase(it);
+				m_hashMap.remove(_key);
 				release(m_data[handle].m_value);
 			}
 		}
@@ -630,7 +630,7 @@ namespace bgfx
 			{
 				m_alloc.free(_handle);
 				Data& data = m_data[_handle];
-				m_hashMap.erase(m_hashMap.find(data.m_hash) );
+				m_hashMap.tryRemove(data.m_hash);
 				release(data.m_value);
 			}
 		}
@@ -645,7 +645,7 @@ namespace bgfx
 				if (data.m_parent == _parent)
 				{
 					m_alloc.free(handle);
-					m_hashMap.erase(m_hashMap.find(data.m_hash) );
+					m_hashMap.tryRemove(data.m_hash);
 					release(data.m_value);
 				}
 				else
@@ -670,12 +670,12 @@ namespace bgfx
 
 		uint32_t getCount() const
 		{
-			return uint32_t(m_hashMap.size() );
+			return m_hashMap.getCount();
 		}
 
 	private:
-		typedef stl::unordered_map<uint64_t, uint16_t> HashMap;
-		HashMap m_hashMap;
+		using HashMap = bx::HashMapT<uint64_t, uint16_t>;
+		HashMap m_hashMap{g_allocatorHandle};
 		bx::HandleAllocLruT<MaxHandleT> m_alloc;
 		struct Data
 		{
@@ -708,15 +708,15 @@ namespace bgfx
 		{
 			invalidate(_key);
 			StateCacheFuncT<Ty>::validate(_value, _key);
-			m_hashMap.insert(stl::make_pair(_key, Data{_value, _parent}) );
+			m_hashMap.add(_key, Data{_value, _parent});
 		}
 
 		Ty find(uint64_t _key)
 		{
-			typename HashMap::iterator it = m_hashMap.find(_key);
-			if (it != m_hashMap.end() )
+			const Data* found = m_hashMap.find(_key);
+			if (NULL != found)
 			{
-				return it->second.m_value;
+				return found->m_value;
 			}
 
 			return Ty(0);
@@ -724,37 +724,31 @@ namespace bgfx
 
 		void invalidate(uint64_t _key)
 		{
-			typename HashMap::iterator it = m_hashMap.find(_key);
-			if (it != m_hashMap.end() )
+			const Data* found = m_hashMap.find(_key);
+			if (NULL != found)
 			{
-				StateCacheFuncT<Ty>::evict(it->second.m_value);
-				m_hashMap.erase(it);
+				StateCacheFuncT<Ty>::evict(found->m_value);
+				m_hashMap.remove(_key);
 			}
 		}
 
 		void invalidateWithParent(uint16_t _parent)
 		{
-			for (typename HashMap::iterator it = m_hashMap.begin(), itEnd = m_hashMap.end(); it != itEnd;)
+			for (typename HashMap::Iterator it = m_hashMap.begin(), itEnd = m_hashMap.end(); it != itEnd; ++it)
 			{
-				if (it->second.m_parent == _parent)
+				if (it.getValue().m_parent == _parent)
 				{
-					StateCacheFuncT<Ty>::evict(it->second.m_value);
-					typename HashMap::iterator itErase = it;
-					++it;
-					m_hashMap.erase(itErase);
-				}
-				else
-				{
-					++it;
+					StateCacheFuncT<Ty>::evict(it.getValue().m_value);
+					m_hashMap.remove(it);
 				}
 			}
 		}
 
 		void invalidate()
 		{
-			for (typename HashMap::iterator it = m_hashMap.begin(), itEnd = m_hashMap.end(); it != itEnd; ++it)
+			for (typename HashMap::Iterator it = m_hashMap.begin(), itEnd = m_hashMap.end(); it != itEnd; ++it)
 			{
-				StateCacheFuncT<Ty>::evict(it->second.m_value);
+				StateCacheFuncT<Ty>::evict(it.getValue().m_value);
 			}
 
 			m_hashMap.clear();
@@ -762,7 +756,7 @@ namespace bgfx
 
 		uint32_t getCount() const
 		{
-			return uint32_t(m_hashMap.size() );
+			return m_hashMap.getCount();
 		}
 
 	private:
@@ -772,8 +766,8 @@ namespace bgfx
 			uint16_t m_parent;
 		};
 
-		typedef stl::unordered_map<uint64_t, Data> HashMap;
-		HashMap m_hashMap;
+		using HashMap = bx::HashMapT<uint64_t, Data>;
+		HashMap m_hashMap{g_allocatorHandle};
 	};
 
 	class StateCache
@@ -781,16 +775,15 @@ namespace bgfx
 	public:
 		void add(uint64_t _key, uint16_t _value)
 		{
-			invalidate(_key);
-			m_hashMap.insert(stl::make_pair(_key, _value) );
+			m_hashMap.add(_key, _value, true);
 		}
 
 		uint16_t find(uint64_t _key)
 		{
-			HashMap::iterator it = m_hashMap.find(_key);
-			if (it != m_hashMap.end() )
+			const uint16_t* found = m_hashMap.find(_key);
+			if (NULL != found)
 			{
-				return it->second;
+				return *found;
 			}
 
 			return UINT16_MAX;
@@ -798,11 +791,7 @@ namespace bgfx
 
 		void invalidate(uint64_t _key)
 		{
-			HashMap::iterator it = m_hashMap.find(_key);
-			if (it != m_hashMap.end() )
-			{
-				m_hashMap.erase(it);
-			}
+			m_hashMap.tryRemove(_key);
 		}
 
 		void invalidate()
@@ -812,12 +801,12 @@ namespace bgfx
 
 		uint32_t getCount() const
 		{
-			return uint32_t(m_hashMap.size() );
+			return m_hashMap.getCount();
 		}
 
 	private:
-		typedef stl::unordered_map<uint64_t, uint16_t> HashMap;
-		HashMap m_hashMap;
+		using HashMap = bx::HashMapT<uint64_t, uint16_t>;
+		HashMap m_hashMap{g_allocatorHandle};
 	};
 
 	template<typename Derived, typename BufferTy, typename ChunkTy>
@@ -867,7 +856,7 @@ namespace bgfx
 			ChunkTy sbc;
 			static_cast<Derived*>(this)->createChunk(sbc);
 
-			const uint32_t numChunks  = uint32_t(m_chunks.size() );
+			const uint32_t numChunks  = m_chunks.getCount();
 			const uint32_t chunkIndex = UINT32_MAX == _at
 				? numChunks
 				: bx::min(_at, numChunks)
@@ -875,7 +864,7 @@ namespace bgfx
 
 			m_chunkControl.resize(m_chunkSize);
 
-			m_chunks.insert(m_chunks.begin() + chunkIndex, sbc);
+			m_chunks.add(chunkIndex, sbc);
 		}
 
 		Alloc alloc(uint32_t _size)
@@ -982,7 +971,7 @@ namespace bgfx
 
 			for (uint32_t ii = first, num = numReserved / m_chunkSize + first; ii < num; ++ii)
 			{
-				ChunkTy& chunk = m_chunks[ii % m_chunks.size()];
+				ChunkTy& chunk = m_chunks[ii % m_chunks.getCount()];
 
 				static_cast<Derived*>(this)->flushChunk(chunk, bx::min(numFlush, m_chunkSize) );
 
@@ -1001,7 +990,7 @@ namespace bgfx
 			begin();
 		}
 
-		stl::vector<ChunkTy> m_chunks;
+		bx::ArrayT<ChunkTy> m_chunks{g_allocatorHandle};
 		bx::RingBufferControl m_chunkControl;
 
 		uint32_t m_chunkPos;

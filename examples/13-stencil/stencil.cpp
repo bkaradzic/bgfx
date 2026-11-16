@@ -3,9 +3,6 @@
  * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
-#include <string>
-#include <vector>
-
 #include "common.h"
 #include "bgfx_utils.h"
 #include <bx/file.h>
@@ -597,7 +594,7 @@ struct Primitive
 	Obb m_obb;
 };
 
-typedef std::vector<Primitive> PrimitiveArray;
+using PrimitiveArray = bx::ArrayT<Primitive>;
 
 struct Group
 {
@@ -640,7 +637,7 @@ struct Mesh
 		mem = bgfx::makeRef(_indices, size);
 		group.m_ibh = bgfx::createIndexBuffer(mem);
 
-		m_groups.push_back(group);
+		m_groups.add(group);
 	}
 
 	void load(const char* _filePath)
@@ -694,9 +691,9 @@ struct Mesh
 					uint16_t len;
 					bx::read(reader, len, &err);
 
-					std::string material;
-					material.resize(len);
-					bx::read(reader, const_cast<char*>(material.c_str() ), len, &err);
+					bx::ArrayT<char> material;
+					material.setCount(len, bx::InitNone);
+					bx::read(reader, material.getPtr(), len, &err);
 
 					uint16_t num;
 					bx::read(reader, num, &err);
@@ -705,9 +702,9 @@ struct Mesh
 					{
 						bx::read(reader, len, &err);
 
-						std::string name;
-						name.resize(len);
-						bx::read(reader, const_cast<char*>(name.c_str() ), len, &err);
+						bx::ArrayT<char> name;
+						name.setCount(len, bx::InitNone);
+						bx::read(reader, name.getPtr(), len, &err);
 
 						Primitive prim;
 						bx::read(reader, prim.m_startIndex, &err);
@@ -718,10 +715,10 @@ struct Mesh
 						bx::read(reader, prim.m_aabb, &err);
 						bx::read(reader, prim.m_obb, &err);
 
-						group.m_prims.push_back(prim);
+						group.m_prims.add(prim);
 					}
 
-					m_groups.push_back(group);
+					m_groups.add(group);
 					group.reset();
 				}
 				break;
@@ -738,9 +735,8 @@ struct Mesh
 
 	void unload()
 	{
-		for (GroupArray::const_iterator it = m_groups.begin(), itEnd = m_groups.end(); it != itEnd; ++it)
+		for (const Group& group : m_groups)
 		{
-			const Group& group = *it;
 			bgfx::destroy(group.m_vbh);
 
 			if (bgfx::isValid(group.m_ibh) )
@@ -759,10 +755,8 @@ struct Mesh
 
 	void submit(bgfx::ViewId _id, float* _mtx, bgfx::ProgramHandle _program, const RenderState& _renderState, bgfx::TextureHandle _texture)
 	{
-		for (GroupArray::const_iterator it = m_groups.begin(), itEnd = m_groups.end(); it != itEnd; ++it)
+		for (const Group& group : m_groups)
 		{
-			const Group& group = *it;
-
 			// Set uniforms
 			s_uniforms.submitPerDrawUniforms();
 
@@ -787,7 +781,7 @@ struct Mesh
 	}
 
 	bgfx::VertexLayout m_layout;
-	typedef std::vector<Group> GroupArray;
+	using GroupArray = bx::ArrayT<Group>;
 	GroupArray m_groups;
 };
 

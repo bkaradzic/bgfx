@@ -31,23 +31,6 @@ BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wshadow") // warning: declaration of 'u
 #include <tint/api/tint.h>
 BX_PRAGMA_DIAGNOSTIC_POP()
 
-namespace bgfx
-{
-	struct TinyStlAllocator
-	{
-		static void* static_allocate(size_t _bytes);
-		static void static_deallocate(void* _ptr, size_t /*_bytes*/);
-	};
-
-} // namespace bgfx
-
-#define TINYSTL_ALLOCATOR bgfx::TinyStlAllocator
-#include <tinystl/allocator.h>
-#include <tinystl/string.h>
-#include <tinystl/unordered_map.h>
-#include <tinystl/vector.h>
-namespace stl = tinystl;
-
 #include "../../src/shader.h"
 
 namespace bgfx { namespace wgsl
@@ -349,7 +332,7 @@ namespace bgfx { namespace wgsl
 
 		RawBindings().write(_shaderWriter, &err);
 
-		uint16_t count = uint16_t(uniforms.size() );
+		uint16_t count = uint16_t(uniforms.getCount() );
 		bx::write(_shaderWriter, count, &err);
 
 		uint32_t fragmentBit = isFragmentShader ? kUniformFragmentBit : 0;
@@ -363,9 +346,9 @@ namespace bgfx { namespace wgsl
 				size = bx::max(size, (uint16_t)(un.regIndex + un.regCount*16) );
 			}
 
-			uint8_t nameSize = (uint8_t)un.name.size();
+			uint8_t nameSize = (uint8_t)un.name.getLength();
 			bx::write(_shaderWriter, nameSize, &err);
-			bx::write(_shaderWriter, un.name.c_str(), nameSize, &err);
+			bx::write(_shaderWriter, un.name.getCPtr(), nameSize, &err);
 			bx::write(_shaderWriter, uint8_t(un.type | fragmentBit), &err);
 			bx::write(_shaderWriter, un.num, &err);
 			bx::write(_shaderWriter, un.regIndex, &err);
@@ -375,7 +358,7 @@ namespace bgfx { namespace wgsl
 			bx::write(_shaderWriter, un.texFormat, &err);
 
 			BX_TRACE("%s, %s, %d, %d, %d"
-				, un.name.c_str()
+				, un.name.getCPtr()
 				, getUniformTypeName(UniformType::Enum(un.type & ~kUniformMask))
 				, un.num
 				, un.regIndex
@@ -457,7 +440,7 @@ namespace bgfx { namespace wgsl
 	/// The value is 100.
 	constexpr int s_GLSL_VULKAN_CLIENT_VERSION = 100;
 
-	static bool compile(const Options& _options, uint32_t _version, const std::string& _code, bx::WriterI* _shaderWriter, bx::WriterI* _messageWriter, bool _firstPass)
+	static bool compile(const Options& _options, uint32_t _version, const bx::StringView& _code, bx::WriterI* _shaderWriter, bx::WriterI* _messageWriter, bool _firstPass)
 	{
 		BX_UNUSED(_version);
 
@@ -496,9 +479,11 @@ namespace bgfx { namespace wgsl
 		shader->setShiftBinding(glslang::EResSsbo, kSpirvBindShift);
 		shader->setShiftBinding(glslang::EResImage, kSpirvBindShift);
 
-		const char* shaderStrings[] = { _code.c_str() };
-		shader->setStrings(
+		const char* shaderStrings[] = { _code.getPtr() };
+		const int   shaderLengths[] = { _code.getLength() };
+		shader->setStringsWithLengths(
 			  shaderStrings
+			, shaderLengths
 			, BX_COUNTOF(shaderStrings)
 			);
 		bool compiled = shader->parse(&resourceLimits
@@ -540,7 +525,7 @@ namespace bgfx { namespace wgsl
 					end   = start + 20;
 				}
 
-				printCode(_code.c_str(), bx::satSub<uint32_t>(line, 1u), start, end, column);
+				printCode(_code, bx::satSub<uint32_t>(line, 1u), start, end, column);
 
 				bx::write(_messageWriter, &messageErr, "%s\n", log);
 			}
@@ -568,16 +553,16 @@ namespace bgfx { namespace wgsl
 				if (_firstPass)
 				{
 					// first time through, we just find unused uniforms and get rid of them
-					std::string output;
+					bx::StringBuilder output;
 
 					struct Uniform
 					{
-						std::string name;
-						std::string decl;
+						bx::String name;
+						bx::String decl;
 					};
-					std::vector<Uniform> uniforms;
+					bx::ArrayT<Uniform> uniforms;
 
-					bx::LineReader reader(_code.c_str() );
+					bx::LineReader reader(_code);
 					while (!reader.isDone() )
 					{
 						bx::StringView strLine = reader.next();
@@ -589,7 +574,7 @@ namespace bgfx { namespace wgsl
 						{
 							bool found = false;
 							bool sampler = false;
-							std::string name = "";
+							bx::String name;
 
 							// add to samplers
 
@@ -615,7 +600,7 @@ namespace bgfx { namespace wgsl
 									if (!bx::findIdentifierMatch(strLine, program->getUniformName(ii) ).isEmpty() )
 									{
 										found = true;
-										name = program->getUniformName(ii);
+										name = bx::String(bx::StringView(program->getUniformName(ii) ) );
 										break;
 									}
 								}
@@ -623,47 +608,46 @@ namespace bgfx { namespace wgsl
 
 							if (!found)
 							{
-								output.append(strLine.getPtr(), str.getPtr() );
-								output += "static ";
-								output.append(str.getTerm(), strLine.getTerm() );
-								output += "\n";
+								output.add(bx::StringView(strLine.getPtr(), str.getPtr() ) );
+								output.add("static ");
+								output.add(bx::StringView(str.getTerm(), strLine.getTerm() ) );
+								output.add("\n");
 								moved = true;
 							}
 							else if (!sampler)
 							{
 								Uniform uniform;
 								uniform.name = name;
-								uniform.decl = std::string(strLine.getPtr(), strLine.getTerm() );
-								uniforms.push_back(uniform);
+								uniform.decl = bx::String(strLine);
+								uniforms.add(uniform);
 								moved = true;
 							}
 						}
 
 						if (!moved)
 						{
-							output.append(strLine.getPtr(), strLine.getTerm() );
-							output += "\n";
+							output.add(strLine);
+							output.add("\n");
 						}
 					}
 
-					std::string uniformBlock;
-					uniformBlock += "cbuffer UniformBlock\n";
-					uniformBlock += "{\n";
+					bx::StringBuilder uniformBlock;
+					uniformBlock.add("cbuffer UniformBlock\n");
+					uniformBlock.add("{\n");
 
 					for (const Uniform& uniform : uniforms)
 					{
-						uniformBlock += uniform.decl.substr(7 /* uniform */);
-						uniformBlock += "\n";
+						uniformBlock.add(bx::strSubstr(uniform.decl, 7 /* uniform */) );
+						uniformBlock.add("\n");
 					}
 
-					uniformBlock += "};\n";
-
-					output = uniformBlock + output;
+					uniformBlock.add("};\n");
+					uniformBlock.add(output.getView() );
 
 					// recompile with the unused uniforms converted to statics
 					delete program;
 					delete shader;
-					return compile(_options, _version, output.c_str(), _shaderWriter, _messageWriter, false);
+					return compile(_options, _version, uniformBlock.getView(), _shaderWriter, _messageWriter, false);
 				}
 
 				uint32_t blockIndex = 0;
@@ -689,16 +673,16 @@ namespace bgfx { namespace wgsl
 					for (uint16_t ii = 0; ii < count; ++ii)
 					{
 						Uniform un;
-						un.name = program->getUniformName(ii);
+						un.name = bx::String(bx::StringView(program->getUniformName(ii) ) );
 
-						if (bx::hasSuffix(un.name.c_str(), ".@data") )
+						if (bx::hasSuffix(un.name.getCPtr(), ".@data") )
 						{
 							continue;
 						}
 
 						const uint32_t arraySize = uint32_t(program->getUniformArraySize(ii) );
 
-						if (!isUniformNumValid(un.name.c_str(), arraySize, _messageWriter) )
+						if (!isUniformNumValid(un.name.getCPtr(), arraySize, _messageWriter) )
 						{
 							invalidUniform = true;
 							continue;
@@ -733,7 +717,7 @@ namespace bgfx { namespace wgsl
 							continue;
 						}
 
-						uniforms.push_back(un);
+						uniforms.add(un);
 					}
 				}
 
@@ -743,7 +727,7 @@ namespace bgfx { namespace wgsl
 				}
 
 				glslang::TIntermediate* intermediate = program->getIntermediate(stage);
-				std::vector<uint32_t> spirv;
+				bx::ArrayT<uint32_t> spirv;
 
 				glslang::SpvOptions options;
 				options.disableOptimizer = _options.debugInformation;
@@ -751,7 +735,11 @@ namespace bgfx { namespace wgsl
 				options.emitNonSemanticShaderDebugInfo = _options.debugInformation;
 				options.emitNonSemanticShaderDebugSource = _options.debugInformation;
 
-				glslang::GlslangToSpv(*intermediate, spirv, &options);
+				{
+					std::vector<uint32_t> generated;
+					glslang::GlslangToSpv(*intermediate, generated, &options);
+					spirv.set(bx::ArrayViewT<uint32_t>(generated.data(), uint32_t(generated.size() ) ) );
+				}
 
 				spvtools::Optimizer opt(getSpirvTargetVersion(_version, _messageWriter));
 
@@ -772,57 +760,80 @@ namespace bgfx { namespace wgsl
 				spvtools::ValidatorOptions validatorOptions;
 				validatorOptions.SetBeforeHlslLegalization(true);
 
-				if (false
-				||  invalidUniform
-				||  !opt.Run(
-					  spirv.data()
-					, spirv.size()
-					, &spirv
-					, validatorOptions
-					, false
-					) )
+				bool optimized = !invalidUniform;
+
+				if (optimized)
+				{
+					std::vector<uint32_t> optimizedSpirv;
+					optimized = opt.Run(
+						  spirv.getPtr()
+						, spirv.getCount()
+						, &optimizedSpirv
+						, validatorOptions
+						, false
+						);
+					spirv.set(bx::ArrayViewT<uint32_t>(optimizedSpirv.data(), uint32_t(optimizedSpirv.size() ) ) );
+				}
+
+				if (!optimized)
 				{
 					compiled = false;
 				}
 				else
 				{
-					tint::Result<std::string> result = tint::SpirvToWgsl(
-						  spirv
-						, {
-							.allow_non_uniform_derivatives = true,
-							.allow_non_uniform_subgroup_operations = true,
-							.allowed_features = {
-								.extensions =
-								{
+					bx::StringBuilder wgslSource;
+					bx::String failureReason;
+
+					{
+						tint::Result<std::string> result = tint::SpirvToWgsl(
+							  std::vector<uint32_t>(spirv.getPtr(), spirv.getTerm() )
+							, {
+								.allow_non_uniform_derivatives = true,
+								.allow_non_uniform_subgroup_operations = true,
+								.allowed_features = {
+									.extensions =
+									{
+									},
+									.features =
+									{
+										tint::wgsl::LanguageFeature::kReadonlyAndReadwriteStorageTextures,
+									}
 								},
-								.features =
-								{
-									tint::wgsl::LanguageFeature::kReadonlyAndReadwriteStorageTextures,
-								}
-							},
-						  }
-						);
-					translated = result == tint::Success;
+							  }
+							);
+						translated = result == tint::Success;
+
+						if (translated)
+						{
+							wgslSource.set(bx::StringView(result.Get().c_str() ) );
+						}
+						else
+						{
+							failureReason = bx::String(bx::StringView(result.Failure().reason.c_str() ) );
+						}
+					}
 
 					if (translated)
 					{
+						const bx::StringView code = wgslSource.getView();
+
 						if (g_verbose)
 						{
-							bx::printf("%s", result.Get().c_str() );
+							bx::printf("%s", code.getPtr() );
 						}
 
-						spirv_cross::CompilerReflection refl(spirv);
+						spirv_cross::CompilerReflection refl(spirv.getPtr(), spirv.getCount() );
 						spirv_cross::ShaderResources shaderRes = refl.get_shader_resources();
 
 						// Loop through the separate_images, and extract the uniform names:
 						for (auto& resource : shaderRes.separate_images)
 						{
-							std::string name = refl.get_name(resource.id);
+							bx::StringView name = toStringView(refl.get_name(resource.id) );
 
-							if (name.size() > 7
-							&&  0 == bx::strCmp(name.c_str() + name.length() - 7, "Texture") )
+							if (name.getLength() > 7
+							&&  bx::hasSuffix(name, "Texture") )
 							{
-								name = name.substr(0, name.length() - 7);
+								name.set(name.getPtr(), name.getTerm() - 7);
 							}
 
 							uint32_t binding_index = refl.get_decoration(resource.id, spv::Decoration::DecorationBinding);
@@ -835,14 +846,14 @@ namespace bgfx { namespace wgsl
 							{
 								if (binding_index + 16 == refl.get_decoration(sampler.id, spv::Decoration::DecorationBinding) )
 								{
-									std::string samplerName = refl.get_name(sampler.id);
-									isCompareSampler = refl.variable_is_depth_or_compare(sampler.id) || samplerName.find("Comparison") != std::string::npos;
+									const bx::StringView samplerName = toStringView(refl.get_name(sampler.id) );
+									isCompareSampler = refl.variable_is_depth_or_compare(sampler.id) || !bx::strFind(samplerName, "Comparison").isEmpty();
 									break;
 								}
 							}
 
 							Uniform un;
-							un.name = name;
+							un.name = bx::String(name);
 							un.type = UniformType::Enum(UniformType::Sampler
 									| kUniformSamplerBit
 									| (isCompareSampler ? kUniformCompareBit : 0)
@@ -855,13 +866,13 @@ namespace bgfx { namespace wgsl
 							un.regIndex = uint16_t(binding_index);
 							un.regCount = 0; // unused
 
-							uniforms.push_back(un);
+							uniforms.add(un);
 						}
 
 						// Loop through the storage_images, and extract the uniform names:
 						for (auto& resource : shaderRes.storage_images)
 						{
-							const std::string& name = refl.get_name(resource.id);
+							const bx::StringView name = toStringView(refl.get_name(resource.id) );
 
 							uint32_t binding_index = refl.get_decoration(resource.id, spv::Decoration::DecorationBinding);
 
@@ -875,7 +886,7 @@ namespace bgfx { namespace wgsl
 								;
 
 							Uniform un;
-							un.name = name;
+							un.name = bx::String(name);
 							un.type = type;
 
 							un.texComponent = textureComponentTypeToId(spirvCrossBaseTypeToFormatType(componentType, imageType.depth) );
@@ -890,7 +901,7 @@ namespace bgfx { namespace wgsl
 							un.regIndex = uint16_t(binding_index);
 							un.regCount = descriptorTypeToId(DescriptorType::StorageImage);
 
-							uniforms.push_back(un);
+							uniforms.add(un);
 						}
 
 						bx::Error err;
@@ -898,7 +909,7 @@ namespace bgfx { namespace wgsl
 						// Loop through the storage buffer, and extract the uniform names:
 						for (auto& resource : shaderRes.storage_buffers)
 						{
-							const std::string& name = refl.get_name(resource.id);
+							const bx::StringView name = toStringView(refl.get_name(resource.id) );
 
 							uint32_t binding_index = refl.get_decoration(resource.id, spv::Decoration::DecorationBinding);
 
@@ -909,18 +920,17 @@ namespace bgfx { namespace wgsl
 								;
 
 							Uniform un;
-							un.name = name;
+							un.name = bx::String(name);
 							un.type = type;
 							un.num = 0;
 							un.regIndex = uint16_t(binding_index);
 							un.regCount = descriptorTypeToId(DescriptorType::StorageBuffer);
 
-							uniforms.push_back(un);
+							uniforms.add(un);
 						}
 
 						const uint16_t size = writeUniformArray(_shaderWriter, uniforms, _options.shaderType == 'f');
 
-						const bx::StringView code(result.Get().c_str() );
 						bx::write(_shaderWriter, code.getLength(), &err);
 						bx::write(_shaderWriter, code, &err);
 						const uint8_t nul = 0;
@@ -947,7 +957,7 @@ namespace bgfx { namespace wgsl
 					}
 					else
 					{
-						bx::write(_messageWriter, &messageErr, "Error: %s\n", result.Failure().reason.c_str() );
+						bx::write(_messageWriter, &messageErr, "Error: %s\n", failureReason.getCPtr() );
 					}
 				}
 			}
@@ -963,7 +973,7 @@ namespace bgfx { namespace wgsl
 
 } // namespace wgsl
 
-	bool compileWgslShader(const Options& _options, uint32_t _version, const std::string& _code, bx::WriterI* _shaderWriter, bx::WriterI* _messageWriter)
+	bool compileWgslShader(const Options& _options, uint32_t _version, const bx::StringView& _code, bx::WriterI* _shaderWriter, bx::WriterI* _messageWriter)
 	{
 		return wgsl::compile(_options, _version, _code, _shaderWriter, _messageWriter, true);
 	}
@@ -974,7 +984,7 @@ namespace bgfx { namespace wgsl
 
 namespace bgfx
 {
-	bool compileWgslShader(const Options& _options, uint32_t _version, const std::string& _code, bx::WriterI* _shaderWriter, bx::WriterI* _messageWriter)
+	bool compileWgslShader(const Options& _options, uint32_t _version, const bx::StringView& _code, bx::WriterI* _shaderWriter, bx::WriterI* _messageWriter)
 	{
 		BX_UNUSED(_options, _version, _code, _shaderWriter);
 		bx::Error messageErr;

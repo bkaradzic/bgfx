@@ -245,6 +245,68 @@ namespace bgfx { namespace d3d12
 		uint16_t m_numBlocks;
 	};
 
+	struct TransientStagingD3D12
+	{
+		ID3D12Resource* m_ptr = NULL;
+		TransientStaging* m_staging = NULL;
+	};
+
+	struct HeapAllocationD3D12
+	{
+		static constexpr uint32_t kCommitted = UINT32_MAX;
+
+		uint32_t blockIdx = kCommitted;
+		uint32_t offset   = 0;
+		uint32_t size     = 0;
+		uint16_t slabIdx  = 0;
+	};
+
+	struct MemoryKindD3D12
+	{
+		enum Enum
+		{
+			Buffer,
+			Texture,
+
+			Count
+		};
+	};
+
+	struct MemoryAllocatorD3D12
+	{
+		static constexpr uint32_t kMinSlabSize  = 8<<20;
+		static constexpr uint32_t kMaxSlabSize  = 64<<20;
+		static constexpr uint32_t kMaxBlockSize = kMaxSlabSize/4;
+		static constexpr uint32_t kMinFreeSize  = 2*kMinSlabSize;
+		static constexpr uint32_t kMinBlockSize = 4<<10;
+		static constexpr uint32_t kSmallSize    = 64<<10;
+		static constexpr uint32_t kSlabShift    = 32;
+		static constexpr uint16_t kMaxSlabs     = 256;
+
+		using Allocator = bx::TwoLevelSegregatedFitAllocatorT<kMinBlockSize, false>;
+
+		struct Slab
+		{
+			ID3D12Heap*           heap;
+			uint32_t              size;
+			MemoryKindD3D12::Enum kind;
+		};
+
+		MemoryAllocatorD3D12();
+
+		void shutdown();
+		ID3D12Resource* createResource(MemoryKindD3D12::Enum _kind, const D3D12_RESOURCE_DESC* _resourceDesc, D3D12_RESOURCE_STATES _state, HeapAllocationD3D12* _alloc);
+		void free(const HeapAllocationD3D12& _alloc);
+
+		bool addSlab(Allocator& _allocator, uint32_t _size, MemoryKindD3D12::Enum _kind);
+		void removeSlab(uint16_t _slabIdx);
+
+		Allocator* m_allocator[MemoryKindD3D12::Count];
+		uint8_t m_numSlabs[MemoryKindD3D12::Count];
+		Slab m_slab[kMaxSlabs];
+		bx::HandleAlloc2T<kMaxSlabs> m_slabHandle;
+	};
+
 	struct BufferD3D12
 	{
 		BufferD3D12()
@@ -258,6 +320,7 @@ namespace bgfx { namespace d3d12
 
 		void create(uint32_t _size, void* _data, uint16_t _flags, bool _vertex, uint32_t _stride = 0);
 		void update(ID3D12GraphicsCommandList* _commandList, uint32_t _offset, uint32_t _size, void* _data, bool _discard = false);
+		void copy(ID3D12GraphicsCommandList* _commandList, ID3D12Resource* _src, uint32_t _size);
 		void destroy();
 
 		D3D12_RESOURCE_STATES setState(ID3D12GraphicsCommandList* _commandList, D3D12_RESOURCE_STATES _state);
@@ -269,6 +332,7 @@ namespace bgfx { namespace d3d12
 		D3D12_UNORDERED_ACCESS_VIEW_DESC m_uavdRaw;
 
 		ID3D12Resource* m_ptr;
+		HeapAllocationD3D12 m_alloc;
 		D3D12_GPU_VIRTUAL_ADDRESS m_gpuVA;
 		D3D12_RESOURCE_STATES m_state;
 		uint32_t m_size;
@@ -489,6 +553,7 @@ namespace bgfx { namespace d3d12
 		D3D12_UNORDERED_ACCESS_VIEW_DESC m_uavd;
 		D3D12_CPU_DESCRIPTOR_HANDLE m_srvHandle;
 		ID3D12Resource* m_ptr;
+		HeapAllocationD3D12 m_alloc;
 		ID3D12Resource* m_singleMsaa;
 		HANDLE m_handle;
 		void* m_directAccessPtr;
@@ -587,6 +652,9 @@ namespace bgfx { namespace d3d12
 			, m_externalQueue(false)
 		{
 			static_assert(BX_COUNTOF(m_commandList) == BX_COUNTOF(m_release) );
+			setAllocatorHandle(m_release, g_allocatorHandle);
+			setAllocatorHandle(m_free, g_allocatorHandle);
+			setAllocatorHandle(m_transientStaging, g_allocatorHandle);
 		}
 
 		void init(ID3D12Device* _device, ID3D12CommandQueue* _queue);
@@ -596,6 +664,8 @@ namespace bgfx { namespace d3d12
 		void finish(uint64_t _waitFence = UINT64_MAX, bool _finishAll = false);
 		bool tryFinish(uint64_t _waitFence);
 		void release(IUnknown* _ptr);
+		void free(const HeapAllocationD3D12& _alloc);
+		void releaseTransientStaging(TransientStaging* _staging);
 		bool consume(uint32_t _ms = UINT32_MAX);
 
 		void addExternal(TextureHandle _handle);
@@ -651,10 +721,13 @@ namespace bgfx { namespace d3d12
 		uint64_t m_completedFence;
 		ID3D12Fence* m_fence;
 		CommandList m_commandList[kMaxCommandLists];
-		typedef stl::vector<IUnknown*> ResourceArray;
+		using ResourceArray = bx::ArrayT<IUnknown*>;
 		ResourceArray m_release[kMaxCommandLists];
-		typedef stl::vector<TextureHandle> ExternalTextureArray;
-		ExternalTextureArray m_external;
+		using AllocationArray = bx::ArrayT<HeapAllocationD3D12>;
+		AllocationArray m_free[kMaxCommandLists];
+		bx::ArrayT<TransientStaging*> m_transientStaging[kMaxCommandLists];
+		using ExternalTextureArray = bx::ArrayT<TextureHandle>;
+		ExternalTextureArray m_external{g_allocatorHandle};
 		bx::RingBufferControl m_control;
 		bool m_externalQueue;
 

@@ -83,13 +83,10 @@ public:
 		uint32_t numVertices = 0;
 		uint32_t numIndices  = 0;
 
-		for (GroupArray::const_iterator it = _mesh->m_groups.begin(), itEnd = _mesh->m_groups.end()
-			; it != itEnd
-			; ++it
-			)
+		for (const Group& group : _mesh->m_groups)
 		{
-			numVertices += it->m_numVertices;
-			numIndices  += it->m_numIndices;
+			numVertices += group.m_numVertices;
+			numIndices  += group.m_numIndices;
 		}
 
 		const bgfx::Memory* ib = bgfx::alloc(numIndices * sizeof(uint32_t) );
@@ -100,24 +97,21 @@ public:
 			uint32_t ioffset = 0;
 			uint32_t index   = 0;
 
-			for (GroupArray::const_iterator it = _mesh->m_groups.begin(), itEnd = _mesh->m_groups.end()
-				; it != itEnd
-				; ++it
-				)
+			for (const Group& group : _mesh->m_groups)
 			{
-				const uint32_t vsize = _mesh->m_layout.getSize(it->m_numVertices);
-				bx::memCopy(vbData + voffset, it->m_vertices, vsize);
+				const uint32_t vsize = _mesh->m_layout.getSize(group.m_numVertices);
+				bx::memCopy(vbData + voffset, group.m_vertices, vsize);
 
 				uint32_t* ibptr = (uint32_t*)(ib->data + ioffset);
 
-				for (uint32_t ii = 0, num = it->m_numIndices; ii < num; ++ii)
+				for (uint32_t ii = 0, num = group.m_numIndices; ii < num; ++ii)
 				{
-					ibptr[ii] = it->m_indices[ii] + index;
+					ibptr[ii] = group.m_indices[ii] + index;
 				}
 
 				voffset += vsize;
-				ioffset += uint32_t(it->m_numIndices * sizeof(uint32_t) );
-				index   += uint32_t(it->m_numVertices);
+				ioffset += uint32_t(group.m_numIndices * sizeof(uint32_t) );
+				index   += uint32_t(group.m_numVertices);
 			}
 		}
 

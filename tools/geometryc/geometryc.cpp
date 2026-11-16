@@ -3,16 +3,11 @@
  * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
-#include <algorithm>
-
+#include <bx/array.h>
 #include <bx/string.h>
+#include <bx/stringpool.h>
 #include <bgfx/bgfx.h>
 #include "../../src/vertexlayout.h"
-
-#include <tinystl/allocator.h>
-#include <tinystl/string.h>
-#include <tinystl/vector.h>
-namespace stl = tinystl;
 
 #include <meshoptimizer/src/meshoptimizer.h>
 
@@ -56,7 +51,7 @@ namespace stl = tinystl;
 #include <bx/math.h>
 #include <bx/timer.h>
 
-typedef stl::vector<bx::Vec3> Vec3Array;
+using Vec3Array = bx::ArrayT<bx::Vec3>;
 
 struct Index3
 {
@@ -71,17 +66,17 @@ struct TriIndices
 	Index3 m_index[3];
 };
 
-typedef stl::vector<TriIndices> TriangleArray;
+using TriangleArray = bx::ArrayT<TriIndices>;
 
 struct Group
 {
 	uint32_t m_startTriangle;
 	uint32_t m_numTriangles;
-	stl::string m_name;
-	stl::string m_material;
+	bx::String m_name;
+	bx::String m_material;
 };
 
-typedef stl::vector<Group> GroupArray;
+using GroupArray = bx::ArrayT<Group>;
 
 struct Primitive
 {
@@ -89,10 +84,10 @@ struct Primitive
 	uint32_t m_startIndex;
 	uint32_t m_numVertices;
 	uint32_t m_numIndices;
-	stl::string m_name;
+	bx::String m_name;
 };
 
-typedef stl::vector<Primitive> PrimitiveArray;
+using PrimitiveArray = bx::ArrayT<Primitive>;
 
 struct Axis
 {
@@ -368,7 +363,7 @@ void write(
 	, const uint16_t* _indices
 	, uint32_t _numIndices
 	, bool _compress
-	, const stl::string& _material
+	, const bx::StringView& _material
 	, const PrimitiveArray& _primitives
 	, bx::Error* _err
 	)
@@ -415,18 +410,17 @@ void write(
 
 	write(_writer, kChunkPrimitive, _err);
 
-	uint16_t nameLen = uint16_t(_material.size() );
+	uint16_t nameLen = uint16_t(_material.getLength() );
 	write(_writer, nameLen, _err);
 
-	write(_writer, _material.c_str(), nameLen, _err);
-	write(_writer, uint16_t(_primitives.size() ), _err);
+	write(_writer, _material.getPtr(), nameLen, _err);
+	write(_writer, uint16_t(_primitives.getCount() ), _err);
 
-	for (PrimitiveArray::const_iterator primIt = _primitives.begin(); primIt != _primitives.end(); ++primIt)
+	for (const Primitive& prim : _primitives)
 	{
-		const Primitive& prim = *primIt;
-		nameLen = uint16_t(prim.m_name.size() );
+		nameLen = uint16_t(prim.m_name.getLength() );
 		write(_writer, nameLen, _err);
-		write(_writer, prim.m_name.c_str(), nameLen, _err);
+		write(_writer, prim.m_name.getCPtr(), nameLen, _err);
 		write(_writer, prim.m_startIndex, _err);
 		write(_writer, prim.m_numIndices, _err);
 		write(_writer, prim.m_startVertex, _err);
@@ -446,9 +440,9 @@ inline uint32_t rgbaToAbgr(uint8_t _r, uint8_t _g, uint8_t _b, uint8_t _a)
 
 struct GroupSortByMaterial
 {
-	bool operator()(const Group& _lhs, const Group& _rhs)
+	bool operator()(const Group& _lhs, const Group& _rhs) const
 	{
-		return 0 < bx::strCmp(_lhs.m_material.c_str(), _rhs.m_material.c_str() );
+		return 0 < bx::strCmp(_lhs.m_material.getCPtr(), _rhs.m_material.getCPtr() );
 	}
 };
 
@@ -537,9 +531,9 @@ void parseObj(char* _data, uint32_t _size, Mesh* _mesh, bool _hasBc)
 				TriIndices triangle;
 				bx::memSet(&triangle, 0, sizeof(TriIndices) );
 
-				const int numNormals   = (int)_mesh->m_normals.size();
-				const int numTexcoords = (int)_mesh->m_texcoords.size();
-				const int numPositions = (int)_mesh->m_positions.size();
+				const int numNormals   = (int)_mesh->m_normals.getCount();
+				const int numTexcoords = (int)_mesh->m_texcoords.getCount();
+				const int numPositions = (int)_mesh->m_positions.getCount();
 				for (uint32_t edge = 0, numEdges = argc-1; edge < numEdges; ++edge)
 				{
 					Index3 index;
@@ -595,7 +589,7 @@ void parseObj(char* _data, uint32_t _size, Mesh* _mesh, bool _hasBc)
 						triangle.m_index[edge] = index;
 						if (2 == edge)
 						{
-							_mesh->m_triangles.push_back(triangle);
+							_mesh->m_triangles.add(triangle);
 						}
 						break;
 
@@ -603,22 +597,22 @@ void parseObj(char* _data, uint32_t _size, Mesh* _mesh, bool _hasBc)
 						triangle.m_index[1] = triangle.m_index[2];
 						triangle.m_index[2] = index;
 
-						_mesh->m_triangles.push_back(triangle);
+						_mesh->m_triangles.add(triangle);
 						break;
 					}
 				}
 			}
 			else if (0 == bx::strCmp(argv[0], "g") )
 			{
-				group.m_name = argv[1];
+				group.m_name = bx::String(bx::StringView(argv[1]) );
 			}
 			else if (*argv[0] == 'v')
 			{
-				group.m_numTriangles = (uint32_t)(_mesh->m_triangles.size() ) - group.m_startTriangle;
+				group.m_numTriangles = _mesh->m_triangles.getCount() - group.m_startTriangle;
 				if (0 < group.m_numTriangles)
 				{
-					_mesh->m_groups.push_back(group);
-					group.m_startTriangle = (uint32_t)(_mesh->m_triangles.size() );
+					_mesh->m_groups.add(group);
+					group.m_startTriangle = _mesh->m_triangles.getCount();
 					group.m_numTriangles = 0;
 				}
 
@@ -629,7 +623,7 @@ void parseObj(char* _data, uint32_t _size, Mesh* _mesh, bool _hasBc)
 					bx::fromString(&normal.y, argv[2]);
 					bx::fromString(&normal.z, argv[3]);
 
-					_mesh->m_normals.push_back(normal);
+					_mesh->m_normals.add(normal);
 				}
 				else if (0 == bx::strCmp(argv[0], "vp") )
 				{
@@ -662,7 +656,7 @@ void parseObj(char* _data, uint32_t _size, Mesh* _mesh, bool _hasBc)
 						break;
 					}
 
-					_mesh->m_texcoords.push_back(texcoord);
+					_mesh->m_texcoords.add(texcoord);
 				}
 				else
 				{
@@ -685,20 +679,20 @@ void parseObj(char* _data, uint32_t _size, Mesh* _mesh, bool _hasBc)
 					const float invW = bx::rcp(pw);
 					pos = bx::mul(pos, invW);
 
-					_mesh->m_positions.push_back(pos);
+					_mesh->m_positions.add(pos);
 				}
 			}
 			else if (0 == bx::strCmp(argv[0], "usemtl") )
 			{
-				stl::string material(argv[1]);
+				const bx::String material = bx::String(bx::StringView(argv[1]) );
 
-				if (0 != bx::strCmp(material.c_str(), group.m_material.c_str() ) )
+				if (0 != bx::strCmp(material.getCPtr(), group.m_material.getCPtr() ) )
 				{
-					group.m_numTriangles = (uint32_t)(_mesh->m_triangles.size() ) - group.m_startTriangle;
+					group.m_numTriangles = _mesh->m_triangles.getCount() - group.m_startTriangle;
 					if (0 < group.m_numTriangles)
 					{
-						_mesh->m_groups.push_back(group);
-						group.m_startTriangle = (uint32_t)(_mesh->m_triangles.size() );
+						_mesh->m_groups.add(group);
+						group.m_startTriangle = _mesh->m_triangles.getCount();
 						group.m_numTriangles = 0;
 					}
 				}
@@ -710,12 +704,12 @@ void parseObj(char* _data, uint32_t _size, Mesh* _mesh, bool _hasBc)
 		++num;
 	}
 
-	group.m_numTriangles = (uint32_t)(_mesh->m_triangles.size() ) - group.m_startTriangle;
+	group.m_numTriangles = _mesh->m_triangles.getCount() - group.m_startTriangle;
 
 	if (0 < group.m_numTriangles)
 	{
-		_mesh->m_groups.push_back(group);
-		group.m_startTriangle = (uint32_t)(_mesh->m_triangles.size() );
+		_mesh->m_groups.add(group);
+		group.m_startTriangle = _mesh->m_triangles.getCount();
 		group.m_numTriangles  = 0;
 	}
 
@@ -748,9 +742,9 @@ void processGltfNode(cgltf_node* _node, Mesh* _mesh, Group* _group, bool _hasBc)
 
 			cgltf_size numVertex = primitive->attributes[0].data->count;
 
-			int32_t basePositionIndex = (int32_t)_mesh->m_positions.size();
-			int32_t baseNormalIndex   = (int32_t)_mesh->m_normals.size();
-			int32_t baseTexcoordIndex = (int32_t)_mesh->m_texcoords.size();
+			int32_t basePositionIndex = (int32_t)_mesh->m_positions.getCount();
+			int32_t baseNormalIndex   = (int32_t)_mesh->m_normals.getCount();
+			int32_t baseTexcoordIndex = (int32_t)_mesh->m_texcoords.getCount();
 
 			bool hasNormal   = false;
 			bool hasTexcoord = false;
@@ -771,7 +765,7 @@ void processGltfNode(cgltf_node* _node, Mesh* _mesh, Group* _group, bool _hasBc)
 
 				if (attribute->type == cgltf_attribute_type_position && attribute->index == 0)
 				{
-					_mesh->m_positions.reserve(_mesh->m_positions.size() + accessorCount);
+					_mesh->m_positions.setCapacity(_mesh->m_positions.getCount() + uint32_t(accessorCount) );
 
 					bx::Vec3 pos(bx::InitNone);
 
@@ -779,12 +773,12 @@ void processGltfNode(cgltf_node* _node, Mesh* _mesh, Group* _group, bool _hasBc)
 					{
 						gltfReadFloat(accessorData, numComponents, v, &pos.x, 3);
 						pos = mul(pos, nodeToWorld);
-						_mesh->m_positions.push_back(pos);
+						_mesh->m_positions.add(pos);
 					}
 				}
 				else if (attribute->type == cgltf_attribute_type_normal && attribute->index == 0)
 				{
-					_mesh->m_normals.reserve(_mesh->m_normals.size() + accessorCount);
+					_mesh->m_normals.setCapacity(_mesh->m_normals.getCount() + uint32_t(accessorCount) );
 
 					hasNormal = true;
 					bx::Vec3 normal(bx::InitNone);
@@ -793,12 +787,12 @@ void processGltfNode(cgltf_node* _node, Mesh* _mesh, Group* _group, bool _hasBc)
 					{
 						gltfReadFloat(accessorData, numComponents, v, &normal.x, 3);
 						normal = mul(normal, nodeToWorldNormal);
-						_mesh->m_normals.push_back(normal);
+						_mesh->m_normals.add(normal);
 					}
 				}
 				else if (attribute->type == cgltf_attribute_type_texcoord && attribute->index == 0)
 				{
-					_mesh->m_texcoords.reserve(_mesh->m_texcoords.size() + accessorCount);
+					_mesh->m_texcoords.setCapacity(_mesh->m_texcoords.getCount() + uint32_t(accessorCount) );
 
 					hasTexcoord = true;
 					bx::Vec3 texcoord(bx::InitNone);
@@ -806,7 +800,7 @@ void processGltfNode(cgltf_node* _node, Mesh* _mesh, Group* _group, bool _hasBc)
 					for (cgltf_size v = 0; v < accessorCount; ++v)
 					{
 						gltfReadFloat(accessorData, numComponents, v, &texcoord.x, 3);
-						_mesh->m_texcoords.push_back(texcoord);
+						_mesh->m_texcoords.add(texcoord);
 					}
 				}
 
@@ -830,7 +824,7 @@ void processGltfNode(cgltf_node* _node, Mesh* _mesh, Group* _group, bool _hasBc)
 						index.m_vbc      = _hasBc      ? i                               :  0;
 						triangle.m_index[i] = index;
 					}
-					_mesh->m_triangles.push_back(triangle);
+					_mesh->m_triangles.add(triangle);
 				}
 			}
 			else
@@ -848,16 +842,16 @@ void processGltfNode(cgltf_node* _node, Mesh* _mesh, Group* _group, bool _hasBc)
 						index.m_vbc      = _hasBc      ? i                               :  0;
 						triangle.m_index[i] = index;
 					}
-					_mesh->m_triangles.push_back(triangle);
+					_mesh->m_triangles.add(triangle);
 				}
 			}
 
-			_group->m_numTriangles = (uint32_t)(_mesh->m_triangles.size() ) - _group->m_startTriangle;
+			_group->m_numTriangles = _mesh->m_triangles.getCount() - _group->m_startTriangle;
 
 			if (0 < _group->m_numTriangles)
 			{
-				_mesh->m_groups.push_back(*_group);
-				_group->m_startTriangle = (uint32_t)(_mesh->m_triangles.size() );
+				_mesh->m_groups.add(*_group);
+				_group->m_startTriangle = _mesh->m_triangles.getCount();
 				_group->m_numTriangles = 0;
 			}
 		}
@@ -1109,17 +1103,17 @@ int main(int _argc, const char* _argv[])
 	parseElapsed += now;
 	int64_t convertElapsed = -now;
 
-	std::sort(mesh.m_groups.begin(), mesh.m_groups.end(), GroupSortByMaterial() );
+	bx::stableSort(mesh.m_groups, GroupSortByMaterial() );
 
 	bool changeWinding = ccw;
 
 	if (scale != 1.0f)
 	{
-		for (Vec3Array::iterator it = mesh.m_positions.begin(), itEnd = mesh.m_positions.end(); it != itEnd; ++it)
+		for (bx::Vec3& pos : mesh.m_positions)
 		{
-			it->x *= scale;
-			it->y *= scale;
-			it->z *= scale;
+			pos.x *= scale;
+			pos.y *= scale;
+			pos.z *= scale;
 		}
 	}
 
@@ -1146,14 +1140,14 @@ int main(int _argc, const char* _argv[])
 
 		if (0 != bx::memCmp(identity, transform, sizeof(transform) ) )
 		{
-			for (Vec3Array::iterator it = mesh.m_positions.begin(), itEnd = mesh.m_positions.end(); it != itEnd; ++it)
+			for (bx::Vec3& pos : mesh.m_positions)
 			{
-				*it = bx::mul(*it, transform);
+				pos = bx::mul(pos, transform);
 			}
 
-			for (Vec3Array::iterator it = mesh.m_normals.begin(), itEnd = mesh.m_normals.end(); it != itEnd; ++it)
+			for (bx::Vec3& normal : mesh.m_normals)
 			{
-				*it = bx::mul(*it, transform);
+				normal = bx::mul(normal, transform);
 			}
 		}
 	}
@@ -1164,27 +1158,27 @@ int main(int _argc, const char* _argv[])
 	bool hasTexcoord = false;
 
 	{
-		for (TriangleArray::iterator it = mesh.m_triangles.begin(), itEnd = mesh.m_triangles.end(); it != itEnd && !hasTexcoord; ++it)
+		for (uint32_t tri = 0, num = mesh.m_triangles.getCount(); tri < num && !hasTexcoord; ++tri)
 		{
 			for (uint32_t i = 0; i < 3; ++i)
 			{
-				hasTexcoord |= -1 != it->m_index[i].m_texcoord;
+				hasTexcoord |= -1 != mesh.m_triangles[tri].m_index[i].m_texcoord;
 			}
 		}
 
-		for (TriangleArray::iterator it = mesh.m_triangles.begin(), itEnd = mesh.m_triangles.end(); it != itEnd && !hasNormal; ++it)
+		for (uint32_t tri = 0, num = mesh.m_triangles.getCount(); tri < num && !hasNormal; ++tri)
 		{
 			for (uint32_t i = 0; i < 3; ++i)
 			{
-				hasNormal |= -1 != it->m_index[i].m_normal;
+				hasNormal |= -1 != mesh.m_triangles[tri].m_index[i].m_normal;
 			}
 		}
 
 		if (changeWinding)
 		{
-			for (TriangleArray::iterator it = mesh.m_triangles.begin(), itEnd = mesh.m_triangles.end(); it != itEnd; ++it)
+			for (TriIndices& triangle : mesh.m_triangles)
 			{
-				bx::swap(it->m_index[1], it->m_index[2]);
+				bx::swap(triangle.m_index[1], triangle.m_index[2]);
 			}
 		}
 	}
@@ -1246,8 +1240,8 @@ int main(int _argc, const char* _argv[])
 	layout.end();
 
 	uint32_t stride = layout.getStride();
-	uint8_t* vertexData = new uint8_t[mesh.m_triangles.size() * 3 * stride];
-	uint16_t* indexData = new uint16_t[mesh.m_triangles.size() * 3];
+	uint8_t* vertexData = new uint8_t[size_t(mesh.m_triangles.getCount() ) * 3 * stride];
+	uint16_t* indexData = new uint16_t[size_t(mesh.m_triangles.getCount() ) * 3];
 	int32_t numVertices = 0;
 	int32_t numIndices = 0;
 
@@ -1263,7 +1257,7 @@ int main(int _argc, const char* _argv[])
 	uint32_t* table = new uint32_t[tableSize];
 	bx::memSet(table, 0xff, tableSize * sizeof(uint32_t) );
 
-	stl::string material = mesh.m_groups.empty() ? "" : mesh.m_groups.begin()->m_material;
+	bx::String material = mesh.m_groups.isEmpty() ? bx::String() : mesh.m_groups[0].m_material;
 
 	PrimitiveArray primitives;
 
@@ -1284,18 +1278,20 @@ int main(int _argc, const char* _argv[])
 	Group sentinelGroup;
 	sentinelGroup.m_startTriangle = 0;
 	sentinelGroup.m_numTriangles = UINT32_MAX;
-	mesh.m_groups.push_back(sentinelGroup);
+	mesh.m_groups.add(sentinelGroup);
 
 	bx::Error err;
 
 	uint32_t ii = 0;
-	for (GroupArray::const_iterator groupIt = mesh.m_groups.begin(); groupIt != mesh.m_groups.end(); ++groupIt, ++ii)
+	for (uint32_t numGroups = mesh.m_groups.getCount(); ii < numGroups; ++ii)
 	{
-		const bool sentinel = groupIt->m_startTriangle == 0 && groupIt->m_numTriangles == UINT32_MAX;
+		const Group& group = mesh.m_groups[ii];
 
-		for (uint32_t tri = groupIt->m_startTriangle, end = tri + groupIt->m_numTriangles; tri < end; ++tri)
+		const bool sentinel = group.m_startTriangle == 0 && group.m_numTriangles == UINT32_MAX;
+
+		for (uint32_t tri = group.m_startTriangle, end = tri + group.m_numTriangles; tri < end; ++tri)
 		{
-			if (0 != bx::strCmp(material.c_str(), groupIt->m_material.c_str() )
+			if (0 != bx::strCmp(material.getCPtr(), group.m_material.getCPtr() )
 			||  sentinel
 			||  65533 <= numVertices)
 			{
@@ -1304,7 +1300,7 @@ int main(int _argc, const char* _argv[])
 
 				if (0 < prim.m_numVertices)
 				{
-					primitives.push_back(prim);
+					primitives.add(prim);
 				}
 
 				if (hasTangent)
@@ -1314,9 +1310,8 @@ int main(int _argc, const char* _argv[])
 
 				triReorderElapsed -= bx::getHPCounter();
 
-				for (PrimitiveArray::const_iterator primIt = primitives.begin(); primIt != primitives.end(); ++primIt)
+				for (const Primitive& prim1 : primitives)
 				{
-					const Primitive& prim1 = *primIt;
 					optimizeVertexCache(indexData + prim1.m_startIndex, prim1.m_numIndices, numVertices);
 				}
 
@@ -1354,7 +1349,7 @@ int main(int _argc, const char* _argv[])
 				prim.m_startVertex = 0;
 				prim.m_startIndex  = 0;
 
-				material = groupIt->m_material;
+				material = group.m_material;
 
 				if (sentinel)
 				{
@@ -1449,21 +1444,21 @@ int main(int _argc, const char* _argv[])
 		if (0 < prim.m_numVertices)
 		{
 			prim.m_numIndices = numIndices - prim.m_startIndex;
-			prim.m_name = groupIt->m_name;
-			primitives.push_back(prim);
+			prim.m_name = group.m_name;
+			primitives.add(prim);
 			prim.m_startVertex = numVertices;
 			prim.m_startIndex  = numIndices;
 		}
 
 		BX_TRACE("%3d: s %5d, n %5d, %s\n"
 			, ii
-			, groupIt->m_startTriangle
-			, groupIt->m_numTriangles
-			, groupIt->m_material.c_str()
+			, group.m_startTriangle
+			, group.m_numTriangles
+			, group.m_material.getCPtr()
 			);
 	}
 
-	BX_ASSERT(0 == primitives.size(), "Not all primitives are written");
+	BX_ASSERT(0 == primitives.getCount(), "Not all primitives are written");
 
 	bx::printf("size: %d\n", uint32_t(bx::seek(&writer) ) );
 	bx::close(&writer);
@@ -1478,7 +1473,7 @@ int main(int _argc, const char* _argv[])
 		, double(parseElapsed)/bx::getHPFrequency()
 		, double(triReorderElapsed)/bx::getHPFrequency()
 		, double(convertElapsed)/bx::getHPFrequency()
-		, uint32_t(mesh.m_groups.size()-1)
+		, mesh.m_groups.getCount()-1
 		, writtenPrimitives
 		, writtenVertices
 		, writtenIndices
