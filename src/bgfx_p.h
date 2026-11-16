@@ -3860,7 +3860,7 @@ namespace bgfx
 #endif // BGFX_CONFIG_DYNAMIC_FRAME_STORAGE
 
 		bool m_touched[kNumBlocks];
-		bx::HandleAlloc2T<kNumBlocks*kBlock> m_alloc;
+		bx::HandleAllocT<kNumBlocks*kBlock> m_alloc;
 	};
 
 	struct UniformCacheKey
@@ -5323,7 +5323,7 @@ namespace bgfx
 		}
 
 		template <uint16_t MaxHandlesT>
-		void shutdown(bx::HandleAlloc2T<MaxHandlesT>& _handleAlloc)
+		void shutdown(bx::HandleAllocT<MaxHandlesT>& _handleAlloc)
 		{
 			for (uint16_t idx = _handleAlloc.findFirst(); bx::kInvalidHandle != idx; idx = _handleAlloc.findNext(idx) )
 			{
@@ -9123,20 +9123,20 @@ namespace bgfx
 		OcclusionQueryHandle m_newOcclusionQueryHandle[BGFX_CONFIG_MAX_OCCLUSION_QUERIES];
 
 		RangeAllocator m_dynIndexBufferAllocator;
-		bx::HandleAlloc2T<BGFX_CONFIG_MAX_DYNAMIC_INDEX_BUFFERS> m_dynamicIndexBufferHandle;
+		bx::HandleAllocT<BGFX_CONFIG_MAX_DYNAMIC_INDEX_BUFFERS> m_dynamicIndexBufferHandle;
 		RangeAllocator m_dynVertexBufferAllocator;
-		bx::HandleAlloc2T<BGFX_CONFIG_MAX_DYNAMIC_VERTEX_BUFFERS> m_dynamicVertexBufferHandle;
+		bx::HandleAllocT<BGFX_CONFIG_MAX_DYNAMIC_VERTEX_BUFFERS> m_dynamicVertexBufferHandle;
 
-		bx::HandleAlloc2T<BGFX_CONFIG_MAX_INDEX_BUFFERS> m_indexBufferHandle;
-		bx::HandleAlloc2T<BGFX_CONFIG_MAX_VERTEX_LAYOUTS > m_layoutHandle;
+		bx::HandleAllocT<BGFX_CONFIG_MAX_INDEX_BUFFERS> m_indexBufferHandle;
+		bx::HandleAllocT<BGFX_CONFIG_MAX_VERTEX_LAYOUTS > m_layoutHandle;
 
-		bx::HandleAlloc2T<BGFX_CONFIG_MAX_VERTEX_BUFFERS> m_vertexBufferHandle;
-		bx::HandleAlloc2T<BGFX_CONFIG_MAX_SHADERS> m_shaderHandle;
-		bx::HandleAlloc2T<BGFX_CONFIG_MAX_PROGRAMS> m_programHandle;
-		bx::HandleAlloc2T<BGFX_CONFIG_MAX_TEXTURES> m_textureHandle;
-		bx::HandleAlloc2T<BGFX_CONFIG_MAX_FRAME_BUFFERS> m_frameBufferHandle;
-		bx::HandleAlloc2T<BGFX_CONFIG_MAX_UNIFORMS> m_uniformHandle;
-		bx::HandleAlloc2T<BGFX_CONFIG_MAX_OCCLUSION_QUERIES> m_occlusionQueryHandle;
+		bx::HandleAllocT<BGFX_CONFIG_MAX_VERTEX_BUFFERS> m_vertexBufferHandle;
+		bx::HandleAllocT<BGFX_CONFIG_MAX_SHADERS> m_shaderHandle;
+		bx::HandleAllocT<BGFX_CONFIG_MAX_PROGRAMS> m_programHandle;
+		bx::HandleAllocT<BGFX_CONFIG_MAX_TEXTURES> m_textureHandle;
+		bx::HandleAllocT<BGFX_CONFIG_MAX_FRAME_BUFFERS> m_frameBufferHandle;
+		bx::HandleAllocT<BGFX_CONFIG_MAX_UNIFORMS> m_uniformHandle;
+		bx::HandleAllocT<BGFX_CONFIG_MAX_OCCLUSION_QUERIES> m_occlusionQueryHandle;
 
 		typedef bx::HandleHashMapT<BGFX_CONFIG_MAX_UNIFORMS*2> UniformHashMap;
 		UniformHashMap m_uniformHashMap;

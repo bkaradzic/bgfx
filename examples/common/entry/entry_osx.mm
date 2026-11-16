@@ -556,7 +556,7 @@ namespace entry
 		EventQueue m_eventQueue;
 		bx::Mutex m_lock;
 
-		bx::HandleAlloc2T<ENTRY_CONFIG_MAX_WINDOWS> m_windowAlloc;
+		bx::HandleAllocT<ENTRY_CONFIG_MAX_WINDOWS> m_windowAlloc;
 		NSWindow* m_window[ENTRY_CONFIG_MAX_WINDOWS];
 		NSRect m_windowFrame;
 

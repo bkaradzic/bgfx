@@ -634,7 +634,7 @@ namespace entry
 		bx::Mutex m_lock;
 
 		GLFWwindow* m_window[ENTRY_CONFIG_MAX_WINDOWS];
-		bx::HandleAlloc2T<ENTRY_CONFIG_MAX_WINDOWS> m_windowAlloc;
+		bx::HandleAllocT<ENTRY_CONFIG_MAX_WINDOWS> m_windowAlloc;
 
 		GamepadGLFW m_gamepad[ENTRY_CONFIG_MAX_GAMEPADS];
 
