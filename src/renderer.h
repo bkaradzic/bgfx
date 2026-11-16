@@ -637,9 +637,9 @@ namespace bgfx
 
 		void invalidateWithParent(uint16_t _parent)
 		{
-			for (uint16_t ii = 0; ii < m_alloc.getNumHandles();)
+			for (uint16_t handle = m_alloc.getFront(); bx::kInvalidHandle != handle;)
 			{
-				uint16_t handle = m_alloc.getHandleAt(ii);
+				const uint16_t next = m_alloc.getNext(handle);
 				Data& data = m_data[handle];
 
 				if (data.m_parent == _parent)
@@ -648,18 +648,15 @@ namespace bgfx
 					m_hashMap.tryRemove(data.m_hash);
 					release(data.m_value);
 				}
-				else
-				{
-					++ii;
-				}
+
+				handle = next;
 			}
 		}
 
 		void invalidate()
 		{
-			for (uint16_t ii = 0, num = m_alloc.getNumHandles(); ii < num; ++ii)
+			for (uint16_t handle = m_alloc.getFront(); bx::kInvalidHandle != handle; handle = m_alloc.getNext(handle) )
 			{
-				uint16_t handle = m_alloc.getHandleAt(ii);
 				Data& data = m_data[handle];
 				release(data.m_value);
 			}
