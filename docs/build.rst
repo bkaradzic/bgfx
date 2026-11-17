@@ -241,7 +241,7 @@ Libraries are in ``.build/ios-arm64/bin``. To use them in your own Xcode project
 3. Add ``bgfx/include``, ``bimg/include`` and ``bx/include`` to *Header Search Paths*.
 4. Pass a ``CAMetalLayer``, or an ``MTKView``, as ``bgfx::PlatformData::nwh``.
 
-Or build ``src/amalgamated.mm`` directly in your project instead of linking the libraries
+Or build ``src/amalgamated.cpp`` directly in your project instead of linking the libraries
 (see `Amalgamated Build <#amalgamated-build>`_).
 
 For the Xcode IDE:
@@ -279,9 +279,7 @@ Amalgamated Build
 For ease of integration with other build systems, the bgfx library can be built
 with a single .cpp file. It's only necessary to build
 `src/amalgamated.cpp <https://github.com/bkaradzic/bgfx/blob/master/src/amalgamated.cpp>`__
-(for macOS/iOS/iPadOS/tvOS use
-`src/amalgamated.mm <https://github.com/bkaradzic/bgfx/blob/master/src/amalgamated.mm>`__
-instead) inside a different build system.
+inside a different build system.
 
 Tools
 -----
