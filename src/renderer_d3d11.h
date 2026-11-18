@@ -426,7 +426,7 @@ namespace bgfx { namespace d3d11
 			, m_needToRecreateSwapChain(false)
 			, m_needsQuadClear(false)
 			, m_needsQuadClearZero(false)
-			, m_intColor(false)
+			, m_intColorMask(0)
 		{
 			bx::memSet(&m_desc, 0, sizeof(m_desc) );
 			bx::memSet(&m_descPending, 0, sizeof(m_descPending) );
@@ -476,7 +476,7 @@ namespace bgfx { namespace d3d11
 		bool m_needToRecreateSwapChain;
 		bool m_needsQuadClear;
 		bool m_needsQuadClearZero;
-		bool m_intColor;
+		uint8_t m_intColorMask;
 	};
 
 	struct TimerQueryD3D11

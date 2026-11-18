@@ -4473,6 +4473,12 @@ namespace bgfx { namespace d3d12
 					for (uint8_t ii = 0, num = frameBuffer.m_num; ii < num; ++ii)
 					{
 						desc.RTVFormats[ii] = frameBuffer.m_rtvFormat[ii];
+
+						if (isIntegerFormat(TextureFormat::Enum(m_textures[frameBuffer.m_texture[ii].idx].m_textureFormat) ) )
+						{
+							desc.BlendState.IndependentBlendEnable       = true;
+							desc.BlendState.RenderTarget[ii].BlendEnable = false;
+						}
 					}
 
 					if (isValid(frameBuffer.m_depth) )

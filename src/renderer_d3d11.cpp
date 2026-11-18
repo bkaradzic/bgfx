@@ -2984,6 +2984,28 @@ namespace bgfx { namespace d3d11
 		{
 			_state &= BGFX_D3D11_BLEND_STATE_MASK;
 
+			uint8_t intColorMask = isValid(m_fbh)
+				? m_frameBuffers[m_fbh.idx].m_intColorMask
+				: 0
+				;
+
+			if (0 != intColorMask)
+			{
+				uint8_t blendMask = 0 != (BGFX_STATE_BLEND_MASK & _state) ? UINT8_MAX : 0;
+
+				if (0 != (BGFX_STATE_BLEND_INDEPENDENT & _state) )
+				{
+					blendMask &= 1;
+
+					for (uint32_t ii = 1, rgba = _rgba; ii < D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT; ++ii, rgba >>= 11)
+					{
+						blendMask |= 0 != (rgba & 0x7ff) ? uint8_t(1<<ii) : 0;
+					}
+				}
+
+				intColorMask &= blendMask;
+			}
+
 			bx::HashMurmur2A murmur;
 			murmur.begin();
 			murmur.add(_state);
@@ -2992,6 +3014,7 @@ namespace bgfx { namespace d3d11
 				: -1
 				);
 			murmur.add(_mrtMask);
+			murmur.add(intColorMask);
 			const uint32_t hash = murmur.end();
 
 			ID3D11BlendState* bs = m_blendStateCache.find(hash);
@@ -3070,6 +3093,19 @@ namespace bgfx { namespace d3d11
 						if (0 == (_mrtMask & (1<<ii) ) )
 						{
 							desc.RenderTarget[ii].RenderTargetWriteMask = 0;
+						}
+					}
+				}
+
+				if (0 != intColorMask)
+				{
+					desc.IndependentBlendEnable = true;
+
+					for (uint32_t ii = 0; ii < BX_COUNTOF(desc.RenderTarget); ++ii)
+					{
+						if (0 != (intColorMask & (1<<ii) ) )
+						{
+							desc.RenderTarget[ii].BlendEnable = false;
 						}
 					}
 				}
@@ -3998,7 +4034,7 @@ namespace bgfx { namespace d3d11
 
 			const bool intColor = true
 				&& isValid(m_fbh)
-				&& m_frameBuffers[m_fbh.idx].m_intColor
+				&& 0 != m_frameBuffers[m_fbh.idx].m_intColorMask
 				&& 0 != (_clear.m_flags & BGFX_CLEAR_COLOR)
 				&& !isZeroColorClear(_clear, _palette)
 				;
@@ -6328,7 +6364,7 @@ namespace bgfx { namespace d3d11
 		m_width  = 0;
 		m_height = 0;
 		m_needsQuadClear = false;
-		m_intColor       = false;
+		m_intColorMask   = 0;
 
 		if (0 < m_numTh)
 		{
@@ -6449,12 +6485,7 @@ namespace bgfx { namespace d3d11
 							|| 1 < texture.m_numLayers
 							;
 
-						{
-							const bx::EncodingType::Enum encoding = bx::EncodingType::Enum(bimg::getBlockInfo(bimg::TextureFormat::Enum(texture.m_textureFormat) ).encoding);
-							m_intColor |= bx::EncodingType::Int  == encoding
-								||        bx::EncodingType::Uint == encoding
-								;
-						}
+						m_intColorMask |= isIntegerFormat(TextureFormat::Enum(texture.m_textureFormat) ) ? uint8_t(1<<m_num) : 0;
 
 						D3D11_RENDER_TARGET_VIEW_DESC desc;
 						desc.Format = texture.getSrvFormat(srgbSelect(at.flags, BGFX_ATTACHMENT_SRGB) );
