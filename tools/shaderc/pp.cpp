@@ -691,6 +691,7 @@ namespace shaderc
 			uint32_t                    next;
 			bool                        isFunction;
 			bool                        isVariadic;
+			bx::StringView              vaName;
 		};
 
 		struct File
@@ -1295,7 +1296,7 @@ namespace shaderc
 			}
 
 			if (_macro.isVariadic
-			&&  isEqual(_token.lexeme(), "__VA_ARGS__") )
+			&&  isEqual(_token.lexeme(), _macro.vaName) )
 			{
 				return true;
 			}
@@ -1311,7 +1312,7 @@ namespace shaderc
 			)
 		{
 			if (_macro.isVariadic
-			&&  isEqual(_name, "__VA_ARGS__") )
+			&&  isEqual(_name, _macro.vaName) )
 			{
 				const uint32_t first = _macro.params.getCount();
 
@@ -1525,7 +1526,7 @@ namespace shaderc
 			&&  hasVaOpt(body, num) )
 			{
 				bx::ArrayT<Token> va;
-				selectActual(_macro, _actuals, "__VA_ARGS__", va);
+				selectActual(_macro, _actuals, _macro.vaName, va);
 
 				expandVaOpt(body, num, !va.isEmpty(), vaOptBody);
 
@@ -2590,6 +2591,7 @@ namespace shaderc
 				.next       = UINT32_MAX,
 				.isFunction = false,
 				.isVariadic = false,
+				.vaName     = "__VA_ARGS__",
 			};
 
 			const uint32_t num = _args.getCount();
@@ -2622,6 +2624,15 @@ namespace shaderc
 
 					if (isPunct(token, "...") )
 					{
+						if (!expectParam
+						&&  0 < ii
+						&&  Kind::Identifier == _args[ii - 1].kind
+						&&  !macro.params.isEmpty() )
+						{
+							macro.vaName = macro.params[macro.params.getCount() - 1];
+							macro.params.remove(bx::kLast);
+						}
+
 						macro.isVariadic = true;
 						expectParam = false;
 						continue;
@@ -2678,7 +2689,7 @@ namespace shaderc
 						if (jj + 1 >= bodyNum
 						||  Kind::Identifier != body[jj + 1].kind
 						||  (-1 == findParam(macro, body[jj + 1].lexeme())
-						&&   !(macro.isVariadic && isEqual(body[jj + 1].lexeme(), "__VA_ARGS__") ) ) )
+						&&   !(macro.isVariadic && isEqual(body[jj + 1].lexeme(), macro.vaName) ) ) )
 						{
 							error("'#' must be followed by a macro parameter");
 							return;
