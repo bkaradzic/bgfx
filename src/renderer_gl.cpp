@@ -8158,7 +8158,11 @@ namespace bgfx { namespace gl
 		{
 			const bx::StringView fragData = bx::strFind(code, "bgfx_FragData[");
 
-			if (!fragData.isEmpty() )
+			if (0 != (kFragDataValid & hashOut) )
+			{
+				m_numFragOutputs = bx::findLastSet(getFragDataMask(hashOut) );
+			}
+			else if (!fragData.isEmpty() )
 			{
 				uint32_t num = 0;
 				bx::fromString(&num, bx::StringView(fragData.getTerm(), code.getTerm() ) );

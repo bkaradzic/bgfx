@@ -646,6 +646,12 @@ public static partial class bgfx
 		/// the next one.
 		/// </summary>
 		Serialize              = 0x00000008,
+	
+		/// <summary>
+		/// Check that the type of every fragment shader output a draw call writes matches
+		/// the frame buffer attachment it's written to. Requires `Init::debug`.
+		/// </summary>
+		DrawValidation         = 0x00000010,
 	}
 	
 	[Flags]

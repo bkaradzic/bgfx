@@ -177,6 +177,36 @@ The semantic must be ``TEXCOORDN`` with a decreasing index starting from ``TEXCO
   vec4 i_data3 : TEXCOORD4;
   vec4 i_data4 : TEXCOORD3;
 
+Fragment Shader Outputs
+~~~~~~~~~~~~~~~~~~~~~~~
+
+``gl_FragData[N]`` is a ``vec4`` output, unless ``varying.def.sc`` gives it another type. A fragment shader
+that writes an attachment of another type, for example an integer one, declares it in ``varying.def.sc``:
+
+::
+
+  uvec4 gl_FragData[1];
+
+and writes that type to it:
+
+::
+
+  $input v_texcoord0
+
+  void main()
+  {
+      gl_FragData[0] = texture2D(s_tex, v_texcoord0);
+      gl_FragData[1] = uvec4(u_id);
+  }
+
+``gl_FragColor`` is ``gl_FragData[0]``, and has its type.
+
+The declaration applies to every fragment shader that is compiled with that ``varying.def.sc``.
+
+The type of an output has to match the frame buffer attachment it is written to. A debug build of bgfx
+asserts when it doesn't, if ``Init::debug`` is set, and ``BGFX_DIAGNOSTIC_DRAW_VALIDATION`` is set in
+``Init::diagnostics``.
+
 Options
 ~~~~~~~
 

@@ -5266,7 +5266,10 @@ WGPU_IMPORT
 		bx::read(&reader, m_size, &err);
 		bx::read(&reader, m_blockSize, &err);
 
-		m_outputMask = getFragmentOutputMask(bx::StringView( (const char*)m_code->data, m_code->size) );
+		m_outputMask = fragment && 0 != (kFragDataValid & hashOut)
+			? getFragDataMask(hashOut)
+			: getFragmentOutputMask(bx::StringView( (const char*)m_code->data, m_code->size) )
+			;
 
 		if (bx::strFind(bx::StringView( (const char*)m_code->data, m_code->size), "rgba8unorm").isEmpty() )
 		{

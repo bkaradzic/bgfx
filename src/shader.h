@@ -76,6 +76,45 @@ namespace bgfx
 	TextureDimension::Enum idToTextureDimension(uint8_t _id);
 	uint8_t textureDimensionToId(TextureDimension::Enum _dim);
 
+	struct FragDataType
+	{
+		enum Enum
+		{
+			None,
+			Float,
+			Int,
+			Uint,
+
+			Count
+		};
+	};
+
+	static constexpr uint32_t kFragDataValid   = UINT32_C(0x80000000);
+	static constexpr uint32_t kFragDataMaxNum  = 8;
+	static constexpr uint32_t kFragDataNumBits = 2;
+
+	inline uint32_t encodeFragData(uint32_t _idx, FragDataType::Enum _type)
+	{
+		return uint32_t(_type) << (_idx*kFragDataNumBits);
+	}
+
+	inline FragDataType::Enum getFragDataType(uint32_t _fragData, uint32_t _idx)
+	{
+		return FragDataType::Enum( (_fragData >> (_idx*kFragDataNumBits) ) & ( (1<<kFragDataNumBits)-1) );
+	}
+
+	inline uint8_t getFragDataMask(uint32_t _fragData)
+	{
+		uint8_t mask = 0;
+
+		for (uint32_t ii = 0; ii < kFragDataMaxNum; ++ii)
+		{
+			mask |= FragDataType::None != getFragDataType(_fragData, ii) ? uint8_t(1<<ii) : 0;
+		}
+
+		return mask;
+	}
+
 	///
 	void disassemble(bx::WriterI* _writer, bx::ReaderSeekerI* _reader, bx::Error* _err = NULL);
 

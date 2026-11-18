@@ -397,6 +397,10 @@ pub const DiagnosticFlags_SyncValidation: DiagnosticFlags         = 0x00000004;
 /// the next one.
 pub const DiagnosticFlags_Serialize: DiagnosticFlags              = 0x00000008;
 
+/// Check that the type of every fragment shader output a draw call writes matches
+/// the frame buffer attachment it's written to. Requires `Init::debug`.
+pub const DiagnosticFlags_DrawValidation: DiagnosticFlags         = 0x00000010;
+
 pub const BufferFlags = u16;
 pub const BufferFlags_None: BufferFlags                   = 0x0000;
 

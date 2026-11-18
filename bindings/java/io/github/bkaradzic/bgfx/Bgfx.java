@@ -4224,6 +4224,12 @@ public final class Bgfx {
 		 * the next one.
 		 */
 		public static final int Serialize = 0x00000008;
+
+		/**
+		 * Check that the type of every fragment shader output a draw call writes matches
+		 * the frame buffer attachment it's written to. Requires {@code Init.debug}.
+		 */
+		public static final int DrawValidation = 0x00000010;
 	}
 
 	/**

@@ -7465,6 +7465,20 @@ namespace bgfx
 			sr.m_numSamplers = 0;
 			sr.m_hasNumWorkGroups = false;
 
+			if (isShaderType(magic, 'F')
+			&&  0 != (kFragDataValid & hashOut) )
+			{
+				const uint32_t numFragData = bx::findLastSet(getFragDataMask(hashOut) );
+				BX_UNUSED(numFragData);
+
+				BX_WARN(numFragData <= g_caps.limits.maxFBAttachments
+					, "Fragment shader %d writes gl_FragData[%d], but renderer supports %d color attachment(s)."
+					, handle.idx
+					, numFragData-1
+					, g_caps.limits.maxFBAttachments
+					);
+			}
+
 			UniformHandle* uniforms = (UniformHandle*)BX_STACK_ALLOC(count*sizeof(UniformHandle) );
 
 			for (uint32_t ii = 0; ii < count; ++ii)
@@ -8944,6 +8958,7 @@ namespace bgfx
 		void freeDynamicBuffers();
 		void freeAllHandles(Frame* _frame);
 		void frameNoRenderWait();
+		void checkFragData();
 		void swap();
 		void collectSubmitViewUsed();
 		void latencySimulationEnd();

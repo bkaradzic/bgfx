@@ -406,6 +406,10 @@ constdef DiagnosticFlags : inline uint
 	// Wait for the GPU to finish each submitted command buffer before recording
 	// the next one.
 	SERIALIZE              = 0x00000008,
+
+	// Check that the type of every fragment shader output a draw call writes matches
+	// the frame buffer attachment it's written to. Requires `Init::debug`.
+	DRAWVALIDATION         = 0x00000010,
 }
 
 constdef BufferFlags : inline ushort

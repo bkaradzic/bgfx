@@ -9,6 +9,7 @@
 #include <bgfx/embedded_shader.h>
 #include <bx/file.h>
 #include <bx/mutex.h>
+#include <bx/pixelformat.h>
 #include <bx/superluminal.h>
 
 #include "topology.h"
@@ -3234,8 +3235,120 @@ namespace bgfx
 		m_movedDynamicIndexBuffers.clear();
 	}
 
+	void Context::checkFragData()
+	{
+		static const char* s_fragDataType[] =
+		{
+			"none",
+			"float",
+			"int",
+			"uint",
+		};
+		static_assert(FragDataType::Count == BX_COUNTOF(s_fragDataType) );
+
+		const FrameArenaT<uint64_t, kDrawCallBlock>& submitKeys = m_submit->m_submitKeys;
+
+		uint32_t last = UINT32_MAX;
+
+		for (uint32_t ii = 0, num = m_submit->m_numRenderItems; ii < num; ++ii)
+		{
+			const uint64_t encodedKey = submitKeys[ii];
+
+			SortKey key;
+			if (key.decode(encodedKey, m_viewRemap) )
+			{
+				continue;
+			}
+
+			const ViewId   view = SortKey::decodeView(encodedKey);
+			const uint32_t curr = uint32_t(view)<<16 | key.m_program.idx;
+
+			if (curr == last
+			||  !m_programHandle.isValid(key.m_program.idx) )
+			{
+				continue;
+			}
+
+			last = curr;
+
+			const ShaderHandle fsh = m_programRef[key.m_program.idx].m_fsh;
+			const uint32_t fragData = isValid(fsh)
+				? m_shaderRef[fsh.idx].m_hashOut
+				: 0
+				;
+
+			if (0 == (kFragDataValid & fragData) )
+			{
+				continue;
+			}
+
+			const FrameBufferHandle fbh = m_view.get(view).m_fbh;
+			const bool backBuffer = false
+				|| !isValid(fbh)
+				|| !m_frameBufferHandle.isValid(fbh.idx)
+				|| m_frameBufferRef[fbh.idx].m_window
+				;
+
+			uint32_t attachment = backBuffer ? encodeFragData(0, FragDataType::Float) : 0;
+
+			if (!backBuffer)
+			{
+				uint32_t color = 0;
+
+				for (const TextureHandle th : m_frameBufferRef[fbh.idx].un.m_th)
+				{
+					if (!isValid(th) )
+					{
+						break;
+					}
+
+					const TextureRef& tr = m_textureRef[th.idx];
+
+					if (tr.isDepth() )
+					{
+						continue;
+					}
+
+					const bx::EncodingType::Enum encoding = bx::EncodingType::Enum(bimg::getBlockInfo(bimg::TextureFormat::Enum(tr.m_format) ).encoding);
+
+					attachment |= encodeFragData(color++
+						, bx::EncodingType::Int  == encoding ? FragDataType::Int
+						: bx::EncodingType::Uint == encoding ? FragDataType::Uint
+						:                                      FragDataType::Float
+						);
+				}
+			}
+
+			for (uint32_t jj = 0; jj < kFragDataMaxNum; ++jj)
+			{
+				const FragDataType::Enum src = getFragDataType(fragData,   jj);
+				const FragDataType::Enum dst = getFragDataType(attachment, jj);
+				BX_UNUSED(src, dst);
+
+				BX_ASSERT(false
+					|| FragDataType::None == src
+					|| FragDataType::None == dst
+					|| src == dst
+					, "View %d, program %d: gl_FragData[%d] is %s, but frame buffer attachment is %s."
+					, view
+					, key.m_program.idx
+					, jj
+					, s_fragDataType[src]
+					, s_fragDataType[dst]
+					);
+			}
+		}
+	}
+
 	void Context::swap()
 	{
+		if (BX_ENABLED(BGFX_CONFIG_DEBUG)
+		&&  m_init.debug
+		&&  0 != (m_init.diagnostics & BGFX_DIAGNOSTIC_DRAW_VALIDATION) )
+		{
+			checkFragData();
+		}
+
 		resolveDynamicBuffers();
 		patchMovedDynamicBuffers();
 		freeDynamicBuffers();
