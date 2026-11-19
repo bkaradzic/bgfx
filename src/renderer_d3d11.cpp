@@ -3895,7 +3895,7 @@ namespace bgfx { namespace d3d11
 			}
 		}
 
-		static bool isZeroColorClear(const Clear& _clear, const float _palette[][4])
+		static bool isZeroColorClear(const Clear& _clear, const float _palette[][4], uint32_t _attachment)
 		{
 			if (0 == (BGFX_CLEAR_COLOR & _clear.m_flags) )
 			{
@@ -3904,7 +3904,7 @@ namespace bgfx { namespace d3d11
 
 			if (0 != (BGFX_CLEAR_COLOR_USE_PALETTE & _clear.m_flags) )
 			{
-				const uint8_t index = _clear.m_index[0];
+				const uint8_t index = _clear.m_index[_attachment];
 
 				return UINT8_MAX != index
 					&& 0.0f == _palette[index][0]
@@ -4032,21 +4032,51 @@ namespace bgfx { namespace d3d11
 
 			const Rect fbRect(0, 0, bx::narrowCast<uint16_t>(width), bx::narrowCast<uint16_t>(height) );
 
-			const bool intColor = true
-				&& isValid(m_fbh)
-				&& 0 != m_frameBuffers[m_fbh.idx].m_intColorMask
-				&& 0 != (_clear.m_flags & BGFX_CLEAR_COLOR)
-				&& !isZeroColorClear(_clear, _palette)
-				;
+			bool clearColor = 0 != (_clear.m_flags & BGFX_CLEAR_COLOR);
 
-			const bool needsQuadClear = true
-				&& isValid(m_fbh)
-				&& !intColor
-				&& (false
-					|| m_frameBuffers[m_fbh.idx].m_needsQuadClear
-					|| (m_frameBuffers[m_fbh.idx].m_needsQuadClearZero && isZeroColorClear(_clear, _palette) )
-					)
-				;
+			uint32_t numMrt = 1;
+			bool needsQuadClear = false;
+
+			if (isValid(m_fbh) )
+			{
+				const FrameBufferD3D11& fb = m_frameBuffers[m_fbh.idx];
+				numMrt = bx::max(1, fb.m_num);
+				needsQuadClear = fb.m_needsQuadClear;
+			}
+
+			uint8_t intMask  = 0;
+			uint8_t quadMask = uint8_t(~_clear.getColorSkipMask(numMrt) );
+
+			if (clearColor
+			&&  isValid(m_fbh) )
+			{
+				const FrameBufferD3D11& fb = m_frameBuffers[m_fbh.idx];
+
+				for (uint32_t ii = 0; ii < fb.m_num; ++ii)
+				{
+					const uint8_t bit = uint8_t(1<<ii);
+
+					if (NULL == fb.m_rtv[ii]
+					||  0 == (quadMask & bit) )
+					{
+						continue;
+					}
+
+					const bool zero = isZeroColorClear(_clear, _palette, ii);
+
+					if (!zero
+					&&  0 != (fb.m_intColorMask & bit)
+					&&  NULL != m_deviceCtx1)
+					{
+						intMask  |= bit;
+						quadMask &= ~bit;
+					}
+					else if (zero)
+					{
+						needsQuadClear |= fb.m_needsQuadClearZero;
+					}
+				}
+			}
 
 			if (_rect.isEqual(fbRect)
 			&& !needsQuadClear)
@@ -4057,38 +4087,34 @@ namespace bgfx { namespace d3d11
 			{
 				ID3D11DeviceContext* deviceCtx = m_deviceCtx;
 
-				bool clearColor = 0 != (_clear.m_flags & BGFX_CLEAR_COLOR);
-
-				if (clearColor
-				&&  intColor
-				&&  NULL != m_deviceCtx1)
+				if (0 != intMask)
 				{
 					const FrameBufferD3D11& fb = m_frameBuffers[m_fbh.idx];
 					const D3D11_RECT rect = { _rect.m_x, _rect.m_y, _rect.m_x + _rect.m_width, _rect.m_y + _rect.m_height };
-					const uint8_t skipMask = _clear.getColorSkipMask(fb.m_num);
 
 					for (uint32_t ii = 0; ii < fb.m_num; ++ii)
 					{
-						if (NULL == fb.m_rtv[ii]
-						||  0 != (skipMask & (1<<ii) ) )
+						if (0 == (intMask & (1<<ii) ) )
 						{
 							continue;
 						}
 
-						const TextureFormat::Enum format = TextureFormat::Enum(m_textures[fb.m_attachment[ii].handle.idx].m_textureFormat);
-
 						float rgba[4];
-						getClearColor(rgba, _clear, _palette, ii, isIntegerFormat(format) );
+						getClearColor(rgba, _clear, _palette, ii, true);
 
 						m_deviceCtx1->ClearView(fb.m_rtv[ii], rgba, &rect, 1);
 					}
+				}
 
-					if (0 == (_clear.m_flags & (BGFX_CLEAR_DEPTH|BGFX_CLEAR_STENCIL) ) )
-					{
-						return;
-					}
+				clearColor = true
+					&& clearColor
+					&& 0 != (quadMask & ( (1<<numMrt)-1) )
+					;
 
-					clearColor = false;
+				if (!clearColor
+				&&  0 == (_clear.m_flags & (BGFX_CLEAR_DEPTH|BGFX_CLEAR_STENCIL) ) )
+				{
+					return;
 				}
 
 				const uint64_t state = 0
@@ -4108,15 +4134,7 @@ namespace bgfx { namespace d3d11
 					: 0
 					;
 
-				uint32_t numMrt = 1;
-				FrameBufferHandle fbh = m_fbh;
-				if (isValid(fbh) )
-				{
-					const FrameBufferD3D11& fb = m_frameBuffers[fbh.idx];
-					numMrt = bx::max(1, fb.m_num);
-				}
-
-				setBlendState(state, 0, UINT32_MAX, uint8_t(~_clear.getColorSkipMask(numMrt) ) );
+				setBlendState(state, 0, UINT32_MAX, quadMask);
 				setDepthStencilState(state, stencil);
 				setRasterizerState(state);
 
@@ -6363,8 +6381,9 @@ namespace bgfx { namespace d3d11
 
 		m_width  = 0;
 		m_height = 0;
-		m_needsQuadClear = false;
-		m_intColorMask   = 0;
+		m_needsQuadClear     = false;
+		m_needsQuadClearZero = false;
+		m_intColorMask       = 0;
 
 		if (0 < m_numTh)
 		{

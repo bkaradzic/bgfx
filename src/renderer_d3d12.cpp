@@ -2314,6 +2314,11 @@ namespace bgfx { namespace d3d12
 			m_pipelineStateCache.invalidate();
 			psoMruReset();
 
+			for (uint32_t ii = 1, num = m_numWindows; ii < num; ++ii)
+			{
+				m_frameBuffers[m_windows[ii].idx].destroy();
+			}
+
 			m_indexBuffers.each([](BufferD3D12& _indexBuffer) { _indexBuffer.destroy(); });
 
 			m_vertexBuffers.each([](VertexBufferD3D12& _vertexBuffer) { _vertexBuffer.destroy(); });

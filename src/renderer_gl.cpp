@@ -3307,6 +3307,18 @@ namespace bgfx { namespace gl
 
 			invalidateCache();
 
+			m_frameBuffers.each([](FrameBufferGL& _frameBuffer) { _frameBuffer.destroy(); });
+
+			m_indexBuffers.each([](IndexBufferGL& _indexBuffer) { _indexBuffer.destroy(); });
+
+			m_vertexBuffers.each([](VertexBufferGL& _vertexBuffer) { _vertexBuffer.destroy(); });
+
+			m_shaders.each([](ShaderGL& _shader) { _shader.destroy(); });
+
+			m_program.each([](ProgramGL& _program) { _program.destroy(); });
+
+			m_textures.each([](TextureGL& _texture) { _texture.destroy(); });
+
 			if (m_timerQuerySupport)
 			{
 				m_gpuTimer.destroy();
@@ -6622,14 +6634,22 @@ namespace bgfx { namespace gl
 
 	void IndexBufferGL::destroy()
 	{
-		GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0) );
-		GL_CHECK(glDeleteBuffers(1, &m_id) );
+		if (0 != m_id)
+		{
+			GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0) );
+			GL_CHECK(glDeleteBuffers(1, &m_id) );
+			m_id = 0;
+		}
 	}
 
 	void VertexBufferGL::destroy()
 	{
-		GL_CHECK(glBindBuffer(m_target, 0) );
-		GL_CHECK(glDeleteBuffers(1, &m_id) );
+		if (0 != m_id)
+		{
+			GL_CHECK(glBindBuffer(m_target, 0) );
+			GL_CHECK(glDeleteBuffers(1, &m_id) );
+			m_id = 0;
+		}
 	}
 
 	bool TextureGL::init(GLenum _target, uint32_t _width, uint32_t _height, uint32_t _depth, uint8_t _numMips, uint64_t _flags, uint64_t _external)

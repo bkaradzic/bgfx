@@ -1401,6 +1401,13 @@ namespace bgfx { namespace gl
 
 	struct IndexBufferGL
 	{
+		IndexBufferGL()
+			: m_id(0)
+			, m_size(0)
+			, m_flags(0)
+		{
+		}
+
 		void create(uint32_t _size, void* _data, uint16_t _flags)
 		{
 			m_size  = _size;
@@ -1446,6 +1453,13 @@ namespace bgfx { namespace gl
 
 	struct VertexBufferGL
 	{
+		VertexBufferGL()
+			: m_id(0)
+			, m_target(GL_ARRAY_BUFFER)
+			, m_size(0)
+		{
+		}
+
 		void create(uint32_t _size, void* _data, VertexLayoutHandle _layoutHandle, uint16_t _flags)
 		{
 			m_size = _size;
