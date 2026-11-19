@@ -2870,6 +2870,14 @@ namespace bgfx
 #undef CHECK_HANDLE_LEAK
 #undef CHECK_HANDLE_LEAK_NAME
 		}
+
+		for (uint16_t idx = m_shaderHandle.findFirst(); bx::kInvalidHandle != idx; idx = m_shaderHandle.findNext(idx) )
+		{
+			ShaderRef& sr = m_shaderRef[idx];
+			bx::freePtr(sr.m_uniforms);
+			sr.m_uniforms = NULL;
+			sr.m_num = 0;
+		}
 	}
 
 	void Context::freeDynamicBuffers()
@@ -7239,19 +7247,21 @@ namespace bgfx
 
 		for (uint8_t ii = 0; ii < _num; ++ii)
 		{
-			Attachment& at = attachment[ii];
-			const TextureRef& ref = s_ctx->m_textureRef[_handles[ii].idx];
+			const TextureHandle handle = _handles[ii];
+			uint8_t flags = BGFX_ATTACHMENT_NONE;
 
-			at.init(
-				  _handles[ii]
-				, Access::Write
-				, 0
-				, 1
-				, 0
-				, !ref.hasMips() || ref.isDepth()
-					? BGFX_ATTACHMENT_NONE
-					: BGFX_ATTACHMENT_AUTO_GEN_MIPS
-				);
+			if (s_ctx->m_textureHandle.isValid(handle.idx) )
+			{
+				const TextureRef& ref = s_ctx->m_textureRef[handle.idx];
+
+				if (ref.hasMips()
+				&& !ref.isDepth() )
+				{
+					flags = BGFX_ATTACHMENT_AUTO_GEN_MIPS;
+				}
+			}
+
+			attachment[ii].init(handle, Access::Write, 0, 1, 0, flags);
 		}
 
 		return createFrameBuffer(_num, attachment, _destroyTextures);
