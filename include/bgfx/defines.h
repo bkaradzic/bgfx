@@ -15,7 +15,7 @@
 #ifndef BGFX_DEFINES_H_HEADER_GUARD
 #define BGFX_DEFINES_H_HEADER_GUARD
 
-#define BGFX_API_VERSION UINT32_C(169)
+#define BGFX_API_VERSION UINT32_C(170)
 
 /**
  * Color RGB/alpha/depth write. When it's not specified write will be disabled.
@@ -290,6 +290,10 @@
 /// Wait for the GPU to finish each submitted command buffer before recording
 /// the next one.
 #define BGFX_DIAGNOSTIC_SERIALIZE                 UINT32_C(0x00000008)
+
+/// Check that the type of every fragment shader output a draw call writes matches
+/// the frame buffer attachment it's written to. Requires `Init::debug`.
+#define BGFX_DIAGNOSTIC_DRAW_VALIDATION           UINT32_C(0x00000010)
 
 #define BGFX_BUFFER_NONE                          UINT16_C(0x0000)
 #define BGFX_BUFFER_COMPUTE_READ                  UINT16_C(0x0100) //!< Buffer will be read by shader.

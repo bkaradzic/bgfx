@@ -1014,7 +1014,7 @@ namespace bgfx
 		return hash;
 	}
 
-	void addFragData(Preprocessor& _preprocessor, char* _data, uint32_t _idx, bool _comma)
+	void addFragData(Preprocessor& _preprocessor, char* _data, uint32_t _idx, bool _comma, const char* _type)
 	{
 		char find[32];
 		bx::snprintf(find, sizeof(find), "gl_FragData[%d]", _idx);
@@ -1025,8 +1025,9 @@ namespace bgfx
 		strReplace(_data, find, replace);
 
 		_preprocessor.writef(
-			" \\\n\t%sout vec4 bgfx_FragData%d : SV_TARGET%d"
+			" \\\n\t%sout %s bgfx_FragData%d : SV_TARGET%d"
 			, _comma ? ", " : "  "
+			, _type
 			, _idx
 			, _idx
 			);
@@ -1147,6 +1148,37 @@ namespace bgfx
 		bx::StringView word = bx::strWord(bx::strLTrimSpace(_parse) );
 		_parse = bx::strLTrimSpace(bx::StringView(word.getTerm(), _parse.getTerm() ) );
 		return word;
+	}
+
+	int32_t fragDataIndex(const bx::StringView& _name)
+	{
+		bx::Scanner scanner(_name);
+
+		if (scanner.accept(bx::StringView("gl_FragData[") ).isEmpty() )
+		{
+			return -1;
+		}
+
+		const bx::StringView index = scanner.accept('0', '1', '2', '3', '4', '5', '6', '7');
+
+		const bool valid = true
+			&& !index.isEmpty()
+			&& !scanner.accept(']').isEmpty()
+			&& scanner.isDone()
+			;
+
+		return valid
+			? *index.getPtr() - '0'
+			: -1
+			;
+	}
+
+	FragDataType::Enum toFragDataType(const char* _type)
+	{
+		return 'u' == _type[0] ? FragDataType::Uint
+			:  'i' == _type[0] ? FragDataType::Int
+			:                    FragDataType::Float
+			;
 	}
 
 	bool compileShader(const char* _varying, const char* _comment, char* _shader, uint32_t _shaderLen, const Options& _options, bx::WriterI* _shaderWriter, bx::WriterI* _messageWriter)
@@ -1516,6 +1548,21 @@ namespace bgfx
 				}
 
 				bx::StringView name   = nextWord(parse);
+
+				bx::Scanner scanner(bx::StringView(parse.getPtr(), eol.getPtr() ) );
+
+				if (!scanner.accept('[').isEmpty() )
+				{
+					scanner.acceptUntil("]");
+
+					if (!scanner.accept(']').isEmpty() )
+					{
+						name.set(name.getPtr(), scanner.getCursor().getPtr() );
+						scanner.accept(bx::Scanner::Class::Space);
+						parse.set(scanner.getCursor().getPtr(), parse.getTerm() );
+					}
+				}
+
 				bx::StringView column = bx::strSubstr(parse, 0, 1);
 				bx::StringView semantics;
 				if (0 == bx::strCmp(column, ":", 1) )
@@ -1534,7 +1581,7 @@ namespace bgfx
 
 				if (!typen.isEmpty()
 				&&  !name.isEmpty()
-				&&  !semantics.isEmpty() )
+				&& (!semantics.isEmpty() || 0 <= fragDataIndex(name) ) )
 				{
 					Varying var;
 					if (!precision.isEmpty() )
@@ -1652,6 +1699,51 @@ namespace bgfx
 						  "\n"
 						, inout.getCPtr() );
 					break;
+				}
+			}
+		}
+
+		const char* fragDataType[8];
+		bool typedFragData = false;
+
+		for (const char*& type : fragDataType)
+		{
+			type = "vec4";
+		}
+
+		if ('f' == _options.shaderType)
+		{
+			outputHash = 0;
+
+			if (!raw)
+			{
+				const bool hasFragColor = !bx::findIdentifierMatch(input, "gl_FragColor").isEmpty();
+
+				outputHash = kFragDataValid;
+
+				for (uint32_t ii = 0; ii < BX_COUNTOF(fragDataType); ++ii)
+				{
+					char find[32];
+					bx::snprintf(find, sizeof(find), "gl_FragData[%d]", ii);
+
+					const bool hasFragData = false
+						|| !bx::strFind(input, find).isEmpty()
+						|| (0 == ii && hasFragColor)
+						;
+
+					if (!hasFragData)
+					{
+						continue;
+					}
+
+					const Varying* found = varyingMap.find(bx::String(find).getHandle() );
+					if (NULL != found)
+					{
+						fragDataType[ii] = found->m_type.getCPtr();
+						typedFragData = true;
+					}
+
+					outputHash |= encodeFragData(ii, toFragDataType(fragDataType[ii]) );
 				}
 			}
 		}
@@ -1950,17 +2042,54 @@ namespace bgfx
 						}
 					}
 
-					for (const bx::String& inout : shaderOutputs)
+					if (typedFragData)
 					{
-						const Varying* found = varyingMap.find(inout.getHandle() );
-						if (NULL != found)
+						const bool hasFragColor = !bx::findIdentifierMatch(input, "gl_FragColor").isEmpty();
+
+						for (uint32_t ii = 0; ii < BX_COUNTOF(fragDataType); ++ii)
 						{
-							const Varying& var = *found;
-							preprocessor.writef("%s varying %s %s;\n"
-								, var.m_interpolation.getCPtr()
-								, var.m_type.getCPtr()
-								, var.m_name.getCPtr()
-								);
+							char find[32];
+							bx::snprintf(find, sizeof(find), "gl_FragData[%d]", ii);
+
+							char replace[32];
+							bx::snprintf(replace, sizeof(replace), "bgfx_FragData%d", ii);
+
+							const bool hasFragData = false
+								|| !bx::strFind(input, find).isEmpty()
+								|| (0 == ii && hasFragColor)
+								;
+
+							strReplace(input, find, replace);
+
+							if (hasFragData)
+							{
+								preprocessor.writef("layout(location = %d) out %s bgfx_FragData%d;\n"
+									, ii
+									, fragDataType[ii]
+									, ii
+									);
+							}
+						}
+
+						if (hasFragColor)
+						{
+							preprocessor.writef("#define gl_FragColor bgfx_FragData0\n");
+						}
+					}
+					else
+					{
+						for (const bx::String& inout : shaderOutputs)
+						{
+							const Varying* found = varyingMap.find(inout.getHandle() );
+							if (NULL != found)
+							{
+								const Varying& var = *found;
+								preprocessor.writef("%s varying %s %s;\n"
+									, var.m_interpolation.getCPtr()
+									, var.m_type.getCPtr()
+									, var.m_name.getCPtr()
+									);
+							}
 						}
 					}
 				}
@@ -2074,7 +2203,7 @@ namespace bgfx
 							{
 								if (hasFragData[ii])
 								{
-									addFragData(preprocessor, input, ii, arg++ > 0);
+									addFragData(preprocessor, input, ii, arg++ > 0, fragDataType[ii]);
 								}
 							}
 							else
@@ -2324,7 +2453,7 @@ namespace bgfx
 						{
 							bx::write(_shaderWriter, BGFX_CHUNK_MAGIC_FSH, &err);
 							bx::write(_shaderWriter, inputHash, &err);
-							bx::write(_shaderWriter, uint32_t(0), &err);
+							bx::write(_shaderWriter, outputHash, &err);
 						}
 						else if ('v' == _options.shaderType)
 						{
@@ -2411,7 +2540,8 @@ namespace bgfx
 									);
 							}
 
-							if (!bx::findIdentifierMatch(input, "gl_FragColor").isEmpty() )
+							if (!typedFragData
+							&&  !bx::findIdentifierMatch(input, "gl_FragColor").isEmpty() )
 							{
 								code.addPrintf(
 									  "out vec4 bgfx_FragColor;\n"

@@ -549,6 +549,7 @@ class DiagnosticFlags(enum.IntFlag):
 	GpuValidation = 0x2
 	SyncValidation = 0x4
 	Serialize = 0x8
+	DrawValidation = 0x10
 
 class SwapChainMsaaFlags(enum.IntFlag):
 	X2 = 0x10

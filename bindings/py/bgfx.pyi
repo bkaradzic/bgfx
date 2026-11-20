@@ -1022,6 +1022,9 @@ class DiagnosticFlags(enum.IntFlag):
 	# Wait for the GPU to finish each submitted command buffer before recording
 	# the next one.
 	Serialize = 0x8
+	# Check that the type of every fragment shader output a draw call writes matches
+	# the frame buffer attachment it's written to. Requires `Init::debug`.
+	DrawValidation = 0x10
 
 class SwapChainMsaaFlags(enum.IntFlag):
 	# Enable 2x MSAA.

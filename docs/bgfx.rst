@@ -26,6 +26,7 @@ Initialization and Shutdown
 .. doxygendefine:: BGFX_DIAGNOSTIC_GPU_VALIDATION
 .. doxygendefine:: BGFX_DIAGNOSTIC_SYNC_VALIDATION
 .. doxygendefine:: BGFX_DIAGNOSTIC_SERIALIZE
+.. doxygendefine:: BGFX_DIAGNOSTIC_DRAW_VALIDATION
 
 .. doxygendefine:: BGFX_PCI_ID_NONE
 .. doxygendefine:: BGFX_PCI_ID_SOFTWARE_RASTERIZER

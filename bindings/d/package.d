@@ -9,7 +9,7 @@ import bindbc.common.types: c_int64, c_uint64, va_list;
 import bindbc.bgfx.config;
 static import bgfx.impl;
 
-enum uint apiVersion = 169;
+enum uint apiVersion = 170;
 
 alias ViewID = ushort;
 
@@ -314,6 +314,11 @@ enum Diagnostic: Diagnostic_{
 	the next one.
 	*/
 	serialize       = 0x0000_0008,
+	/**
+	Check that the type of every fragment shader output a draw call writes matches
+	the frame buffer attachment it's written to. Requires `Init::debug`.
+	*/
+	drawValidation  = 0x0000_0010,
 }
 
 alias Buffer_ = ushort;
