@@ -7020,25 +7020,10 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 										if (0 != (BGFX_CLEAR_COLOR & clr.m_flags)
 										&&  0 == (colorSkipMask & (1<<ii) ) )
 										{
-											if (0 != (BGFX_CLEAR_COLOR_USE_PALETTE & clr.m_flags) )
-											{
-												uint8_t index = (uint8_t)bx::min(BGFX_CONFIG_MAX_COLOR_PALETTE-1, clr.m_index[ii]);
-												const float* rgba = _render->m_colorPalette[index];
-												const float rr = rgba[0];
-												const float gg = rgba[1];
-												const float bb = rgba[2];
-												const float aa = rgba[3];
-												desc->setClearColor(MTL::ClearColor::Make(rr, gg, bb, aa) );
-											}
-											else
-											{
-												float rr = clr.m_index[0]*1.0f/255.0f;
-												float gg = clr.m_index[1]*1.0f/255.0f;
-												float bb = clr.m_index[2]*1.0f/255.0f;
-												float aa = clr.m_index[3]*1.0f/255.0f;
-												desc->setClearColor(MTL::ClearColor::Make(rr, gg, bb, aa) );
-											}
+											float rgba[4];
+											getClearColor(rgba, clr, _render->m_colorPalette, ii, 0 != (integerAttachmentMask & (1<<ii) ) );
 
+											desc->setClearColor(MTL::ClearColor::Make(rgba[0], rgba[1], rgba[2], rgba[3]) );
 											desc->setLoadAction(MTL::LoadActionClear);
 										}
 										else

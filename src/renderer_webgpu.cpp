@@ -8347,28 +8347,21 @@ WGPU_IMPORT
 							.clearValue    = {},
 						};
 
-						if (0 != (BGFX_CLEAR_COLOR_USE_PALETTE & clr.m_flags) )
+						const bool integer = true
+							&& !isSwapChain
+							&& isIntegerFormat(TextureFormat::Enum(m_textures[fb.m_texture[ii].idx].m_textureFormat) )
+							;
+
+						float rgba[4];
+						getClearColor(rgba, clr, _render->m_colorPalette, ii, integer);
+
+						colorAttachment[ii].clearValue =
 						{
-							uint8_t index = (uint8_t)bx::min(BGFX_CONFIG_MAX_COLOR_PALETTE-1, clr.m_index[ii]);
-							const float* rgba = _render->m_colorPalette[index];
-							colorAttachment[ii].clearValue =
-							{
-								.r = rgba[0],
-								.g = rgba[1],
-								.b = rgba[2],
-								.a = rgba[3],
-							};
-						}
-						else
-						{
-							colorAttachment[ii].clearValue =
-							{
-								.r = clr.m_index[0] * 1.0/255.0,
-								.g = clr.m_index[1] * 1.0/255.0,
-								.b = clr.m_index[2] * 1.0/255.0,
-								.a = clr.m_index[3] * 1.0/255.0,
-							};
-						}
+							.r = rgba[0],
+							.g = rgba[1],
+							.b = rgba[2],
+							.a = rgba[3],
+						};
 					}
 
 					const bool stencilRw = hasStencil(TextureFormat::Enum(fb.m_formatDepthStencil) ) && !fb.m_readOnlyStencil;

@@ -6338,7 +6338,10 @@ namespace bgfx { namespace d3d11
 		m_num   = 0;
 		m_nwh   = NULL;
 		m_numTh = 0;
-		m_needPresent = false;
+		m_needPresent        = false;
+		m_needsQuadClear     = false;
+		m_needsQuadClearZero = false;
+		m_intColorMask       = 0;
 
 		uint16_t denseIdx = m_denseIdx;
 		m_denseIdx = UINT16_MAX;
@@ -6623,33 +6626,17 @@ namespace bgfx { namespace d3d11
 
 		if (BGFX_CLEAR_COLOR & _clear.m_flags)
 		{
-			if (BGFX_CLEAR_COLOR_USE_PALETTE & _clear.m_flags)
+			const bool usePalette = 0 != (BGFX_CLEAR_COLOR_USE_PALETTE & _clear.m_flags);
+
+			for (uint32_t ii = 0, num = m_num; ii < num; ++ii)
 			{
-				for (uint32_t ii = 0, num = m_num; ii < num; ++ii)
+				if (NULL != m_rtv[ii]
+				&& (!usePalette || UINT8_MAX != _clear.m_index[ii]) )
 				{
-					uint8_t index = _clear.m_index[ii];
-					if (NULL != m_rtv[ii]
-					&&  UINT8_MAX != index)
-					{
-						deviceCtx->ClearRenderTargetView(m_rtv[ii], _palette[index]);
-					}
-				}
-			}
-			else
-			{
-				float frgba[4] =
-				{
-					_clear.m_index[0]*1.0f/255.0f,
-					_clear.m_index[1]*1.0f/255.0f,
-					_clear.m_index[2]*1.0f/255.0f,
-					_clear.m_index[3]*1.0f/255.0f,
-				};
-				for (uint32_t ii = 0, num = m_num; ii < num; ++ii)
-				{
-					if (NULL != m_rtv[ii])
-					{
-						deviceCtx->ClearRenderTargetView(m_rtv[ii], frgba);
-					}
+					float rgba[4];
+					getClearColor(rgba, _clear, _palette, ii, 0 != (m_intColorMask & (1<<ii) ) );
+
+					deviceCtx->ClearRenderTargetView(m_rtv[ii], rgba);
 				}
 			}
 		}

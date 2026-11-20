@@ -9493,41 +9493,30 @@ namespace bgfx { namespace d3d12
 		if (BGFX_CLEAR_COLOR & _clear.m_flags
 		&&  0 != m_num)
 		{
-			if (BGFX_CLEAR_COLOR_USE_PALETTE & _clear.m_flags)
-			{
-				for (uint32_t ii = 0, num = m_num; ii < num; ++ii)
-				{
-					uint8_t index = _clear.m_index[ii];
-					if (UINT8_MAX != index)
-					{
-						_commandList->ClearRenderTargetView(rtv
-								, _palette[index]
-								, _num
-								, _rect
-								);
-					}
+			const bool usePalette = 0 != (BGFX_CLEAR_COLOR_USE_PALETTE & _clear.m_flags);
 
-					rtv.ptr += rtvDescriptorSize;
-				}
-			}
-			else
+			for (uint32_t ii = 0, num = m_num; ii < num; ++ii)
 			{
-				float frgba[4] =
+				if (!usePalette
+				||  UINT8_MAX != _clear.m_index[ii])
 				{
-					_clear.m_index[0]*1.0f/255.0f,
-					_clear.m_index[1]*1.0f/255.0f,
-					_clear.m_index[2]*1.0f/255.0f,
-					_clear.m_index[3]*1.0f/255.0f,
-				};
-				for (uint32_t ii = 0, num = m_num; ii < num; ++ii)
-				{
+					const bool integer = true
+						&& !isSwapChain()
+						&& isValid(m_texture[ii])
+						&& isIntegerFormat(TextureFormat::Enum(s_renderD3D12->m_textures[m_texture[ii].idx].m_textureFormat) )
+						;
+
+					float rgba[4];
+					getClearColor(rgba, _clear, _palette, ii, integer);
+
 					_commandList->ClearRenderTargetView(rtv
-						, frgba
+						, rgba
 						, _num
 						, _rect
 						);
-					rtv.ptr += rtvDescriptorSize;
 				}
+
+				rtv.ptr += rtvDescriptorSize;
 			}
 		}
 
