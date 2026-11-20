@@ -1326,7 +1326,8 @@ namespace bgfx { namespace d3d11
 					);
 
 				m_timerQuerySupport   = true;
-				m_directAccessSupport = 0 != (g_caps.supported & BGFX_CAPS_TEXTURE_DIRECT_ACCESS);
+				m_directAccessSupport = 0 != (g_caps.supported & _init.capabilities
+					& BGFX_CAPS_TEXTURE_DIRECT_ACCESS);
 
 				g_caps.limits.maxComputeBindings = bx::min(BGFX_MAX_COMPUTE_BINDINGS
 					, D3D_FEATURE_LEVEL_11_1 <= m_featureLevel
