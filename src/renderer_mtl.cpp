@@ -6171,6 +6171,30 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 		sampling.m_numSamples += 2;
 	}
 
+	void TimerQueryMtl::attach(MTL::ComputePassDescriptor* _computePassDescriptor)
+	{
+		if (!isViewTimingSupported() )
+		{
+			return;
+		}
+
+		Sampling& sampling = m_sampling[m_samplingIdx];
+
+		if (UINT32_MAX == sampling.m_activeQuery
+		||  sampling.m_numSamples + 2 > kMaxTimestampSamples)
+		{
+			return;
+		}
+
+		MTL::ComputePassSampleBufferAttachmentDescriptor* desc = _computePassDescriptor->sampleBufferAttachments()->object(0);
+		desc->setSampleBuffer(sampling.m_sampleBuffer);
+		desc->setStartOfEncoderSampleIndex(sampling.m_numSamples);
+		desc->setEndOfEncoderSampleIndex(sampling.m_numSamples + 1);
+
+		sampling.m_query[sampling.m_activeQuery].m_num += 2;
+		sampling.m_numSamples += 2;
+	}
+
 	void TimerQueryMtl::resolve(uint32_t _samplingIdx)
 	{
 		Sampling& sampling = m_sampling[_samplingIdx];
@@ -6226,12 +6250,18 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 				end   = bx::max(end,   value);
 			}
 
+			Result& result = m_result[query.m_resultIdx];
+			result.m_frameNum = query.m_frameNum;
+
 			if (UINT64_MAX != begin)
 			{
-				Result& result = m_result[query.m_resultIdx];
-				result.m_begin    = sampling.m_cpuTimestamp + uint64_t(double(begin - sampling.m_gpuTimestamp)*scale);
-				result.m_end      = sampling.m_cpuTimestamp + uint64_t(double(end   - sampling.m_gpuTimestamp)*scale);
-				result.m_frameNum = query.m_frameNum;
+				result.m_begin = sampling.m_cpuTimestamp + uint64_t(double(begin - sampling.m_gpuTimestamp)*scale);
+				result.m_end   = sampling.m_cpuTimestamp + uint64_t(double(end   - sampling.m_gpuTimestamp)*scale);
+			}
+			else
+			{
+				result.m_begin = 0;
+				result.m_end   = 0;
 			}
 		}
 	}
@@ -7172,7 +7202,8 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 				if (isCompute)
 				{
-					if (!wasCompute)
+					if (!wasCompute
+					|| (profileViews && viewChanged) )
 					{
 						wasCompute = true;
 
@@ -7183,7 +7214,17 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 						BGFX_MTL_PROFILER_END();
 						BGFX_MTL_PROFILER_BEGIN(view, kColorCompute);
 
-						m_computeCommandEncoder = m_commandBuffer->computeCommandEncoder();
+						if (profileViews)
+						{
+							MTL::ComputePassDescriptor* computePassDescriptor = newComputePassDescriptor();
+							m_gpuTimer.attach(computePassDescriptor);
+							m_computeCommandEncoder = m_commandBuffer->computeCommandEncoder(computePassDescriptor);
+							MTL_RELEASE(computePassDescriptor, 0);
+						}
+						else
+						{
+							m_computeCommandEncoder = m_commandBuffer->computeCommandEncoder();
+						}
 					}
 					else if (viewChanged && BX_ENABLED(BGFX_CONFIG_DEBUG_ANNOTATION) )
 					{
