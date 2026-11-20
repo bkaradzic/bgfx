@@ -226,6 +226,11 @@ namespace bgfx { namespace mtl
 		return MTL::RenderPassDescriptor::alloc()->init();
 	}
 
+	inline MTL::ComputePassDescriptor* newComputePassDescriptor()
+	{
+		return MTL::ComputePassDescriptor::alloc()->init();
+	}
+
 	inline MTL::VertexDescriptor* newVertexDescriptor()
 	{
 		return MTL::VertexDescriptor::alloc()->init();
@@ -712,6 +717,7 @@ namespace bgfx { namespace mtl
 
 		void beginFrame(uint32_t _frameNum);
 		void attach(MTL::RenderPassDescriptor* _renderPassDescriptor);
+		void attach(MTL::ComputePassDescriptor* _computePassDescriptor);
 		void resolve(uint32_t _samplingIdx);
 
 		struct Result
