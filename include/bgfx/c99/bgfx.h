@@ -449,6 +449,20 @@ typedef enum bgfx_view_mode
 } bgfx_view_mode_t;
 
 /**
+ * View stats type.
+ *
+ */
+typedef enum bgfx_view_stats_type
+{
+    BGFX_VIEW_STATS_TYPE_BLIT,                /** ( 0) Blits submitted to the view.   */
+    BGFX_VIEW_STATS_TYPE_COMPUTE,             /** ( 1) Compute dispatches submitted to the view. */
+    BGFX_VIEW_STATS_TYPE_DRAW,                /** ( 2) Draw calls submitted to the view. */
+
+    BGFX_VIEW_STATS_TYPE_COUNT
+
+} bgfx_view_stats_type_t;
+
+/**
  * Shading Rate.
  *
  */
@@ -1238,6 +1252,7 @@ typedef struct bgfx_view_stats_s
 {
     char                 name[256];          /** View name.                               */
     bgfx_view_id_t       view;               /** View id.                                 */
+    bgfx_view_stats_type_t type;             /** View stats type.                         */
     int64_t              cpuTimeBegin;       /** CPU (submit) begin time.                 */
     int64_t              cpuTimeEnd;         /** CPU (submit) end time.                   */
     int64_t              gpuTimeBegin;       /** GPU begin time.                          */
@@ -1323,7 +1338,12 @@ typedef struct bgfx_stats_s
     uint16_t             height;             /** Backbuffer height in pixels.             */
     uint16_t             textWidth;          /** Debug text width in characters.          */
     uint16_t             textHeight;         /** Debug text height in characters.         */
-    uint16_t             numViews;           /** Number of view stats.                    */
+    
+    /**
+     * Number of view stats. View has one for each type of work
+     * submitted to it. See: `bgfx::ViewStatsType`
+     */
+    uint16_t             numViewStats;
     bgfx_view_stats_t*   viewStats;          /** Array of View stats.                     */
     uint8_t              numEncoders;        /** Number of encoders used during frame.    */
     bgfx_encoder_stats_t* encoderStats;      /** Array of encoder stats.                  */

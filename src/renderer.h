@@ -62,15 +62,21 @@ namespace bgfx
 	}
 
 	static constexpr uint32_t kTimerQueryBlock = 64;
-	static constexpr uint32_t kMaxTimerQueries = BGFX_CONFIG_MAX_VIEWS*4;
+	static constexpr uint32_t kMaxTimerQueries = BGFX_CONFIG_MAX_VIEWS*ViewStatsType::Count*4;
 	static constexpr uint32_t kMinTimerQueries = bx::min<uint32_t>(kTimerQueryBlock, kMaxTimerQueries);
+	static constexpr uint32_t kTimerResultFrame = BGFX_CONFIG_MAX_VIEWS*ViewStatsType::Count;
+
+	inline uint32_t getTimerResultIdx(ViewId _view, ViewStatsType::Enum _type)
+	{
+		return uint32_t(_view)*ViewStatsType::Count + _type;
+	}
 
 	inline uint32_t getNumTimerQueries(const Frame* _frame, uint32_t _num)
 	{
-		const bool profiler     = 0 != (_frame->m_debug & BGFX_DEBUG_PROFILER);
-		const uint32_t numViews = profiler ? _frame->m_numUsedViews : 0;
-		const uint32_t spare    = profiler ? kTimerQueryBlock : 0;
-		const uint32_t num      = bx::min<uint32_t>(bx::alignUp( (numViews+1)*4, kTimerQueryBlock) + spare, kMaxTimerQueries);
+		const bool profiler         = 0 != (_frame->m_debug & BGFX_DEBUG_PROFILER);
+		const uint32_t numViewStats = profiler ? _frame->m_numUsedViewStats : 0;
+		const uint32_t spare        = profiler ? kTimerQueryBlock : 0;
+		const uint32_t num          = bx::min<uint32_t>(bx::alignUp( (numViewStats+1)*4, kTimerQueryBlock) + spare, kMaxTimerQueries);
 
 		return profiler
 			? bx::max(num, _num)
@@ -176,7 +182,7 @@ namespace bgfx
 
 		ResultT& operator[](uint32_t _idx)
 		{
-			if (BGFX_CONFIG_MAX_VIEWS == _idx)
+			if (kTimerResultFrame == _idx)
 			{
 				return m_frame;
 			}
@@ -226,6 +232,11 @@ namespace bgfx
 			return m_item < m_frame->m_numBlitItems
 				&& m_key.m_view <= m_frame->m_viewOrder[_view]
 				;
+		}
+
+		ViewId getView() const
+		{
+			return m_frame->m_viewRemap[m_key.m_view];
 		}
 
 		const BlitItem& advance()
@@ -1033,7 +1044,7 @@ namespace bgfx
 			: m_frame(_frame)
 			, m_gpuTimer(_gpuTimer)
 			, m_queryIdx(UINT32_MAX)
-			, m_numViews(0)
+			, m_numViewStats(0)
 			, m_enabled(0 != (_frame->m_debug & BGFX_DEBUG_PROFILER) )
 			, m_gpuTimerEnabled(_gpuTimerEnabled)
 			, m_inView(false)
@@ -1042,23 +1053,25 @@ namespace bgfx
 
 		~Profiler()
 		{
-			m_frame->m_perfStats.numViews = m_numViews;
+			m_frame->m_perfStats.numViewStats = m_numViewStats;
 		}
 
-		void begin(uint16_t _view)
+		void begin(uint16_t _view, ViewStatsType::Enum _type)
 		{
-			if (m_enabled)
+			if (m_enabled
+			&&  m_numViewStats < m_frame->m_numUsedViewStats)
 			{
-				ViewStats& viewStats   = m_frame->m_perfStats.viewStats[m_numViews];
+				ViewStats& viewStats   = m_frame->m_perfStats.viewStats[m_numViewStats];
 				viewStats.cpuTimeBegin = bx::getHPCounter();
 
 				m_queryIdx = m_gpuTimerEnabled
-					? m_gpuTimer.begin(_view, m_frame->m_frameNum)
+					? m_gpuTimer.begin(getTimerResultIdx(ViewId(_view), _type), m_frame->m_frameNum)
 					: UINT32_MAX
 					;
 				m_inView = true;
 
 				viewStats.view = ViewId(_view);
+				viewStats.type = _type;
 				bx::strCopy(viewStats.name
 					, BGFX_CONFIG_MAX_VIEW_NAME
 					, getViewName(m_frame, _view)
@@ -1070,7 +1083,7 @@ namespace bgfx
 		{
 			if (m_inView)
 			{
-				ViewStats& viewStats = m_frame->m_perfStats.viewStats[m_numViews];
+				ViewStats& viewStats = m_frame->m_perfStats.viewStats[m_numViewStats];
 				viewStats.cpuTimeEnd   = bx::getHPCounter();
 				viewStats.gpuTimeBegin = 0;
 				viewStats.gpuTimeEnd   = 0;
@@ -1080,22 +1093,54 @@ namespace bgfx
 				{
 					m_gpuTimer.end(m_queryIdx);
 
-					const typename Ty::Result& result = m_gpuTimer.m_result[viewStats.view];
+					const typename Ty::Result& result = m_gpuTimer.m_result[getTimerResultIdx(viewStats.view, viewStats.type)];
 					viewStats.gpuTimeBegin = result.m_begin;
 					viewStats.gpuTimeEnd   = result.m_end;
 					viewStats.gpuFrameNum  = result.m_frameNum;
 				}
 
-				++m_numViews;
+				++m_numViewStats;
 				m_queryIdx = UINT32_MAX;
 				m_inView   = false;
+			}
+		}
+
+		void setType(ViewStatsType::Enum _type)
+		{
+			if (m_inView)
+			{
+				const ViewStats& viewStats = m_frame->m_perfStats.viewStats[m_numViewStats];
+
+				if (_type != viewStats.type)
+				{
+					const ViewId view = viewStats.view;
+
+					end();
+					begin(view, _type);
+				}
+			}
+		}
+
+		template<typename RendererTy>
+		void blit(RendererTy* _renderer, BlitState& _bs, uint16_t _view)
+		{
+			while (m_enabled
+			&&     _bs.hasItem(_view) )
+			{
+				end();
+
+				const ViewId view = _bs.getView();
+
+				begin(view, ViewStatsType::Blit);
+				_renderer->submitBlit(_bs, view);
+				end();
 			}
 		}
 
 		Frame*   m_frame;
 		Ty&      m_gpuTimer;
 		uint32_t m_queryIdx;
-		uint16_t m_numViews;
+		uint16_t m_numViewStats;
 		bool     m_enabled;
 		bool     m_gpuTimerEnabled;
 		bool     m_inView;

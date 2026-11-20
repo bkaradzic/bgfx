@@ -1,7 +1,7 @@
 -- vim: syntax=lua
 -- bgfx interface
 
-version(170)
+version(171)
 
 typedef "bool"
 typedef "char"
@@ -823,6 +823,13 @@ enum.ViewMode { underscore, comment = "View modes:", section = "Views" }
 	.DepthDescending --- Sort draw call depth in descending order.
 	()
 
+--- View stats type.
+enum.ViewStatsType { comment = "View stats types:", section = "Statistics" }
+	.Blit    --- Blits submitted to the view.
+	.Compute --- Compute dispatches submitted to the view.
+	.Draw    --- Draw calls submitted to the view.
+	()
+
 --- Shading Rate.
 enum.ShadingRate { underscore, comment = "Shading rate:", section = "Views" }
 	.Rate1x1 --- 1x1
@@ -1269,13 +1276,14 @@ struct.Transform
 
 --- View stats.
 struct.ViewStats { section = "Statistics" }
-	.name           "char[256]" --- View name.
-	.view           "ViewId"    --- View id.
-	.cpuTimeBegin   "int64_t"   --- CPU (submit) begin time.
-	.cpuTimeEnd     "int64_t"   --- CPU (submit) end time.
-	.gpuTimeBegin   "int64_t"   --- GPU begin time.
-	.gpuTimeEnd     "int64_t"   --- GPU end time.
-	.gpuFrameNum    "uint32_t"  --- Frame which generated gpuTimeBegin, gpuTimeEnd.
+	.name           "char[256]"           --- View name.
+	.view           "ViewId"              --- View id.
+	.type           "ViewStatsType::Enum" --- View stats type.
+	.cpuTimeBegin   "int64_t"             --- CPU (submit) begin time.
+	.cpuTimeEnd     "int64_t"             --- CPU (submit) end time.
+	.gpuTimeBegin   "int64_t"             --- GPU begin time.
+	.gpuTimeEnd     "int64_t"             --- GPU end time.
+	.gpuFrameNum    "uint32_t"            --- Frame which generated gpuTimeBegin, gpuTimeEnd.
 
 --- Encoder stats.
 struct.EncoderStats { section = "Statistics" }
@@ -1346,7 +1354,8 @@ struct.Stats { section = "Statistics" }
 	.textWidth               "uint16_t"      --- Debug text width in characters.
 	.textHeight              "uint16_t"      --- Debug text height in characters.
 
-	.numViews                "uint16_t"      --- Number of view stats.
+	.numViewStats            "uint16_t"      --- Number of view stats. View has one for each type of work
+	                                         --- submitted to it. See: `bgfx::ViewStatsType`
 	.viewStats               "ViewStats*"    --- Array of View stats.
 
 	.numEncoders             "uint8_t"       --- Number of encoders used during frame.

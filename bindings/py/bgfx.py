@@ -260,6 +260,12 @@ class ViewMode(enum.IntEnum):
 	DepthDescending = 3
 	Count = 4
 
+class ViewStatsType(enum.IntEnum):
+	Blit = 0
+	Compute = 1
+	Draw = 2
+	Count = 3
+
 class ShadingRate(enum.IntEnum):
 	Rate1x1 = 0
 	Rate1x2 = 1
@@ -1060,6 +1066,7 @@ Transform._fields_ = [
 ViewStats._fields_ = [
 	("name", (ctypes.c_char * 256)),
 	("view", ctypes.c_uint16),
+	("type", ctypes.c_int),
 	("cpuTimeBegin", ctypes.c_int64),
 	("cpuTimeEnd", ctypes.c_int64),
 	("gpuTimeBegin", ctypes.c_int64),
@@ -1118,7 +1125,7 @@ Stats._fields_ = [
 	("height", ctypes.c_uint16),
 	("textWidth", ctypes.c_uint16),
 	("textHeight", ctypes.c_uint16),
-	("numViews", ctypes.c_uint16),
+	("numViewStats", ctypes.c_uint16),
 	("viewStats", ctypes.POINTER(ViewStats)),
 	("numEncoders", ctypes.c_uint8),
 	("encoderStats", ctypes.POINTER(EncoderStats)),

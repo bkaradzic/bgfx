@@ -7488,7 +7488,7 @@ namespace bgfx { namespace d3d11
 		if (m_timerQuerySupport)
 		{
 			m_gpuTimer.resize(getNumTimerQueries(_render, m_gpuTimer.m_control.getSize() ) );
-			frameQueryIdx = m_gpuTimer.begin(BGFX_CONFIG_MAX_VIEWS, _render->m_frameNum);
+			frameQueryIdx = m_gpuTimer.begin(kTimerResultFrame, _render->m_frameNum);
 		}
 
 		if (0 < _render->m_iboffset)
@@ -7607,6 +7607,8 @@ namespace bgfx { namespace d3d11
 					viewState.setView(*renderView);
 					currentProgram = BGFX_INVALID_HANDLE;
 
+					resolveFrameBuffer(renderView->m_fbh);
+
 					if (item > 1)
 					{
 						profiler.end();
@@ -7616,9 +7618,9 @@ namespace bgfx { namespace d3d11
 					formatViewName(viewName, _render, view, "  ");
 					BGFX_D3D11_PROFILER_BEGIN(view, kColorView);
 
-					profiler.begin(view);
+					profiler.blit(this, bs, view);
+					profiler.begin(view, isCompute ? ViewStatsType::Compute : ViewStatsType::Draw);
 
-					resolveFrameBuffer(renderView->m_fbh);
 					submitUniformCache(ucs, view);
 					submitBlit(bs, view);
 
@@ -7835,6 +7837,8 @@ namespace bgfx { namespace d3d11
 
 				if (wasCompute)
 				{
+					profiler.setType(ViewStatsType::Draw);
+
 					setViewType(viewName, " ");
 					BGFX_D3D11_PROFILER_END();
 					BGFX_D3D11_PROFILER_BEGIN(view, kColorDraw);
@@ -8442,6 +8446,7 @@ namespace bgfx { namespace d3d11
 				invalidateCompute();
 			}
 
+			profiler.blit(this, bs, BGFX_CONFIG_MAX_VIEWS);
 			submitBlit(bs, BGFX_CONFIG_MAX_VIEWS);
 
 			if (0 < _render->m_numRenderItems)
@@ -8477,7 +8482,7 @@ namespace bgfx { namespace d3d11
 		{
 			m_gpuTimer.end(frameQueryIdx);
 
-			const TimerQueryD3D11::Result& result = m_gpuTimer.m_result[BGFX_CONFIG_MAX_VIEWS];
+			const TimerQueryD3D11::Result& result = m_gpuTimer.m_result[kTimerResultFrame];
 			double toGpuMs = 1000.0 / double(result.m_frequency);
 			elapsedGpuMs   = (result.m_end - result.m_begin) * toGpuMs;
 			maxGpuElapsed  = elapsedGpuMs > maxGpuElapsed ? elapsedGpuMs : maxGpuElapsed;
@@ -8491,7 +8496,7 @@ namespace bgfx { namespace d3d11
 		perfStats.cpuTimeBegin  = timeBegin;
 		perfStats.cpuTimeEnd    = timeEnd;
 		perfStats.cpuTimerFreq  = timerFreq;
-		const TimerQueryD3D11::Result& result = m_gpuTimer.m_result[BGFX_CONFIG_MAX_VIEWS];
+		const TimerQueryD3D11::Result& result = m_gpuTimer.m_result[kTimerResultFrame];
 		perfStats.gpuTimeBegin  = result.m_begin;
 		perfStats.gpuTimeEnd    = result.m_end;
 		perfStats.gpuTimerFreq  = result.m_frequency;

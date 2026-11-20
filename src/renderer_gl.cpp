@@ -9989,7 +9989,7 @@ namespace bgfx { namespace gl
 		if (m_timerQuerySupport)
 		{
 			m_gpuTimer.resize(getNumTimerQueries(_render, m_gpuTimer.m_control.getSize() ) );
-			frameQueryIdx = m_gpuTimer.begin(BGFX_CONFIG_MAX_VIEWS, _render->m_frameNum);
+			frameQueryIdx = m_gpuTimer.begin(kTimerResultFrame, _render->m_frameNum);
 		}
 
 		if (0 < _render->m_iboffset)
@@ -10143,6 +10143,8 @@ namespace bgfx { namespace gl
 					viewState.setView(*renderView);
 					currentProgram = BGFX_INVALID_HANDLE;
 
+					resolveFrameBuffer(renderView->m_fbh);
+
 					if (item > 1)
 					{
 						profiler.end();
@@ -10150,7 +10152,9 @@ namespace bgfx { namespace gl
 
 					BGFX_GL_PROFILER_END();
 
-					resolveFrameBuffer(renderView->m_fbh);
+					profiler.blit(this, bs, view);
+					profiler.begin(view, isCompute ? ViewStatsType::Compute : ViewStatsType::Draw);
+
 					submitUniformCache(ucs, view);
 					submitBlit(bs, view);
 
@@ -10195,8 +10199,6 @@ namespace bgfx { namespace gl
 
 					formatViewName(viewName, _render, view, "  ");
 					BGFX_GL_PROFILER_BEGIN(view, kColorView);
-
-					profiler.begin(view);
 
 					viewState.m_rect = renderView->m_rect;
 
@@ -10412,6 +10414,8 @@ namespace bgfx { namespace gl
 				if (wasCompute)
 				{
 					wasCompute = false;
+
+					profiler.setType(ViewStatsType::Draw);
 
 					setViewType(viewName, " ");
 					BGFX_GL_PROFILER_END();
@@ -11308,6 +11312,7 @@ namespace bgfx { namespace gl
 				BGFX_GL_PROFILER_BEGIN(view, kColorCompute);
 			}
 
+			profiler.blit(this, bs, BGFX_CONFIG_MAX_VIEWS);
 			submitBlit(bs, BGFX_CONFIG_MAX_VIEWS);
 
 			blitMsaaFbo();
@@ -11352,7 +11357,7 @@ namespace bgfx { namespace gl
 		{
 			m_gpuTimer.end(frameQueryIdx);
 
-			const TimerQueryGL::Result& result = m_gpuTimer.m_result[BGFX_CONFIG_MAX_VIEWS];
+			const TimerQueryGL::Result& result = m_gpuTimer.m_result[kTimerResultFrame];
 			double toGpuMs = 1000.0 / 1e9;
 			elapsedGpuMs   = (result.m_end - result.m_begin) * toGpuMs;
 			maxGpuElapsed  = elapsedGpuMs > maxGpuElapsed ? elapsedGpuMs : maxGpuElapsed;
@@ -11366,7 +11371,7 @@ namespace bgfx { namespace gl
 		perfStats.cpuTimeBegin  = timeBegin;
 		perfStats.cpuTimeEnd    = timeEnd;
 		perfStats.cpuTimerFreq  = timerFreq;
-		const TimerQueryGL::Result& result = m_gpuTimer.m_result[BGFX_CONFIG_MAX_VIEWS];
+		const TimerQueryGL::Result& result = m_gpuTimer.m_result[kTimerResultFrame];
 		perfStats.gpuTimeBegin  = result.m_begin;
 		perfStats.gpuTimeEnd    = result.m_end;
 		perfStats.gpuTimerFreq  = 1000000000;

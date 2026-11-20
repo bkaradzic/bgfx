@@ -6684,6 +6684,48 @@ public final class Bgfx {
 	}
 
 	/**
+	 * View stats type.
+	 */
+	@NullMarked
+	public enum ViewStatsType {
+		/**
+		 * Blits submitted to the view.
+		 */
+		BLIT,
+		/**
+		 * Compute dispatches submitted to the view.
+		 */
+		COMPUTE,
+		/**
+		 * Draw calls submitted to the view.
+		 */
+		DRAW,
+
+		/**
+		 * Number of native enum values.
+		 */
+		COUNT;
+
+		/**
+		 * Native C enum layout.
+		 */
+		public static final ValueLayout.OfInt LAYOUT = ValueLayout.JAVA_INT;
+		private static final ViewStatsType[] VALUES = values();
+
+		/**
+		 * Returns the enum constant for a native C enum value.
+		 * @param value the native enum value
+		 * @return the matching enum constant
+		 */
+		public static ViewStatsType fromValue(int value) {
+			if (value >= 0 && value < VALUES.length) {
+				return VALUES[value];
+			}
+			throw new IllegalArgumentException("Unknown ViewStatsType value: " + value);
+		}
+	}
+
+	/**
 	 * Shading Rate.
 	 */
 	@NullMarked
@@ -10799,6 +10841,7 @@ public final class Bgfx {
 		public static final StructLayout LAYOUT = cStruct("bgfx_view_stats_t",
 			MemoryLayout.sequenceLayout(256, ValueLayout.JAVA_BYTE).withName("name"),
 			ValueLayout.JAVA_SHORT.withName("view"),
+			ValueLayout.JAVA_INT.withName("type"),
 			ValueLayout.JAVA_LONG.withName("cpuTimeBegin"),
 			ValueLayout.JAVA_LONG.withName("cpuTimeEnd"),
 			ValueLayout.JAVA_LONG.withName("gpuTimeBegin"),
@@ -10808,6 +10851,8 @@ public final class Bgfx {
 			MemoryLayout.PathElement.groupElement("name"));
 		private static final VarHandle VH_VIEW = LAYOUT.varHandle(
 			MemoryLayout.PathElement.groupElement("view"));
+		private static final VarHandle VH_TYPE = LAYOUT.varHandle(
+			MemoryLayout.PathElement.groupElement("type"));
 		private static final VarHandle VH_CPUTIMEBEGIN = LAYOUT.varHandle(
 			MemoryLayout.PathElement.groupElement("cpuTimeBegin"));
 		private static final VarHandle VH_CPUTIMEEND = LAYOUT.varHandle(
@@ -10865,6 +10910,23 @@ public final class Bgfx {
 		 */
 		public ViewStats view(int value) {
 			return view((short)value);
+		}
+
+		/**
+		 * View stats type.
+		 * @return the field value
+		 */
+		public ViewStatsType type() {
+			return ViewStatsType.fromValue((int) VH_TYPE.get(segment(), 0L));
+		}
+
+		/**
+		 * Sets the native {@code type} field and returns {@code this}.
+		 * @param value the new field value
+		 */
+		public ViewStats type(ViewStatsType value) {
+			VH_TYPE.set(segment(), 0L, value.ordinal());
+			return this;
 		}
 
 		/**
@@ -11076,7 +11138,7 @@ public final class Bgfx {
 			ValueLayout.JAVA_SHORT.withName("height"),
 			ValueLayout.JAVA_SHORT.withName("textWidth"),
 			ValueLayout.JAVA_SHORT.withName("textHeight"),
-			ValueLayout.JAVA_SHORT.withName("numViews"),
+			ValueLayout.JAVA_SHORT.withName("numViewStats"),
 			ValueLayout.ADDRESS.withName("viewStats"),
 			ValueLayout.JAVA_BYTE.withName("numEncoders"),
 			ValueLayout.ADDRESS.withName("encoderStats"));
@@ -11170,8 +11232,8 @@ public final class Bgfx {
 			MemoryLayout.PathElement.groupElement("textWidth"));
 		private static final VarHandle VH_TEXTHEIGHT = LAYOUT.varHandle(
 			MemoryLayout.PathElement.groupElement("textHeight"));
-		private static final VarHandle VH_NUMVIEWS = LAYOUT.varHandle(
-			MemoryLayout.PathElement.groupElement("numViews"));
+		private static final VarHandle VH_NUMVIEWSTATS = LAYOUT.varHandle(
+			MemoryLayout.PathElement.groupElement("numViewStats"));
 		private static final VarHandle VH_VIEWSTATS = LAYOUT.varHandle(
 			MemoryLayout.PathElement.groupElement("viewStats"));
 		private static final VarHandle VH_NUMENCODERS = LAYOUT.varHandle(
@@ -12075,28 +12137,29 @@ public final class Bgfx {
 		}
 
 		/**
-		 * Number of view stats.
+		 * Number of view stats. View has one for each type of work
+		 * submitted to it. See: {@code ViewStatsType}
 		 * @return the field value
 		 */
-		public @Unsigned short numViews() {
-			return (@Unsigned short) VH_NUMVIEWS.get(segment(), 0L);
+		public @Unsigned short numViewStats() {
+			return (@Unsigned short) VH_NUMVIEWSTATS.get(segment(), 0L);
 		}
 
 		/**
-		 * Sets the native {@code numViews} field and returns {@code this}.
+		 * Sets the native {@code numViewStats} field and returns {@code this}.
 		 * @param value the new field value
 		 */
-		public Stats numViews(@Unsigned short value) {
-			VH_NUMVIEWS.set(segment(), 0L, value);
+		public Stats numViewStats(@Unsigned short value) {
+			VH_NUMVIEWSTATS.set(segment(), 0L, value);
 			return this;
 		}
 
 		/**
-		 * Sets the native {@code numViews} field and returns {@code this}.
+		 * Sets the native {@code numViewStats} field and returns {@code this}.
 		 * @param value the new field value
 		 */
-		public Stats numViews(int value) {
-			return numViews(NativeObject.toUnsignedShort(value));
+		public Stats numViewStats(int value) {
+			return numViewStats(NativeObject.toUnsignedShort(value));
 		}
 
 		/**

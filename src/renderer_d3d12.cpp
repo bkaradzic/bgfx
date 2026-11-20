@@ -10641,7 +10641,7 @@ namespace bgfx { namespace d3d12
 		int64_t timeBegin = bx::getHPCounter();
 		int64_t captureElapsed = 0;
 
-		uint32_t frameQueryIdx = m_gpuTimer.begin(BGFX_CONFIG_MAX_VIEWS, _render->m_frameNum);
+		uint32_t frameQueryIdx = m_gpuTimer.begin(kTimerResultFrame, _render->m_frameNum);
 
 		{
 			BGFX_PROFILER_SCOPE("bgfx/Update transient index buffer", kColorResource);
@@ -10835,6 +10835,8 @@ namespace bgfx { namespace d3d12
 					currentProgram         = BGFX_INVALID_HANDLE;
 					hasPredefined          = false;
 
+					resolveFrameBuffer(renderView->m_fbh);
+
 					if (item > 1)
 					{
 						profiler.end();
@@ -10844,9 +10846,9 @@ namespace bgfx { namespace d3d12
 					formatViewName(viewName, _render, view, "  ");
 					BGFX_D3D12_PROFILER_BEGIN(view, kColorView);
 
-					profiler.begin(view);
+					profiler.blit(this, bs, view);
+					profiler.begin(view, isCompute ? ViewStatsType::Compute : ViewStatsType::Draw);
 
-					resolveFrameBuffer(renderView->m_fbh);
 					submitUniformCache(ucs, view);
 					submitBlit(bs, view);
 
@@ -11205,6 +11207,8 @@ namespace bgfx { namespace d3d12
 				if (wasCompute)
 				{
 					wasCompute = false;
+
+					profiler.setType(ViewStatsType::Draw);
 
 					setViewType(viewName, " ");
 					BGFX_D3D12_PROFILER_END();
@@ -11655,6 +11659,7 @@ namespace bgfx { namespace d3d12
 				BGFX_D3D12_PROFILER_BEGIN(view, kColorCompute);
 			}
 
+			profiler.blit(this, bs, BGFX_CONFIG_MAX_VIEWS);
 			submitBlit(bs, BGFX_CONFIG_MAX_VIEWS);
 
 			if (0 < _render->m_numRenderItems)
@@ -11695,7 +11700,7 @@ namespace bgfx { namespace d3d12
 		{
 			m_gpuTimer.end(frameQueryIdx);
 
-			const TimerQueryD3D12::Result& result = m_gpuTimer.m_result[BGFX_CONFIG_MAX_VIEWS];
+			const TimerQueryD3D12::Result& result = m_gpuTimer.m_result[kTimerResultFrame];
 			double toGpuMs = 1000.0 / double(m_gpuTimer.m_frequency);
 			elapsedGpuMs   = (result.m_end - result.m_begin) * toGpuMs;
 			maxGpuElapsed  = elapsedGpuMs > maxGpuElapsed ? elapsedGpuMs : maxGpuElapsed;
@@ -11711,7 +11716,7 @@ namespace bgfx { namespace d3d12
 		perfStats.cpuTimeBegin  = timeBegin;
 		perfStats.cpuTimeEnd    = timeEnd;
 		perfStats.cpuTimerFreq  = timerFreq;
-		const TimerQueryD3D12::Result& result = m_gpuTimer.m_result[BGFX_CONFIG_MAX_VIEWS];
+		const TimerQueryD3D12::Result& result = m_gpuTimer.m_result[kTimerResultFrame];
 		perfStats.gpuTimeBegin  = result.m_begin;
 		perfStats.gpuTimeEnd    = result.m_end;
 		perfStats.gpuTimerFreq  = m_gpuTimer.m_frequency;

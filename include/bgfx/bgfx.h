@@ -466,6 +466,23 @@ namespace bgfx
 		};
 	};
 
+	/// View stats type.
+	///
+	/// @attention C99's equivalent binding is `bgfx_view_stats_type_t`.
+	///
+	struct ViewStatsType
+	{
+		/// View stats types:
+		enum Enum
+		{
+			Blit,    //!< Blits submitted to the view.
+			Compute, //!< Compute dispatches submitted to the view.
+			Draw,    //!< Draw calls submitted to the view.
+
+			Count
+		};
+	};
+
 	/// Shading Rate.
 	///
 	/// @attention C99's equivalent binding is `bgfx_shading_rate_t`.
@@ -1114,13 +1131,14 @@ namespace bgfx
 	///
 	struct ViewStats
 	{
-		char name[256];       //!< View name.
-		ViewId view;          //!< View id.
-		int64_t cpuTimeBegin; //!< CPU (submit) begin time.
-		int64_t cpuTimeEnd;   //!< CPU (submit) end time.
-		int64_t gpuTimeBegin; //!< GPU begin time.
-		int64_t gpuTimeEnd;   //!< GPU end time.
-		uint32_t gpuFrameNum; //!< Frame which generated gpuTimeBegin, gpuTimeEnd.
+		char name[256];           //!< View name.
+		ViewId view;              //!< View id.
+		ViewStatsType::Enum type; //!< View stats type.
+		int64_t cpuTimeBegin;     //!< CPU (submit) begin time.
+		int64_t cpuTimeEnd;       //!< CPU (submit) end time.
+		int64_t gpuTimeBegin;     //!< GPU begin time.
+		int64_t gpuTimeEnd;       //!< GPU end time.
+		uint32_t gpuFrameNum;     //!< Frame which generated gpuTimeBegin, gpuTimeEnd.
 	};
 
 	/// Encoder stats.
@@ -1191,7 +1209,8 @@ namespace bgfx
 		uint16_t height;                    //!< Backbuffer height in pixels.
 		uint16_t textWidth;                 //!< Debug text width in characters.
 		uint16_t textHeight;                //!< Debug text height in characters.
-		uint16_t numViews;                  //!< Number of view stats.
+		uint16_t numViewStats;              //!< Number of view stats. View has one for each type of work
+		                                    ///  submitted to it. See: `bgfx::ViewStatsType`
 		ViewStats* viewStats;               //!< Array of View stats.
 		uint8_t numEncoders;                //!< Number of encoders used during frame.
 		EncoderStats* encoderStats;         //!< Array of encoder stats.

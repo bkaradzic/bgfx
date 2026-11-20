@@ -130,6 +130,14 @@ static void resourceBar(const char* _name, const char* _tooltip, uint32_t _num, 
 
 static bool s_showStats = false;
 
+static const char* s_viewStatsType[] =
+{
+	"blit",
+	"compute",
+	"draw",
+};
+static_assert(bgfx::ViewStatsType::Count == BX_COUNTOF(s_viewStatsType) );
+
 static const char* getRendererArg(bgfx::RendererType::Enum _type)
 {
 	switch (_type)
@@ -496,7 +504,7 @@ void showExampleDialog(entry::AppI* _app, const char* _errorText)
 
 			if (ImGui::CollapsingHeader(ICON_FA_CLOCK_O " Profiler") )
 			{
-				if (0 == stats->numViews)
+				if (0 == stats->numViewStats)
 				{
 					ImGui::Text("Profiler is not enabled.");
 				}
@@ -548,10 +556,10 @@ void showExampleDialog(entry::AppI* _app, const char* _errorText)
 
 						ImGui::Separator();
 
-						if (ImGui::BeginListBox("Views", ImVec2(ImGui::GetWindowWidth(), stats->numViews*itemHeightWithSpacing) ) )
+						if (ImGui::BeginListBox("Views", ImVec2(ImGui::GetWindowWidth(), stats->numViewStats*itemHeightWithSpacing) ) )
 						{
 							ImGuiListClipper clipper;
-							clipper.Begin(stats->numViews, itemHeight);
+							clipper.Begin(stats->numViewStats, itemHeight);
 
 							while (clipper.Step() )
 							{
@@ -559,7 +567,7 @@ void showExampleDialog(entry::AppI* _app, const char* _errorText)
 								{
 									const bgfx::ViewStats& viewStats = stats->viewStats[pos];
 
-									ImGui::Text("%3d %3d %s", pos, viewStats.view, viewStats.name);
+									ImGui::Text("%3d %3d %c %s", pos, viewStats.view, "BCD"[viewStats.type], viewStats.name);
 
 									const float maxWidth = 30.0f*scale;
 									const float cpuTimeElapsed = float((viewStats.cpuTimeEnd - viewStats.cpuTimeBegin) * toCpuMs);
@@ -569,13 +577,14 @@ void showExampleDialog(entry::AppI* _app, const char* _errorText)
 
 									ImGui::SameLine(64.0f);
 
-									ImGui::PushID(viewStats.name);
+									ImGui::PushID(pos);
 
 									if (bar("CPU", cpuWidth, maxWidth, itemHeight, cpuColor))
 									{
-										ImGui::SetTooltip("View %d \"%s\", CPU: %f [ms]"
+										ImGui::SetTooltip("View %d \"%s\" %s, CPU: %f [ms]"
 											, pos
 											, viewStats.name
+											, s_viewStatsType[viewStats.type]
 											, cpuTimeElapsed
 											);
 									}
@@ -583,9 +592,10 @@ void showExampleDialog(entry::AppI* _app, const char* _errorText)
 									ImGui::SameLine();
 									if (bar("GPU", gpuWidth, maxWidth, itemHeight, gpuColor) )
 									{
-										ImGui::SetTooltip("View: %d \"%s\", GPU: %f [ms]"
+										ImGui::SetTooltip("View %d \"%s\" %s, GPU: %f [ms]"
 											, pos
 											, viewStats.name
+											, s_viewStatsType[viewStats.type]
 											, gpuTimeElapsed
 											);
 									}

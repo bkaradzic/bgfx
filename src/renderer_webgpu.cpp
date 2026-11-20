@@ -8036,7 +8036,7 @@ WGPU_IMPORT
 
 		uint32_t frameQueryIdx = UINT32_MAX;
 
-		frameQueryIdx = m_gpuTimer.begin(BGFX_CONFIG_MAX_VIEWS, _render->m_frameNum);
+		frameQueryIdx = m_gpuTimer.begin(kTimerResultFrame, _render->m_frameNum);
 
 		if (0 < _render->m_iboffset)
 		{
@@ -8243,9 +8243,19 @@ WGPU_IMPORT
 						renderPassEncoder = NULL;
 					}
 
-					if (item > 1)
+					if (viewChanged)
 					{
-						profiler.end();
+						if (item > 1)
+						{
+							profiler.end();
+						}
+
+						profiler.blit(this, bs, view);
+						profiler.begin(view, ViewStatsType::Draw);
+					}
+					else
+					{
+						profiler.setType(ViewStatsType::Draw);
 					}
 
 					submitUniformCache(ucs, view);
@@ -8254,8 +8264,6 @@ WGPU_IMPORT
 					BGFX_WGPU_PROFILER_END();
 					formatViewName(viewName, _render, view, " ");
 					BGFX_WGPU_PROFILER_BEGIN(view, kColorView);
-
-					profiler.begin(view);
 
 					FrameBufferWGPU& fb = getFrameBuffer(fbh);
 
@@ -8541,6 +8549,14 @@ WGPU_IMPORT
 
 						if (viewChanged)
 						{
+							if (item > 1)
+							{
+								profiler.end();
+							}
+
+							profiler.blit(this, bs, view);
+							profiler.begin(view, ViewStatsType::Compute);
+
 							submitUniformCache(ucs, view);
 							submitBlit(bs, view);
 						}
@@ -9168,6 +9184,7 @@ WGPU_IMPORT
 				lastFb.resolve(m_cmd.m_commandEncoder);
 			}
 
+			profiler.blit(this, bs, BGFX_CONFIG_MAX_VIEWS);
 			submitBlit(bs, BGFX_CONFIG_MAX_VIEWS);
 
 			m_occlusionQuery.resolve();
@@ -9205,7 +9222,7 @@ WGPU_IMPORT
 		{
 			m_gpuTimer.end(frameQueryIdx);
 
-			const TimerQueryWGPU::Result& result = m_gpuTimer.m_result[BGFX_CONFIG_MAX_VIEWS];
+			const TimerQueryWGPU::Result& result = m_gpuTimer.m_result[kTimerResultFrame];
 			double toGpuMs = 1000.0 / double(m_gpuTimer.m_frequency);
 			elapsedGpuMs   = (result.m_end - result.m_begin) * toGpuMs;
 			maxGpuElapsed  = elapsedGpuMs > maxGpuElapsed ? elapsedGpuMs : maxGpuElapsed;
@@ -9219,7 +9236,7 @@ WGPU_IMPORT
 
 		const int64_t timerFreq = bx::getHPFrequency();
 
-		const TimerQueryWGPU::Result& result = m_gpuTimer.m_result[BGFX_CONFIG_MAX_VIEWS];
+		const TimerQueryWGPU::Result& result = m_gpuTimer.m_result[kTimerResultFrame];
 
 		Stats& perfStats = _render->m_perfStats;
 		perfStats.cpuTimeBegin  = timeBegin;

@@ -12355,7 +12355,7 @@ VK_DESTROY
 		if (m_timerQuerySupport)
 		{
 			m_gpuTimer.resize(getNumTimerQueries(_render, m_gpuTimer.m_control.getSize() ) );
-			frameQueryIdx = m_gpuTimer.begin(BGFX_CONFIG_MAX_VIEWS, _render->m_frameNum);
+			frameQueryIdx = m_gpuTimer.begin(kTimerResultFrame, _render->m_frameNum);
 		}
 
 		{
@@ -12553,9 +12553,19 @@ VK_DESTROY
 						beginRenderPass = false;
 					}
 
-					if (item > 1)
+					if (viewChanged)
 					{
-						profiler.end();
+						if (item > 1)
+						{
+							profiler.end();
+						}
+
+						profiler.blit(this, bs, view);
+						profiler.begin(view, ViewStatsType::Draw);
+					}
+					else
+					{
+						profiler.setType(ViewStatsType::Draw);
 					}
 
 					if (beginRenderPass && bs.hasItem(view) )
@@ -12571,8 +12581,6 @@ VK_DESTROY
 					BGFX_VK_PROFILER_END();
 					formatViewName(viewName, _render, view, " ");
 					BGFX_VK_PROFILER_BEGIN(view, kColorView);
-
-					profiler.begin(view);
 
 					const FrameBufferVK& fb = getFrameBuffer(m_fbh);
 
@@ -12780,6 +12788,14 @@ VK_DESTROY
 
 					if (viewChanged)
 					{
+						if (item > 1)
+						{
+							profiler.end();
+						}
+
+						profiler.blit(this, bs, view);
+						profiler.begin(view, ViewStatsType::Compute);
+
 						submitUniformCache(ucs, view);
 						submitBlit(bs, view);
 						currentPipeline = VK_NULL_HANDLE;
@@ -13431,6 +13447,7 @@ VK_DESTROY
 				BGFX_VK_PROFILER_BEGIN(view, kColorCompute);
 			}
 
+			profiler.blit(this, bs, BGFX_CONFIG_MAX_VIEWS);
 			submitBlit(bs, BGFX_CONFIG_MAX_VIEWS);
 
 			if (0 < _render->m_numRenderItems)
@@ -13466,7 +13483,7 @@ VK_DESTROY
 		{
 			m_gpuTimer.end(frameQueryIdx);
 
-			const TimerQueryVK::Result& result = m_gpuTimer.m_result[BGFX_CONFIG_MAX_VIEWS];
+			const TimerQueryVK::Result& result = m_gpuTimer.m_result[kTimerResultFrame];
 			double toGpuMs = 1000.0 / double(m_gpuTimer.m_frequency);
 			elapsedGpuMs   = (result.m_end - result.m_begin) * toGpuMs;
 			maxGpuElapsed  = elapsedGpuMs > maxGpuElapsed ? elapsedGpuMs : maxGpuElapsed;
@@ -13515,7 +13532,7 @@ VK_DESTROY
 		perfStats.cpuTimeBegin  = timeBegin;
 		perfStats.cpuTimeEnd    = timeEnd;
 		perfStats.cpuTimerFreq  = timerFreq;
-		const TimerQueryVK::Result& result = m_gpuTimer.m_result[BGFX_CONFIG_MAX_VIEWS];
+		const TimerQueryVK::Result& result = m_gpuTimer.m_result[kTimerResultFrame];
 		perfStats.gpuTimeBegin  = result.m_begin;
 		perfStats.gpuTimeEnd    = result.m_end;
 		perfStats.gpuTimerFreq  = m_gpuTimer.m_frequency;

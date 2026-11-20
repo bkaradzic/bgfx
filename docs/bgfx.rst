@@ -187,6 +187,9 @@ Statistics
 
 Per-frame rendering statistics.
 
+.. doxygenstruct:: bgfx::ViewStatsType
+    :members:
+
 .. doxygenstruct:: bgfx::ViewStats
     :members:
 
