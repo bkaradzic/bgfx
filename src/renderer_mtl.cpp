@@ -671,6 +671,10 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 					| BGFX_CAPS_FORMAT_TEXTURE_IMAGE_WRITE
 					;
 			}
+			else if (TextureFormat::RG11B10F == _fmt)
+			{
+				caps |= BGFX_CAPS_FORMAT_TEXTURE_IMAGE_WRITE;
+			}
 
 			if (autoMipmap)
 			{
