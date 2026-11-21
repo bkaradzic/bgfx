@@ -1303,6 +1303,10 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 				m_textures.each([](TextureMtl& _texture) { _texture.destroy(); });
 
+				m_indexBuffers.each([](IndexBufferMtl& _ib) { _ib.destroy(); });
+
+				m_vertexBuffers.each([](VertexBufferMtl& _vb) { _vb.destroy(); });
+
 				m_screenshotBlitProgramVsh.destroy();
 				m_screenshotBlitProgramFsh.destroy();
 				m_screenshotBlitProgram.destroy();
@@ -4302,13 +4306,20 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 		m_flags  = _flags;
 		m_vertex = _vertex;
 
+		const uint32_t size = _vertex ? _size : bx::strideAlign(_size, 4);
+
 		if (NULL == _data)
 		{
-			m_ptr = s_renderMtl->m_device->newBuffer(_size, MTL::ResourceCPUCacheModeDefaultCache);
+			m_ptr = s_renderMtl->m_device->newBuffer(size, MTL::ResourceCPUCacheModeDefaultCache);
+		}
+		else if (size == _size)
+		{
+			m_ptr = s_renderMtl->m_device->newBuffer(_data, _size, MTL::ResourceCPUCacheModeDefaultCache);
 		}
 		else
 		{
-			m_ptr = s_renderMtl->m_device->newBuffer(_data, _size, MTL::ResourceCPUCacheModeDefaultCache);
+			m_ptr = s_renderMtl->m_device->newBuffer(size, MTL::ResourceCPUCacheModeDefaultCache);
+			bx::memCopy(m_ptr->contents(), _data, _size);
 		}
 	}
 
@@ -4321,7 +4332,9 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 		{
 			if (NULL == m_dynamic)
 			{
-				m_dynamic = (uint8_t*)bx::allocPtr(g_allocatorBlk, m_size);
+				const uint32_t size = bx::strideAlign(m_size, 4);
+				m_dynamic = (uint8_t*)bx::allocPtr(g_allocatorBlk, size);
+				bx::memSet(m_dynamic + m_size, 0, size - m_size);
 			}
 
 			bx::memCopy(m_dynamic + _offset, _data, _size);
