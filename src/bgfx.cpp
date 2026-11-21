@@ -1603,7 +1603,7 @@ namespace bgfx
 		}
 
 		++m_numSubmitted;
-		markViewUsed(_id);
+		markViewUsed(_id, ViewStatsType::Draw);
 
 		UniformBuffer* uniformBuffer = m_frame->m_uniformBuffer[m_uniformIdx];
 		m_uniformEnd = uniformBuffer->getPos();
@@ -1710,7 +1710,7 @@ namespace bgfx
 		}
 
 		++m_numSubmitted;
-		markViewUsed(_id);
+		markViewUsed(_id, ViewStatsType::Compute);
 
 		UniformBuffer* uniformBuffer = m_frame->m_uniformBuffer[m_uniformIdx];
 		m_uniformEnd = uniformBuffer->getPos();
@@ -1763,7 +1763,7 @@ namespace bgfx
 			return;
 		}
 
-		markViewUsed(_id);
+		markViewUsed(_id, ViewStatsType::Blit);
 
 		BlitItem& bi = m_frame->m_blitItem[blitItemIdx];
 		bi = _blit;
@@ -3015,8 +3015,7 @@ namespace bgfx
 		if (0 != (_flags & BGFX_FRAME_DISCARD) )
 		{
 			m_submit->m_numRenderItems = 0;
-			m_submit->m_numUsedViews   = 0;
-			bx::memSet(m_submit->m_viewUsed, 0, sizeof(m_submit->m_viewUsed) );
+			m_submit->resetUsedViews();
 		}
 
 		m_submit->m_capture = 0 != (_flags & BGFX_FRAME_DEBUG_CAPTURE);
@@ -3085,26 +3084,29 @@ namespace bgfx
 
 	void Context::collectSubmitViewUsed()
 	{
-		bx::memSet(m_submit->m_viewUsed, 0, sizeof(m_submit->m_viewUsed) );
+		uint64_t used[ViewStatsType::Count][kViewUsedWords] = {};
+
+		const auto collect = [&](const EncoderImpl& _encoder)
+		{
+			for (uint32_t type = 0; type < ViewStatsType::Count; ++type)
+			{
+				for (uint32_t ww = 0; ww < kViewUsedWords; ++ww)
+				{
+					used[type][ww] |= _encoder.m_viewUsed[type][ww];
+				}
+			}
+		};
 
 #if BGFX_CONFIG_MULTITHREADED
 		for (uint16_t idx = m_encoderHandle->findFirst(); bx::kInvalidHandle != idx; idx = m_encoderHandle->findNext(idx) )
 		{
-			const uint64_t* src = m_encoder[idx].m_viewUsed;
-
-			for (uint32_t ww = 0; ww < kViewUsedWords; ++ww)
-			{
-				m_submit->m_viewUsed[ww] |= src[ww];
-			}
+			collect(m_encoder[idx]);
 		}
 #else
-		for (uint32_t ww = 0; ww < kViewUsedWords; ++ww)
-		{
-			m_submit->m_viewUsed[ww] |= m_encoder[0].m_viewUsed[ww];
-		}
+		collect(m_encoder[0]);
 #endif // BGFX_CONFIG_MULTITHREADED
 
-		m_submit->collectUsedViews();
+		m_submit->collectUsedViews(used);
 	}
 
 	void Context::resolveDynamicBuffers()
@@ -3358,8 +3360,8 @@ namespace bgfx
 		m_submit->m_debug            = m_debug;
 		m_submit->m_debugFrameBuffer = m_debugFrameBuffer;
 		m_submit->m_debugTextScale   = m_debugTextScale;
-		m_submit->m_perfStats.numViews = 0;
-		m_submit->reserveViewStats(0 != (m_debug & BGFX_DEBUG_PROFILER), m_submit->m_numUsedViews);
+		m_submit->m_perfStats.numViewStats = 0;
+		m_submit->reserveViewStats(0 != (m_debug & BGFX_DEBUG_PROFILER), m_submit->m_numUsedViewStats);
 
 		{
 			// Renderer writes latency stats only when driver returns a report.

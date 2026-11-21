@@ -4226,6 +4226,7 @@ namespace bgfx
 			, m_flush(false)
 			, m_needBindDedup(false)
 			, m_numUsedViews(0)
+			, m_numUsedViewStats(0)
 			, m_peakViews(0)
 		{
 			m_numRenderItems = 0;
@@ -4470,21 +4471,38 @@ namespace bgfx
 			m_frameNum = frameNum;
 			m_latencyFrameId = 0;
 
-			m_numUsedViews = 0;
+			resetUsedViews();
+		}
+
+		void resetUsedViews()
+		{
+			m_numUsedViews     = 0;
+			m_numUsedViewStats = 0;
 			bx::memSet(m_viewUsed, 0, sizeof(m_viewUsed) );
 		}
 
-		void collectUsedViews()
+		void collectUsedViews(const uint64_t _used[ViewStatsType::Count][kViewUsedWords])
 		{
-			uint16_t num = 0;
+			uint16_t num      = 0;
+			uint16_t numStats = 0;
 
 			for (uint32_t ww = 0; ww < kViewUsedWords; ++ww)
 			{
+				uint64_t used = 0;
+
+				for (uint32_t type = 0; type < ViewStatsType::Count; ++type)
+				{
+					used     |= _used[type][ww];
+					numStats += uint16_t(bx::countBits(_used[type][ww]) );
+				}
+
+				m_viewUsed[ww]       = used;
 				m_viewUsedOffset[ww] = num;
-				num += uint16_t(bx::countBits(m_viewUsed[ww]) );
+				num += uint16_t(bx::countBits(used) );
 			}
 
-			m_numUsedViews = num;
+			m_numUsedViews     = num;
+			m_numUsedViewStats = numStats;
 		}
 
 		void finish()
@@ -4632,6 +4650,7 @@ namespace bgfx
 		uint64_t m_viewUsed[kViewUsedWords];
 		uint16_t m_viewUsedOffset[kViewUsedWords];
 		uint16_t m_numUsedViews;
+		uint16_t m_numUsedViewStats;
 		uint32_t m_peakViews;
 	};
 
@@ -4706,9 +4725,9 @@ namespace bgfx
 			bx::memSet(m_viewUsed, 0, sizeof(m_viewUsed) );
 		}
 
-		BX_FORCE_INLINE void markViewUsed(ViewId _id)
+		BX_FORCE_INLINE void markViewUsed(ViewId _id, ViewStatsType::Enum _type)
 		{
-			m_viewUsed[uint32_t(_id) >> 6] |= uint64_t(1) << (_id & 0x3f);
+			m_viewUsed[_type][uint32_t(_id) >> 6] |= uint64_t(1) << (_id & 0x3f);
 		}
 
 		void end(bool _finalize)
@@ -5307,7 +5326,7 @@ namespace bgfx
 		int64_t m_cpuTimeBegin;
 		int64_t m_cpuTimeEnd;
 
-		uint64_t m_viewUsed[kViewUsedWords];
+		uint64_t m_viewUsed[ViewStatsType::Count][kViewUsedWords];
 	};
 
 	struct VertexLayoutRef

@@ -3747,7 +3747,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			return _visible == (0 != _render->m_occlusion[_handle.idx]);
 		}
 
-		MTL::BlitCommandEncoder* getBlitCommandEncoder()
+		MTL::BlitCommandEncoder* getBlitCommandEncoder(bool _profile = false)
 		{
 			if (NULL == m_blitCommandEncoder)
 			{
@@ -3758,9 +3758,20 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 					m_commandBuffer = m_cmd.alloc();
 				}
 
+				if (_profile)
+				{
+					MTL::BlitPassDescriptor* blitPassDescriptor = newBlitPassDescriptor();
+					m_gpuTimer.attach(blitPassDescriptor);
+					m_blitCommandEncoder = m_commandBuffer->blitCommandEncoder(blitPassDescriptor);
+					MTL_RELEASE(blitPassDescriptor, 0);
+				}
+				else
+				{
+					m_blitCommandEncoder = m_commandBuffer->blitCommandEncoder();
+				}
+
 				// Retained, since it can stay open past the end of renderFrame's autorelease pool
 				// when submit is skipped (e.g. resource updates pending at shutdown).
-				m_blitCommandEncoder = m_commandBuffer->blitCommandEncoder();
 				retain(m_blitCommandEncoder);
 			}
 
@@ -6195,6 +6206,30 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 		sampling.m_numSamples += 2;
 	}
 
+	void TimerQueryMtl::attach(MTL::BlitPassDescriptor* _blitPassDescriptor)
+	{
+		if (!isViewTimingSupported() )
+		{
+			return;
+		}
+
+		Sampling& sampling = m_sampling[m_samplingIdx];
+
+		if (UINT32_MAX == sampling.m_activeQuery
+		||  sampling.m_numSamples + 2 > kMaxTimestampSamples)
+		{
+			return;
+		}
+
+		MTL::BlitPassSampleBufferAttachmentDescriptor* desc = _blitPassDescriptor->sampleBufferAttachments()->object(0);
+		desc->setSampleBuffer(sampling.m_sampleBuffer);
+		desc->setStartOfEncoderSampleIndex(sampling.m_numSamples);
+		desc->setEndOfEncoderSampleIndex(sampling.m_numSamples + 1);
+
+		sampling.m_query[sampling.m_activeQuery].m_num += 2;
+		sampling.m_numSamples += 2;
+	}
+
 	void TimerQueryMtl::resolve(uint32_t _samplingIdx)
 	{
 		Sampling& sampling = m_sampling[_samplingIdx];
@@ -6390,7 +6425,11 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 		endEncoding();
 
-		m_blitCommandEncoder = getBlitCommandEncoder();
+		const bool profileViews = m_gpuTimer.isViewTimingSupported()
+			&& 0 != (_bs.m_frame->m_debug & BGFX_DEBUG_PROFILER)
+			;
+
+		m_blitCommandEncoder = getBlitCommandEncoder(profileViews);
 
 		while (_bs.hasItem(_view) )
 		{
@@ -6848,7 +6887,14 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 					viewState.setView(*renderView);
 					currentProgram = BGFX_INVALID_HANDLE;
 
-					if (item > 1)
+					if (isValid(m_fbh)
+					&&  m_fbh.idx != renderView->m_fbh.idx)
+					{
+						resolveFrameBuffer();
+					}
+
+					if (viewChanged
+					&&  item > 1)
 					{
 						profiler.end();
 					}
@@ -6857,18 +6903,19 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 					formatViewName(viewName, _render, view, "  ");
 					BGFX_MTL_PROFILER_BEGIN(view, kColorView);
 
-					profiler.begin(view);
+					if (viewChanged)
+					{
+						profiler.blit(this, bs, view);
+						profiler.begin(view, isCompute ? ViewStatsType::Compute : ViewStatsType::Draw);
+					}
+					else
+					{
+						profiler.setType(ViewStatsType::Draw);
+					}
 
 					viewState.m_rect = renderView->m_rect;
 
 					submitUniformCache(ucs, view);
-
-					if (isValid(m_fbh)
-					&&  m_fbh.idx != renderView->m_fbh.idx)
-					{
-						resolveFrameBuffer();
-					}
-
 					submitBlit(bs, view);
 
 					if (!isCompute)
@@ -7915,6 +7962,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 				BGFX_MTL_PROFILER_BEGIN(view, kColorCompute);
 			}
 
+			profiler.blit(this, bs, BGFX_CONFIG_MAX_VIEWS);
 			submitBlit(bs, BGFX_CONFIG_MAX_VIEWS);
 
 			if (0 < _render->m_numRenderItems)

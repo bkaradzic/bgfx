@@ -9,7 +9,7 @@ import bindbc.common.types: c_int64, c_uint64, va_list;
 import bindbc.bgfx.config;
 static import bgfx.impl;
 
-enum uint apiVersion = 170;
+enum uint apiVersion = 171;
 
 alias ViewID = ushort;
 
@@ -1034,6 +1034,14 @@ enum ViewMode: bgfx.impl.ViewMode.Enum{
 	count = bgfx.impl.ViewMode.Enum.count,
 }
 
+///View stats type.
+enum ViewStatsType: bgfx.impl.ViewStatsType.Enum{
+	blit = bgfx.impl.ViewStatsType.Enum.blit,
+	compute = bgfx.impl.ViewStatsType.Enum.compute,
+	draw = bgfx.impl.ViewStatsType.Enum.draw,
+	count = bgfx.impl.ViewStatsType.Enum.count,
+}
+
 ///Shading Rate.
 enum ShadingRate: bgfx.impl.ShadingRate.Enum{
 	rate1x1 = bgfx.impl.ShadingRate.Enum.rate1x1,
@@ -1788,6 +1796,7 @@ extern(C++, "bgfx") struct Transform{
 extern(C++, "bgfx") struct ViewStats{
 	char[256] name; ///View name.
 	ViewID view; ///View id.
+	ViewStatsType type; ///View stats type.
 	c_int64 cpuTimeBegin; ///CPU (submit) begin time.
 	c_int64 cpuTimeEnd; ///CPU (submit) end time.
 	c_int64 gpuTimeBegin; ///GPU begin time.
@@ -1865,7 +1874,12 @@ extern(C++, "bgfx") struct Stats{
 	ushort height; ///Backbuffer height in pixels.
 	ushort textWidth; ///Debug text width in characters.
 	ushort textHeight; ///Debug text height in characters.
-	ushort numViews; ///Number of view stats.
+	
+	/**
+	Number of view stats. View has one for each type of work
+	submitted to it. See: `bgfx::ViewStatsType`
+	*/
+	ushort numViewStats;
 	ViewStats* viewStats; ///Array of View stats.
 	ubyte numEncoders; ///Number of encoders used during frame.
 	EncoderStats* encoderStats; ///Array of encoder stats.

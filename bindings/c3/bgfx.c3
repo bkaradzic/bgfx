@@ -1650,6 +1650,20 @@ enum ViewMode : uint
 	COUNT
 }
 
+enum ViewStatsType : uint
+{
+	// Blits submitted to the view.
+	BLIT,
+
+	// Compute dispatches submitted to the view.
+	COMPUTE,
+
+	// Draw calls submitted to the view.
+	DRAW,
+
+	COUNT
+}
+
 enum ShadingRate : uint
 {
 	// 1x1
@@ -2250,6 +2264,8 @@ struct ViewStats
 	char[256] name;
 	// View id.
 	ushort view;
+	// View stats type.
+	ViewStatsType type;
 	// CPU (submit) begin time.
 	long cpuTimeBegin;
 	// CPU (submit) end time.
@@ -2371,8 +2387,9 @@ struct Stats
 	ushort textWidth;
 	// Debug text height in characters.
 	ushort textHeight;
-	// Number of view stats.
-	ushort numViews;
+	// Number of view stats. View has one for each type of work
+	// submitted to it. See: `bgfx::ViewStatsType`
+	ushort numViewStats;
 	// Array of View stats.
 	ViewStats* viewStats;
 	// Number of encoders used during frame.

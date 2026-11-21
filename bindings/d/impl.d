@@ -94,6 +94,11 @@ extern(C++, "bgfx") package final abstract class ViewMode{
 		default_,sequential,depthAscending,depthDescending,count
 	}
 }
+extern(C++, "bgfx") package final abstract class ViewStatsType{
+	enum Enum{
+		blit,compute,draw,count
+	}
+}
 extern(C++, "bgfx") package final abstract class ShadingRate{
 	enum Enum{
 		rate1x1,rate1x2,rate2x1,rate2x2,rate2x4,rate4x2,rate4x4,count

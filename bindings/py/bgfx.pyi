@@ -490,6 +490,16 @@ class ViewMode(enum.IntEnum):
 	DepthDescending = 3
 	Count = 4
 
+# View stats type.
+class ViewStatsType(enum.IntEnum):
+	# Blits submitted to the view.
+	Blit = 0
+	# Compute dispatches submitted to the view.
+	Compute = 1
+	# Draw calls submitted to the view.
+	Draw = 2
+	Count = 3
+
 # Shading Rate.
 class ShadingRate(enum.IntEnum):
 	# 1x1
@@ -1762,6 +1772,8 @@ class ViewStats(ctypes.Structure):
 	name: bytes
 	# View id.
 	view: int
+	# View stats type.
+	type: int
 	# CPU (submit) begin time.
 	cpuTimeBegin: int
 	# CPU (submit) end time.
@@ -1879,8 +1891,9 @@ class Stats(ctypes.Structure):
 	textWidth: int
 	# Debug text height in characters.
 	textHeight: int
-	# Number of view stats.
-	numViews: int
+	# Number of view stats. View has one for each type of work
+	# submitted to it. See: `bgfx::ViewStatsType`
+	numViewStats: int
 	# Array of View stats.
 	viewStats: _Pointer[ViewStats]
 	# Number of encoders used during frame.

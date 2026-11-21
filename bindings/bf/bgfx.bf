@@ -2609,6 +2609,27 @@ public static class bgfx
 	}
 	
 	[AllowDuplicates]
+	public enum ViewStatsType : uint32
+	{
+		/// <summary>
+		/// Blits submitted to the view.
+		/// </summary>
+		Blit,
+	
+		/// <summary>
+		/// Compute dispatches submitted to the view.
+		/// </summary>
+		Compute,
+	
+		/// <summary>
+		/// Draw calls submitted to the view.
+		/// </summary>
+		Draw,
+	
+		Count
+	}
+	
+	[AllowDuplicates]
 	public enum ShadingRate : uint32
 	{
 		/// <summary>
@@ -2950,6 +2971,7 @@ public static class bgfx
 	{
 		public char8[256] name;
 		public ViewId view;
+		public ViewStatsType type;
 		public int64 cpuTimeBegin;
 		public int64 cpuTimeEnd;
 		public int64 gpuTimeBegin;
@@ -3012,7 +3034,7 @@ public static class bgfx
 		public uint16 height;
 		public uint16 textWidth;
 		public uint16 textHeight;
-		public uint16 numViews;
+		public uint16 numViewStats;
 		public ViewStats* viewStats;
 		public uint8 numEncoders;
 		public EncoderStats* encoderStats;

@@ -1596,6 +1596,19 @@ pub const ViewMode = enum(c_int) {
     Count
 };
 
+pub const ViewStatsType = enum(c_int) {
+    /// Blits submitted to the view.
+    Blit,
+
+    /// Compute dispatches submitted to the view.
+    Compute,
+
+    /// Draw calls submitted to the view.
+    Draw,
+
+    Count
+};
+
 pub const ShadingRate = enum(c_int) {
     /// 1x1
     Rate1x1,
@@ -1899,6 +1912,7 @@ pub const Init = extern struct {
     pub const ViewStats = extern struct {
         name: [256]u8,
         view: ViewId,
+        type: ViewStatsType,
         cpuTimeBegin: i64,
         cpuTimeEnd: i64,
         gpuTimeBegin: i64,
@@ -1957,7 +1971,7 @@ pub const Init = extern struct {
         height: u16,
         textWidth: u16,
         textHeight: u16,
-        numViews: u16,
+        numViewStats: u16,
         viewStats: [*c]ViewStats,
         numEncoders: u8,
         encoderStats: [*c]EncoderStats,
