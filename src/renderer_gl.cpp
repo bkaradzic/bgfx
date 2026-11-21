@@ -4526,7 +4526,7 @@ namespace bgfx { namespace gl
 			return _height;
 		}
 
-		void setDrawBuffers(uint8_t _num)
+		void setDrawBuffers(uint8_t _mask)
 		{
 			if (!BX_ENABLED(BX_PLATFORM_EMSCRIPTEN)
 			||  !isValid(m_fbh) )
@@ -4535,20 +4535,20 @@ namespace bgfx { namespace gl
 			}
 
 			FrameBufferGL& frameBuffer = m_frameBuffers[m_fbh.idx];
-			const uint8_t num = bx::min(_num, frameBuffer.m_num);
+			const uint8_t mask = _mask & uint8_t( (1<<frameBuffer.m_num)-1);
 
 			if (0 < frameBuffer.m_num
-			&&  num != frameBuffer.m_numDrawBuffers)
+			&&  mask != frameBuffer.m_drawBufferMask)
 			{
 				GLenum buffers[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
 
 				for (uint32_t ii = 0; ii < frameBuffer.m_num; ++ii)
 				{
-					buffers[ii] = ii < num ? GL_COLOR_ATTACHMENT0 + ii : GL_NONE;
+					buffers[ii] = 0 != (mask & (1<<ii) ) ? GL_COLOR_ATTACHMENT0 + ii : GL_NONE;
 				}
 
 				GL_CHECK(glDrawBuffers(frameBuffer.m_num, buffers) );
-				frameBuffer.m_numDrawBuffers = num;
+				frameBuffer.m_drawBufferMask = mask;
 			}
 		}
 
@@ -6050,8 +6050,8 @@ namespace bgfx { namespace gl
 
 	void ProgramGL::create(const ShaderGL& _vsh, const ShaderGL& _fsh)
 	{
-		m_id             = glCreateProgram();
-		m_numFragOutputs = _fsh.m_numFragOutputs;
+		m_id           = glCreateProgram();
+		m_fragDataMask = _fsh.m_fragDataMask;
 		BX_TRACE("Program create: GL%d: GL%d, GL%d", m_id, _vsh.m_id, _fsh.m_id);
 
 		const uint64_t id = (uint64_t(_vsh.m_hash)<<32) | _fsh.m_hash;
@@ -8160,17 +8160,17 @@ namespace bgfx { namespace gl
 
 			if (0 != (kFragDataValid & hashOut) )
 			{
-				m_numFragOutputs = bx::findLastSet(getFragDataMask(hashOut) );
+				m_fragDataMask = getFragDataMask(hashOut);
 			}
 			else if (!fragData.isEmpty() )
 			{
 				uint32_t num = 0;
 				bx::fromString(&num, bx::StringView(fragData.getTerm(), code.getTerm() ) );
-				m_numFragOutputs = uint8_t(bx::min<uint32_t>(num, UINT8_MAX) );
+				m_fragDataMask = uint8_t( (1<<bx::min<uint32_t>(num, kFragDataMaxNum) )-1);
 			}
 			else
 			{
-				m_numFragOutputs = bx::strFind(code, "bgfx_FragColor").isEmpty() ? 0 : 1;
+				m_fragDataMask = bx::strFind(code, "bgfx_FragColor").isEmpty() ? 0 : 1;
 			}
 		}
 
@@ -8431,7 +8431,7 @@ namespace bgfx { namespace gl
 			}
 
 			m_num            = uint8_t(colorIdx);
-			m_numDrawBuffers = uint8_t(colorIdx);
+			m_drawBufferMask = uint8_t( (1<<colorIdx)-1);
 
 			if (0 == colorIdx && BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) )
 			{
@@ -10909,7 +10909,7 @@ namespace bgfx { namespace gl
 
 					viewState.setPredefined<1>(this, view, *renderView, program, _render, draw);
 
-					setDrawBuffers(program.m_numFragOutputs);
+					setDrawBuffers(program.m_fragDataMask);
 
 					{
 						GLbitfield barrier = 0;
