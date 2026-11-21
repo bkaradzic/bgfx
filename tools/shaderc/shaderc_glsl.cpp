@@ -72,6 +72,8 @@ namespace bgfx { namespace glsl
 	{
 		switch (_format)
 		{
+		case spv::ImageFormatRg32f:
+		case spv::ImageFormatRg16f:
 		case spv::ImageFormatR11fG11fB10f:
 		case spv::ImageFormatR16f:
 		case spv::ImageFormatRgb10A2:
@@ -85,10 +87,14 @@ namespace bgfx { namespace glsl
 		case spv::ImageFormatRgba16Snorm:
 		case spv::ImageFormatR8Snorm:
 		case spv::ImageFormatRg8Snorm:
+		case spv::ImageFormatRg32ui:
+		case spv::ImageFormatRg16ui:
 		case spv::ImageFormatR8ui:
 		case spv::ImageFormatRg8ui:
 		case spv::ImageFormatR16ui:
 		case spv::ImageFormatRgb10a2ui:
+		case spv::ImageFormatRg32i:
+		case spv::ImageFormatRg16i:
 		case spv::ImageFormatR8i:
 		case spv::ImageFormatRg8i:
 		case spv::ImageFormatR16i:

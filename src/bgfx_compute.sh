@@ -14,6 +14,16 @@
  || BGFX_SHADER_LANGUAGE_SPIRV \
  || BGFX_SHADER_LANGUAGE_WGSL
 #	define FORMAT(_format) [[__CONCAT(spv::format_, _format)]]
+#	define format_r11f_g11f_b10f format_r11fg11fb10f
+#	define format_rg11b10f       format_r11fg11fb10f
+#	define format_rgb10_a2       format_rgb10a2
+#	define format_rgb10_a2ui     format_rgb10a2ui
+#	define format_rgba8_snorm    format_rgba8snorm
+#	define format_rg8_snorm      format_rg8snorm
+#	define format_r8_snorm       format_r8snorm
+#	define format_rgba16_snorm   format_rgba16snorm
+#	define format_rg16_snorm     format_rg16snorm
+#	define format_r16_snorm      format_r16snorm
 #	define WRITEONLY [[spv::nonreadable]]
 #else
 #	define FORMAT(_format)
@@ -28,26 +38,36 @@
 	layout(_format, binding=_reg) _access uniform highp _image _name
 
 #define readwrite
+#define rg11b10f r11f_g11f_b10f
 #define IMAGE2D_RO( _name, _format, _reg) __IMAGE_XX(_name, _format, _reg, image2D,  readonly)
 #define UIMAGE2D_RO(_name, _format, _reg) __IMAGE_XX(_name, _format, _reg, uimage2D, readonly)
+#define IIMAGE2D_RO(_name, _format, _reg) __IMAGE_XX(_name, _format, _reg, iimage2D, readonly)
 #define IMAGE2D_WO( _name, _format, _reg) __IMAGE_XX(_name, _format, _reg, image2D,  writeonly)
 #define UIMAGE2D_WO(_name, _format, _reg) __IMAGE_XX(_name, _format, _reg, uimage2D, writeonly)
+#define IIMAGE2D_WO(_name, _format, _reg) __IMAGE_XX(_name, _format, _reg, iimage2D, writeonly)
 #define IMAGE2D_RW( _name, _format, _reg) __IMAGE_XX(_name, _format, _reg, image2D,  readwrite)
 #define UIMAGE2D_RW(_name, _format, _reg) __IMAGE_XX(_name, _format, _reg, uimage2D, readwrite)
+#define IIMAGE2D_RW(_name, _format, _reg) __IMAGE_XX(_name, _format, _reg, iimage2D, readwrite)
 
 #define IMAGE2D_ARRAY_RO( _name, _format, _reg) __IMAGE_XX(_name, _format, _reg, image2DArray,  readonly)
 #define UIMAGE2D_ARRAY_RO(_name, _format, _reg) __IMAGE_XX(_name, _format, _reg, uimage2DArray, readonly)
+#define IIMAGE2D_ARRAY_RO(_name, _format, _reg) __IMAGE_XX(_name, _format, _reg, iimage2DArray, readonly)
 #define IMAGE2D_ARRAY_WO( _name, _format, _reg) __IMAGE_XX(_name, _format, _reg, image2DArray,  writeonly)
 #define UIMAGE2D_ARRAY_WO(_name, _format, _reg) __IMAGE_XX(_name, _format, _reg, uimage2DArray, writeonly)
+#define IIMAGE2D_ARRAY_WO(_name, _format, _reg) __IMAGE_XX(_name, _format, _reg, iimage2DArray, writeonly)
 #define IMAGE2D_ARRAY_RW( _name, _format, _reg) __IMAGE_XX(_name, _format, _reg, image2DArray,  readwrite)
 #define UIMAGE2D_ARRAY_RW(_name, _format, _reg) __IMAGE_XX(_name, _format, _reg, uimage2DArray, readwrite)
+#define IIMAGE2D_ARRAY_RW(_name, _format, _reg) __IMAGE_XX(_name, _format, _reg, iimage2DArray, readwrite)
 
 #define IMAGE3D_RO( _name, _format, _reg) __IMAGE_XX(_name, _format, _reg, image3D,  readonly)
 #define UIMAGE3D_RO(_name, _format, _reg) __IMAGE_XX(_name, _format, _reg, uimage3D, readonly)
+#define IIMAGE3D_RO(_name, _format, _reg) __IMAGE_XX(_name, _format, _reg, iimage3D, readonly)
 #define IMAGE3D_WO( _name, _format, _reg) __IMAGE_XX(_name, _format, _reg, image3D,  writeonly)
 #define UIMAGE3D_WO(_name, _format, _reg) __IMAGE_XX(_name, _format, _reg, uimage3D, writeonly)
+#define IIMAGE3D_WO(_name, _format, _reg) __IMAGE_XX(_name, _format, _reg, iimage3D, writeonly)
 #define IMAGE3D_RW( _name, _format, _reg) __IMAGE_XX(_name, _format, _reg, image3D,  readwrite)
 #define UIMAGE3D_RW(_name, _format, _reg) __IMAGE_XX(_name, _format, _reg, uimage3D, readwrite)
+#define IIMAGE3D_RW(_name, _format, _reg) __IMAGE_XX(_name, _format, _reg, iimage3D, readwrite)
 
 #define __BUFFER_XX(_name, _type, _reg, _access)                \
 	layout(std430, binding=_reg) _access buffer _name ## Buffer \
@@ -83,77 +103,116 @@
 
 #define SHARED groupshared
 
-#define COMP_r32ui    uint
-#define COMP_rg32ui   uint2
-#define COMP_rgba32ui uint4
-#define COMP_r16ui    uint
-#define COMP_rg16ui   uint2
-#define COMP_rgba16ui uint4
-#define COMP_r32f     float
-#define COMP_r16f     float
-#define COMP_rg16f    float2
-#define COMP_rgba16f  float4
+#define COMP_r8ui           uint
+#define COMP_rg8ui          uint2
+#define COMP_rgba8ui        uint4
+#define COMP_r16ui          uint
+#define COMP_rg16ui         uint2
+#define COMP_rgba16ui       uint4
+#define COMP_r32ui          uint
+#define COMP_rg32ui         uint2
+#define COMP_rgba32ui       uint4
+#define COMP_rgb10_a2ui     uint4
+#define COMP_r8i            int
+#define COMP_rg8i           int2
+#define COMP_rgba8i         int4
+#define COMP_r16i           int
+#define COMP_rg16i          int2
+#define COMP_rgba16i        int4
+#define COMP_r32i           int
+#define COMP_rg32i          int2
+#define COMP_rgba32i        int4
+#define COMP_r16f           float
+#define COMP_rg16f          float2
+#define COMP_rgba16f        float4
+#define COMP_r32f           float
+#define COMP_rg32f          float2
+#define COMP_rgba32f        float4
+#define COMP_rg11b10f       float3
+#define COMP_r11f_g11f_b10f float3
 #if BGFX_SHADER_LANGUAGE_HLSL
-#	define COMP_rgba8  unorm float4
-#	define COMP_rg8    unorm float2
-#	define COMP_r8     unorm float
-#	define COMP_rgba16 unorm float4
-#	define COMP_rg16   unorm float2
-#	define COMP_r16    unorm float
+#	define COMP_r8           unorm float
+#	define COMP_rg8          unorm float2
+#	define COMP_rgba8        unorm float4
+#	define COMP_r16          unorm float
+#	define COMP_rg16         unorm float2
+#	define COMP_rgba16       unorm float4
+#	define COMP_rgb10_a2     unorm float4
+#	define COMP_r8_snorm     snorm float
+#	define COMP_rg8_snorm    snorm float2
+#	define COMP_rgba8_snorm  snorm float4
+#	define COMP_r16_snorm    snorm float
+#	define COMP_rg16_snorm   snorm float2
+#	define COMP_rgba16_snorm snorm float4
 #else
-#	define COMP_rgba8        float4
-#	define COMP_rg8          float2
 #	define COMP_r8           float
-#	define COMP_rgba16       float4
-#	define COMP_rg16         float2
+#	define COMP_rg8          float2
+#	define COMP_rgba8        float4
 #	define COMP_r16          float
+#	define COMP_rg16         float2
+#	define COMP_rgba16       float4
+#	define COMP_rgb10_a2     float4
+#	define COMP_r8_snorm     float
+#	define COMP_rg8_snorm    float2
+#	define COMP_rgba8_snorm  float4
+#	define COMP_r16_snorm    float
+#	define COMP_rg16_snorm   float2
+#	define COMP_rgba16_snorm float4
 #endif // BGFX_SHADER_LANGUAGE_HLSL
-#define COMP_rgba32f  float4
 
 #define IMAGE2D_RO( _name, _format, _reg) \
 	FORMAT(_format) Texture2D<__CONCAT(COMP_, _format)> _name : REGISTER(t, _reg);
 
 #define UIMAGE2D_RO(_name, _format, _reg) IMAGE2D_RO(_name, _format, _reg)
+#define IIMAGE2D_RO(_name, _format, _reg) IMAGE2D_RO(_name, _format, _reg)
 
 #define IMAGE2D_WO( _name, _format, _reg) \
 	WRITEONLY FORMAT(_format) RWTexture2D<__CONCAT(COMP_, _format)> _name : REGISTER(u, _reg);
 
 #define UIMAGE2D_WO(_name, _format, _reg) IMAGE2D_WO(_name, _format, _reg)
+#define IIMAGE2D_WO(_name, _format, _reg) IMAGE2D_WO(_name, _format, _reg)
 
 #define IMAGE2D_RW( _name, _format, _reg) \
 	FORMAT(_format) RWTexture2D<__CONCAT(COMP_, _format)> _name : REGISTER(u, _reg);
 
 #define UIMAGE2D_RW(_name, _format, _reg) IMAGE2D_RW(_name, _format, _reg)
+#define IIMAGE2D_RW(_name, _format, _reg) IMAGE2D_RW(_name, _format, _reg)
 
 #define IMAGE2D_ARRAY_RO(_name, _format, _reg) \
 	FORMAT(_format) Texture2DArray<__CONCAT(COMP_, _format)> _name : REGISTER(t, _reg);
 
 #define UIMAGE2D_ARRAY_RO(_name, _format, _reg) IMAGE2D_ARRAY_RO(_name, _format, _reg)
+#define IIMAGE2D_ARRAY_RO(_name, _format, _reg) IMAGE2D_ARRAY_RO(_name, _format, _reg)
 
 #define IMAGE2D_ARRAY_WO( _name, _format, _reg) \
 	WRITEONLY FORMAT(_format) RWTexture2DArray<__CONCAT(COMP_, _format)> _name : REGISTER(u, _reg);
 
 #define UIMAGE2D_ARRAY_WO(_name, _format, _reg) IMAGE2D_ARRAY_WO(_name, _format, _reg)
+#define IIMAGE2D_ARRAY_WO(_name, _format, _reg) IMAGE2D_ARRAY_WO(_name, _format, _reg)
 
 #define IMAGE2D_ARRAY_RW(_name, _format, _reg) \
 	FORMAT(_format) RWTexture2DArray<__CONCAT(COMP_, _format)> _name : REGISTER(u, _reg);
 
 #define UIMAGE2D_ARRAY_RW(_name, _format, _reg) IMAGE2D_ARRAY_RW(_name, _format, _reg)
+#define IIMAGE2D_ARRAY_RW(_name, _format, _reg) IMAGE2D_ARRAY_RW(_name, _format, _reg)
 
 #define IMAGE3D_RO( _name, _format, _reg) \
 	FORMAT(_format) Texture3D<__CONCAT(COMP_, _format)> _name : REGISTER(t, _reg);
 
 #define UIMAGE3D_RO(_name, _format, _reg) IMAGE3D_RO(_name, _format, _reg)
+#define IIMAGE3D_RO(_name, _format, _reg) IMAGE3D_RO(_name, _format, _reg)
 
 #define IMAGE3D_WO( _name, _format, _reg) \
 	WRITEONLY FORMAT(_format) RWTexture3D<__CONCAT(COMP_, _format)> _name : REGISTER(u, _reg);
 
 #define UIMAGE3D_WO(_name, _format, _reg) IMAGE3D_WO(_name, _format, _reg)
+#define IIMAGE3D_WO(_name, _format, _reg) IMAGE3D_WO(_name, _format, _reg)
 
 #define IMAGE3D_RW( _name, _format, _reg) \
 	FORMAT(_format) RWTexture3D<__CONCAT(COMP_, _format)> _name : REGISTER(u, _reg);
 
 #define UIMAGE3D_RW(_name, _format, _reg) IMAGE3D_RW(_name, _format, _reg)
+#define IIMAGE3D_RW(_name, _format, _reg) IMAGE3D_RW(_name, _format, _reg)
 
 #if BGFX_SHADER_LANGUAGE_METAL \
  || BGFX_SHADER_LANGUAGE_SPIRV \
@@ -283,16 +342,24 @@
 
 __IMAGE_IMPL_A(float,  x,    vec4,  xxxx)
 __IMAGE_IMPL_A(float2, xy,   vec4,  xyyy)
+__IMAGE_IMPL_A(float3, xyz,  vec4,  xyzz)
 __IMAGE_IMPL_A(float4, xyzw, vec4,  xyzw)
 
 __IMAGE_IMPL_A(uint,   x,    uvec4, xxxx)
 __IMAGE_IMPL_A(uint2,  xy,   uvec4, xyyy)
 __IMAGE_IMPL_A(uint4,  xyzw, uvec4, xyzw)
 
+__IMAGE_IMPL_A(int,    x,    ivec4, xxxx)
+__IMAGE_IMPL_A(int2,   xy,   ivec4, xyyy)
+__IMAGE_IMPL_A(int4,   xyzw, ivec4, xyzw)
+
 #if BGFX_SHADER_LANGUAGE_HLSL && !BGFX_SHADER_LANGUAGE_DXIL
 __IMAGE_IMPL_A(unorm float,       x,    vec4,  xxxx)
 __IMAGE_IMPL_A(unorm float2,      xy,   vec4,  xyyy)
 __IMAGE_IMPL_A(unorm float4,      xyzw, vec4,  xyzw)
+__IMAGE_IMPL_A(snorm float,       x,    vec4,  xxxx)
+__IMAGE_IMPL_A(snorm float2,      xy,   vec4,  xyyy)
+__IMAGE_IMPL_A(snorm float4,      xyzw, vec4,  xyzw)
 #endif // BGFX_SHADER_LANGUAGE_HLSL && !BGFX_SHADER_LANGUAGE_DXIL
 
 __IMAGE_IMPL_ATOMIC(uint, x, uvec4, xxxx)
