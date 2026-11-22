@@ -96,6 +96,7 @@ public:
 
 		// Create program from shaders.
 		m_program = loadProgram("vs_clip", "fs_clip");
+		m_clipPlane = bgfx::createUniform("u_clipPlane", bgfx::UniformType::Vec4);
 
 		imguiCreate();
 	}
@@ -106,6 +107,7 @@ public:
 		bgfx::destroy(m_ibh);
 		bgfx::destroy(m_vbh);
 		bgfx::destroy(m_program);
+		bgfx::destroy(m_clipPlane);
 		bgfx::shutdown();
 		return 0;
 	}
@@ -157,6 +159,10 @@ public:
 		float model[16];
 		bx::mtxIdentity(model);
 
+		// Clip against the horizontal plane y = 0.
+		const float clipPlane[4] = { 0.0f, 0.5f, 0.0f, 0.0f };
+		bgfx::setUniform(m_clipPlane, clipPlane);
+
 		// Set model matrix for rendering.
 		bgfx::setTransform(model);
 
@@ -166,7 +172,7 @@ public:
 
 		// Set render states.
 		bgfx::setState(BGFX_STATE_WRITE_RGB|BGFX_STATE_WRITE_A|BGFX_STATE_WRITE_Z
-			| BGFX_STATE_DEPTH_TEST_LESS|BGFX_STATE_CULL_CW|BGFX_STATE_MSAA);
+			| BGFX_STATE_DEPTH_TEST_LESS|BGFX_STATE_MSAA);
 
 		// Submit primitive for rendering to view 0.
 		bgfx::submit(0, m_program);
@@ -185,6 +191,7 @@ public:
 	bgfx::VertexBufferHandle m_vbh;
 	bgfx::IndexBufferHandle m_ibh;
 	bgfx::ProgramHandle m_program;
+	bgfx::UniformHandle m_clipPlane;
 };
 
 } // namespace
