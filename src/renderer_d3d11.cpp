@@ -7241,6 +7241,13 @@ namespace bgfx { namespace d3d11
 			0.0f,
 		};
 
+		ID3D11RenderTargetView* rtv[D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT] = {};
+		ID3D11DepthStencilView* dsv = NULL;
+		deviceCtx->OMGetRenderTargets(BX_COUNTOF(rtv), rtv, &dsv);
+		deviceCtx->OMSetRenderTargets(0, NULL, NULL);
+
+		invalidateCompute();
+
 		deviceCtx->CSSetShader(shader.m_computeShader, NULL, 0);
 		deviceCtx->CSSetShaderResources(0, 1, &srv);
 		deviceCtx->CSSetUnorderedAccessViews(0, 1, &uav, NULL);
@@ -7264,6 +7271,15 @@ namespace bgfx { namespace d3d11
 		deviceCtx->CSSetShader(NULL, NULL, 0);
 
 		m_currentProgram = NULL;
+
+		deviceCtx->OMSetRenderTargets(BX_COUNTOF(rtv), rtv, dsv);
+
+		for (uint32_t ii = 0; ii < BX_COUNTOF(rtv); ++ii)
+		{
+			DX_RELEASE_I(rtv[ii]);
+		}
+
+		DX_RELEASE_I(dsv);
 
 		DX_RELEASE(srv, 0);
 		DX_RELEASE(uav, 0);
