@@ -6690,7 +6690,25 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			MTL::CaptureManager* captureMgr = getSharedCaptureManager();
 			MTL::CaptureDescriptor* captureDesc = newCaptureDescriptor();
 			captureDesc->setCaptureObject( (MTL::Device*)m_device);
-			captureDesc->setDestination(MTL::CaptureDestinationDeveloperTools);
+
+			if (captureMgr->supportsDestination(MTL::CaptureDestinationDeveloperTools) )
+			{
+				captureDesc->setDestination(MTL::CaptureDestinationDeveloperTools);
+			}
+			else if (captureMgr->supportsDestination(MTL::CaptureDestinationGPUTraceDocument) )
+			{
+				char filePath[64];
+				bx::snprintf(filePath, sizeof(filePath), "bgfx-frame-%u.gputrace", _render->m_frameNum);
+
+				captureDesc->setDestination(MTL::CaptureDestinationGPUTraceDocument);
+				captureDesc->setOutputURL(NS::URL::fileURLWithPath(nsstr(filePath) ) );
+
+				BX_TRACE("Capturing frame to %s.", filePath);
+			}
+			else
+			{
+				BX_TRACE("Frame capture isn't supported: set MTL_CAPTURE_ENABLED=1 to capture to a file.");
+			}
 
 			NS::Error* err = NULL;
 			captureMgr->startCapture(captureDesc, &err);
@@ -6699,6 +6717,8 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			{
 				BX_TRACE("Failed to start capture. Error %ld: %s", (long)err->code(), err->localizedDescription()->utf8String() );
 			}
+
+			MTL_RELEASE_I(captureDesc);
 		}
 
 		BGFX_MTL_PROFILER_BEGIN_LITERAL("rendererSubmit", kColorFrame);
