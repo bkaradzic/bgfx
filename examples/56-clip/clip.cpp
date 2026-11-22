@@ -48,6 +48,16 @@ static const uint16_t s_clipIndices[] =
 	2, 3, 6, 6, 3, 7,
 };
 
+static const ClipVertex s_capVertices[] =
+{
+	{ -1.0f, 0.0f, -1.0f, 0xff0000ff },
+	{ 1.0f, 0.0f, -1.0f,  0xff0000ff },
+	{ -1.0f, 0.0f,  1.0f, 0xff0000ff },
+	{ 1.0f, 0.0f,  1.0f,  0xff0000ff },
+};
+
+static const uint16_t s_capIndices[] = { 0, 1, 2, 1, 3, 2 };
+
 class ExampleClip : public entry::AppI
 {
 public:
@@ -59,6 +69,8 @@ public:
 		, m_reset(BGFX_RESET_VSYNC)
 		, m_vbh(BGFX_INVALID_HANDLE)
 		, m_ibh(BGFX_INVALID_HANDLE)
+		, m_capVbh(BGFX_INVALID_HANDLE)
+		, m_capIbh(BGFX_INVALID_HANDLE)
 		, m_program(BGFX_INVALID_HANDLE)
 	{
 	}
@@ -83,7 +95,7 @@ public:
 		bgfx::init(init);
 
 		bgfx::setDebug(m_debug);
-		bgfx::setViewClear(0, BGFX_CLEAR_COLOR|BGFX_CLEAR_DEPTH, 0x303030ff, 1.0f, 0);
+		bgfx::setViewClear(0, BGFX_CLEAR_COLOR|BGFX_CLEAR_DEPTH|BGFX_CLEAR_STENCIL, 0x303030ff, 1.0f, 0);
 
 		// Create vertex stream declaration.
 		ClipVertex::init();
@@ -93,6 +105,10 @@ public:
 
 		// Create static index buffer for triangle list rendering.
 		m_ibh = bgfx::createIndexBuffer(bgfx::makeRef(s_clipIndices, sizeof(s_clipIndices)));
+
+		// Create the plane used to visualize the clipped opening.
+		m_capVbh = bgfx::createVertexBuffer(bgfx::makeRef(s_capVertices, sizeof(s_capVertices)), ClipVertex::ms_layout);
+		m_capIbh = bgfx::createIndexBuffer(bgfx::makeRef(s_capIndices, sizeof(s_capIndices)));
 
 		// Create program from shaders.
 		m_program = loadProgram("vs_clip", "fs_clip");
@@ -106,6 +122,8 @@ public:
 		imguiDestroy();
 		bgfx::destroy(m_ibh);
 		bgfx::destroy(m_vbh);
+		bgfx::destroy(m_capIbh);
+		bgfx::destroy(m_capVbh);
 		bgfx::destroy(m_program);
 		bgfx::destroy(m_clipPlane);
 		bgfx::shutdown();
@@ -124,13 +142,6 @@ public:
 			m_mouseState.m_mz, uint16_t(m_width), uint16_t(m_height));
 		showExampleDialog(this);
 		imguiEndFrame();
-
-		// Set view 0 default viewport.
-		bgfx::setViewRect(0, 0, 0, uint16_t(m_width), uint16_t(m_height));
-
-		// This dummy draw call is here to make sure that view 0 is cleared
-		// if no other draw calls are submitted to view 0.
-		bgfx::touch(0);
 
 		// Isometric-style camera: view the origin diagonally from above.
 		const bx::Vec3 at = { 0.0f, 0.0f, 0.0f };
@@ -154,7 +165,12 @@ public:
 			,  0.0f
 			,  bgfx::getCaps()->homogeneousDepth
 			);
-		bgfx::setViewTransform(0, view, proj);
+
+		for (bgfx::ViewId viewId = 0; viewId < 4; ++viewId)
+		{
+			bgfx::setViewRect(viewId, 0, 0, uint16_t(m_width), uint16_t(m_height));
+			bgfx::setViewTransform(viewId, view, proj);
+		}
 
 		float model[16];
 		bx::mtxIdentity(model);
@@ -163,19 +179,66 @@ public:
 		const float clipPlane[4] = { 0.0f, 0.5f, 0.0f, 0.0f };
 		bgfx::setUniform(m_clipPlane, clipPlane);
 
-		// Set model matrix for rendering.
+		// Pass 0: Increment the stencil where backface exists.
 		bgfx::setTransform(model);
-
-		// Set vertex and index buffer.
 		bgfx::setVertexBuffer(0, m_vbh);
 		bgfx::setIndexBuffer(m_ibh);
-
-		// Set render states.
-		bgfx::setState(BGFX_STATE_WRITE_RGB|BGFX_STATE_WRITE_A|BGFX_STATE_WRITE_Z
-			| BGFX_STATE_DEPTH_TEST_LESS|BGFX_STATE_MSAA);
-
-		// Submit primitive for rendering to view 0.
+		bgfx::setStencil(
+			BGFX_STENCIL_TEST_ALWAYS
+			| BGFX_STENCIL_OP_FAIL_S_KEEP
+			| BGFX_STENCIL_OP_FAIL_Z_KEEP
+			| BGFX_STENCIL_OP_PASS_Z_INCRSAT
+			, BGFX_STENCIL_NONE
+			);
+		bgfx::setState(
+			BGFX_STATE_DEPTH_TEST_LESS
+			| BGFX_STATE_CULL_CCW
+			);
 		bgfx::submit(0, m_program);
+
+		// Pass 1: Decrement the stencil where frontface exists to leave peeping backface in stencil.
+		bgfx::setStencil(
+			BGFX_STENCIL_TEST_ALWAYS
+			| BGFX_STENCIL_OP_FAIL_S_KEEP
+			| BGFX_STENCIL_OP_FAIL_Z_KEEP
+			| BGFX_STENCIL_OP_PASS_Z_DECRSAT
+			, BGFX_STENCIL_NONE
+			);
+		bgfx::setState(
+			BGFX_STATE_DEPTH_TEST_LESS
+			| BGFX_STATE_CULL_CW
+			);
+		bgfx::submit(1, m_program);
+
+		// Pass 2: render the clipped cube normally.
+		bgfx::setStencil(BGFX_STENCIL_NONE, BGFX_STENCIL_NONE);
+		bgfx::setTransform(model);
+		bgfx::setVertexBuffer(0, m_vbh);
+		bgfx::setIndexBuffer(m_ibh);
+		bgfx::setState(
+			BGFX_STATE_WRITE_RGB|BGFX_STATE_WRITE_A|BGFX_STATE_WRITE_Z
+			| BGFX_STATE_DEPTH_TEST_LESS|BGFX_STATE_MSAA
+			);
+		bgfx::submit(2, m_program);
+
+		// Pass 3: Render the capp masked with above computed stencil.
+		bgfx::setTransform(model);
+		bgfx::setVertexBuffer(0, m_capVbh);
+		bgfx::setIndexBuffer(m_capIbh);
+		bgfx::setStencil(
+			BGFX_STENCIL_TEST_NOTEQUAL
+			| BGFX_STENCIL_FUNC_REF(0)
+			| BGFX_STENCIL_FUNC_RMASK(0xff)
+			| BGFX_STENCIL_OP_FAIL_S_KEEP
+			| BGFX_STENCIL_OP_FAIL_Z_KEEP
+			| BGFX_STENCIL_OP_PASS_Z_KEEP
+			, BGFX_STENCIL_NONE
+			);
+		bgfx::setState(
+			BGFX_STATE_WRITE_RGB|BGFX_STATE_WRITE_A
+			| BGFX_STATE_DEPTH_TEST_LESS|BGFX_STATE_MSAA
+			);
+		bgfx::submit(3, m_program);
 
 		// Advance to next frame. Rendering thread will be kicked to
 		// process submitted rendering primitives.
@@ -190,6 +253,8 @@ public:
 	uint32_t m_reset;
 	bgfx::VertexBufferHandle m_vbh;
 	bgfx::IndexBufferHandle m_ibh;
+	bgfx::VertexBufferHandle m_capVbh;
+	bgfx::IndexBufferHandle m_capIbh;
 	bgfx::ProgramHandle m_program;
 	bgfx::UniformHandle m_clipPlane;
 };
@@ -200,5 +265,5 @@ ENTRY_IMPLEMENT_MAIN(
 	  ExampleClip
 	, "56-clip"
 	, "Rendering a simple position/color geometry for clipping experiments."
-	, "https://bkaradzic.github.io/bgfx/examples.html#clip"
+	//, "https://bkaradzic.github.io/bgfx/examples.html#clip" : Pending implementation
 	);
