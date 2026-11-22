@@ -7267,6 +7267,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 				if (isCompute)
 				{
 					if (!wasCompute
+					||  NULL == m_computeCommandEncoder
 					|| (profileViews && viewChanged) )
 					{
 						wasCompute = true;
