@@ -2775,6 +2775,7 @@ public static class bgfx
 	{
 		public Caps* caps;
 		public void* context;
+		public void* queue;
 	}
 	
 	[CRepr]

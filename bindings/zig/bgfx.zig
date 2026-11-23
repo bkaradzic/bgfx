@@ -1715,6 +1715,7 @@ pub const Caps = extern struct {
     pub const InternalData = extern struct {
         caps: [*c]const Caps,
         context: ?*anyopaque,
+        queue: ?*anyopaque,
     };
 
     pub const PlatformData = extern struct {

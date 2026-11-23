@@ -2244,6 +2244,7 @@ namespace bgfx { namespace d3d12
 			}
 
 			g_internalData.context = m_device;
+			g_internalData.queue   = m_cmd.m_commandQueue;
 			return true;
 
 		error:

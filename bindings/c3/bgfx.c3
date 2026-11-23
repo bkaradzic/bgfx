@@ -1865,6 +1865,8 @@ struct InternalData
 	Caps* caps;
 	// GL context, or D3D device.
 	void* context;
+	// D3D12 or Metal command queue.
+	void* queue;
 }
 
 // Platform data.
@@ -1873,7 +1875,7 @@ struct PlatformData
 	// GL context, D3D device, or Vulkan device. If `NULL`, bgfx
 	// will create context/device.
 	void* context;
-	// D3D12 Queue. If `NULL` bgfx will create queue.
+	// D3D12 or Metal command queue. If `NULL` bgfx will create queue.
 	void* queue;
 	// Handle type. Needed for platforms having more than one option.
 	NativeWindowHandleType type;
