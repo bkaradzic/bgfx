@@ -6502,9 +6502,13 @@ namespace bgfx { namespace d3d11
 					}
 					else if (Access::Write == at.access)
 					{
-						m_needsQuadClearZero |= 0 != at.mip
-							|| 0 != at.layer
-							|| 1 < texture.m_numLayers
+						m_needsQuadClearZero |= true
+							&& (1 == at.numLayers)
+							&& (false
+								|| 0 != at.mip
+								|| 0 != at.layer
+								|| 1 < texture.m_numLayers
+							 	)
 							;
 
 						m_intColorMask |= isIntegerFormat(TextureFormat::Enum(texture.m_textureFormat) ) ? uint8_t(1<<m_num) : 0;
