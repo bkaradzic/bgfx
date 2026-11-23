@@ -3508,41 +3508,38 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 					}
 				}
 
-				if (0 < _numInstanceData)
+				uint32_t numInstanceAttribs = 0;
+
+				for (uint32_t ii = 0; ii < BX_COUNTOF(s_instanceDataName); ++ii)
 				{
-					uint32_t numAttribs = 0;
-					for (uint32_t ii = 0; ii < BX_COUNTOF(s_instanceDataName); ++ii)
+					const uint32_t loc = program.m_instanceData[ii];
+
+					if (UINT32_MAX == loc)
 					{
-						const uint32_t loc = program.m_instanceData[ii];
-						if (UINT32_MAX != loc)
-						{
-							vertexDesc->attributes()->object(loc)->setFormat(MTL::VertexFormatFloat4);
-							vertexDesc->attributes()->object(loc)->setBufferIndex(stream+1);
-							vertexDesc->attributes()->object(loc)->setOffset(ii*16);
-							++numAttribs;
-						}
+						continue;
 					}
 
-					if (0 < numAttribs)
+					if (ii < _numInstanceData)
 					{
-						vertexDesc->layouts()->object(stream+1)->setStride(_numInstanceData * 16);
-						vertexDesc->layouts()->object(stream+1)->setStepFunction(MTL::VertexStepFunctionPerInstance);
-						vertexDesc->layouts()->object(stream+1)->setStepRate(1);
+						vertexDesc->attributes()->object(loc)->setFormat(MTL::VertexFormatFloat4);
+						vertexDesc->attributes()->object(loc)->setBufferIndex(stream+1);
+						vertexDesc->attributes()->object(loc)->setOffset(ii*16);
+						++numInstanceAttribs;
+					}
+					else
+					{
+						vertexDesc->attributes()->object(loc)->setFormat(MTL::VertexFormatUChar4);
+						vertexDesc->attributes()->object(loc)->setBufferIndex(1);
+						vertexDesc->attributes()->object(loc)->setOffset(0);
+						usedFallbackAttrib = true;
 					}
 				}
-				else
+
+				if (0 < numInstanceAttribs)
 				{
-					for (uint32_t ii = 0; ii < BX_COUNTOF(s_instanceDataName); ++ii)
-					{
-						const uint32_t loc = program.m_instanceData[ii];
-						if (UINT32_MAX != loc)
-						{
-							vertexDesc->attributes()->object(loc)->setFormat(MTL::VertexFormatUChar4);
-							vertexDesc->attributes()->object(loc)->setBufferIndex(1);
-							vertexDesc->attributes()->object(loc)->setOffset(0);
-							usedFallbackAttrib = true;
-						}
-					}
+					vertexDesc->layouts()->object(stream+1)->setStride(_numInstanceData * 16);
+					vertexDesc->layouts()->object(stream+1)->setStepFunction(MTL::VertexStepFunctionPerInstance);
+					vertexDesc->layouts()->object(stream+1)->setStepRate(1);
 				}
 
 				MTL::VertexBufferLayoutDescriptor* vbld = vertexDesc->layouts()->object(1);

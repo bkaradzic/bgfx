@@ -907,7 +907,7 @@ namespace bgfx { namespace spirv
 						}
 						else
 						{
-							bx::write(_shaderWriter, uint16_t(UINT16_MAX), &err);
+							bx::write(_shaderWriter, toInstanceDataId(program->getAttributeName(ii) ), &err);
 						}
 					}
 

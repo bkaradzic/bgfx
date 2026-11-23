@@ -2312,6 +2312,7 @@ namespace bgfx { namespace gl
 			, m_readBackSupported(BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) )
 			, m_readBackFboSupported(false)
 			, m_vaoSupport(false)
+			, m_clipControl(false)
 			, m_samplerObjectSupport(false)
 			, m_srgbWriteControlSupport(BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) )
 			, m_srgbDecodeSupport(false)
@@ -3046,6 +3047,15 @@ namespace bgfx { namespace gl
 				{
 					g_caps.homogeneousDepth = true;
 					g_caps.originBottomLeft = true;
+				}
+				else
+				{
+					m_clipControl = true
+						&& BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL)
+						&& s_extension[Extension::ARB_clip_control].m_supported
+						&& NULL != glClipControl
+						;
+					setClipControl();
 				}
 
 				m_vaoSupport = !BX_ENABLED(BX_PLATFORM_EMSCRIPTEN)
@@ -5605,6 +5615,14 @@ namespace bgfx { namespace gl
 			}
 		}
 
+		void setClipControl()
+		{
+			if (m_clipControl)
+			{
+				GL_CHECK(glClipControl(GL_LOWER_LEFT, GL_ZERO_TO_ONE) );
+			}
+		}
+
 		void setProgram(GLuint program)
 		{
 			m_uniformStateCache.saveCurrentProgram(program);
@@ -5737,6 +5755,7 @@ namespace bgfx { namespace gl
 		bool m_readBackSupported;
 		bool m_readBackFboSupported;
 		bool m_vaoSupport;
+		bool m_clipControl;
 		bool m_samplerObjectSupport;
 		bool m_srgbWriteControlSupport;
 		bool m_srgbDecodeSupport;
@@ -6570,11 +6589,20 @@ namespace bgfx { namespace gl
 		for (uint32_t ii = 0; -1 != m_instanceData[ii]; ++ii)
 		{
 			GLint loc = m_instanceData[ii];
-			lazyEnableVertexAttribArray(loc);
 
-			const uint32_t baseVertex = _baseVertex + m_instanceOffset[ii];
-			GL_CHECK(glVertexAttribPointer(loc, 4, GL_FLOAT, GL_FALSE, _stride, (void*)(uintptr_t)baseVertex) );
-			GL_CHECK(glVertexAttribDivisor(loc, 1) );
+			if (m_instanceOffset[ii] < _stride)
+			{
+				lazyEnableVertexAttribArray(loc);
+
+				const uint32_t baseVertex = _baseVertex + m_instanceOffset[ii];
+				GL_CHECK(glVertexAttribPointer(loc, 4, GL_FLOAT, GL_FALSE, _stride, (void*)(uintptr_t)baseVertex) );
+				GL_CHECK(glVertexAttribDivisor(loc, 1) );
+			}
+			else
+			{
+				lazyDisableVertexAttribArray(loc);
+				GL_CHECK(glVertexAttrib4f(loc, 0.0f, 0.0f, 0.0f, 1.0f) );
+			}
 		}
 	}
 
@@ -7966,6 +7994,8 @@ namespace bgfx { namespace gl
 	static bx::StringView patchNdcConventions(
 		  const bx::StringView& _code
 		, GLenum _type
+		, bool _writePointSize
+		, bool _clipControl
 		, char* _temp
 		, int32_t _tempLen
 		)
@@ -8020,17 +8050,20 @@ namespace bgfx { namespace gl
 			bx::write(&writer, "#define main bgfx_ndcMain\n", &err);
 			bx::write(&writer, split, int32_t(_code.getTerm() - split), &err);
 			bx::write(&writer
+				, &err
 				, "\n#undef main\n"
 				  "void main()\n"
 				  "{\n"
 				  "\tbgfx_ndcMain();\n"
+				  "%s"
 				  "\tif (0.0 != bgfx_indirectArgBase.w)\n"
 				  "\t{\n"
-				  "\t\tgl_Position.z = gl_Position.z*2.0 - gl_Position.w;\n"
+				  "%s"
 				  "\t\tgl_Position.y = 0.0 > bgfx_indirectArgBase.w ? -gl_Position.y : gl_Position.y;\n"
 				  "\t}\n"
 				  "}\n"
-				, &err
+				, _writePointSize ? "\tgl_PointSize = 1.0;\n" : ""
+				, _clipControl    ? "" : "\t\tgl_Position.z = gl_Position.z*2.0 - gl_Position.w;\n"
 				);
 		}
 		else
@@ -8176,6 +8209,8 @@ namespace bgfx { namespace gl
 
 		if (0 != m_id)
 		{
+			bool writePointSize = false;
+
 			if (0 != bx::strCmp(code, "#version", 8) )
 			{
 				const int32_t tempLen = code.getLength() + (4<<10);
@@ -8209,20 +8244,25 @@ namespace bgfx { namespace gl
 					bx::write(&writer, &err, "#version %d\n", BGFX_CONFIG_RENDERER_OPENGL*10);
 				}
 
-				const bool writePointSize = true
+				writePointSize = true
 					&& BX_ENABLED(BX_PLATFORM_EMSCRIPTEN)
 					&& GL_VERTEX_SHADER == m_type
 					&& bx::strFind(code, "gl_PointSize").isEmpty()
 					;
 
-				if (writePointSize)
+				const bool wrapMain = true
+					&& writePointSize
+					&& !BX_ENABLED(BGFX_CONFIG_GL_NORMALIZE_NDC_CONVENTIONS)
+					;
+
+				if (wrapMain)
 				{
 					bx::write(&writer, &err, "#define main bgfx_main\n");
 				}
 
 				bx::write(&writer, code.getPtr(), code.getLength(), &err);
 
-				if (writePointSize)
+				if (wrapMain)
 				{
 					bx::write(&writer, &err
 						, "\n#undef main\n"
@@ -8251,7 +8291,7 @@ namespace bgfx { namespace gl
 				{
 					const int32_t ndcTempLen = code.getLength() + (4<<10);
 					ndcTemp = (char*)BX_STACK_ALLOC(ndcTempLen);
-					code = patchNdcConventions(code, m_type, ndcTemp, ndcTempLen);
+					code = patchNdcConventions(code, m_type, writePointSize, s_renderGL->m_clipControl, ndcTemp, ndcTempLen);
 				}
 #endif // BGFX_CONFIG_GL_NORMALIZE_NDC_CONVENTIONS
 
@@ -8514,6 +8554,13 @@ namespace bgfx { namespace gl
 		m_numTh     = 0;
 		m_denseIdx  = _denseIdx;
 		m_needPresent = false;
+
+		if (s_renderGL->m_clipControl)
+		{
+			s_renderGL->m_glctx.makeCurrent(m_swapChain);
+			s_renderGL->setClipControl();
+			s_renderGL->m_glctx.makeCurrent(NULL);
+		}
 
 		createSwapChainFbo(_desc);
 	}

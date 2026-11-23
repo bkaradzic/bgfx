@@ -33,6 +33,12 @@ namespace bgfx
 	AttribType::Enum idToAttribType(uint16_t id);
 
 	///
+	uint16_t instanceDataToId(uint8_t _idx);
+
+	///
+	uint8_t idToInstanceData(uint16_t _id);
+
+	///
 	int32_t write(bx::WriterI* _writer, const bgfx::VertexLayout& _layout, bx::Error* _err = NULL);
 
 	///

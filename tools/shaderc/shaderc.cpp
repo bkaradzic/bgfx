@@ -237,6 +237,22 @@ namespace bgfx
 		NULL
 	};
 
+	uint16_t toInstanceDataId(const bx::StringView& _name)
+	{
+		for (uint8_t ii = 0; ii < 16; ++ii)
+		{
+			char name[16];
+			bx::snprintf(name, sizeof(name), "i_data%d", ii);
+
+			if (0 == bx::strCmp(_name, name) )
+			{
+				return bgfx::instanceDataToId(ii);
+			}
+		}
+
+		return UINT16_MAX;
+	}
+
 	void fatal(const char* _filePath, uint16_t _line, Fatal::Enum _code, const char* _format, ...)
 	{
 		BX_UNUSED(_filePath, _line, _code);

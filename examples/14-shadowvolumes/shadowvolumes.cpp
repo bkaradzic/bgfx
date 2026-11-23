@@ -1059,40 +1059,51 @@ struct Instance
 };
 
 #define SV_INSTANCE_MEM_SIZE (1500 << 10)
-#define SV_INSTANCE_COUNT ( (25 > MAX_INSTANCE_COUNT) ? 25 : MAX_INSTANCE_COUNT)
-#define SV_PAGE_SIZE (SV_INSTANCE_MEM_SIZE * SV_INSTANCE_COUNT * MAX_LIGHTS_COUNT)
 
 struct ShadowVolumeAllocator
 {
 	ShadowVolumeAllocator()
+		: m_mem(NULL)
+		, m_ptr(NULL)
 	{
-		m_mem = (uint8_t*)malloc(SV_PAGE_SIZE*2);
-		m_ptr = m_mem;
-		m_firstPage = true;
 	}
 
-	~ShadowVolumeAllocator()
+	void init()
+	{
+		m_mem = (uint8_t*)malloc(SV_INSTANCE_MEM_SIZE);
+		m_ptr = m_mem;
+	}
+
+	void shutdown()
 	{
 		free(m_mem);
+		m_mem = NULL;
+		m_ptr = NULL;
 	}
 
 	void* alloc(uint32_t _size)
 	{
 		void* ret = (void*)m_ptr;
 		m_ptr += _size;
-		BX_ASSERT(m_ptr - m_mem < (m_firstPage ? SV_PAGE_SIZE : 2 * SV_PAGE_SIZE), "Buffer overflow!");
+		BX_ASSERT(m_ptr - m_mem <= SV_INSTANCE_MEM_SIZE, "Buffer overflow!");
 		return ret;
 	}
 
-	void swap()
+	void reset()
 	{
-		m_ptr = m_firstPage ? m_mem + SV_PAGE_SIZE : m_mem;
-		m_firstPage = !m_firstPage;
+		m_ptr = m_mem;
+	}
+
+	const bgfx::Memory* copy(const void* _data, uint32_t _size)
+	{
+		return 0 < _size
+			? bgfx::copy(_data, _size)
+			: bgfx::makeRef(_data, _size)
+			;
 	}
 
 	uint8_t* m_mem;
 	uint8_t* m_ptr;
-	bool m_firstPage;
 };
 
 struct ShadowVolumeImpl
@@ -1211,6 +1222,8 @@ void shadowVolumeCreate(
 	};
 
 	bool cap = (ShadowVolumeImpl::DepthFail == _impl);
+
+	_svAllocator.reset();
 
 	VertexData* verticesSide    = (VertexData*)_svAllocator.alloc(20000 * sizeof(VertexData) );
 	uint16_t*   indicesSide     = (uint16_t  *)_svAllocator.alloc(20000 * 3*sizeof(uint16_t) );
@@ -1500,10 +1513,10 @@ void shadowVolumeCreate(
 	uint32_t vsize = vsideI * 5*sizeof(float);
 	uint32_t isize = sideI * sizeof(uint16_t);
 
-	mem = bgfx::makeRef(verticesSide, vsize);
+	mem = _svAllocator.copy(verticesSide, vsize);
 	_outShadowVolume.m_vbSides = bgfx::createVertexBuffer(mem, layout);
 
-	mem = bgfx::makeRef(indicesSide, isize);
+	mem = _svAllocator.copy(indicesSide, isize);
 	_outShadowVolume.m_ibSides = bgfx::createIndexBuffer(mem);
 
 	// bgfx::destroy*Buffer doesn't actually destroy buffers now.
@@ -1515,7 +1528,7 @@ void shadowVolumeCreate(
 	{
 		//front cap
 		isize = frontCapI * sizeof(uint16_t);
-		mem = bgfx::makeRef(indicesFrontCap, isize);
+		mem = _svAllocator.copy(indicesFrontCap, isize);
 		_outShadowVolume.m_ibFrontCap = bgfx::createIndexBuffer(mem);
 
 		//gets destroyed after the end of the next frame
@@ -1523,7 +1536,7 @@ void shadowVolumeCreate(
 
 		//back cap
 		isize = backCapI * sizeof(uint16_t);
-		mem = bgfx::makeRef(indicesBackCap, isize);
+		mem = _svAllocator.copy(indicesBackCap, isize);
 		_outShadowVolume.m_ibBackCap = bgfx::createIndexBuffer(mem);
 
 		//gets destroyed after the end of the next frame
@@ -1705,6 +1718,8 @@ public:
 	void init(int32_t _argc, const char* const* _argv, uint32_t _width, uint32_t _height) override
 	{
 		Args args(_argc, _argv);
+
+		m_svAllocator.init();
 
 		m_viewState   = ViewState(_width, _height);
 		m_clearValues = { 0x00000000, 1.0f, 0 };
@@ -1914,6 +1929,8 @@ public:
 
 		// Shutdown bgfx.
 		bgfx::shutdown();
+
+		m_svAllocator.shutdown();
 
 		return 0;
 	}
@@ -2675,9 +2692,6 @@ public:
 			// Advance to next frame. Rendering thread will be kicked to
 			// process submitted rendering primitives.
 			bgfx::frame();
-
-			// Swap memory pages.
-			m_svAllocator.swap();
 
 			// Reset clear values.
 			setViewClearMask(UINT32_MAX
