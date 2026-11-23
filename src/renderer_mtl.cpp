@@ -3086,7 +3086,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 								const char* name = utf8String(arg->name() );
 								BX_UNUSED(name);
 
-								if (arg->index() >= BGFX_CONFIG_MAX_TEXTURE_SAMPLERS)
+								if (arg->index() - 1 >= BGFX_CONFIG_MAX_TEXTURE_SAMPLERS)
 								{
 									BX_TRACE(
 										"Binding index is too large %d max is %d. "
