@@ -548,7 +548,7 @@ namespace wgpu {
 		uint16_t m_blockSize;
 		uint8_t  m_numPredefined;
 		uint8_t  m_numAttrs;
-		uint8_t  m_numInstanceData;
+		uint8_t  m_instanceLocation[BGFX_CONFIG_MAX_INSTANCE_DATA_COUNT];
 		uint8_t  m_outputMask;
 
 		ShaderBinding m_shaderBinding[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS];

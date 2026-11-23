@@ -107,6 +107,9 @@ namespace bgfx
 	/// dimension id stored in `Uniform::texDimension`.
 	uint8_t spirvDimToTextureDimensionId(uint32_t _dim, bool _arrayed, bool _multisampled);
 
+	///
+	uint16_t toInstanceDataId(const bx::StringView& _name);
+
 	struct Uniform
 	{
 		Uniform()

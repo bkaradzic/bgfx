@@ -4051,13 +4051,6 @@ WGPU_IMPORT
 				uint16_t attrMask[Attrib::Count];
 				bx::memCopy(attrMask, program.m_vsh->m_attrMask, sizeof(attrMask) );
 
-				uint32_t maxShaderLocation = 0;
-
-				for (uint32_t attr = 0; attr < Attrib::Count; ++attr)
-				{
-					maxShaderLocation = bx::max(maxShaderLocation, program.m_vsh->m_attrRemap[attr]);
-				}
-
 				if (UINT32_MAX != _streamMask)
 				{
 					for (bx::BitMaskToIndexIteratorT it(_streamMask)
@@ -4109,17 +4102,23 @@ WGPU_IMPORT
 					}
 				}
 
-				const uint32_t firstInstanceLocation = maxShaderLocation + (0 < numStreams);
-				const uint32_t numFallback = 0 < numStreams ? program.m_vsh->m_numInstanceData : 0;
+				const uint32_t numFallback = 0 < numStreams ? BX_COUNTOF(program.m_vsh->m_instanceLocation) : 0;
 
 				for (uint32_t ii = _numInstanceData; ii < numFallback; ++ii)
 				{
+					const uint8_t location = program.m_vsh->m_instanceLocation[ii];
+
+					if (UINT8_MAX == location)
+					{
+						continue;
+					}
+
 					*elem =
 					{
 						.nextInChain    = NULL,
 						.format         = WGPUVertexFormat_Unorm8x4,
 						.offset         = 0,
-						.shaderLocation = firstInstanceLocation+ii,
+						.shaderLocation = location,
 					};
 
 					++elem;
@@ -4128,14 +4127,24 @@ WGPU_IMPORT
 
 				if (0 < _numInstanceData)
 				{
-					for (uint32_t ii = 0; ii < _numInstanceData; ++ii)
+					const uint32_t numInstanceData = bx::min<uint32_t>(_numInstanceData, BX_COUNTOF(program.m_vsh->m_instanceLocation) );
+					uint32_t numInstanceAttribs = 0;
+
+					for (uint32_t ii = 0; ii < numInstanceData; ++ii)
 					{
-						elem[ii] =
+						const uint8_t location = program.m_vsh->m_instanceLocation[ii];
+
+						if (UINT8_MAX == location)
+						{
+							continue;
+						}
+
+						elem[numInstanceAttribs++] =
 						{
 							.nextInChain = 0,
 							.format      = WGPUVertexFormat_Float32x4,
 							.offset      = ii*16ull,
-							.shaderLocation = firstInstanceLocation+ii,
+							.shaderLocation = location,
 						};
 					}
 
@@ -4144,7 +4153,7 @@ WGPU_IMPORT
 						.nextInChain    = NULL,
 						.stepMode       = WGPUVertexStepMode_Instance,
 						.arrayStride    = _numInstanceData*16ull,
-						.attributeCount = _numInstanceData,
+						.attributeCount = numInstanceAttribs,
 						.attributes     = elem,
 					};
 
@@ -5233,7 +5242,9 @@ WGPU_IMPORT
 
 		bx::read(&reader, m_numAttrs, &err);
 
-		m_numInstanceData = 0;
+		bx::memSet(m_instanceLocation, UINT8_MAX, sizeof(m_instanceLocation) );
+
+		uint8_t numInstanceData = 0;
 
 		for (uint8_t ii = 0; ii < m_numAttrs; ++ii)
 		{
@@ -5249,7 +5260,18 @@ WGPU_IMPORT
 			}
 			else
 			{
-				++m_numInstanceData;
+				const uint8_t idx  = idToInstanceData(id);
+				const uint8_t inst = UINT8_MAX != idx
+					? idx
+					: numInstanceData
+					;
+
+				if (inst < BX_COUNTOF(m_instanceLocation) )
+				{
+					m_instanceLocation[inst] = ii;
+				}
+
+				++numInstanceData;
 			}
 		}
 
@@ -5261,6 +5283,7 @@ WGPU_IMPORT
 		murmur.add(m_numAttrs);
 		murmur.add(m_attrMask,  m_numAttrs);
 		murmur.add(m_attrRemap, m_numAttrs);
+		murmur.add(m_instanceLocation, sizeof(m_instanceLocation) );
 		m_hash = murmur.end();
 
 		bx::read(&reader, m_size, &err);

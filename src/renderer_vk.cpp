@@ -630,8 +630,6 @@ VK_IMPORT_DEVICE
 
 	void fillInstanceBinding(const ShaderVK* _vsh, VkPipelineVertexInputStateCreateInfo& _vertexInputState, uint32_t _numInstanceData)
 	{
-		BX_UNUSED(_vsh);
-
 		uint32_t numBindings = _vertexInputState.vertexBindingDescriptionCount;
 		uint32_t numAttribs  = _vertexInputState.vertexAttributeDescriptionCount;
 		VkVertexInputBindingDescription*   inputBinding = const_cast<VkVertexInputBindingDescription  *>(_vertexInputState.pVertexBindingDescriptions   + numBindings);
@@ -641,9 +639,18 @@ VK_IMPORT_DEVICE
 		inputBinding->stride    = _numInstanceData * 16;
 		inputBinding->inputRate = VK_VERTEX_INPUT_RATE_INSTANCE;
 
-		for (uint32_t inst = 0; inst < _numInstanceData; ++inst)
+		const uint32_t numInstanceData = bx::min<uint32_t>(_numInstanceData, BX_COUNTOF(_vsh->m_instanceLocation) );
+
+		for (uint32_t inst = 0; inst < numInstanceData; ++inst)
 		{
-			inputAttrib->location = numAttribs;
+			const uint8_t location = _vsh->m_instanceLocation[inst];
+
+			if (UINT8_MAX == location)
+			{
+				continue;
+			}
+
+			inputAttrib->location = location;
 			inputAttrib->binding  = numBindings;
 			inputAttrib->format   = VK_FORMAT_R32G32B32A32_SFLOAT;
 			inputAttrib->offset   = inst * 16;
@@ -4358,19 +4365,24 @@ VK_IMPORT_DEVICE
 				}
 			}
 
-			const uint32_t firstInstanceLocation = _vertexInputState.vertexAttributeDescriptionCount;
-
 			if (0 < _numInstanceData)
 			{
 				fillInstanceBinding(_program.m_vsh, _vertexInputState, _numInstanceData);
 			}
 
-			const uint32_t numFallback = 0 < _numStream ? _program.m_vsh->m_numInstanceData : 0;
+			const uint32_t numFallback = 0 < _numStream ? BX_COUNTOF(_program.m_vsh->m_instanceLocation) : 0;
 
 			for (uint32_t ii = _numInstanceData; ii < numFallback; ++ii)
 			{
+				const uint8_t location = _program.m_vsh->m_instanceLocation[ii];
+
+				if (UINT8_MAX == location)
+				{
+					continue;
+				}
+
 				VkVertexInputAttributeDescription* inputAttrib = const_cast<VkVertexInputAttributeDescription*>(_vertexInputState.pVertexAttributeDescriptions + _vertexInputState.vertexAttributeDescriptionCount);
-				inputAttrib->location = firstInstanceLocation + ii;
+				inputAttrib->location = location;
 				inputAttrib->binding  = 0;
 				inputAttrib->format   = VK_FORMAT_R8G8B8A8_UNORM;
 				inputAttrib->offset   = 0;
@@ -7484,7 +7496,9 @@ VK_DESTROY
 
 		bx::read(&reader, m_numAttrs, &err);
 
-		m_numInstanceData = 0;
+		bx::memSet(m_instanceLocation, UINT8_MAX, sizeof(m_instanceLocation) );
+
+		uint8_t numInstanceData = 0;
 
 		for (uint8_t ii = 0; ii < m_numAttrs; ++ii)
 		{
@@ -7500,7 +7514,18 @@ VK_DESTROY
 			}
 			else
 			{
-				++m_numInstanceData;
+				const uint8_t idx  = idToInstanceData(id);
+				const uint8_t inst = UINT8_MAX != idx
+					? idx
+					: numInstanceData
+					;
+
+				if (inst < BX_COUNTOF(m_instanceLocation) )
+				{
+					m_instanceLocation[inst] = ii;
+				}
+
+				++numInstanceData;
 			}
 		}
 
@@ -7512,6 +7537,7 @@ VK_DESTROY
 		murmur.add(m_numAttrs);
 		murmur.add(m_attrMask,  m_numAttrs);
 		murmur.add(m_attrRemap, m_numAttrs);
+		murmur.add(m_instanceLocation, sizeof(m_instanceLocation) );
 		m_hash = murmur.end();
 
 		bx::read(&reader, m_size, &err);

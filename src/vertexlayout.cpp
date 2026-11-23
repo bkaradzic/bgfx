@@ -240,6 +240,24 @@ namespace bgfx
 		return s_attribToId[_attr].id;
 	}
 
+	static constexpr uint16_t kInstanceDataId    = 0x0100;
+	static constexpr uint16_t kInstanceDataIdNum = 16;
+
+	uint16_t instanceDataToId(uint8_t _idx)
+	{
+		return uint16_t(kInstanceDataId + _idx);
+	}
+
+	uint8_t idToInstanceData(uint16_t _id)
+	{
+		const uint16_t idx = uint16_t(_id - kInstanceDataId);
+
+		return idx < kInstanceDataIdNum
+			? uint8_t(idx)
+			: UINT8_MAX
+			;
+	}
+
 	struct AttribTypeToId
 	{
 		AttribType::Enum type;

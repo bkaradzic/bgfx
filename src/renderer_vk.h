@@ -643,7 +643,7 @@ VK_DESTROY_FUNC(DescriptorSet);
 		uint16_t m_size;
 		uint8_t m_numPredefined;
 		uint8_t m_numAttrs;
-		uint8_t m_numInstanceData;
+		uint8_t m_instanceLocation[BGFX_CONFIG_MAX_INSTANCE_DATA_COUNT];
 
 		BindInfo m_bindInfo[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS];
 
