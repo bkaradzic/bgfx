@@ -716,6 +716,7 @@ namespace bgfx
 	{
 		const Caps* caps; //!< Renderer capabilities.
 		void* context;    //!< GL context, or D3D device.
+		void* queue;      //!< D3D12 or Metal command queue.
 	};
 
 	/// Platform data.
@@ -728,7 +729,7 @@ namespace bgfx
 
 		void* context;                     //!< GL context, D3D device, or Vulkan device. If `NULL`, bgfx
 		                                   ///  will create context/device.
-		void* queue;                       //!< D3D12 Queue. If `NULL` bgfx will create queue.
+		void* queue;                       //!< D3D12 or Metal command queue. If `NULL` bgfx will create queue.
 		NativeWindowHandleType::Enum type; //!< Handle type. Needed for platforms having more than one option.
 	};
 

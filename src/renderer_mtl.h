@@ -662,6 +662,7 @@ namespace bgfx { namespace mtl
 	{
 		CommandQueueMtl()
 			: m_commandQueue(NULL)
+			, m_externalQueue(false)
 			, m_activeCommandBuffer(NULL)
 			, m_maxFrameLatency(BGFX_CONFIG_MAX_FRAME_LATENCY)
 			, m_submittedFrames(0)
@@ -684,6 +685,7 @@ namespace bgfx { namespace mtl
 		bx::Semaphore m_framesSemaphore;
 
 		MTL::CommandQueue*  m_commandQueue;
+		bool                m_externalQueue;
 		MTL::CommandBuffer* m_activeCommandBuffer;
 
 		uint32_t m_maxFrameLatency;

@@ -9,7 +9,7 @@ import bindbc.common.types: c_int64, c_uint64, va_list;
 import bindbc.bgfx.config;
 static import bgfx.impl;
 
-enum uint apiVersion = 171;
+enum uint apiVersion = 172;
 
 alias ViewID = ushort;
 
@@ -1341,6 +1341,7 @@ extern(C++, "bgfx") struct Caps{
 extern(C++, "bgfx") struct InternalData{
 	const(Caps)* caps; ///Renderer capabilities.
 	void* context; ///GL context, or D3D device.
+	void* queue; ///D3D12 or Metal command queue.
 }
 
 ///Platform data.
@@ -1350,7 +1351,7 @@ extern(C++, "bgfx") struct PlatformData{
 	will create context/device.
 	*/
 	void* context;
-	void* queue; ///D3D12 Queue. If `NULL` bgfx will create queue.
+	void* queue; ///D3D12 or Metal command queue. If `NULL` bgfx will create queue.
 	NativeWindowHandleType type; ///Handle type. Needed for platforms having more than one option.
 }
 

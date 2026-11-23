@@ -906,6 +906,7 @@ Caps._fields_ = [
 InternalData._fields_ = [
 	("caps", ctypes.POINTER(Caps)),
 	("context", ctypes.c_void_p),
+	("queue", ctypes.c_void_p),
 ]
 
 PlatformData._fields_ = [

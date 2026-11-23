@@ -1,7 +1,7 @@
 -- vim: syntax=lua
 -- bgfx interface
 
-version(171)
+version(172)
 
 typedef "bool"
 typedef "char"
@@ -952,6 +952,7 @@ struct.Caps { section = "Capabilities" }
 struct.InternalData { section = "Platform specific" }
 	.caps    "const Caps*" --- Renderer capabilities.
 	.context "void*"       --- GL context, or D3D device.
+	.queue   "void*"       --- D3D12 or Metal command queue.
 
 --- Platform data.
 struct.PlatformData { ctor, section = "Platform specific" }
@@ -959,7 +960,7 @@ struct.PlatformData { ctor, section = "Platform specific" }
 		--- GL context, D3D device, or Vulkan device. If `NULL`, bgfx
 		--- will create context/device.
 	.queue "void*"
-		--- D3D12 Queue. If `NULL` bgfx will create queue.
+		--- D3D12 or Metal command queue. If `NULL` bgfx will create queue.
 	.type "NativeWindowHandleType::Enum" --- Handle type. Needed for platforms having more than one option.
 
 --- Swap chain description.

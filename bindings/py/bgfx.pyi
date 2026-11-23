@@ -1409,13 +1409,15 @@ class InternalData(ctypes.Structure):
 	caps: _Pointer[Caps]
 	# GL context, or D3D device.
 	context: Any
+	# D3D12 or Metal command queue.
+	queue: Any
 
 # Platform data.
 class PlatformData(ctypes.Structure):
 	# GL context, D3D device, or Vulkan device. If `NULL`, bgfx
 	# will create context/device.
 	context: Any
-	# D3D12 Queue. If `NULL` bgfx will create queue.
+	# D3D12 or Metal command queue. If `NULL` bgfx will create queue.
 	queue: Any
 	# Handle type. Needed for platforms having more than one option.
 	type: int

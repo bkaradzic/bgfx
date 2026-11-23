@@ -791,6 +791,7 @@ typedef struct bgfx_internal_data_s
 {
     const bgfx_caps_t*   caps;               /** Renderer capabilities.                   */
     void*                context;            /** GL context, or D3D device.               */
+    void*                queue;              /** D3D12 or Metal command queue.            */
 
 } bgfx_internal_data_t;
 
@@ -806,7 +807,7 @@ typedef struct bgfx_platform_data_s
      * will create context/device.
      */
     void*                context;
-    void*                queue;              /** D3D12 Queue. If `NULL` bgfx will create queue. */
+    void*                queue;              /** D3D12 or Metal command queue. If `NULL` bgfx will create queue. */
     bgfx_native_window_handle_type_t type;   /** Handle type. Needed for platforms having more than one option. */
 
 } bgfx_platform_data_t;

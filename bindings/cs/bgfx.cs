@@ -2751,6 +2751,7 @@ public static partial class bgfx
 	{
 		public Caps* caps;
 		public void* context;
+		public void* queue;
 	}
 	
 	public unsafe struct PlatformData

@@ -7868,11 +7868,14 @@ public final class Bgfx {
 		 */
 		public static final StructLayout LAYOUT = cStruct("bgfx_internal_data_t",
 			ValueLayout.ADDRESS.withName("caps"),
-			ValueLayout.ADDRESS.withName("context"));
+			ValueLayout.ADDRESS.withName("context"),
+			ValueLayout.ADDRESS.withName("queue"));
 		private static final VarHandle VH_CAPS = LAYOUT.varHandle(
 			MemoryLayout.PathElement.groupElement("caps"));
 		private static final VarHandle VH_CONTEXT = LAYOUT.varHandle(
 			MemoryLayout.PathElement.groupElement("context"));
+		private static final VarHandle VH_QUEUE = LAYOUT.varHandle(
+			MemoryLayout.PathElement.groupElement("queue"));
 		/**
 		 * Wraps an existing native structure.
 		 * @param segment native memory segment
@@ -7920,6 +7923,23 @@ public final class Bgfx {
 		 */
 		public InternalData context(MemorySegment value) {
 			VH_CONTEXT.set(segment(), 0L, address(value));
+			return this;
+		}
+
+		/**
+		 * D3D12 or Metal command queue.
+		 * @return the field value
+		 */
+		public MemorySegment queue() {
+			return address((MemorySegment) VH_QUEUE.get(segment(), 0L));
+		}
+
+		/**
+		 * Sets the native {@code queue} field and returns {@code this}.
+		 * @param value the new field value
+		 */
+		public InternalData queue(MemorySegment value) {
+			VH_QUEUE.set(segment(), 0L, address(value));
 			return this;
 		}
 	}
@@ -7977,7 +7997,7 @@ public final class Bgfx {
 		}
 
 		/**
-		 * D3D12 Queue. If {@code NULL} bgfx will create queue.
+		 * D3D12 or Metal command queue. If {@code NULL} bgfx will create queue.
 		 * @return the field value
 		 */
 		public MemorySegment queue() {

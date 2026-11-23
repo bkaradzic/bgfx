@@ -1272,6 +1272,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			m_gpuTimer.init();
 
 			g_internalData.context = m_device;
+			g_internalData.queue   = m_cmd.m_commandQueue;
 
 			return true;
 		}
@@ -5896,7 +5897,19 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 	void CommandQueueMtl::init(MTL::Device* _device, uint32_t _maxFrameLatency)
 	{
-		m_commandQueue = _device->newCommandQueue();
+		m_externalQueue = NULL != g_platformData.queue;
+
+		if (m_externalQueue)
+		{
+			m_commandQueue = (MTL::CommandQueue*)g_platformData.queue;
+			BX_ASSERT(m_commandQueue->device() == _device, "PlatformData::queue must be created by the device used by bgfx.");
+			m_commandQueue->retain();
+		}
+		else
+		{
+			m_commandQueue = _device->newCommandQueue();
+		}
+
 		m_maxFrameLatency = bx::min<uint32_t>(
 			  _maxFrameLatency != 0 ? _maxFrameLatency : BGFX_CONFIG_MAX_FRAME_LATENCY
 			, BGFX_CONFIG_MAX_FRAME_LATENCY
@@ -5918,7 +5931,14 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 			m_release.clear();
 
-			MTL_RELEASE(m_commandQueue, 0);
+			if (m_externalQueue)
+			{
+				MTL_RELEASE_I(m_commandQueue);
+			}
+			else
+			{
+				MTL_RELEASE(m_commandQueue, 0);
+			}
 
 			pool->release();
 		}
