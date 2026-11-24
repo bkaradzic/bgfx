@@ -560,9 +560,12 @@ static size_t kdtreeBuild(size_t offset, KDNode* nodes, size_t node_count, const
 	float split = mean[axis];
 	size_t middle = kdtreePartition(indices, count, points, stride, axis, split);
 
-	// when the partition is degenerate simply consolidate the points into a single node
-	// this also ensures recursion depth is bounded on pathological inputs
-	if (middle <= leaf_size / 2 || middle >= count - leaf_size / 2 || depth >= kMeshletMaxTreeDepth)
+	// when the partition is degenerate, consolidate the points into a single node; also ensure recursion depth is bounded on pathological inputs
+	if (middle == 0 || middle == count || depth >= kMeshletMaxTreeDepth)
+		return kdtreeBuildLeaf(offset, nodes, node_count, indices, count);
+
+	// when the partition is unbalanced, consolidate the points into a single small node; large nodes are still split to prevent outlier points from creating very large leaves
+	if ((middle <= leaf_size / 2 || middle >= count - leaf_size / 2) && count <= leaf_size * 8)
 		return kdtreeBuildLeaf(offset, nodes, node_count, indices, count);
 
 	KDNode& result = nodes[offset];
@@ -863,6 +866,15 @@ static void bvhComputeArea(float* areas, const BVHBox* boxes, const unsigned int
 
 	for (size_t i = 0; i < count; ++i)
 	{
+#ifdef SIMD_SSE
+		// prefetch boxes ahead to reduce the stalls from cache misses; the loop is not load-limited so these do not hurt even on smaller inputs
+		if (i + 16 < count)
+		{
+			_mm_prefetch(reinterpret_cast<const char*>(&boxes[order[i + 16]]), _MM_HINT_T0);
+			_mm_prefetch(reinterpret_cast<const char*>(&boxes[order[count - 1 - i - 16]]), _MM_HINT_T0);
+		}
+#endif
+
 		float larea = boxMerge(accuml, boxes[order[i]]);
 		float rarea = boxMerge(accumr, boxes[order[count - 1 - i]]);
 

@@ -44,7 +44,7 @@ static const Case kBaseCases[] = {
     {0x03, 0, {}, {}},
     {0x06, 0, {}, {}},
     {0x07, 0, {0x120}, {}},
-    {0x0f, 0, {0x130, 0x320}, {}},
+    {0x0f, 2, {0x130, 0x032}, {0x321, 0x120}},
     {0x16, 1, {0x124, 0x142}, {}},
     {0x17, 0, {0x124}, {}},
     {0x18, 0, {}, {}},
@@ -55,13 +55,13 @@ static const Case kBaseCases[] = {
     {0x1f, 2, {0x412, 0x213}, {0x134, 0x432}},
     {0x3c, 1, {0x345, 0x324, 0x543, 0x423}, {}},
     {0x3d, 1, {0x253, 0x524, 0x350}, {0x240, 0x504, 0x320}},
-    {0x3f, 0, {0x253, 0x452}, {}},
+    {0x3f, 2, {0x325, 0x524}, {0x243, 0x345}},
     {0x69, 1, {0x035, 0x560, 0x306, 0x536}, {}},
     {0x6b, 1, {0x063, 0x605, 0x365}, {0x305}},
     {0x6f, 1, {0x365, 0x560}, {0x530, 0x036}},
     {0x7e, 0, {0x142, 0x536}, {}},
     {0x7f, 0, {0x365}, {}},
-    {0xf0, 0, {0x547, 0x746}, {}},
+    {0xf0, 2, {0x547, 0x746}, {0x465, 0x567}},
     {0xff, 0, {}, {}},
 };
 
@@ -270,7 +270,7 @@ static float measureGrid(const float* vertex_positions_data, size_t vertex_count
 	return scale;
 }
 
-static void voxelize(unsigned char* grid, Voxel* voxels, const unsigned int* voxel_rows, const unsigned int* indices, size_t index_count, const float* vertex_positions, size_t vertex_count, size_t vertex_positions_stride, int resolution, float scale, const float offset[3], unsigned int options)
+static void voxelize(unsigned char* grid, const unsigned int* rowmap, Voxel* voxels, const unsigned int* indices, size_t index_count, const float* vertex_positions, size_t vertex_count, size_t vertex_positions_stride, int resolution, float scale, const float offset[3], unsigned int options)
 {
 	(void)vertex_count;
 
@@ -290,13 +290,13 @@ static void voxelize(unsigned char* grid, Voxel* voxels, const unsigned int* vox
 		float gx = vc[0] - vb[0], gy = vc[1] - vb[1], gz = vc[2] - vb[2];
 
 		// use maximum edge length to establish sampling rate
-		// TODO: this is wasteful for thin triangles
-		float el = sqrtf(ex * ex + ey * ey + ez * ez);
-		float fl = sqrtf(fx * fx + fy * fy + fz * fz);
-		float gl = sqrtf(gx * gx + gy * gy + gz * gz);
+		float el2 = ex * ex + ey * ey + ez * ez;
+		float fl2 = fx * fx + fy * fy + fz * fz;
+		float gl2 = gx * gx + gy * gy + gz * gz;
 
-		float max_edge = el > fl ? el : fl;
-		max_edge = max_edge > gl ? max_edge : gl;
+		float max_edge = el2 > fl2 ? el2 : fl2;
+		max_edge = max_edge > gl2 ? max_edge : gl2;
+		max_edge = sqrtf(max_edge);
 
 		// we target 2 samples per voxel edge which should be enough to hit all voxels at any rotation
 		int samples = int(max_edge * scale * 2.f);
@@ -307,18 +307,20 @@ static void voxelize(unsigned char* grid, Voxel* voxels, const unsigned int* vox
 		float nx = ey * fz - ez * fy, ny = ez * fx - ex * fz, nz = ex * fy - ey * fx;
 		float area = sqrtf(nx * nx + ny * ny + nz * nz);
 
-		float ns = area == 0.f ? 0.f : 1.f / area;
-		nx *= ns;
-		ny *= ns;
-		nz *= ns;
+		// skip degenerate triangles; they don't contribute to voxelization and may result in NaN when computing voxel centroid
+		if (area == 0.f)
+			continue;
+
+		float ns = 1.f / area;
+		nx *= ns, ny *= ns, nz *= ns;
 
 		float sx = va[0] - offset[0], sy = va[1] - offset[1], sz = va[2] - offset[2];
-		float sr = 1.f / float(samples);
+		float sr = 1.f;
 		float weight = area / float((samples + 1) * (samples + 2));
 
-		// skip degenerate triangles; they don't contribute to voxelization and may result in NaN when computing voxel centroid
-		if (weight == 0.f)
-			continue;
+		// this division is on a critical path, and for dense input meshes the branch is almost never taken so it's worth skipping it
+		if (samples > 1)
+			sr = 1.f / float(samples);
 
 		for (int u = 0; u <= samples; ++u)
 			for (int v = 0; v <= samples - u; ++v)
@@ -346,7 +348,7 @@ static void voxelize(unsigned char* grid, Voxel* voxels, const unsigned int* vox
 				if (voxels)
 				{
 					assert(grid[idx] != 0 && grid[idx] != 0xff);
-					Voxel& vox = voxels[voxel_rows[row] + (grid[idx] - 1)];
+					Voxel& vox = voxels[rowmap[row] + (grid[idx] - 1)];
 
 					vox.coord = (unsigned(x) << 20) | (unsigned(y) << 10) | unsigned(z);
 					vox.octants |= 1 << ((hx & 1) | ((hy & 1) << 1) | ((hz & 1) << 2));
@@ -367,14 +369,24 @@ static void voxelize(unsigned char* grid, Voxel* voxels, const unsigned int* vox
 	}
 }
 
-static size_t rowpack(unsigned char* grid, unsigned int* voxel_rows, int resolution)
+static size_t rowpack(unsigned char* grid, unsigned int* rowmap, int resolution)
 {
 	size_t result = 0;
 	size_t slice = size_t(resolution) * size_t(resolution);
 
+	unsigned char zero[256];
+	memset(zero, 0, resolution);
+
 	for (size_t i = 0; i < slice; ++i)
 	{
 		unsigned char* data = grid + i * size_t(resolution);
+
+		if (memcmp(data, zero, resolution) == 0)
+		{
+			// mark empty rows with a sentinel to accelerate further processing
+			rowmap[i] = ~0u;
+			continue;
+		}
 
 		int count = 0;
 
@@ -388,7 +400,7 @@ static size_t rowpack(unsigned char* grid, unsigned int* voxel_rows, int resolut
 
 		assert(count < 255); // we store offsets in a single byte, with 0 reserved for empty voxels and 0xff reserved for interior voxels
 
-		voxel_rows[i] = unsigned(result);
+		rowmap[i] = unsigned(result);
 		result += count;
 	}
 
@@ -404,7 +416,7 @@ static void solidifyQueue(unsigned int row, unsigned int* worklist, unsigned cha
 	worklist[pending++] = row;
 }
 
-static void solidify(unsigned char* grid, unsigned int* worklist, unsigned char* queued, int resolution)
+static void solidify(unsigned char* grid, const unsigned int* rowmap, unsigned int* worklist, unsigned char* queued, int resolution)
 {
 	size_t pending = 0;
 	memset(queued, 0, size_t(resolution) * size_t(resolution));
@@ -413,6 +425,10 @@ static void solidify(unsigned char* grid, unsigned int* worklist, unsigned char*
 	for (int z = 1; z < resolution - 1; ++z)
 		for (int y = 1; y < resolution - 1; ++y)
 		{
+			// rows without occupied voxels shortcircuit the interior propagation and are kept as 'empty'
+			if (rowmap[y + size_t(resolution) * z] == ~0u)
+				continue;
+
 			unsigned char* data = grid + size_t(resolution) * (y + size_t(resolution) * z);
 
 			for (int x = 1; x < resolution - 1; ++x)
@@ -432,12 +448,15 @@ static void solidify(unsigned char* grid, unsigned int* worklist, unsigned char*
 
 		unsigned char* data = grid + size_t(resolution) * row;
 
-		// propagate outside state to the interior within row
-		for (int x = 1; x < resolution - 1; ++x)
-			data[x] = (data[x] == 0xff && data[x - 1] == 0) ? 0 : data[x];
+		// propagate outside state to the interior within row; rows without occupied voxels have no 'inside' voxels
+		if (rowmap[row] != ~0u)
+		{
+			for (int x = 1; x < resolution - 1; ++x)
+				data[x] = (data[x] == 0xff && data[x - 1] == 0) ? 0 : data[x];
 
-		for (int x = resolution - 2; x >= 1; --x)
-			data[x] = (data[x] == 0xff && data[x + 1] == 0) ? 0 : data[x];
+			for (int x = resolution - 2; x >= 1; --x)
+				data[x] = (data[x] == 0xff && data[x + 1] == 0) ? 0 : data[x];
+		}
 
 		// propagate outside state to the interior into neighboring rows
 		int y = row % resolution, z = row / resolution;
@@ -448,6 +467,10 @@ static void solidify(unsigned char* grid, unsigned int* worklist, unsigned char*
 			int zn = z + (k == 2 ? -1 : (k == 3 ? 1 : 0));
 
 			if (yn < 1 || yn >= resolution - 1 || zn < 1 || zn >= resolution - 1)
+				continue;
+
+			// neighboring rows without occupied voxels have no 'inside' voxels and can be skipped
+			if (rowmap[yn + size_t(resolution) * zn] == ~0u)
 				continue;
 
 			unsigned char* datan = grid + size_t(resolution) * (yn + size_t(resolution) * zn);
@@ -531,7 +554,7 @@ static void solve(Voxel* voxels, size_t voxel_count, float scale, unsigned int o
 #endif
 }
 
-static void emitVertex(float* result, int x, int y, int z, int corner, const unsigned char* grid, const Voxel* voxels, const unsigned int* voxel_rows, int resolution, const float offset[3])
+static void emitVertex(float* result, int x, int y, int z, int corner, const unsigned char* grid, const unsigned int* rowmap, const Voxel* voxels, int resolution, const float offset[3])
 {
 	int ox = corner & 1, oy = (corner >> 1) & 1, oz = (corner >> 2) & 1;
 
@@ -539,14 +562,14 @@ static void emitVertex(float* result, int x, int y, int z, int corner, const uns
 	size_t idx = (x + ox) + size_t(resolution) * row;
 
 	assert(grid[idx] != 0 && grid[idx] != 0xff);
-	const Voxel& vox = voxels[voxel_rows[row] + (grid[idx] - 1)];
+	const Voxel& vox = voxels[rowmap[row] + (grid[idx] - 1)];
 
 	result[0] = vox.px + offset[0];
 	result[1] = vox.py + offset[1];
 	result[2] = vox.pz + offset[2];
 }
 
-static bool octantDecider(int x, int y, int z, int cube, const unsigned char* grid, const Voxel* voxels, const unsigned int* voxel_rows, int resolution)
+static bool octantDecider(int x, int y, int z, int cube, const unsigned char* grid, const unsigned int* rowmap, const Voxel* voxels, int resolution)
 {
 	for (int c = 0; c < 8; ++c)
 		if (cube & (1 << c))
@@ -562,7 +585,7 @@ static bool octantDecider(int x, int y, int z, int cube, const unsigned char* gr
 			if (grid[idx] == 0xff)
 				continue;
 
-			const Voxel& vox = voxels[voxel_rows[row] + (grid[idx] - 1)];
+			const Voxel& vox = voxels[rowmap[row] + (grid[idx] - 1)];
 
 			// test octant contained within the cell (opposite of the corner index)
 			if (vox.octants & (1 << (7 - c)))
@@ -573,7 +596,7 @@ static bool octantDecider(int x, int y, int z, int cube, const unsigned char* gr
 	return true;
 }
 
-static bool quadricDecider(int x, int y, int z, int cube, const unsigned char* grid, const Voxel* voxels, const unsigned int* voxel_rows, int resolution)
+static bool quadricDecider(int x, int y, int z, int cube, const unsigned char* grid, const unsigned int* rowmap, const Voxel* voxels, int resolution, float rscale)
 {
 	// quads are encoded implicitly as 0xabc 0xcbd
 	unsigned int quad = (kTriangleTable[cube][0][0] << 4) | (kTriangleTable[cube][0][1] & 0xf);
@@ -587,35 +610,44 @@ static bool quadricDecider(int x, int y, int z, int cube, const unsigned char* g
 		size_t idx = (x + (c & 1)) + size_t(resolution) * row;
 
 		assert(grid[idx] != 0 && grid[idx] != 0xff);
-		corner[i] = &voxels[voxel_rows[row] + (grid[idx] - 1)];
+		corner[i] = &voxels[rowmap[row] + (grid[idx] - 1)];
 	}
+
+	// accumulate the quadrics of all four corners; we sum (a+d)+(b+c) to get the same results on both sides of thin sheets
+	const Voxel *va = corner[0], *vb = corner[1], *vc = corner[2], *vd = corner[3];
+
+	Voxel sum = {};
+	sum.a00 = (va->a00 + vd->a00) + (vb->a00 + vc->a00), sum.a11 = (va->a11 + vd->a11) + (vb->a11 + vc->a11), sum.a22 = (va->a22 + vd->a22) + (vb->a22 + vc->a22);
+	sum.a10 = (va->a10 + vd->a10) + (vb->a10 + vc->a10), sum.a20 = (va->a20 + vd->a20) + (vb->a20 + vc->a20), sum.a21 = (va->a21 + vd->a21) + (vb->a21 + vc->a21);
+	sum.b0 = (va->b0 + vd->b0) + (vb->b0 + vc->b0), sum.b1 = (va->b1 + vd->b1) + (vb->b1 + vc->b1), sum.b2 = (va->b2 + vd->b2) + (vb->b2 + vc->b2);
+	sum.c = (va->c + vd->c) + (vb->c + vc->c), sum.w = (va->w + vd->w) + (vb->w + vc->w);
 
 	// evaluate error for midpoints of primary (bc) and alternate (ad) diagonal
-	float mx = (corner[1]->px + corner[2]->px) * 0.5f, my = (corner[1]->py + corner[2]->py) * 0.5f, mz = (corner[1]->pz + corner[2]->pz) * 0.5f;
-	float nx = (corner[0]->px + corner[3]->px) * 0.5f, ny = (corner[0]->py + corner[3]->py) * 0.5f, nz = (corner[0]->pz + corner[3]->pz) * 0.5f;
-	float error0 = 0, error1 = 0;
+	float error0 = voxelError(sum, (vb->px + vc->px) * 0.5f, (vb->py + vc->py) * 0.5f, (vb->pz + vc->pz) * 0.5f);
+	float error1 = voxelError(sum, (va->px + vd->px) * 0.5f, (va->py + vd->py) * 0.5f, (va->pz + vd->pz) * 0.5f);
 
-	for (int i = 0; i < 4; ++i)
-	{
-		error0 += voxelError(*corner[i], mx, my, mz);
-		error1 += voxelError(*corner[i], nx, ny, nz);
-	}
-
-	// select alternate configuration if it is clearly better
-	return error1 < error0 * 0.9f;
+	// select alternate configuration if it is clearly better and if the primary error is not too small, to avoid excessive flips
+	return error0 > sum.w * (0.1f * 0.1f * rscale * rscale) && error1 < error0 * (0.85f * 0.85f);
 }
 
-static size_t polygonize(float* destination, size_t max_triangle_count, const unsigned char* grid, const Voxel* voxels, const unsigned int* voxel_rows, int resolution, const float offset[3], unsigned int options)
+static size_t polygonize(float* destination, size_t max_triangle_count, const unsigned char* grid, const unsigned int* rowmap, const Voxel* voxels, int resolution, float scale, const float offset[3], unsigned int options)
 {
 	size_t result = 0;
 	size_t slice = size_t(resolution) * size_t(resolution);
+	float rscale = 1.f / scale;
 
 	assert(gRemeshTablesInitialized);
 
 	for (int z = 0; z < resolution - 1; ++z)
 		for (int y = 0; y < resolution - 1; ++y)
 		{
-			const unsigned char* data = grid + size_t(resolution) * (y + size_t(resolution) * z);
+			size_t row = y + size_t(resolution) * z;
+
+			// skip processing if all four rows are entirely empty as that guarantees empty output (even three out of four would be enough but that's more expensive to check)
+			if ((rowmap[row] & rowmap[row + 1] & rowmap[row + resolution] & rowmap[row + resolution + 1]) == ~0u)
+				continue;
+
+			const unsigned char* data = grid + size_t(resolution) * row;
 
 			// we track each slice as a 8-bit code (matching cube indexing) as we iterate through the row to avoid extra lookups
 			int last = (data[0] != 0) | ((data[resolution] != 0) << 2) | ((data[slice] != 0) << 4) | ((data[slice + resolution] != 0) << 6);
@@ -642,9 +674,9 @@ static size_t polygonize(float* destination, size_t max_triangle_count, const un
 				int alt = 0;
 
 				if (kTriangleAlt[cube] == 1)
-					alt = octantDecider(x, y, z, cube, grid, voxels, voxel_rows, resolution);
+					alt = octantDecider(x, y, z, cube, grid, rowmap, voxels, resolution);
 				else if (kTriangleAlt[cube] == 2 && (options & meshopt_RemeshSolve))
-					alt = quadricDecider(x, y, z, cube, grid, voxels, voxel_rows, resolution);
+					alt = quadricDecider(x, y, z, cube, grid, rowmap, voxels, resolution, rscale);
 
 				const unsigned short* tris = kTriangleTable[cube][alt];
 
@@ -655,9 +687,9 @@ static size_t polygonize(float* destination, size_t max_triangle_count, const un
 					{
 						unsigned short tri = tris[i];
 
-						emitVertex(&destination[result * 9 + 0], x, y, z, (tri >> 8) & 0xf, grid, voxels, voxel_rows, resolution, offset);
-						emitVertex(&destination[result * 9 + 3], x, y, z, (tri >> 4) & 0xf, grid, voxels, voxel_rows, resolution, offset);
-						emitVertex(&destination[result * 9 + 6], x, y, z, (tri >> 0) & 0xf, grid, voxels, voxel_rows, resolution, offset);
+						emitVertex(&destination[result * 9 + 0], x, y, z, (tri >> 8) & 0xf, grid, rowmap, voxels, resolution, offset);
+						emitVertex(&destination[result * 9 + 3], x, y, z, (tri >> 4) & 0xf, grid, rowmap, voxels, resolution, offset);
+						emitVertex(&destination[result * 9 + 6], x, y, z, (tri >> 0) & 0xf, grid, rowmap, voxels, resolution, offset);
 					}
 
 					result++;
@@ -692,23 +724,22 @@ size_t meshopt_remesh(float* destination, size_t max_triangle_count, const unsig
 
 	voxelize(grid, NULL, NULL, indices, index_count, vertex_positions, vertex_count, vertex_positions_stride, resolution, scale, offset, options);
 
+	// compute row offsets for occupied voxels; also stores ~0u for empty rows to accelerate further processing
+	unsigned int* rowmap = allocator.allocate<unsigned int>(size_t(resolution) * size_t(resolution));
+	size_t voxel_count = rowpack(grid, rowmap, resolution);
+
+#if TRACE
+	printf("remesher: %zu voxels occupied\n", voxel_count);
+#endif
+
 	// allocate additional voxel data for each occupied voxel; this can be filled in the second pass to compute positions
 	// note that we only do this if we need to compute output triangles; counting runs skip it for performance
 	Voxel* voxels = NULL;
-	unsigned int* voxel_rows = NULL;
-	size_t voxel_count = 0;
 
 	if (destination)
 	{
-		voxel_rows = allocator.allocate<unsigned int>(size_t(resolution) * size_t(resolution));
-		voxel_count = rowpack(grid, voxel_rows, resolution);
-
 		voxels = allocator.allocate<Voxel>(voxel_count);
 		memset(voxels, 0, voxel_count * sizeof(Voxel));
-
-#if TRACE
-		printf("remesher: %zu voxels occupied\n", voxel_count);
-#endif
 	}
 
 	// fill in empty voxels that are not reachable from the grid boundary; the inside empty voxels are marked with 0xff
@@ -718,7 +749,7 @@ size_t meshopt_remesh(float* destination, size_t max_triangle_count, const unsig
 		unsigned int* worklist = allocator.allocate<unsigned int>(size_t(resolution) * size_t(resolution));
 		unsigned char* queued = allocator.allocate<unsigned char>(size_t(resolution) * size_t(resolution));
 
-		solidify(grid, worklist, queued, resolution);
+		solidify(grid, rowmap, worklist, queued, resolution);
 
 #if TRACE
 		size_t inside_count = 0, occupied_count = 0;
@@ -734,14 +765,14 @@ size_t meshopt_remesh(float* destination, size_t max_triangle_count, const unsig
 
 	// accumulate voxel positions: in the second pass, this computes enough data in each voxel to calculate positions
 	if (voxels)
-		voxelize(grid, voxels, voxel_rows, indices, index_count, vertex_positions, vertex_count, vertex_positions_stride, resolution, scale, offset, options);
+		voxelize(grid, rowmap, voxels, indices, index_count, vertex_positions, vertex_count, vertex_positions_stride, resolution, scale, offset, options);
 
 	// compute final voxel positions; each voxel has a single resulting position that will be emitted during polygonization
 	if (voxels)
 		solve(voxels, voxel_count, scale, options);
 
 	// output triangles from the voxel grid; if destination is NULL, this still counts the number of triangles that would be generated
-	size_t result = polygonize(destination, max_triangle_count, grid, voxels, voxel_rows, resolution, offset, options);
+	size_t result = polygonize(destination, max_triangle_count, grid, rowmap, voxels, resolution, scale, offset, options);
 
 #if TRACE
 	printf("remesher: %zu triangles (%zu capacity)\n", result, max_triangle_count);

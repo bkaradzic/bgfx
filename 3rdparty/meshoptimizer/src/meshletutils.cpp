@@ -19,7 +19,8 @@ const size_t kMeshletMaxVertices = 256;
 // A reasonable limit is around 2*max_vertices or less
 const size_t kMeshletMaxTriangles = 512;
 
-static void computeBoundingSphere(float result[4], const float* points, size_t count, size_t points_stride, const float* radii, size_t radii_stride, size_t axis_count, const unsigned int* indices = NULL)
+template <int Axes>
+static void computeBoundingSphere(float result[4], const float* points, size_t count, size_t points_stride, const float* radii, size_t radii_stride, const unsigned int* indices = NULL)
 {
 	static const float axes[7][3] = {
 	    // X, Y, Z
@@ -35,7 +36,7 @@ static void computeBoundingSphere(float result[4], const float* points, size_t c
 	};
 
 	assert(count > 0);
-	assert(axis_count <= sizeof(axes) / sizeof(axes[0]));
+	assert(size_t(Axes) <= sizeof(axes) / sizeof(axes[0]));
 
 	size_t points_stride_float = points_stride / sizeof(float);
 	size_t radii_stride_float = radii_stride / sizeof(float);
@@ -44,7 +45,7 @@ static void computeBoundingSphere(float result[4], const float* points, size_t c
 	unsigned int pmin[7], pmax[7];
 	float tmin[7], tmax[7];
 
-	for (size_t axis = 0; axis < axis_count; ++axis)
+	for (int axis = 0; axis < Axes; ++axis)
 	{
 		pmin[axis] = pmax[axis] = 0;
 		tmin[axis] = FLT_MAX;
@@ -57,7 +58,7 @@ static void computeBoundingSphere(float result[4], const float* points, size_t c
 		const float* p = points + v * points_stride_float;
 		float r = radii[v * radii_stride_float];
 
-		for (size_t axis = 0; axis < axis_count; ++axis)
+		for (int axis = 0; axis < Axes; ++axis)
 		{
 			const float* ax = axes[axis];
 
@@ -75,7 +76,7 @@ static void computeBoundingSphere(float result[4], const float* points, size_t c
 	size_t paxis = 0;
 	float paxisdr = 0;
 
-	for (size_t axis = 0; axis < axis_count; ++axis)
+	for (int axis = 0; axis < Axes; ++axis)
 	{
 		const float* p1 = points + pmin[axis] * points_stride_float;
 		const float* p2 = points + pmax[axis] * points_stride_float;
@@ -182,13 +183,13 @@ static meshopt_Bounds computeClusterBounds(const unsigned int* indices, size_t i
 
 	// compute cluster bounding sphere; we'll use the center to determine normal cone apex as well
 	float psphere[4] = {};
-	computeBoundingSphere(psphere, vertex_positions, corner_count, vertex_positions_stride, &rzero, 0, 7, corners);
+	computeBoundingSphere<7>(psphere, vertex_positions, corner_count, vertex_positions_stride, &rzero, 0, corners);
 
 	float center[3] = {psphere[0], psphere[1], psphere[2]};
 
 	// treating triangle normals as points, find the bounding sphere - the sphere center determines the optimal cone axis
 	float nsphere[4] = {};
-	computeBoundingSphere(nsphere, normals[0], triangles, sizeof(float) * 4, &rzero, 0, 3);
+	computeBoundingSphere<3>(nsphere, normals[0], triangles, sizeof(float) * 4, &rzero, 0);
 
 	float axis[3] = {nsphere[0], nsphere[1], nsphere[2]};
 	float axislength = sqrtf(axis[0] * axis[0] + axis[1] * axis[1] + axis[2] * axis[2]);
@@ -353,7 +354,7 @@ meshopt_Bounds meshopt_computeSphereBounds(const float* positions, size_t count,
 	const float rzero = 0.f;
 
 	float psphere[4] = {};
-	computeBoundingSphere(psphere, positions, count, positions_stride, radii ? radii : &rzero, radii ? radii_stride : 0, 7);
+	computeBoundingSphere<7>(psphere, positions, count, positions_stride, radii ? radii : &rzero, radii ? radii_stride : 0);
 
 	bounds.center[0] = psphere[0];
 	bounds.center[1] = psphere[1];

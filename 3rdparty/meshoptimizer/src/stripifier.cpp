@@ -7,16 +7,20 @@
 
 // This work is based on:
 // Francine Evans, Steven Skiena and Amitabh Varshney. Optimizing Triangle Strips for Fast Rendering. 1996
+// Hugues Hoppe. Optimization of Mesh Locality for Transparent Vertex Caching. 1999
 namespace meshopt
 {
 
-static unsigned int findStripFirst(const unsigned int buffer[][3], unsigned int buffer_size, const unsigned char* valence)
+static unsigned int findStripFirst(const unsigned int buffer[][3], unsigned int buffer_size, const unsigned char* valence, const unsigned int hint[3])
 {
 	unsigned int index = 0;
 	unsigned int iv = ~0u;
 
 	for (size_t i = 0; i < buffer_size; ++i)
 	{
+		if (buffer[i][0] == hint[0] && buffer[i][1] == hint[1] && buffer[i][2] == hint[2])
+			return unsigned(i);
+
 		unsigned char va = valence[buffer[i][0]], vb = valence[buffer[i][1]], vc = valence[buffer[i][2]];
 		unsigned int v = (va < vb && va < vc) ? va : (vb < vc ? vb : vc);
 
@@ -32,19 +36,32 @@ static unsigned int findStripFirst(const unsigned int buffer[][3], unsigned int 
 
 static int findStripNext(const unsigned int buffer[][3], unsigned int buffer_size, unsigned int e0, unsigned int e1)
 {
+	unsigned long long e = ((unsigned long long)e0 << 32) | e1;
+
 	for (size_t i = 0; i < buffer_size; ++i)
 	{
 		unsigned int a = buffer[i][0], b = buffer[i][1], c = buffer[i][2];
 
-		if (e0 == a && e1 == b)
+		unsigned long long ab = ((unsigned long long)a << 32) | b;
+		unsigned long long bc = ((unsigned long long)b << 32) | c;
+		unsigned long long ca = ((unsigned long long)c << 32) | a;
+
+		if (e == ab)
 			return (int(i) << 2) | 2;
-		else if (e0 == b && e1 == c)
+		else if (e == bc)
 			return (int(i) << 2) | 0;
-		else if (e0 == c && e1 == a)
+		else if (e == ca)
 			return (int(i) << 2) | 1;
 	}
 
 	return -1;
+}
+
+static unsigned int countSharedVertices(const unsigned int* tri, const unsigned char* valence)
+{
+	unsigned char va = valence[tri[0]], vb = valence[tri[1]], vc = valence[tri[2]];
+
+	return (va > 1) + (vb > 1) + (vc > 1);
 }
 
 } // namespace meshopt
@@ -58,7 +75,7 @@ size_t meshopt_stripify(unsigned int* destination, const unsigned int* indices, 
 
 	meshopt_Allocator allocator;
 
-	const size_t buffer_capacity = 8;
+	const size_t buffer_capacity = 12;
 
 	unsigned int buffer[buffer_capacity][3] = {};
 	unsigned int buffer_size = 0;
@@ -70,8 +87,8 @@ size_t meshopt_stripify(unsigned int* destination, const unsigned int* indices, 
 
 	size_t strip_size = 0;
 
-	// compute vertex valence; this is used to prioritize starting triangle for strips
-	// note: we use 8-bit counters for performance; for outlier vertices the valence is incorrect but that just affects the heuristic
+	// compute vertex valence; this is used to prioritize starting and continuation triangles for strips
+	// note: we use 8-bit counters for performance; for outlier vertices the valence is incorrect but that just affects the heuristics
 	unsigned char* valence = allocator.allocate<unsigned char>(vertex_count);
 	memset(valence, 0, vertex_count);
 
@@ -84,6 +101,7 @@ size_t meshopt_stripify(unsigned int* destination, const unsigned int* indices, 
 	}
 
 	int next = -1;
+	unsigned int skipped[3] = {};
 
 	while (buffer_size > 0 || index_offset < index_count)
 	{
@@ -112,7 +130,7 @@ size_t meshopt_stripify(unsigned int* destination, const unsigned int* indices, 
 			memmove(buffer[i], buffer[i + 1], (buffer_size - i - 1) * sizeof(buffer[0]));
 			buffer_size--;
 
-			// update vertex valences for strip start heuristic
+			// update vertex valences for strip start/next heuristic
 			valence[a]--;
 			valence[b]--;
 			valence[c]--;
@@ -120,8 +138,20 @@ size_t meshopt_stripify(unsigned int* destination, const unsigned int* indices, 
 			// find next triangle (note that edge order flips on every iteration)
 			// in some cases we need to perform a swap to pick a different outgoing triangle edge
 			// for [a b c], the default strip edge is [b c], but we might want to use [a c]
-			int cont = findStripNext(buffer, buffer_size, parity ? strip[1] : v, parity ? v : strip[1]);
-			int swap = cont < 0 ? findStripNext(buffer, buffer_size, parity ? v : strip[0], parity ? strip[0] : v) : -1;
+			// note: we skip the search if the older strip vertex has no live triangles left for performance
+			int cont = valence[strip[1]] ? findStripNext(buffer, buffer_size, parity ? strip[1] : v, parity ? v : strip[1]) : -1;
+			int swap = valence[strip[0]] ? findStripNext(buffer, buffer_size, parity ? v : strip[0], parity ? strip[0] : v) : -1;
+
+			// when both edges have a neighbor, pick triangle with fewer neighbors to avoid future dead-ends
+			// this is locally sub-optimal (we spend one extra index to swap) but creates a smaller output in the end
+			if (cont >= 0 && swap >= 0)
+			{
+				bool use_swap = countSharedVertices(buffer[swap >> 2], valence) < countSharedVertices(buffer[cont >> 2], valence);
+
+				// remember the triangle we didn't pick for a future strip restart
+				memcpy(skipped, buffer[(use_swap ? cont : swap) >> 2], sizeof(skipped));
+				cont = use_swap ? -1 : cont;
+			}
 
 			if (cont < 0 && swap >= 0)
 			{
@@ -152,14 +182,14 @@ size_t meshopt_stripify(unsigned int* destination, const unsigned int* indices, 
 		{
 			// if we didn't find anything, we need to find the next new triangle
 			// we use a heuristic to maximize the strip length
-			unsigned int i = findStripFirst(buffer, buffer_size, valence);
+			unsigned int i = findStripFirst(buffer, buffer_size, valence, skipped);
 			unsigned int a = buffer[i][0], b = buffer[i][1], c = buffer[i][2];
 
 			// ordered removal from the buffer
 			memmove(buffer[i], buffer[i + 1], (buffer_size - i - 1) * sizeof(buffer[0]));
 			buffer_size--;
 
-			// update vertex valences for strip start heuristic
+			// update vertex valences for strip start/next heuristic
 			valence[a]--;
 			valence[b]--;
 			valence[c]--;
