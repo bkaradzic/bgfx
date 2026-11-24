@@ -816,7 +816,6 @@ namespace bgfx { namespace d3d11
 			, m_fsChanges(0)
 			, m_rtMsaa(false)
 			, m_timerQuerySupport(false)
-			, m_directAccessSupport(false)
 		{
 			m_fbh = BGFX_INVALID_HANDLE;
 			bx::memSet(&m_scd, 0, sizeof(m_scd) );
@@ -1325,8 +1324,7 @@ namespace bgfx { namespace d3d11
 					| BGFX_CAPS_TEXTURE_EXTERNAL
 					);
 
-				m_timerQuerySupport   = true;
-				m_directAccessSupport = 0 != (g_caps.supported & BGFX_CAPS_TEXTURE_DIRECT_ACCESS);
+				m_timerQuerySupport = true;
 
 				g_caps.limits.maxComputeBindings = bx::min(BGFX_MAX_COMPUTE_BINDINGS
 					, D3D_FEATURE_LEVEL_11_1 <= m_featureLevel
@@ -4368,7 +4366,6 @@ namespace bgfx { namespace d3d11
 		FrameBufferHandle m_fbh;
 		bool m_rtMsaa;
 		bool m_timerQuerySupport;
-		bool m_directAccessSupport;
 	};
 
 	static RendererContextD3D11* s_renderD3D11;
@@ -5351,7 +5348,7 @@ namespace bgfx { namespace d3d11
 			}
 
 			const bool external = 0 != _external;
-			const bool directAccess = s_renderD3D11->m_directAccessSupport
+			const bool directAccess = 0 != (g_caps.supported & BGFX_CAPS_TEXTURE_DIRECT_ACCESS)
 				&& !renderTarget
 				&& !readBack
 				&& !blit
