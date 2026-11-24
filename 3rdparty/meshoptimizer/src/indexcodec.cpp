@@ -33,18 +33,23 @@ static int rotateTriangle(unsigned int a, unsigned int b, unsigned int c, unsign
 
 static int getEdgeFifo(EdgeFifo fifo, unsigned int a, unsigned int b, unsigned int c, size_t offset)
 {
+	unsigned long long ab = ((unsigned long long)a << 32) | b;
+	unsigned long long bc = ((unsigned long long)b << 32) | c;
+	unsigned long long ca = ((unsigned long long)c << 32) | a;
+
 	for (int i = 0; i < 16; ++i)
 	{
 		size_t index = (offset - 1 - i) & 15;
 
 		unsigned int e0 = fifo[index][0];
 		unsigned int e1 = fifo[index][1];
+		unsigned long long e = ((unsigned long long)e0 << 32) | e1;
 
-		if (e0 == a && e1 == b)
+		if (e == ab)
 			return (i << 2) | 0;
-		if (e0 == b && e1 == c)
+		if (e == bc)
 			return (i << 2) | 1;
-		if (e0 == c && e1 == a)
+		if (e == ca)
 			return (i << 2) | 2;
 	}
 

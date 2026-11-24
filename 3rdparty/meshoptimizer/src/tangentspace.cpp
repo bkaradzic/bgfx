@@ -350,6 +350,8 @@ static void mergeNormalGroups(unsigned int* groups, const unsigned int* data, si
 	for (size_t i = 0; i < count; ++i)
 	{
 		unsigned int ti = data[i] >> 2;
+		unsigned int ci = ti * 3 + (data[i] & 3);
+
 		unsigned int cib = ti * 3 + next[(data[i] & 3) + 0];
 		unsigned int cic = ti * 3 + next[(data[i] & 3) + 1];
 
@@ -361,6 +363,8 @@ static void mergeNormalGroups(unsigned int* groups, const unsigned int* data, si
 		for (size_t j = i + 1; j < count; ++j)
 		{
 			unsigned int tj = data[j] >> 2;
+			unsigned int cj = tj * 3 + (data[j] & 3);
+
 			unsigned int cjb = tj * 3 + next[(data[j] & 3) + 0];
 			unsigned int cjc = tj * 3 + next[(data[j] & 3) + 1];
 
@@ -369,15 +373,25 @@ static void mergeNormalGroups(unsigned int* groups, const unsigned int* data, si
 
 			const Normal& fj = face_normals[tj];
 
-			// merge normal groups if triangles are adjacent and normal angle is below crease threshold
-			if ((njb == nic || njc == nib) && fi.x * fj.x + fi.y * fj.y + fi.z * fj.z > crease_cutoff && fi.id == fj.id)
+			// merge normal groups if triangles are adjacent, non-degenerate, and normal angle is below crease threshold
+			if ((njb == nic || njc == nib) && fi.x * fj.x + fi.y * fj.y + fi.z * fj.z > crease_cutoff && fi.id == fj.id && fi.id != 0)
 			{
 				// union normal groups for individual corners with gi as the root
-				unsigned int gi = follow2(groups, ti * 3 + (data[i] & 3));
-				unsigned int gj = follow2(groups, tj * 3 + (data[j] & 3));
+				unsigned int gi = follow2(groups, ci);
+				unsigned int gj = follow2(groups, cj);
 
 				if (gi != gj)
 					groups[gj] = gi;
+			}
+			else if ((njb == nic || njc == nib) && (fi.id == 0) != (fj.id == 0))
+			{
+				// corners of unattached degenerate triangles join the first adjacent non-degenerate group
+				// this makes sure that two non-degenerate triangles can't be joined via a degenerate bridge
+				unsigned int cd = fi.id ? cj : ci;
+				unsigned int cn = fi.id ? ci : cj;
+
+				if (groups[cd] == cd)
+					groups[cd] = follow2(groups, cn);
 			}
 		}
 	}
@@ -505,7 +519,7 @@ static void accumulateNormals(float* result, const unsigned int* groups, const u
 	}
 }
 
-static void smoothNormals(float* result, float* scratch, const unsigned int* groups, size_t index_count, float alpha)
+static void smoothNormals(float* result, float* scratch, const unsigned int* groups, size_t index_count, const Normal* face_normals, float alpha)
 {
 	static const int next[4] = {1, 2, 0, 1};
 
@@ -516,13 +530,17 @@ static void smoothNormals(float* result, float* scratch, const unsigned int* gro
 	// for each triangle, accumulate normal deltas alongside each edge in both directions
 	for (size_t i = 0; i < face_count; ++i)
 	{
+		// degenerate triangles may connect groups across hard edges
+		if (face_normals[i].id == 0)
+			continue;
+
 		for (int k = 0; k < 3; ++k)
 		{
 			unsigned int ga = groups[i * 3 + k];
 			unsigned int gb = groups[i * 3 + next[k]];
 
-			const float* na = &result[ga * 3];
-			const float* nb = &result[gb * 3];
+			const float* na = &result[size_t(ga) * 3];
+			const float* nb = &result[size_t(gb) * 3];
 
 			// normal alignment is symmetric; we compute it once per edge and use dp^2 for stronger alignment
 			float dp = na[0] * nb[0] + na[1] * nb[1] + na[2] * nb[2];
@@ -531,8 +549,8 @@ static void smoothNormals(float* result, float* scratch, const unsigned int* gro
 			float nx = (nb[0] - na[0]) * w, ny = (nb[1] - na[1]) * w, nz = (nb[2] - na[2]) * w;
 
 			// accumulate deltas; the last component is used to compute delta averages below
-			float* sa = &scratch[ga * 4];
-			float* sb = &scratch[gb * 4];
+			float* sa = &scratch[size_t(ga) * 4];
+			float* sb = &scratch[size_t(gb) * 4];
 
 			sa[0] += nx;
 			sa[1] += ny;
@@ -573,6 +591,7 @@ void meshopt_generateTangents(float* result, const unsigned int* indices, size_t
 
 	assert(indices || index_count == vertex_count);
 	assert(index_count % 3 == 0);
+	assert(index_count < (3u << 30)); // corner adjacency stores triangle index in 30 bits
 	assert(vertex_positions_stride >= 12 && vertex_positions_stride <= 256);
 	assert(vertex_normals_stride >= 12 && vertex_normals_stride <= 256);
 	assert(vertex_uvs_stride >= 8 && vertex_uvs_stride <= 256);
@@ -656,6 +675,7 @@ void meshopt_generateNormals(float* result, const unsigned int* indices, size_t 
 
 	assert(indices || index_count == vertex_count);
 	assert(index_count % 3 == 0);
+	assert(index_count < (3u << 30)); // corner adjacency stores triangle index in 30 bits
 	assert(vertex_positions_stride >= 12 && vertex_positions_stride <= 256);
 	assert(vertex_positions_stride % sizeof(float) == 0);
 	assert(crease_angle >= 0 && crease_angle <= 3.1415927f);
@@ -719,7 +739,7 @@ void meshopt_generateNormals(float* result, const unsigned int* indices, size_t 
 			float rem = smoothing - float(pass);
 			float alpha = 0.5f * (rem < 1.f ? rem : 1.f);
 
-			smoothNormals(result, scratch, groups, index_count, alpha);
+			smoothNormals(result, scratch, groups, index_count, face_normals, alpha);
 		}
 	}
 
