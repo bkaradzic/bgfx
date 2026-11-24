@@ -1925,7 +1925,8 @@ namespace bgfx { namespace d3d11
 		void readTexture(TextureHandle _handle, void* _data, uint16_t _layer, uint8_t _mip) override
 		{
 			const TextureD3D11& texture = m_textures[_handle.idx];
-			const uint32_t subresource = _mip + _layer*texture.m_numMips;
+			const bool     texture3d   = TextureD3D11::Texture3D == texture.m_type;
+			const uint32_t subresource = _mip + (texture3d ? 0 : _layer*texture.m_numMips);
 
 			BX_ASSERT(NULL != texture.m_staging, "Texture must be created with BGFX_TEXTURE_READ_BACK.");
 
@@ -1946,7 +1947,7 @@ namespace bgfx { namespace d3d11
 
 			uint32_t srcWidth  = bx::max(1, texture.m_width >>_mip);
 			uint32_t srcHeight = bx::max(1, texture.m_height>>_mip);
-			uint8_t* src       = (uint8_t*)mapped.pData;
+			uint8_t* src       = (uint8_t*)mapped.pData + (texture3d ? _layer*mapped.DepthPitch : 0);
 			uint32_t srcPitch  = mapped.RowPitch;
 
 			const bimg::ImageBlockInfo& blockInfo = bimg::getBlockInfo(bimg::TextureFormat::Enum(texture.m_textureFormat) );

@@ -1687,9 +1687,13 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 				return;
 			}
 
+			const bool     texture3d = TextureMtl::Texture3D == texture.m_type;
+			const uint16_t slice     = texture3d ? 0 : _layer;
+			const uint16_t zz        = texture3d ? _layer : 0;
+
 			MTL::BlitCommandEncoder* bce = s_renderMtl->getBlitCommandEncoder();
 #if BX_PLATFORM_OSX
-			bce->synchronizeTexture(texture.m_ptr, _layer, _mip);
+			bce->synchronizeTexture(texture.m_ptr, slice, _mip);
 #endif  // BX_PLATFORM_OSX
 			BX_UNUSED(bce);
 			endEncoding();
@@ -1709,9 +1713,12 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 				;
 			BX_UNUSED(bpp);
 
-			MTL::Region region(0, 0, 0, srcWidth, srcHeight, 1);
+			const uint32_t numBlocksY    = (srcHeight + blockInfo.blockHeight - 1) / blockInfo.blockHeight;
+			const uint32_t bytesPerImage = texture3d ? bytesPerRow*numBlocksY : 0;
 
-			texture.m_ptr->getBytes(_data, bytesPerRow, 0, region, _mip, _layer);
+			MTL::Region region(0, 0, zz, srcWidth, srcHeight, 1);
+
+			texture.m_ptr->getBytes(_data, bytesPerRow, bytesPerImage, region, _mip, slice);
 		}
 
 		BufferMtl& getBuffer(Handle _handle)

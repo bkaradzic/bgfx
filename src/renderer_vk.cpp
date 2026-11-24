@@ -3228,13 +3228,16 @@ VK_IMPORT_DEVICE
 			VkBuffer stagingBuffer;
 			VK_CHECK(createReadbackBuffer(size, &stagingBuffer, &stagingMemory) );
 
+			const bool texture3d = VK_IMAGE_VIEW_TYPE_3D == texture.m_type;
+
 			texture.m_readback.copyImageToBuffer(
 				  m_commandBuffer
 				, stagingBuffer
 				, texture.m_currentImageLayout
 				, texture.m_aspectFlags
-				, _layer
+				, texture3d ? 0 : _layer
 				, _mip
+				, texture3d ? _layer : 0
 				);
 
 			kick(true);
@@ -8173,7 +8176,7 @@ VK_DESTROY
 		return mipHeight * pitch(_mip);
 	}
 
-	void ReadbackVK::copyImageToBuffer(VkCommandBuffer _commandBuffer, VkBuffer _buffer, VkImageLayout _layout, VkImageAspectFlags _aspect, uint16_t _layer, uint8_t _mip) const
+	void ReadbackVK::copyImageToBuffer(VkCommandBuffer _commandBuffer, VkBuffer _buffer, VkImageLayout _layout, VkImageAspectFlags _aspect, uint16_t _layer, uint8_t _mip, uint16_t _slice) const
 	{
 		BGFX_PROFILER_SCOPE("ReadbackVK::copyImageToBuffer", kColorFrame);
 
@@ -8204,7 +8207,7 @@ VK_DESTROY
 		bic[0].imageSubresource.mipLevel       = _mip;
 		bic[0].imageSubresource.baseArrayLayer = _layer;
 		bic[0].imageSubresource.layerCount     = 1;
-		bic[0].imageOffset = { 0, 0, 0 };
+		bic[0].imageOffset = { 0, 0, int32_t(_slice) };
 		bic[0].imageExtent = { mipWidth, mipHeight, 1 };
 
 		uint32_t numRegions = 1;

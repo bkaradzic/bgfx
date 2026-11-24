@@ -3721,21 +3721,59 @@ namespace bgfx { namespace gl
 
 				GL_CHECK(glPixelStorei(GL_PACK_ALIGNMENT, 1) );
 
-				if (texture.m_numLayers > 1
-				&&  NULL != glGetTextureSubImage)
-				{
-					bimg::TextureInfo ti;
-					bimg::imageGetSize(
-						  &ti
-						, uint16_t(mipWidth)
-						, uint16_t(mipHeight)
-						, 1
-						, false
-						, false
-						, 1
-						, bimg::TextureFormat::Enum(texture.m_textureFormat)
-						);
+				const bool sliced = false
+					|| texture.m_numLayers > 1
+					|| GL_TEXTURE_3D == texture.m_target
+					;
 
+				bimg::TextureInfo ti;
+				bimg::imageGetSize(
+					  &ti
+					, uint16_t(mipWidth)
+					, uint16_t(mipHeight)
+					, 1
+					, false
+					, false
+					, 1
+					, bimg::TextureFormat::Enum(texture.m_textureFormat)
+					);
+
+				if (sliced
+				&&  NULL == glGetTextureSubImage)
+				{
+					const uint32_t numSlices = GL_TEXTURE_3D == texture.m_target
+						? bx::max<uint32_t>(1, texture.m_depth >> _mip)
+						: texture.m_numLayers * (GL_TEXTURE_CUBE_MAP_ARRAY == texture.m_target ? 6 : 1)
+						;
+
+					uint8_t* temp = (uint8_t*)bx::allocPtr(g_allocatorBlk, ti.storageSize*numSlices);
+
+					GL_CHECK(glBindTexture(texture.m_target, texture.m_id) );
+
+					if (compressed)
+					{
+						GL_CHECK(glGetCompressedTexImage(texture.m_target
+							, _mip
+							, temp
+							) );
+					}
+					else
+					{
+						GL_CHECK(glGetTexImage(texture.m_target
+							, _mip
+							, texture.m_fmt
+							, texture.m_type
+							, temp
+							) );
+					}
+
+					GL_CHECK(glBindTexture(texture.m_target, 0) );
+
+					bx::memCopy(_data, temp + ti.storageSize*_layer, ti.storageSize);
+					bx::freePtr(temp);
+				}
+				else if (sliced)
+				{
 					if (compressed)
 					{
 						GL_CHECK(glGetCompressedTextureSubImage(texture.m_id
