@@ -2780,7 +2780,8 @@ namespace bgfx { namespace d3d12
 		{
 			TextureD3D12& texture = m_textures[_handle.idx];
 
-			const uint32_t subresource = _mip + _layer*texture.m_numMips;
+			const bool     texture3d   = TextureD3D12::Texture3D == texture.m_type;
+			const uint32_t subresource = _mip + (texture3d ? 0 : _layer*texture.m_numMips);
 
 			D3D12_RESOURCE_DESC desc = getResourceDesc(texture.m_ptr);
 
@@ -2827,14 +2828,17 @@ namespace bgfx { namespace d3d12
 
 			layout.Footprint.Width  = alignedWidth;
 			layout.Footprint.Height = alignedHeight;
+			layout.Footprint.Depth  = 1;
+
+			const uint32_t slice = texture3d ? _layer : 0;
 
 			D3D12_BOX box;
 			box.left   = 0;
 			box.top    = 0;
 			box.right  = alignedWidth;
 			box.bottom = alignedHeight;
-			box.front  = 0;
-			box.back   = 1;
+			box.front  = slice;
+			box.back   = slice + 1;
 
 			D3D12_TEXTURE_COPY_LOCATION dstLocation = { readback,      D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT,  { layout } };
 			D3D12_TEXTURE_COPY_LOCATION srcLocation = { texture.m_ptr, D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX, { }        };
@@ -7719,7 +7723,7 @@ namespace bgfx { namespace d3d12
 							const uint32_t numBlocksX = (mip.m_width  + blockInfo.blockWidth  - 1) / blockInfo.blockWidth;
 							const uint32_t numBlocksY = (mip.m_height + blockInfo.blockHeight - 1) / blockInfo.blockHeight;
 							const uint32_t pitch = bx::strideAlign(numBlocksX*mip.m_blockSize, D3D12_TEXTURE_DATA_PITCH_ALIGNMENT);
-							const uint32_t slice = bx::strideAlign(numBlocksY*pitch,           D3D12_TEXTURE_DATA_PLACEMENT_ALIGNMENT);
+							const uint32_t slice = numBlocksY*pitch;
 							const uint32_t size  = slice*mip.m_depth;
 
 							uint8_t* temp = (uint8_t*)bx::allocPtr(g_allocatorBlk, size);
@@ -7738,7 +7742,7 @@ namespace bgfx { namespace d3d12
 						else
 						{
 							const uint32_t pitch = bx::strideAlign(mip.m_width*mip.m_bpp / 8, D3D12_TEXTURE_DATA_PITCH_ALIGNMENT);
-							const uint32_t slice = bx::strideAlign(mip.m_height*pitch,        D3D12_TEXTURE_DATA_PLACEMENT_ALIGNMENT);
+							const uint32_t slice = mip.m_height*pitch;
 
 							uint8_t* temp = (uint8_t*)bx::allocPtr(g_allocatorBlk, slice*mip.m_depth);
 							bimg::imageCopy(temp

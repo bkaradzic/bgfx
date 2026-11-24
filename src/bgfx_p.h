@@ -8051,8 +8051,13 @@ namespace bgfx
 			const TextureRef& ref = m_textureRef[_handle.idx];
 			BX_ASSERT(ref.isReadBack(), "Can't read from texture which was not created with BGFX_TEXTURE_READ_BACK.");
 			BX_ASSERT(_mip < ref.m_numMips, "Invalid mip: %d num mips:", _mip, ref.m_numMips);
-			const uint16_t numLayers = uint16_t(ref.m_numLayers * (ref.m_cubeMap ? 6 : 1) );
-			BX_ASSERT(_layer < numLayers, "Invalid layer: %d num layers: %d", _layer, numLayers);
+			const uint32_t numLayers = ref.m_cubeMap
+				? 6 * ref.m_numLayers
+				: ref.m_numLayers > 1
+				? ref.m_numLayers
+				: bx::max<uint32_t>(1, ref.m_depth >> _mip)
+				;
+			BX_ASSERT(_layer < numLayers, "Invalid layer or slice: %d num layers or slices: %d", _layer, numLayers);
 			BX_UNUSED(ref, numLayers);
 
 			CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::ReadTexture);

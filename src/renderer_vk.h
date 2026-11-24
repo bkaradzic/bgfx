@@ -770,7 +770,7 @@ VK_DESTROY_FUNC(DescriptorSet);
 		void destroy();
 		uint32_t pitch(uint8_t _mip = 0) const;
 		uint32_t stagingSize(VkImageAspectFlags _aspect, uint8_t _mip = 0) const;
-		void copyImageToBuffer(VkCommandBuffer _commandBuffer, VkBuffer _buffer, VkImageLayout _layout, VkImageAspectFlags _aspect, uint16_t _layer = 0, uint8_t _mip = 0) const;
+		void copyImageToBuffer(VkCommandBuffer _commandBuffer, VkBuffer _buffer, VkImageLayout _layout, VkImageAspectFlags _aspect, uint16_t _layer = 0, uint8_t _mip = 0, uint16_t _slice = 0) const;
 		void readback(const DeviceMemoryAllocationVK& _memory, void* _data, VkImageAspectFlags _aspect, uint8_t _mip = 0) const;
 
 		VkImage  m_image;
