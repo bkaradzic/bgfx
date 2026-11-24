@@ -738,6 +738,8 @@ namespace wgpu {
 			, m_needPresent(false)
 			, m_needResolve(false)
 		{
+			m_resolveArea.clear();
+			m_colorResolveArea.clear();
 		}
 
 		void create(uint8_t _num, const Attachment* _attachment);
@@ -771,6 +773,9 @@ namespace wgpu {
 
 		bool m_readOnlyDepth;
 		bool m_readOnlyStencil;
+
+		Rect m_resolveArea;
+		Rect m_colorResolveArea;
 
 		uint16_t m_denseIdx;
 		uint8_t m_numColorAttachments;

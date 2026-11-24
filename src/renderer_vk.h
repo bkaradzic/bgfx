@@ -807,7 +807,7 @@ VK_DESTROY_FUNC(DescriptorSet);
 
 		void update(VkCommandBuffer _commandBuffer, uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem);
 		void clear(VkCommandBuffer _commandBuffer, uint8_t _mip, uint8_t _numMips, uint16_t _layer, uint16_t _numLayers);
-		void resolve(VkCommandBuffer _commandBuffer, uint8_t _resolve, uint32_t _layer, uint32_t _numLayers, uint32_t _mip);
+		void resolve(VkCommandBuffer _commandBuffer, uint8_t _resolve, uint32_t _layer, uint32_t _numLayers, uint32_t _mip, const Rect& _rect);
 
 		void copyBufferToTexture(VkCommandBuffer _commandBuffer, VkBuffer _stagingBuffer, uint32_t _bufferImageCopyCount, VkBufferImageCopy* _bufferImageCopy);
 		void setState(VkCommandBuffer _commandBuffer, VkImageLayout _newImageLayout, bool _singleMsaaImage = false);
@@ -816,7 +816,7 @@ VK_DESTROY_FUNC(DescriptorSet);
 
 		VkFormat getViewFormat(uint32_t _flags, uint32_t _bit) const;
 
-		void resolveRenderPass(VkCommandBuffer _commandBuffer, VkFormat _format, uint32_t _layer, uint32_t _numLayers, uint32_t _mip);
+		void resolveRenderPass(VkCommandBuffer _commandBuffer, VkFormat _format, uint32_t _layer, uint32_t _numLayers, uint32_t _mip, const Rect& _rect);
 
 		void*    m_directAccessPtr;
 		uint64_t m_flags;
@@ -971,6 +971,7 @@ VK_DESTROY_FUNC(DescriptorSet);
 			, m_framebuffer(VK_NULL_HANDLE)
 			, m_currentFramebuffer(VK_NULL_HANDLE)
 		{
+			m_resolveArea.clear();
 		}
 
 		void create(uint8_t _num, const Attachment* _attachment);
@@ -1006,6 +1007,7 @@ VK_DESTROY_FUNC(DescriptorSet);
 		uint8_t  m_num;
 		uint8_t  m_numTh;
 		Attachment m_attachment[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
+		Rect m_resolveArea;
 
 		SwapChainVK m_swapChain;
 		void* m_nwh;

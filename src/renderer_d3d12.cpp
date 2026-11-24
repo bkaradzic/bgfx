@@ -899,6 +899,7 @@ namespace bgfx { namespace d3d12
 			, m_mipGen(NULL)
 			, m_zeroInitBuffer(NULL)
 		{
+			m_resolveArea.clear();
 		}
 
 		~RendererContextD3D12()
@@ -3370,6 +3371,7 @@ namespace bgfx { namespace d3d12
 
 			m_wireframe = false;
 			setFrameBuffer(_handle, false);
+			m_resolveArea.set(0, 0, bx::narrowCast<uint16_t>(width), bx::narrowCast<uint16_t>(height) );
 
 			D3D12_VIEWPORT vp;
 			vp.TopLeftX = 0;
@@ -3766,7 +3768,7 @@ namespace bgfx { namespace d3d12
 			&&  m_rtMsaa)
 			{
 				FrameBufferD3D12& frameBuffer = m_frameBuffers[m_fbh.idx];
-				frameBuffer.resolve();
+				frameBuffer.resolve(m_resolveArea);
 				m_rtMsaa = false;
 			}
 		}
@@ -3794,6 +3796,11 @@ namespace bgfx { namespace d3d12
 		void setFrameBuffer(FrameBufferHandle _fbh, bool _msaa = true)
 		{
 			resolveFrameBuffer(_fbh);
+
+			if (m_fbh.idx != _fbh.idx)
+			{
+				m_resolveArea.clear();
+			}
 
 			if (isValid(m_fbh)
 			&&  m_fbh.idx != _fbh.idx)
@@ -4822,7 +4829,7 @@ namespace bgfx { namespace d3d12
 			return pso;
 		}
 
-		void resolveDepth(ID3D12GraphicsCommandList* _commandList, TextureD3D12& _texture, uint32_t _layer, uint32_t _numLayers, uint32_t _mip)
+		void resolveDepth(ID3D12GraphicsCommandList* _commandList, TextureD3D12& _texture, uint32_t _layer, uint32_t _numLayers, uint32_t _mip, const Rect& _rect)
 		{
 			const D3D12_RESOURCE_STATES state = _texture.setState(_commandList, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
@@ -4859,10 +4866,10 @@ namespace bgfx { namespace d3d12
 
 			const D3D12_RECT rc =
 			{
-				.left   = 0,
-				.top    = 0,
-				.right  = LONG(width),
-				.bottom = LONG(height),
+				.left   = _rect.m_x,
+				.top    = _rect.m_y,
+				.right  = _rect.m_x + _rect.m_width,
+				.bottom = _rect.m_y + _rect.m_height,
 			};
 			_commandList->RSSetScissorRects(1, &rc);
 
@@ -5285,6 +5292,7 @@ namespace bgfx { namespace d3d12
 
 		FrameBufferHandle m_fbh;
 		uint32_t m_backBufferColorIdx;
+		Rect m_resolveArea;
 		bool m_rtMsaa;
 		bool m_directAccessSupport;
 		bool m_shaderF16Support;
@@ -8461,7 +8469,7 @@ namespace bgfx { namespace d3d12
 		setState(_commandList, state);
 	}
 
-	void TextureD3D12::resolve(ID3D12GraphicsCommandList* _commandList, uint8_t _resolve, uint32_t _layer, uint32_t _numLayers, uint32_t _mip)
+	void TextureD3D12::resolve(ID3D12GraphicsCommandList* _commandList, uint8_t _resolve, uint32_t _layer, uint32_t _numLayers, uint32_t _mip, const Rect& _rect)
 	{
 		const bx::EncodingType::Enum encoding = bx::EncodingType::Enum(bimg::getBlockInfo(bimg::TextureFormat::Enum(m_textureFormat) ).encoding);
 		const bool resolvable = bx::EncodingType::Int  != encoding
@@ -8472,7 +8480,7 @@ namespace bgfx { namespace d3d12
 		if (needResolve
 		&&  bimg::isDepth(bimg::TextureFormat::Enum(m_textureFormat) ) )
 		{
-			s_renderD3D12->resolveDepth(_commandList, *this, _layer, _numLayers, _mip);
+			s_renderD3D12->resolveDepth(_commandList, *this, _layer, _numLayers, _mip, _rect);
 		}
 		else if (needResolve)
 		{
@@ -8502,14 +8510,57 @@ namespace bgfx { namespace d3d12
 				resolveFormat = useSrgb ? tfi.m_fmtSrgb : tfi.m_fmt;
 			}
 
+			const bool whole = true
+				&& 0 == _rect.m_x
+				&& 0 == _rect.m_y
+				&& _rect.m_width  >= bx::max<uint32_t>(m_width  >> _mip, 1)
+				&& _rect.m_height >= bx::max<uint32_t>(m_height >> _mip, 1)
+				;
+
+			ID3D12GraphicsCommandList1* commandList1 = NULL;
+
+			if (!whole)
+			{
+				_commandList->QueryInterface(IID_ID3D12GraphicsCommandList1, (void**)&commandList1);
+			}
+
 			for (uint32_t ii = _layer, end = _layer + _numLayers; ii < end; ++ii)
 			{
-				_commandList->ResolveSubresource(m_singleMsaa
-					, _mip + (ii * m_numMips)
-					, m_ptr
-					, ii
-					, resolveFormat
-				);
+				if (NULL != commandList1)
+				{
+					D3D12_RECT rc =
+					{
+						.left   = _rect.m_x,
+						.top    = _rect.m_y,
+						.right  = _rect.m_x + _rect.m_width,
+						.bottom = _rect.m_y + _rect.m_height,
+					};
+
+					commandList1->ResolveSubresourceRegion(m_singleMsaa
+						, _mip + (ii * m_numMips)
+						, _rect.m_x
+						, _rect.m_y
+						, m_ptr
+						, ii
+						, &rc
+						, resolveFormat
+						, D3D12_RESOLVE_MODE_AVERAGE
+						);
+				}
+				else
+				{
+					_commandList->ResolveSubresource(m_singleMsaa
+						, _mip + (ii * m_numMips)
+						, m_ptr
+						, ii
+						, resolveFormat
+						);
+				}
+			}
+
+			if (NULL != commandList1)
+			{
+				commandList1->Release();
 			}
 
 			setResourceBarrier(_commandList
@@ -9467,10 +9518,15 @@ namespace bgfx { namespace d3d12
 		}
 	}
 
-	void FrameBufferD3D12::resolve()
+	void FrameBufferD3D12::resolve(const Rect& _rect)
 	{
 		if (0 < m_numTh)
 		{
+			const Rect rect = _rect.isZeroArea()
+				? Rect(0, 0, bx::narrowCast<uint16_t>(m_width), bx::narrowCast<uint16_t>(m_height) )
+				: _rect
+				;
+
 			for (uint32_t ii = 0; ii < m_numTh; ++ii)
 			{
 				const Attachment& at = m_attachment[ii];
@@ -9478,7 +9534,7 @@ namespace bgfx { namespace d3d12
 				if (isValid(at.handle) )
 				{
 					TextureD3D12& texture = s_renderD3D12->m_textures[at.handle.idx];
-					texture.resolve(s_renderD3D12->m_commandList, at.flags, at.layer, at.numLayers, at.mip);
+					texture.resolve(s_renderD3D12->m_commandList, at.flags, at.layer, at.numLayers, at.mip, rect);
 				}
 			}
 		}
@@ -10266,7 +10322,8 @@ namespace bgfx { namespace d3d12
 				&&  0 == blit.m_srcMip
 				&&  findPendingResolve(TextureHandle{blit.m_src.idx}, resolveFlags) )
 				{
-					src.resolve(m_commandList, resolveFlags & BGFX_ATTACHMENT_SRGB, blit.m_srcZ, 1, 0);
+					const Rect rect(0, 0, bx::narrowCast<uint16_t>(src.m_width), bx::narrowCast<uint16_t>(src.m_height) );
+					src.resolve(m_commandList, resolveFlags & BGFX_ATTACHMENT_SRGB, blit.m_srcZ, 1, 0, rect);
 				}
 
 				if (D3D12_RESOURCE_STATES(UINT32_MAX) != srcState)
@@ -10867,6 +10924,7 @@ namespace bgfx { namespace d3d12
 					const Rect& scissorRect = renderView->m_scissor;
 					viewHasScissor  = !scissorRect.isZero();
 					viewScissorRect = viewHasScissor ? scissorRect : clippedRect;
+					m_resolveArea.expand(clippedRect);
 
 					D3D12_VIEWPORT vp;
 					vp.TopLeftX = rect.m_x;

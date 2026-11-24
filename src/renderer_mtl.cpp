@@ -896,6 +896,8 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			, m_renderCommandEncoder(NULL)
 			, m_computeCommandEncoder(NULL)
 			, m_renderCommandEncoderFbh(BGFX_INVALID_HANDLE)
+			, m_renderTargetWidth(0)
+			, m_renderTargetHeight(0)
 			, m_maxAnisotropy(1)
 		{
 			bx::memSet(&m_windows, 0xff, sizeof(m_windows) );
@@ -1994,6 +1996,8 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 				MTL::RenderCommandEncoder* rce = m_commandBuffer->renderCommandEncoder(renderPassDescriptor);
 				setRenderCommandEncoder(rce);
 				m_renderCommandEncoderFbh = fbh;
+				m_renderTargetWidth  = 0;
+				m_renderTargetHeight = 0;
 				MTL_RELEASE(renderPassDescriptor, 0);
 
 				{
@@ -2264,6 +2268,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 				MTL::RenderPassDescriptor* renderPassDescriptor = newRenderPassDescriptor();
 				setFrameBuffer(renderPassDescriptor, m_renderCommandEncoderFbh);
+				setRenderTargetArea(renderPassDescriptor);
 
 				for (uint32_t ii = 0; ii < g_caps.limits.maxFBAttachments; ++ii)
 				{
@@ -2668,6 +2673,15 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			{
 				m_frameBuffers[m_fbh.idx].resolve();
 				m_fbh = BGFX_INVALID_HANDLE;
+			}
+		}
+
+		void setRenderTargetArea(MTL::RenderPassDescriptor* _renderPassDescriptor)
+		{
+			if (0 != m_renderTargetWidth)
+			{
+				_renderPassDescriptor->setRenderTargetWidth(m_renderTargetWidth);
+				_renderPassDescriptor->setRenderTargetHeight(m_renderTargetHeight);
 			}
 		}
 
@@ -3834,6 +3848,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 				MTL::RenderPassDescriptor* renderPassDescriptor = newRenderPassDescriptor();
 
 				setFrameBuffer(renderPassDescriptor, m_renderCommandEncoderFbh);
+				setRenderTargetArea(renderPassDescriptor);
 
 				renderPassDescriptor->colorAttachments()->object(0)->setLoadAction(MTL::LoadActionLoad);
 				renderPassDescriptor->colorAttachments()->object(0)->setStoreAction(
@@ -3979,6 +3994,8 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 		MTL::RenderCommandEncoder*  m_renderCommandEncoder;
 		MTL::ComputeCommandEncoder* m_computeCommandEncoder;
 		FrameBufferHandle           m_renderCommandEncoderFbh;
+		uint16_t                    m_renderTargetWidth;
+		uint16_t                    m_renderTargetHeight;
 		uint32_t                    m_maxAnisotropy;
 		FrameBufferHandle           m_dbgTextFbh;
 	};
@@ -7007,12 +7024,39 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 						bool clearWithRenderPass = false;
 						bool integerCleared      = false;
 
+						uint16_t areaWidth  = 0;
+						uint16_t areaHeight = 0;
+
+						if (isValid(viewFbh)
+						&&  NULL == m_frameBuffers[viewFbh.idx].m_swapChain)
+						{
+							const uint32_t right  = bx::min<uint32_t>(width,  viewRect.m_x + viewRect.m_width);
+							const uint32_t bottom = bx::min<uint32_t>(height, viewRect.m_y + viewRect.m_height);
+
+							if (right  < width
+							||  bottom < height)
+							{
+								areaWidth  = bx::narrowCast<uint16_t>(bx::max<uint32_t>(right,  1) );
+								areaHeight = bx::narrowCast<uint16_t>(bx::max<uint32_t>(bottom, 1) );
+							}
+						}
+
+						const bool outsideArea = 0 != m_renderTargetWidth
+							&& (0 == areaWidth
+							||  areaWidth  > m_renderTargetWidth
+							||  areaHeight > m_renderTargetHeight)
+							;
+
 						if (NULL == m_renderCommandEncoder
 						||  fbh.idx != renderView->m_fbh.idx
 						||  profileViews
+						||  outsideArea
 						||  (BGFX_CLEAR_NONE != (clr.m_flags & BGFX_CLEAR_MASK) && hasIntegerColorAttachment(renderView->m_fbh) ) )
 						{
 							endEncoding();
+
+							m_renderTargetWidth  = areaWidth;
+							m_renderTargetHeight = areaHeight;
 
 							MTL::RenderPassDescriptor* renderPassDescriptor = newRenderPassDescriptor();
 							renderPassDescriptor->setVisibilityResultBuffer(m_occlusionQuery.m_buffer);
@@ -7069,6 +7113,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 							{
 								MTL::RenderPassDescriptor* clearRenderPassDescriptor = newRenderPassDescriptor();
 								setFrameBuffer(clearRenderPassDescriptor, fbh);
+								setRenderTargetArea(clearRenderPassDescriptor);
 
 								for (uint32_t ii = 0; ii < g_caps.limits.maxFBAttachments; ++ii)
 								{
@@ -7137,6 +7182,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 							}
 
 							setFrameBuffer(renderPassDescriptor, fbh);
+							setRenderTargetArea(renderPassDescriptor);
 
 							if (clearWithRenderPass)
 							{
@@ -8230,6 +8276,8 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 		endEncoding();
 
 		m_renderCommandEncoderFbh = BGFX_INVALID_HANDLE;
+		m_renderTargetWidth  = 0;
+		m_renderTargetHeight = 0;
 
 		if (_render->m_capture)
 		{

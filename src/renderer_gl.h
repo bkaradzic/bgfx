@@ -1623,7 +1623,7 @@ namespace bgfx { namespace gl
 		void update(const SwapChain& _desc);
 		void postReset();
 		uint16_t destroy();
-		void resolve();
+		void resolve(const Rect& _rect);
 		void discard(uint16_t _flags);
 		bool isSrgbWrite() const;
 

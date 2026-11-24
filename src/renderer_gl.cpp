@@ -2296,6 +2296,7 @@ namespace bgfx { namespace gl
 	{
 		RendererContextGL()
 			: m_numWindows(1)
+			, m_resolveArea(0, 0, 0, 0)
 			, m_rtMsaa(false)
 			, m_fbDiscard(BGFX_CLEAR_NONE)
 			, m_capture(NULL)
@@ -4254,6 +4255,11 @@ namespace bgfx { namespace gl
 					m_glctx.makeCurrent(NULL);
 					GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, frameBuffer.m_fbo[0]) );
 				}
+
+				if (m_fbh.idx == _handle.idx)
+				{
+					m_resolveArea.set(0, 0, bx::narrowCast<uint16_t>(width), bx::narrowCast<uint16_t>(height) );
+				}
 			}
 			else
 			{
@@ -4440,7 +4446,7 @@ namespace bgfx { namespace gl
 				if (UINT16_MAX == frameBuffer.m_denseIdx)
 				{
 					m_glctx.makeCurrent(NULL);
-					frameBuffer.resolve();
+					frameBuffer.resolve(m_resolveArea);
 				}
 
 				m_rtMsaa = false;
@@ -4450,6 +4456,11 @@ namespace bgfx { namespace gl
 		uint32_t setFrameBuffer(FrameBufferHandle _fbh, uint32_t _height, uint16_t _discard = BGFX_CLEAR_NONE, bool _msaa = true)
 		{
 			resolveFrameBuffer(_fbh);
+
+			if (m_fbh.idx != _fbh.idx)
+			{
+				m_resolveArea.clear();
+			}
 
 			if (isValid(m_fbh)
 			&&  m_fbh.idx != _fbh.idx)
@@ -5733,6 +5744,7 @@ namespace bgfx { namespace gl
 		UniformStateCache m_uniformStateCache;
 
 		TextVideoMem m_textVideoMem;
+		Rect m_resolveArea;
 		bool m_rtMsaa;
 
 		FrameBufferHandle m_fbh;
@@ -8872,10 +8884,18 @@ namespace bgfx { namespace gl
 		return true;
 	}
 
-	void FrameBufferGL::resolve()
+	void FrameBufferGL::resolve(const Rect& _rect)
 	{
 		if (0 != m_fbo[1])
 		{
+			constexpr int32_t kPointRadiusMax = 8;
+
+			const bool whole = _rect.isZeroArea();
+			const GLint x0 = whole ? 0               : bx::max<int32_t>(_rect.m_x - kPointRadiusMax, 0);
+			const GLint y0 = whole ? 0               : bx::max<int32_t>(_rect.m_y - kPointRadiusMax, 0);
+			const GLint x1 = whole ? GLint(m_width)  : bx::min<int32_t>(_rect.m_x + _rect.m_width  + kPointRadiusMax, m_width);
+			const GLint y1 = whole ? GLint(m_height) : bx::min<int32_t>(_rect.m_y + _rect.m_height + kPointRadiusMax, m_height);
+
 			uint32_t colorIdx = 0;
 			for (uint32_t ii = 0; ii < m_numTh; ++ii)
 			{
@@ -8921,14 +8941,14 @@ namespace bgfx { namespace gl
 
 						colorIdx++;
 
-						GL_CHECK(glBlitFramebuffer(0
-							, 0
-							, m_width
-							, m_height
-							, 0
-							, 0
-							, m_width
-							, m_height
+						GL_CHECK(glBlitFramebuffer(x0
+							, y0
+							, x1
+							, y1
+							, x0
+							, y0
+							, x1
+							, y1
 							, GL_COLOR_BUFFER_BIT
 							, GL_NEAREST
 							) );
@@ -8940,14 +8960,14 @@ namespace bgfx { namespace gl
 						GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, m_fbo[0]) );
 						GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_fbo[1]) );
 
-						GL_CHECK(glBlitFramebuffer(0
-							, 0
-							, m_width
-							, m_height
-							, 0
-							, 0
-							, m_width
-							, m_height
+						GL_CHECK(glBlitFramebuffer(x0
+							, y0
+							, x1
+							, y1
+							, x0
+							, y0
+							, x1
+							, y1
 							, GL_DEPTH_BUFFER_BIT
 							, GL_NEAREST
 							) );
@@ -10267,6 +10287,16 @@ namespace bgfx { namespace gl
 					const Rect& scissorRect = renderView->m_scissor;
 					viewHasScissor  = !scissorRect.isZero();
 					viewScissorRect = viewHasScissor ? scissorRect : clippedRect;
+
+					m_resolveArea.expand(Rect(
+						  clippedRect.m_x
+						, int16_t(ndcFlipRectY
+							? resolutionHeight-clippedRect.m_height-clippedRect.m_y
+							: clippedRect.m_y
+							)
+						, clippedRect.m_width
+						, clippedRect.m_height
+						) );
 
 					GL_CHECK(glViewport(viewState.m_rect.m_x
 						, ndcFlipRectY

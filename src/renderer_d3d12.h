@@ -533,7 +533,7 @@ namespace bgfx { namespace d3d12
 		void destroy();
 		void clear(ID3D12GraphicsCommandList* _commandList, uint8_t _mip, uint8_t _numMips, uint16_t _layer, uint16_t _numLayers);
 		void update(ID3D12GraphicsCommandList* _commandList, uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem);
-		void resolve(ID3D12GraphicsCommandList* _commandList, uint8_t _resolve, uint32_t _layer, uint32_t _numLayers, uint32_t _mip);
+		void resolve(ID3D12GraphicsCommandList* _commandList, uint8_t _resolve, uint32_t _layer, uint32_t _numLayers, uint32_t _mip, const Rect& _rect);
 		D3D12_RESOURCE_STATES setState(ID3D12GraphicsCommandList* _commandList, D3D12_RESOURCE_STATES _state);
 
 		void setState(ID3D12GraphicsCommandList* _commandList, D3D12_RESOURCE_STATES _state, uint16_t _firstMip, uint16_t _numMips, uint16_t _firstSlice, uint16_t _numSlices);
@@ -608,7 +608,7 @@ namespace bgfx { namespace d3d12
 		HRESULT present(uint32_t _syncInterval, uint32_t _flags);
 		void preReset();
 		void postReset();
-		void resolve();
+		void resolve(const Rect& _rect);
 		void clear(ID3D12GraphicsCommandList* _commandList, const Clear& _clear, const float _palette[][4], const D3D12_RECT* _rect = NULL, uint32_t _num = 0);
 		D3D12_RESOURCE_STATES setState(ID3D12GraphicsCommandList* _commandList, uint8_t _idx, D3D12_RESOURCE_STATES _state);
 

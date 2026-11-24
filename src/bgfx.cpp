@@ -489,6 +489,14 @@ namespace bgfx
 #	include "cs_blit_buffer_to_texture_uint.bin.h"
 #endif // BGFX_CONFIG_BLIT_FALLBACK
 
+#if BGFX_CONFIG_COLOR_RESOLVE_FALLBACK
+#	include "fs_resolve_color.bin.h"
+#endif // BGFX_CONFIG_COLOR_RESOLVE_FALLBACK
+
+#if BGFX_CONFIG_DEPTH_UPLOAD_FALLBACK
+#	include "fs_upload_depth.bin.h"
+#endif // BGFX_CONFIG_DEPTH_UPLOAD_FALLBACK
+
 	static const EmbeddedShader s_embeddedShaders[] =
 	{
 #if BGFX_CONFIG_DEBUG_TEXT
@@ -526,6 +534,14 @@ namespace bgfx
 		BGFX_EMBEDDED_SHADER(cs_blit_texture_to_buffer_uint),
 		BGFX_EMBEDDED_SHADER(cs_blit_buffer_to_texture_uint),
 #endif // BGFX_CONFIG_BLIT_FALLBACK
+
+#if BGFX_CONFIG_COLOR_RESOLVE_FALLBACK
+		BGFX_EMBEDDED_SHADER(fs_resolve_color),
+#endif // BGFX_CONFIG_COLOR_RESOLVE_FALLBACK
+
+#if BGFX_CONFIG_DEPTH_UPLOAD_FALLBACK
+		BGFX_EMBEDDED_SHADER(fs_upload_depth),
+#endif // BGFX_CONFIG_DEPTH_UPLOAD_FALLBACK
 
 		BGFX_EMBEDDED_SHADER_END()
 	};
@@ -1188,6 +1204,94 @@ namespace bgfx
 			}
 		}
 	}
+
+	ColorResolve* g_colorResolve = NULL;
+
+#if BGFX_CONFIG_COLOR_RESOLVE_FALLBACK
+	void ColorResolve::init()
+	{
+		BGFX_CHECK_API_THREAD();
+
+		const RendererType::Enum rendererType = g_caps.rendererType;
+
+		if (RendererType::WebGPU == rendererType)
+		{
+			ShaderHandle vsh = createEmbeddedShader(s_embeddedShaders, rendererType, "vs_resolve_depth");
+			ShaderHandle fsh = createEmbeddedShader(s_embeddedShaders, rendererType, "fs_resolve_color");
+			BX_ASSERT(isValid(vsh) && isValid(fsh), "Failed to create color resolve embedded shader.");
+
+			m_program = createProgram(vsh, fsh, true);
+			BX_ASSERT(isValid(m_program), "Failed to create color resolve program.");
+
+			g_colorResolve = this;
+		}
+	}
+
+	void ColorResolve::shutdown()
+	{
+		BGFX_CHECK_API_THREAD();
+
+		g_colorResolve = NULL;
+
+		if (isValid(m_program) )
+		{
+			destroy(m_program);
+			m_program = BGFX_INVALID_HANDLE;
+		}
+	}
+#else
+	void ColorResolve::init()
+	{
+	}
+
+	void ColorResolve::shutdown()
+	{
+	}
+#endif // BGFX_CONFIG_COLOR_RESOLVE_FALLBACK
+
+	DepthUpload* g_depthUpload = NULL;
+
+#if BGFX_CONFIG_DEPTH_UPLOAD_FALLBACK
+	void DepthUpload::init()
+	{
+		BGFX_CHECK_API_THREAD();
+
+		const RendererType::Enum rendererType = g_caps.rendererType;
+
+		if (RendererType::WebGPU == rendererType)
+		{
+			ShaderHandle vsh = createEmbeddedShader(s_embeddedShaders, rendererType, "vs_resolve_depth");
+			ShaderHandle fsh = createEmbeddedShader(s_embeddedShaders, rendererType, "fs_upload_depth");
+			BX_ASSERT(isValid(vsh) && isValid(fsh), "Failed to create depth upload embedded shader.");
+
+			m_program = createProgram(vsh, fsh, true);
+			BX_ASSERT(isValid(m_program), "Failed to create depth upload program.");
+
+			g_depthUpload = this;
+		}
+	}
+
+	void DepthUpload::shutdown()
+	{
+		BGFX_CHECK_API_THREAD();
+
+		g_depthUpload = NULL;
+
+		if (isValid(m_program) )
+		{
+			destroy(m_program);
+			m_program = BGFX_INVALID_HANDLE;
+		}
+	}
+#else
+	void DepthUpload::init()
+	{
+	}
+
+	void DepthUpload::shutdown()
+	{
+	}
+#endif // BGFX_CONFIG_DEPTH_UPLOAD_FALLBACK
 
 #if BGFX_CONFIG_VIDEO
 	VideoDecode* g_videoDecode = NULL;
@@ -2676,6 +2780,8 @@ namespace bgfx
 		m_mipGen.init();
 		m_blitFallback.init();
 		m_depthResolve.init();
+		m_colorResolve.init();
+		m_depthUpload.init();
 		m_videoDecode.init();
 
 		transientAddChunk(m_submit->m_transientVb, _init.limits.minTransientVbSize, false);
@@ -2715,6 +2821,8 @@ namespace bgfx
 		m_clearQuad.shutdown();
 		m_mipGen.shutdown();
 		m_depthResolve.shutdown();
+		m_colorResolve.shutdown();
+		m_depthUpload.shutdown();
 		m_blitFallback.shutdown();
 		m_videoDecode.shutdown();
 		frame();
