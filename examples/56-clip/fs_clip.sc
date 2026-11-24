@@ -7,14 +7,20 @@ $input v_color0, v_position
 
 #include "../common/common.sh"
 
-uniform vec4 u_clipPlane;
+uniform vec4 u_clipPlane0;
+uniform vec4 u_clipPlane1;
 
 void main()
 {
-	// The plane equation
-	float clipDistance = dot(v_position, u_clipPlane.xyz) + u_clipPlane.w;
+	// The normal mesh pass clips against every active plane.
+	float clipDistance0 = dot(v_position, u_clipPlane0.xyz) + u_clipPlane0.w;
+	if (clipDistance0 > 0.0)
+	{
+		discard;
+	}
 
-	if (clipDistance > 0.0)
+	float clipDistance1 = dot(v_position, u_clipPlane1.xyz) + u_clipPlane1.w;
+	if (clipDistance1 > 0.0)
 	{
 		discard;
 	}

@@ -10,6 +10,8 @@
 namespace
 {
 
+static const uint32_t kNumClipPlanes = 2;
+
 struct ClipVertex
 {
 	float m_x;
@@ -48,12 +50,20 @@ static const uint16_t s_clipIndices[] =
 	2, 3, 6, 6, 3, 7,
 };
 
-static const ClipVertex s_capVertices[] =
+static const ClipVertex s_capYVertices[] =
 {
 	{ -1.0f, 0.0f, -1.0f, 0xff0000ff },
 	{ 1.0f, 0.0f, -1.0f,  0xff0000ff },
 	{ -1.0f, 0.0f,  1.0f, 0xff0000ff },
 	{ 1.0f, 0.0f,  1.0f,  0xff0000ff },
+};
+
+static const ClipVertex s_capZVertices[] =
+{
+	{ -1.0f, -1.0f, 0.0f, 0xff0080ff },
+	{ 1.0f, -1.0f, 0.0f,  0xff0080ff },
+	{ -1.0f,  1.0f, 0.0f, 0xff0080ff },
+	{ 1.0f,  1.0f, 0.0f, 0xff0080ff },
 };
 
 static const uint16_t s_capIndices[] = { 0, 1, 2, 1, 3, 2 };
@@ -69,9 +79,16 @@ public:
 		, m_reset(BGFX_RESET_VSYNC)
 		, m_vbh(BGFX_INVALID_HANDLE)
 		, m_ibh(BGFX_INVALID_HANDLE)
-		, m_capVbh(BGFX_INVALID_HANDLE)
+		, m_capYVbh(BGFX_INVALID_HANDLE)
+		, m_capZVbh(BGFX_INVALID_HANDLE)
 		, m_capIbh(BGFX_INVALID_HANDLE)
 		, m_program(BGFX_INVALID_HANDLE)
+		, m_stencilProgram(BGFX_INVALID_HANDLE)
+		, m_capProgram(BGFX_INVALID_HANDLE)
+		, m_clipPlane0(BGFX_INVALID_HANDLE)
+		, m_clipPlane1(BGFX_INVALID_HANDLE)
+		, m_cameraPos(BGFX_INVALID_HANDLE)
+		, m_capIndex(BGFX_INVALID_HANDLE)
 	{
 	}
 
@@ -96,6 +113,11 @@ public:
 
 		bgfx::setDebug(m_debug);
 		bgfx::setViewClear(0, BGFX_CLEAR_COLOR|BGFX_CLEAR_DEPTH|BGFX_CLEAR_STENCIL, 0x303030ff, 1.0f, 0);
+		bgfx::setViewName(0, "Stencil back faces");
+		bgfx::setViewName(1, "Stencil front faces");
+		bgfx::setViewName(2, "Clipped mesh");
+		bgfx::setViewName(3, "Y cap");
+		bgfx::setViewName(4, "Z cap");
 
 		// Create vertex stream declaration.
 		ClipVertex::init();
@@ -106,13 +128,19 @@ public:
 		// Create static index buffer for triangle list rendering.
 		m_ibh = bgfx::createIndexBuffer(bgfx::makeRef(s_clipIndices, sizeof(s_clipIndices)));
 
-		// Create the plane used to visualize the clipped opening.
-		m_capVbh = bgfx::createVertexBuffer(bgfx::makeRef(s_capVertices, sizeof(s_capVertices)), ClipVertex::ms_layout);
+		// Create one cap plane for each clipping plane.
+		m_capYVbh = bgfx::createVertexBuffer(bgfx::makeRef(s_capYVertices, sizeof(s_capYVertices)), ClipVertex::ms_layout);
+		m_capZVbh = bgfx::createVertexBuffer(bgfx::makeRef(s_capZVertices, sizeof(s_capZVertices)), ClipVertex::ms_layout);
 		m_capIbh = bgfx::createIndexBuffer(bgfx::makeRef(s_capIndices, sizeof(s_capIndices)));
 
-		// Create program from shaders.
+		// Create the normal, stencil, and cap programs.
 		m_program = loadProgram("vs_clip", "fs_clip");
-		m_clipPlane = bgfx::createUniform("u_clipPlane", bgfx::UniformType::Vec4);
+		m_stencilProgram = loadProgram("vs_clip", "fs_clip_stencil");
+		m_capProgram = loadProgram("vs_clip", "fs_cap");
+		m_clipPlane0 = bgfx::createUniform("u_clipPlane0", bgfx::UniformType::Vec4);
+		m_clipPlane1 = bgfx::createUniform("u_clipPlane1", bgfx::UniformType::Vec4);
+		m_cameraPos = bgfx::createUniform("u_cameraPos", bgfx::UniformType::Vec4);
+		m_capIndex = bgfx::createUniform("u_capIndex", bgfx::UniformType::Vec4);
 
 		imguiCreate();
 	}
@@ -123,9 +151,15 @@ public:
 		bgfx::destroy(m_ibh);
 		bgfx::destroy(m_vbh);
 		bgfx::destroy(m_capIbh);
-		bgfx::destroy(m_capVbh);
+		bgfx::destroy(m_capZVbh);
+		bgfx::destroy(m_capYVbh);
+		bgfx::destroy(m_capProgram);
+		bgfx::destroy(m_stencilProgram);
 		bgfx::destroy(m_program);
-		bgfx::destroy(m_clipPlane);
+		bgfx::destroy(m_clipPlane0);
+		bgfx::destroy(m_clipPlane1);
+		bgfx::destroy(m_cameraPos);
+		bgfx::destroy(m_capIndex);
 		bgfx::shutdown();
 		return 0;
 	}
@@ -166,7 +200,7 @@ public:
 			,  bgfx::getCaps()->homogeneousDepth
 			);
 
-		for (bgfx::ViewId viewId = 0; viewId < 4; ++viewId)
+		for (bgfx::ViewId viewId = 0; viewId < 5; ++viewId)
 		{
 			bgfx::setViewRect(viewId, 0, 0, uint16_t(m_width), uint16_t(m_height));
 			bgfx::setViewTransform(viewId, view, proj);
@@ -175,11 +209,37 @@ public:
 		float model[16];
 		bx::mtxIdentity(model);
 
-		// Clip against the horizontal plane y = 0.
-		const float clipPlane[4] = { 0.0f, 0.5f, 0.0f, 0.0f };
-		bgfx::setUniform(m_clipPlane, clipPlane);
+		// Keep the negative side of both planes: y <= 0 and z <= 0.
+		const float clipPlane0[4] = { 0.0f, 0.5f, 0.0f, 0.0f };
+		const float clipPlane1[4] = { 0.0f, 0.0f, -0.5f, 0.0f };
+		bgfx::setUniform(m_clipPlane0, clipPlane0);
+		bgfx::setUniform(m_clipPlane1, clipPlane1);
 
-		// Pass 0: Increment the stencil where backface exists.
+		// The stencil shader needs the camera position in the same space as the
+		// vertex positions. The model is currently identity, so world space and
+		// object space are the same here.
+		const float cameraPos[4] = { eye.x, eye.y, eye.z, 1.0f };
+		bgfx::setUniform(m_cameraPos, cameraPos);
+
+		// The stencil shader uses the same test. Use it on the CPU as well so
+		// that an away-facing plane does not submit a cap into the shared mask.
+		const float cameraPlaneDistance0 =
+			eye.x * clipPlane0[0]
+			+ eye.y * clipPlane0[1]
+			+ eye.z * clipPlane0[2]
+			+ clipPlane0[3]
+			;
+		const float cameraPlaneDistance1 =
+			eye.x * clipPlane1[0]
+			+ eye.y * clipPlane1[1]
+			+ eye.z * clipPlane1[2]
+			+ clipPlane1[3]
+			;
+		const bool plane0FacesCamera = cameraPlaneDistance0 > 0.0f;
+		const bool plane1FacesCamera = cameraPlaneDistance1 > 0.0f;
+
+		// Pass 0: Increment the stencil where a backface exists. The stencil
+		// shader only clips against planes facing the camera.
 		bgfx::setTransform(model);
 		bgfx::setVertexBuffer(0, m_vbh);
 		bgfx::setIndexBuffer(m_ibh);
@@ -194,9 +254,10 @@ public:
 			BGFX_STATE_DEPTH_TEST_LESS
 			| BGFX_STATE_CULL_CCW
 			);
-		bgfx::submit(0, m_program);
+		bgfx::submit(0, m_stencilProgram);
 
-		// Pass 1: Decrement the stencil where frontface exists to leave peeping backface in stencil.
+		// Pass 1: Decrement the stencil where a frontface exists. Together with
+		// the previous pass, this leaves nonzero values in the cap region.
 		bgfx::setStencil(
 			BGFX_STENCIL_TEST_ALWAYS
 			| BGFX_STENCIL_OP_FAIL_S_KEEP
@@ -208,9 +269,9 @@ public:
 			BGFX_STATE_DEPTH_TEST_LESS
 			| BGFX_STATE_CULL_CW
 			);
-		bgfx::submit(1, m_program);
+		bgfx::submit(1, m_stencilProgram);
 
-		// Pass 2: render the clipped cube normally.
+		// Pass 2: render the cube clipped by every active plane.
 		bgfx::setStencil(BGFX_STENCIL_NONE, BGFX_STENCIL_NONE);
 		bgfx::setTransform(model);
 		bgfx::setVertexBuffer(0, m_vbh);
@@ -221,24 +282,53 @@ public:
 			);
 		bgfx::submit(2, m_program);
 
-		// Pass 3: Render the capp masked with above computed stencil.
-		bgfx::setTransform(model);
-		bgfx::setVertexBuffer(0, m_capVbh);
-		bgfx::setIndexBuffer(m_capIbh);
-		bgfx::setStencil(
-			BGFX_STENCIL_TEST_NOTEQUAL
-			| BGFX_STENCIL_FUNC_REF(0)
-			| BGFX_STENCIL_FUNC_RMASK(0xff)
-			| BGFX_STENCIL_OP_FAIL_S_KEEP
-			| BGFX_STENCIL_OP_FAIL_Z_KEEP
-			| BGFX_STENCIL_OP_PASS_Z_KEEP
-			, BGFX_STENCIL_NONE
-			);
-		bgfx::setState(
-			BGFX_STATE_WRITE_RGB|BGFX_STATE_WRITE_A
-			| BGFX_STATE_DEPTH_TEST_LESS|BGFX_STATE_MSAA
-			);
-		bgfx::submit(3, m_program);
+		// Pass 3: render the y = 0 cap only when that plane faces the camera.
+		if (plane0FacesCamera)
+		{
+			bgfx::setTransform(model);
+			bgfx::setVertexBuffer(0, m_capYVbh);
+			bgfx::setIndexBuffer(m_capIbh);
+			const float yCapIndex[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
+			bgfx::setUniform(m_capIndex, yCapIndex);
+			bgfx::setStencil(
+				BGFX_STENCIL_TEST_NOTEQUAL
+				| BGFX_STENCIL_FUNC_REF(0)
+				| BGFX_STENCIL_FUNC_RMASK(0xff)
+				| BGFX_STENCIL_OP_FAIL_S_KEEP
+				| BGFX_STENCIL_OP_FAIL_Z_KEEP
+				| BGFX_STENCIL_OP_PASS_Z_KEEP
+				, BGFX_STENCIL_NONE
+				);
+			bgfx::setState(
+				BGFX_STATE_WRITE_RGB|BGFX_STATE_WRITE_A
+				| BGFX_STATE_DEPTH_TEST_LESS|BGFX_STATE_MSAA
+				);
+			bgfx::submit(3, m_capProgram);
+		}
+
+		// Pass 4: render the z = 0 cap only when that plane faces the camera.
+		if (plane1FacesCamera)
+		{
+			bgfx::setTransform(model);
+			bgfx::setVertexBuffer(0, m_capZVbh);
+			bgfx::setIndexBuffer(m_capIbh);
+			const float zCapIndex[4] = { 1.0f, 0.0f, 0.0f, 0.0f };
+			bgfx::setUniform(m_capIndex, zCapIndex);
+			bgfx::setStencil(
+				BGFX_STENCIL_TEST_NOTEQUAL
+				| BGFX_STENCIL_FUNC_REF(0)
+				| BGFX_STENCIL_FUNC_RMASK(0xff)
+				| BGFX_STENCIL_OP_FAIL_S_KEEP
+				| BGFX_STENCIL_OP_FAIL_Z_KEEP
+				| BGFX_STENCIL_OP_PASS_Z_KEEP
+				, BGFX_STENCIL_NONE
+				);
+			bgfx::setState(
+				BGFX_STATE_WRITE_RGB|BGFX_STATE_WRITE_A
+				| BGFX_STATE_DEPTH_TEST_LESS|BGFX_STATE_MSAA
+				);
+			bgfx::submit(4, m_capProgram);
+		}
 
 		// Advance to next frame. Rendering thread will be kicked to
 		// process submitted rendering primitives.
@@ -253,10 +343,16 @@ public:
 	uint32_t m_reset;
 	bgfx::VertexBufferHandle m_vbh;
 	bgfx::IndexBufferHandle m_ibh;
-	bgfx::VertexBufferHandle m_capVbh;
+	bgfx::VertexBufferHandle m_capYVbh;
+	bgfx::VertexBufferHandle m_capZVbh;
 	bgfx::IndexBufferHandle m_capIbh;
 	bgfx::ProgramHandle m_program;
-	bgfx::UniformHandle m_clipPlane;
+	bgfx::ProgramHandle m_stencilProgram;
+	bgfx::ProgramHandle m_capProgram;
+	bgfx::UniformHandle m_clipPlane0;
+	bgfx::UniformHandle m_clipPlane1;
+	bgfx::UniformHandle m_cameraPos;
+	bgfx::UniformHandle m_capIndex;
 };
 
 } // namespace
@@ -265,5 +361,5 @@ ENTRY_IMPLEMENT_MAIN(
 	  ExampleClip
 	, "56-clip"
 	, "Rendering a simple position/color geometry for clipping experiments."
-	//, "https://bkaradzic.github.io/bgfx/examples.html#clip" : Pending implementation
+	, "https://bkaradzic.github.io/bgfx/examples.html#clip" //: Pending implementation
 	);
