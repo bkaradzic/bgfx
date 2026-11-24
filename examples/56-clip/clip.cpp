@@ -10,7 +10,7 @@
 namespace
 {
 
-static const uint32_t kNumClipPlanes = 2;
+static const char* s_axisNames[] = { "X", "Y", "Z" };
 
 struct ClipVertex
 {
@@ -68,6 +68,36 @@ static const ClipVertex s_capZVertices[] =
 
 static const uint16_t s_capIndices[] = { 0, 1, 2, 1, 3, 2 };
 
+static void buildCapVertices(uint8_t _axis, float _distance, uint32_t _color, ClipVertex* _vertices)
+{
+	const float min = -1.0f;
+	const float max =  1.0f;
+
+	switch (_axis)
+	{
+	case 0: // x = distance
+		_vertices[0] = { _distance, min, min, _color };
+		_vertices[1] = { _distance, max, min, _color };
+		_vertices[2] = { _distance, min, max, _color };
+		_vertices[3] = { _distance, max, max, _color };
+		break;
+
+	case 1: // y = distance
+		_vertices[0] = { min, _distance, min, _color };
+		_vertices[1] = { max, _distance, min, _color };
+		_vertices[2] = { min, _distance, max, _color };
+		_vertices[3] = { max, _distance, max, _color };
+		break;
+
+	default: // z = distance
+		_vertices[0] = { min, min, _distance, _color };
+		_vertices[1] = { max, min, _distance, _color };
+		_vertices[2] = { min, max, _distance, _color };
+		_vertices[3] = { max, max, _distance, _color };
+		break;
+	}
+}
+
 class ExampleClip : public entry::AppI
 {
 public:
@@ -89,6 +119,12 @@ public:
 		, m_clipPlane1(BGFX_INVALID_HANDLE)
 		, m_cameraPos(BGFX_INVALID_HANDLE)
 		, m_capIndex(BGFX_INVALID_HANDLE)
+		, m_planeAxis0(1)
+		, m_planeAxis1(2)
+		, m_planeDistance0(0.0f)
+		, m_planeDistance1(0.0f)
+		, m_invertNormal0(false)
+		, m_invertNormal1(false)
 	{
 	}
 
@@ -129,8 +165,8 @@ public:
 		m_ibh = bgfx::createIndexBuffer(bgfx::makeRef(s_clipIndices, sizeof(s_clipIndices)));
 
 		// Create one cap plane for each clipping plane.
-		m_capYVbh = bgfx::createVertexBuffer(bgfx::makeRef(s_capYVertices, sizeof(s_capYVertices)), ClipVertex::ms_layout);
-		m_capZVbh = bgfx::createVertexBuffer(bgfx::makeRef(s_capZVertices, sizeof(s_capZVertices)), ClipVertex::ms_layout);
+		m_capYVbh = bgfx::createDynamicVertexBuffer(4, ClipVertex::ms_layout);
+		m_capZVbh = bgfx::createDynamicVertexBuffer(4, ClipVertex::ms_layout);
 		m_capIbh = bgfx::createIndexBuffer(bgfx::makeRef(s_capIndices, sizeof(s_capIndices)));
 
 		// Create the normal, stencil, and cap programs.
@@ -175,6 +211,36 @@ public:
 			| (m_mouseState.m_buttons[entry::MouseButton::Middle] ? IMGUI_MBUT_MIDDLE : 0),
 			m_mouseState.m_mz, uint16_t(m_width), uint16_t(m_height));
 		showExampleDialog(this);
+
+		ImGui::SetNextWindowPos(
+			  ImVec2(m_width - m_width / 4.0f - 10.0f, 10.0f)
+			, ImGuiCond_FirstUseEver
+			);
+		ImGui::SetNextWindowSize(
+			  ImVec2(m_width / 4.0f, m_height / 3.0f)
+			, ImGuiCond_FirstUseEver
+			);
+		ImGui::Begin("Clipping Planes", NULL, 0);
+		ImGui::Text("Kept side: coordinate <= distance");
+		ImGui::Separator();
+
+		ImGui::PushID(0);
+		ImGui::Text("Plane 0");
+		ImGui::Combo("Axis", &m_planeAxis0, s_axisNames, BX_COUNTOF(s_axisNames));
+		ImGui::SliderFloat("Distance", &m_planeDistance0, -2.0f, 2.0f, "%.2f");
+		ImGui::Checkbox("Invert normal", &m_invertNormal0);
+		ImGui::PopID();
+
+		ImGui::Separator();
+
+		ImGui::PushID(1);
+		ImGui::Text("Plane 1");
+		ImGui::Combo("Axis", &m_planeAxis1, s_axisNames, BX_COUNTOF(s_axisNames));
+		ImGui::SliderFloat("Distance", &m_planeDistance1, -2.0f, 2.0f, "%.2f");
+		ImGui::Checkbox("Invert normal", &m_invertNormal1);
+		ImGui::PopID();
+
+		ImGui::End();
 		imguiEndFrame();
 
 		// Isometric-style camera: view the origin diagonally from above.
@@ -209,11 +275,26 @@ public:
 		float model[16];
 		bx::mtxIdentity(model);
 
-		// Keep the negative side of both planes: y <= 0 and z <= 0.
-		const float clipPlane0[4] = { 0.0f, 0.5f, 0.0f, 0.0f };
-		const float clipPlane1[4] = { 0.0f, 0.0f, -0.5f, 0.0f };
+		// Keep the negative side of both planes. For a plane at coordinate d,
+		// the equation is 0.5 * (coordinate - d), so distance <= 0 keeps
+		// coordinate <= d.
+		float clipPlane0[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
+		float clipPlane1[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
+		const float normalSign0 = m_invertNormal0 ? -1.0f : 1.0f;
+		const float normalSign1 = m_invertNormal1 ? -1.0f : 1.0f;
+		clipPlane0[m_planeAxis0] = 0.5f * normalSign0;
+		clipPlane0[3] = -0.5f * m_planeDistance0 * normalSign0;
+		clipPlane1[m_planeAxis1] = 0.5f * normalSign1;
+		clipPlane1[3] = -0.5f * m_planeDistance1 * normalSign1;
 		bgfx::setUniform(m_clipPlane0, clipPlane0);
 		bgfx::setUniform(m_clipPlane1, clipPlane1);
+
+		ClipVertex cap0Vertices[4];
+		ClipVertex cap1Vertices[4];
+		buildCapVertices(uint8_t(m_planeAxis0), m_planeDistance0, 0xff0000ff, cap0Vertices);
+		buildCapVertices(uint8_t(m_planeAxis1), m_planeDistance1, 0xff0080ff, cap1Vertices);
+		bgfx::update(m_capYVbh, 0, bgfx::copy(cap0Vertices, sizeof(cap0Vertices)));
+		bgfx::update(m_capZVbh, 0, bgfx::copy(cap1Vertices, sizeof(cap1Vertices)));
 
 		// The stencil shader needs the camera position in the same space as the
 		// vertex positions. The model is currently identity, so world space and
@@ -343,8 +424,8 @@ public:
 	uint32_t m_reset;
 	bgfx::VertexBufferHandle m_vbh;
 	bgfx::IndexBufferHandle m_ibh;
-	bgfx::VertexBufferHandle m_capYVbh;
-	bgfx::VertexBufferHandle m_capZVbh;
+	bgfx::DynamicVertexBufferHandle m_capYVbh;
+	bgfx::DynamicVertexBufferHandle m_capZVbh;
 	bgfx::IndexBufferHandle m_capIbh;
 	bgfx::ProgramHandle m_program;
 	bgfx::ProgramHandle m_stencilProgram;
@@ -353,6 +434,12 @@ public:
 	bgfx::UniformHandle m_clipPlane1;
 	bgfx::UniformHandle m_cameraPos;
 	bgfx::UniformHandle m_capIndex;
+	int m_planeAxis0;
+	int m_planeAxis1;
+	float m_planeDistance0;
+	float m_planeDistance1;
+	bool m_invertNormal0;
+	bool m_invertNormal1;
 };
 
 } // namespace
