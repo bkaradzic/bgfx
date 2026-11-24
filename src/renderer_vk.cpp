@@ -3666,11 +3666,12 @@ VK_IMPORT_DEVICE
 		{
 			m_dbgTextFbh = _handle;
 
-			const FrameBufferVK& frameBuffer = getFrameBuffer(_handle);
+			FrameBufferVK& frameBuffer = getFrameBuffer(_handle);
 			const uint32_t width  = frameBuffer.m_width;
 			const uint32_t height = frameBuffer.m_height;
 
 			setFrameBuffer(_handle);
+			frameBuffer.m_resolveArea.set(0, 0, bx::narrowCast<uint16_t>(width), bx::narrowCast<uint16_t>(height) );
 
 			VkViewport vp;
 			vp.x        = 0.0f;
@@ -4947,7 +4948,7 @@ VK_IMPORT_DEVICE
 			return pipeline;
 		}
 
-		void resolveDepth(VkCommandBuffer _commandBuffer, TextureVK& _texture, uint32_t _layer, uint32_t _numLayers, uint32_t _mip)
+		void resolveDepth(VkCommandBuffer _commandBuffer, TextureVK& _texture, uint32_t _layer, uint32_t _numLayers, uint32_t _mip, const Rect& _rect)
 		{
 			const ProgramVK& program = m_program[g_depthResolve->m_program[DepthResolve::Texture2DArray].idx];
 
@@ -4972,8 +4973,8 @@ VK_IMPORT_DEVICE
 
 			const VkRect2D rc =
 			{
-				.offset = { .x     = 0,     .y      = 0      },
-				.extent = { .width = width, .height = height },
+				.offset = { .x     = _rect.m_x,     .y      = _rect.m_y      },
+				.extent = { .width = _rect.m_width, .height = _rect.m_height },
 			};
 
 			for (uint32_t ii = _layer, end = _layer + _numLayers; ii < end; ++ii)
@@ -9027,7 +9028,7 @@ VK_DESTROY
 		}
 	}
 
-	void TextureVK::resolve(VkCommandBuffer _commandBuffer, uint8_t _resolve, uint32_t _layer, uint32_t _numLayers, uint32_t _mip)
+	void TextureVK::resolve(VkCommandBuffer _commandBuffer, uint8_t _resolve, uint32_t _layer, uint32_t _numLayers, uint32_t _mip, const Rect& _rect)
 	{
 		BGFX_PROFILER_SCOPE("TextureVK::resolve", kColorResource);
 
@@ -9060,11 +9061,11 @@ VK_DESTROY
 
 			if (0 != (m_aspectFlags & VK_IMAGE_ASPECT_DEPTH_BIT) )
 			{
-				s_renderVK->resolveDepth(_commandBuffer, *this, layer, numLayers, _mip);
+				s_renderVK->resolveDepth(_commandBuffer, *this, layer, numLayers, _mip, _rect);
 			}
 			else if (resolveFormat != m_format)
 			{
-				resolveRenderPass(_commandBuffer, resolveFormat, layer, numLayers, _mip);
+				resolveRenderPass(_commandBuffer, resolveFormat, layer, numLayers, _mip, _rect);
 				setState(_commandBuffer, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, true);
 			}
 			else
@@ -9081,7 +9082,7 @@ VK_DESTROY
 						.baseArrayLayer = layer,
 						.layerCount     = numLayers,
 					},
-					.srcOffset = { .x = 0, .y = 0, .z = 0 },
+					.srcOffset = { .x = _rect.m_x, .y = _rect.m_y, .z = 0 },
 					.dstSubresource =
 					{
 						.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT,
@@ -9089,8 +9090,8 @@ VK_DESTROY
 						.baseArrayLayer = layer,
 						.layerCount     = numLayers,
 					},
-					.dstOffset = { .x = 0, .y = 0, .z = 0 },
-					.extent    = { .width = m_width, .height = m_height, .depth = 1 },
+					.dstOffset = { .x = _rect.m_x, .y = _rect.m_y, .z = 0 },
+					.extent    = { .width = _rect.m_width, .height = _rect.m_height, .depth = 1 },
 				};
 
 				vkCmdResolveImage(
@@ -9281,7 +9282,7 @@ VK_DESTROY
 		setState(_commandBuffer, oldSingleMsaaLayout, true);
 	}
 
-	void TextureVK::resolveRenderPass(VkCommandBuffer _commandBuffer, VkFormat _format, uint32_t _layer, uint32_t _numLayers, uint32_t _mip)
+	void TextureVK::resolveRenderPass(VkCommandBuffer _commandBuffer, VkFormat _format, uint32_t _layer, uint32_t _numLayers, uint32_t _mip, const Rect& _rect)
 	{
 		const VkDevice device = s_renderVK->m_device;
 		const VkAllocationCallbacks* allocatorCb = s_renderVK->m_allocatorCb;
@@ -9349,8 +9350,8 @@ VK_DESTROY
 				.framebuffer = framebuffer,
 				.renderArea  =
 				{
-					.offset = { .x     = 0,     .y      = 0      },
-					.extent = { .width = width, .height = height },
+					.offset = { .x     = _rect.m_x,     .y      = _rect.m_y      },
+					.extent = { .width = _rect.m_width, .height = _rect.m_height },
 				},
 				.clearValueCount = 0,
 				.pClearValues    = NULL,
@@ -11411,6 +11412,11 @@ VK_DESTROY
 
 		if (NULL == m_nwh)
 		{
+			const Rect rect = m_resolveArea.isZeroArea()
+				? Rect(0, 0, bx::narrowCast<uint16_t>(m_width), bx::narrowCast<uint16_t>(m_height) )
+				: m_resolveArea
+				;
+
 			for (uint32_t ii = 0; ii < m_numTh; ++ii)
 			{
 				const Attachment& at = m_attachment[ii];
@@ -11418,7 +11424,7 @@ VK_DESTROY
 				if (isValid(at.handle) )
 				{
 					TextureVK& texture = s_renderVK->m_textures[at.handle.idx];
-					texture.resolve(s_renderVK->m_commandBuffer, at.flags, at.layer, at.numLayers, at.mip);
+					texture.resolve(s_renderVK->m_commandBuffer, at.flags, at.layer, at.numLayers, at.mip, rect);
 				}
 			}
 		}
@@ -11429,13 +11435,17 @@ VK_DESTROY
 			m_swapChain.m_backBufferColorMsaa.m_singleMsaaImage = m_swapChain.m_backBufferColorImage[m_swapChain.m_backBufferColorIdx];
 			m_swapChain.m_backBufferColorMsaa.m_currentSingleMsaaImageLayout = m_swapChain.m_backBufferColorImageLayout[m_swapChain.m_backBufferColorIdx];
 
-			m_swapChain.m_backBufferColorMsaa.resolve(s_renderVK->m_commandBuffer, 0, 0, 1, 0);
+			const TextureVK& msaa = m_swapChain.m_backBufferColorMsaa;
+			const Rect rect(0, 0, bx::narrowCast<uint16_t>(msaa.m_width), bx::narrowCast<uint16_t>(msaa.m_height) );
+
+			m_swapChain.m_backBufferColorMsaa.resolve(s_renderVK->m_commandBuffer, 0, 0, 1, 0, rect);
 
 			m_swapChain.m_backBufferColorMsaa.m_singleMsaaImage = VK_NULL_HANDLE;
 			m_swapChain.m_backBufferColorMsaa.m_currentSingleMsaaImageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 		}
 
 		m_needResolve = false;
+		m_resolveArea.clear();
 	}
 
 	uint16_t FrameBufferVK::destroy()
@@ -11456,6 +11466,7 @@ VK_DESTROY
 		m_depth = BGFX_INVALID_HANDLE;
 
 		m_needResolve = false;
+		m_resolveArea.clear();
 
 		uint16_t denseIdx = m_denseIdx;
 		m_denseIdx = UINT16_MAX;
@@ -11940,7 +11951,8 @@ VK_DESTROY
 			&&  0 == blit.m_srcMip
 			&&  findPendingResolve(TextureHandle{blit.m_src.idx}, resolveFlags) )
 			{
-				src.resolve(m_commandBuffer, resolveFlags & BGFX_ATTACHMENT_SRGB, blit.m_srcZ, 1, 0);
+				const Rect rect(0, 0, bx::narrowCast<uint16_t>(src.m_width), bx::narrowCast<uint16_t>(src.m_height) );
+				src.resolve(m_commandBuffer, resolveFlags & BGFX_ATTACHMENT_SRGB, blit.m_srcZ, 1, 0, rect);
 			}
 
 			srcLayouts[item] = blitReadsSingleMsaa(src, dst)
@@ -12638,6 +12650,7 @@ VK_DESTROY
 
 						Rect renderArea;
 						renderArea.setIntersect(renderView->m_clippedRect, framebufferRect);
+						getFrameBuffer(m_fbh).m_resolveArea.expand(renderArea);
 
 						Rect scissorRect = renderView->m_scissor;
 						viewHasScissor  = !scissorRect.isZero();

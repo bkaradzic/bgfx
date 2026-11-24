@@ -32,6 +32,8 @@ BIN = vs_debugfont.bin.h \
 	  vs_resolve_depth.bin.h \
 	  fs_resolve_depth.bin.h \
 	  fs_resolve_depth_array.bin.h \
+	  fs_resolve_color.bin.h \
+	  fs_upload_depth.bin.h \
 
 .PHONY: all
 all: $(BIN)
@@ -146,6 +148,12 @@ fs_resolve_depth.bin.h : fs_resolve_depth.sc
 	$(call shader-embedded, f)
 
 fs_resolve_depth_array.bin.h : fs_resolve_depth_array.sc
+	$(call shader-embedded, f)
+
+fs_resolve_color.bin.h : fs_resolve_color.sc
+	$(call shader-embedded, f)
+
+fs_upload_depth.bin.h : fs_upload_depth.sc
 	$(call shader-embedded, f)
 
 .PHONY: clean

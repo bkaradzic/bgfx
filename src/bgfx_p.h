@@ -634,6 +634,25 @@ namespace bgfx
 			setIntersect(*this, _a);
 		}
 
+		void expand(const Rect& _a)
+		{
+			if (isZeroArea() )
+			{
+				*this = _a;
+			}
+			else if (!_a.isZeroArea() )
+			{
+				const int32_t sx = bx::min<int32_t>(m_x, _a.m_x);
+				const int32_t sy = bx::min<int32_t>(m_y, _a.m_y);
+				const int32_t ex = bx::max<int32_t>(m_x + m_width,  _a.m_x + _a.m_width );
+				const int32_t ey = bx::max<int32_t>(m_y + m_height, _a.m_y + _a.m_height);
+				m_x      = int16_t(sx);
+				m_y      = int16_t(sy);
+				m_width  = uint16_t(ex - sx);
+				m_height = uint16_t(ey - sy);
+			}
+		}
+
 		int16_t  m_x;
 		int16_t  m_y;
 		uint16_t m_width;
@@ -1074,6 +1093,28 @@ namespace bgfx
 	};
 
 	extern DepthResolve* g_depthResolve;
+
+	///
+	struct ColorResolve
+	{
+		void init();
+		void shutdown();
+
+		ProgramHandle m_program = BGFX_INVALID_HANDLE;
+	};
+
+	extern ColorResolve* g_colorResolve;
+
+	///
+	struct DepthUpload
+	{
+		void init();
+		void shutdown();
+
+		ProgramHandle m_program = BGFX_INVALID_HANDLE;
+	};
+
+	extern DepthUpload* g_depthUpload;
 
 	///
 	struct VideoDecode
@@ -9215,6 +9256,8 @@ namespace bgfx
 		MipGen m_mipGen;
 		BlitFallback m_blitFallback;
 		DepthResolve m_depthResolve;
+		ColorResolve m_colorResolve;
+		DepthUpload m_depthUpload;
 		VideoDecode m_videoDecode;
 
 		RendererContextI* m_renderCtx;
