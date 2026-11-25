@@ -278,11 +278,8 @@ public:
 		return 0;
 	}
 
-	bool update() override
+	void drawControls()
 	{
-		if (entry::processEvents(m_width, m_height, m_debug, m_reset, &m_mouseState))
-			return false;
-
 		imguiBeginFrame(m_mouseState.m_mx, m_mouseState.m_my,
 			(m_mouseState.m_buttons[entry::MouseButton::Left] ? IMGUI_MBUT_LEFT : 0)
 			| (m_mouseState.m_buttons[entry::MouseButton::Right] ? IMGUI_MBUT_RIGHT : 0)
@@ -326,14 +323,15 @@ public:
 
 		ImGui::End();
 		imguiEndFrame();
+	}
 
-		// Isometric-style camera: view the origin diagonally from above.
+	void setupViews(const bx::Vec3& _eye) const
+	{
 		const bx::Vec3 at = { 0.0f, 0.0f, 0.0f };
-		const bx::Vec3 eye = { 6.0f, 5.0f, -6.0f };
-		// Set view and projection matrix for view 0.
+		// All five passes use the same camera and viewport.
 		float view[16];
 		float proj[16];
-		bx::mtxLookAt(view, eye, at);
+		bx::mtxLookAt(view, _eye, at);
 
 		const float aspect = float(m_width) / float(m_height);
 		const float viewHeight = 4.0f;
@@ -355,8 +353,11 @@ public:
 			bgfx::setViewRect(viewId, 0, 0, uint16_t(m_width), uint16_t(m_height));
 			bgfx::setViewTransform(viewId, view, proj);
 		}
+	}
 
-		float model[16];
+	// Center and scale the mesh; return the camera in that mesh's object space.
+	bx::Vec3 buildModelTransform(float* _model, const bx::Vec3& _eye) const
+	{
 		const float centerX = (m_meshBoundsMin[0] + m_meshBoundsMax[0]) * 0.5f;
 		const float centerY = (m_meshBoundsMin[1] + m_meshBoundsMax[1]) * 0.5f;
 		const float centerZ = (m_meshBoundsMin[2] + m_meshBoundsMax[2]) * 0.5f;
@@ -366,12 +367,21 @@ public:
 		const float extent = bx::max(extentX, bx::max(extentY, extentZ));
 		const float modelScale = extent > 0.0f ? 2.0f / extent : 1.0f;
 		bx::mtxSRT(
-			model
+			_model
 			, modelScale, modelScale, modelScale
 			, 0.0f, 0.0f, 0.0f
 			, -centerX * modelScale, -centerY * modelScale, -centerZ * modelScale
 			);
 
+		return bx::Vec3(
+			  _eye.x / modelScale + centerX
+			, _eye.y / modelScale + centerY
+			, _eye.z / modelScale + centerZ
+			);
+	}
+
+	void updatePlaneUniforms(const bx::Vec3& _cameraObject, bool& _plane0FacesCamera, bool& _plane1FacesCamera) const
+	{
 		// Keep the negative side of both planes. For a plane at coordinate d,
 		// the equation is 0.5 * (coordinate - d), so distance <= 0 keeps
 		// coordinate <= d.
@@ -386,41 +396,55 @@ public:
 		bgfx::setUniform(m_clipPlane0, clipPlane0);
 		bgfx::setUniform(m_clipPlane1, clipPlane1);
 
+		// Camera and plane equations must use the same space as v_position.
+		const float cameraPos[4] = { _cameraObject.x, _cameraObject.y, _cameraObject.z, 1.0f };
+		bgfx::setUniform(m_cameraPos, cameraPos);
+
+		// The stencil shader uses the same test. Use it on the CPU as well so
+		// that an away-facing plane does not submit a cap into the shared mask.
+		const float cameraPlaneDistance0 =
+			_cameraObject.x * clipPlane0[0]
+			+ _cameraObject.y * clipPlane0[1]
+			+ _cameraObject.z * clipPlane0[2]
+			+ clipPlane0[3]
+			;
+		const float cameraPlaneDistance1 =
+			_cameraObject.x * clipPlane1[0]
+			+ _cameraObject.y * clipPlane1[1]
+			+ _cameraObject.z * clipPlane1[2]
+			+ clipPlane1[3]
+			;
+		_plane0FacesCamera = cameraPlaneDistance0 > 0.0f;
+		_plane1FacesCamera = cameraPlaneDistance1 > 0.0f;
+	}
+
+	void updateCapGeometry() const
+	{
 		ClipVertex cap0Vertices[4];
 		ClipVertex cap1Vertices[4];
 		buildCapVertices(uint8_t(m_planeAxis0), m_planeDistance0, m_meshBoundsMin, m_meshBoundsMax, 0xff0000ff, cap0Vertices);
 		buildCapVertices(uint8_t(m_planeAxis1), m_planeDistance1, m_meshBoundsMin, m_meshBoundsMax, 0xff0080ff, cap1Vertices);
 		bgfx::update(m_capYVbh, 0, bgfx::copy(cap0Vertices, sizeof(cap0Vertices)));
 		bgfx::update(m_capZVbh, 0, bgfx::copy(cap1Vertices, sizeof(cap1Vertices)));
+	}
 
-		// The stencil shader needs the camera position in the same space as the
-		// vertex positions. Convert the world-space camera back into the mesh's
-		// object space because the model is normalized around the origin.
-		const bx::Vec3 cameraObject =
-		{
-			eye.x / modelScale + centerX,
-			eye.y / modelScale + centerY,
-			eye.z / modelScale + centerZ,
-		};
-		const float cameraPos[4] = { cameraObject.x, cameraObject.y, cameraObject.z, 1.0f };
-		bgfx::setUniform(m_cameraPos, cameraPos);
+	bool update() override
+	{
+		if (entry::processEvents(m_width, m_height, m_debug, m_reset, &m_mouseState))
+			return false;
 
-		// The stencil shader uses the same test. Use it on the CPU as well so
-		// that an away-facing plane does not submit a cap into the shared mask.
-		const float cameraPlaneDistance0 =
-			cameraObject.x * clipPlane0[0]
-			+ cameraObject.y * clipPlane0[1]
-			+ cameraObject.z * clipPlane0[2]
-			+ clipPlane0[3]
-			;
-		const float cameraPlaneDistance1 =
-			cameraObject.x * clipPlane1[0]
-			+ cameraObject.y * clipPlane1[1]
-			+ cameraObject.z * clipPlane1[2]
-			+ clipPlane1[3]
-			;
-		const bool plane0FacesCamera = cameraPlaneDistance0 > 0.0f;
-		const bool plane1FacesCamera = cameraPlaneDistance1 > 0.0f;
+		drawControls();
+
+		// Isometric-style camera: view the origin diagonally from above.
+		const bx::Vec3 eye = { 6.0f, 5.0f, -6.0f };
+		setupViews(eye);
+		float model[16];
+		const bx::Vec3 cameraObject = buildModelTransform(model, eye);
+		bool plane0FacesCamera = false;
+		bool plane1FacesCamera = false;
+		updatePlaneUniforms(cameraObject, plane0FacesCamera, plane1FacesCamera);
+		updateCapGeometry();
+
 		const bool plane0IntersectsMesh = planeIntersectsMesh(uint8_t(m_planeAxis0), m_planeDistance0, m_meshBoundsMin, m_meshBoundsMax);
 		const bool plane1IntersectsMesh = planeIntersectsMesh(uint8_t(m_planeAxis1), m_planeDistance1, m_meshBoundsMin, m_meshBoundsMax);
 
@@ -456,7 +480,7 @@ public:
 			);
 		submitMesh(1, m_stencilProgram);
 
-		// Pass 2: render the cube clipped by every active plane.
+		// Pass 2: render the mesh clipped by every active plane.
 		bgfx::setStencil(BGFX_STENCIL_NONE, BGFX_STENCIL_NONE);
 		bgfx::setTransform(model);
 		bgfx::setState(
@@ -466,7 +490,7 @@ public:
 		submitMesh(2, m_program);
 
 		// Pass 3: render the first cap only when the plane faces the camera and
-		// actually intersects the cube. Outside the mesh bounds, there is no cap.
+		// intersects the mesh bounds. Outside those bounds, there is no cap.
 		if (plane0FacesCamera && plane0IntersectsMesh)
 		{
 			bgfx::setTransform(model);
@@ -491,7 +515,7 @@ public:
 		}
 
 		// Pass 4: render the second cap only when the plane faces the camera and
-		// actually intersects the cube. Outside the mesh bounds, there is no cap.
+		// intersects the mesh bounds. Outside those bounds, there is no cap.
 		if (plane1FacesCamera && plane1IntersectsMesh)
 		{
 			bgfx::setTransform(model);
