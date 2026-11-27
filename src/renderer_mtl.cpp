@@ -3444,24 +3444,9 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 					: NULL
 					);
 
-				bool layeredTarget = false;
-				if (isValid(_fbh) )
-				{
-					const FrameBufferMtl& frameBuffer = m_frameBuffers[_fbh.idx];
-					for (uint32_t ii = 0; ii < frameBuffer.m_num; ++ii)
-					{
-						layeredTarget |= frameBuffer.m_colorAttachment[ii].numLayers > 1;
-					}
-					if (isValid(frameBuffer.m_depthHandle) )
-					{
-						layeredTarget |= frameBuffer.m_depthAttachment.numLayers > 1;
-					}
-				}
-
 				const uint64_t pt = _state & BGFX_STATE_PT_MASK;
 				pd->setInputPrimitiveTopology(
 					  BGFX_STATE_PT_POINTS == pt ? MTL::PrimitiveTopologyClassPoint
-					: !layeredTarget            ? MTL::PrimitiveTopologyClassUnspecified
 					: BGFX_STATE_PT_LINES     == pt
 					||BGFX_STATE_PT_LINESTRIP == pt ? MTL::PrimitiveTopologyClassLine
 					:                            MTL::PrimitiveTopologyClassTriangle
