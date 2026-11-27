@@ -7,28 +7,21 @@ $input v_color0, v_position
 
 #include "../common/common.sh"
 
-uniform vec4 u_clipPlane0;
-uniform vec4 u_clipPlane1;
+uniform vec4 u_clipPlanes[6];
 uniform vec4 u_capIndex;
 
 void main()
 {
-	// A cap lies on its own plane, so do not test that plane again. Test the
-	// other plane so the cap is limited to the intersection of both cuts.
-	if (u_capIndex.x < 0.5)
+	// Keep this cap inside the retained side of every other clipping plane.
+	for (int ii = 0; ii < 6; ++ii)
 	{
-		float otherPlaneDistance = dot(v_position, u_clipPlane1.xyz) + u_clipPlane1.w;
-		if (otherPlaneDistance > 0.0)
+		if (float(ii) != u_capIndex.x)
 		{
-			discard;
-		}
-	}
-	else
-	{
-		float otherPlaneDistance = dot(v_position, u_clipPlane0.xyz) + u_clipPlane0.w;
-		if (otherPlaneDistance > 0.0)
-		{
-			discard;
+			float otherPlaneDistance = dot(v_position, u_clipPlanes[ii].xyz) + u_clipPlanes[ii].w;
+			if (otherPlaneDistance > 0.0)
+			{
+				discard;
+			}
 		}
 	}
 

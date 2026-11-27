@@ -10,6 +10,7 @@
 namespace
 {
 
+static const uint8_t kNumClipPlanes = 6;
 static const char* s_axisNames[] = { "X", "Y", "Z" };
 
 struct MeshChoice
@@ -65,6 +66,7 @@ struct ClipVertex
 bgfx::VertexLayout ClipVertex::ms_layout;
 
 static const uint16_t s_capIndices[] = { 0, 1, 2, 1, 3, 2 };
+static const uint16_t s_planeOutlineIndices[] = { 0, 1, 1, 3, 3, 2, 2, 0 };
 
 static void buildCapVertices(uint8_t _axis, float _distance, const float* _min, const float* _max, uint32_t _color, ClipVertex* _vertices)
 {
@@ -112,25 +114,27 @@ public:
 		, m_height(0)
 		, m_debug(BGFX_DEBUG_NONE)
 		, m_reset(BGFX_RESET_VSYNC)
-		, m_capYVbh(BGFX_INVALID_HANDLE)
-		, m_capZVbh(BGFX_INVALID_HANDLE)
 		, m_capIbh(BGFX_INVALID_HANDLE)
+		, m_planeIbh(BGFX_INVALID_HANDLE)
 		, m_program(BGFX_INVALID_HANDLE)
 		, m_stencilProgram(BGFX_INVALID_HANDLE)
 		, m_capProgram(BGFX_INVALID_HANDLE)
-		, m_clipPlane0(BGFX_INVALID_HANDLE)
-		, m_clipPlane1(BGFX_INVALID_HANDLE)
+		, m_planeProgram(BGFX_INVALID_HANDLE)
+		, m_clipPlanes(BGFX_INVALID_HANDLE)
 		, m_cameraPos(BGFX_INVALID_HANDLE)
 		, m_capIndex(BGFX_INVALID_HANDLE)
-		, m_planeAxis0(1)
-		, m_planeAxis1(2)
-		, m_planeDistance0(0.0f)
-		, m_planeDistance1(0.0f)
-		, m_invertNormal0(false)
-		, m_invertNormal1(false)
 		, m_meshSelection(0)
 		, m_mesh(NULL)
 	{
+		for (uint8_t ii = 0; ii < kNumClipPlanes; ++ii)
+		{
+			m_capVbh[ii].idx = bgfx::kInvalidHandle;
+			m_planeVbh[ii].idx = bgfx::kInvalidHandle;
+			m_planeAxis[ii] = ii / 2;
+			m_planeDistance[ii] = 0.0f;
+			m_invertNormal[ii] = 0 != (ii % 2);
+		}
+
 		for (Mesh*& mesh : m_meshes)
 		{
 			mesh = NULL;
@@ -177,8 +181,12 @@ public:
 			}
 		}
 
-		m_planeDistance0 = bx::clamp(m_planeDistance0, m_meshBoundsMin[m_planeAxis0], m_meshBoundsMax[m_planeAxis0]);
-		m_planeDistance1 = bx::clamp(m_planeDistance1, m_meshBoundsMin[m_planeAxis1], m_meshBoundsMax[m_planeAxis1]);
+		for (uint8_t ii = 0; ii < kNumClipPlanes; ++ii)
+		{
+			m_planeDistance[ii] = m_invertNormal[ii]
+				? m_meshBoundsMin[m_planeAxis[ii]]
+				: m_meshBoundsMax[m_planeAxis[ii]];
+		}
 	}
 
 	void submitMesh(bgfx::ViewId _view, bgfx::ProgramHandle _program) const
@@ -225,8 +233,11 @@ public:
 		bgfx::setViewName(0, "Stencil back faces");
 		bgfx::setViewName(1, "Stencil front faces");
 		bgfx::setViewName(2, "Clipped mesh");
-		bgfx::setViewName(3, "Y cap");
-		bgfx::setViewName(4, "Z cap");
+		for (uint8_t ii = 0; ii < kNumClipPlanes; ++ii)
+		{
+			bgfx::setViewName(bgfx::ViewId(3 + ii), "Clipping plane cap");
+			bgfx::setViewName(bgfx::ViewId(3 + kNumClipPlanes + ii), "Clipping plane outline");
+		}
 
 		// Create the vertex stream declaration used by the generated cap quads.
 		ClipVertex::init();
@@ -237,17 +248,22 @@ public:
 		}
 		selectMesh(0);
 
-		// Create one cap plane for each clipping plane.
-		m_capYVbh = bgfx::createDynamicVertexBuffer(4, ClipVertex::ms_layout);
-		m_capZVbh = bgfx::createDynamicVertexBuffer(4, ClipVertex::ms_layout);
+		// Create a dynamic quad buffer for each clipping plane cap.
+		for (uint8_t ii = 0; ii < kNumClipPlanes; ++ii)
+		{
+			m_capVbh[ii] = bgfx::createDynamicVertexBuffer(4, ClipVertex::ms_layout);
+			m_planeVbh[ii] = bgfx::createDynamicVertexBuffer(4, ClipVertex::ms_layout);
+		}
 		m_capIbh = bgfx::createIndexBuffer(bgfx::makeRef(s_capIndices, sizeof(s_capIndices)));
+		m_planeIbh = bgfx::createIndexBuffer(bgfx::makeRef(s_planeOutlineIndices, sizeof(s_planeOutlineIndices)));
 
 		// Create the normal, stencil, and cap programs.
 		m_program = loadProgram("vs_clip", "fs_clip");
 		m_stencilProgram = loadProgram("vs_clip", "fs_clip_stencil");
 		m_capProgram = loadProgram("vs_cap", "fs_cap");
-		m_clipPlane0 = bgfx::createUniform("u_clipPlane0", bgfx::UniformType::Vec4);
-		m_clipPlane1 = bgfx::createUniform("u_clipPlane1", bgfx::UniformType::Vec4);
+		m_planeProgram = loadProgram("vs_cap", "fs_plane");
+		BX_ASSERT(bgfx::isValid(m_planeProgram), "Failed to create clipping plane outline program");
+		m_clipPlanes = bgfx::createUniform("u_clipPlanes", bgfx::UniformType::Vec4, kNumClipPlanes);
 		m_cameraPos = bgfx::createUniform("u_cameraPos", bgfx::UniformType::Vec4);
 		m_capIndex = bgfx::createUniform("u_capIndex", bgfx::UniformType::Vec4);
 
@@ -258,13 +274,17 @@ public:
 	{
 		imguiDestroy();
 		bgfx::destroy(m_capIbh);
-		bgfx::destroy(m_capZVbh);
-		bgfx::destroy(m_capYVbh);
+		bgfx::destroy(m_planeIbh);
+		for (uint8_t ii = 0; ii < kNumClipPlanes; ++ii)
+		{
+			bgfx::destroy(m_capVbh[ii]);
+			bgfx::destroy(m_planeVbh[ii]);
+		}
 		bgfx::destroy(m_capProgram);
+		bgfx::destroy(m_planeProgram);
 		bgfx::destroy(m_stencilProgram);
 		bgfx::destroy(m_program);
-		bgfx::destroy(m_clipPlane0);
-		bgfx::destroy(m_clipPlane1);
+		bgfx::destroy(m_clipPlanes);
 		bgfx::destroy(m_cameraPos);
 		bgfx::destroy(m_capIndex);
 		for (Mesh* mesh : m_meshes)
@@ -302,24 +322,23 @@ public:
 			selectMesh(m_meshSelection);
 		}
 		ImGui::Separator();
-		ImGui::Text("Kept side: coordinate <= distance");
+		ImGui::Text("Normal: coordinate <= distance");
+		ImGui::Text("Inverted: coordinate >= distance");
 		ImGui::Separator();
 
-		ImGui::PushID(0);
-		ImGui::Text("Plane 0");
-		ImGui::Combo("Axis", &m_planeAxis0, s_axisNames, BX_COUNTOF(s_axisNames));
-		ImGui::SliderFloat("Distance", &m_planeDistance0, m_meshBoundsMin[m_planeAxis0], m_meshBoundsMax[m_planeAxis0], "%.2f");
-		ImGui::Checkbox("Invert normal", &m_invertNormal0);
-		ImGui::PopID();
-
-		ImGui::Separator();
-
-		ImGui::PushID(1);
-		ImGui::Text("Plane 1");
-		ImGui::Combo("Axis", &m_planeAxis1, s_axisNames, BX_COUNTOF(s_axisNames));
-		ImGui::SliderFloat("Distance", &m_planeDistance1, m_meshBoundsMin[m_planeAxis1], m_meshBoundsMax[m_planeAxis1], "%.2f");
-		ImGui::Checkbox("Invert normal", &m_invertNormal1);
-		ImGui::PopID();
+		for (uint8_t ii = 0; ii < kNumClipPlanes; ++ii)
+		{
+			if (ii > 0)
+			{
+				ImGui::Separator();
+			}
+			ImGui::PushID(ii);
+			ImGui::Text("Plane %u", uint32_t(ii + 1));
+			ImGui::Combo("Axis", &m_planeAxis[ii], s_axisNames, BX_COUNTOF(s_axisNames));
+			ImGui::SliderFloat("Distance", &m_planeDistance[ii], m_meshBoundsMin[m_planeAxis[ii]], m_meshBoundsMax[m_planeAxis[ii]], "%.2f");
+			ImGui::Checkbox("Invert normal", &m_invertNormal[ii]);
+			ImGui::PopID();
+		}
 
 		ImGui::End();
 		imguiEndFrame();
@@ -328,7 +347,7 @@ public:
 	void setupViews(const bx::Vec3& _eye) const
 	{
 		const bx::Vec3 at = { 0.0f, 0.0f, 0.0f };
-		// All five passes use the same camera and viewport.
+		// All nine passes use the same camera and viewport.
 		float view[16];
 		float proj[16];
 		bx::mtxLookAt(view, _eye, at);
@@ -348,7 +367,7 @@ public:
 			,  bgfx::getCaps()->homogeneousDepth
 			);
 
-		for (bgfx::ViewId viewId = 0; viewId < 5; ++viewId)
+		for (bgfx::ViewId viewId = 0; viewId < 3 + 2 * kNumClipPlanes; ++viewId)
 		{
 			bgfx::setViewRect(viewId, 0, 0, uint16_t(m_width), uint16_t(m_height));
 			bgfx::setViewTransform(viewId, view, proj);
@@ -380,21 +399,16 @@ public:
 			);
 	}
 
-	void updatePlaneUniforms(const bx::Vec3& _cameraObject, bool& _plane0FacesCamera, bool& _plane1FacesCamera) const
+	void updatePlaneUniforms(const bx::Vec3& _cameraObject, bool* _planeFacesCamera) const
 	{
-		// Keep the negative side of both planes. For a plane at coordinate d,
-		// the equation is 0.5 * (coordinate - d), so distance <= 0 keeps
-		// coordinate <= d.
-		float clipPlane0[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
-		float clipPlane1[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
-		const float normalSign0 = m_invertNormal0 ? -1.0f : 1.0f;
-		const float normalSign1 = m_invertNormal1 ? -1.0f : 1.0f;
-		clipPlane0[m_planeAxis0] = 0.5f * normalSign0;
-		clipPlane0[3] = -0.5f * m_planeDistance0 * normalSign0;
-		clipPlane1[m_planeAxis1] = 0.5f * normalSign1;
-		clipPlane1[3] = -0.5f * m_planeDistance1 * normalSign1;
-		bgfx::setUniform(m_clipPlane0, clipPlane0);
-		bgfx::setUniform(m_clipPlane1, clipPlane1);
+		float clipPlanes[kNumClipPlanes][4] = {};
+		for (uint8_t ii = 0; ii < kNumClipPlanes; ++ii)
+		{
+			const float normalSign = m_invertNormal[ii] ? -1.0f : 1.0f;
+			clipPlanes[ii][m_planeAxis[ii]] = 0.5f * normalSign;
+			clipPlanes[ii][3] = -0.5f * m_planeDistance[ii] * normalSign;
+		}
+		bgfx::setUniform(m_clipPlanes, clipPlanes[0], kNumClipPlanes);
 
 		// Camera and plane equations must use the same space as v_position.
 		const float cameraPos[4] = { _cameraObject.x, _cameraObject.y, _cameraObject.z, 1.0f };
@@ -402,30 +416,36 @@ public:
 
 		// The stencil shader uses the same test. Use it on the CPU as well so
 		// that an away-facing plane does not submit a cap into the shared mask.
-		const float cameraPlaneDistance0 =
-			_cameraObject.x * clipPlane0[0]
-			+ _cameraObject.y * clipPlane0[1]
-			+ _cameraObject.z * clipPlane0[2]
-			+ clipPlane0[3]
-			;
-		const float cameraPlaneDistance1 =
-			_cameraObject.x * clipPlane1[0]
-			+ _cameraObject.y * clipPlane1[1]
-			+ _cameraObject.z * clipPlane1[2]
-			+ clipPlane1[3]
-			;
-		_plane0FacesCamera = cameraPlaneDistance0 > 0.0f;
-		_plane1FacesCamera = cameraPlaneDistance1 > 0.0f;
+		for (uint8_t ii = 0; ii < kNumClipPlanes; ++ii)
+		{
+			const float cameraPlaneDistance =
+				_cameraObject.x * clipPlanes[ii][0]
+				+ _cameraObject.y * clipPlanes[ii][1]
+				+ _cameraObject.z * clipPlanes[ii][2]
+				+ clipPlanes[ii][3]
+				;
+			_planeFacesCamera[ii] = cameraPlaneDistance > 0.0f;
+		}
 	}
 
 	void updateCapGeometry() const
 	{
-		ClipVertex cap0Vertices[4];
-		ClipVertex cap1Vertices[4];
-		buildCapVertices(uint8_t(m_planeAxis0), m_planeDistance0, m_meshBoundsMin, m_meshBoundsMax, 0xff0000ff, cap0Vertices);
-		buildCapVertices(uint8_t(m_planeAxis1), m_planeDistance1, m_meshBoundsMin, m_meshBoundsMax, 0xff0080ff, cap1Vertices);
-		bgfx::update(m_capYVbh, 0, bgfx::copy(cap0Vertices, sizeof(cap0Vertices)));
-		bgfx::update(m_capZVbh, 0, bgfx::copy(cap1Vertices, sizeof(cap1Vertices)));
+		static const uint32_t capColors[kNumClipPlanes] =
+		{
+			0xff0000ff, 0xff0080ff, 0xff00ff00,
+			0xffff0000, 0xffffff00, 0xffff00ff,
+		};
+		for (uint8_t ii = 0; ii < kNumClipPlanes; ++ii)
+		{
+			ClipVertex vertices[4];
+			buildCapVertices(uint8_t(m_planeAxis[ii]), m_planeDistance[ii], m_meshBoundsMin, m_meshBoundsMax, capColors[ii], vertices);
+			bgfx::update(m_capVbh[ii], 0, bgfx::copy(vertices, sizeof(vertices)));
+			for (ClipVertex& vertex : vertices)
+			{
+				vertex.m_abgr = (capColors[ii] & 0x00ffffff) | 0x33000000;
+			}
+			bgfx::update(m_planeVbh[ii], 0, bgfx::copy(vertices, sizeof(vertices)));
+		}
 	}
 
 	bool update() override
@@ -440,13 +460,9 @@ public:
 		setupViews(eye);
 		float model[16];
 		const bx::Vec3 cameraObject = buildModelTransform(model, eye);
-		bool plane0FacesCamera = false;
-		bool plane1FacesCamera = false;
-		updatePlaneUniforms(cameraObject, plane0FacesCamera, plane1FacesCamera);
+		bool planeFacesCamera[kNumClipPlanes] = {};
+		updatePlaneUniforms(cameraObject, planeFacesCamera);
 		updateCapGeometry();
-
-		const bool plane0IntersectsMesh = planeIntersectsMesh(uint8_t(m_planeAxis0), m_planeDistance0, m_meshBoundsMin, m_meshBoundsMax);
-		const bool plane1IntersectsMesh = planeIntersectsMesh(uint8_t(m_planeAxis1), m_planeDistance1, m_meshBoundsMin, m_meshBoundsMax);
 
 		// Pass 0: Increment the stencil where a backface exists.
 		bgfx::setTransform(model);
@@ -489,54 +505,50 @@ public:
 			);
 		submitMesh(2, m_program);
 
-		// Pass 3: render the first cap only when the plane faces the camera and
-		// intersects the mesh bounds. Outside those bounds, there is no cap.
-		if (plane0FacesCamera && plane0IntersectsMesh)
+		// Passes 3-8: render each cap inside the stencil mask when its plane
+		// faces the camera and intersects the mesh bounds.
+		const uint32_t capStencil =
+			BGFX_STENCIL_TEST_NOTEQUAL
+			| BGFX_STENCIL_FUNC_REF(0)
+			| BGFX_STENCIL_FUNC_RMASK(0xff)
+			| BGFX_STENCIL_OP_FAIL_S_KEEP
+			| BGFX_STENCIL_OP_FAIL_Z_KEEP
+			| BGFX_STENCIL_OP_PASS_Z_KEEP
+			;
+		for (uint8_t ii = 0; ii < kNumClipPlanes; ++ii)
 		{
+			const bool intersectsMesh = planeIntersectsMesh(uint8_t(m_planeAxis[ii]), m_planeDistance[ii], m_meshBoundsMin, m_meshBoundsMax);
+			if (!planeFacesCamera[ii] || !intersectsMesh)
+			{
+				continue;
+			}
+
 			bgfx::setTransform(model);
-			bgfx::setVertexBuffer(0, m_capYVbh);
+			bgfx::setVertexBuffer(0, m_capVbh[ii]);
 			bgfx::setIndexBuffer(m_capIbh);
-			const float yCapIndex[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
-			bgfx::setUniform(m_capIndex, yCapIndex);
-			const uint32_t capStencil =
-				BGFX_STENCIL_TEST_NOTEQUAL
-				| BGFX_STENCIL_FUNC_REF(0)
-				| BGFX_STENCIL_FUNC_RMASK(0xff)
-				| BGFX_STENCIL_OP_FAIL_S_KEEP
-				| BGFX_STENCIL_OP_FAIL_Z_KEEP
-				| BGFX_STENCIL_OP_PASS_Z_KEEP
-				;
-			bgfx::setStencil(capStencil, capStencil);
+			const float capIndex[4] = { float(ii), 0.0f, 0.0f, 0.0f };
+			bgfx::setUniform(m_capIndex, capIndex);
+			bgfx::setStencil(capStencil, BGFX_STENCIL_NONE);
 			bgfx::setState(
 				BGFX_STATE_WRITE_RGB|BGFX_STATE_WRITE_A
 				| BGFX_STATE_DEPTH_TEST_LESS|BGFX_STATE_MSAA
 				);
-			bgfx::submit(3, m_capProgram);
+			bgfx::submit(bgfx::ViewId(3 + ii), m_capProgram);
 		}
 
-		// Pass 4: render the second cap only when the plane faces the camera and
-		// intersects the mesh bounds. Outside those bounds, there is no cap.
-		if (plane1FacesCamera && plane1IntersectsMesh)
+		// Passes 9-14: outline each clipping plane across the mesh bounds.
+		bgfx::setStencil(BGFX_STENCIL_NONE, BGFX_STENCIL_NONE);
+		for (uint8_t ii = 0; bgfx::isValid(m_planeProgram) && ii < kNumClipPlanes; ++ii)
 		{
 			bgfx::setTransform(model);
-			bgfx::setVertexBuffer(0, m_capZVbh);
-			bgfx::setIndexBuffer(m_capIbh);
-			const float zCapIndex[4] = { 1.0f, 0.0f, 0.0f, 0.0f };
-			bgfx::setUniform(m_capIndex, zCapIndex);
-			const uint32_t capStencil =
-				BGFX_STENCIL_TEST_NOTEQUAL
-				| BGFX_STENCIL_FUNC_REF(0)
-				| BGFX_STENCIL_FUNC_RMASK(0xff)
-				| BGFX_STENCIL_OP_FAIL_S_KEEP
-				| BGFX_STENCIL_OP_FAIL_Z_KEEP
-				| BGFX_STENCIL_OP_PASS_Z_KEEP
-				;
-			bgfx::setStencil(capStencil, capStencil);
+			bgfx::setVertexBuffer(0, m_planeVbh[ii]);
+			bgfx::setIndexBuffer(m_planeIbh);
 			bgfx::setState(
 				BGFX_STATE_WRITE_RGB|BGFX_STATE_WRITE_A
-				| BGFX_STATE_DEPTH_TEST_LESS|BGFX_STATE_MSAA
+				| BGFX_STATE_BLEND_ALPHA|BGFX_STATE_MSAA
+				| BGFX_STATE_PT_LINES
 				);
-			bgfx::submit(4, m_capProgram);
+			bgfx::submit(bgfx::ViewId(3 + kNumClipPlanes + ii), m_planeProgram);
 		}
 
 		// Advance to next frame. Rendering thread will be kicked to
@@ -550,22 +562,20 @@ public:
 	uint32_t m_height;
 	uint32_t m_debug;
 	uint32_t m_reset;
-	bgfx::DynamicVertexBufferHandle m_capYVbh;
-	bgfx::DynamicVertexBufferHandle m_capZVbh;
+	bgfx::DynamicVertexBufferHandle m_capVbh[kNumClipPlanes];
+	bgfx::DynamicVertexBufferHandle m_planeVbh[kNumClipPlanes];
 	bgfx::IndexBufferHandle m_capIbh;
+	bgfx::IndexBufferHandle m_planeIbh;
 	bgfx::ProgramHandle m_program;
 	bgfx::ProgramHandle m_stencilProgram;
 	bgfx::ProgramHandle m_capProgram;
-	bgfx::UniformHandle m_clipPlane0;
-	bgfx::UniformHandle m_clipPlane1;
+	bgfx::ProgramHandle m_planeProgram;
+	bgfx::UniformHandle m_clipPlanes;
 	bgfx::UniformHandle m_cameraPos;
 	bgfx::UniformHandle m_capIndex;
-	int m_planeAxis0;
-	int m_planeAxis1;
-	float m_planeDistance0;
-	float m_planeDistance1;
-	bool m_invertNormal0;
-	bool m_invertNormal1;
+	int m_planeAxis[kNumClipPlanes];
+	float m_planeDistance[kNumClipPlanes];
+	bool m_invertNormal[kNumClipPlanes];
 	int m_meshSelection;
 	Mesh* m_meshes[BX_COUNTOF(s_meshChoices)];
 	Mesh* m_mesh;
