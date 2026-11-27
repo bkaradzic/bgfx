@@ -739,6 +739,22 @@ https://proje.ca - Projeca is a massively multiplayer anarchy blockgame.
 
 <img width="3024" height="1898" alt="Projeca" src="https://github.com/user-attachments/assets/9c775be6-e91d-4ca4-b066-3069adb9ca54" />
 
+## SilverNode
+
+https://silvernode.io/ - SilverNode is a handmade RAW photo developer where
+performance is central, written in C++.
+
+bgfx does the GPU rendering: the fragment-shader image pipeline (tone mapping,
+curves, HSL, color balance, lens correction, blur/denoise/sharpen, watermarks)
+and compute shaders for the histogram, the vectorscope, and a few more.
+The entire UI is custom-made and is rendered through [vg-renderer](https://github.com/bkaradzic/vg-renderer),
+which sits on top of the bgfx API. [Halide](https://github.com/halide/Halide) does the heavy image processing: decoding
+conversions, the deconvolution and denoising filters, mipmap/blur chains,
+highlight reconstruction, and many more.
+
+![SilverNode in the Develop module](https://silvernode.io/img/screenshots/develop-hero.webp)
+
+
 [License (BSD 2-clause)](https://bkaradzic.github.io/bgfx/license.html)
 -----------------------------------------------------------------------
 
