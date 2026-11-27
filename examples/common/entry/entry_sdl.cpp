@@ -168,7 +168,6 @@ namespace entry
 			if (filter(_axis, &_value) )
 			{
 				_eventQueue.postAxisEvent(_handle, _gamepad, _axis, _value);
-
 			}
 		}
 
@@ -458,7 +457,8 @@ namespace entry
 				bx::close(reader);
 				((char*)data)[size] = '\0';
 
-				if (SDL_GameControllerAddMapping( (char*)data) < 0) {
+				if (SDL_GameControllerAddMapping( (char*)data) < 0)
+				{
 					DBG("SDL game controller add mapping failed: %s", SDL_GetError());
 				}
 
