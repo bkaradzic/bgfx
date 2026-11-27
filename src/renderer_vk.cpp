@@ -9830,6 +9830,11 @@ VK_DESTROY
 					if (VK_SUCCESS != result)
 					{
 						BX_TRACE("Surface lost.");
+
+						// Retry on the next update(). createSurface() clears the flag up
+						// front, and m_surface is now null.
+						m_needToRecreateSurface   = true;
+						m_needToRecreateSwapchain = true;
 						return;
 					}
 				}
