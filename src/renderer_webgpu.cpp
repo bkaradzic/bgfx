@@ -2419,7 +2419,7 @@ WGPU_IMPORT
 
 			m_cmd.copyTextureToBuffer(
 				{
-					.texture  = swapChain.m_texture,
+					.texture  = swapChain.getRenderTexture(),
 					.mipLevel = 0,
 					.origin   =
 					{
@@ -6364,6 +6364,7 @@ WGPU_IMPORT
 	{
 		wgpuRelease(m_textureView);
 		wgpuRelease(m_texture);
+		wgpuRelease(m_resizeTexture);
 		wgpuRelease(m_msaaTextureView);
 		wgpuRelease(m_depthStencilView);
 
@@ -6459,6 +6460,7 @@ WGPU_IMPORT
 			.usage           = 0
 				| WGPUTextureUsage_RenderAttachment
 				| (m_readable ? WGPUTextureUsage_CopySrc : 0)
+				| (BX_ENABLED(BX_PLATFORM_EMSCRIPTEN) ? WGPUTextureUsage_CopyDst : 0)
 				,
 			.width           = m_desc.width,
 			.height          = m_desc.height,
@@ -6475,6 +6477,7 @@ WGPU_IMPORT
 
 		wgpuRelease(m_textureView);
 		wgpuRelease(m_texture);
+		wgpuRelease(m_resizeTexture);
 
 #if !BX_PLATFORM_EMSCRIPTEN
 		WGPUSurfaceTexture surfaceTexture = WGPU_SURFACE_TEXTURE_INIT;
@@ -6846,7 +6849,7 @@ WGPU_IMPORT
 			.usage           = m_surfaceConfig.usage,
 		};
 
-		WGPUTextureView textureView = WGPU_CHECK(wgpuTextureCreateView(m_texture, &textureViewDesc) );
+		WGPUTextureView textureView = WGPU_CHECK(wgpuTextureCreateView(getRenderTexture(), &textureViewDesc) );
 
 		return textureView;
 	}
@@ -6886,6 +6889,26 @@ WGPU_IMPORT
 
 		if (NULL != m_texture)
 		{
+#if BX_PLATFORM_EMSCRIPTEN
+			// Keep the configured extent and shared depth attachment until the application resets the swap chain.
+			if (wgpuTextureGetWidth(m_texture)  == m_surfaceConfig.width
+			&&  wgpuTextureGetHeight(m_texture) == m_surfaceConfig.height)
+			{
+				wgpuRelease(m_resizeTexture);
+			}
+			else if (NULL == m_resizeTexture)
+			{
+				WGPUTextureDescriptor desc = WGPU_TEXTURE_DESCRIPTOR_INIT;
+				desc.label           = toWGPUStringView("SwapChain Resize");
+				desc.usage           = m_surfaceConfig.usage | WGPUTextureUsage_CopySrc;
+				desc.dimension       = WGPUTextureDimension_2D;
+				desc.size            = { m_surfaceConfig.width, m_surfaceConfig.height, 1 };
+				desc.format          = m_surfaceConfig.format;
+				desc.viewFormatCount = m_surfaceConfig.viewFormatCount;
+				desc.viewFormats     = m_surfaceConfig.viewFormats;
+				m_resizeTexture = WGPU_CHECK(wgpuDeviceCreateTexture(m_surfaceConfig.device, &desc) );
+			}
+#endif // BX_PLATFORM_EMSCRIPTEN
 			m_textureView = createTextureView();
 		}
 	}
@@ -9590,6 +9613,27 @@ WGPU_IMPORT
 
 		m_uniformScratchBuffer.end();
 
+#if BX_PLATFORM_EMSCRIPTEN
+		// The canvas texture expires at the end of this browser task, which can precede the next flip.
+		for (uint16_t ii = 0; ii < m_numWindows; ++ii)
+		{
+			const SwapChainWGPU& swapChain = getFrameBuffer(m_windows[ii]).m_swapChain;
+			if (NULL != swapChain.m_resizeTexture
+			&&  NULL != swapChain.m_texture)
+			{
+				WGPUTexelCopyTextureInfo src = WGPU_TEXEL_COPY_TEXTURE_INFO_INIT;
+				src.texture = swapChain.m_resizeTexture;
+				WGPUTexelCopyTextureInfo dst = WGPU_TEXEL_COPY_TEXTURE_INFO_INIT;
+				dst.texture = swapChain.m_texture;
+				m_cmd.copyTextureToTexture(src, dst
+					, {
+						bx::min(swapChain.m_surfaceConfig.width,  wgpuTextureGetWidth(swapChain.m_texture)  ),
+						bx::min(swapChain.m_surfaceConfig.height, wgpuTextureGetHeight(swapChain.m_texture) ),
+						1
+					});
+			}
+		}
+#endif // BX_PLATFORM_EMSCRIPTEN
 		m_cmd.frame();
 	}
 

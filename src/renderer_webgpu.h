@@ -680,6 +680,7 @@ namespace wgpu {
 			: m_nwh(NULL)
 			, m_surface(NULL)
 			, m_texture(NULL)
+			, m_resizeTexture(NULL)
 			, m_textureView(NULL)
 			, m_msaaTextureView(NULL)
 			, m_depthStencilView(NULL)
@@ -699,6 +700,7 @@ namespace wgpu {
 		bool createSurface(void* _nwh);
 
 		bool configure(const SwapChain& _desc);
+		WGPUTexture getRenderTexture() const { return NULL != m_resizeTexture ? m_resizeTexture : m_texture; }
 		WGPUTextureView createTextureView();
 		void acquire();
 		void present();
@@ -710,6 +712,7 @@ namespace wgpu {
 
 		WGPUSurface m_surface;
 		WGPUTexture m_texture;
+		WGPUTexture m_resizeTexture;
 		WGPUTextureView m_textureView;
 		WGPUTextureView m_msaaTextureView;
 		WGPUTextureView m_depthStencilView;
