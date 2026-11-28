@@ -592,6 +592,7 @@ or _OPTIONS["with-combined-examples"] then
 		, "53-sky2"
 		, "54-s2h"
 		, "55-hdr10"
+		, "56-clip"
 		)
 
 
